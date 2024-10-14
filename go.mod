@@ -7,7 +7,7 @@ require (
 	cosmossdk.io/math v1.2.0
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
 	cosmossdk.io/tools/rosetta v0.2.1
-	github.com/ExocoreNetwork/price-feeder v0.1.9
+	github.com/ExocoreNetwork/price-feeder v0.0.0-20241009094357-40e58e6f1694
 	github.com/agiledragon/gomonkey/v2 v2.11.0
 	github.com/armon/go-metrics v0.4.1
 	github.com/cometbft/cometbft v0.37.4
