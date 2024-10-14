@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +13,6 @@ func (k Keeper) TokenIndexes(goCtx context.Context, req *types.QueryTokenIndexes
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	fmt.Println("debug----keeper.TokenIndexes")
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	ret := k.GetTokens(ctx)
