@@ -1,11 +1,15 @@
 package assets_test
 
 import (
+	"fmt"
 	"math/big"
+	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	assetsprecompile "github.com/ExocoreNetwork/exocore/precompiles/assets"
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
+	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 
 	"github.com/ExocoreNetwork/exocore/app"
@@ -70,7 +74,7 @@ func paddingClientChainAddress(input []byte, outputLength int) []byte {
 }
 
 // TestRunDepositTo tests DepositOrWithdraw method through calling Run function..
-func (s *AssetsPrecompileSuite) TestRunDepositLST() {
+func (s *AssetsPrecompileSuite) TestRunDeposit() {
 	// assetsprecompile params for test
 	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	exocoreLzAppEventTopic := "0xc6a377bfc4eb120024a8ac08eef205be16b817020812c73223e81d1bdb9708ec"
@@ -78,11 +82,17 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 	usdcAddress := paddingClientChainAddress(common.FromHex("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"), assetstype.GeneralClientChainAddrLength)
 	clientChainLzID := 101
 	stakerAddr := paddingClientChainAddress(s.Address.Bytes(), assetstype.GeneralClientChainAddrLength)
+	stakerAddrStr := strings.ToLower(s.Address.String())
+	NSTAssetAddr := assetstypes.GenerateNSTAddr(s.ClientChains[0].AddressLength)
+	stakerID, assetID := assetstype.GetStakerIDAndAssetID(s.ClientChains[0].LayerZeroChainID, s.Address.Bytes(), NSTAssetAddr)
+
 	opAmount := big.NewInt(100)
+	opAmount32, _ := new(big.Int).SetString("32000000000000000000", 10)
 	assetAddr := usdtAddress
-	commonMalleate := func() (common.Address, []byte) {
+	assetAddrNST := paddingClientChainAddress(assetstype.GenerateNSTAddr(s.ClientChains[0].AddressLength), assetstype.GeneralClientChainAddrLength)
+	commonMalleate := func(method string, assetAddr []byte, opAmount *big.Int) (common.Address, []byte) {
 		input, err := s.precompile.Pack(
-			assetsprecompile.MethodDepositLST,
+			method,
 			uint32(clientChainLzID),
 			assetAddr,
 			stakerAddr,
@@ -92,6 +102,7 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 		return s.Address, input
 	}
 	successRet, err := s.precompile.Methods[assetsprecompile.MethodDepositLST].Outputs.Pack(true, opAmount)
+	successRetNST, err := s.precompile.Methods[assetsprecompile.MethodDepositNST].Outputs.Pack(true, opAmount32)
 	s.Require().NoError(err)
 
 	testcases := []struct {
@@ -101,11 +112,12 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 		expPass     bool
 		errContains string
 		returnBytes []byte
+		extra       func()
 	}{
 		{
 			name: "fail - depositTo transaction will fail because the exocoreLzAppAddress is mismatched",
 			malleate: func() (common.Address, []byte) {
-				return commonMalleate()
+				return commonMalleate(assetsprecompile.MethodDepositLST, assetAddr, opAmount)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -120,7 +132,7 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
-				return commonMalleate()
+				return commonMalleate(assetsprecompile.MethodDepositLST, assetAddr, opAmount)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -136,7 +148,7 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
 				assetAddr = usdcAddress
-				return commonMalleate()
+				return commonMalleate(assetsprecompile.MethodDepositLST, assetAddr, opAmount)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -152,11 +164,49 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 				assetAddr = usdtAddress
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
-				return commonMalleate()
+				return commonMalleate(assetsprecompile.MethodDepositLST, assetAddr, opAmount)
 			},
 			returnBytes: successRet,
 			readOnly:    false,
 			expPass:     true,
+		},
+		{
+			name: "pass - depositNST",
+			malleate: func() (common.Address, []byte) {
+				depositModuleParam := &assetstype.Params{
+					ExocoreLzAppAddress:    s.Address.String(),
+					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+				}
+				assetAddr = usdtAddress
+				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
+				s.Require().NoError(err)
+				return commonMalleate(assetsprecompile.MethodDepositNST, assetAddrNST, opAmount32)
+			},
+			returnBytes: successRetNST,
+			readOnly:    false,
+			expPass:     true,
+			extra: func() {
+				amount32 := sdkmath.NewIntWithDecimal(32, 18)
+				// check depositNST successfully updated stakerAssetInfo in assets_module
+				stakerAssetInfo, _ := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(s.Ctx, stakerID, assetID)
+				s.Equal(&assetstypes.StakerAssetInfo{
+					TotalDepositAmount:        amount32,
+					WithdrawableAmount:        amount32,
+					PendingUndelegationAmount: sdkmath.ZeroInt(),
+				}, stakerAssetInfo)
+
+				// check depositNST successfully updated stakerList in oracle_module
+				stakerList := s.App.OracleKeeper.GetStakerList(s.Ctx, assetID)
+				s.Equal(stakerList.StakerAddrs[0], stakerAddrStr)
+				// check depositNST successfully update stakerInfo with correct validatorPubkey
+				stakerInfo := s.App.OracleKeeper.GetStakerInfo(s.Ctx, assetID, stakerAddrStr)
+				s.Equal(types.BalanceInfo{
+					Block:   1,
+					RoundID: 0,
+					Change:  types.Action_ACTION_DEPOSIT,
+					Balance: 32,
+				}, *stakerInfo.BalanceList[0])
+			},
 		},
 	}
 
@@ -235,6 +285,10 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 				s.Require().True(ok)
 				s.Require().False(success)
 			}
+			if tc.extra != nil {
+				// run extra logic/checking for this test case
+				tc.extra()
+			}
 		})
 	}
 }
@@ -247,24 +301,29 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 	clientChainLzID := 101
 	withdrawAmount := big.NewInt(10)
 	depositAmount := big.NewInt(100)
+	amount32, _ := new(big.Int).SetString("32000000000000000000", 10)
 	assetAddr := paddingClientChainAddress(usdtAddress, assetstype.GeneralClientChainAddrLength)
-	depositAsset := func(staker []byte, depositAmount sdkmath.Int) {
+	assetAddrNST := paddingClientChainAddress(assetstype.GenerateNSTAddr(s.ClientChains[0].AddressLength), assetstype.GeneralClientChainAddrLength)
+	NSTAddress := assetstype.GenerateNSTAddr(s.ClientChains[0].AddressLength)
+	depositAsset := func(staker []byte, depositAmount sdkmath.Int, assetAddress []byte) {
 		// deposit asset for withdraw test
 		params := &assetskeeper.DepositWithdrawParams{
 			ClientChainLzID: 101,
 			Action:          assetstype.DepositLST,
 			StakerAddress:   staker,
-			AssetsAddress:   usdtAddress,
-			OpAmount:        depositAmount,
+			// AssetsAddress:   usdtAddress,
+			AssetsAddress: assetAddress,
+			OpAmount:      depositAmount,
 		}
 		err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
+		fmt.Println("Debug---", assetAddress, len(assetAddress))
 		s.Require().NoError(err)
 	}
 
-	commonMalleate := func() (common.Address, []byte) {
+	commonMalleate := func(method string, assetAddr []byte, withdrawAmount *big.Int) (common.Address, []byte) {
 		// Prepare the call input for withdraw test
 		input, err := s.precompile.Pack(
-			assetsprecompile.MethodWithdrawLST,
+			method,
 			uint32(clientChainLzID),
 			assetAddr,
 			paddingClientChainAddress(s.Address.Bytes(), assetstype.GeneralClientChainAddrLength),
@@ -274,6 +333,7 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 		return s.Address, input
 	}
 	successRet, err := s.precompile.Methods[assetsprecompile.MethodWithdrawLST].Outputs.Pack(true, new(big.Int).Sub(depositAmount, withdrawAmount))
+	successRetNST, err := s.precompile.Methods[assetsprecompile.MethodWithdrawNST].Outputs.Pack(true, big.NewInt(0))
 	s.Require().NoError(err)
 	testcases := []struct {
 		name        string
@@ -282,9 +342,10 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 		expPass     bool
 		errContains string
 		returnBytes []byte
+		extra       func()
 	}{
 		{
-			name: "pass - withdraw via pre-compiles",
+			name: "pass - withdraw via pre-compiles, LST",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
 					ExocoreLzAppAddress:    s.Address.String(),
@@ -292,12 +353,46 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
-				depositAsset(s.Address.Bytes(), sdkmath.NewIntFromBigInt(depositAmount))
-				return commonMalleate()
+				depositAsset(s.Address.Bytes(), sdkmath.NewIntFromBigInt(depositAmount), usdtAddress)
+				return commonMalleate(assetsprecompile.MethodWithdrawLST, assetAddr, withdrawAmount)
 			},
 			returnBytes: successRet,
 			readOnly:    false,
 			expPass:     true,
+		},
+		{
+			name: "pass - withdraw via pre-compiles, NST",
+			malleate: func() (common.Address, []byte) {
+				depositModuleParam := &assetstype.Params{
+					ExocoreLzAppAddress:    s.Address.String(),
+					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+				}
+				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
+				s.Require().NoError(err)
+				depositAsset(s.Address.Bytes(), sdkmath.NewIntFromBigInt(amount32), NSTAddress)
+				return commonMalleate(assetsprecompile.MethodWithdrawLST, assetAddrNST, amount32)
+			},
+			returnBytes: successRetNST,
+			readOnly:    false,
+			expPass:     true,
+			extra: func() {
+
+				stakerID, assetID := assetstype.GetStakerIDAndAssetID(s.ClientChains[0].LayerZeroChainID, s.Address.Bytes(), NSTAddress)
+				// check depositNST successfully updated stakerAssetInfo in assets_module
+				stakerAssetInfo, _ := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(s.Ctx, stakerID, assetID)
+				s.Equal(&assetstypes.StakerAssetInfo{
+					TotalDepositAmount:        sdkmath.ZeroInt(),
+					WithdrawableAmount:        sdkmath.ZeroInt(),
+					PendingUndelegationAmount: sdkmath.ZeroInt(),
+				}, stakerAssetInfo)
+
+				// check depositNST successfully updated stakerList in oracle_module
+				stakerList := s.App.OracleKeeper.GetStakerList(s.Ctx, assetID)
+				s.Equal(len(stakerList.StakerAddrs), 0)
+				// check depositNST successfully update stakerInfo with correct validatorPubkey
+				stakerInfo := s.App.OracleKeeper.GetStakerInfo(s.Ctx, assetID, s.Address.String())
+				s.Equal(0, len(stakerInfo.BalanceList))
+			},
 		},
 	}
 	for _, tc := range testcases {
@@ -365,6 +460,9 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 				s.Require().Error(err, "expected error to be returned when running the precompile")
 				s.Require().Nil(bz, "expected returned bytes to be nil")
 				s.Require().ErrorContains(err, tc.errContains)
+			}
+			if tc.extra != nil {
+				tc.extra()
 			}
 		})
 	}

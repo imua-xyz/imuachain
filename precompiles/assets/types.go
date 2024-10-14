@@ -49,7 +49,7 @@ func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, a
 	case MethodDepositLST, MethodWithdrawLST:
 		// the length of client chain address inputted by caller is 32, so we need to check the length and remove the padding according to the actual length.
 		assetAddr, ok := args[1].([]byte)
-		if !ok || assetAddr == nil {
+		if !ok || len(assetAddr) == 0 {
 			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
 		}
 		// #nosec G115
@@ -64,7 +64,7 @@ func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, a
 		}
 	case MethodDepositNST, MethodWithdrawNST:
 		validatorPubkey, ok := args[1].([]byte)
-		if !ok || validatorPubkey == nil {
+		if !ok || len(validatorPubkey) == 0 {
 			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
 		}
 		// generate the virtual address for native restaking asset
@@ -81,7 +81,7 @@ func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, a
 	}
 
 	stakerAddr, ok := args[2].([]byte)
-	if !ok || stakerAddr == nil {
+	if !ok || len(stakerAddr) == 0 {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "[]byte", args[2])
 	}
 	// #nosec G115
