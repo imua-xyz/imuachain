@@ -33,6 +33,7 @@ GENESIS=$HOMEDIR/config/genesis.json
 TMP_GENESIS=$HOMEDIR/config/tmp_genesis.json
 ORACLE_ENV_CHAINLINK=$HOMEDIR/config/oracle_env_chainlink.yaml
 ORACLE_FEEDER=$HOMEDIR/config/oracle_feeder.yaml
+ORACLE_ENV_BEACONCHAIN=$HOMEDIR/config/oracle_env_beaconchain.yaml
 
 # validate dependencies are installed
 command -v jq >/dev/null 2>&1 || {
@@ -218,6 +219,17 @@ EOF
 
 	# Write the YAML content to a file
 	echo "$oracle_feeder_content" >"$ORACLE_FEEDER"
+
+	# generate oracle_env_beaconchain.yaml
+	oracle_env_beaconchain_content=$(
+		cat <<EOF
+url:
+  !!str https://ethereum-holesky-rpc.publicnode.com
+EOF
+	)
+
+	# Write the YAML content to a file
+	echo "$oracle_env_beaconchain_content" >"$ORACLE_ENV_BEACONCHAIN"
 
 	if [[ $1 == "pending" ]]; then
 		if [[ "$OSTYPE" == "darwin"* ]]; then
