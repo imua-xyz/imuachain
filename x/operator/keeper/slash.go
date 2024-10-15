@@ -157,10 +157,13 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	}
 
 	// slash assets according to the input information
-	executionInfo, err := k.SlashAssets(ctx, parameter)
+	// using cache context to ensure the atomicity of slash execution.
+	cc, writeFunc := ctx.CacheContext()
+	executionInfo, err := k.SlashAssets(cc, parameter)
 	if err != nil {
 		return err
 	}
+	writeFunc()
 	// store the slash information
 	height := ctx.BlockHeight()
 	slashInfo := types.OperatorSlashInfo{
@@ -203,7 +206,7 @@ func (k Keeper) SlashWithInfractionReason(
 	}
 	err := k.Slash(ctx, slashParam)
 	if err != nil {
-		k.Logger(ctx).Error(err.Error(), avsAddr)
+		k.Logger(ctx).Error("error when executing slash", "error", err, "avsAddr", avsAddr)
 		return sdkmath.NewInt(0)
 	}
 	// todo: The returned value should be the amount of burned Exo if we considering a slash from the reward

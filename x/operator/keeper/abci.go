@@ -16,11 +16,10 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr string) error {
 	// get assets supported by the AVS
 	// the mock keeper returns all registered assets.
 	assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
-	if err != nil {
-		return err
-	}
-	if assets == nil {
-		ctx.Logger().Info("UpdateVotingPower the assets list supported by AVS is nil")
+	// set the voting power to zero if an error is returned, which may prevent malicious behavior
+	// where errors are intentionally triggered to avoid updating the voting power.
+	if err != nil || assets == nil {
+		ctx.Logger().Info("UpdateVotingPower the assets list supported by AVS is nil or can't get the assets list", "error", err)
 		// clear the voting power regarding this AVS if there isn't any assets supported by it.
 		err = k.DeleteAllOperatorsUSDValueForAVS(ctx, avsAddr)
 		if err != nil {
@@ -53,8 +52,11 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr string) error {
 	// check if self USD value is more than the minimum self delegation.
 	minimumSelfDelegation, err := k.avsKeeper.GetAVSMinimumSelfDelegation(ctx, avsAddr)
 	if err != nil {
+		// this error is handled earlier when calling `GetAVSSupportedAssets`,
+		// so we don't set the voting power to zero here.
 		return err
 	}
+
 	opFunc := func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error {
 		// clear the old voting power for the operator
 		*optedUSDValues = operatortypes.OperatorOptedUSDValue{
@@ -74,17 +76,21 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr string) error {
 		}
 		return nil
 	}
+
+	// using cache context to ensure the atomicity of the operation.
+	cc, writeFunc := ctx.CacheContext()
 	// iterate all operators of the AVS to update their voting power
 	// and calculate the voting power for AVS
-	err = k.IterateOperatorsForAVS(ctx, avsAddr, true, opFunc)
+	err = k.IterateOperatorsForAVS(cc, avsAddr, true, opFunc)
 	if err != nil {
 		return err
 	}
 	// set the voting power for AVS
-	err = k.SetAVSUSDValue(ctx, avsAddr, avsVotingPower)
+	err = k.SetAVSUSDValue(cc, avsAddr, avsVotingPower)
 	if err != nil {
 		return err
 	}
+	writeFunc()
 	return nil
 }
 
