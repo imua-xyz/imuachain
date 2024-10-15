@@ -1,193 +1,122 @@
 [
-    {
-      "inputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "pubkey1",
-          "type": "bytes"
-        },
-        {
-          "internalType": "bytes",
-          "name": "pubkey2",
-          "type": "bytes"
-        }
-      ],
-      "name": "addTwoPubkeys",
-      "outputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "newPubkey",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs":
-      [
-        {
-          "internalType": "bytes[]",
-          "name": "pubkeys",
-          "type": "bytes[]"
-        }
-      ],
-      "name": "aggregatePubkeys",
-      "outputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "pubkey",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs":
-      [
-        {
-          "internalType": "bytes[]",
-          "name": "sigs",
-          "type": "bytes[]"
-        }
-      ],
-      "name": "aggregateSignatures",
-      "outputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "sig",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs":
-      [
-        {
-          "internalType": "bytes32",
-          "name": "msg_",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
-        },
-        {
-          "internalType": "bytes[]",
-          "name": "pubkeys",
-          "type": "bytes[]"
-        }
-      ],
-      "name": "fastAggregateVerify",
-      "outputs":
-      [
-        {
-          "internalType": "bool",
-          "name": "valid",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "generatePrivateKey",
-      "outputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "privkey",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "privkey",
-          "type": "bytes"
-        }
-      ],
-      "name": "publicKey",
-      "outputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "pubkey",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "privkey",
-          "type": "bytes"
-        },
-        {
-          "internalType": "bytes32",
-          "name": "msg_",
-          "type": "bytes32"
-        }
-      ],
-      "name": "sign",
-      "outputs":
-      [
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs":
-      [
-        {
-          "internalType": "bytes32",
-          "name": "msg_",
-          "type": "bytes32"
-        },
-        {
-          "internalType": "bytes",
-          "name": "signature",
-          "type": "bytes"
-        },
-        {
-          "internalType": "bytes",
-          "name": "pubkey",
-          "type": "bytes"
-        }
-      ],
-      "name": "verify",
-      "outputs":
-      [
-        {
-          "internalType": "bool",
-          "name": "valid",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "pure",
-      "type": "function"
-    }
-  ]
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "pubkey1",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "pubkey2",
+        "type": "bytes"
+      }
+    ],
+    "name": "addTwoPubkeys",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "newPubkey",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "pubkeys",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "aggregatePubkeys",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "pubkey",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "sigs",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "aggregateSignatures",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "sig",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "msg_",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "pubkeys",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "fastAggregateVerify",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "valid",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "msg_",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "signature",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "pubkey",
+        "type": "bytes"
+      }
+    ],
+    "name": "verify",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "valid",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  }
+]

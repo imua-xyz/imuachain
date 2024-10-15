@@ -24,7 +24,6 @@ const (
 	MethodRegisterOperatorToAVS     = "registerOperatorToAVS"
 	MethodDeregisterOperatorFromAVS = "deregisterOperatorFromAVS"
 	MethodCreateAVSTask             = "createTask"
-	MethodSubmitProof               = "submitProof"
 	MethodRegisterBLSPublicKey      = "registerBLSPublicKey"
 	MethodChallenge                 = "challenge"
 )
@@ -43,6 +42,7 @@ func (p Precompile) RegisterAVS(
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "parse args error")
 	}
+	// verification of the calling address to ensure it is avs contract owner
 	if !slices.Contains(avsParams.AvsOwnerAddress, avsParams.CallerAddress) {
 		return nil, errorsmod.Wrap(err, "not qualified to registerOrDeregister")
 	}
@@ -305,30 +305,5 @@ func (p Precompile) RegisterBLSPublicKey(
 		return nil, err
 	}
 
-	return method.Outputs.Pack(true)
-}
-
-// SubmitProof
-func (p Precompile) SubmitProof(
-	_ sdk.Context,
-	_ common.Address,
-	_ *vm.Contract,
-	_ vm.StateDB,
-	method *abi.Method,
-	args []interface{},
-) ([]byte, error) {
-	if len(args) != len(p.ABI.Methods[MethodSubmitProof].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodSubmitProof].Inputs), len(args))
-	}
-	// TODO: check whether this address is acc or hex and decide the type accordingly
-	addr, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "string", addr)
-	}
-	// TODO implement SubmitProof
-	// err := p.avsKeeper.SubmitProof(ctx, addr)
-	// if err != nil {
-	//	return nil, err
-	//}
 	return method.Outputs.Pack(true)
 }
