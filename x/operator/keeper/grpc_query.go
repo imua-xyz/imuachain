@@ -179,7 +179,7 @@ func (k Keeper) QueryAllOperatorConsAddrsByChainID(
 
 func (k *Keeper) QueryOperatorUSDValue(ctx context.Context, req *types.QueryOperatorUSDValueRequest) (*types.QueryOperatorUSDValueResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	optedUSDValues, err := k.GetOperatorOptedUSDValue(c, req.Details.AVSAddress, req.Details.OperatorAddr)
+	optedUSDValues, err := k.GetOperatorOptedUSDValue(c, req.AvsAddress, req.OperatorAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (k *Keeper) QueryOperatorSlashInfo(goCtx context.Context, req *types.QueryO
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorSlashInfoByID, 0)
 
-	slashPrefix := utils.AppendMany(types.KeyPrefixOperatorSlashInfo, assetstype.GetJoinedStoreKeyForPrefix(req.Details.OperatorAddr, req.Details.AVSAddress))
+	slashPrefix := utils.AppendMany(types.KeyPrefixOperatorSlashInfo, assetstype.GetJoinedStoreKeyForPrefix(req.OperatorAddr, req.AvsAddress))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), slashPrefix)
 	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
 		ret := &types.OperatorSlashInfo{}
@@ -247,4 +247,9 @@ func (k *Keeper) QueryAllAVSsByOperator(goCtx context.Context, req *types.QueryA
 	return &types.QueryAllAVSsByOperatorResponse{
 		AvsList: avsList,
 	}, nil
+}
+
+func (k *Keeper) QueryOptInfo(goCtx context.Context, req *types.QueryOptInfoRequest) (*types.OptedInfo, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	return k.GetOptedInfo(ctx, req.OperatorAddr, req.AvsAddress)
 }

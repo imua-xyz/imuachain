@@ -46,7 +46,7 @@ func (m *MockAVSKeeper) EXPECT() *MockAVSKeeperMockRecorder {
 }
 
 // DeleteAVSInfo mocks base method.
-func (m *MockAVSKeeper) DeleteAVSInfo(arg0 types1.Context, arg1 common.Address) error {
+func (m *MockAVSKeeper) DeleteAVSInfo(arg0 types1.Context, arg1 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteAVSInfo", arg0, arg1)
 	ret0, _ := ret[0].(error)
@@ -74,11 +74,11 @@ func (mr *MockAVSKeeperMockRecorder) GetEpochEndChainIDs(arg0, arg1, arg2 any) *
 }
 
 // IsAVSByChainID mocks base method.
-func (m *MockAVSKeeper) IsAVSByChainID(arg0 types1.Context, arg1 string) (bool, common.Address) {
+func (m *MockAVSKeeper) IsAVSByChainID(arg0 types1.Context, arg1 string) (bool, string) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsAVSByChainID", arg0, arg1)
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(common.Address)
+	ret1, _ := ret[1].(string)
 	return ret0, ret1
 }
 
@@ -243,11 +243,12 @@ func (mr *MockOperatorKeeperMockRecorder) GetActiveOperatorsForChainID(arg0, arg
 }
 
 // GetChainIDsForOperator mocks base method.
-func (m *MockOperatorKeeper) GetChainIDsForOperator(arg0 types1.Context, arg1 types1.AccAddress) []string {
+func (m *MockOperatorKeeper) GetChainIDsForOperator(arg0 types1.Context, arg1 string) ([]string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChainIDsForOperator", arg0, arg1)
 	ret0, _ := ret[0].([]string)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetChainIDsForOperator indicates an expected call of GetChainIDsForOperator.
