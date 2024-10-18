@@ -67,6 +67,9 @@ const (
 	// BytePrefixForOperatorKeyRemovalForChainID is the prefix to store that the operator with
 	// the given address is in the process of unbonding their key for the given chainID.
 	BytePrefixForOperatorKeyRemovalForChainID
+
+	// BytePrefixForVotingPowerSnapshot is the prefix to store the voting power snapshot for all AVSs
+	BytePrefixForVotingPowerSnapshot
 )
 
 var (
@@ -94,6 +97,20 @@ var (
 	// processedSlashHeight + '/' + assetID + '/' + stakerID -> SlashAmount
 	// processedSlashHeight + '/' + assetID + '/' + operatorAddr -> SlashAmount
 	KeyPrefixSlashAssetsState = []byte{prefixSlashAssetsState}
+
+	// KeyPrefixVotingPowerSnapshot key-value:
+	// Including the epoch identifier in the key is used to address the case that AVSs will change
+	// their epoch configuration.
+	// In general, the key used to store the voting power snapshot is based on the epoch number as
+	// the smallest unit, since our voting power is updated once per epoch. However, when a slash event occurs,
+	// the voting power needs to be updated immediately to ensure the slash takes effect for the relevant operator.
+	// In this case, we need to store the voting power information at the corresponding block height.
+	// Therefore, when constructing the key, the slash height is appended as a suffix.
+	// This way, when executing a slash, we can accurately retrieve the historical voting power information
+	// using the provided epoch number and slash event height.
+	// AVSAddr+ '/' + epochIdentifier + '/' + epochNumber  -> VotingPowerSnapshot
+	// AVSAddr+ '/' + epochIdentifier + '/' + epochNumber + '/' + slashHeight -> VotingPowerSnapshot
+	KeyPrefixVotingPowerSnapshot = []byte{BytePrefixForVotingPowerSnapshot}
 )
 
 // ModuleAddress is the native module address for EVM
