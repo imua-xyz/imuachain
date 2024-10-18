@@ -283,3 +283,10 @@ func ChainIDWithLenKey(chainID string) []byte {
 		[]byte(chainID),
 	)
 }
+
+// PanicIfNil panics if the input is nil with the given message.
+func PanicIfNil(x interface{}, msg string) {
+	if x == nil {
+		panic("zero or nil value for " + msg)
+	}
+}

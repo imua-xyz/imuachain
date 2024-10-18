@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/ExocoreNetwork/exocore/utils"
 	commontypes "github.com/ExocoreNetwork/exocore/x/appchain/common/types"
 	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -45,7 +46,7 @@ func NewKeeper(
 	connectionKeeper commontypes.ConnectionKeeper,
 	accountKeeper commontypes.AccountKeeper,
 ) Keeper {
-	return Keeper{
+	k := Keeper{
 		cdc:              cdc,
 		storeKey:         storeKey,
 		avsKeeper:        avsKeeper,
@@ -60,6 +61,8 @@ func NewKeeper(
 		connectionKeeper: connectionKeeper,
 		accountKeeper:    accountKeeper,
 	}
+	k.mustValidateFields()
+	return k
 }
 
 // Logger returns a logger object for use within the module.
@@ -92,4 +95,23 @@ func (k Keeper) ClaimCapability(
 	ctx sdk.Context, cap *capabilitytypes.Capability, name string,
 ) error {
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
+}
+
+// mustValidateFields ensures that all the required fields are set. It does not count the number
+func (k Keeper) mustValidateFields() {
+	// TODO: there is no way to count the number of fields here, besides using reflect, which
+	// fails the Linter. The developer should ensure to add the fields here when adding new fields.
+	utils.PanicIfNil(k.storeKey, "storeKey")
+	utils.PanicIfNil(k.cdc, "cdc")
+	utils.PanicIfNil(k.avsKeeper, "avsKeeper")
+	utils.PanicIfNil(k.epochsKeeper, "epochsKeeper")
+	utils.PanicIfNil(k.operatorKeeper, "operatorKeeper")
+	utils.PanicIfNil(k.stakingKeeper, "stakingKeeper")
+	utils.PanicIfNil(k.delegationKeeper, "delegationKeeper")
+	utils.PanicIfNil(k.clientKeeper, "clientKeeper")
+	utils.PanicIfNil(k.portKeeper, "portKeeper")
+	utils.PanicIfNil(k.scopedKeeper, "scopedKeeper")
+	utils.PanicIfNil(k.channelKeeper, "channelKeeper")
+	utils.PanicIfNil(k.connectionKeeper, "connectionKeeper")
+	utils.PanicIfNil(k.accountKeeper, "accountKeeper")
 }

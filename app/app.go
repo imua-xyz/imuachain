@@ -204,6 +204,10 @@ import (
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator"
+	coordinatorkeeper "github.com/ExocoreNetwork/exocore/x/appchain/coordinator/keeper"
+	coordinatortypes "github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 )
 
 // Name defines the application binary name
@@ -274,6 +278,7 @@ var (
 		avs.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		distr.AppModuleBasic{},
+		coordinator.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -351,15 +356,16 @@ type ExocoreApp struct {
 	EpochsKeeper epochskeeper.Keeper
 
 	// exocore assets module keepers
-	AssetsKeeper     assetsKeeper.Keeper
-	DelegationKeeper delegationKeeper.Keeper
-	RewardKeeper     rewardKeeper.Keeper
-	OperatorKeeper   operatorKeeper.Keeper
-	ExoSlashKeeper   slashKeeper.Keeper
-	AVSManagerKeeper avsManagerKeeper.Keeper
-	OracleKeeper     oracleKeeper.Keeper
-	ExomintKeeper    exomintkeeper.Keeper
-	DistrKeeper      distrkeeper.Keeper
+	AssetsKeeper      assetsKeeper.Keeper
+	DelegationKeeper  delegationKeeper.Keeper
+	RewardKeeper      rewardKeeper.Keeper
+	OperatorKeeper    operatorKeeper.Keeper
+	ExoSlashKeeper    slashKeeper.Keeper
+	AVSManagerKeeper  avsManagerKeeper.Keeper
+	OracleKeeper      oracleKeeper.Keeper
+	ExomintKeeper     exomintkeeper.Keeper
+	DistrKeeper       distrkeeper.Keeper
+	CoordinatorKeeper coordinatorkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -445,6 +451,7 @@ func NewExocoreApp(
 		oracleTypes.StoreKey,
 		exominttypes.StoreKey,
 		distrtypes.StoreKey,
+		coordinatortypes.StoreKey,
 	)
 
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
@@ -619,6 +626,7 @@ func NewExocoreApp(
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedICAHostKeeper := app.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
+	scopedIBCProviderKeeper := app.CapabilityKeeper.ScopeToModule(coordinatortypes.ModuleName)
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal`
 	// after creating their scoped modules in `NewApp` with `ScopeToModule`
 	app.CapabilityKeeper.Seal()
@@ -785,22 +793,42 @@ func NewExocoreApp(
 
 	app.IBCKeeper.SetRouter(ibcRouter)
 
+	// we are the x/appchain coordinator chain, so we add the keeper, but
+	// it's added after IBC to allow communication between chains.
+	app.CoordinatorKeeper = coordinatorkeeper.NewKeeper(
+		appCodec, keys[coordinatortypes.StoreKey],
+		app.AVSManagerKeeper, app.EpochsKeeper, app.OperatorKeeper,
+		app.StakingKeeper, app.DelegationKeeper,
+		app.IBCKeeper.ClientKeeper, &app.IBCKeeper.PortKeeper,
+		scopedIBCProviderKeeper, app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ConnectionKeeper, app.AccountKeeper,
+	)
+
 	// set the hooks at the end, after all modules are instantiated.
 	(&app.OperatorKeeper).SetHooks(
-		app.StakingKeeper.OperatorHooks(),
+		operatorTypes.NewMultiOperatorHooks(
+			// the order is not super relevant because these functions are independent
+			app.StakingKeeper.OperatorHooks(),
+			app.CoordinatorKeeper.OperatorHooks(),
+		),
 	)
 
 	(&app.DelegationKeeper).SetHooks(
-		app.StakingKeeper.DelegationHooks(),
+		delegationTypes.NewMultiDelegationHooks(
+			// the order is not super relevant because these functions are independent
+			app.StakingKeeper.DelegationHooks(),
+			app.CoordinatorKeeper.DelegationHooks(),
+		),
 	)
 
 	(&app.EpochsKeeper).SetHooks(
 		epochstypes.NewMultiEpochHooks(
-			app.DistrKeeper.EpochsHooks(),      // come first for using the voting power of last epoch
-			app.OperatorKeeper.EpochsHooks(),   // must come before staking keeper so it can set the USD value
-			app.StakingKeeper.EpochsHooks(),    // at this point, the order is irrelevant.
-			app.ExomintKeeper.EpochsHooks(),    // however, this may change once we have distribution
-			app.AVSManagerKeeper.EpochsHooks(), // no-op for now
+			app.DistrKeeper.EpochsHooks(),       // come first for using the voting power of last epoch
+			app.OperatorKeeper.EpochsHooks(),    // must come before staking keeper so it can set the USD value
+			app.ExomintKeeper.EpochsHooks(),     // must happen after distribution but not relevant otherwise
+			app.StakingKeeper.EpochsHooks(),     // after operator == good
+			app.AVSManagerKeeper.EpochsHooks(),  // after operator == good
+			app.CoordinatorKeeper.EpochsHooks(), // after operator == good
 		),
 	)
 

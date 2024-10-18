@@ -60,7 +60,7 @@ func (k Keeper) HandleSlashPacket(ctx sdk.Context, chainID string, data commonty
 	// validator set update; record that here.
 	k.AppendSlashAck(ctx, chainID, consAddress)
 	if err := k.operatorKeeper.ApplySlashForHeight(
-		ctx, operatorAccAddress, avsAddress.String(), height,
+		ctx, operatorAccAddress, avsAddress, height,
 		slashProportionDecimal, data.Infraction, jailDuration,
 	); err != nil {
 		k.Logger(ctx).Error(

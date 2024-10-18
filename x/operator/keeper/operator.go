@@ -196,7 +196,7 @@ func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) 
 	return avsList, nil
 }
 
-func (k *Keeper) GetChainIDsForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
+func (k Keeper) GetChainIDsForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
 	addrs, err := k.GetOptedInAVSForOperator(ctx, operatorAddr)
 	if err != nil {
 		return nil, err

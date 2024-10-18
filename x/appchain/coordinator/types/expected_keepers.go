@@ -16,8 +16,8 @@ type AVSKeeper interface {
 	RegisterAVSWithChainID(
 		sdk.Context, *avstypes.AVSRegisterOrDeregisterParams,
 	) (common.Address, error)
-	IsAVSByChainID(sdk.Context, string) (bool, common.Address)
-	DeleteAVSInfo(sdk.Context, common.Address) error
+	IsAVSByChainID(sdk.Context, string) (bool, string)
+	DeleteAVSInfo(sdk.Context, string) error
 	GetEpochEndChainIDs(sdk.Context, string, int64) []string
 }
 
@@ -52,7 +52,7 @@ type OperatorKeeper interface {
 		height uint64, fraction sdk.Dec, infraction stakingtypes.Infraction,
 		jailDuration time.Duration,
 	) error
-	GetChainIDsForOperator(sdk.Context, sdk.AccAddress) []string
+	GetChainIDsForOperator(sdk.Context, string) ([]string, error)
 }
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.

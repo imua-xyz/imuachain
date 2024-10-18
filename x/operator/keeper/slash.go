@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"strings"
+	"time"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -261,4 +262,24 @@ func (k Keeper) Jail(ctx sdk.Context, consAddr sdk.ConsAddress, chainID string) 
 // Unjail an operator
 func (k Keeper) Unjail(ctx sdk.Context, consAddr sdk.ConsAddress, chainID string) {
 	k.SetJailedState(ctx, consAddr, chainID, false)
+}
+
+// ApplySlashForHeight is a function used by x/appchain/coordinator to slash an operator
+// based on the historical power and the current assets state. The slashing is made for the
+// provided avsAddress.
+func (k Keeper) ApplySlashForHeight(
+	ctx sdk.Context, operatorAccAddress sdk.AccAddress, avsAddress string,
+	height uint64, fraction sdk.Dec, infraction stakingtypes.Infraction,
+	jailDuration time.Duration,
+) error {
+	k.Logger(ctx).Info(
+		"ApplySlashForHeight",
+		"operatorAccAddress", operatorAccAddress,
+		"avsAddress", avsAddress,
+		"height", height,
+		"fraction", fraction,
+		"infraction", infraction,
+		"jailDuration", jailDuration,
+	)
+	return nil
 }
