@@ -83,7 +83,9 @@ func (s *RewardPrecompileTestSuite) TestRunRewardThroughClientChain() {
 		s.Require().NoError(err, "failed to pack input")
 		return s.Address, input
 	}
-	successRet, err := s.precompile.Methods[reward.MethodReward].Outputs.Pack(true, new(big.Int).Add(depositAmount, withdrawAmount))
+	// successRet, err := s.precompile.Methods[reward.MethodReward].Outputs.Pack(true, new(big.Int).Add(depositAmount, withdrawAmount))
+	// TODO: reward precompile is disabled, so it always errors and returns fail
+	successRet, err := s.precompile.Methods[reward.MethodReward].Outputs.Pack(false, new(big.Int))
 	s.Require().NoError(err)
 	testcases := []struct {
 		name        string

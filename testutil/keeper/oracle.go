@@ -14,6 +14,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
@@ -49,6 +51,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		dogfoodkeeper.Keeper{},
 		delegationkeeper.Keeper{},
 		assetskeeper.Keeper{},
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{

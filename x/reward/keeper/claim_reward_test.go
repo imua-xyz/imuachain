@@ -9,7 +9,7 @@ import (
 )
 
 func (suite *RewardTestSuite) TestClaimWithdrawRequest() {
-	assets, err := suite.App.AssetsKeeper.GetAllStakingAssetsInfo(suite.Ctx)
+	_, err := suite.App.AssetsKeeper.GetAllStakingAssetsInfo(suite.Ctx)
 	suite.NoError(err)
 
 	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
@@ -24,24 +24,26 @@ func (suite *RewardTestSuite) TestClaimWithdrawRequest() {
 	// test the case that the deposit asset hasn't registered
 	event.AssetsAddress = usdcAddress[:]
 	err = suite.App.RewardKeeper.RewardForWithdraw(suite.Ctx, event)
-	suite.ErrorContains(err, rewardtype.ErrRewardAssetNotExist.Error())
+	// suite.ErrorContains(err, rewardtype.ErrRewardAssetNotExist.Error())
+	suite.ErrorContains(err, rewardtype.ErrNotSupportYet.Error())
 
 	// test the normal case
 	event.AssetsAddress = usdtAddress[:]
 	err = suite.App.RewardKeeper.RewardForWithdraw(suite.Ctx, event)
-	suite.NoError(err)
+	// suite.NoError(err)
+	suite.ErrorContains(err, rewardtype.ErrNotSupportYet.Error())
 
 	// check state after reward
-	stakerID, assetID := types.GetStakerIDAndAssetID(event.ClientChainLzID, event.WithdrawRewardAddress, event.AssetsAddress)
-	info, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
-	suite.NoError(err)
-	suite.Equal(types.StakerAssetInfo{
-		TotalDepositAmount:        sdkmath.NewInt(10),
-		WithdrawableAmount:        sdkmath.NewInt(10),
-		PendingUndelegationAmount: sdkmath.NewInt(0),
-	}, *info)
+	// stakerID, assetID := types.GetStakerIDAndAssetID(event.ClientChainLzID, event.WithdrawRewardAddress, event.AssetsAddress)
+	// info, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
+	// suite.NoError(err)
+	// suite.Equal(types.StakerAssetInfo{
+	// 	TotalDepositAmount:        sdkmath.NewInt(10),
+	// 	WithdrawableAmount:        sdkmath.NewInt(10),
+	// 	PendingUndelegationAmount: sdkmath.NewInt(0),
+	// }, *info)
 
-	assetInfo, err := suite.App.AssetsKeeper.GetStakingAssetInfo(suite.Ctx, assetID)
-	suite.NoError(err)
-	suite.Equal(sdkmath.NewInt(10).Add(assets[0].StakingTotalAmount), assetInfo.StakingTotalAmount)
+	// assetInfo, err := suite.App.AssetsKeeper.GetStakingAssetInfo(suite.Ctx, assetID)
+	// suite.NoError(err)
+	// suite.Equal(sdkmath.NewInt(10).Add(assets[0].StakingTotalAmount), assetInfo.StakingTotalAmount)
 }

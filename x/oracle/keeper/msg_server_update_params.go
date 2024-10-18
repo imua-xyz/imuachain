@@ -3,18 +3,28 @@ package keeper
 import (
 	"context"
 
+	utils "github.com/ExocoreNetwork/exocore/utils"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: skip the authority check for test
-	//	if ms.authority != msg.Authority {
-	//		return nil, govtypes.ErrInvalidSigner.Wrapf("invalid authority; expected %s, got %s", ms.authority, msg.Authority)
-	//	}
+	if utils.IsMainnet(ctx.ChainID()) && ms.Keeper.authority != msg.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf(
+			"invalid authority; expected %s, got %s",
+			ms.Keeper.authority, msg.Authority,
+		)
+	}
+
+	ms.Keeper.Logger(ctx).Info(
+		"UpdateParams request",
+		"authority", ms.Keeper.authority,
+		"params.AUthority", msg.Authority,
+	)
 
 	p := ms.GetParams(ctx)
 	var err error
