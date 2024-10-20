@@ -70,6 +70,10 @@ const (
 
 	// BytePrefixForVotingPowerSnapshot is the prefix to store the voting power snapshot for all AVSs
 	BytePrefixForVotingPowerSnapshot
+
+	// BytePrefixForSnapshotHelper is the prefix used to store helper information
+	// for voting power snapshot updates.
+	BytePrefixForSnapshotHelper
 )
 
 var (
@@ -111,6 +115,10 @@ var (
 	// AVSAddr+ '/' + epochIdentifier + '/' + epochNumber  -> VotingPowerSnapshot
 	// AVSAddr+ '/' + epochIdentifier + '/' + epochNumber + '/' + slashHeight -> VotingPowerSnapshot
 	KeyPrefixVotingPowerSnapshot = []byte{BytePrefixForVotingPowerSnapshot}
+
+	// KeyPrefixSnapshotHelper key-value:
+	// avsAddr -> SnapshotHelper
+	KeyPrefixSnapshotHelper = []byte{BytePrefixForSnapshotHelper}
 )
 
 // ModuleAddress is the native module address for EVM

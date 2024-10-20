@@ -7,7 +7,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
@@ -46,22 +45,21 @@ func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slas
 
 func (k *Keeper) CheckSlashParameter(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if parameter.SlashProportion.IsNil() || parameter.SlashProportion.IsNegative() {
-		return errorsmod.Wrapf(types.ErrValueIsNilOrZero, "Invalid SlashProportion; expected non-nil and non-negative, got: %+v", parameter.SlashProportion)
+		return types.ErrValueIsNilOrZero.Wrapf("Invalid SlashProportion; expected non-nil and non-negative, got: %+v", parameter.SlashProportion)
 	}
 	height := ctx.BlockHeight()
 	if parameter.SlashEventHeight > height {
-		return errorsmod.Wrapf(types.ErrSlashOccurredHeight, "slashEventHeight:%d,curHeight:%d", parameter.SlashEventHeight, height)
+		return types.ErrSlashOccurredHeight.Wrapf("slashEventHeight:%d,curHeight:%d", parameter.SlashEventHeight, height)
 	}
 
 	if parameter.IsDogFood {
 		if parameter.Power <= 0 {
-			return errorsmod.Wrapf(types.ErrInvalidSlashPower, "slash for dogfood, the power is:%v", parameter.Power)
+			return types.ErrInvalidSlashPower.Wrapf("slash for dogfood, the power is:%v", parameter.Power)
 		}
 	} else {
 		if parameter.Power != 0 {
-			return errorsmod.Wrapf(types.ErrInvalidSlashPower, "slash for other AVSs, the power is:%v", parameter.Power)
+			return types.ErrInvalidSlashPower.Wrapf("slash for other AVSs, the input power should be zero, power:%v", parameter.Power)
 		}
-		// todo: get the historical voting power from the snapshot for the other AVSs
 	}
 	return nil
 }
@@ -156,6 +154,22 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		return err
 	}
 
+	// get the historical voting power from the snapshot for the other AVSs
+	if !parameter.IsDogFood {
+		snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEpochIdentifier, parameter.SlashEpochNumber, &parameter.SlashEventHeight)
+		if err != nil {
+			return types.ErrFailToGetHistoricalVP.Wrapf("slash: failed to load voting power snapshot, err:%s", err)
+		}
+		votingPower := types.GetSpecifiedVotingPower(parameter.Operator.String(), snapshot.VotingPowerSet)
+		if votingPower == nil {
+			return types.ErrFailToGetHistoricalVP.Wrapf("slash: the operator isn't in the voting power set, addr:%s", parameter.Operator)
+		}
+		parameter.Power = votingPower.VotingPower.TruncateInt64()
+		if parameter.Power < 0 {
+			return types.ErrInvalidSlashPower.Wrapf("slash: valid voting power, the power is:%v", parameter.Power)
+		}
+	}
+
 	// slash assets according to the input information
 	// using cache context to ensure the atomicity of slash execution.
 	cc, writeFunc := ctx.CacheContext()
@@ -175,6 +189,19 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		ExecutionInfo:   executionInfo,
 	}
 	err = k.UpdateOperatorSlashInfo(ctx, parameter.Operator.String(), parameter.AVSAddr, parameter.SlashID, slashInfo)
+	if err != nil {
+		return err
+	}
+	// update the voting power and save the snapshot caused by slash execution
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, parameter.AVSAddr)
+	if err != nil {
+		return err
+	}
+	err = k.UpdateVotingPower(ctx, parameter.AVSAddr, epochInfo.Identifier, epochInfo.CurrentEpoch, true)
+	if err != nil {
+		return err
+	}
+	err = k.SetSlashFlag(ctx, parameter.AVSAddr, true)
 	if err != nil {
 		return err
 	}

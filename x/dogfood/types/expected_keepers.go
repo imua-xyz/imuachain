@@ -83,6 +83,7 @@ type OperatorKeeper interface {
 	GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) ([]string, error)
 	CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr string, operator sdk.AccAddress) (math.LegacyDec, error)
 	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
+	HasSlash(ctx sdk.Context, avsAddr string) bool
 }
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.

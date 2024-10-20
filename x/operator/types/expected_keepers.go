@@ -6,6 +6,7 @@ import (
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -110,6 +111,7 @@ type AVSKeeper interface {
 	// IsAVS returns true if the address is a registered AVS address.
 	IsAVS(ctx sdk.Context, addr string) (bool, error)
 	IsAVSByChainID(ctx sdk.Context, chainID string) (bool, string)
+	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error)
 }
 
 type SlashKeeper interface {

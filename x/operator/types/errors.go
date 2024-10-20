@@ -111,4 +111,9 @@ var (
 		ModuleName, 24,
 		"the operator USD value is less than the minimum self delegation",
 	)
+
+	ErrFailToGetHistoricalVP = errorsmod.Register(
+		ModuleName, 25,
+		"failed to get the historical voting power",
+	)
 )

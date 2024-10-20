@@ -18,13 +18,15 @@ type OperatorStakingInfo struct {
 }
 
 type SlashInputInfo struct {
-	IsDogFood        bool
-	Power            int64
-	SlashType        uint32
-	Operator         sdk.AccAddress
-	AVSAddr          string
-	SlashContract    string
-	SlashID          string
-	SlashEventHeight int64
-	SlashProportion  sdkmath.LegacyDec
+	IsDogFood            bool
+	Power                int64
+	SlashType            uint32
+	Operator             sdk.AccAddress
+	AVSAddr              string
+	SlashContract        string
+	SlashID              string
+	SlashEventHeight     int64
+	SlashEpochIdentifier string
+	SlashEpochNumber     int64
+	SlashProportion      sdkmath.LegacyDec
 }
