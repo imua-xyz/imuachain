@@ -35,6 +35,28 @@ func NewSlashPacketData(
 	}
 }
 
+// NewVscPacketData creates a new ValidatorSetChangePacketData instance.
+func NewVscPacketData(
+	updates []abci.ValidatorUpdate,
+	valsetUpdateID uint64,
+	slashAcks [][]byte,
+) ValidatorSetChangePacketData {
+	return ValidatorSetChangePacketData{
+		ValidatorUpdates: updates,
+		ValsetUpdateID:   valsetUpdateID,
+		SlashAcks:        slashAcks,
+	}
+}
+
+// NewVscPacketData creates a new VscMaturedPacketData instance.
+func NewVscMaturedPacketData(
+	valsetUpdateID uint64,
+) *VscMaturedPacketData {
+	return &VscMaturedPacketData{
+		ValsetUpdateID: valsetUpdateID,
+	}
+}
+
 // PacketAckResult is the acknowledgment result of a packet.
 type PacketAckResult []byte
 

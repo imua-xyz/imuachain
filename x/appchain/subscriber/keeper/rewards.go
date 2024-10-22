@@ -13,7 +13,7 @@ import (
 // EndBlockSendRewards distributes the rewards minted / collected so far amongst the coordinator and the subscriber.
 func (k Keeper) EndBlockSendRewards(ctx sdk.Context) {
 	k.SplitRewardsInternally(ctx)
-	if !k.shouldSendRewardsToCoordinator(ctx) {
+	if !k.ShouldSendRewardsToCoordinator(ctx) {
 		return
 	}
 	// Try to send rewards to coordinator
@@ -83,7 +83,7 @@ func (k Keeper) SplitRewardsInternally(ctx sdk.Context) {
 }
 
 // Check whether it's time to send rewards to coordinator
-func (k Keeper) shouldSendRewardsToCoordinator(ctx sdk.Context) bool {
+func (k Keeper) ShouldSendRewardsToCoordinator(ctx sdk.Context) bool {
 	bpdt := k.GetSubscriberParams(ctx).BlocksPerDistributionTransmission
 	curHeight := ctx.BlockHeight()
 	ltbh := k.GetLastRewardTransmissionHeight(ctx)

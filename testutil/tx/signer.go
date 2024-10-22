@@ -42,6 +42,16 @@ func GenerateAddress() common.Address {
 	return addr
 }
 
+func GenerateAccAddress() sdk.AccAddress {
+	addr, _ := NewAccAddressAndKey()
+	return addr
+}
+
+func GenerateConsAddress() sdk.ConsAddress {
+	addr, _ := NewConsAddressAndKey()
+	return addr
+}
+
 // GenerateConsensusKey generates a consensus key.
 func GenerateConsensusKey() keytypes.WrappedConsKey {
 	privVal := mock.NewPV()
@@ -50,6 +60,15 @@ func GenerateConsensusKey() keytypes.WrappedConsKey {
 		return nil
 	}
 	return keytypes.NewWrappedConsKeyFromHex(hexutil.Encode(pubKey.Bytes()))
+}
+
+func NewConsAddressAndKey() (sdk.ConsAddress, mock.PV) {
+	privVal := mock.NewPV()
+	pubKey, err := privVal.GetPubKey()
+	if err != nil {
+		return nil, mock.PV{}
+	}
+	return sdk.ConsAddress(pubKey.Address()), privVal
 }
 
 var _ keyring.Signer = &Signer{}
