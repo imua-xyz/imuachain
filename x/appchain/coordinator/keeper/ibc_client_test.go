@@ -199,7 +199,7 @@ func (suite *IBCClientTestSuite) TestActivateScheduledChains() {
 				suite.mocks.OperatorKeeper.EXPECT().GetVotePowerForChainID(gomock.Any(), gomock.Any(), gomock.Any()).Return([]int64{}, fmt.Errorf("error getting vote power"))
 				suite.mocks.ClientKeeper.EXPECT().CreateClient(gomock.Any(), gomock.Any(), gomock.Any()).Return("clientID1", nil)
 				suite.mocks.EpochsKeeper.EXPECT().GetEpochInfo(gomock.Any(), gomock.Any()).Return(epochstypes.EpochInfo{CurrentEpoch: 1}, true)
-				suite.mocks.AVSKeeper.EXPECT().IsAVSByChainID(gomock.Any(), gomock.Any()).Return(true, testutiltx.GenerateAddress())
+				suite.mocks.AVSKeeper.EXPECT().IsAVSByChainID(gomock.Any(), gomock.Any()).Return(true, testutiltx.GenerateAddress().String())
 				suite.mocks.AVSKeeper.EXPECT().DeleteAVSInfo(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			epochIdentifier: "month",

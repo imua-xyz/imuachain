@@ -61,7 +61,7 @@ func (k Keeper) OnRecvSlashPacket(
 	)
 
 	// Return result ack that the packet was handled successfully
-	return commontypes.SlashPacketHandledResult, nil
+	return commontypes.SlashPacketHandledResult.Bytes(), nil
 }
 
 // OnRecvVscMaturedPacket handles a VscMatured packet and returns a no-op result ack.

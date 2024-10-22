@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -109,7 +111,7 @@ func (k Keeper) GetVscTimeout(
 // GetFirstVscTimeout returns the first epoch by the end of which a response to a VSC must be received.
 func (k Keeper) GetFirstVscTimeout(
 	ctx sdk.Context, chainID string,
-) (timeout epochstypes.Epoch, found bool) {
+) (timeout epochstypes.Epoch, vscID uint64, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	partialKey := append(
 		[]byte{types.VscTimeoutBytePrefix},
@@ -119,15 +121,15 @@ func (k Keeper) GetFirstVscTimeout(
 	defer iterator.Close()
 
 	if iterator.Valid() {
-		_, _, err := types.ParseVscTimeoutKey(iterator.Key())
+		_, vscID, err := types.ParseVscTimeoutKey(iterator.Key())
 		if err != nil {
-			return timeout, false
+			return timeout, 0, false
 		}
 		bz := iterator.Value()
 		k.cdc.MustUnmarshal(bz, &timeout)
-		return timeout, true
+		return timeout, vscID, true
 	}
-	return timeout, false
+	return timeout, 0, false
 }
 
 // DeleteVscTimeout deletes the epoch by the end of which a response to a VSC must be received.
@@ -152,10 +154,12 @@ func (k Keeper) RemoveTimedoutSubscribers(ctx sdk.Context, epochIdentifier strin
 	// vsc timeout chains
 	vscChains := k.GetAllChainsWithChannels(ctx)
 	for _, chainID := range vscChains {
-		timeout, found := k.GetFirstVscTimeout(ctx, chainID)
+		fmt.Println("chainID", chainID)
+		timeout, vscID, found := k.GetFirstVscTimeout(ctx, chainID)
 		if !found {
 			continue
 		}
+		fmt.Println("timeout", timeout)
 		if timeout.EpochIdentifier == epochIdentifier && timeout.EpochNumber <= uint64(epochNumber) {
 			k.Logger(ctx).Info(
 				"VSC timed out, removing subscriber",
@@ -167,7 +171,7 @@ func (k Keeper) RemoveTimedoutSubscribers(ctx sdk.Context, epochIdentifier strin
 				k.Logger(ctx).Error("failed to stop subscriber chain", "chainID", chainID, "error", err)
 				continue
 			}
-			k.DeleteVscTimeout(ctx, chainID, timeout.EpochNumber) // prune
+			k.DeleteVscTimeout(ctx, chainID, vscID) // prune
 		}
 	}
 }

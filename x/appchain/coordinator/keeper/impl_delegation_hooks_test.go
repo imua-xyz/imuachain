@@ -31,7 +31,7 @@ func TestAfterUndelegationStarted(t *testing.T) {
 	chainIDs := []string{"chain1", "chain2"}
 
 	// Setup mocks
-	mocks.OperatorKeeper.EXPECT().GetChainIDsForOperator(ctx, operator).Return(chainIDs)
+	mocks.OperatorKeeper.EXPECT().GetChainIDsForOperator(ctx, operator.String()).Return(chainIDs, nil)
 
 	for _, chainID := range chainIDs {
 		wrappedKey := testutiltx.GenerateConsensusKey()
@@ -52,7 +52,7 @@ func TestAfterUndelegationStarted(t *testing.T) {
 		hooks := keeper.DelegationHooks()
 
 		chainID := "chain3"
-		mocks.OperatorKeeper.EXPECT().GetChainIDsForOperator(ctx, operator).Return([]string{chainID})
+		mocks.OperatorKeeper.EXPECT().GetChainIDsForOperator(ctx, operator.String()).Return([]string{chainID}, nil)
 		wrappedKey := testutiltx.GenerateConsensusKey()
 		mocks.OperatorKeeper.EXPECT().GetOperatorConsKeyForChainID(ctx, operator, chainID).
 			Return(true, wrappedKey, nil)
@@ -74,7 +74,7 @@ func TestAfterUndelegationStarted(t *testing.T) {
 		keeper, ctx, mocks := testkeeper.NewCoordinatorKeeper(t)
 		hooks := keeper.DelegationHooks()
 
-		mocks.OperatorKeeper.EXPECT().GetChainIDsForOperator(ctx, operator).Return(chainIDs)
+		mocks.OperatorKeeper.EXPECT().GetChainIDsForOperator(ctx, operator.String()).Return(chainIDs, nil)
 		wrappedKey := testutiltx.GenerateConsensusKey()
 		mocks.OperatorKeeper.EXPECT().GetOperatorConsKeyForChainID(ctx, operator, chainIDs[0]).
 			Return(true, wrappedKey, nil)

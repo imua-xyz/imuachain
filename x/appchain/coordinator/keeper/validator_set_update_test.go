@@ -5,6 +5,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
@@ -42,6 +43,9 @@ func TestQueueValidatorUpdatesForChainID(t *testing.T) {
 	pubKey := ed25519.GenPrivKey().PubKey()
 	wrappedKey := keytypes.NewWrappedConsKeyFromSdkKey(pubKey)
 
+	// set up max validators for chain
+	keeper.SetMaxValidatorsForChain(ctx, chainID, 100)
+
 	mocks.OperatorKeeper.EXPECT().GetActiveOperatorsForChainID(ctx, chainID).Return([]sdk.AccAddress{operator}, []keytypes.WrappedConsKey{wrappedKey}).Times(1)
 	mocks.OperatorKeeper.EXPECT().GetVotePowerForChainID(ctx, []sdk.AccAddress{operator}, chainID).Return([]int64{100}, nil)
 
@@ -74,8 +78,10 @@ func TestSendQueuedValidatorUpdates(t *testing.T) {
 	keeper.AppendPendingVscPacket(ctx, chainID, packet)
 
 	mocks.ScopedKeeper.EXPECT().GetCapability(gomock.Any(), gomock.Any()).Return(nil, true)
-	mocks.ChannelKeeper.EXPECT().GetNextSequenceSend(gomock.Any(), gomock.Any(), gomock.Any()).Return(uint64(1), true)
-	mocks.ChannelKeeper.EXPECT().SendPacket(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+	mocks.ChannelKeeper.EXPECT().GetChannel(gomock.Any(), gomock.Any(), gomock.Any()).Return(channeltypes.Channel{}, true)
+	mocks.ChannelKeeper.EXPECT().SendPacket(
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(uint64(1), nil)
 
 	keeper.SendQueuedValidatorUpdates(ctx, epochNumber)
 

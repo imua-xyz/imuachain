@@ -45,6 +45,10 @@ var (
 	SlashPacketHandledResult = PacketAckResult([]byte{byte(2)})
 )
 
+// Validate validates the SlashPacketData. It only performs stateless validation.
+// (1) The address must be a valid consensus address.
+// (2) The power must be positive.
+// (3) The infraction type must be downtime.
 func (vdt SlashPacketData) Validate() error {
 	// vdt.Validator.Address must be a consensus address
 	if err := sdk.VerifyAddressFormat(vdt.Validator.Address); err != nil {
@@ -61,4 +65,9 @@ func (vdt SlashPacketData) Validate() error {
 	}
 
 	return nil
+}
+
+// Bytes returns the byte representation of the PacketAckResult.
+func (res PacketAckResult) Bytes() []byte {
+	return res
 }
