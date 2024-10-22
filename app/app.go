@@ -787,11 +787,31 @@ func NewExocoreApp(
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
 
+	// we are the x/appchain coordinator chain, so we add the keeper, but
+	// it's added after IBC to allow communication between chains.
+	// however, it is added before the IBC router is set (and sealed), so that
+	// it can handle messages from other chains.
+	app.CoordinatorKeeper = coordinatorkeeper.NewKeeper(
+		appCodec, keys[coordinatortypes.StoreKey],
+		app.AVSManagerKeeper, app.EpochsKeeper, app.OperatorKeeper,
+		app.StakingKeeper, app.DelegationKeeper,
+		app.IBCKeeper.ClientKeeper, &app.IBCKeeper.PortKeeper,
+		scopedIBCProviderKeeper, app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ConnectionKeeper, app.AccountKeeper,
+	)
+
+	coordinatorModule := coordinator.NewAppModule(
+		appCodec,
+		app.CoordinatorKeeper,
+	)
+	coordinatorIbcModule := coordinator.NewIBCModule(app.CoordinatorKeeper)
+
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.
 		AddRoute(icahosttypes.SubModuleName, icaHostIBCModule).
-		AddRoute(ibctransfertypes.ModuleName, transferStack)
+		AddRoute(ibctransfertypes.ModuleName, transferStack).
+		AddRoute(coordinatortypes.ModuleName, coordinatorIbcModule)
 
 	app.IBCKeeper.SetRouter(ibcRouter)
 
@@ -929,6 +949,7 @@ func NewExocoreApp(
 		avs.NewAppModule(appCodec, app.AVSManagerKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper),
+		coordinatorModule,
 	)
 
 	// During begin block slashing happens after reward.BeginBlocker so that
@@ -967,6 +988,7 @@ func NewExocoreApp(
 		avsManagerTypes.ModuleName,
 		oracleTypes.ModuleName,
 		distrtypes.ModuleName,
+		coordinatortypes.ModuleName,
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -1001,6 +1023,7 @@ func NewExocoreApp(
 		exoslashTypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
+		coordinatortypes.ModuleName,
 		// op module
 		feemarkettypes.ModuleName, // last in order to retrieve the block gas used
 	)
@@ -1043,6 +1066,7 @@ func NewExocoreApp(
 		rewardTypes.ModuleName,   // not fully implemented yet
 		exoslashTypes.ModuleName, // not fully implemented yet
 		distrtypes.ModuleName,
+		coordinatortypes.ModuleName, // not fully implemented yet
 		// must be the last module after others have been set up, so that it can check
 		// the invariants (if configured to do so).
 		crisistypes.ModuleName,
