@@ -7,6 +7,7 @@ import "cosmos/staking/v1beta1/staking.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 
@@ -63,10 +64,8 @@ message OperatorVotingPower {
 
 // VotingPowerSnapshot is used to record the historical voting power for AVSs
 message VotingPowerSnapshot {
-  // height is the block height at which this snapshot is generated
-  int64 height = 1;
   // total_voting_power is the total voting power of specified AVS
-  string total_voting_power = 2
+  string total_voting_power = 1
   [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
@@ -74,17 +73,28 @@ message VotingPowerSnapshot {
   ];
   // operator_voting_powers records the active voting power of all operators
   // for the specified AVS
-  repeated OperatorVotingPower voting_power_set = 3;
-  // last_changed_key is used to indicate the key of most recent change when
-  // the voting_power_set is nil, which can help to fall back to the correct key.
-  string last_changed_key = 4;
+  repeated OperatorVotingPower voting_power_set = 2;
+  // last_changed_height is used to indicate the height of most recent change when
+  // the voting_power_set is nil, which can help to fall back to the correct epoch height.
+  int64 last_changed_height = 3;
+  // epoch_identifier record the epoch info
+  string epoch_identifier = 4;
+  // epoch_number indicates which epoch this snapshot serve for
+  int64  epoch_number = 5;
+  // block_time records the block time when it is stored, and it is used for snapshot pruning
+  // The epoch_number would be sufficient for pruning if we don't support AVSs changing their
+  // epoch configuration.
+  google.protobuf.Timestamp block_time = 6 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 // SnapshotHelper is used to record the helper information for voting power snapshot update
 message SnapshotHelper {
-  // last_changed_key indicates the key of the most recent change.
-  // It is used to set the `last_changed_key` field in `VotingPowerSnapshot`.
-  string last_changed_key = 1;
+  // last_changed_height indicates the height of the most recent change.
+  // It is used to set the `last_changed_height` field in `VotingPowerSnapshot`.
+  int64 last_changed_height = 1;
 
   // has_opt_out is used to indicate whether there has been any opt-out operation from
   // the most recently saved snapshot to the current height. This is because,

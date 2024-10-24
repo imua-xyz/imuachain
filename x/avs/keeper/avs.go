@@ -64,6 +64,14 @@ func (k *Keeper) GetAVSMinimumSelfDelegation(ctx sdk.Context, avsAddr string) (s
 	return sdkmath.LegacyNewDec(int64(avsInfo.Info.MinSelfDelegation)), nil
 }
 
+func (k *Keeper) GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error) {
+	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
+	if err != nil {
+		return 0, errorsmod.Wrap(err, fmt.Sprintf("GetAVSUnbondingDuration: key is %s", avsAddr))
+	}
+	return avsInfo.Info.AvsUnbondingPeriod, nil
+}
+
 // GetEpochEndAVSs returns a list of hex AVS addresses for AVSs which are scheduled to start at the end of the
 // current epoch, or the beginning of the next one. The address format returned is hex.
 func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) []string {

@@ -30,7 +30,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	suite.NoError(err)
 	// call the EndBlock to update the voting power
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
-	infractionHeight := suite.Ctx.BlockHeight()
+	infractionHeight := suite.Ctx.BlockHeight() + 1
 	optedUSDValues, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, avsAddr, suite.operatorAddr.String())
 	suite.NoError(err)
 	// get the historical voting power

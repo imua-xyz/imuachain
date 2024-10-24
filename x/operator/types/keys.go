@@ -103,17 +103,15 @@ var (
 	KeyPrefixSlashAssetsState = []byte{prefixSlashAssetsState}
 
 	// KeyPrefixVotingPowerSnapshot key-value:
-	// Including the epoch identifier in the key is used to address the case that AVSs will change
-	// their epoch configuration.
 	// In general, the key used to store the voting power snapshot is based on the epoch number as
-	// the smallest unit, since our voting power is updated once per epoch. However, when a slash event occurs,
+	// the smallest unit, since our voting power is updated once per epoch. When saving the snapshot, we use
+	// the `start_height` of current epoch to represent the whole epoch. Therefore, when in use,
+	// you only need to find the largest height that is less than or equal to the input height,
+	// which will be the correct snapshot key.
+	// Additionally, when a slash event occurs,
 	// the voting power needs to be updated immediately to ensure the slash takes effect for the relevant operator.
-	// In this case, we need to store the voting power information at the corresponding block height.
-	// Therefore, when constructing the key, the slash height is appended as a suffix.
-	// This way, when executing a slash, we can accurately retrieve the historical voting power information
-	// using the provided epoch number and slash event height.
-	// AVSAddr+ '/' + epochIdentifier + '/' + epochNumber  -> VotingPowerSnapshot
-	// AVSAddr+ '/' + epochIdentifier + '/' + epochNumber + '/' + slashHeight -> VotingPowerSnapshot
+	// In this case, we need to store an additional snapshot at the height where the slash is executed.
+	// AVSAddr+ '/' + Height -> VotingPowerSnapshot
 	KeyPrefixVotingPowerSnapshot = []byte{BytePrefixForVotingPowerSnapshot}
 
 	// KeyPrefixSnapshotHelper key-value:

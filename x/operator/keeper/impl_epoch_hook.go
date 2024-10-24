@@ -36,6 +36,13 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			// Handle the error gracefully, continue to the next AVS
 			continue
 		}
+		// clear the expired voting power snapshot.
+		err = wrapper.keeper.ClearVotingPowerSnapshot(ctx, avs)
+		if err != nil {
+			ctx.Logger().Error("Failed to clear voting power snapshot", "avs", avs, "error", err)
+			// Handle the error gracefully, continue to the next AVS
+			continue
+		}
 	}
 }
 

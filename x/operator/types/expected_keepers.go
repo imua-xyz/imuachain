@@ -112,6 +112,7 @@ type AVSKeeper interface {
 	IsAVS(ctx sdk.Context, addr string) (bool, error)
 	IsAVSByChainID(ctx sdk.Context, chainID string) (bool, string)
 	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error)
+	GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error)
 }
 
 type SlashKeeper interface {

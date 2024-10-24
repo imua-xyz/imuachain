@@ -69,7 +69,7 @@ func (k *Keeper) CheckSlashParameter(ctx sdk.Context, parameter *types.SlashInpu
 // If the remaining amount of the assets pool after slash is zero, the share of related
 // stakers should be cleared, because the divisor will be zero when calculating the share
 // of new delegation after the slash.
-func (k *Keeper) SlashAssets(ctx sdk.Context, parameter *types.SlashInputInfo) (*types.SlashExecutionInfo, error) {
+func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *types.SlashInputInfo) (*types.SlashExecutionInfo, error) {
 	// calculate the new slash proportion according to the historical power and current assets state
 	slashUSDValue := sdkmath.LegacyNewDec(parameter.Power).Mul(parameter.SlashProportion)
 	// calculate the current usd value of all assets pool for the operator
@@ -98,7 +98,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, parameter *types.SlashInputInfo) (
 			return nil
 		}
 		// #nosec G701
-		heightFilter := uint64(parameter.SlashEventHeight)
+		heightFilter := uint64(snapshotHeight)
 		err = k.delegationKeeper.IterateUndelegationsByOperator(ctx, parameter.Operator.String(), &heightFilter, true, opFunc)
 		if err != nil {
 			return nil, err
@@ -153,13 +153,12 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if err != nil {
 		return err
 	}
-
+	snapshotHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEventHeight)
+	if err != nil {
+		return err
+	}
 	// get the historical voting power from the snapshot for the other AVSs
 	if !parameter.IsDogFood {
-		snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEpochIdentifier, parameter.SlashEpochNumber, &parameter.SlashEventHeight)
-		if err != nil {
-			return types.ErrFailToGetHistoricalVP.Wrapf("slash: failed to load voting power snapshot, err:%s", err)
-		}
 		votingPower := types.GetSpecifiedVotingPower(parameter.Operator.String(), snapshot.VotingPowerSet)
 		if votingPower == nil {
 			return types.ErrFailToGetHistoricalVP.Wrapf("slash: the operator isn't in the voting power set, addr:%s", parameter.Operator)
@@ -173,7 +172,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	// slash assets according to the input information
 	// using cache context to ensure the atomicity of slash execution.
 	cc, writeFunc := ctx.CacheContext()
-	executionInfo, err := k.SlashAssets(cc, parameter)
+	executionInfo, err := k.SlashAssets(cc, snapshotHeight, parameter)
 	if err != nil {
 		return err
 	}

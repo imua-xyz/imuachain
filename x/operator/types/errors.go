@@ -116,4 +116,9 @@ var (
 		ModuleName, 25,
 		"failed to get the historical voting power",
 	)
+
+	ErrFailToClearVPSnapshot = errorsmod.Register(
+		ModuleName, 26,
+		"failed to clear voting power snapshot",
+	)
 )

@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"strconv"
+	"time"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 
@@ -12,11 +13,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// VotingPowerActivationDuration indicates how many epochs after the current epoch's voting power calculation
-// will be activated and used. By default, this is set to 1 for all AVS. If we want to support custom configurations
-// for AVS, we need to add it to the AVS info.
-const VotingPowerActivationDuration = 1
 
 // UpdateVotingPower update the voting power of the specified AVS and its operators at
 // the end of epoch.
@@ -129,46 +125,69 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		}
 	}
 	votingPowerSnapshot := operatortypes.VotingPowerSnapshot{
-		Height: cc.BlockHeight(),
+		EpochIdentifier: epochIdentifier,
+		EpochNumber:     epochNumber,
+		BlockTime:       ctx.BlockTime(),
 	}
-	// The voting power calculated at the end of the current epoch will be
-	// used in the epoch following the VotingPowerActivationDuration.
-	// Therefore, when storing the voting power snapshot, we directly store
-	// the voting power information that is activated for the specified epoch.
-	// This way, during the slashing process, we do not need to consider the
-	// impact of VotingPowerActivationDuration. It can be directly used.
-	snapshotKey := assetstype.GetJoinedStoreKey(avsAddr, epochIdentifier, strconv.FormatInt(epochNumber+VotingPowerActivationDuration, 10))
-	if isForSlash {
-		// When generating the snapshot key, there's no need to add VotingPowerActivationDuration
-		// to the epochNumber, because when a slash triggers a snapshot update, it updates the
-		// voting power information used in the current epoch.
-		snapshotKey = assetstype.GetJoinedStoreKey(
-			avsAddr, epochIdentifier,
-			strconv.FormatInt(epochNumber, 10),
-			strconv.FormatInt(ctx.BlockHeight(), 10))
+
+	// The voting power calculated at the end of the current epoch will be applied
+	// to the next epoch. Therefore, when storing the voting power snapshot, we use
+	// the `start_height` of the next epoch as the key. This ensures that during the
+	// slashing process, there is no need to account for voting power activation delay;
+	// it can be used directly.
+	// Use the current height as the snapshot height when handling snapshots triggered
+	// by slashing. This prevents stakers from escaping slashes through backrunning
+	// undelegation.
+	snapshotHeight := ctx.BlockHeight()
+	if !isForSlash {
+		// clear the slash flag at the end of the epoch
+		snapshotHelper.HasSlash = false
+		// Use the start height of the next epoch as the snapshot key.
+		// The start height of the next epoch should be the current height plus 1,
+		// as voting power is updated at the end of the epoch.
+		snapshotHeight++
+		votingPowerSnapshot.EpochNumber++
 	}
 	if snapshotHelper.HasOptOut || isSnapshotChanged {
 		votingPowerSnapshot.TotalVotingPower = avsVotingPower
 		votingPowerSnapshot.VotingPowerSet = votingPowerSet
-		snapshotHelper.LastChangedKey = string(snapshotKey)
+		snapshotHelper.LastChangedHeight = snapshotHeight
 		// clear the hasOptOut flag if it's certain that the snapshot will be updated
 		snapshotHelper.HasOptOut = false
 	}
-	votingPowerSnapshot.LastChangedKey = snapshotHelper.LastChangedKey
-	if !isForSlash {
-		// clear the slash flag at the end of the epoch
-		snapshotHelper.HasSlash = false
-	}
+	votingPowerSnapshot.LastChangedHeight = snapshotHelper.LastChangedHeight
+
 	err = k.SetSnapshotHelper(cc, avsAddr, &snapshotHelper)
 	if err != nil {
 		return err
 	}
+	snapshotKey := assetstype.GetJoinedStoreKey(avsAddr, strconv.FormatInt(snapshotHeight, 10))
 	err = k.SetVotingPowerSnapshot(cc, snapshotKey, &votingPowerSnapshot)
 	if err != nil {
 		return err
 	}
 
 	writeFunc()
+	return nil
+}
+
+func (k *Keeper) ClearVotingPowerSnapshot(ctx sdk.Context, avs string) error {
+	// calculate the time before which the snapshot should be cleared.
+	unbondingDuration, err := k.avsKeeper.GetAVSUnbondingDuration(ctx, avs)
+	if err != nil {
+		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: failed to get the avs unbonding duration, err:%s, avs:%s", err, avs)
+	}
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
+	if err != nil {
+		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: failed to get the avs epoch information, err:%s, avs:%s", err, avs)
+	}
+
+	clearTime := ctx.BlockTime().Add(-epochInfo.Duration * time.Duration(unbondingDuration))
+	err = k.RemoveVotingPowerSnapshot(ctx, avs, clearTime)
+	if err != nil {
+		ctx.Logger().Error("Failed to get the avs epoch information", "avs", avs, "error", err)
+		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: failed to remove voting power snapshot, err:%s, avs:%s", err, avs)
+	}
 	return nil
 }
 
