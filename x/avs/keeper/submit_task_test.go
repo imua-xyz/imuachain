@@ -80,11 +80,11 @@ func (suite *AVSTestSuite) prepareAvs(assetIDs []string) {
 		AvsName:             "avs01",
 		Action:              avstypes.RegisterAction,
 		EpochIdentifier:     epochstypes.HourEpochID,
-		AvsAddress:          suite.avsAddr,
+		AvsAddress:          common.HexToAddress(suite.avsAddr),
 		AssetID:             assetIDs,
-		TaskAddr:            suite.taskAddress.String(),
-		SlashContractAddr:   "",
-		RewardContractAddr:  "",
+		TaskAddr:            suite.taskAddress,
+		SlashContractAddr:   common.Address{},
+		RewardContractAddr:  common.Address{},
 		MinSelfDelegation:   3,
 		AvsOwnerAddress:     nil,
 		UnbondingPeriod:     7,
@@ -142,7 +142,7 @@ func (suite *AVSTestSuite) prepareTaskInfo() {
 	err = suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
 	suite.NoError(err)
 
-	getTaskInfo, err := suite.App.AVSManagerKeeper.GetTaskInfo(suite.Ctx, strconv.FormatUint(suite.taskId, 10), common.Address(suite.taskAddress.Bytes()).String())
+	getTaskInfo, err := suite.App.AVSManagerKeeper.GetTaskInfo(suite.Ctx, strconv.Itoa(int(suite.taskId)), common.Address(suite.taskAddress.Bytes()).String())
 	suite.NoError(err)
 	suite.Equal(*info, *getTaskInfo)
 }

@@ -12,18 +12,18 @@ IAVSManager constant AVSMANAGER_CONTRACT = IAVSManager(
 /// @dev The interface through which solidity contracts will interact with AVS-Manager
 /// @custom:address 0x0000000000000000000000000000000000000901
 interface IAVSManager {
-    event AVSRegistered(address indexed sender, string avsName);
-    event AVSUpdated(address indexed sender, string avsName);
-    event AVSDeregistered(address indexed sender, string avsName);
-    event OperatorJoined(address indexed sender);
-    event OperatorOuted(address indexed sender);
-    event TaskCreated(address indexed sender,uint64 taskId,address indexed taskContractAddress,string name,bytes hash,
+    event AVSRegistered(address indexed avsAddr, string sender, string avsName);
+    event AVSUpdated(address indexed avsAddr, string sender, string avsName);
+    event AVSDeregistered(address indexed avsAddr, string sender, string avsName);
+    event OperatorJoined(address indexed avsAddr,string sender);
+    event OperatorOuted(address indexed avsAddr,string sender);
+    event TaskCreated(string sender,uint64 taskId,address indexed taskContractAddress,string name,bytes hash,
         uint64 taskResponsePeriod,uint64 taskChallengePeriod,uint64 thresholdPercentage,uint64 taskStatisticalPeriod
     );
-    event ChallengeInitiated(address indexed sender, bytes taskHash, uint64 taskID, bytes taskResponseHash,
+    event ChallengeInitiated(string sender, bytes taskHash, uint64 taskID, bytes taskResponseHash,
         string operatorAddress);
-    event PublicKeyRegistered(address indexed sender, string name);
-    event TaskSubmittedByOperator(address indexed sender, uint64 taskID, bytes taskResponse,
+    event PublicKeyRegistered(string sender, string name);
+    event TaskSubmittedByOperator(string sender, uint64 taskID, bytes taskResponse,
         bytes blsSignature, address indexed taskContractAddress, uint8 phase);
 
 
@@ -199,7 +199,7 @@ interface IAVSManager {
         string memory operatorAddr
     ) external view returns (uint256 amount);
 
-    /// @dev getAVSInfo  is a function to query Avs info.
+    /// @dev getAVSInfo  is a function to query Avs epochIdentifier info.
     /// @param avsAddr The address of the avs
     function getAVSInfo(
         address avsAddr

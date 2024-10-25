@@ -135,7 +135,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.GetOptedInOperatorAccAddrs(ctx, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
-			bz, err = method.Outputs.Pack([]string(nil))
+			bz, err = method.Outputs.Pack([]string{})
 		}
 	case MethodGetAVSInfo:
 		bz, err = p.GetAVSInfo(ctx, contract, method, args)
@@ -147,7 +147,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.GetTaskInfo(ctx, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
-			bz, err = method.Outputs.Pack([]uint64(nil))
+			bz, err = method.Outputs.Pack([]uint64{})
 		}
 	case MethodIsOperator:
 		bz, err = p.IsOperator(ctx, contract, method, args)
@@ -167,7 +167,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.GetRegisteredPubkey(ctx, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
-			bz, err = method.Outputs.Pack([]byte(nil))
+			bz, err = method.Outputs.Pack([]byte{})
 		}
 	case MethodGetOperatorOptedUSDValue:
 		bz, err = p.GetOperatorOptedUSDValue(ctx, contract, method, args)

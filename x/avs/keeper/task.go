@@ -172,9 +172,9 @@ func (k *Keeper) SetTaskResultInfo(
 	}
 
 	//  check prescribed period
-	//  If submitted in the first stage, in order  to avoid plagiarism by other operators,
+	//  If submitted in the first phase, in order  to avoid plagiarism by other operators,
 	//	TaskResponse and TaskResponseHash must be null values
-	//	At the same time, it must be submitted within the response deadline in the first stage
+	//	At the same time, it must be submitted within the response deadline in the first phase
 	avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
 	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
 	if !found {
@@ -206,7 +206,7 @@ func (k *Keeper) SetTaskResultInfo(
 					info.TaskResponseHash, info.TaskResponse),
 			)
 		}
-		// check epoch，The first stage submission must be within the response window period
+		// check epoch，The first phase submission must be within the response window period
 		// #nosec G115
 		if epoch.CurrentEpoch > int64(task.StartingEpoch)+int64(task.TaskResponsePeriod) {
 			return errorsmod.Wrap(
@@ -240,7 +240,7 @@ func (k *Keeper) SetTaskResultInfo(
 					info.OperatorAddress, info.TaskContractAddress, info.TaskId, info.BlsSignature),
 			)
 		}
-		//  check epoch，The second stage submission must be within the statistical window period
+		//  check epoch，The second phase submission must be within the statistical window period
 		// #nosec G115
 		if epoch.CurrentEpoch <= int64(task.StartingEpoch)+int64(task.TaskResponsePeriod) {
 			return errorsmod.Wrap(

@@ -23,7 +23,7 @@ func (suite *AVSTestSuite) TestEpochEnd_TaskCalculation() {
 	suite.CommitAfter(suite.EpochDuration)
 	suite.CommitAfter(suite.EpochDuration)
 	suite.CommitAfter(suite.EpochDuration)
-	info, err := suite.App.AVSManagerKeeper.GetTaskInfo(suite.Ctx, strconv.FormatUint(suite.taskId, 10), common.Address(suite.taskAddress.Bytes()).String())
+	info, err := suite.App.AVSManagerKeeper.GetTaskInfo(suite.Ctx, strconv.Itoa(int(suite.taskId)), common.Address(suite.taskAddress.Bytes()).String())
 	suite.NoError(err)
 	expectInfo := &avstypes.TaskInfo{
 		TaskContractAddress:   suite.taskAddress.String(),

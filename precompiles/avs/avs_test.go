@@ -245,8 +245,8 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 			MinStakeAmount:      minStakeAmount,
 			MinOptInOperators:   params[0],
 			MinTotalStakeAmount: params[1],
-			AvsReward:           sdk.MustNewDecFromStr(strconv.FormatUint(params[1], 10)),
-			AvsSlash:            sdk.MustNewDecFromStr(strconv.FormatUint(params[2], 10)),
+			AvsReward:           sdk.MustNewDecFromStr(strconv.Itoa(int(params[1]))),
+			AvsSlash:            sdk.MustNewDecFromStr(strconv.Itoa(int(params[2]))),
 		}
 
 		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
@@ -391,8 +391,8 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 			MinStakeAmount:      minStakeAmount,
 			MinOptInOperators:   params[0],
 			MinTotalStakeAmount: params[1],
-			AvsReward:           sdk.MustNewDecFromStr(strconv.FormatUint(params[1], 10)),
-			AvsSlash:            sdk.MustNewDecFromStr(strconv.FormatUint(params[2], 10)),
+			AvsReward:           sdk.MustNewDecFromStr(strconv.Itoa(int(params[1]))),
+			AvsSlash:            sdk.MustNewDecFromStr(strconv.Itoa(int(params[2]))),
 		}
 
 		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
@@ -536,7 +536,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 				_, defaultAssetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.LayerZeroChainID, "", asset.Address)
 				err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &types.AVSRegisterOrDeregisterParams{
 					Action:     types.UpdateAction,
-					AvsAddress: avsAddr.String(),
+					AvsAddress: avsAddr,
 					AssetID:    []string{defaultAssetID},
 				})
 				suite.NoError(err)

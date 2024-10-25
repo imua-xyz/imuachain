@@ -5,8 +5,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "sender",
+				"name": "avsAddr",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "sender",
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -24,8 +30,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "sender",
+				"name": "avsAddr",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "sender",
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -43,8 +55,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "sender",
+				"name": "avsAddr",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "sender",
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -60,10 +78,10 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "address",
+				"indexed": false,
+				"internalType": "string",
 				"name": "sender",
-				"type": "address"
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -99,8 +117,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "sender",
+				"name": "avsAddr",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "sender",
+				"type": "string"
 			}
 		],
 		"name": "OperatorJoined",
@@ -112,8 +136,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "sender",
+				"name": "avsAddr",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "sender",
+				"type": "string"
 			}
 		],
 		"name": "OperatorOuted",
@@ -123,10 +153,10 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "address",
+				"indexed": false,
+				"internalType": "string",
 				"name": "sender",
-				"type": "address"
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -142,10 +172,10 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "address",
+				"indexed": false,
+				"internalType": "string",
 				"name": "sender",
-				"type": "address"
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -203,10 +233,10 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
-				"internalType": "address",
+				"indexed": false,
+				"internalType": "string",
 				"name": "sender",
-				"type": "address"
+				"type": "string"
 			},
 			{
 				"indexed": false,

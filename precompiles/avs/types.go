@@ -23,7 +23,7 @@ func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	avsParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	avsParams.CallerAddress = callerAddress[:]
 	avsName, ok := args[1].(string)
 	if !ok || avsName == "" {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", avsName)
@@ -40,19 +40,19 @@ func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*
 	if !ok || taskAddr == (common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 3, "common.Address", taskAddr)
 	}
-	avsParams.TaskAddr = taskAddr.String()
+	avsParams.TaskAddr = taskAddr
 
 	slashContractAddr, ok := args[4].(common.Address)
 	if !ok || (slashContractAddr == common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 4, "common.Address", slashContractAddr)
 	}
-	avsParams.SlashContractAddr = slashContractAddr.String()
+	avsParams.SlashContractAddr = slashContractAddr
 
 	rewardContractAddr, ok := args[5].(common.Address)
 	if !ok || (rewardContractAddr == common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 5, "common.Address", rewardContractAddr)
 	}
-	avsParams.RewardContractAddr = rewardContractAddr.String()
+	avsParams.RewardContractAddr = rewardContractAddr
 
 	// bech32
 	avsOwnerAddress, ok := args[6].([]string)
@@ -125,7 +125,7 @@ func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	avsParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	avsParams.CallerAddress = callerAddress[:]
 
 	avsName, ok := args[1].(string)
 	if !ok {
@@ -143,19 +143,19 @@ func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface
 	if !ok || taskAddr == (common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 3, "common.Address", taskAddr)
 	}
-	avsParams.TaskAddr = taskAddr.String()
+	avsParams.TaskAddr = taskAddr
 
 	slashContractAddr, ok := args[4].(common.Address)
 	if !ok {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 4, "common.Address", slashContractAddr)
 	}
-	avsParams.SlashContractAddr = slashContractAddr.String()
+	avsParams.SlashContractAddr = slashContractAddr
 
 	rewardContractAddr, ok := args[5].(common.Address)
 	if !ok {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 5, "common.Address", rewardContractAddr)
 	}
-	avsParams.RewardContractAddr = rewardContractAddr.String()
+	avsParams.RewardContractAddr = rewardContractAddr
 
 	// bech32
 	avsOwnerAddress, ok := args[6].([]string)
@@ -228,7 +228,7 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	taskParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	taskParams.CallerAddress = callerAddress[:]
 	name, ok := args[1].(string)
 	if !ok || name == "" {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", name)

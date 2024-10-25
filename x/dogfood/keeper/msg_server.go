@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"cosmossdk.io/errors"
 	"github.com/ExocoreNetwork/exocore/utils"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -120,7 +122,7 @@ func (k Keeper) UpdateParams(
 	}
 	err := k.avsKeeper.UpdateAVSInfo(c, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:           c.ChainID(),
-		AvsAddress:        avsAddr,
+		AvsAddress:        common.HexToAddress(avsAddr),
 		AssetID:           nextParams.AssetIDs,
 		UnbondingPeriod:   uint64(nextParams.EpochsUntilUnbonded),
 		MinSelfDelegation: nextParams.MinSelfDelegation.Uint64(),

@@ -35,16 +35,18 @@ func (p Precompile) GetRegisteredPubkey(
 	if len(args) != len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs), len(args))
 	}
-	// the key is set using the operator's acc address so the same logic should apply here
 	addr, ok := args[0].(string)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "string", addr)
 	}
-	blsPubkeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, addr)
+	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, addr)
 	if err != nil {
+		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
+			return method.Outputs.Pack([]byte{})
+		}
 		return nil, err
 	}
-	return method.Outputs.Pack(blsPubkeyInfo.PubKey)
+	return method.Outputs.Pack(blsPubKeyInfo.PubKey)
 }
 
 func (p Precompile) GetOptedInOperatorAccAddrs(
@@ -85,6 +87,9 @@ func (p Precompile) GetAVSUSDValue(
 	}
 	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, addr.String())
 	if err != nil {
+		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
+			return method.Outputs.Pack(common.Big0)
+		}
 		return nil, err
 	}
 	return method.Outputs.Pack(amount.BigInt())
@@ -110,6 +115,9 @@ func (p Precompile) GetOperatorOptedUSDValue(
 	}
 	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, avsAddr.String(), operatorAddr)
 	if err != nil {
+		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
+			return method.Outputs.Pack(common.Big0)
+		}
 		return nil, err
 	}
 	return method.Outputs.Pack(amount.ActiveUSDValue.BigInt())
@@ -124,7 +132,6 @@ func (p Precompile) GetAVSInfo(
 	if len(args) != len(p.ABI.Methods[MethodGetAVSInfo].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetAVSInfo].Inputs), len(args))
 	}
-	// the key is set using the operator's acc address so the same logic should apply here
 	addr, ok := args[0].(common.Address)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", addr)
@@ -174,7 +181,6 @@ func (p Precompile) GetTaskInfo(
 	if len(args) != len(p.ABI.Methods[MethodGetTaskInfo].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetTaskInfo].Inputs), len(args))
 	}
-	// the key is set using the operator's acc address so the same logic should apply here
 	addr, ok := args[0].(common.Address)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", addr)

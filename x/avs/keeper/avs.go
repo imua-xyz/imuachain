@@ -85,7 +85,7 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 // TODO:this function is frequently used while its implementation iterates over existing avs to find the target avs by task contract address,  we should use a reverse mapping to avoid iteration
 func (k *Keeper) GetAVSInfoByTaskAddress(ctx sdk.Context, taskAddr string) types.AVSInfo {
 	var avs types.AVSInfo
-	if taskAddr == "" {
+	if taskAddr == "" || taskAddr == "0x0000000000000000000000000000000000000000" {
 		return avs
 	}
 	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) (stop bool) {
@@ -161,7 +161,7 @@ func (k Keeper) RegisterAVSWithChainID(
 		return common.Address{}, err
 	}
 	// SetAVSInfo expects HexAddress for the AvsAddress
-	params.AvsAddress = avsAddrStr
+	params.AvsAddress = avsAddr
 	params.Action = types.RegisterAction
 
 	if err := k.UpdateAVSInfo(ctx, params); err != nil {

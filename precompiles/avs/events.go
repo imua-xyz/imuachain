@@ -54,42 +54,47 @@ func (p Precompile) emitEvent(ctx sdk.Context, stateDB vm.StateDB, eventName str
 func (p Precompile) EmitAVSRegistered(ctx sdk.Context, stateDB vm.StateDB, avs *avstypes.AVSRegisterOrDeregisterParams) error {
 	arguments := p.ABI.Events[EventTypeAVSRegistered].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeAVSRegistered, arguments,
-		common.HexToAddress(avs.CallerAddress),
+		avs.AvsAddress,
+		avs.CallerAddress.String(),
 		avs.AvsName)
 }
 
 func (p Precompile) EmitAVSUpdated(ctx sdk.Context, stateDB vm.StateDB, avs *avstypes.AVSRegisterOrDeregisterParams) error {
 	arguments := p.ABI.Events[EventTypeAVSUpdated].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeAVSUpdated, arguments,
-		common.HexToAddress(avs.CallerAddress),
+		avs.AvsAddress,
+		avs.CallerAddress.String(),
 		avs.AvsName)
 }
 
 func (p Precompile) EmitAVSDeregistered(ctx sdk.Context, stateDB vm.StateDB, avs *avstypes.AVSRegisterOrDeregisterParams) error {
 	arguments := p.ABI.Events[EventTypeAVSDeregistered].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeAVSDeregistered, arguments,
-		common.HexToAddress(avs.CallerAddress),
+		avs.AvsAddress,
+		avs.CallerAddress.String(),
 		avs.AvsName)
 }
 
 func (p Precompile) EmitOperatorJoined(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.OperatorOptParams) error {
 	arguments := p.ABI.Events[EventTypeOperatorJoined].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeOperatorJoined, arguments,
-		common.HexToAddress(params.OperatorAddress))
+		params.AvsAddress,
+		params.OperatorAddress.String())
 }
 
 func (p Precompile) EmitOperatorOuted(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.OperatorOptParams) error {
 	arguments := p.ABI.Events[EventTypeOperatorOuted].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeOperatorOuted, arguments,
-		common.HexToAddress(params.OperatorAddress))
+		params.AvsAddress,
+		params.OperatorAddress.String())
 }
 
 func (p Precompile) EmitTaskCreated(ctx sdk.Context, stateDB vm.StateDB, task *avstypes.TaskInfoParams) error {
 	arguments := p.ABI.Events[EventTypeTaskCreated].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeTaskCreated, arguments,
-		common.HexToAddress(task.CallerAddress),
+		task.CallerAddress.String(),
 		task.TaskID,
-		common.HexToAddress(task.TaskContractAddress),
+		task.TaskContractAddress,
 		task.TaskName,
 		task.Hash,
 		task.TaskResponsePeriod,
@@ -101,7 +106,7 @@ func (p Precompile) EmitTaskCreated(ctx sdk.Context, stateDB vm.StateDB, task *a
 func (p Precompile) EmitChallengeInitiated(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.ChallengeParams) error {
 	arguments := p.ABI.Events[EventTypeChallengeInitiated].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeChallengeInitiated, arguments,
-		common.HexToAddress(params.CallerAddress),
+		params.CallerAddress.String(),
 		params.TaskHash,
 		params.TaskID,
 		params.TaskResponseHash,
@@ -111,14 +116,14 @@ func (p Precompile) EmitChallengeInitiated(ctx sdk.Context, stateDB vm.StateDB, 
 func (p Precompile) EmitPublicKeyRegistered(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.BlsParams) error {
 	arguments := p.ABI.Events[EventTypePublicKeyRegistered].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypePublicKeyRegistered, arguments,
-		common.HexToAddress(params.Operator),
+		params.Operator.String(),
 		params.Name)
 }
 
 func (p Precompile) EmitTaskSubmittedByOperator(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.TaskResultParams) error {
 	arguments := p.ABI.Events[EventTypeTaskSubmittedByOperator].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeTaskSubmittedByOperator, arguments,
-		common.HexToAddress(params.CallerAddress),
+		params.CallerAddress.String(),
 		params.TaskID,
 		params.TaskResponse,
 		params.BlsSignature,

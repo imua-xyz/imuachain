@@ -43,11 +43,11 @@ func (p Precompile) RegisterAVS(
 		return nil, errorsmod.Wrap(err, "parse args error")
 	}
 	// verification of the calling address to ensure it is avs contract owner
-	if !slices.Contains(avsParams.AvsOwnerAddress, avsParams.CallerAddress) {
+	if !slices.Contains(avsParams.AvsOwnerAddress, avsParams.CallerAddress.String()) {
 		return nil, errorsmod.Wrap(err, "not qualified to registerOrDeregister")
 	}
 	// The AVS registration is done by the calling contract.
-	avsParams.AvsAddress = contract.CallerAddress.String()
+	avsParams.AvsAddress = contract.CallerAddress
 	avsParams.Action = avstypes.RegisterAction
 	// Finally, update the AVS information in the keeper.
 	err = p.avsKeeper.UpdateAVSInfo(ctx, avsParams)
@@ -77,14 +77,14 @@ func (p Precompile) DeregisterAVS(
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	avsParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	avsParams.CallerAddress = callerAddress[:]
 	avsName, ok := args[1].(string)
 	if !ok || avsName == "" {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", avsName)
 	}
 	avsParams.AvsName = avsName
 
-	avsParams.AvsAddress = contract.CallerAddress.String()
+	avsParams.AvsAddress = contract.CallerAddress
 	avsParams.Action = avstypes.DeRegisterAction
 	// validates that this is owner
 
@@ -112,14 +112,14 @@ func (p Precompile) UpdateAVS(
 		return nil, errorsmod.Wrap(err, "parse args error")
 	}
 
-	avsParams.AvsAddress = contract.CallerAddress.String()
+	avsParams.AvsAddress = contract.CallerAddress
 	avsParams.Action = avstypes.UpdateAction
-	previousAVSInfo, err := p.avsKeeper.GetAVSInfo(ctx, avsParams.AvsAddress)
+	previousAVSInfo, err := p.avsKeeper.GetAVSInfo(ctx, avsParams.AvsAddress.String())
 	if err != nil {
 		return nil, err
 	}
 	// If avs UpdateAction check CallerAddress
-	if !slices.Contains(previousAVSInfo.Info.AvsOwnerAddress, avsParams.CallerAddress) {
+	if !slices.Contains(previousAVSInfo.Info.AvsOwnerAddress, avsParams.CallerAddress.String()) {
 		return nil, fmt.Errorf("this caller not qualified to update %s", avsParams.CallerAddress)
 	}
 	err = p.avsKeeper.UpdateAVSInfo(ctx, avsParams)
@@ -150,8 +150,8 @@ func (p Precompile) BindOperatorToAVS(
 	}
 
 	operatorParams := &avstypes.OperatorOptParams{}
-	operatorParams.OperatorAddress = sdk.AccAddress(callerAddress[:]).String()
-	operatorParams.AvsAddress = contract.CallerAddress.String()
+	operatorParams.OperatorAddress = callerAddress[:]
+	operatorParams.AvsAddress = contract.CallerAddress
 	operatorParams.Action = avstypes.RegisterAction
 	err := p.avsKeeper.OperatorOptAction(ctx, operatorParams)
 	if err != nil {
@@ -179,8 +179,8 @@ func (p Precompile) UnbindOperatorToAVS(
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
 	operatorParams := &avstypes.OperatorOptParams{}
-	operatorParams.OperatorAddress = sdk.AccAddress(callerAddress[:]).String()
-	operatorParams.AvsAddress = contract.CallerAddress.String()
+	operatorParams.OperatorAddress = callerAddress[:]
+	operatorParams.AvsAddress = contract.CallerAddress
 	operatorParams.Action = avstypes.DeRegisterAction
 	err := p.avsKeeper.OperatorOptAction(ctx, operatorParams)
 	if err != nil {
@@ -205,7 +205,7 @@ func (p Precompile) CreateAVSTask(
 	if err != nil {
 		return nil, err
 	}
-	params.TaskContractAddress = contract.CallerAddress.String()
+	params.TaskContractAddress = contract.CallerAddress
 	taskID, err := p.avsKeeper.CreateAVSTask(ctx, params)
 	if err != nil {
 		return nil, err
@@ -234,7 +234,7 @@ func (p Precompile) Challenge(
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	challengeParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	challengeParams.CallerAddress = callerAddress[:]
 
 	taskHash, ok := args[1].([]byte)
 	if !ok {
@@ -292,7 +292,7 @@ func (p Precompile) RegisterBLSPublicKey(
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	blsParams.Operator = sdk.AccAddress(callerAddress[:]).String()
+	blsParams.Operator = callerAddress[:]
 	name, ok := args[1].(string)
 	if !ok || name == "" {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", name)
@@ -346,7 +346,7 @@ func (p Precompile) OperatorSubmitTask(
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	resultParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	resultParams.CallerAddress = callerAddress[:]
 
 	taskID, ok := args[1].(uint64)
 	if !ok {
@@ -382,13 +382,13 @@ func (p Precompile) OperatorSubmitTask(
 
 	result := &avstypes.TaskResultInfo{
 		TaskId:              resultParams.TaskID,
-		OperatorAddress:     resultParams.OperatorAddress,
+		OperatorAddress:     resultParams.OperatorAddress.String(),
 		TaskContractAddress: resultParams.TaskContractAddress.String(),
 		TaskResponse:        resultParams.TaskResponse,
 		BlsSignature:        resultParams.BlsSignature,
 		Phase:               uint32(resultParams.Phase),
 	}
-	err := p.avsKeeper.SetTaskResultInfo(ctx, resultParams.OperatorAddress, result)
+	err := p.avsKeeper.SetTaskResultInfo(ctx, resultParams.OperatorAddress.String(), result)
 	if err != nil {
 		return nil, err
 	}

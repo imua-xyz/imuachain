@@ -103,9 +103,9 @@ func (suite *AVSManagerPrecompileSuite) prepareAvs(assetIDs []string, task strin
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		Action:          avstypes.RegisterAction,
 		EpochIdentifier: epochstypes.HourEpochID,
-		AvsAddress:      suite.avsAddr,
+		AvsAddress:      common.HexToAddress(suite.avsAddr),
 		AssetID:         assetIDs,
-		TaskAddr:        task,
+		TaskAddr:        common.HexToAddress(task),
 		AvsOwnerAddress: avsOwnerAddress,
 	})
 	suite.NoError(err)
@@ -150,6 +150,7 @@ func (suite *AVSManagerPrecompileSuite) TestOptIn() {
 	usdValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
 	expectedState := &StateForCheck{
 		OptedInfo: &operatorTypes.OptedInfo{
+			SlashContract:  "0x0000000000000000000000000000000000000000",
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),
 			OptedOutHeight: operatorTypes.DefaultOptedOutHeight,
 		},
@@ -199,6 +200,7 @@ func (suite *AVSManagerPrecompileSuite) TestOptOut() {
 
 	expectedState := &StateForCheck{
 		OptedInfo: &operatorTypes.OptedInfo{
+			SlashContract:  "0x0000000000000000000000000000000000000000",
 			OptedInHeight:  uint64(optInHeight),
 			OptedOutHeight: uint64(suite.Ctx.BlockHeight()),
 		},
