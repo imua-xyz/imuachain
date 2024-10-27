@@ -9,18 +9,15 @@ import (
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	// prepare the deposit and delegation
 	suite.prepareOperator()
-	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
-	assetDecimal := 6
 	depositAmount := sdkmath.NewIntWithDecimal(200, assetDecimal)
-	suite.prepareDeposit(usdtAddress, depositAmount)
+	suite.prepareDeposit(suite.Address, usdtAddr, depositAmount)
 	delegationAmount := sdkmath.NewIntWithDecimal(100, assetDecimal)
-	suite.prepareDelegation(true, suite.assetAddr, delegationAmount)
+	suite.prepareDelegation(true, suite.Address, suite.assetAddr, suite.operatorAddr, delegationAmount)
 	err := suite.App.DelegationKeeper.AssociateOperatorWithStaker(suite.Ctx, suite.clientChainLzID, suite.operatorAddr, suite.Address[:])
 	suite.NoError(err)
 
@@ -40,14 +37,14 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 
 	// delegates new amount to the operator
 	newDelegateAmount := sdkmath.NewIntWithDecimal(20, assetDecimal)
-	suite.prepareDelegation(true, suite.assetAddr, newDelegateAmount)
+	suite.prepareDelegation(true, suite.Address, suite.assetAddr, suite.operatorAddr, newDelegateAmount)
 	// updating the voting power
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
 	newOptedUSDValues, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, avsAddr, suite.operatorAddr.String())
 	suite.NoError(err)
 	// submits an undelegation to test the slashFromUndelegation
 	undelegationAmount := sdkmath.NewIntWithDecimal(10, assetDecimal)
-	suite.prepareDelegation(false, suite.assetAddr, undelegationAmount)
+	suite.prepareDelegation(false, suite.Address, suite.assetAddr, suite.operatorAddr, undelegationAmount)
 	delegationRemaining := delegationAmount.Add(newDelegateAmount).Sub(undelegationAmount)
 	startHeight := uint64(suite.Ctx.BlockHeight())
 	completedHeight := suite.App.OperatorKeeper.GetUnbondingExpirationBlockNumber(suite.Ctx, suite.operatorAddr, startHeight)

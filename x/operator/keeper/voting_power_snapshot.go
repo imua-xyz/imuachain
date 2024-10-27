@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	"strconv"
 	"time"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,6 +14,41 @@ func (k *Keeper) SetVotingPowerSnapshot(ctx sdk.Context, key []byte, snapshot *t
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	bz := k.cdc.MustMarshal(snapshot)
 	store.Set(key, bz)
+	return nil
+}
+
+func (k *Keeper) GetVotingPowerSnapshot(ctx sdk.Context, key []byte) (*types.VotingPowerSnapshot, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
+	var ret types.VotingPowerSnapshot
+	value := store.Get(key)
+	if value == nil {
+		return nil, types.ErrNoKeyInTheStore.Wrapf("GetVotingPowerSnapshot: key is %s", key)
+	}
+	k.cdc.MustUnmarshal(value, &ret)
+	return &ret, nil
+}
+
+func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(height int64, snapshot *types.VotingPowerSnapshot) error) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
+	iterator := sdk.KVStorePrefixIterator(store, common.HexToAddress(avsAddr).Bytes())
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var snapshot types.VotingPowerSnapshot
+		k.cdc.MustUnmarshal(iterator.Value(), &snapshot)
+		_, height, err := types.ParseVotingPowerSnapshotKey(iterator.Key())
+		if err != nil {
+			return err
+		}
+		err = opFunc(height, &snapshot)
+		if err != nil {
+			return err
+		}
+		if isUpdate {
+			bz := k.cdc.MustMarshal(&snapshot)
+			store.Set(iterator.Key(), bz)
+		}
+	}
 	return nil
 }
 
@@ -27,14 +62,20 @@ func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height
 	// The snapshot closest to the input height is the one used for its voting
 	// power information. The correct snapshot key can be found by taking advantage
 	// of the ascending order of data returned when using an iterator range.
-	keyWithHeight := assetstype.GetJoinedStoreKey(avsAddr, strconv.FormatInt(height, 10))
-	findKey := keyWithHeight
-	if !store.Has(keyWithHeight) {
-		iterator := sdk.KVStorePrefixIterator(store, []byte(avsAddr))
+	avsEthAddr := common.HexToAddress(avsAddr)
+	findKey := types.KeyForVotingPowerSnapshot(avsEthAddr, height)
+	findHeight := height
+	if !store.Has(findKey) {
+		iterator := sdk.KVStorePrefixIterator(store, avsEthAddr.Bytes())
 		defer iterator.Close()
 		for ; iterator.Valid(); iterator.Next() {
-			if string(iterator.Key()) <= string(keyWithHeight) {
+			_, keyHeight, err := types.ParseVotingPowerSnapshotKey(iterator.Key())
+			if err != nil {
+				return 0, nil, err
+			}
+			if keyHeight <= height {
 				findKey = iterator.Key()
+				findHeight = keyHeight
 			} else {
 				break
 			}
@@ -43,26 +84,17 @@ func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height
 
 	value := store.Get(findKey)
 	if value == nil {
-		return 0, nil, types.ErrNoKeyInTheStore.Wrapf("LoadVotingPowerSnapshot: key is %s", findKey)
+		return 0, nil, types.ErrNoKeyInTheStore.Wrapf("LoadVotingPowerSnapshot: height is %v", findHeight)
 	}
 	k.cdc.MustUnmarshal(value, &ret)
 
-	// fall back to the last snapshot if the voting power set is nil
-	if ret.VotingPowerSet == nil {
-		value = store.Get(assetstype.GetJoinedStoreKey(avsAddr, strconv.FormatInt(ret.LastChangedHeight, 10)))
+	// fall back to get the snapshot if the key height doesn't equal to the `LastChangedHeight`
+	if findHeight != ret.LastChangedHeight {
+		value = store.Get(types.KeyForVotingPowerSnapshot(common.HexToAddress(avsAddr), ret.LastChangedHeight))
 		if value == nil {
 			return 0, nil, types.ErrNoKeyInTheStore.Wrapf("LoadVotingPowerSnapshot: fall back to the height %v", ret.LastChangedHeight)
 		}
 		k.cdc.MustUnmarshal(value, &ret)
-	}
-
-	keysList, err := assetstype.ParseJoinedKey(findKey)
-	if value == nil {
-		return 0, nil, err
-	}
-	findHeight, err := strconv.ParseInt(keysList[1], 10, 64)
-	if value == nil {
-		return 0, nil, err
 	}
 	return findHeight, &ret, nil
 }
@@ -70,23 +102,26 @@ func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height
 // RemoveVotingPowerSnapshot remove all snapshots older than the input time.
 func (k *Keeper) RemoveVotingPowerSnapshot(ctx sdk.Context, avsAddr string, time time.Time) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(avsAddr))
+	iterator := sdk.KVStorePrefixIterator(store, common.HexToAddress(avsAddr).Bytes())
 	defer iterator.Close()
 	// the retained key is used to record the snapshot that will be fallen back to
 	// by snapshots earlier than the input time.
 	var retainedKey []byte
-	var snapshot types.VotingPowerSnapshot
 	for ; iterator.Valid(); iterator.Next() {
+		var snapshot types.VotingPowerSnapshot
 		k.cdc.MustUnmarshal(iterator.Value(), &snapshot)
-		if snapshot.BlockTime.After(time) {
+		_, height, _ := types.ParseVotingPowerSnapshotKey(iterator.Key())
+		if snapshot.BlockTime.Compare(time) >= 0 {
 			// delete the retained key, because the snapshots that is earlier than the input time
 			// don't need to retain any old snapshot key.
-			if snapshot.VotingPowerSet != nil && retainedKey != nil {
+			if height == snapshot.LastChangedHeight && retainedKey != nil {
 				store.Delete(retainedKey)
 			}
 			break
 		}
-		if snapshot.VotingPowerSet != nil {
+		// When height == snapshot.LastChangedHeight, it indicates that the current snapshot
+		// contains the current voting power set, so there is no need to fall back to other keys.
+		if height == snapshot.LastChangedHeight {
 			// delete the old retained key, because the key currently holding the voting power set
 			// will become the latest retained key.
 			if retainedKey != nil {

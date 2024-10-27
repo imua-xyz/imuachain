@@ -188,11 +188,13 @@ func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) 
 
 	avsList := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
-		if err != nil {
-			return nil, err
-		}
-		if k.IsOptedIn(ctx, keys[0], keys[1]) {
+		var optedInfo operatortypes.OptedInfo
+		k.cdc.MustUnmarshal(iterator.Value(), &optedInfo)
+		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
+			keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+			if err != nil {
+				return nil, err
+			}
 			avsList = append(avsList, keys[1])
 		}
 	}
@@ -238,7 +240,7 @@ func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([
 		if err != nil {
 			return nil, err
 		}
-		if strings.ToLower(avsAddr) == keys[1] && k.IsOptedIn(ctx, keys[0], keys[1]) {
+		if strings.ToLower(avsAddr) == keys[1] {
 			operatorList = append(operatorList, keys[0])
 		}
 	}

@@ -153,7 +153,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if err != nil {
 		return err
 	}
-	snapshotHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEventHeight)
+	snapshotKeyLastHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEventHeight)
 	if err != nil {
 		return err
 	}
@@ -168,11 +168,15 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 			return types.ErrInvalidSlashPower.Wrapf("slash: valid voting power, the power is:%v", parameter.Power)
 		}
 	}
+	if parameter.Power == 0 {
+		k.Logger(ctx).Info("don't execute the slash if the historical voting power is zero")
+		return nil
+	}
 
 	// slash assets according to the input information
 	// using cache context to ensure the atomicity of slash execution.
 	cc, writeFunc := ctx.CacheContext()
-	executionInfo, err := k.SlashAssets(cc, snapshotHeight, parameter)
+	executionInfo, err := k.SlashAssets(cc, snapshotKeyLastHeight, parameter)
 	if err != nil {
 		return err
 	}
@@ -191,18 +195,26 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if err != nil {
 		return err
 	}
-	// update the voting power and save the snapshot caused by slash execution
-	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, parameter.AVSAddr)
+
+	// update the voting power and save the snapshot for all affected AVSs
+	avsList, err := k.GetOptedInAVSForOperator(ctx, parameter.Operator.String())
 	if err != nil {
 		return err
 	}
-	err = k.UpdateVotingPower(ctx, parameter.AVSAddr, epochInfo.Identifier, epochInfo.CurrentEpoch, true)
-	if err != nil {
-		return err
-	}
-	err = k.SetSlashFlag(ctx, parameter.AVSAddr, true)
-	if err != nil {
-		return err
+	for i := range avsList {
+		avs := avsList[i]
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
+		if err != nil {
+			return err
+		}
+		err = k.UpdateVotingPower(ctx, avs, epochInfo.Identifier, epochInfo.CurrentEpoch, true)
+		if err != nil {
+			return err
+		}
+		err = k.SetSlashFlag(ctx, avs, true)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

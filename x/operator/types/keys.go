@@ -1,7 +1,10 @@
 package types
 
 import (
+	"encoding/binary"
 	"math"
+
+	"github.com/ExocoreNetwork/exocore/utils"
 
 	"golang.org/x/xerrors"
 
@@ -156,6 +159,24 @@ func KeyForOperatorAndChainIDToConsKey(addr sdk.AccAddress, chainID string) []by
 		BytePrefixForOperatorAndChainIDToConsKey,
 		addr, chainID,
 	)
+}
+
+func KeyForVotingPowerSnapshot(avs common.Address, height int64) []byte {
+	return AppendMany(
+		avs.Bytes(),
+		// Append the height
+		utils.EncodeHeightBytes(uint64(height)),
+	)
+}
+
+func ParseVotingPowerSnapshotKey(key []byte) (string, int64, error) {
+	if len(key) != common.AddressLength+ByteLengthForUint64 {
+		return "", 0, xerrors.Errorf("invalid snapshot key length,expected:%d,got:%d", common.AddressLength+ByteLengthForUint64, len(key))
+	}
+	avsAddr := common.Address(key[:common.AddressLength])
+	height := binary.BigEndian.Uint64(key[common.AddressLength:])
+	// #nosec G115
+	return avsAddr.String(), int64(height), nil
 }
 
 func ParseKeyForOperatorAndChainIDToConsKey(key []byte) (addr sdk.AccAddress, chainID string, err error) {

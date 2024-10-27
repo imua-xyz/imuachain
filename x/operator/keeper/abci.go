@@ -2,10 +2,9 @@ package keeper
 
 import (
 	"errors"
-	"strconv"
 	"time"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	sdkmath "cosmossdk.io/math"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -61,9 +60,13 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	isSnapshotChanged := false
 	votingPowerSet := make([]*operatortypes.OperatorVotingPower, 0)
 	avsVotingPower := sdkmath.LegacyNewDec(0)
+	hasOptedOperator := false
 	opFunc := func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error {
+		if !hasOptedOperator {
+			hasOptedOperator = true
+		}
 		// clear the old voting power for the operator
-		lastOptedUSDValue := optedUSDValues
+		lastOptedUSDValue := *optedUSDValues
 		*optedUSDValues = operatortypes.OperatorOptedUSDValue{
 			TotalUSDValue:  sdkmath.LegacyNewDec(0),
 			SelfUSDValue:   sdkmath.LegacyNewDec(0),
@@ -138,22 +141,27 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	// Use the current height as the snapshot height when handling snapshots triggered
 	// by slashing. This prevents stakers from escaping slashes through backrunning
 	// undelegation.
+	// Use the start height of the next epoch as the snapshot key.
+	// The start height of the next epoch should be the current height,
+	// as the `AfterEpochEnd` is called in the beginBlock of next epoch's start height.
 	snapshotHeight := ctx.BlockHeight()
 	if !isForSlash {
 		// clear the slash flag at the end of the epoch
 		snapshotHelper.HasSlash = false
-		// Use the start height of the next epoch as the snapshot key.
-		// The start height of the next epoch should be the current height plus 1,
-		// as voting power is updated at the end of the epoch.
-		snapshotHeight++
+		// the epoch number should plus 1, as it's updated after the hook `AfterEpochEnd` is called
 		votingPowerSnapshot.EpochNumber++
 	}
+	isSetSnapshot := true
 	if snapshotHelper.HasOptOut || isSnapshotChanged {
 		votingPowerSnapshot.TotalVotingPower = avsVotingPower
 		votingPowerSnapshot.VotingPowerSet = votingPowerSet
 		snapshotHelper.LastChangedHeight = snapshotHeight
 		// clear the hasOptOut flag if it's certain that the snapshot will be updated
 		snapshotHelper.HasOptOut = false
+	} else if !hasOptedOperator {
+		// don’t set the snapshot if no operator has opted into the AVS,
+		// except for the first epoch after all operators have opted out of this AVS.
+		isSetSnapshot = false
 	}
 	votingPowerSnapshot.LastChangedHeight = snapshotHelper.LastChangedHeight
 
@@ -161,12 +169,14 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	if err != nil {
 		return err
 	}
-	snapshotKey := assetstype.GetJoinedStoreKey(avsAddr, strconv.FormatInt(snapshotHeight, 10))
-	err = k.SetVotingPowerSnapshot(cc, snapshotKey, &votingPowerSnapshot)
-	if err != nil {
-		return err
-	}
 
+	if isSetSnapshot {
+		snapshotKey := operatortypes.KeyForVotingPowerSnapshot(common.HexToAddress(avsAddr), snapshotHeight)
+		err = k.SetVotingPowerSnapshot(cc, snapshotKey, &votingPowerSnapshot)
+		if err != nil {
+			return err
+		}
+	}
 	writeFunc()
 	return nil
 }

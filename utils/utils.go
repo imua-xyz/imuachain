@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"encoding/binary"
 	"sort"
 	"strings"
 
@@ -209,4 +210,10 @@ func SortByPower(
 		sortedPowers[i] = powers[idx]
 	}
 	return sortedOperatorAddrs, sortedPubKeys, sortedPowers
+}
+
+func EncodeHeightBytes(height uint64) []byte {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, height)
+	return buf
 }
