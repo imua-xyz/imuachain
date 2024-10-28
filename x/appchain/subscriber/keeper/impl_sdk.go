@@ -138,7 +138,7 @@ func (k Keeper) Delegation(
 
 // Unused by evidence and slashing. However, I have set it up to report 0.
 // Alternatively we could panic here as well.
-func (k Keeper) MaxValidators(ctx sdk.Context) uint32 {
+func (k Keeper) MaxValidators(sdk.Context) uint32 {
 	return 0
 }
 
@@ -176,6 +176,6 @@ func (k Keeper) BondedRatio(sdk.Context) sdk.Dec {
 
 // StakingTokenSupply returns the total amount of staking tokens in the system. See
 // `BondedRatio` to understand why this is zero, and its consequences.
-func (k Keeper) StakingTokenSupply(ctx sdk.Context) sdk.Int {
+func (k Keeper) StakingTokenSupply(sdk.Context) math.Int {
 	return sdk.ZeroInt()
 }
