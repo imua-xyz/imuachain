@@ -221,6 +221,7 @@ func CmdOptIntoAVS() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -242,6 +243,7 @@ func CmdOptOutOfAVS() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -264,5 +266,6 @@ func CmdSetConsKey() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 )
 
@@ -55,6 +56,7 @@ func CmdRegisterSubscriberChain() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }
