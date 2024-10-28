@@ -8,10 +8,10 @@ import (
 	"github.com/ExocoreNetwork/exocore/utils"
 	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-
 	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	epochstypes "github.com/evmos/evmos/v16/x/epochs/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 type msgServer struct {
@@ -32,13 +32,17 @@ func (k Keeper) UpdateParams(
 	ctx context.Context, msg *types.MsgUpdateParams,
 ) (*types.MsgUpdateParamsResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	// if k.authority != msg.Authority {
-	// 	return nil, errorsmod.Wrapf(
-	// 		govtypes.ErrInvalidSigner,
-	// 		"invalid authority; expected %s, got %s",
-	// 		k.authority, msg.Authority,
-	// 	)
-	// }
+	if utils.IsMainnet(c.ChainID()) && k.authority != msg.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf(
+			"invalid authority; expected %s, got %s",
+			k.authority, msg.Authority,
+		)
+	}
+	k.Logger(c).Info(
+		"UpdateParams request",
+		"authority", k.authority,
+		"params.Authority", msg.Authority,
+	)
 	prevParams := k.GetDogfoodParams(c)
 	nextParams := msg.Params
 	logger := k.Logger(c)

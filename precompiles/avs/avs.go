@@ -133,12 +133,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		}
 	case MethodGetOptinOperators:
 		bz, err = p.GetOptedInOperatorAccAddrs(ctx, contract, method, args)
-	case MethodSubmitProof:
-		bz, err = p.SubmitProof(ctx, evm.Origin, contract, stateDB, method, args)
-		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
-			bz, err = method.Outputs.Pack(false)
-		}
 	case MethodGetRegisteredPubkey:
 		bz, err = p.GetRegisteredPubkey(ctx, contract, method, args)
 	case MethodGetAVSUSDValue:
@@ -181,7 +175,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 func (Precompile) IsTransaction(methodID string) bool {
 	switch methodID {
 	case MethodRegisterAVS, MethodDeregisterAVS, MethodUpdateAVS, MethodRegisterOperatorToAVS,
-		MethodDeregisterOperatorFromAVS, MethodCreateAVSTask, MethodRegisterBLSPublicKey, MethodSubmitProof, MethodChallenge:
+		MethodDeregisterOperatorFromAVS, MethodCreateAVSTask, MethodRegisterBLSPublicKey, MethodChallenge:
 		return true
 	case MethodGetRegisteredPubkey, MethodGetOptinOperators, MethodGetAVSUSDValue, MethodGetOperatorOptedUSDValue:
 		return false

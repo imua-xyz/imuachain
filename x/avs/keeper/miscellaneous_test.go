@@ -1,8 +1,8 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
@@ -20,43 +20,22 @@ func TestReceiptMarshalBinary(t *testing.T) {
 
 	packed, err := types.Args.Pack(&task)
 	if err != nil {
-		fmt.Println("bad bad ", err)
+		t.Errorf("Error packing task: %v", err)
 		return
 	} else {
-		fmt.Println("abi encoded", hexutil.Encode(packed))
+		t.Logf("ABI encoded: %s", hexutil.Encode(packed))
 	}
 
 	args := make(map[string]interface{})
 
 	err = types.Args.UnpackIntoMap(args, packed)
 	result, _ := types.Args.Unpack(packed)
-	fmt.Println("unpacked", result[0])
+	t.Logf("Unpacked: %v", result[0])
 	hash := crypto.Keccak256Hash(packed)
-	fmt.Println("hash:", hash.String())
+	t.Logf("Hash: %s", hash.String())
 
 	key := args["TaskResponse"]
-	fmt.Println("key", key)
-	for _, elem := range result {
-		switch v := elem.(type) {
-		case uint64:
-			fmt.Println("Found uint64:", v)
-		case *big.Int:
-			fmt.Println("Found *big.Int:", v)
-		case *types.TaskResponse:
-			fmt.Println("types.TaskResponse type found")
-		default:
-			fmt.Println("Unknown type found")
-		}
-	}
-	taskNew, _ := result[0].(*types.TaskResponse)
-	fmt.Println("hash:", taskNew)
-
-	var taskResponse types.TaskResponse
-
-	if err := types.Args.Copy(&taskResponse, result); err != nil {
-		fmt.Println("unpacked", result)
-	}
-	fmt.Println("taskResponse", taskResponse)
+	t.Logf("Key: %v", key)
 }
 
 func Test_difference(t *testing.T) {
@@ -64,7 +43,13 @@ func Test_difference(t *testing.T) {
 	arr2 := []string{"apple", "cherry", "date"}
 
 	diff := types.Difference(arr1, arr2)
-	fmt.Println("Differences:", diff)
+	expectedDiff := []string{"banana", "date"}
+	if !reflect.DeepEqual(diff, expectedDiff) {
+		t.Errorf("Expected difference %v, got %v", expectedDiff, diff)
+	} else {
+		t.Logf("Differences: %v", diff)
+	}
+
 	num1 := sdk.MustNewDecFromStr("1.3")
 	num2 := sdk.MustNewDecFromStr("12.3")
 
@@ -74,8 +59,12 @@ func Test_difference(t *testing.T) {
 	// Convert result to percentage
 	percentage := result.Mul(sdk.NewDec(100))
 
-	// Print the result
-	fmt.Print(percentage)
+	expectedPercentage := sdk.MustNewDecFromStr("10.569105691056910600")
+	if !percentage.Equal(expectedPercentage) {
+		t.Errorf("Expected percentage %s, got %s", expectedPercentage, percentage)
+	} else {
+		t.Logf("Percentage: %s", percentage)
+	}
 }
 
 func Test_genKey(t *testing.T) {
@@ -87,8 +76,11 @@ func Test_genKey(t *testing.T) {
 		addresses[i] = exoAddress
 	}
 
-	fmt.Println("Generated EXO addresses:")
+	t.Log("Generated EXO addresses:")
 	for _, address := range addresses {
-		fmt.Println(address)
+		t.Log(address)
+		if _, err := sdk.AccAddressFromBech32(address); err != nil {
+			t.Errorf("Invalid EXO address: %s", address)
+		}
 	}
 }

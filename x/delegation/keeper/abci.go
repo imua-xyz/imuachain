@@ -19,32 +19,33 @@ func (k *Keeper) EndBlock(
 		originalCtx, uint64(originalCtx.BlockHeight()),
 	)
 	if err != nil {
-		logger.Error("failed to get pending undelegation records", "error", err)
+		// When encountering an error while retrieving pending undelegation, skip the undelegation at the given height without causing the node to stop running.
+		logger.Error("Error in GetPendingUndelegationRecords during the delegation's EndBlock execution", "error", err)
+		return []abci.ValidatorUpdate{}
 	}
 	if len(records) == 0 {
-		logger.Info("no pending undelegation records")
 		return []abci.ValidatorUpdate{}
 	}
 	for i := range records {
 		record := records[i] // avoid implicit memory aliasing
-		ctx, writeCache := originalCtx.CacheContext()
+		cc, writeCache := originalCtx.CacheContext()
 		// we can use `Must` here because we stored this record ourselves.
 		operatorAccAddress := sdk.MustAccAddressFromBech32(record.OperatorAddr)
 		// TODO check if the operator has been slashed or frozen
 		recordID := types.GetUndelegationRecordKey(
 			record.BlockNumber, record.LzTxNonce, record.TxHash, record.OperatorAddr,
 		)
-		if k.GetUndelegationHoldCount(ctx, recordID) > 0 {
+		if k.GetUndelegationHoldCount(cc, recordID) > 0 {
 			// delete from all 3 states
-			if err := k.DeleteUndelegationRecord(ctx, record); err != nil {
+			if err := k.DeleteUndelegationRecord(cc, record); err != nil {
 				logger.Error("failed to delete undelegation record", "error", err)
 				continue
 			}
 			// add back to all 3 states, with the new block height
 			// #nosec G701
-			record.CompleteBlockNumber = uint64(ctx.BlockHeight()) + 1
+			record.CompleteBlockNumber = uint64(cc.BlockHeight()) + 1
 			if err := k.SetUndelegationRecords(
-				ctx, []types.UndelegationRecord{*record},
+				cc, []types.UndelegationRecord{*record},
 			); err != nil {
 				logger.Error("failed to set undelegation records", "error", err)
 				continue
@@ -58,13 +59,9 @@ func (k *Keeper) EndBlock(
 		deltaAmount := &types.DeltaDelegationAmounts{
 			WaitUndelegationAmount: recordAmountNeg,
 		}
-		if _, err := k.UpdateDelegationState(
-			ctx, record.StakerID, record.AssetID, record.OperatorAddr, deltaAmount,
-		); err != nil {
-			logger.Error(
-				"failed to update delegation state",
-				"error", err,
-			)
+		_, err = k.UpdateDelegationState(cc, record.StakerID, record.AssetID, record.OperatorAddr, deltaAmount)
+		if err != nil {
+			logger.Error("Error in UpdateDelegationState during the delegation's EndBlock execution", "error", err)
 			continue
 		}
 
@@ -88,7 +85,7 @@ func (k *Keeper) EndBlock(
 			}
 			stakerAddr := sdk.AccAddress(stakerAddrBytes)
 			if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
-				ctx, types.DelegatedPoolName, stakerAddr,
+				cc, types.DelegatedPoolName, stakerAddr,
 				sdk.NewCoins(
 					sdk.NewCoin(assetstypes.ExocoreAssetDenom, record.ActualCompletedAmount),
 				),
@@ -100,41 +97,29 @@ func (k *Keeper) EndBlock(
 				continue
 			}
 		} else {
-			if err := k.assetsKeeper.UpdateStakerAssetState(
-				ctx, record.StakerID, record.AssetID,
-				assetstypes.DeltaStakerSingleAsset{
-					WithdrawableAmount:        record.ActualCompletedAmount,
-					PendingUndelegationAmount: recordAmountNeg,
-				},
-			); err != nil {
-				logger.Error(
-					"failed to update staker asset state",
-					"error", err,
-				)
+			err = k.assetsKeeper.UpdateStakerAssetState(cc, record.StakerID, record.AssetID, assetstypes.DeltaStakerSingleAsset{
+				WithdrawableAmount:        record.ActualCompletedAmount,
+				PendingUndelegationAmount: recordAmountNeg,
+			})
+			if err != nil {
+				logger.Error("Error in UpdateStakerAssetState during the delegation's EndBlock execution", "error", err)
 				continue
 			}
 		}
 
 		// update the operator state
-		if err := k.assetsKeeper.UpdateOperatorAssetState(
-			ctx, operatorAccAddress, record.AssetID,
-			assetstypes.DeltaOperatorSingleAsset{
-				PendingUndelegationAmount: recordAmountNeg,
-			},
-		); err != nil {
-			logger.Error(
-				"failed to update operator asset state",
-				"error", err,
-			)
+		err = k.assetsKeeper.UpdateOperatorAssetState(cc, operatorAccAddress, record.AssetID, assetstypes.DeltaOperatorSingleAsset{
+			PendingUndelegationAmount: recordAmountNeg,
+		})
+		if err != nil {
+			logger.Error("Error in UpdateOperatorAssetState during the delegation's EndBlock execution", "error", err)
 			continue
 		}
 
 		// delete the Undelegation records that have been complemented
-		if err := k.DeleteUndelegationRecord(ctx, record); err != nil {
-			logger.Error(
-				"failed to delete undelegation record",
-				"error", err,
-			)
+		err = k.DeleteUndelegationRecord(cc, record)
+		if err != nil {
+			logger.Error("Error in DeleteUndelegationRecord during the delegation's EndBlock execution", "error", err)
 			continue
 		}
 		// when calling `writeCache`, events are automatically emitted on the parent context

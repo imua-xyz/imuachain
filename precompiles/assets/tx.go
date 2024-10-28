@@ -59,7 +59,7 @@ func (p Precompile) DepositOrWithdraw(
 	if depositWithdrawParams.Action == assetstypes.DepositNST ||
 		depositWithdrawParams.Action == assetstypes.WithdrawNST {
 		opAmount := depositWithdrawParams.OpAmount
-		if depositWithdrawParams.Action == assetstypes.WithdrawLST {
+		if depositWithdrawParams.Action == assetstypes.WithdrawNST {
 			opAmount = opAmount.Neg()
 		}
 		_, assetID := assetstypes.GetStakerIDAndAssetID(depositWithdrawParams.ClientChainLzID,

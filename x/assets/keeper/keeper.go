@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -13,8 +15,9 @@ type Keeper struct {
 	storeKey storetypes.StoreKey
 	cdc      codec.BinaryCodec
 	assetstype.OracleKeeper
-	bk assetstype.BankKeeper
-	dk delegationKeeper
+	bk        assetstype.BankKeeper
+	dk        delegationKeeper
+	authority string
 }
 
 func NewKeeper(
@@ -23,13 +26,19 @@ func NewKeeper(
 	oracleKeeper assetstype.OracleKeeper,
 	bk assetstype.BankKeeper,
 	dk delegationKeeper,
+	authority string,
 ) Keeper {
+	// ensure authority is a valid bech32 address
+	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
+		panic(fmt.Sprintf("authority address %s is invalid: %s", authority, err))
+	}
 	return Keeper{
 		storeKey:     storeKey,
 		cdc:          cdc,
 		OracleKeeper: oracleKeeper,
 		bk:           bk,
 		dk:           dk,
+		authority:    authority,
 	}
 }
 

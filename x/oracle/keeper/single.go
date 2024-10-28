@@ -153,6 +153,12 @@ func recacheAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext
 	if updated := c.GetCache(&pRet); !updated {
 		c.AddCache(cache.ItemP(*p))
 	}
+	// TODO: these 4 lines are mainly used for hot fix
+	// since the latest params stored in KV for recache should be the same with the latest params, so these lines are just duplicated actions if everything is fine.
+	*p = k.GetParams(ctx)
+	agc.SetParams(p)
+	setCommonParams(p)
+	c.AddCache(cache.ItemP(*p))
 
 	return true
 }

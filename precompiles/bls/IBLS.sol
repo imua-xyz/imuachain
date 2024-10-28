@@ -33,9 +33,6 @@ interface IBLS {
         bytes[] calldata pubkeys
     ) external pure returns (bool valid);
 
-    function generatePrivateKey() external pure returns (bytes memory privkey);
-    function publicKey(bytes calldata privkey) external pure returns (bytes memory pubkey);
-    function sign(bytes calldata privkey, bytes32 msg_) external pure returns (bytes memory signature);
     function aggregatePubkeys(bytes[] calldata pubkeys) external pure returns (bytes memory pubkey);
     function aggregateSignatures(bytes[] calldata sigs) external pure returns (bytes memory sig);
     function addTwoPubkeys(bytes calldata pubkey1, bytes calldata pubkey2) external pure returns (bytes memory newPubkey);

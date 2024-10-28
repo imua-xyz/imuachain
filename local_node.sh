@@ -33,6 +33,7 @@ GENESIS=$HOMEDIR/config/genesis.json
 TMP_GENESIS=$HOMEDIR/config/tmp_genesis.json
 ORACLE_ENV_CHAINLINK=$HOMEDIR/config/oracle_env_chainlink.yaml
 ORACLE_FEEDER=$HOMEDIR/config/oracle_feeder.yaml
+ORACLE_ENV_BEACONCHAIN=$HOMEDIR/config/oracle_env_beaconchain.yaml
 
 # validate dependencies are installed
 command -v jq >/dev/null 2>&1 || {
@@ -86,6 +87,9 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	LOCAL_ADDRESS_EXO=$(exocored keys show "$LOCAL_NAME" -a --keyring-backend "$KEYRING" --home "$HOMEDIR")
 	LOCAL_ADDRESS_HEX=0x$(exocored keys parse "$LOCAL_ADDRESS_EXO" --output json | jq -r .bytes | tr '[:upper:]' '[:lower:]')
 	CONSENSUS_KEY=$(exocored keys consensus-pubkey-to-bytes --keyring-backend "$KEYRING" --home "$HOMEDIR" --output json | jq -r .bytes32)
+
+	echo "the local operator address is $LOCAL_ADDRESS_EXO"
+	echo "the dogfood AVS address is $AVS_ADDRESS"
 
 	# Change parameter token denominations to hua
 	jq '.app_state["crisis"]["constant_fee"]["denom"]="hua"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -218,6 +222,17 @@ EOF
 
 	# Write the YAML content to a file
 	echo "$oracle_feeder_content" >"$ORACLE_FEEDER"
+
+	# generate oracle_env_beaconchain.yaml
+	oracle_env_beaconchain_content=$(
+		cat <<EOF
+url:
+  !!str https://ethereum-holesky-rpc.publicnode.com
+EOF
+	)
+
+	# Write the YAML content to a file
+	echo "$oracle_env_beaconchain_content" >"$ORACLE_ENV_BEACONCHAIN"
 
 	if [[ $1 == "pending" ]]; then
 		if [[ "$OSTYPE" == "darwin"* ]]; then

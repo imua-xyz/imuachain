@@ -4,9 +4,10 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-
+	"github.com/ExocoreNetwork/exocore/utils"
 	"github.com/ExocoreNetwork/exocore/x/exomint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 type msgServer struct {
@@ -27,13 +28,17 @@ func (k Keeper) UpdateParams(
 	ctx context.Context, msg *types.MsgUpdateParams,
 ) (*types.MsgUpdateParamsResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	// if k.authority != msg.Authority {
-	// 	return nil, errorsmod.Wrapf(
-	// 		govtypes.ErrInvalidSigner,
-	// 		"invalid authority; expected %s, got %s",
-	// 		k.authority, msg.Authority,
-	// 	)
-	// }
+	if utils.IsMainnet(c.ChainID()) && k.authority != msg.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf(
+			"invalid authority; expected %s, got %s",
+			k.authority, msg.Authority,
+		)
+	}
+	k.Logger(c).Info(
+		"UpdateParams request",
+		"authority", k.authority,
+		"params.Authority", msg.Authority,
+	)
 	prevParams := k.GetParams(c)
 	nextParams := msg.Params
 	// stateless validations

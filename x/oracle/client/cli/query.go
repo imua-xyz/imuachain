@@ -38,6 +38,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 	cmd.AddCommand(CmdQueryStakerInfo())
 	cmd.AddCommand(CmdQueryStakerInfos())
 	cmd.AddCommand(CmdQueryStakerList())
+	cmd.AddCommand(CmdQueryTokenIndexes())
 	// this line is used by starport scaffolding # 1
 
 	return cmd

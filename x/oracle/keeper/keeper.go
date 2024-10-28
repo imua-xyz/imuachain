@@ -21,7 +21,7 @@ type (
 		storeKey   storetypes.StoreKey
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
-		// authority  string
+		authority  string
 		common.KeeperDogfood
 		delegationKeeper types.DelegationKeeper
 		assetsKeeper     types.AssetsKeeper
@@ -38,7 +38,12 @@ func NewKeeper(
 	sKeeper common.KeeperDogfood,
 	delegationKeeper types.DelegationKeeper,
 	assetsKeeper types.AssetsKeeper,
+	authority string,
 ) Keeper {
+	// ensure authority is a valid bech32 address
+	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
+		panic(fmt.Sprintf("authority address %s is invalid: %s", authority, err))
+	}
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
@@ -52,6 +57,7 @@ func NewKeeper(
 		KeeperDogfood:    sKeeper,
 		delegationKeeper: delegationKeeper,
 		assetsKeeper:     assetsKeeper,
+		authority:        authority,
 	}
 }
 

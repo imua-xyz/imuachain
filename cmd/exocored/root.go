@@ -53,6 +53,7 @@ import (
 	evmoskr "github.com/evmos/evmos/v16/crypto/keyring"
 
 	pricefeeder "github.com/ExocoreNetwork/price-feeder/external"
+	feedertypes "github.com/ExocoreNetwork/price-feeder/types"
 )
 
 const (
@@ -154,6 +155,9 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				defer func() {
 					if err := recover(); err != nil {
 						fmt.Println("price-feeder failed", err)
+						if e, ok := err.(error); ok && errors.Is(e, feedertypes.ErrInitFail) {
+							panic(e)
+						}
 					}
 				}()
 				mnemonic, _ := cmd.Flags().GetString(flagMnemonic)

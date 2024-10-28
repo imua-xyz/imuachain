@@ -73,6 +73,10 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		if t.Name == oInfo.Token.Name && t.ChainID == chainID {
 			t.AssetID = strings.Join([]string{t.AssetID, oInfo.AssetID}, ",")
 			k.SetParams(ctx, p)
+			if !ctx.IsCheckTx() {
+				_ = GetAggregatorContext(ctx, k)
+				cs.AddCache(cache.ItemP(p))
+			}
 			// there should have been existing tokenFeeder running(currently we register tokens from assets-module and with infinite endBlock)
 			return nil
 		}

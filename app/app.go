@@ -546,7 +546,10 @@ func NewExocoreApp(
 	)
 
 	// asset and client chain registry.
-	app.AssetsKeeper = assetsKeeper.NewKeeper(keys[assetsTypes.StoreKey], appCodec, &app.OracleKeeper, app.BankKeeper, &app.DelegationKeeper)
+	app.AssetsKeeper = assetsKeeper.NewKeeper(
+		keys[assetsTypes.StoreKey], appCodec, &app.OracleKeeper,
+		app.BankKeeper, &app.DelegationKeeper, authAddrString,
+	)
 
 	// handles delegations by stakers, and must know if the delegatee operator is registered.
 	app.DelegationKeeper = delegationKeeper.NewKeeper(
@@ -574,18 +577,17 @@ func NewExocoreApp(
 	// these two modules aren't finalized yet.
 	app.RewardKeeper = rewardKeeper.NewKeeper(
 		appCodec, keys[rewardTypes.StoreKey], app.AssetsKeeper,
-		app.AVSManagerKeeper,
+		app.AVSManagerKeeper, authAddrString,
 	)
 	app.ExoSlashKeeper = slashKeeper.NewKeeper(
-		appCodec, keys[exoslashTypes.StoreKey], app.AssetsKeeper,
+		appCodec, keys[exoslashTypes.StoreKey], app.AssetsKeeper, authAddrString,
 	)
 
 	// x/oracle is not fully integrated (or enabled) but allows for exchange rates to be added.
 	app.OracleKeeper = oracleKeeper.NewKeeper(
 		appCodec, keys[oracleTypes.StoreKey], memKeys[oracleTypes.MemStoreKey],
 		app.GetSubspace(oracleTypes.ModuleName), app.StakingKeeper,
-		&app.DelegationKeeper,
-		&app.AssetsKeeper,
+		&app.DelegationKeeper, &app.AssetsKeeper, authAddrString,
 	)
 
 	// the SDK slashing module is used to slash validators in the case of downtime. it tracks

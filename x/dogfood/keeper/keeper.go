@@ -40,7 +40,12 @@ type (
 )
 
 // NewKeeper creates a new dogfood keeper.
-func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, epochsKeeper types.EpochsKeeper, operatorKeeper types.OperatorKeeper, delegationKeeper keeper.Keeper, restakingKeeper types.AssetsKeeper, avsKeeper types.AVSKeeper, authority string) Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
+	epochsKeeper types.EpochsKeeper, operatorKeeper types.OperatorKeeper,
+	delegationKeeper keeper.Keeper, restakingKeeper types.AssetsKeeper,
+	avsKeeper types.AVSKeeper, authority string,
+) Keeper {
 	k := Keeper{
 		cdc:              cdc,
 		storeKey:         storeKey,
@@ -113,6 +118,10 @@ func (k Keeper) mustValidateFields() {
 	types.PanicIfNil(k.delegationKeeper, "delegationKeeper")
 	types.PanicIfNil(k.restakingKeeper, "restakingKeeper")
 	types.PanicIfNil(k.avsKeeper, "avsKeeper")
+	// ensure authority is a valid bech32 address
+	if _, err := sdk.AccAddressFromBech32(k.authority); err != nil {
+		panic(fmt.Sprintf("authority address %s is invalid: %s", k.authority, err))
+	}
 }
 
 // Add the function to get detail information through the operatorKeeper within the dogfood

@@ -82,9 +82,10 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 }
 
 // GetAVSInfoByTaskAddress returns the AVS  which containing this task address
+// A task contract address can only be used by one avs
 // TODO:this function is frequently used while its implementation iterates over existing avs to find the target avs by task contract address,  we should use a reverse mapping to avoid iteration
 func (k *Keeper) GetAVSInfoByTaskAddress(ctx sdk.Context, taskAddr string) types.AVSInfo {
-	avs := types.AVSInfo{}
+	var avs types.AVSInfo
 	if taskAddr == "" {
 		return avs
 	}

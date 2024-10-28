@@ -129,22 +129,6 @@ interface IAVSManager {
     ) external returns (bool success);
 
 
-
-    /// @dev SubmitProof ,After processing the task contract, aggregate the signature and submit the processed proof
-    /// @param taskId The task ID of the task.
-    /// @param taskContractAddress The contract address of AVSTask.
-    /// @param aggregator The aggregator address.
-    /// @param avsAddress The address of AVS.
-    /// @param operatorStatus The status and proof of operators.
-    function submitProof(
-        string memory taskId,
-        string memory taskContractAddress,
-        string memory aggregator,
-        string memory avsAddress,
-        bytes calldata operatorStatus
-    ) external returns (bool success);
-
-
     /// @dev Called by the avs manager service register an operator as the owner of a BLS public key.
     /// @param sender The external address for calling this method.
     /// @param name the name of public keys

@@ -547,8 +547,8 @@ github.com/ChainSafe/go-schnorrkel v1.0.0/go.mod h1:dpzHYVxLZcp8pjlV+O+UR8K0Hp/z
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
 github.com/ExocoreNetwork/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812 h1:4P/4GZ89DOy9uNPDlEwebPytKltbimq8wn9XiuX96vw=
 github.com/ExocoreNetwork/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812/go.mod h1:w0vtRYI4I0/O8eihq6ZuDvlca4ZiYCKN6vpakG9zHcc=
-github.com/ExocoreNetwork/price-feeder v0.1.9 h1:1keqcZoYdW2XE+TQBYyStfUyLpNAbjgsw1grshdfPlQ=
-github.com/ExocoreNetwork/price-feeder v0.1.9/go.mod h1:/6yLPrHdUdKyZaKeQ0MNpYq2cBlT58ZokPHlh8ARZ9g=
+github.com/ExocoreNetwork/price-feeder v0.0.0-20241009094357-40e58e6f1694 h1:Qkm7hiwvp1WusBlOGZhPsRlzy1Yb6tXEeEZXo8W11JE=
+github.com/ExocoreNetwork/price-feeder v0.0.0-20241009094357-40e58e6f1694/go.mod h1:CgVrnt5K1Yp8/y7Dz/UFU0g3B86Hx9DjJHHiQz2z0rY=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=

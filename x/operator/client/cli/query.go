@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,6 +15,30 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 )
+
+type GenericQueryParams struct {
+	queryClient operatortypes.QueryClient
+	clientCtx   client.Context
+}
+
+func ValidOperatorAVSAddr(cmd *cobra.Command, originalOperatorAddr, originalAVSAddr string) (*operatortypes.OperatorAVSAddress, *GenericQueryParams, error) {
+	_, err := sdk.AccAddressFromBech32(originalOperatorAddr)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("invalid operator address,err:%s", err.Error())
+	}
+	if !common.IsHexAddress(originalAVSAddr) {
+		return nil, nil, xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidAddr)
+	}
+	clientCtx, err := client.GetClientQueryContext(cmd)
+	if err != nil {
+		return nil, nil, err
+	}
+	queryClient := operatortypes.NewQueryClient(clientCtx)
+	return &operatortypes.OperatorAVSAddress{
+		OperatorAddr: originalOperatorAddr,
+		AvsAddress:   strings.ToLower(originalAVSAddr),
+	}, &GenericQueryParams{queryClient: queryClient, clientCtx: clientCtx}, nil
+}
 
 // GetQueryCmd returns the parent command for all incentives CLI query commands.
 func GetQueryCmd() *cobra.Command {
@@ -37,6 +62,7 @@ func GetQueryCmd() *cobra.Command {
 		QueryOperatorSlashInfo(),
 		QueryAllOperatorsWithOptInAVS(),
 		QueryAllAVSsByOperator(),
+		GetOptInfo(),
 	)
 	return cmd
 }
@@ -251,31 +277,23 @@ func GetAllOperatorConsAddrs() *cobra.Command {
 // QueryOperatorUSDValue queries the opted-in USD value for the operator
 func QueryOperatorUSDValue() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "QueryOperatorUSDValue <operatorAddr> <avsAddr>",
-		Short: "Get the opted-in USD value for the operator",
-		Long:  "Get the opted-in USD value for the operator",
-		Args:  cobra.ExactArgs(2),
+		Use:     "QueryOperatorUSDValue <operatorAddr> <avsAddr>",
+		Short:   "Get the opted-in USD value",
+		Long:    "Get the opted-in USD value for the operator",
+		Example: "exocored query operator QueryOperatorUSDValue exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return xerrors.Errorf("invalid operator address,err:%s", err.Error())
-			}
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
 			if err != nil {
 				return err
 			}
-			queryClient := operatortypes.NewQueryClient(clientCtx)
-			req := &operatortypes.QueryOperatorUSDValueRequest{
-				Details: &operatortypes.OperatorAVSAddressDetails{
-					OperatorAddr: args[0],
-					AVSAddress:   args[1],
-				},
-			}
-			res, err := queryClient.QueryOperatorUSDValue(context.Background(), req)
+			res, err := genericQueryParams.queryClient.QueryOperatorUSDValue(context.Background(), &operatortypes.QueryOperatorUSDValueRequest{
+				OperatorAVSAddress: validOperatorAVSAddr,
+			})
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintProto(res)
+			return genericQueryParams.clientCtx.PrintProto(res)
 		},
 	}
 
@@ -291,13 +309,16 @@ func QueryAVSUSDValue() *cobra.Command {
 		Long:  "Get the USD value for the avs",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !common.IsHexAddress(args[0]) {
+				return xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidAddr)
+			}
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := operatortypes.NewQueryClient(clientCtx)
 			req := &operatortypes.QueryAVSUSDValueRequest{
-				AVSAddress: args[0],
+				AVSAddress: strings.ToLower(args[0]),
 			}
 			res, err := queryClient.QueryAVSUSDValue(context.Background(), req)
 			if err != nil {
@@ -314,16 +335,13 @@ func QueryAVSUSDValue() *cobra.Command {
 // QueryOperatorSlashInfo queries the slash information for the specified operator and AVS
 func QueryOperatorSlashInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "QueryOperatorSlashInfo <operatorAddr> <avsAddr>",
-		Short: "Get the the slash information for the operator",
-		Long:  "Get the the slash information for the operator",
-		Args:  cobra.ExactArgs(2),
+		Use:     "QueryOperatorSlashInfo <operatorAddr> <avsAddr>",
+		Short:   "Get the the slash information for the operator",
+		Long:    "Get the the slash information for the operator",
+		Example: "exocored query operator QueryOperatorSlashInfo exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return xerrors.Errorf("invalid operator address,err:%s", err.Error())
-			}
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
 			if err != nil {
 				return err
 			}
@@ -331,19 +349,15 @@ func QueryOperatorSlashInfo() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			queryClient := operatortypes.NewQueryClient(clientCtx)
 			req := &operatortypes.QueryOperatorSlashInfoRequest{
-				Details: &operatortypes.OperatorAVSAddressDetails{
-					OperatorAddr: args[0],
-					AVSAddress:   args[1],
-				},
-				Pagination: pageReq,
+				OperatorAVSAddress: validOperatorAVSAddr,
+				Pagination:         pageReq,
 			}
-			res, err := queryClient.QueryOperatorSlashInfo(context.Background(), req)
+			res, err := genericQueryParams.queryClient.QueryOperatorSlashInfo(context.Background(), req)
 			if err != nil {
 				return err
 			}
-			return clientCtx.PrintProto(res)
+			return genericQueryParams.clientCtx.PrintProto(res)
 		},
 	}
 
@@ -370,7 +384,7 @@ func QueryAllOperatorsWithOptInAVS() *cobra.Command {
 
 			queryClient := operatortypes.NewQueryClient(clientCtx)
 			req := operatortypes.QueryAllOperatorsByOptInAVSRequest{
-				Avs: args[0],
+				Avs: strings.ToLower(args[0]),
 			}
 			res, err := queryClient.QueryAllOperatorsWithOptInAVS(context.Background(), &req)
 			if err != nil {
@@ -412,6 +426,33 @@ func QueryAllAVSsByOperator() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetOptInfo queries opt info
+func GetOptInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "GetOptInfo <operatorAddr> <avsAddr>",
+		Short:   "Get opt info",
+		Long:    "Get opt info of specified operator and AVS",
+		Example: "exocored query operator GetOptInfo exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
+			if err != nil {
+				return err
+			}
+			res, err := genericQueryParams.queryClient.QueryOptInfo(context.Background(), &operatortypes.QueryOptInfoRequest{
+				OperatorAVSAddress: validOperatorAVSAddr,
+			})
+			if err != nil {
+				return err
+			}
+			return genericQueryParams.clientCtx.PrintProto(res)
+		},
+	}
+
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

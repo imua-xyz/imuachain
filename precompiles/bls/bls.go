@@ -82,12 +82,6 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 		bz, err = p.Verify(method, args)
 	case MethodFastAggregateVerify:
 		bz, err = p.FastAggregateVerify(method, args)
-	case MethodGeneratePrivateKey:
-		bz, err = p.GeneratePrivateKey(method, args)
-	case MethodPublicKey:
-		bz, err = p.PublicKey(method, args)
-	case MethodSign:
-		bz, err = p.Sign(method, args)
 	case MethodAggregatePubkeys:
 		bz, err = p.AggregatePubkeys(method, args)
 	case MethodAggregateSignatures:
@@ -113,9 +107,6 @@ func (Precompile) IsTransaction(methodID string) bool {
 	switch methodID {
 	case MethodVerify,
 		MethodFastAggregateVerify,
-		MethodGeneratePrivateKey,
-		MethodPublicKey,
-		MethodSign,
 		MethodAggregatePubkeys,
 		MethodAggregateSignatures,
 		MethodAddTwoPubkeys:

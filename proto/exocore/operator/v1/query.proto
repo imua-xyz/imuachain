@@ -31,24 +31,24 @@ message QueryAllOperatorsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// OperatorAVSAddressDetails includes the address of operator and AVS
-message OperatorAVSAddressDetails {
+// OperatorAVSAddress includes the address of operator and AVS
+message OperatorAVSAddress {
   // operator_addr should be the string type of sdk.AccAddress
   string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // avs_address is the address of the AVS - either an 0x address or a chainID.
-  string avs_address = 2 [(gogoproto.customname) = "AVSAddress"];
+  string avs_address = 2;
 }
 
 // QueryOperatorUSDValueRequest is the request to obtain the USD value for operator.
 message QueryOperatorUSDValueRequest {
-  // details is the operator and AVS address
-  OperatorAVSAddressDetails details = 1;
+  // operator_and_avs is the operator and AVS address
+  OperatorAVSAddress operator_and_avs = 1 [(gogoproto.embed) = true];;
 }
 
 // QueryOperatorUSDValueResponse is the response to obtain the USD value for operator.
 message QueryOperatorUSDValueResponse {
   // usd_info includes the self and total staking for the operator and AVS
-  OperatorOptedUSDValue usd_values  = 1
+  OperatorOptedUSDValue usd_values = 1
   [(gogoproto.customname) = "USDValues"];
 }
 
@@ -62,8 +62,8 @@ message QueryAVSUSDValueRequest {
 // QueryOperatorSlashInfoRequest is the request to obtain the slash information for the specified
 // operator and AVS
 message QueryOperatorSlashInfoRequest {
-  // details is the operator and AVS address
-  OperatorAVSAddressDetails details = 1;
+  // operator_and_avs is the operator and AVS address
+  OperatorAVSAddress operator_and_avs = 1 [(gogoproto.embed) = true];
   // pagination related options.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -213,6 +213,14 @@ message QueryAllAVSsByOperatorResponse {
   // avs_list is a list of avs addresses  .
   repeated string avs_list = 1;
 }
+
+// QueryOptInfoRequest is the request to obtain the opted information of specified operator
+// and AVS
+message QueryOptInfoRequest {
+  // operator_and_avs is the operator and AVS address
+  OperatorAVSAddress operator_and_avs = 1 [(gogoproto.embed) = true];
+}
+
 // Query defines the gRPC querier service.
 service Query {
   // QueryOperatorInfo queries the operator information.
@@ -257,7 +265,9 @@ service Query {
 
   // QueryOperatorUSDValue queries the opted-in USD value for the operator
   rpc QueryOperatorUSDValue(QueryOperatorUSDValueRequest) returns(QueryOperatorUSDValueResponse){
-    option (google.api.http).get = "/exocore/operator/v1/QueryOperatorUSDValue";
+    option (google.api.http).get =
+      "/exocore/operator/v1/QueryOperatorUSDValue/{operator_and_avs.operator_addr}/"
+      "{operator_and_avs.avs_address}";
   }
 
   // QueryAVSUSDValue queries the USD value for the AVS
@@ -267,7 +277,9 @@ service Query {
 
   // QueryOperatorSlashInfo queries the slash information for the specified operator and AVS
   rpc QueryOperatorSlashInfo(QueryOperatorSlashInfoRequest) returns(QueryOperatorSlashInfoResponse){
-    option (google.api.http).get = "/exocore/operator/v1/QueryOperatorSlashInfo";
+    option (google.api.http).get =
+      "/exocore/operator/v1/QueryOperatorSlashInfo/{operator_and_avs.operator_addr}/"
+      "{operator_and_avs.avs_address}";
   }
 
   // QueryAllOperatorConsAddrsByChainID queries all operators and their consensus addresses
@@ -292,6 +304,13 @@ service Query {
   rpc QueryAllAVSsByOperator(QueryAllAVSsByOperatorRequest) returns (QueryAllAVSsByOperatorResponse) {
     option (google.api.http) = {
       get: "/exocore/operator/v1/opt/avs_list/{operator}"
+    };
+  }
+
+  // QueryOptInfo queries specified opted information.
+  rpc QueryOptInfo(QueryOptInfoRequest) returns (OptedInfo) {
+    option (google.api.http) = {
+      get: "/exocore/operator/v1/opt_info/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}"
     };
   }
 }

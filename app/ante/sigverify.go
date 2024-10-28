@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	cosmosante "github.com/ExocoreNetwork/exocore/app/ante/cosmos"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -64,35 +65,7 @@ func ConsumeMultisignatureVerificationGas(
 	meter sdk.GasMeter, sig *signing.MultiSignatureData, pubkey multisig.PubKey,
 	params authtypes.Params, accSeq uint64,
 ) error {
-	pubkeys := pubkey.GetPubKeys()
-	size := sig.BitArray.Count()
-	if size != len(pubkeys) {
-		return errorsmod.Wrapf(errortypes.ErrInvalidPubKey, "bitarray length doesn't match the number of public keys")
-	}
-	if len(sig.Signatures) != sig.BitArray.NumTrueBitsBefore(size) {
-		return errorsmod.Wrapf(errortypes.ErrTooManySignatures, "number of signatures exceeds number of bits in bitarray")
-	}
-	// we have verified that size == len(pubkeys)
-	// and that the number of signatures == number of true bits in the bitarray
-	// so we can safely iterate over the pubkeys and signatures
-	sigIndex := 0
-
-	for i := 0; i < size; i++ {
-		if !sig.BitArray.GetIndex(i) {
-			// not signed
-			continue
-		}
-		sigV2 := signing.SignatureV2{
-			PubKey:   pubkeys[i],
-			Data:     sig.Signatures[sigIndex],
-			Sequence: accSeq,
-		}
-		err := SigVerificationGasConsumer(meter, sigV2, params)
-		if err != nil {
-			return err
-		}
-		sigIndex++
-	}
-
-	return nil
+	return cosmosante.ConsumeMultisignatureVerificationGasWithVerifier(
+		meter, sig, pubkey, params, accSeq, SigVerificationGasConsumer,
+	)
 }

@@ -243,7 +243,7 @@ func (k *Keeper) SetTaskResultInfo(
 		// #nosec G115
 		if epoch.CurrentEpoch <= int64(task.StartingEpoch)+int64(task.TaskResponsePeriod) {
 			return errorsmod.Wrap(
-				types.ErrSubmitTooLateError,
+				types.ErrSubmitTooSoonError,
 				fmt.Sprintf("SetTaskResultInfo:the TaskResponse period has not started , CurrentEpoch:%d", epoch.CurrentEpoch),
 			)
 		}

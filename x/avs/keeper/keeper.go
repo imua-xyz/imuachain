@@ -96,10 +96,11 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			// TODO: handle this better
 			startingEpoch = uint64(epoch.CurrentEpoch)
 		}
+
 		if err := k.ValidateAssetIDs(ctx, params.AssetID); err != nil {
 			return err
 		}
-		// The caller must ensure that the relevant addresses are set to be the appropriate format (hex/bech32)
+
 		avs := &types.AVSInfo{
 			Name:                params.AvsName,
 			AvsAddress:          params.AvsAddress,
@@ -146,7 +147,9 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 		if avsInfo == nil {
 			return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the avsaddress is :%s", params.AvsAddress))
 		}
-		if k.GetAVSInfoByTaskAddress(ctx, params.TaskAddr).AvsAddress != "" {
+		// Check here to ensure that the task address is only used  by one avs
+		avsAddress := k.GetAVSInfoByTaskAddress(ctx, params.TaskAddr).AvsAddress
+		if avsAddress != "" && avsAddress != avsInfo.Info.AvsAddress {
 			return errorsmod.Wrap(types.ErrAlreadyRegistered, fmt.Sprintf("this TaskAddr has already been used by other AVS,the TaskAddr is :%s", params.TaskAddr))
 		}
 		// TODO: The AvsUnbondingPeriod is used for undelegation, but this check currently blocks updates to AVS information. Remove this check to allow AVS updates, while detailed control mechanisms for updates should be considered and implemented in the future.
@@ -429,7 +432,7 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *ChallengeParam
 	}
 	if epoch.CurrentEpoch <= int64(taskInfo.StartingEpoch)+int64(taskInfo.TaskResponsePeriod)+int64(taskInfo.TaskStatisticalPeriod) {
 		return errorsmod.Wrap(
-			types.ErrSubmitTooLateError,
+			types.ErrSubmitTooSoonError,
 			fmt.Sprintf("SetTaskResultInfo:the challenge period has not started , CurrentEpoch:%d", epoch.CurrentEpoch),
 		)
 	}
