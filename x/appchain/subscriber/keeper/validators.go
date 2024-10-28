@@ -70,6 +70,7 @@ func (k Keeper) ApplyValidatorChanges(
 			}
 		case false:
 			if change.Power > 0 {
+				cc, writeFunc := ctx.CacheContext()
 				ocVal, err := commontypes.NewSubscriberValidator(
 					consAddress, change.Power, wrappedKey.ToSdkKey(),
 				)
@@ -83,7 +84,15 @@ func (k Keeper) ApplyValidatorChanges(
 					continue
 				}
 				logger.Info("adding validator", "consAddress", consAddress)
-				k.SetSubscriberValidator(ctx, ocVal)
+				k.SetSubscriberValidator(cc, ocVal)
+				if err := k.Hooks().AfterValidatorBonded(cc, consAddress, nil); err != nil {
+					logger.Error(
+						"failed to execute AfterValidatorBonded hook",
+						"error", err,
+					)
+					continue
+				}
+				writeFunc()
 			} else {
 				// edge case: we received an update for 0 power
 				// but the validator is already deleted. Do not forward

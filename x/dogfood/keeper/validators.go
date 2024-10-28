@@ -64,13 +64,13 @@ func (k Keeper) ApplyValidatorChanges(
 				val.Power = change.Power
 				// guard for errors within the hooks.
 				cc, writeFunc := ctx.CacheContext()
-				k.SetExocoreValidator(ctx, val)
+				k.SetExocoreValidator(cc, val)
 				// sdk slashing.AfterValidatorCreated stores the lookup from cons address to
 				// cons pub key. it loads the validator from `valAddr` (operator address)
 				// via stakingkeeeper.Validator(ctx, valAddr)
 				// then it fetches the cons pub key from said validator to generate the lookup
 				found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-					ctx, utils.ChainIDWithoutRevision(ctx.ChainID()), addr,
+					cc, utils.ChainIDWithoutRevision(cc.ChainID()), addr,
 				)
 				if !found {
 					// should never happen

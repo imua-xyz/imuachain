@@ -94,3 +94,11 @@ type IBCTransferKeeper interface {
 		*transfertypes.MsgTransfer,
 	) (*transfertypes.MsgTransferResponse, error)
 }
+
+// SubscriberHooks defines the hooks used by other modules to subscribe to x/appchain/subscriber
+// related events.
+type SubscriberHooks interface {
+	AfterValidatorBonded(
+		sdk.Context, sdk.ConsAddress, sdk.ValAddress,
+	) error
+}

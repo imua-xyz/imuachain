@@ -27,6 +27,7 @@ type Keeper struct {
 	ibcCoreKeeper     commontypes.IBCCoreKeeper
 	ibcTransferKeeper commontypes.IBCTransferKeeper
 	feeCollectorName  string
+	subscriberHooks   commontypes.SubscriberHooks
 }
 
 // NewKeeper creates a new subscriber keeper.
@@ -199,4 +200,37 @@ func (k Keeper) HasOutstandingDowntime(
 ) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(types.OutstandingDowntimeKey(consAddress))
+}
+
+// NewEmptyKeeper creates a new empty subscriber keeper. It is used for temporary initialization
+// of the keeper in app.go file.
+func NewEmptyKeeper(
+	cdc codec.BinaryCodec,
+	key storetypes.StoreKey,
+) Keeper {
+	return Keeper{
+		cdc:      cdc,
+		storeKey: key,
+	}
+}
+
+// SetHooks sets the hooks for the subscriber keeper. It panics if hooks are already set, or
+// if an empty hooks object is supplied.
+func (k *Keeper) SetHooks(sh commontypes.SubscriberHooks) *Keeper {
+	if k.subscriberHooks != nil {
+		panic("cannot set subscriber hooks twice")
+	}
+	if sh == nil {
+		panic("cannot set nil subscriber hooks")
+	}
+	k.subscriberHooks = sh
+	return k
+}
+
+// Hooks returns the hooks registered to the module.
+func (k Keeper) Hooks() commontypes.SubscriberHooks {
+	if k.subscriberHooks != nil {
+		return k.subscriberHooks
+	}
+	return commontypes.MultiSubscriberHooks{}
 }
