@@ -86,18 +86,24 @@ func CmdQueryStakerInfo() *cobra.Command {
 
 func CmdQueryStakerList() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-staker-list",
+		Use:   "show-staker-list [assetID]",
 		Short: "shows staker list including all staker addresses",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) (err error) {
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 
+			assetID := args[0]
+
+			if _, _, err := assetstypes.ValidateID(assetID, true, false); err != nil {
+				return err
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.StakerList(cmd.Context(), &types.QueryStakerListRequest{})
+			res, err := queryClient.StakerList(cmd.Context(), &types.QueryStakerListRequest{AssetId: assetID})
 			if err != nil {
 				return err
 			}
