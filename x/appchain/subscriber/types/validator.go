@@ -26,14 +26,14 @@ func NewSubscriberChainValidator(
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces.
 // It is required to ensure that ConsPubKey below works.
-func (ocv SubscriberChainValidator) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+func (scv SubscriberChainValidator) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 	var pk cryptotypes.PubKey
-	return unpacker.UnpackAny(ocv.Pubkey, &pk)
+	return unpacker.UnpackAny(scv.Pubkey, &pk)
 }
 
 // ConsPubKey returns the validator PubKey as a cryptotypes.PubKey.
-func (ocv SubscriberChainValidator) ConsPubKey() (cryptotypes.PubKey, error) {
-	pk, ok := ocv.Pubkey.GetCachedValue().(cryptotypes.PubKey)
+func (scv SubscriberChainValidator) ConsPubKey() (cryptotypes.PubKey, error) {
+	pk, ok := scv.Pubkey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
 		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidType,
