@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
@@ -28,6 +29,7 @@ var (
 	_ evidencetypes.StakingKeeper = Keeper{}
 	_ clienttypes.StakingKeeper   = Keeper{}
 	_ genutiltypes.StakingKeeper  = Keeper{}
+	_ minttypes.StakingKeeper     = Keeper{}
 )
 
 // GetParams returns an empty staking params. It is used by the interfaces above, but the returned
@@ -134,10 +136,10 @@ func (k Keeper) Delegation(
 	panic("unimplemented on this keeper")
 }
 
-// Unused by evidence and slashing. However, I have set it up to report the correct number
-// anyway. Alternatively we could panic here as well.
+// Unused by evidence and slashing. However, I have set it up to report 0.
+// Alternatively we could panic here as well.
 func (k Keeper) MaxValidators(ctx sdk.Context) uint32 {
-	return k.GetParams(ctx).MaxValidators
+	return 0
 }
 
 // In interchain-security, this does seem to have been implemented. However, I did not see
@@ -162,4 +164,18 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(
 	sdk.Context,
 ) (updates []abci.ValidatorUpdate, err error) {
 	return
+}
+
+// BondedRatio is the amount of tokens currently bonded, as a proportion of the total supply.
+// It refers to only the staking tokens, of course, and is correctly set to zero since
+// subscribers do not have staking tokens. As a consequence of this approach, subscribers must
+// instead use a custom mint function if they use the x/mint module.
+func (k Keeper) BondedRatio(sdk.Context) sdk.Dec {
+	return sdk.ZeroDec()
+}
+
+// StakingTokenSupply returns the total amount of staking tokens in the system. See
+// `BondedRatio` to understand why this is zero, and its consequences.
+func (k Keeper) StakingTokenSupply(ctx sdk.Context) sdk.Int {
+	return sdk.ZeroInt()
 }

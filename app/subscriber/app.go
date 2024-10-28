@@ -64,6 +64,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/group"
 	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+	"github.com/cosmos/cosmos-sdk/x/mint"
+	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -128,6 +131,7 @@ var (
 		vesting.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		subscriber.AppModuleBasic{},
+		mint.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -137,6 +141,7 @@ var (
 		ibctransfertypes.ModuleName:                       {authtypes.Minter, authtypes.Burner},
 		subscribertypes.SubscriberRedistributeName:        nil,
 		subscribertypes.SubscriberToSendToCoordinatorName: nil,
+		minttypes.ModuleName:                              {authtypes.Minter},
 	}
 )
 
@@ -190,6 +195,7 @@ type App struct {
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	SubscriberKeeper      subscriberkeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
+	MintKeeper            mintkeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper        capabilitykeeper.ScopedKeeper
@@ -252,6 +258,7 @@ func New(
 		icacontrollertypes.StoreKey,
 		consensusparamtypes.StoreKey,
 		subscribertypes.StoreKey,
+		minttypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -405,6 +412,21 @@ func New(
 	subscriberModule := subscriber.NewAppModule(appCodec, app.SubscriberKeeper)
 	subscriberIbcModule := subscriber.NewIBCModule(app.SubscriberKeeper)
 
+	app.MintKeeper = mintkeeper.NewKeeper(
+		appCodec, keys[minttypes.StoreKey],
+		app.SubscriberKeeper, app.AccountKeeper, app.BankKeeper,
+		authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+	// for testing and CI purposes, this function is sufficient.
+	var inflationFunction minttypes.InflationCalculationFn = func(
+		_ sdk.Context, _ minttypes.Minter, _ minttypes.Params, _ sdk.Dec,
+	) sdk.Dec {
+		return sdk.MustNewDecFromStr("0.05")
+	}
+	mintModule := mint.NewAppModule(
+		appCodec, app.MintKeeper, app.AccountKeeper, inflationFunction, app.GetSubspace(minttypes.ModuleName),
+	)
+
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec,
@@ -510,6 +532,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		subscriberModule,
+		mintModule,
 		crisis.NewAppModule(
 			app.CrisisKeeper,
 			skipGenesisInvariants,
@@ -539,7 +562,8 @@ func New(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
-		subscribertypes.ModuleName,
+		subscribertypes.ModuleName, // TrackHistoricalInfo + map height to valsetID
+		minttypes.ModuleName,       // mint to FeeCollector (independent of subscriber)
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -562,6 +586,7 @@ func New(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		subscribertypes.ModuleName,
+		minttypes.ModuleName, // no-op
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -588,7 +613,8 @@ func New(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
-		subscribertypes.ModuleName,
+		subscribertypes.ModuleName, // sets params and inits val set
+		minttypes.ModuleName,       // sets params
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
 	app.mm.SetOrderExportGenesis(genesisModuleOrder...)
