@@ -42,6 +42,14 @@ func (k *Keeper) DelegateAssetToOperator(
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, delegationParams := range delegationParamsList {
+		if !k.operatorKeeper.IsOperator(cachedCtx, delegationParams.OperatorAddress) {
+			logger.Error(
+				"operator not found",
+				"operator", delegationParams.OperatorAddress,
+			)
+			// user input is wrong, fail.
+			return nil, types.ErrOperatorNotExist.Wrap(delegationParams.OperatorAddress.String())
+		}
 		if err := k.DelegateTo(cachedCtx, delegationParams); err != nil {
 			logger.Error(
 				"failed to delegate asset",
