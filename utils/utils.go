@@ -246,9 +246,9 @@ func AccumulateChanges(
 }
 
 // AppendMany appends a variable number of byte slices together
-func AppendMany(byteses ...[]byte) (out []byte) {
-	for _, bytes := range byteses {
-		out = append(out, bytes...)
+func AppendMany(slices ...[]byte) (out []byte) {
+	for _, slice := range slices {
+		out = append(out, slice...)
 	}
 	return out
 }
