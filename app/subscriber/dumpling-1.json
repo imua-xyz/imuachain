@@ -1,0 +1,24 @@
+{
+  "chain_id": "dumpling-1",
+  "epoch_identifier": "minute",
+  "asset_ids": [
+    "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65",
+    "0x0000000000000000000000000000000000000000_0x0"
+  ],
+  "max_validators": 50,
+  "min_self_delegation_usd": "100",
+  "subscriber_params": {
+    "coordinator_fee_pool_addr_str": "",
+    "distribution_transmission_channel": "",
+    "blocks_per_distribution_transmission": "40",
+    "subscriber_redistribution_fraction": "0.85",
+    "reward_denom": "subcoin",
+    "ibc_timeout_period": "2419200",
+    "transfer_timeout_period": "3600",
+    "unbonding_period": "1728000",
+    "historical_entries": "1000",
+    "slash_fraction_downtime": "0.01",
+    "downtime_jail_duration": "600",
+    "slash_fraction_double_sign": "0.05"
+  }
+}
