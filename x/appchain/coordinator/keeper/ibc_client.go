@@ -183,7 +183,7 @@ func (k Keeper) MakeSubscriberGenesis(
 	if err != nil {
 		return nil, nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidHeight,
-			"error %s calculating self trusting period for chain %s",
+			"error %s calculating self trusting period against chain %s",
 			err, chainID,
 		)
 	}
@@ -194,7 +194,7 @@ func (k Keeper) MakeSubscriberGenesis(
 	if err != nil {
 		return nil, nil, errorsmod.Wrapf(
 			clienttypes.ErrConsensusStateNotFound,
-			"error %s getting self consensus state for chain %s",
+			"error %s getting self consensus state against chain %s",
 			err, chainID,
 		)
 	}
