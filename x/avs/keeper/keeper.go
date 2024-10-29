@@ -385,14 +385,11 @@ func (k Keeper) IterateAVSInfo(ctx sdk.Context, fn func(index int64, avsInfo typ
 }
 
 func (k Keeper) GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSInfo)
-	value := store.Get(common.HexToAddress(addr).Bytes())
-	if value == nil {
-		return nil, types.ErrNoKeyInTheStore.Wrapf("GetAVSInfo: key is %s", addr)
+	avsInfoResp, err := k.GetAVSInfo(ctx, addr)
+	if err != nil {
+		return nil, err
 	}
-	avsInfo := types.AVSInfo{}
-	k.cdc.MustUnmarshal(value, &avsInfo)
-
+	avsInfo := avsInfoResp.Info
 	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
 	if !found {
 		return nil, types.ErrEpochNotFound.Wrapf("epoch info not found %s", avsInfo.EpochIdentifier)

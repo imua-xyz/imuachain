@@ -118,12 +118,12 @@ func (suite *OperatorTestSuite) TestInitializeSnapshot() {
 		}
 	}
 	expectedSnapshot := types.VotingPowerSnapshot{
-		TotalVotingPower:  avsUSDValue,
-		VotingPowerSet:    expectedVotingPowerSet,
-		LastChangedHeight: epochInfo.CurrentEpochStartHeight,
-		EpochIdentifier:   epochInfo.Identifier,
-		EpochNumber:       epochInfo.CurrentEpoch,
-		BlockTime:         suite.Ctx.BlockTime(),
+		TotalVotingPower:     avsUSDValue,
+		OperatorVotingPowers: expectedVotingPowerSet,
+		LastChangedHeight:    epochInfo.CurrentEpochStartHeight,
+		EpochIdentifier:      epochInfo.Identifier,
+		EpochNumber:          epochInfo.CurrentEpoch,
+		BlockTime:            suite.Ctx.BlockTime(),
 	}
 	suite.Equal(expectedSnapshot, *snapshot)
 
@@ -185,12 +185,12 @@ func (suite *OperatorTestSuite) TestSnapshotVPChanged() {
 	_, snapshotAfterUpdate, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 
-	addVotingPower := initialSnapshot.VotingPowerSet[index].VotingPower
+	addVotingPower := initialSnapshot.OperatorVotingPowers[index].VotingPower
 	expectedTotalVotingPower := initialSnapshot.TotalVotingPower.Add(addVotingPower)
-	expectedVotingPowerSet := initialSnapshot.VotingPowerSet
+	expectedVotingPowerSet := initialSnapshot.OperatorVotingPowers
 	expectedVotingPowerSet[index].VotingPower = expectedVotingPowerSet[index].VotingPower.Add(addVotingPower)
 	suite.Equal(expectedTotalVotingPower, snapshotAfterUpdate.TotalVotingPower)
-	suite.Equal(expectedVotingPowerSet, snapshotAfterUpdate.VotingPowerSet)
+	suite.Equal(expectedVotingPowerSet, snapshotAfterUpdate.OperatorVotingPowers)
 	suite.Equal(initialSnapshot.EpochNumber+1, snapshotAfterUpdate.EpochNumber)
 }
 
@@ -209,8 +209,8 @@ func (suite *OperatorTestSuite) TestSnapshotWithOptOut() {
 	suite.runToEpochEnd()
 	_, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
-	suite.Equal(operatorNumber-1, len(snapshot.VotingPowerSet))
-	votingPower := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshot.VotingPowerSet)
+	suite.Equal(operatorNumber-1, len(snapshot.OperatorVotingPowers))
+	votingPower := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshot.OperatorVotingPowers)
 	suite.Nil(votingPower)
 
 	snapshotHelper, err = suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, suite.avsAddr)
@@ -226,9 +226,9 @@ func (suite *OperatorTestSuite) TestSnapshotWithOptOut() {
 	_, snapshot, err = suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 	suite.Equal(suite.Ctx.BlockHeight(), snapshot.LastChangedHeight)
-	suite.Equal(0, len(snapshot.VotingPowerSet))
+	suite.Equal(0, len(snapshot.OperatorVotingPowers))
 	for i := 0; i < operatorNumber; i++ {
-		votingPower = types.GetSpecifiedVotingPower(testHelper.operators[i].String(), snapshot.VotingPowerSet)
+		votingPower = types.GetSpecifiedVotingPower(testHelper.operators[i].String(), snapshot.OperatorVotingPowers)
 		suite.Nil(votingPower)
 	}
 	suite.runToEpochEnd()
@@ -262,8 +262,8 @@ func (suite *OperatorTestSuite) TestSnapshotWithSlash() {
 	_, snapshotAfterSlash, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 	suite.Equal(suite.Ctx.BlockHeight(), snapshotAfterSlash.LastChangedHeight)
-	operatorVPBeforeSlash := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshotBeforeSlash.VotingPowerSet)
-	operatorVPAfterSlash := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshotAfterSlash.VotingPowerSet)
+	operatorVPBeforeSlash := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshotBeforeSlash.OperatorVotingPowers)
+	operatorVPAfterSlash := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshotAfterSlash.OperatorVotingPowers)
 	suite.Equal(operatorVPBeforeSlash.VotingPower.Mul(remainingProportion), operatorVPAfterSlash.VotingPower)
 
 	snapshotHelper, err := suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, suite.avsAddr)

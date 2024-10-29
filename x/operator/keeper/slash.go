@@ -159,13 +159,13 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	}
 	// get the historical voting power from the snapshot for the other AVSs
 	if !parameter.IsDogFood {
-		votingPower := types.GetSpecifiedVotingPower(parameter.Operator.String(), snapshot.VotingPowerSet)
+		votingPower := types.GetSpecifiedVotingPower(parameter.Operator.String(), snapshot.OperatorVotingPowers)
 		if votingPower == nil {
 			return types.ErrFailToGetHistoricalVP.Wrapf("slash: the operator isn't in the voting power set, addr:%s", parameter.Operator)
 		}
 		parameter.Power = votingPower.VotingPower.TruncateInt64()
 		if parameter.Power < 0 {
-			return types.ErrInvalidSlashPower.Wrapf("slash: valid voting power, the power is:%v", parameter.Power)
+			return types.ErrInvalidSlashPower.Wrapf("slash: invalid voting power, power:%v", parameter.Power)
 		}
 	}
 	if parameter.Power == 0 {

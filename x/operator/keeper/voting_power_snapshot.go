@@ -22,7 +22,11 @@ func (k *Keeper) GetVotingPowerSnapshot(ctx sdk.Context, key []byte) (*types.Vot
 	var ret types.VotingPowerSnapshot
 	value := store.Get(key)
 	if value == nil {
-		return nil, types.ErrNoKeyInTheStore.Wrapf("GetVotingPowerSnapshot: key is %s", key)
+		avsAddr, height, err := types.ParseVotingPowerSnapshotKey(key)
+		if err != nil {
+			return nil, err
+		}
+		return nil, types.ErrNoKeyInTheStore.Wrapf("GetVotingPowerSnapshot: invalid key, avs:%s height:%v", avsAddr, height)
 	}
 	k.cdc.MustUnmarshal(value, &ret)
 	return &ret, nil
@@ -154,7 +158,7 @@ func (k *Keeper) UpdateSnapshotHelper(ctx sdk.Context, avsAddr string, opFunc fu
 func (k *Keeper) SetOptOutFlag(ctx sdk.Context, avsAddr string, hasOptOut bool) error {
 	opFunc := func(helper *types.SnapshotHelper) error {
 		helper.HasOptOut = hasOptOut
-		return nil
+		return nil // Reserve for future error handling
 	}
 	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
 }
@@ -162,7 +166,7 @@ func (k *Keeper) SetOptOutFlag(ctx sdk.Context, avsAddr string, hasOptOut bool) 
 func (k *Keeper) SetSlashFlag(ctx sdk.Context, avsAddr string, hasSlash bool) error {
 	opFunc := func(helper *types.SnapshotHelper) error {
 		helper.HasSlash = hasSlash
-		return nil
+		return nil // Reserve for future error handling
 	}
 	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
 }
@@ -170,7 +174,7 @@ func (k *Keeper) SetSlashFlag(ctx sdk.Context, avsAddr string, hasSlash bool) er
 func (k *Keeper) SetLastChangedHeight(ctx sdk.Context, avsAddr string, lastChangeHeight int64) error {
 	opFunc := func(helper *types.SnapshotHelper) error {
 		helper.LastChangedHeight = lastChangeHeight
-		return nil
+		return nil // Reserve for future error handling
 	}
 	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
 }
@@ -201,6 +205,7 @@ func (k *Keeper) HasSnapshotHelper(ctx sdk.Context, avsAddr string) bool {
 func (k *Keeper) HasSlash(ctx sdk.Context, avsAddr string) bool {
 	helper, err := k.GetSnapshotHelper(ctx, avsAddr)
 	if err != nil {
+		ctx.Logger().Error("Failed to get SnapshotHelper in HasSlash", "avsAddr", avsAddr, "error", err)
 		return false
 	}
 	return helper.HasSlash

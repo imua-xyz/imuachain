@@ -73,7 +73,7 @@ message VotingPowerSnapshot {
   ];
   // operator_voting_powers records the active voting power of all operators
   // for the specified AVS
-  repeated OperatorVotingPower voting_power_set = 2;
+  repeated OperatorVotingPower operator_voting_powers = 2;
   // last_changed_height is used to indicate the height of most recent change when
   // the voting_power_set is nil, which can help to fall back to the correct epoch height.
   int64 last_changed_height = 3;

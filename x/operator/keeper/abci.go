@@ -24,7 +24,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	// set the voting power to zero if an error is returned, which may prevent malicious behavior
 	// where errors are intentionally triggered to avoid updating the voting power.
 	if getAssetsErr != nil || assets == nil || getSelfDelegationErr != nil {
-		ctx.Logger().Info("UpdateVotingPower the assets list supported by AVS is nil or can't get AVS info", "getAssetsErr", getAssetsErr, "getSelfDelegationErr", getSelfDelegationErr)
+		ctx.Logger().Error("UpdateVotingPower the assets list supported by AVS is nil or can't get AVS info", "getAssetsErr", getAssetsErr, "getSelfDelegationErr", getSelfDelegationErr)
 		// using cache context to ensure the atomicity of the operation.
 		cc, writeFunc := ctx.CacheContext()
 		// clear the voting power regarding this AVS if there isn't any assets supported by it.
@@ -118,7 +118,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	// When the snapshot helper does not exist, it represents the initial state of AVS,
 	// where no snapshot information has been stored. Therefore, it is necessary to store
 	// both the snapshot and the helper information.
-	var snapshotHelper operatortypes.SnapshotHelper
+	snapshotHelper := operatortypes.SnapshotHelper{}
 	if !k.HasSnapshotHelper(cc, avsAddr) {
 		isSnapshotChanged = true
 	} else {
@@ -154,7 +154,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	isSetSnapshot := true
 	if snapshotHelper.HasOptOut || isSnapshotChanged {
 		votingPowerSnapshot.TotalVotingPower = avsVotingPower
-		votingPowerSnapshot.VotingPowerSet = votingPowerSet
+		votingPowerSnapshot.OperatorVotingPowers = votingPowerSet
 		snapshotHelper.LastChangedHeight = snapshotHeight
 		// clear the hasOptOut flag if it's certain that the snapshot will be updated
 		snapshotHelper.HasOptOut = false
@@ -193,9 +193,12 @@ func (k *Keeper) ClearVotingPowerSnapshot(ctx sdk.Context, avs string) error {
 	}
 
 	clearTime := ctx.BlockTime().Add(-epochInfo.Duration * time.Duration(unbondingDuration))
+	if clearTime.After(ctx.BlockTime()) {
+		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: clearTime %s is in the future", clearTime)
+	}
 	err = k.RemoveVotingPowerSnapshot(ctx, avs, clearTime)
 	if err != nil {
-		ctx.Logger().Error("Failed to get the avs epoch information", "avs", avs, "error", err)
+		ctx.Logger().Error("Failed to remove voting power snapshot", "avs", avs, "error", err)
 		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: failed to remove voting power snapshot, err:%s, avs:%s", err, avs)
 	}
 	return nil
