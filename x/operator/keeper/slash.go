@@ -5,6 +5,7 @@ import (
 
 	"github.com/ExocoreNetwork/exocore/utils"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	errorsmod "cosmossdk.io/errors"
@@ -202,6 +203,7 @@ func (k Keeper) SlashWithInfractionReason(
 		SlashID:          slashID,
 		SlashEventHeight: infractionHeight,
 		SlashProportion:  slashFactor,
+		SlashContract:    common.Address{}.String(),
 	}
 	err := k.Slash(ctx, slashParam)
 	if err != nil {

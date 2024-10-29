@@ -29,9 +29,10 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 	suite.NoError(err)
 	suite.CheckLengthOfValidatorUpdates(0, nil, "register operator but don't opt in")
 
-	// opt-in with a key
+	// opt-in with a key - it will fail because there is not enough self delegation to opt-in
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
-	_, avsAddress := suite.App.AVSManagerKeeper.IsAVSByChainID(suite.Ctx, chainIDWithoutRevision)
+	found, avsAddress := suite.App.AVSManagerKeeper.IsAVSByChainID(suite.Ctx, chainIDWithoutRevision)
+	suite.True(found, "AVS not found")
 	key := utiltx.GenerateConsensusKey()
 	_, err = suite.OperatorMsgServer.OptIntoAVS(sdk.WrapSDKContext(suite.Ctx), &operatortypes.OptIntoAVSReq{
 		FromAddress:   operatorAddressString,
@@ -114,7 +115,7 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 		assetDecimals,
 		0, // price decimals
 	)
-	// opt in again when the self delegation meet the requirement
+	// opt in successfully after the self delegation meet the requirement
 	_, err = suite.OperatorMsgServer.OptIntoAVS(sdk.WrapSDKContext(suite.Ctx), &operatortypes.OptIntoAVSReq{
 		FromAddress:   operatorAddressString,
 		AvsAddress:    avsAddress,

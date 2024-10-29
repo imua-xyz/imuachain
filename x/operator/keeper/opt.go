@@ -82,15 +82,21 @@ func (k *Keeper) OptIn(
 // OptInWithConsKey is a wrapper function to call OptIn and then SetOperatorConsKeyForChainID.
 // The caller must ensure that the operatorAddress passed is valid and that the AVS is a chain-type AVS.
 func (k Keeper) OptInWithConsKey(
-	ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr string, key keytypes.WrappedConsKey,
+	originalCtx sdk.Context, operatorAddress sdk.AccAddress, avsAddr string, key keytypes.WrappedConsKey,
 ) error {
-	err := k.OptIn(ctx, operatorAddress, avsAddr)
-	if err != nil {
+	logger := originalCtx.Logger()
+	ctx, writeFunc := originalCtx.CacheContext()
+	if err := k.OptIn(ctx, operatorAddress, avsAddr); err != nil {
+		logger.Error("OptInWithConsKey", "error", err)
 		return err
 	}
 	chainID, _ := k.avsKeeper.GetChainIDByAVSAddr(ctx, avsAddr)
-	k.Logger(ctx).Info("OptInWithConsKey", "chainID", chainID)
-	return k.SetOperatorConsKeyForChainID(ctx, operatorAddress, chainID, key)
+	if err := k.SetOperatorConsKeyForChainID(ctx, operatorAddress, chainID, key); err != nil {
+		logger.Error("OptInWithConsKey", "error", err)
+		return err
+	}
+	writeFunc()
+	return nil
 }
 
 // OptOut call this function to opt out of AVS
