@@ -379,9 +379,13 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 }
 
 func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
-	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetAVSInfo]
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetAVSEpochIdentifier]
 	avsAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-
+	testAVSUnbondingPeriod := 7
+	testMinSelfDelegation := 10
+	testMinOptInOperators := 100
+	testMinTotalStakeAmount := 1000
+	testStartingEpoch := 1
 	setUp := func() {
 		avsName := "avsTest"
 		avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
@@ -392,12 +396,12 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 			SlashAddr:           utiltx.GenerateAddress().String(),
 			AvsOwnerAddress:     avsOwnerAddress,
 			AssetIDs:            assetID,
-			AvsUnbondingPeriod:  7,
-			MinSelfDelegation:   10,
+			AvsUnbondingPeriod:  uint64(testAVSUnbondingPeriod),
+			MinSelfDelegation:   uint64(testMinSelfDelegation),
 			EpochIdentifier:     epochstypes.DayEpochID,
-			StartingEpoch:       1,
-			MinOptInOperators:   100,
-			MinTotalStakeAmount: 1000,
+			StartingEpoch:       uint64(testStartingEpoch),
+			MinOptInOperators:   uint64(testMinOptInOperators),
+			MinTotalStakeAmount: uint64(testMinTotalStakeAmount),
 			AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 			AvsReward:           sdk.MustNewDecFromStr("0.002"),
 			TaskAddr:            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
@@ -418,7 +422,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 			func(bz []byte) {
 				var out string
 
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetAVSInfo, bz)
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetAVSEpochIdentifier, bz)
 				suite.Require().NoError(err, "failed to unpack output", err)
 				suite.Require().Equal(epochstypes.DayEpochID, out)
 			},
@@ -433,7 +437,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 		suite.Run(tc.name, func() {
 			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
 
-			bz, err := suite.precompile.GetAVSInfo(suite.Ctx, contract, &method, tc.malleate())
+			bz, err := suite.precompile.GetAVSEpochIdentifier(suite.Ctx, contract, &method, tc.malleate())
 
 			if tc.expErr {
 				suite.Require().Error(err)
@@ -449,7 +453,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 
 func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodIsOperator]
-	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	opAccAddr, _ := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
 
 	testCases := []avsTestCases{
 		{
@@ -457,7 +461,7 @@ func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 			func() []interface{} {
 				suite.prepareOperator()
 				return []interface{}{
-					operatorAddr,
+					common.BytesToAddress(opAccAddr),
 				}
 			},
 			func(bz []byte) {

@@ -211,7 +211,13 @@ message DeRegisterAVSResponse {
   // avs information
   AVSInfo info = 2;
 }
-
+// It is a two-phase submission with two values, 0 and 1
+enum Phase {
+  // the first phase (pre-commit)
+  PHASE_PREPARE = 0;
+  // the second phase
+  PHASE_DO_COMMIT = 1;
+}
 // TaskResultInfo is the operator sign task info result.
 message TaskResultInfo {
   // operator_address operator address
@@ -228,7 +234,7 @@ message TaskResultInfo {
   uint64 task_id = 6;
   // phase this field is used to solve the problem of task results being copied by other operators.
   // It is a two-phase submission with two values, 0 and 1
-  uint32 phase = 7;
+  Phase phase = 7;
 }
 
 // SubmitTaskResultReq is the request to submit task results.

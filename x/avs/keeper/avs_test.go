@@ -120,10 +120,16 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	suite.NoError(err)
 	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)
 	suite.Equal(avsAddress, info.GetInfo().AvsAddress)
-	suite.CommitAfter(48*time.Hour + time.Nanosecond)
-	suite.CommitAfter(48*time.Hour + time.Nanosecond)
-	suite.CommitAfter(48*time.Hour + time.Nanosecond)
-	suite.CommitAfter(48*time.Hour + time.Nanosecond)
+
+	epoch, _ := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
+	// Numbered loops for epoch ends
+	for epochEnd := epoch.CurrentEpoch; epochEnd <= int64(info.Info.StartingEpoch)+2; epochEnd++ {
+		suite.CommitAfter(time.Hour * 24)
+		epoch, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
+		suite.Equal(found, true)
+		suite.Equal(epoch.CurrentEpoch, epochEnd+1)
+	}
+
 	avsParams.Action = avstypes.DeRegisterAction
 	avsParams.CallerAddress, err = sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)

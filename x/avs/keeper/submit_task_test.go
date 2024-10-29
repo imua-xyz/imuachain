@@ -187,7 +187,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseOne() {
 		TaskResponseHash:    "",
 		TaskResponse:        nil,
 		BlsSignature:        sig.Marshal(),
-		Phase:               uint32(avstypes.PreparePhase),
+		Phase:               avstypes.Phase(avstypes.PreparePhase),
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, suite.operatorAddr.String(), info)
 	suite.NoError(err)
@@ -216,7 +216,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseTwo() {
 		TaskResponseHash:    hash.String(),
 		TaskResponse:        jsonData,
 		BlsSignature:        sig.Marshal(),
-		Phase:               uint32(avstypes.DoCommitPhase),
+		Phase:               avstypes.Phase(avstypes.DoCommitPhase),
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, suite.operatorAddr.String(), info)
 	suite.NoError(err)

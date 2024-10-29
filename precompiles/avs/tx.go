@@ -292,7 +292,7 @@ func (p Precompile) RegisterBLSPublicKey(
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	blsParams.Operator = callerAddress[:]
+	blsParams.OperatorAddress = callerAddress[:]
 	name, ok := args[1].(string)
 	if !ok || name == "" {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", name)
@@ -374,21 +374,27 @@ func (p Precompile) OperatorSubmitTask(
 
 	phase, ok := args[5].(uint8)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 5, "uint8", phase)
+		return nil, fmt.Errorf("invalid phase type: expected uint8, got %T", args[5])
 	}
-	resultParams.Phase = phase
 
-	resultParams.OperatorAddress = resultParams.CallerAddress
+	// The phase of the Two-Phase Commit protocol:
+	// 0 = Prepare phase (commit preparation)
+	// 1 = Commit phase (final commitment)
+	// validation of the phase number
+	if err := avstypes.ValidatePhase(avstypes.CommitPhase(phase)); err != nil {
+		return nil, fmt.Errorf("invalid phase value: %d. Expected 0 (Prepare) or 1 (Commit)", phase)
+	}
+	resultParams.Phase = avstypes.CommitPhase(phase)
 
 	result := &avstypes.TaskResultInfo{
 		TaskId:              resultParams.TaskID,
-		OperatorAddress:     resultParams.OperatorAddress.String(),
+		OperatorAddress:     resultParams.CallerAddress.String(),
 		TaskContractAddress: resultParams.TaskContractAddress.String(),
 		TaskResponse:        resultParams.TaskResponse,
 		BlsSignature:        resultParams.BlsSignature,
-		Phase:               uint32(resultParams.Phase),
+		Phase:               avstypes.Phase(resultParams.Phase),
 	}
-	err := p.avsKeeper.SetTaskResultInfo(ctx, resultParams.OperatorAddress.String(), result)
+	err := p.avsKeeper.SetTaskResultInfo(ctx, resultParams.CallerAddress.String(), result)
 	if err != nil {
 		return nil, err
 	}

@@ -1,12 +1,14 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
 // CommitPhase represents the phases of the Two-Phase Commit protocol
-type CommitPhase uint32
+type CommitPhase uint8
 
 const (
 	PreparePhase CommitPhase = iota
@@ -17,7 +19,7 @@ type OperatorOptParams struct {
 	Name            string         `json:"name"`
 	BlsPublicKey    string         `json:"bls_public_key"`
 	IsRegistered    bool           `json:"is_registered"`
-	Action          uint64         `json:"action"`
+	Action          OperatorAction `json:"action"`
 	OperatorAddress sdk.AccAddress `json:"operator_address"`
 	Status          string         `json:"status"`
 	AvsAddress      common.Address `json:"avs_address"`
@@ -37,7 +39,6 @@ type TaskInfoParams struct {
 	TaskResponseHash      string         `json:"task_response_hash"`
 	TaskResponse          []byte         `json:"task_response"`
 	BlsSignature          []byte         `json:"bls_signature"`
-	Phase                 string         `json:"phase"`
 	ActualThreshold       uint64         `json:"actual_threshold"`
 	OptInCount            uint64         `json:"opt_in_count"`
 	SignedCount           uint64         `json:"signed_count"`
@@ -46,7 +47,7 @@ type TaskInfoParams struct {
 	CallerAddress         sdk.AccAddress `json:"caller_address"`
 }
 type BlsParams struct {
-	Operator                      sdk.AccAddress
+	OperatorAddress               sdk.AccAddress
 	Name                          string
 	PubKey                        []byte
 	PubkeyRegistrationSignature   []byte
@@ -67,10 +68,13 @@ type OperatorStatusParams struct {
 	ProofData       string
 }
 
+// OperatorAction represents the type of action an operator can perform
+type OperatorAction uint64
+
 const (
-	RegisterAction   = 1
-	DeRegisterAction = 2
-	UpdateAction     = 3
+	RegisterAction   OperatorAction = 1
+	DeRegisterAction OperatorAction = 2
+	UpdateAction     OperatorAction = 3
 )
 
 type ChallengeParams struct {
@@ -89,6 +93,15 @@ type TaskResultParams struct {
 	BlsSignature        []byte         `json:"bls_signature"`
 	TaskContractAddress common.Address `json:"task_contract_address"`
 	TaskID              uint64         `json:"task_id"`
-	Phase               uint8          `json:"phase"`
+	Phase               CommitPhase    `json:"phase"`
 	CallerAddress       sdk.AccAddress `json:"caller_address"`
+}
+
+func ValidatePhase(phase CommitPhase) error {
+	switch phase {
+	case PreparePhase, DoCommitPhase:
+		return nil
+	default:
+		return fmt.Errorf("invalid phase value: %d", phase)
+	}
 }

@@ -137,8 +137,8 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack([]string{})
 		}
-	case MethodGetAVSInfo:
-		bz, err = p.GetAVSInfo(ctx, contract, method, args)
+	case MethodGetAVSEpochIdentifier:
+		bz, err = p.GetAVSEpochIdentifier(ctx, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack("")
@@ -219,7 +219,7 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodDeregisterOperatorFromAVS, MethodCreateAVSTask, MethodRegisterBLSPublicKey, MethodChallenge, MethodOperatorSubmitTask:
 		return true
 	case MethodGetRegisteredPubkey, MethodGetOptinOperators, MethodGetAVSUSDValue, MethodGetOperatorOptedUSDValue,
-		MethodGetAVSInfo, MethodGetTaskInfo, MethodIsOperator, MethodGetCurrentEpoch:
+		MethodGetAVSEpochIdentifier, MethodGetTaskInfo, MethodIsOperator, MethodGetCurrentEpoch:
 		return false
 	default:
 		return false

@@ -15,7 +15,7 @@ const (
 	EventTypeAVSUpdated              = "AVSUpdated"
 	EventTypeAVSDeregistered         = "AVSDeregistered"
 	EventTypeOperatorJoined          = "OperatorJoined"
-	EventTypeOperatorOuted           = "OperatorOuted"
+	EventTypeOperatorLeft            = "OperatorLeft"
 	EventTypeTaskCreated             = "TaskCreated"
 	EventTypeChallengeInitiated      = "ChallengeInitiated"
 	EventTypePublicKeyRegistered     = "PublicKeyRegistered"
@@ -83,8 +83,8 @@ func (p Precompile) EmitOperatorJoined(ctx sdk.Context, stateDB vm.StateDB, para
 }
 
 func (p Precompile) EmitOperatorOuted(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.OperatorOptParams) error {
-	arguments := p.ABI.Events[EventTypeOperatorOuted].Inputs
-	return p.emitEvent(ctx, stateDB, EventTypeOperatorOuted, arguments,
+	arguments := p.ABI.Events[EventTypeOperatorLeft].Inputs
+	return p.emitEvent(ctx, stateDB, EventTypeOperatorLeft, arguments,
 		params.AvsAddress,
 		params.OperatorAddress.String())
 }
@@ -116,7 +116,7 @@ func (p Precompile) EmitChallengeInitiated(ctx sdk.Context, stateDB vm.StateDB, 
 func (p Precompile) EmitPublicKeyRegistered(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.BlsParams) error {
 	arguments := p.ABI.Events[EventTypePublicKeyRegistered].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypePublicKeyRegistered, arguments,
-		params.Operator.String(),
+		params.OperatorAddress.String(),
 		params.Name)
 }
 

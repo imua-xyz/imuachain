@@ -146,7 +146,7 @@
 				"type": "string"
 			}
 		],
-		"name": "OperatorOuted",
+		"name": "OperatorLeft",
 		"type": "event"
 	},
 	{
@@ -411,7 +411,7 @@
 				"type": "address"
 			}
 		],
-		"name": "getAVSInfo",
+		"name": "getAVSEpochIdentifier",
 		"outputs": [
 			{
 				"internalType": "string",
@@ -549,9 +549,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "string",
+				"internalType": "address",
 				"name": "operatorAddr",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "isOperator",

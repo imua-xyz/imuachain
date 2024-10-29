@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	errorsmod "cosmossdk.io/errors"
+
 	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	avstype "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,10 +22,10 @@ const (
 	MethodGetAVSUSDValue           = "getAVSUSDValue"
 	MethodGetOperatorOptedUSDValue = "getOperatorOptedUSDValue"
 
-	MethodGetAVSInfo      = "getAVSInfo"
-	MethodGetTaskInfo     = "getTaskInfo"
-	MethodIsOperator      = "isOperator"
-	MethodGetCurrentEpoch = "getCurrentEpoch"
+	MethodGetAVSEpochIdentifier = "getAVSEpochIdentifier"
+	MethodGetTaskInfo           = "getTaskInfo"
+	MethodIsOperator            = "isOperator"
+	MethodGetCurrentEpoch       = "getCurrentEpoch"
 )
 
 func (p Precompile) GetRegisteredPubkey(
@@ -123,21 +125,21 @@ func (p Precompile) GetOperatorOptedUSDValue(
 	return method.Outputs.Pack(amount.ActiveUSDValue.BigInt())
 }
 
-func (p Precompile) GetAVSInfo(
+func (p Precompile) GetAVSEpochIdentifier(
 	ctx sdk.Context,
 	_ *vm.Contract,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	if len(args) != len(p.ABI.Methods[MethodGetAVSInfo].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetAVSInfo].Inputs), len(args))
+	if len(args) != len(p.ABI.Methods[MethodGetAVSEpochIdentifier].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetAVSEpochIdentifier].Inputs), len(args))
 	}
 	addr, ok := args[0].(common.Address)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", addr)
 	}
 
-	avs, err := p.avsKeeper.QueryAVSInfo(ctx, &avstype.QueryAVSInfoReq{AVSAddress: addr.String()})
+	avs, err := p.avsKeeper.GetAVSInfo(ctx, addr.String())
 	if err != nil {
 		// if the avs does not exist, return empty array
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
@@ -158,15 +160,12 @@ func (p Precompile) IsOperator(
 	if len(args) != len(p.ABI.Methods[MethodIsOperator].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodIsOperator].Inputs), len(args))
 	}
-	operatorAddr, ok := args[0].(string)
+	operatorAddr, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "string", operatorAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", operatorAddr)
 	}
 
-	param, err := sdk.AccAddressFromBech32(operatorAddr)
-	if err != nil {
-		return nil, err
-	}
+	param := operatorAddr[:]
 	flag := p.avsKeeper.GetOperatorKeeper().IsOperator(ctx, param)
 
 	return method.Outputs.Pack(flag)
@@ -190,7 +189,7 @@ func (p Precompile) GetTaskInfo(
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "uint64", taskID)
 	}
 
-	task, err := p.avsKeeper.QueryAVSTaskInfo(ctx, &avstype.QueryAVSTaskInfoReq{TaskAddr: addr.String(), TaskId: strconv.FormatUint(taskID, 10)})
+	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), addr.String())
 	if err != nil {
 		// if the avs does not exist, return empty array
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
@@ -219,7 +218,7 @@ func (p Precompile) GetCurrentEpoch(
 	}
 	epoch, flag := p.avsKeeper.GetEpochKeeper().GetEpochInfo(ctx, epochIdentifier)
 	if !flag {
-		return nil, nil
+		return nil, errorsmod.Wrap(avstype.ErrNoKeyInTheStore, fmt.Sprintf("GetCurrentEpoch: epochIdentifier is %s", epochIdentifier))
 	}
 	return method.Outputs.Pack(epoch.CurrentEpoch)
 }

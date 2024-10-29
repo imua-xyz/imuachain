@@ -85,7 +85,7 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 // TODO:this function is frequently used while its implementation iterates over existing avs to find the target avs by task contract address,  we should use a reverse mapping to avoid iteration
 func (k *Keeper) GetAVSInfoByTaskAddress(ctx sdk.Context, taskAddr string) types.AVSInfo {
 	var avs types.AVSInfo
-	if taskAddr == "" || taskAddr == "0x0000000000000000000000000000000000000000" {
+	if taskAddr == "" || taskAddr == (common.Address{}).String() {
 		return avs
 	}
 	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) (stop bool) {
@@ -103,6 +103,9 @@ func (k *Keeper) GetTaskStatisticalEpochEndAVSs(ctx sdk.Context, epochIdentifier
 	var taskResList []types.TaskResultInfo
 	k.IterateResultInfo(ctx, func(_ int64, info types.TaskResultInfo) (stop bool) {
 		avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
+		if avsInfo.AvsAddress == "" {
+			return false
+		}
 		taskInfo, err := k.GetTaskInfo(ctx, strconv.FormatUint(info.TaskId, 10), info.TaskContractAddress)
 		if err != nil {
 			return false

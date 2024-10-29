@@ -176,6 +176,9 @@ func (k *Keeper) SetTaskResultInfo(
 	//	TaskResponse and TaskResponseHash must be null values
 	//	At the same time, it must be submitted within the response deadline in the first phase
 	avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
+	if avsInfo.AvsAddress == "" {
+		return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the taskaddr is :%s", info.TaskContractAddress))
+	}
 	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, fmt.Sprintf("epoch info not found %s",
@@ -183,7 +186,7 @@ func (k *Keeper) SetTaskResultInfo(
 	}
 
 	switch info.Phase {
-	case uint32(types.PreparePhase):
+	case types.Phase(types.PreparePhase):
 		if k.IsExistTaskResultInfo(ctx, info.OperatorAddress, info.TaskContractAddress, info.TaskId) {
 			return errorsmod.Wrap(
 				types.ErrResAlreadyExists,
@@ -221,7 +224,7 @@ func (k *Keeper) SetTaskResultInfo(
 		store.Set(infoKey, bz)
 		return nil
 
-	case uint32(types.DoCommitPhase):
+	case types.Phase(types.DoCommitPhase):
 		// check task response
 		if info.TaskResponse == nil {
 			return errorsmod.Wrap(

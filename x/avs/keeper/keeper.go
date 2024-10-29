@@ -272,15 +272,15 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	pubKey, _ := bls.PublicKeyFromBytes(params.PubKey)
 	valid, err := blst.VerifySignature(sig, [32]byte(msgHash), pubKey)
 	if err != nil || !valid {
-		return errorsmod.Wrap(types.ErrSigNotMatchPubKey, fmt.Sprintf("the operator is :%s", params.Operator))
+		return errorsmod.Wrap(types.ErrSigNotMatchPubKey, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}
 
-	if k.IsExistPubKey(ctx, params.Operator.String()) {
-		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the operator is :%s", params.Operator))
+	if k.IsExistPubKey(ctx, params.OperatorAddress.String()) {
+		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}
 	bls := &types.BlsPubKeyInfo{
 		Name:     params.Name,
-		Operator: params.Operator.String(),
+		Operator: params.OperatorAddress.String(),
 		PubKey:   params.PubKey,
 	}
 	return k.SetOperatorPubKey(ctx, bls)
@@ -416,6 +416,9 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 	// check challenge period
 	//  check epoch，The challenge must be within the challenge window period
 	avsInfo := k.GetAVSInfoByTaskAddress(ctx, taskInfo.TaskContractAddress)
+	if avsInfo.AvsAddress == "" {
+		return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the taskaddr is :%s", taskInfo.TaskContractAddress))
+	}
 	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, fmt.Sprintf("epoch info not found %s",

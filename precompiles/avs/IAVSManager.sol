@@ -4,28 +4,42 @@ pragma solidity >=0.8.17;
 address constant AVSMANAGER_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000901;
 
 /// @dev The avs-manager contract's instance.
-IAVSManager constant AVSMANAGER_CONTRACT = IAVSManager(
-    AVSMANAGER_PRECOMPILE_ADDRESS
-);
+IAVSManager constant AVSMANAGER_CONTRACT = IAVSManager(AVSMANAGER_PRECOMPILE_ADDRESS);
 /// @author Exocore Team
 /// @title AVS-Manager Precompile Contract
 /// @dev The interface through which solidity contracts will interact with AVS-Manager
 /// @custom:address 0x0000000000000000000000000000000000000901
+
 interface IAVSManager {
+    // note:string and bytes will be hashed. address / uintX will not be hashed when using indexed.
     event AVSRegistered(address indexed avsAddr, string sender, string avsName);
     event AVSUpdated(address indexed avsAddr, string sender, string avsName);
     event AVSDeregistered(address indexed avsAddr, string sender, string avsName);
-    event OperatorJoined(address indexed avsAddr,string sender);
-    event OperatorOuted(address indexed avsAddr,string sender);
-    event TaskCreated(string sender,uint64 taskId,address indexed taskContractAddress,string name,bytes hash,
-        uint64 taskResponsePeriod,uint64 taskChallengePeriod,uint64 thresholdPercentage,uint64 taskStatisticalPeriod
+    event OperatorJoined(address indexed avsAddr, string sender);
+    event OperatorLeft(address indexed avsAddr, string sender);
+    event TaskCreated(
+        string sender,
+        uint64 taskId,
+        address indexed taskContractAddress,
+        string name,
+        bytes hash,
+        uint64 taskResponsePeriod,
+        uint64 taskChallengePeriod,
+        uint64 thresholdPercentage,
+        uint64 taskStatisticalPeriod
     );
-    event ChallengeInitiated(string sender, bytes taskHash, uint64 taskID, bytes taskResponseHash,
-        string operatorAddress);
+    event ChallengeInitiated(
+        string sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress
+    );
     event PublicKeyRegistered(string sender, string name);
-    event TaskSubmittedByOperator(string sender, uint64 taskID, bytes taskResponse,
-        bytes blsSignature, address indexed taskContractAddress, uint8 phase);
-
+    event TaskSubmittedByOperator(
+        string sender,
+        uint64 taskID,
+        bytes taskResponse,
+        bytes blsSignature,
+        address indexed taskContractAddress,
+        uint8 phase
+    );
 
     /// @dev Register AVS contract to EXO.
     /// @param sender The external address for calling this method.
@@ -92,23 +106,15 @@ interface IAVSManager {
     /// @dev Deregister avs from exo
     /// @param sender The external address for calling this method.
     /// @param avsName The name of AVS.
-    function deregisterAVS(
-        address sender,
-        string memory avsName
-    ) external returns (bool success);
+    function deregisterAVS(address sender, string memory avsName) external returns (bool success);
 
     /// @dev RegisterOperatorToAVS operator opt in current avs
     /// @param sender The external address for calling this method.
-    function registerOperatorToAVS(
-        address sender
-    ) external returns (bool success);
+    function registerOperatorToAVS(address sender) external returns (bool success);
 
     /// @dev DeregisterOperatorFromAVS operator opt out current avs
     /// @param sender The external address for calling this method.
-    function deregisterOperatorFromAVS(
-        address sender
-    ) external returns (bool success);
-
+    function deregisterOperatorFromAVS(address sender) external returns (bool success);
 
     /// @dev CreateTask , avs owner create a new task
     /// @param sender The external address for calling this method.
@@ -142,7 +148,6 @@ interface IAVSManager {
         string memory operatorAddress
     ) external returns (bool success);
 
-
     /// @dev Called by the avs manager service register an operator as the owner of a BLS public key.
     /// @param sender The external address for calling this method.
     /// @param name the name of public keys
@@ -163,8 +168,9 @@ interface IAVSManager {
     /// @param taskResponse is the task response data..
     /// @param blsSignature is the operator bls sig info..
     /// @param taskContractAddress is contract address of task.
-    /// @param phase this field is used to solve the problem of task results being copied by other operators.
-    //  It is a Two-Phase Commit  with two values, 0 and 1
+    /// @param phase The phase of the Two-Phase Commit protocol:
+    ///             0 = Prepare phase (commit preparation)
+    ///             1 = Commit phase (final commitment)
     function operatorSubmitTask(
         address sender,
         uint64 taskID,
@@ -186,42 +192,35 @@ interface IAVSManager {
     /// @dev getAVSUSDValue is a function to retrieve the USD share of specified Avs.
     /// @param avsAddr The address of the avs
     /// @return amount The total USD share of specified operator and Avs.
-    function getAVSUSDValue(
-        address avsAddr
-    ) external view returns (uint256 amount);
+    function getAVSUSDValue(address avsAddr) external view returns (uint256 amount);
 
     /// @dev getOperatorOptedUSDValue  is a function to retrieve the USD share of specified operator and Avs.
     /// @param avsAddr The address of the avs
     /// @param operatorAddr The address of the operator
     /// @return amount The total USD share of specified operator and Avs.
-    function getOperatorOptedUSDValue(
-        address avsAddr,
-        string memory operatorAddr
-    ) external view returns (uint256 amount);
+    function getOperatorOptedUSDValue(address avsAddr, string memory operatorAddr)
+        external
+        view
+        returns (uint256 amount);
 
-    /// @dev getAVSInfo  is a function to query Avs epochIdentifier info.
+    /// @dev getAVSEpochIdentifier returns the epoch identifier for the given AVS.
     /// @param avsAddr The address of the avs
-    function getAVSInfo(
-        address avsAddr
-    ) external view returns (string memory epochIdentifier);
+    function getAVSEpochIdentifier(address avsAddr) external view returns (string memory epochIdentifier);
 
     /// @dev getTaskInfo  is a function to query task info.
     /// @param taskAddr The address of the avs task
     /// @param taskID The id of task.
-    function getTaskInfo(
-        address taskAddr,
-        uint64 taskID
-    ) external view returns (uint64[] memory info);
+    /// @return info Array containing task information in the following order:
+    /// [0] = startingEpochNumber
+    /// [1] = taskResponsePeriod
+    /// [2] = taskStatisticalPeriod
+    function getTaskInfo(address taskAddr, uint64 taskID) external view returns (uint64[] memory info);
 
     /// @dev isOperator checks if the given address is registered as an operator on exocore.
     /// @param operatorAddr The address of the operator
-    function isOperator(
-        string memory operatorAddr
-    ) external view returns (bool);
+    function isOperator(address operatorAddr) external view returns (bool);
 
     /// @dev getCurrentEpoch obtain the specified current epoch based on epochIdentifier.
     /// @param epochIdentifier  is a descriptive or unique identifier for the epoch
-    function getCurrentEpoch(
-        string memory epochIdentifier
-    ) external view returns (int64  currentEpoch);
- }
+    function getCurrentEpoch(string memory epochIdentifier) external view returns (int64 currentEpoch);
+}

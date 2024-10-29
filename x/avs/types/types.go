@@ -77,7 +77,7 @@ type AVSRegisterOrDeregisterParams struct {
 	ChainID             string
 	AvsReward           uint64
 	AvsSlash            uint64
-	Action              uint64
+	Action              OperatorAction
 }
 
 var (
