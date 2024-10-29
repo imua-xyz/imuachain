@@ -846,7 +846,7 @@ func NewExocoreApp(
 	(&app.EpochsKeeper).SetHooks(
 		epochstypes.NewMultiEpochHooks(
 			app.DistrKeeper.EpochsHooks(),       // come first for using the voting power of last epoch
-			app.OperatorKeeper.EpochsHooks(),    // must come before staking keeper so it can set the USD value
+			app.OperatorKeeper.EpochsHooks(),    // must come before staking / coordinator keepers so it can set the USD value
 			app.ExomintKeeper.EpochsHooks(),     // must happen after distribution but not relevant otherwise
 			app.StakingKeeper.EpochsHooks(),     // after operator == good
 			app.AVSManagerKeeper.EpochsHooks(),  // after operator == good
@@ -958,14 +958,16 @@ func NewExocoreApp(
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,    // to upgrade the chain
 		capabilitytypes.ModuleName, // before any module with capabilities like IBC
-		epochstypes.ModuleName,     // to update the epoch
-		feemarkettypes.ModuleName,  // set EIP-1559 gas prices
-		evmtypes.ModuleName,        // stores chain id in memory
-		slashingtypes.ModuleName,   // TODO after reward
-		evidencetypes.ModuleName,   // TODO after reward
-		stakingtypes.ModuleName,    // track historical info
-		ibcexported.ModuleName,     // handles upgrades of chain and hence client
-		authz.ModuleName,           // clear expired approvals
+		// This must be before x/epochs to ensure that the HistoricalInfo is available during
+		// epochs hooks. it is used to create the IBC client for subscriber chains.
+		stakingtypes.ModuleName,
+		epochstypes.ModuleName,    // to update the epoch
+		feemarkettypes.ModuleName, // set EIP-1559 gas prices
+		evmtypes.ModuleName,       // stores chain id in memory
+		slashingtypes.ModuleName,  // TODO after reward
+		evidencetypes.ModuleName,  // TODO after reward
+		ibcexported.ModuleName,    // handles upgrades of chain and hence client
+		authz.ModuleName,          // clear expired approvals
 		// no-op modules
 		ibctransfertypes.ModuleName,
 		icatypes.ModuleName,

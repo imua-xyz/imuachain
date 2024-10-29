@@ -13,12 +13,12 @@
     "blocks_per_distribution_transmission": "40",
     "subscriber_redistribution_fraction": "0.85",
     "reward_denom": "subcoin",
-    "ibc_timeout_period": "2419200",
-    "transfer_timeout_period": "3600",
-    "unbonding_period": "1728000",
+    "ibc_timeout_period": "2419200000000000",
+    "transfer_timeout_period": "3600000000000",
+    "unbonding_period": "1728000000000000",
     "historical_entries": "1000",
     "slash_fraction_downtime": "0.01",
-    "downtime_jail_duration": "600",
+    "downtime_jail_duration": "600000000000",
     "slash_fraction_double_sign": "0.05"
   }
 }
