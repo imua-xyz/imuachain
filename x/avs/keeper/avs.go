@@ -46,7 +46,9 @@ func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, e
 	if err != nil {
 		return "", errorsmod.Wrap(err, fmt.Sprintf("GetAVSSlashContract: key is %s", avsAddr))
 	}
-
+	if avsInfo.Info.SlashAddr == (common.Address{}).String() {
+		return "", nil
+	}
 	return avsInfo.Info.SlashAddr, nil
 }
 

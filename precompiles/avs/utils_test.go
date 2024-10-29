@@ -150,7 +150,6 @@ func (suite *AVSManagerPrecompileSuite) TestOptIn() {
 	usdValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
 	expectedState := &StateForCheck{
 		OptedInfo: &operatorTypes.OptedInfo{
-			SlashContract:  "0x0000000000000000000000000000000000000000",
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),
 			OptedOutHeight: operatorTypes.DefaultOptedOutHeight,
 		},
@@ -200,7 +199,6 @@ func (suite *AVSManagerPrecompileSuite) TestOptOut() {
 
 	expectedState := &StateForCheck{
 		OptedInfo: &operatorTypes.OptedInfo{
-			SlashContract:  "0x0000000000000000000000000000000000000000",
 			OptedInHeight:  uint64(optInHeight),
 			OptedOutHeight: uint64(suite.Ctx.BlockHeight()),
 		},

@@ -141,7 +141,6 @@ func (suite *OperatorTestSuite) TestOptIn() {
 		OptedInfo: &operatorTypes.OptedInfo{
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),
 			OptedOutHeight: operatorTypes.DefaultOptedOutHeight,
-			SlashContract:  common.Address{}.String(),
 		},
 		AVSTotalShare:    usdValue,
 		AVSOperatorShare: usdValue,
@@ -191,7 +190,6 @@ func (suite *OperatorTestSuite) TestOptOut() {
 		OptedInfo: &operatorTypes.OptedInfo{
 			OptedInHeight:  uint64(optInHeight),
 			OptedOutHeight: uint64(suite.Ctx.BlockHeight()),
-			SlashContract:  common.Address{}.String(),
 		},
 		AVSTotalShare:    sdkmath.LegacyNewDec(0),
 		AVSOperatorShare: sdkmath.LegacyNewDec(0),
