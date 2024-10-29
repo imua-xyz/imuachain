@@ -169,8 +169,8 @@ interface IAVSManager {
     /// @param blsSignature is the operator bls sig info..
     /// @param taskContractAddress is contract address of task.
     /// @param phase The phase of the Two-Phase Commit protocol:
-    ///             0 = Prepare phase (commit preparation)
-    ///             1 = Commit phase (final commitment)
+    ///             1 = Prepare phase (commit preparation)
+    ///             2 = Commit phase (final commitment)
     function operatorSubmitTask(
         address sender,
         uint64 taskID,

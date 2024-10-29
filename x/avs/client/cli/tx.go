@@ -81,7 +81,7 @@ func CmdSubmitTaskResult() *cobra.Command {
 		FlagTaskID, 1, "The  task id",
 	)
 	f.Uint32(
-		FlagPhase, 0, "The phase is a two-phase submission with two values, 0 and 1",
+		FlagPhase, 0, "The phase is a two-phase submission with two values, 1 and 2",
 	)
 	// #nosec G703 // this only errors if the flag isn't defined.
 	_ = cmd.MarkFlagRequired(FlagTaskID)

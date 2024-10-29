@@ -11,7 +11,7 @@ import (
 type CommitPhase uint8
 
 const (
-	PreparePhase CommitPhase = iota
+	PreparePhase CommitPhase = iota + 1
 	DoCommitPhase
 )
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -74,7 +75,7 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 		// it should be returned here, since the operator module should start tracking this.
 		// #nosec G115
 		if epochIdentifier == avsInfo.EpochIdentifier && endingEpochNumber >= int64(avsInfo.StartingEpoch)-1 {
-			avsList = append(avsList, avsInfo.AvsAddress)
+			avsList = append(avsList, strings.ToLower(avsInfo.AvsAddress))
 		}
 		return false
 	})

@@ -382,7 +382,7 @@ func (p Precompile) OperatorSubmitTask(
 	// 1 = Commit phase (final commitment)
 	// validation of the phase number
 	if err := avstypes.ValidatePhase(avstypes.CommitPhase(phase)); err != nil {
-		return nil, fmt.Errorf("invalid phase value: %d. Expected 0 (Prepare) or 1 (Commit)", phase)
+		return nil, fmt.Errorf("invalid phase value: %d. Expected 1 (Prepare) or 2 (Commit)", phase)
 	}
 	resultParams.Phase = avstypes.CommitPhase(phase)
 
