@@ -2,7 +2,7 @@ package types_test
 
 import (
 	"testing"
-	time "time"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
