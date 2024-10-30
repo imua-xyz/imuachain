@@ -105,14 +105,14 @@ func (k Keeper) ClaimCapability(
 // at the end of this block.
 func (k Keeper) GetPendingChanges(
 	ctx sdk.Context,
-) *commontypes.ValidatorSetChangePacketData {
+) commontypes.ValidatorSetChangePacketData {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.PendingChangesKey())
 	if bz == nil {
-		return nil
+		return commontypes.ValidatorSetChangePacketData{}
 	}
-	res := &commontypes.ValidatorSetChangePacketData{}
-	k.cdc.MustUnmarshal(bz, res)
+	res := commontypes.ValidatorSetChangePacketData{}
+	k.cdc.MustUnmarshal(bz, &res)
 	return res
 }
 

@@ -3,6 +3,7 @@
 HOMEROOT="$HOME/.tmp-subscriberd"
 EXO_HOMEDIR="$HOME/.tmp-exocored"
 SUBSCRIBER_JSON="app/subscriber/dumpling-1.json"
+KEYRING_BACKEND="test"
 
 set -e
 
@@ -11,11 +12,11 @@ go install ./cmd/subscriberd
 
 echo "Waiting for network to start..."
 while true; do
-    price=$(exocored query oracle show-prices 1 --output json 2>/dev/null | jq -r '.prices.price_list.[-1].price')
-    if [[ ! "$price" =~ ^[0-9]+$ ]]; then
+    PRICE=$(exocored query oracle show-prices 1 --output json 2>/dev/null | jq -r '.prices.price_list.[-1].price')
+    if [[ ! "$PRICE" =~ ^[0-9]+$ ]]; then
         echo "Failed to retrieve USDT price. Retrying..."
-    elif [ "$price" -ge 99900000 ]; then
-        echo "USDT price available: $price"
+    elif [ "$PRICE" -ge 99900000 ]; then
+        echo "USDT price available: $PRICE"
         break
     else
         echo "Waiting for network to start..."
@@ -51,7 +52,7 @@ for i in {2..4}; do
 done
 
 echo "Making deposits, delegations and associations..."
-ETH_PRIVATE_KEY=$(exocored keys unsafe-export-eth-key local_funded_account --home $EXO_HOMEDIR --keyring-backend test)
+ETH_PRIVATE_KEY=$(exocored keys unsafe-export-eth-key local_funded_account --home $EXO_HOMEDIR --keyring-backend $KEYRING_BACKEND)
 LOCAL_ACCOUNT=$(cast wallet a $ETH_PRIVATE_KEY)
 ASSETS_PRECOMPILE=0x0000000000000000000000000000000000000804
 DELEGATION_PRECOMPILE=0x0000000000000000000000000000000000000805
@@ -102,19 +103,18 @@ done
 echo "Initializing subscriberd folders..."
 SUBSCRIBER_JSON="app/subscriber/dumpling-1.json"
 CHAIN_ID=$(cat $SUBSCRIBER_JSON | jq -r .chain_id)
-KEYRING="test"
-MONIKER="localtestnet"
-KEYS[0]="subscriber_operator1"
-KEYS[1]="subscriber_operator2"
-KEYS[2]="subscriber_operator3"
-rm -rf $HOME/.tmp-subscriberd
-mkdir -p $HOME/.tmp-subscriberd
-for KEY in "${KEYS[@]}"; do
-    HOMEDIR="$HOME/.tmp-subscriberd/$KEY"
-    subscriberd init $MONIKER -o --chain-id $CHAIN_ID --home "$HOMEDIR" --default-denom subcoin
-done
+DENOM=$(cat $SUBSCRIBER_JSON | jq -r .subscriber_params.reward_denom)
+./app/subscriber/init-nodes.py --binary $(which subscriberd) \
+    --chain-id $CHAIN_ID \
+    --log-level info \
+    --folder $HOMEROOT/subscriber_operator \
+    --mnemonics-file ./app/subscriber/mnemonics.txt \
+    --denom $DENOM \
+    --port-offset 5
 
-# The subscriber chain must be registered immediately after the epoch increases
+# The subscriber chain must be registered immediately after the epoch increases so that we have enough time
+# to opt into the chain before the next-to-next epoch starts. At that point, the subscriber chain genesis begins, so
+# these operators must be available prior.
 EPOCH_ID=$(cat $SUBSCRIBER_JSON | jq -r .epoch_identifier)
 START_EPOCH_NUMBER=$(exocored query epochs current-epoch $EPOCH_ID --output json | jq -r .current_epoch)
 while true; do
@@ -154,13 +154,14 @@ done
 
 echo "Opting in to the subscriber chain..."
 AVS_ADDRESS=$(exocored query avs AVSAddrByChainID $CHAIN_ID --output json | jq -r .avs_address)
-for i in {0..2}; do
-    key="dev$i"
-    HOMEDIR="$HOME/.tmp-subscriberd/${KEYS[$i]}"
+for i in {1..3}; do
+    KEY="dev$((i - 1))"
+    FOLDER="subscriber_operator$i"
+    HOMEDIR="$HOMEROOT/$FOLDER"
     TX_HASH=$(yes | exocored tx operator opt-into-avs \
         $AVS_ADDRESS \
         $(subscriberd --home $HOMEDIR tendermint show-validator) \
-        --from $key \
+        --from $KEY \
         --home $EXO_HOMEDIR \
         --gas-prices 700000000hua \
     --output json | jq -r .txhash | tr -d '\n' | cut -c 5-)
@@ -179,3 +180,33 @@ for i in {0..2}; do
         sleep 1
     done
 done
+
+# At the next epoch, the subscriber genesis state will be available
+EPOCH_ID=$(cat $SUBSCRIBER_JSON | jq -r .epoch_identifier)
+START_EPOCH_NUMBER=$(exocored query epochs current-epoch $EPOCH_ID --output json | jq -r .current_epoch)
+while true; do
+    CURRENT_EPOCH_NUMBER=$(exocored query epochs current-epoch $EPOCH_ID --output json 2>/dev/null | jq -r .current_epoch)
+    if [[ ! "$CURRENT_EPOCH_NUMBER" =~ ^[0-9]+$ ]]; then
+        echo "Failed to retrieve current epoch number. Retrying..."
+    elif [ "$CURRENT_EPOCH_NUMBER" -gt "$START_EPOCH_NUMBER" ]; then
+        echo "Current epoch number: $CURRENT_EPOCH_NUMBER (was $START_EPOCH_NUMBER)"
+        break
+    else
+        echo "Waiting for epoch $EPOCH_ID to increase..."
+    fi
+    sleep 1
+done
+
+# Finally, make the genesis state
+GENESIS=$(exocored query coordinator subscriber-genesis $CHAIN_ID --output json | jq .subscriber_genesis)
+# these must be included manually otherwise they are dropped by the `jq --argjson` below
+GENESIS=$(echo "$GENESIS" | jq '. + {coordinator_client_id: "", coordinator_channel_id: ""}')
+GENESIS_FILE="$HOMEROOT/subscriber_operator1/config/genesis.json"
+jq --argjson gen "$GENESIS" '.app_state.subscriber = $gen' "$GENESIS_FILE" > tmp.json && mv tmp.json "$GENESIS_FILE"
+for i in {2..3}; do
+    # copy everything over, including the genesis time
+    cp "$GENESIS_FILE" "$HOMEROOT/subscriber_operator$i/config/genesis.json"
+done
+subscriberd start --home $HOMEROOT/subscriber_operator1 &
+subscriberd start --home $HOMEROOT/subscriber_operator2 &
+subscriberd start --home $HOMEROOT/subscriber_operator3 &

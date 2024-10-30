@@ -175,7 +175,7 @@ func (k Keeper) MakeSubscriberGenesis(
 	coordinatorUnbondingPeriod := k.stakingKeeper.UnbondingTime(ctx)
 	// client state
 	clientState := params.TemplateClient
-	clientState.ChainId = chainID
+	clientState.ChainId = ctx.ChainID()
 	clientState.LatestHeight = clienttypes.GetSelfHeight(ctx)
 	trustPeriod, err := commontypes.CalculateTrustPeriod(
 		coordinatorUnbondingPeriod, params.TrustingPeriodFraction,

@@ -25,9 +25,8 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) []abci.Valid
 	// only bind to the port if the capability keeper hasn't done so already
 	if !k.IsBound(ctx, commontypes.SubscriberPortID) {
 		k.Logger(ctx).Info("binding port", "port", commontypes.SubscriberPortID)
-		if err := k.portKeeper.BindPort(ctx, commontypes.SubscriberPortID); err != nil {
-			panic(fmt.Sprintf("could not claim port capability: %v", err))
-		}
+		// does not return an error on failure, instead it panics
+		k.portKeeper.BindPort(ctx, commontypes.SubscriberPortID)
 	}
 	// the client state and the consensus state are provided by the coordinator.
 	clientID, err := k.clientKeeper.CreateClient(
