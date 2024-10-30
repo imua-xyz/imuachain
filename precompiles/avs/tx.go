@@ -378,13 +378,14 @@ func (p Precompile) OperatorSubmitTask(
 	}
 
 	// The phase of the Two-Phase Commit protocol:
-	// 0 = Prepare phase (commit preparation)
-	// 1 = Commit phase (final commitment)
+	// 1 = Prepare phase (commit preparation)
+	// 2 = Commit phase (final commitment)
 	// validation of the phase number
-	if err := avstypes.ValidatePhase(avstypes.CommitPhase(phase)); err != nil {
+	phaseEnum := avstypes.Phase(phase)
+	if err := avstypes.ValidatePhase(phaseEnum); err != nil {
 		return nil, fmt.Errorf("invalid phase value: %d. Expected 1 (Prepare) or 2 (Commit)", phase)
 	}
-	resultParams.Phase = avstypes.CommitPhase(phase)
+	resultParams.Phase = phaseEnum
 
 	result := &avstypes.TaskResultInfo{
 		TaskId:              resultParams.TaskID,
@@ -392,7 +393,7 @@ func (p Precompile) OperatorSubmitTask(
 		TaskContractAddress: resultParams.TaskContractAddress.String(),
 		TaskResponse:        resultParams.TaskResponse,
 		BlsSignature:        resultParams.BlsSignature,
-		Phase:               avstypes.Phase(resultParams.Phase),
+		Phase:               phaseEnum,
 	}
 	err := p.avsKeeper.SetTaskResultInfo(ctx, resultParams.CallerAddress.String(), result)
 	if err != nil {

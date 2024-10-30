@@ -186,7 +186,7 @@ func (k *Keeper) SetTaskResultInfo(
 	}
 
 	switch info.Phase {
-	case types.Phase(types.PreparePhase):
+	case types.PhasePrepare:
 		if k.IsExistTaskResultInfo(ctx, info.OperatorAddress, info.TaskContractAddress, info.TaskId) {
 			return errorsmod.Wrap(
 				types.ErrResAlreadyExists,
@@ -224,7 +224,7 @@ func (k *Keeper) SetTaskResultInfo(
 		store.Set(infoKey, bz)
 		return nil
 
-	case types.Phase(types.DoCommitPhase):
+	case types.PhaseDoCommit:
 		// check task response
 		if info.TaskResponse == nil {
 			return errorsmod.Wrap(

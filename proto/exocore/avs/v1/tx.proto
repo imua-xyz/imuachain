@@ -204,12 +204,13 @@ message DeRegisterAVSResponse {
 }
 // It is a two-phase submission with two values, 1 and 2
 enum Phase {
+  option (gogoproto.goproto_enum_prefix) = false;
   // Default value when phase is not specified
-  PHASE_UNSPECIFIED = 0;
+  PHASE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "PhaseUnspecified"];
   // First phase where operators prepare and submit their initial responses
-  PHASE_PREPARE = 1;
+  PHASE_PREPARE = 1 [(gogoproto.enumvalue_customname) = "PhasePrepare"];
   // Second phase where operators commit their prepared responses
-  PHASE_DO_COMMIT = 2;
+  PHASE_DO_COMMIT = 2 [(gogoproto.enumvalue_customname) = "PhaseDoCommit"];
 }
 // TaskResultInfo is the operator sign task info result.
 message TaskResultInfo {

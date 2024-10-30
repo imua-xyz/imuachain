@@ -117,7 +117,7 @@ func newBuildMsg(
 
 	taskID, _ := fs.GetUint64(FlagTaskID)
 	phase, _ := fs.GetUint32(FlagPhase)
-	if err := types.ValidatePhase(types.CommitPhase(phase)); err != nil {
+	if err := types.ValidatePhase(types.Phase(phase)); err != nil {
 		return nil, err
 	}
 	msg := &types.SubmitTaskResultReq{

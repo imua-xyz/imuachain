@@ -7,14 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// CommitPhase represents the phases of the Two-Phase Commit protocol
-type CommitPhase uint8
-
-const (
-	PreparePhase CommitPhase = iota + 1
-	DoCommitPhase
-)
-
 type OperatorOptParams struct {
 	Name            string         `json:"name"`
 	BlsPublicKey    string         `json:"bls_public_key"`
@@ -93,13 +85,13 @@ type TaskResultParams struct {
 	BlsSignature        []byte         `json:"bls_signature"`
 	TaskContractAddress common.Address `json:"task_contract_address"`
 	TaskID              uint64         `json:"task_id"`
-	Phase               CommitPhase    `json:"phase"`
+	Phase               Phase          `json:"phase"`
 	CallerAddress       sdk.AccAddress `json:"caller_address"`
 }
 
-func ValidatePhase(phase CommitPhase) error {
+func ValidatePhase(phase Phase) error {
 	switch phase {
-	case PreparePhase, DoCommitPhase:
+	case PhasePrepare, PhaseDoCommit:
 		return nil
 	default:
 		return fmt.Errorf("invalid phase value: %d", phase)

@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
-	"github.com/ethereum/go-ethereum/common/math"
 	"math/big"
 	"strconv"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common/math"
 
 	sdkmath "cosmossdk.io/math"
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
@@ -187,7 +188,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseOne() {
 		TaskResponseHash:    "",
 		TaskResponse:        nil,
 		BlsSignature:        sig.Marshal(),
-		Phase:               avstypes.Phase(avstypes.PreparePhase),
+		Phase:               avstypes.Phase(avstypes.PhasePrepare),
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, suite.operatorAddr.String(), info)
 	suite.NoError(err)
@@ -216,7 +217,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseTwo() {
 		TaskResponseHash:    hash.String(),
 		TaskResponse:        jsonData,
 		BlsSignature:        sig.Marshal(),
-		Phase:               avstypes.Phase(avstypes.DoCommitPhase),
+		Phase:               avstypes.Phase(avstypes.PhaseDoCommit),
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, suite.operatorAddr.String(), info)
 	suite.NoError(err)
