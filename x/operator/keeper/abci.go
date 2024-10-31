@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"errors"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -130,7 +129,6 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	votingPowerSnapshot := operatortypes.VotingPowerSnapshot{
 		EpochIdentifier: epochIdentifier,
 		EpochNumber:     epochNumber,
-		BlockTime:       ctx.BlockTime(),
 	}
 
 	// The voting power calculated at the end of the current epoch will be applied
@@ -146,8 +144,6 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	// as the `AfterEpochEnd` is called in the beginBlock of next epoch's start height.
 	snapshotHeight := ctx.BlockHeight()
 	if !isForSlash {
-		// clear the slash flag at the end of the epoch
-		snapshotHelper.HasSlash = false
 		// the epoch number should plus 1, as it's updated after the hook `AfterEpochEnd` is called
 		votingPowerSnapshot.EpochNumber++
 	}
@@ -191,12 +187,11 @@ func (k *Keeper) ClearVotingPowerSnapshot(ctx sdk.Context, avs string) error {
 	if err != nil {
 		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: failed to get the avs epoch information, err:%s, avs:%s", err, avs)
 	}
-
-	clearTime := ctx.BlockTime().Add(-epochInfo.Duration * time.Duration(unbondingDuration))
-	if clearTime.After(ctx.BlockTime()) {
-		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: clearTime %s is in the future", clearTime)
+	clearEpochNumber := epochInfo.CurrentEpoch - int64(unbondingDuration) // #nosec G115
+	if clearEpochNumber < 0 {
+		return nil
 	}
-	err = k.RemoveVotingPowerSnapshot(ctx, avs, clearTime)
+	err = k.RemoveVotingPowerSnapshot(ctx, avs, clearEpochNumber)
 	if err != nil {
 		ctx.Logger().Error("Failed to remove voting power snapshot", "avs", avs, "error", err)
 		return operatortypes.ErrFailToClearVPSnapshot.Wrapf("ClearVotingPowerSnapshot: failed to remove voting power snapshot, err:%s, avs:%s", err, avs)

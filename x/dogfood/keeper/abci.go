@@ -15,12 +15,13 @@ func (k Keeper) BeginBlock(ctx sdk.Context) {
 }
 
 func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
-	if !k.IsEpochEnd(ctx) {
+	if !k.ShouldUpdateValidatorSet(ctx) {
 		k.SetValidatorUpdates(ctx, []abci.ValidatorUpdate{})
 		return []abci.ValidatorUpdate{}
 	}
-	defer k.ClearEpochEnd(ctx)
+	defer k.ClearValidatorSetUpdateFlag(ctx)
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -63,6 +64,9 @@ func GetQueryCmd() *cobra.Command {
 		QueryAllOperatorsWithOptInAVS(),
 		QueryAllAVSsByOperator(),
 		GetOptInfo(),
+		QuerySnapshotHelper(),
+		QueryAllSnapshot(),
+		QuerySpecifiedSnapshot(),
 	)
 	return cmd
 }
@@ -450,6 +454,106 @@ func GetOptInfo() *cobra.Command {
 				return err
 			}
 			return genericQueryParams.clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func QuerySnapshotHelper() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "QuerySnapshotHelper <avsAddr>",
+		Short: "Get the voting power snapshot helper for the avs",
+		Long:  "Get the voting power snapshot helper for the avs",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !common.IsHexAddress(args[0]) {
+				return xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidAddr)
+			}
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := operatortypes.NewQueryClient(clientCtx)
+			req := &operatortypes.QuerySnapshotAndHelperRequest{
+				Avs: strings.ToLower(args[0]),
+			}
+			res, err := queryClient.QuerySnapshotHelper(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func QueryAllSnapshot() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "QueryAllSnapshot <avsAddr>",
+		Short: "Get the all voting power snapshots for the avs",
+		Long:  "Get the all voting power snapshots for the avs",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !common.IsHexAddress(args[0]) {
+				return xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidAddr)
+			}
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := operatortypes.NewQueryClient(clientCtx)
+			req := &operatortypes.QueryAllSnapshotRequest{
+				Avs:        strings.ToLower(args[0]),
+				Pagination: pageReq,
+			}
+			res, err := queryClient.QueryAllSnapshot(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func QuerySpecifiedSnapshot() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "QuerySpecifiedSnapshot <avsAddr> <height>",
+		Short: "Get the AVS voting power snapshot at specified height",
+		Long:  "Get the AVS voting power snapshot at specified height",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if !common.IsHexAddress(args[0]) {
+				return xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidAddr)
+			}
+			height, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := operatortypes.NewQueryClient(clientCtx)
+			req := &operatortypes.QuerySpecifiedSnapshotRequest{
+				Avs:    strings.ToLower(args[0]),
+				Height: int64(height), // #nosec G115
+			}
+			res, err := queryClient.QuerySpecifiedSnapshot(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
 		},
 	}
 

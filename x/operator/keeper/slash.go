@@ -197,12 +197,12 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	}
 
 	// update the voting power and save the snapshot for all affected AVSs
-	avsList, err := k.GetOptedInAVSForOperator(ctx, parameter.Operator.String())
+	affectedAVSList, err := k.GetImpactfulAVSForOperator(ctx, parameter.Operator.String())
 	if err != nil {
 		return err
 	}
-	for i := range avsList {
-		avs := avsList[i]
+	for i := range affectedAVSList {
+		avs := affectedAVSList[i]
 		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
 		if err != nil {
 			return err
@@ -211,11 +211,8 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		if err != nil {
 			return err
 		}
-		err = k.SetSlashFlag(ctx, avs, true)
-		if err != nil {
-			return err
-		}
 	}
+	k.hooks.AfterSlash(ctx, parameter.Operator, affectedAVSList)
 	return nil
 }
 

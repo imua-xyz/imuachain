@@ -7,6 +7,8 @@ import (
 	"sort"
 	"time"
 
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+
 	sdkmath "cosmossdk.io/math"
 
 	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
@@ -32,7 +34,7 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 	// set default client chainID and asset
 	suite.clientChainLzID = defaultClientChainID
 	// prepare AVS
-	suite.prepareAvs([]string{usdtAssetID})
+	suite.prepareAvs([]string{usdtAssetID}, epochstypes.DayEpochID)
 	// prepare stakers and operators
 	operators := make([]sdk.AccAddress, operatorNumber)
 	stakers := make([]common.Address, operatorNumber)
@@ -53,8 +55,15 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 		suite.prepareDeposit(stakers[i], usdtAddr, depositAmount)
 		// delegate assets
 		suite.prepareDelegation(true, stakers[i], usdtAddr, operators[i], delegateAmount)
-		// opt in
+		// opt in the test AVS
 		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, operators[i], suite.avsAddr)
+		suite.NoError(err)
+		// opt in the dogfood AVS
+		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+		dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+		pubKey := testutiltx.GenerateConsensusKey()
+		suite.Require().NotNil(pubKey)
+		err = suite.App.OperatorKeeper.OptInWithConsKey(suite.Ctx, operators[i], dogfoodAVSAddr, pubKey)
 		suite.NoError(err)
 	}
 	sort.Slice(stakers, func(i, j int) bool {
@@ -73,17 +82,17 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 }
 
 func (suite *OperatorTestSuite) runToEpochEnd() {
-	// the default AVS epoch identifier is hour
-	// Configure 3 blocks per epoch for testing, so the block duration is 20 minutes
+	// the default AVS epoch identifier is day
+	// Configure 3 blocks per epoch for testing, so the block duration is 8 hours
 	// so starting from the initial block of the epoch, it takes three blocks to
 	// reach the epoch’s end block.
 	for i := int64(0); i < blockNumberPerEpoch; i++ {
-		suite.CommitAfter(time.Hour / time.Duration(blockNumberPerEpoch))
+		suite.CommitAfter(8 * time.Hour)
 	}
 }
 
 func (suite *OperatorTestSuite) printAllSnapshot() {
-	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.HourEpochID)
+	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
 	suite.True(found)
 	fmt.Println("epoch", epochInfo.CurrentEpoch, "startHeight", epochInfo.CurrentEpochStartHeight)
 	opFunc := func(height int64, snapshot *types.VotingPowerSnapshot) error {
@@ -100,7 +109,7 @@ func (suite *OperatorTestSuite) printAllSnapshot() {
 func (suite *OperatorTestSuite) TestInitializeSnapshot() {
 	helperInfo := suite.prepareForSnapshotTesting(operatorNumber)
 	suite.runToEpochEnd()
-	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.HourEpochID)
+	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
 	suite.True(found)
 	// the height in the snapshot key should be the start height of next epoch.
 	snapshotHeight, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, epochInfo.CurrentEpochStartHeight)
@@ -123,7 +132,6 @@ func (suite *OperatorTestSuite) TestInitializeSnapshot() {
 		LastChangedHeight:    epochInfo.CurrentEpochStartHeight,
 		EpochIdentifier:      epochInfo.Identifier,
 		EpochNumber:          epochInfo.CurrentEpoch,
-		BlockTime:            suite.Ctx.BlockTime(),
 	}
 	suite.Equal(expectedSnapshot, *snapshot)
 
@@ -147,7 +155,7 @@ func (suite *OperatorTestSuite) TestSnapshotVPUnchanged() {
 
 	for i := 0; i < runToEpochNumber; i++ {
 		suite.runToEpochEnd()
-		epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.HourEpochID)
+		epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
 		suite.True(found)
 		startHeight := epochInfo.CurrentEpochStartHeight
 		endHeight := startHeight + blockNumberPerEpoch - 1
@@ -244,7 +252,7 @@ func (suite *OperatorTestSuite) TestSnapshotWithSlash() {
 	suite.NoError(err)
 	// run to next block to execute slashing
 	index := 0
-	suite.CommitAfter(time.Hour / time.Duration(blockNumberPerEpoch))
+	suite.CommitAfter(8 * time.Hour)
 	slashProportion := sdkmath.LegacyMustNewDecFromStr("0.1")
 	remainingProportion := sdkmath.LegacyNewDec(1).Sub(slashProportion)
 	slashParam := &types.SlashInputInfo{
@@ -268,8 +276,27 @@ func (suite *OperatorTestSuite) TestSnapshotWithSlash() {
 
 	snapshotHelper, err := suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, suite.avsAddr)
 	suite.NoError(err)
-	suite.True(snapshotHelper.HasSlash)
 	suite.Equal(suite.Ctx.BlockHeight(), snapshotHelper.LastChangedHeight)
+
+	shouldUpdateValidatorSet := suite.App.StakingKeeper.ShouldUpdateValidatorSet(suite.Ctx)
+	suite.True(shouldUpdateValidatorSet)
+}
+
+func (suite *OperatorTestSuite) TestGenesisSnapshot() {
+	suite.prepareForSnapshotTesting(operatorNumber)
+	firstBlockHeight := suite.Ctx.BlockHeight()
+	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+	for i := int64(0); i < blockNumberPerEpoch; i++ {
+		height, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, dogfoodAVSAddr, firstBlockHeight)
+		suite.NoError(err)
+		suite.Equal(firstBlockHeight, height)
+		suite.Equal(firstBlockHeight, snapshot.LastChangedHeight)
+		snapshotHelper, err := suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, dogfoodAVSAddr)
+		suite.NoError(err)
+		suite.Equal(firstBlockHeight, snapshotHelper.LastChangedHeight)
+	}
+	suite.printAllSnapshot()
 }
 
 func (suite *OperatorTestSuite) TestSnapshotPruning() {

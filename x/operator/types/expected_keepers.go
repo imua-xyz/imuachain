@@ -120,19 +120,23 @@ type SlashKeeper interface {
 }
 
 type OperatorHooks interface {
-	// This hook is called when an operator declares the consensus key for the provided chain.
+	// AfterOperatorKeySet This hook is called when an operator declares the consensus key for the provided chain.
 	AfterOperatorKeySet(
 		ctx sdk.Context, addr sdk.AccAddress, chainID string,
 		pubKey keytypes.WrappedConsKey,
 	)
-	// This hook is called when an operator's consensus key is replaced for a chain.
+	// AfterOperatorKeyReplaced This hook is called when an operator's consensus key is replaced for a chain.
 	AfterOperatorKeyReplaced(
 		ctx sdk.Context, addr sdk.AccAddress, oldKey keytypes.WrappedConsKey,
 		newKey keytypes.WrappedConsKey, chainID string,
 	)
-	// This hook is called when an operator initiates the removal of a consensus key for a
+	// AfterOperatorKeyRemovalInitiated This hook is called when an operator initiates the removal of a consensus key for a
 	// chain.
 	AfterOperatorKeyRemovalInitiated(
 		ctx sdk.Context, addr sdk.AccAddress, chainID string, key keytypes.WrappedConsKey,
+	)
+	// AfterSlash This hook is called when an operator is slashed
+	AfterSlash(
+		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []string,
 	)
 }

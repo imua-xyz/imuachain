@@ -91,3 +91,29 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 		}
 	}
 }
+
+func (h OperatorHooksWrapper) AfterSlash(
+	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []string,
+) {
+	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+	for i := range affectedAVSList {
+		if affectedAVSList[i] == dogfoodAVSAddr {
+			// check if the operator is in the current validator set.
+			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)
+			if !found || err != nil {
+				ctx.Logger().Error("AfterSlash the consensus key isn't found by the chainIDWithoutRevision and operator address", "operatorAddr", operator, "chainIDWithoutRevision", chainIDWithoutRevision, "err", err)
+				return
+			}
+			// check if the key is active yet
+			isValidator := false
+			_, isValidator = h.keeper.GetExocoreValidator(
+				ctx, wrappedKey.ToConsAddr(),
+			)
+			if isValidator {
+				h.keeper.MarkUpdateValidatorSetFlag(ctx)
+			}
+			break
+		}
+	}
+}

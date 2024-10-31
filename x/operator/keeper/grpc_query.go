@@ -2,8 +2,11 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
@@ -337,4 +340,52 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	}
 
 	return &types.QueryValidatorResponse{Validator: val}, nil
+}
+
+func (k *Keeper) QuerySnapshotHelper(goCtx context.Context, req *types.QuerySnapshotAndHelperRequest) (*types.SnapshotHelper, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	snapshotHelper, err := k.GetSnapshotHelper(ctx, strings.ToLower(req.Avs))
+	if err != nil {
+		return nil, err
+	}
+	return &snapshotHelper, nil
+}
+
+func (k *Keeper) QuerySpecifiedSnapshot(goCtx context.Context, req *types.QuerySpecifiedSnapshotRequest) (*types.VotingPowerSnapshotWithKeyHeight, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	findHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, strings.ToLower(req.Avs), req.Height)
+	if err != nil {
+		return nil, err
+	}
+	return &types.VotingPowerSnapshotWithKeyHeight{
+		SnapshotKeyHeight: findHeight,
+		Snapshot:          snapshot,
+	}, nil
+}
+
+func (k *Keeper) QueryAllSnapshot(goCtx context.Context, req *types.QueryAllSnapshotRequest) (*types.QueryAllSnapshotResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	res := make([]*types.VotingPowerSnapshotWithKeyHeight, 0)
+
+	snapshotPrefix := types.AppendMany(types.KeyPrefixVotingPowerSnapshot, common.HexToAddress(req.Avs).Bytes())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), snapshotPrefix)
+	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
+		ret := &types.VotingPowerSnapshot{}
+		// don't use MustUnmarshal to not panic for queries
+		if err := ret.Unmarshal(value); err != nil {
+			return err
+		}
+		res = append(res, &types.VotingPowerSnapshotWithKeyHeight{
+			SnapshotKeyHeight: int64(binary.BigEndian.Uint64(key)), // #nosec G115
+			Snapshot:          ret,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryAllSnapshotResponse{
+		Snapshots:  res,
+		Pagination: pageRes,
+	}, nil
 }

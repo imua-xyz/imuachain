@@ -81,13 +81,6 @@ message VotingPowerSnapshot {
   string epoch_identifier = 4;
   // epoch_number indicates which epoch this snapshot serve for
   int64  epoch_number = 5;
-  // block_time records the block time when it is stored, and it is used for snapshot pruning
-  // The epoch_number would be sufficient for pruning if we don't support AVSs changing their
-  // epoch configuration.
-  google.protobuf.Timestamp block_time = 6 [
-    (gogoproto.stdtime) = true,
-    (gogoproto.nullable) = false
-  ];
 }
 
 // SnapshotHelper is used to record the helper information for voting power snapshot update
@@ -107,10 +100,6 @@ message SnapshotHelper {
   // similar to the MaxValidatorNumber in Dogfood, this may need to be changed to an operator list
   // to track all operators that have opted out, thereby assisting with the correct snapshot update.
   bool has_opt_out = 2;
-
-  // has_slash is used to indicate whether there is a slash event has been executed before the epoch expires.
-  // When a slash is executed, Dogfood can immediately update the voting power based on this flag.
-  bool has_slash = 3;
 }
 
 // ClientChainEarningAddrList is the list of client chain earning addresses.

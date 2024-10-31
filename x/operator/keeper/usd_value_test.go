@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+
 	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -92,7 +94,7 @@ func (suite *OperatorTestSuite) TestAVSUSDValue() {
 	)
 	suite.NoError(err)
 	// register the new AVS
-	suite.prepareAvs([]string{usdcAssetID, usdtAssetID})
+	suite.prepareAvs([]string{usdcAssetID, usdtAssetID}, types.HourEpochID)
 	// opt in
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
@@ -174,7 +176,7 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	suite.NoError(err)
 	suite.True(found)
 
-	suite.App.StakingKeeper.MarkEpochEnd(suite.Ctx)
+	suite.App.StakingKeeper.MarkUpdateValidatorSetFlag(suite.Ctx)
 	validatorUpdates := suite.App.StakingKeeper.EndBlock(suite.Ctx)
 	suite.Equal(1, len(validatorUpdates))
 	for i, update := range validatorUpdates {

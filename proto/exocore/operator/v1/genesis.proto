@@ -70,7 +70,7 @@ message AVSUSDValue {
 // it's corresponding to the kvStore `KeyPrefixUSDValueForOperator`
 message OperatorUSDValue {
   // key is used for storing the voting power of specified operator and AVS,
-  // which is the combination of operator and AVS address.
+  // which is the combination of AVS and operator address.
   string key = 1;
   // value is the USD value states for the AVS address
   OperatorOptedUSDValue opted_usd_value = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "OptedUSDValue"];

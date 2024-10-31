@@ -270,7 +270,7 @@ func (k *Keeper) SetAllOperatorUSDValues(ctx sdk.Context, usdValues []operatorty
 	for i := range usdValues {
 		usdValue := usdValues[i]
 		bz := k.cdc.MustMarshal(&usdValue.OptedUSDValue)
-		store.Set([]byte(usdValue.Key), bz)
+		store.Set([]byte(strings.ToLower(usdValue.Key)), bz)
 	}
 	return nil
 }
@@ -302,19 +302,42 @@ func (k *Keeper) SetAllAVSUSDValues(ctx sdk.Context, usdValues []operatortypes.A
 	return nil
 }
 
+func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context, isUpdate bool, opFunc func(avsAddr string, avsUSDValue *operatortypes.DecValueField) error) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var usdValue operatortypes.DecValueField
+		k.cdc.MustUnmarshal(iterator.Value(), &usdValue)
+		err := opFunc(string(iterator.Key()), &usdValue)
+		if err != nil {
+			return err
+		}
+		if isUpdate {
+			bz := k.cdc.MustMarshal(&usdValue)
+			store.Set(iterator.Key(), bz)
+		}
+	}
+	return nil
+}
+
 func (k *Keeper) GetAllAVSUSDValues(ctx sdk.Context) ([]operatortypes.AVSUSDValue, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 
 	ret := make([]operatortypes.AVSUSDValue, 0)
-	for ; iterator.Valid(); iterator.Next() {
-		var usdValue operatortypes.DecValueField
-		k.cdc.MustUnmarshal(iterator.Value(), &usdValue)
+	opFunc := func(avsAddr string, avsUSDValue *operatortypes.DecValueField) error {
 		ret = append(ret, operatortypes.AVSUSDValue{
-			AVSAddr: string(iterator.Key()),
-			Value:   usdValue,
+			AVSAddr: avsAddr,
+			Value:   *avsUSDValue,
 		})
+		return nil
+	}
+	err := k.IterateAVSUSDValues(ctx, false, opFunc)
+	if err != nil {
+		return nil, err
 	}
 	return ret, nil
 }

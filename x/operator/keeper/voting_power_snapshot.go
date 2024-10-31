@@ -1,13 +1,10 @@
 package keeper
 
 import (
-	"time"
-
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func (k *Keeper) SetVotingPowerSnapshot(ctx sdk.Context, key []byte, snapshot *types.VotingPowerSnapshot) error {
@@ -56,12 +53,8 @@ func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, isU
 	return nil
 }
 
-// LoadVotingPowerSnapshot loads the voting power snapshot information for the provided height,
-// returning the height of the first block in the epoch the snapshot serves, along with the specific
-// voting power data. The start height will be used to filter pending undelegations during slashing.
-func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height int64) (int64, *types.VotingPowerSnapshot, error) {
+func (k *Keeper) GetSnapshotHeightAndKey(ctx sdk.Context, avsAddr string, height int64) (int64, []byte, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
-	var ret types.VotingPowerSnapshot
 	// If there is no snapshot for the input height, we need to find the correct key.
 	// The snapshot closest to the input height is the one used for its voting
 	// power information. The correct snapshot key can be found by taking advantage
@@ -85,11 +78,39 @@ func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height
 			}
 		}
 	}
+	return findHeight, findKey, nil
+}
 
+func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, optOutHeight int64) (int64, error) {
+	findHeight, findKey, err := k.GetSnapshotHeightAndKey(ctx, avsAddr, optOutHeight)
+	if err != nil {
+		return 0, err
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	value := store.Get(findKey)
 	if value == nil {
-		return 0, nil, types.ErrNoKeyInTheStore.Wrapf("LoadVotingPowerSnapshot: height is %v", findHeight)
+		return 0, types.ErrNoKeyInTheStore.Wrapf("GetEpochNumberByOptOutHeight: findHeight:%v, optOutHeight:%v", findHeight, optOutHeight)
 	}
+	var ret types.VotingPowerSnapshot
+	k.cdc.MustUnmarshal(value, &ret)
+	return ret.EpochNumber, nil
+}
+
+// LoadVotingPowerSnapshot loads the voting power snapshot information for the provided height,
+// returning the height of the first block in the epoch the snapshot serves, along with the specific
+// voting power data. The start height will be used to filter pending undelegations during slashing.
+func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height int64) (int64, *types.VotingPowerSnapshot, error) {
+	findHeight, findKey, err := k.GetSnapshotHeightAndKey(ctx, avsAddr, height)
+	if err != nil {
+		return 0, nil, err
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
+	value := store.Get(findKey)
+	if value == nil {
+		avs, keyHeight, _ := types.ParseVotingPowerSnapshotKey(findKey)
+		return 0, nil, types.ErrNoKeyInTheStore.Wrapf("LoadVotingPowerSnapshot: findHeight is %v, avs:%s ,keyHeight:%v", findHeight, avs, keyHeight)
+	}
+	var ret types.VotingPowerSnapshot
 	k.cdc.MustUnmarshal(value, &ret)
 
 	// fall back to get the snapshot if the key height doesn't equal to the `LastChangedHeight`
@@ -103,8 +124,8 @@ func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height
 	return findHeight, &ret, nil
 }
 
-// RemoveVotingPowerSnapshot remove all snapshots older than the input time.
-func (k *Keeper) RemoveVotingPowerSnapshot(ctx sdk.Context, avsAddr string, time time.Time) error {
+// RemoveVotingPowerSnapshot remove all snapshots older than the input epoch number.
+func (k *Keeper) RemoveVotingPowerSnapshot(ctx sdk.Context, avsAddr string, epochNumber int64) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	iterator := sdk.KVStorePrefixIterator(store, common.HexToAddress(avsAddr).Bytes())
 	defer iterator.Close()
@@ -115,7 +136,7 @@ func (k *Keeper) RemoveVotingPowerSnapshot(ctx sdk.Context, avsAddr string, time
 		var snapshot types.VotingPowerSnapshot
 		k.cdc.MustUnmarshal(iterator.Value(), &snapshot)
 		_, height, _ := types.ParseVotingPowerSnapshotKey(iterator.Key())
-		if snapshot.BlockTime.Compare(time) >= 0 {
+		if snapshot.EpochNumber > epochNumber {
 			// delete the retained key, because the snapshots that is earlier than the input time
 			// don't need to retain any old snapshot key.
 			if height == snapshot.LastChangedHeight && retainedKey != nil {
@@ -163,14 +184,6 @@ func (k *Keeper) SetOptOutFlag(ctx sdk.Context, avsAddr string, hasOptOut bool) 
 	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
 }
 
-func (k *Keeper) SetSlashFlag(ctx sdk.Context, avsAddr string, hasSlash bool) error {
-	opFunc := func(helper *types.SnapshotHelper) error {
-		helper.HasSlash = hasSlash
-		return nil // Reserve for future error handling
-	}
-	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
-}
-
 func (k *Keeper) SetLastChangedHeight(ctx sdk.Context, avsAddr string, lastChangeHeight int64) error {
 	opFunc := func(helper *types.SnapshotHelper) error {
 		helper.LastChangedHeight = lastChangeHeight
@@ -202,11 +215,54 @@ func (k *Keeper) HasSnapshotHelper(ctx sdk.Context, avsAddr string) bool {
 	return store.Has([]byte(avsAddr))
 }
 
-func (k *Keeper) HasSlash(ctx sdk.Context, avsAddr string) bool {
-	helper, err := k.GetSnapshotHelper(ctx, avsAddr)
-	if err != nil {
-		ctx.Logger().Error("Failed to get SnapshotHelper in HasSlash", "avsAddr", avsAddr, "error", err)
-		return false
+func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
+	snapshotStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
+	snapshotHelperStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixSnapshotHelper)
+	opFunc := func(avsAddr string, avsUSDValue *types.DecValueField) error {
+		votingPowerSet := make([]*types.OperatorVotingPower, 0)
+		opFunc := func(operator string, optedUSDValues *types.OperatorOptedUSDValue) error {
+			if optedUSDValues.ActiveUSDValue.IsPositive() {
+				votingPowerSet = append(votingPowerSet, &types.OperatorVotingPower{
+					OperatorAddr: operator,
+					VotingPower:  optedUSDValues.ActiveUSDValue,
+				})
+			}
+			return nil
+		}
+		err := k.IterateOperatorsForAVS(ctx, avsAddr, false, opFunc)
+		if err != nil {
+			return err
+		}
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+		if err != nil {
+			return err
+		}
+		genesisSnapshotHeight := ctx.BlockHeight() + 1
+		epochNumber := epochInfo.CurrentEpoch
+		// set the epoch number to 1 when epoch start for the first time.
+		if !epochInfo.EpochCountingStarted {
+			epochNumber = 1
+		}
+		bz := k.cdc.MustMarshal(&types.VotingPowerSnapshot{
+			TotalVotingPower:     avsUSDValue.Amount,
+			OperatorVotingPowers: votingPowerSet,
+			LastChangedHeight:    genesisSnapshotHeight,
+			EpochIdentifier:      epochInfo.Identifier,
+			EpochNumber:          epochNumber,
+		})
+		snapshotKey := types.KeyForVotingPowerSnapshot(common.HexToAddress(avsAddr), genesisSnapshotHeight)
+		snapshotStore.Set(snapshotKey, bz)
+
+		bz = k.cdc.MustMarshal(&types.SnapshotHelper{
+			LastChangedHeight: genesisSnapshotHeight,
+			HasOptOut:         false,
+		})
+		snapshotHelperStore.Set([]byte(avsAddr), bz)
+		return nil
 	}
-	return helper.HasSlash
+	err := k.IterateAVSUSDValues(ctx, false, opFunc)
+	if err != nil {
+		return err
+	}
+	return nil
 }

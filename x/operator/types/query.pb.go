@@ -9,7 +9,6 @@ import (
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	_ "github.com/cosmos/cosmos-proto"
 	query "github.com/cosmos/cosmos-sdk/types/query"
-	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -1354,28 +1353,192 @@ func (m *QueryOptInfoRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryOptInfoRequest proto.InternalMessageInfo
 
-// QueryValidatorsRequest is request type for Query/Validators RPC method.
-type QueryValidatorsRequest struct {
-	// chain is the id of the chain served by the operator. here chain_id is not used since the
-	// Linter complains about capitalization, which can be set with a gogoproto.custom_name but
-	// that is not compatible with google.api.http.get in the Query service below.
-	Chain string `protobuf:"bytes,1,opt,name=chain,proto3" json:"chain,omitempty"`
-	// pagination defines an optional pagination for the request.
+// QuerySnapshotAndHelperRequest is the request to obtain the voting power snapshot
+// and helper information.
+type QuerySnapshotAndHelperRequest struct {
+	// avs address
+	Avs string `protobuf:"bytes,1,opt,name=avs,proto3" json:"avs,omitempty"`
+}
+
+func (m *QuerySnapshotAndHelperRequest) Reset()         { *m = QuerySnapshotAndHelperRequest{} }
+func (m *QuerySnapshotAndHelperRequest) String() string { return proto.CompactTextString(m) }
+func (*QuerySnapshotAndHelperRequest) ProtoMessage()    {}
+func (*QuerySnapshotAndHelperRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f91e795a3cecbdbf, []int{25}
+}
+func (m *QuerySnapshotAndHelperRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QuerySnapshotAndHelperRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QuerySnapshotAndHelperRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QuerySnapshotAndHelperRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QuerySnapshotAndHelperRequest.Merge(m, src)
+}
+func (m *QuerySnapshotAndHelperRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QuerySnapshotAndHelperRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QuerySnapshotAndHelperRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QuerySnapshotAndHelperRequest proto.InternalMessageInfo
+
+func (m *QuerySnapshotAndHelperRequest) GetAvs() string {
+	if m != nil {
+		return m.Avs
+	}
+	return ""
+}
+
+// QuerySpecifiedSnapshotRequest is the request to obtain the voting power snapshot
+// at the specified height.
+type QuerySpecifiedSnapshotRequest struct {
+	// avs address
+	Avs string `protobuf:"bytes,1,opt,name=avs,proto3" json:"avs,omitempty"`
+	// height is used to specify the snapshot height you want to query.
+	Height int64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (m *QuerySpecifiedSnapshotRequest) Reset()         { *m = QuerySpecifiedSnapshotRequest{} }
+func (m *QuerySpecifiedSnapshotRequest) String() string { return proto.CompactTextString(m) }
+func (*QuerySpecifiedSnapshotRequest) ProtoMessage()    {}
+func (*QuerySpecifiedSnapshotRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f91e795a3cecbdbf, []int{26}
+}
+func (m *QuerySpecifiedSnapshotRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QuerySpecifiedSnapshotRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QuerySpecifiedSnapshotRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QuerySpecifiedSnapshotRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QuerySpecifiedSnapshotRequest.Merge(m, src)
+}
+func (m *QuerySpecifiedSnapshotRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QuerySpecifiedSnapshotRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QuerySpecifiedSnapshotRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QuerySpecifiedSnapshotRequest proto.InternalMessageInfo
+
+func (m *QuerySpecifiedSnapshotRequest) GetAvs() string {
+	if m != nil {
+		return m.Avs
+	}
+	return ""
+}
+
+func (m *QuerySpecifiedSnapshotRequest) GetHeight() int64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+// VotingPowerSnapshotWithKeyHeight is used in the response of QuerySpecifiedSnapshot
+// and QueryAllSnapshot
+type VotingPowerSnapshotWithKeyHeight struct {
+	// snapshot_key_height when it is used in QuerySpecifiedSnapshot, it's the latest
+	// height with a snapshot key found based on the input height; this height is typically
+	// the start height of the epoch in which the input height is located.
+	// when it is used in QueryAllSnapshot, it's the height in the current snapshot key.
+	SnapshotKeyHeight int64 `protobuf:"varint,1,opt,name=snapshot_key_height,json=snapshotKeyHeight,proto3" json:"snapshot_key_height,omitempty"`
+	// snapshot when it is used in QuerySpecifiedSnapshot, it is the final retrieved information
+	// containing the voting power set.
+	// when it is used in QueryAllSnapshot, It is the snapshot stored under `snapshot_key_height`,
+	// and its voting power set may be nil.
+	Snapshot *VotingPowerSnapshot `protobuf:"bytes,2,opt,name=snapshot,proto3" json:"snapshot,omitempty"`
+}
+
+func (m *VotingPowerSnapshotWithKeyHeight) Reset()         { *m = VotingPowerSnapshotWithKeyHeight{} }
+func (m *VotingPowerSnapshotWithKeyHeight) String() string { return proto.CompactTextString(m) }
+func (*VotingPowerSnapshotWithKeyHeight) ProtoMessage()    {}
+func (*VotingPowerSnapshotWithKeyHeight) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f91e795a3cecbdbf, []int{27}
+}
+func (m *VotingPowerSnapshotWithKeyHeight) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *VotingPowerSnapshotWithKeyHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_VotingPowerSnapshotWithKeyHeight.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *VotingPowerSnapshotWithKeyHeight) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VotingPowerSnapshotWithKeyHeight.Merge(m, src)
+}
+func (m *VotingPowerSnapshotWithKeyHeight) XXX_Size() int {
+	return m.Size()
+}
+func (m *VotingPowerSnapshotWithKeyHeight) XXX_DiscardUnknown() {
+	xxx_messageInfo_VotingPowerSnapshotWithKeyHeight.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_VotingPowerSnapshotWithKeyHeight proto.InternalMessageInfo
+
+func (m *VotingPowerSnapshotWithKeyHeight) GetSnapshotKeyHeight() int64 {
+	if m != nil {
+		return m.SnapshotKeyHeight
+	}
+	return 0
+}
+
+func (m *VotingPowerSnapshotWithKeyHeight) GetSnapshot() *VotingPowerSnapshot {
+	if m != nil {
+		return m.Snapshot
+	}
+	return nil
+}
+
+// QueryAllSnapshotRequest is the request to obtain all voting power snapshot
+// for the specified AVS
+type QueryAllSnapshotRequest struct {
+	// avs address
+	Avs string `protobuf:"bytes,1,opt,name=avs,proto3" json:"avs,omitempty"`
+	// pagination related options.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryValidatorsRequest) Reset()         { *m = QueryValidatorsRequest{} }
-func (m *QueryValidatorsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryValidatorsRequest) ProtoMessage()    {}
-func (*QueryValidatorsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f91e795a3cecbdbf, []int{25}
+func (m *QueryAllSnapshotRequest) Reset()         { *m = QueryAllSnapshotRequest{} }
+func (m *QueryAllSnapshotRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllSnapshotRequest) ProtoMessage()    {}
+func (*QueryAllSnapshotRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f91e795a3cecbdbf, []int{28}
 }
-func (m *QueryValidatorsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryAllSnapshotRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryValidatorsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryAllSnapshotRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryValidatorsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryAllSnapshotRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -1385,52 +1548,53 @@ func (m *QueryValidatorsRequest) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *QueryValidatorsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryValidatorsRequest.Merge(m, src)
+func (m *QueryAllSnapshotRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllSnapshotRequest.Merge(m, src)
 }
-func (m *QueryValidatorsRequest) XXX_Size() int {
+func (m *QueryAllSnapshotRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryValidatorsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryValidatorsRequest.DiscardUnknown(m)
+func (m *QueryAllSnapshotRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllSnapshotRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryValidatorsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryAllSnapshotRequest proto.InternalMessageInfo
 
-func (m *QueryValidatorsRequest) GetChain() string {
+func (m *QueryAllSnapshotRequest) GetAvs() string {
 	if m != nil {
-		return m.Chain
+		return m.Avs
 	}
 	return ""
 }
 
-func (m *QueryValidatorsRequest) GetPagination() *query.PageRequest {
+func (m *QueryAllSnapshotRequest) GetPagination() *query.PageRequest {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryValidatorsResponse is response type for the Query/Validators RPC method
-type QueryValidatorsResponse struct {
-	// validators contains all the queried validators.
-	Validators []Validator `protobuf:"bytes,1,rep,name=validators,proto3" json:"validators"`
-	// pagination defines the pagination in the response.
+// QueryAllSnapshotResponse is the response to obtain all voting power snapshot
+// for the specified AVS
+type QueryAllSnapshotResponse struct {
+	// snapshots is a list of all snapshots for the specified AVS.
+	Snapshots []*VotingPowerSnapshotWithKeyHeight `protobuf:"bytes,1,rep,name=snapshots,proto3" json:"snapshots,omitempty"`
+	// pagination related response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryValidatorsResponse) Reset()         { *m = QueryValidatorsResponse{} }
-func (m *QueryValidatorsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryValidatorsResponse) ProtoMessage()    {}
-func (*QueryValidatorsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f91e795a3cecbdbf, []int{26}
+func (m *QueryAllSnapshotResponse) Reset()         { *m = QueryAllSnapshotResponse{} }
+func (m *QueryAllSnapshotResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryAllSnapshotResponse) ProtoMessage()    {}
+func (*QueryAllSnapshotResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f91e795a3cecbdbf, []int{29}
 }
-func (m *QueryValidatorsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryAllSnapshotResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryValidatorsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryAllSnapshotResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryValidatorsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryAllSnapshotResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -1440,133 +1604,30 @@ func (m *QueryValidatorsResponse) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *QueryValidatorsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryValidatorsResponse.Merge(m, src)
+func (m *QueryAllSnapshotResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllSnapshotResponse.Merge(m, src)
 }
-func (m *QueryValidatorsResponse) XXX_Size() int {
+func (m *QueryAllSnapshotResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryValidatorsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryValidatorsResponse.DiscardUnknown(m)
+func (m *QueryAllSnapshotResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllSnapshotResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryValidatorsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryAllSnapshotResponse proto.InternalMessageInfo
 
-func (m *QueryValidatorsResponse) GetValidators() []Validator {
+func (m *QueryAllSnapshotResponse) GetSnapshots() []*VotingPowerSnapshotWithKeyHeight {
 	if m != nil {
-		return m.Validators
+		return m.Snapshots
 	}
 	return nil
 }
 
-func (m *QueryValidatorsResponse) GetPagination() *query.PageResponse {
+func (m *QueryAllSnapshotResponse) GetPagination() *query.PageResponse {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
-}
-
-// QueryValidatorRequest is response type for the Query/Validator RPC method
-type QueryValidatorRequest struct {
-	// validator_acc_addr defines the validator address to query for.
-	ValidatorAccAddr string `protobuf:"bytes,1,opt,name=validator_acc_addr,json=validatorAccAddr,proto3" json:"validator_acc_addr,omitempty"`
-	// chain is the id of the chain served by the operator. here chain_id is not used since the
-	// Linter complains about capitalization, which can be set with a gogoproto.custom_name but
-	// that is not compatible with google.api.http.get in the Query service below.
-	Chain string `protobuf:"bytes,2,opt,name=chain,proto3" json:"chain,omitempty"`
-}
-
-func (m *QueryValidatorRequest) Reset()         { *m = QueryValidatorRequest{} }
-func (m *QueryValidatorRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryValidatorRequest) ProtoMessage()    {}
-func (*QueryValidatorRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f91e795a3cecbdbf, []int{27}
-}
-func (m *QueryValidatorRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryValidatorRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryValidatorRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryValidatorRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryValidatorRequest.Merge(m, src)
-}
-func (m *QueryValidatorRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryValidatorRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryValidatorRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryValidatorRequest proto.InternalMessageInfo
-
-func (m *QueryValidatorRequest) GetValidatorAccAddr() string {
-	if m != nil {
-		return m.ValidatorAccAddr
-	}
-	return ""
-}
-
-func (m *QueryValidatorRequest) GetChain() string {
-	if m != nil {
-		return m.Chain
-	}
-	return ""
-}
-
-// QueryValidatorResponse is response type for the Query/Validator RPC method
-type QueryValidatorResponse struct {
-	// validator defines the validator info.
-	Validator Validator `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator"`
-}
-
-func (m *QueryValidatorResponse) Reset()         { *m = QueryValidatorResponse{} }
-func (m *QueryValidatorResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryValidatorResponse) ProtoMessage()    {}
-func (*QueryValidatorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f91e795a3cecbdbf, []int{28}
-}
-func (m *QueryValidatorResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryValidatorResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryValidatorResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryValidatorResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryValidatorResponse.Merge(m, src)
-}
-func (m *QueryValidatorResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryValidatorResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryValidatorResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryValidatorResponse proto.InternalMessageInfo
-
-func (m *QueryValidatorResponse) GetValidator() Validator {
-	if m != nil {
-		return m.Validator
-	}
-	return Validator{}
 }
 
 func init() {
@@ -1595,121 +1656,126 @@ func init() {
 	proto.RegisterType((*QueryAllAVSsByOperatorRequest)(nil), "exocore.operator.v1.QueryAllAVSsByOperatorRequest")
 	proto.RegisterType((*QueryAllAVSsByOperatorResponse)(nil), "exocore.operator.v1.QueryAllAVSsByOperatorResponse")
 	proto.RegisterType((*QueryOptInfoRequest)(nil), "exocore.operator.v1.QueryOptInfoRequest")
-	proto.RegisterType((*QueryValidatorsRequest)(nil), "exocore.operator.v1.QueryValidatorsRequest")
-	proto.RegisterType((*QueryValidatorsResponse)(nil), "exocore.operator.v1.QueryValidatorsResponse")
-	proto.RegisterType((*QueryValidatorRequest)(nil), "exocore.operator.v1.QueryValidatorRequest")
-	proto.RegisterType((*QueryValidatorResponse)(nil), "exocore.operator.v1.QueryValidatorResponse")
+	proto.RegisterType((*QuerySnapshotAndHelperRequest)(nil), "exocore.operator.v1.QuerySnapshotAndHelperRequest")
+	proto.RegisterType((*QuerySpecifiedSnapshotRequest)(nil), "exocore.operator.v1.QuerySpecifiedSnapshotRequest")
+	proto.RegisterType((*VotingPowerSnapshotWithKeyHeight)(nil), "exocore.operator.v1.VotingPowerSnapshotWithKeyHeight")
+	proto.RegisterType((*QueryAllSnapshotRequest)(nil), "exocore.operator.v1.QueryAllSnapshotRequest")
+	proto.RegisterType((*QueryAllSnapshotResponse)(nil), "exocore.operator.v1.QueryAllSnapshotResponse")
 }
 
 func init() { proto.RegisterFile("exocore/operator/v1/query.proto", fileDescriptor_f91e795a3cecbdbf) }
 
 var fileDescriptor_f91e795a3cecbdbf = []byte{
-	// 1678 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x59, 0xcd, 0x73, 0x14, 0x45,
-	0x14, 0xcf, 0x04, 0x90, 0xec, 0x0b, 0x60, 0xd2, 0x09, 0x1a, 0x06, 0xd8, 0x85, 0x41, 0x49, 0x08,
-	0x61, 0xc7, 0x84, 0x80, 0x16, 0x11, 0xad, 0x5d, 0x02, 0x18, 0xa0, 0x4c, 0x9c, 0x2d, 0x83, 0x5a,
-	0xa5, 0x5b, 0x93, 0x9d, 0x61, 0x33, 0xc5, 0x64, 0x66, 0xd9, 0x9e, 0x5d, 0xd8, 0x4a, 0xc5, 0xb2,
-	0x3c, 0xe1, 0xcd, 0x92, 0xa3, 0x85, 0x67, 0x2f, 0x5a, 0x1e, 0xac, 0xf2, 0xe0, 0x41, 0x8f, 0x1c,
-	0x3c, 0x44, 0xbd, 0x78, 0x8a, 0x56, 0xa2, 0xe5, 0x5f, 0xe0, 0xc1, 0x9b, 0x35, 0x3d, 0xdd, 0xf3,
-	0x3d, 0x93, 0x59, 0x88, 0x5c, 0x52, 0x3b, 0xd3, 0xef, 0xf5, 0xfb, 0xbd, 0xaf, 0x7e, 0xbf, 0x9e,
-	0x40, 0x41, 0xbd, 0x67, 0xd6, 0xcc, 0xa6, 0x2a, 0x9a, 0x0d, 0xb5, 0x29, 0x5b, 0x66, 0x53, 0x6c,
-	0x4f, 0x8a, 0x77, 0x5a, 0x6a, 0xb3, 0x53, 0x6c, 0x34, 0x4d, 0xcb, 0x44, 0x43, 0x54, 0xa0, 0xc8,
-	0x04, 0x8a, 0xed, 0x49, 0x7e, 0x50, 0x5e, 0xd1, 0x0c, 0x53, 0x24, 0x7f, 0x1d, 0x39, 0x7e, 0xbc,
-	0x66, 0xe2, 0x15, 0x13, 0x8b, 0x4b, 0x32, 0x56, 0x9d, 0x0d, 0xc4, 0xf6, 0xe4, 0x92, 0x6a, 0xc9,
-	0x93, 0x62, 0x43, 0xae, 0x6b, 0x86, 0x6c, 0x69, 0xa6, 0x41, 0x65, 0x0f, 0x53, 0x59, 0x26, 0xe6,
-	0x37, 0xc8, 0x1f, 0x72, 0x16, 0xab, 0xe4, 0x49, 0x74, 0x1e, 0xe8, 0xd2, 0x91, 0x38, 0xb0, 0xd6,
-	0x3d, 0xba, 0x7a, 0x22, 0x6e, 0xb5, 0x2d, 0xeb, 0x9a, 0x42, 0x60, 0x3b, 0x42, 0xc3, 0x75, 0xb3,
-	0x6e, 0x3a, 0x5b, 0xdb, 0xbf, 0xd8, 0xc6, 0x75, 0xd3, 0xac, 0xeb, 0xaa, 0x28, 0x37, 0x34, 0x51,
-	0x36, 0x0c, 0xd3, 0x22, 0x68, 0x5d, 0xb3, 0x96, 0x6a, 0x28, 0x6a, 0x73, 0x45, 0x33, 0x2c, 0xb1,
-	0xd6, 0xec, 0x34, 0x2c, 0x53, 0xbc, 0xad, 0x76, 0xe8, 0xaa, 0x50, 0x01, 0x74, 0x55, 0xb5, 0xe6,
-	0xa9, 0xcd, 0x39, 0xe3, 0x96, 0x29, 0xa9, 0x77, 0xd0, 0x45, 0xd8, 0xcf, 0x60, 0x54, 0x65, 0x45,
-	0x69, 0x8e, 0x70, 0xc7, 0xb8, 0xb1, 0x5c, 0x79, 0xe4, 0x97, 0x6f, 0xcf, 0x0c, 0x53, 0x9f, 0x4a,
-	0x8a, 0xd2, 0x54, 0x31, 0xae, 0x58, 0x4d, 0xcd, 0xa8, 0x4b, 0xfb, 0x98, 0xb8, 0xfd, 0x5a, 0x58,
-	0x82, 0x91, 0xb7, 0xec, 0x98, 0x94, 0x74, 0x9d, 0xed, 0x8c, 0x25, 0xf5, 0x4e, 0x4b, 0xc5, 0x16,
-	0xba, 0x02, 0xe0, 0x45, 0x94, 0xec, 0xdb, 0x3f, 0x75, 0xb2, 0x48, 0x37, 0xb5, 0xc3, 0x5f, 0x74,
-	0xc2, 0x49, 0xc3, 0x5f, 0x5c, 0x90, 0xeb, 0x2a, 0xd5, 0x95, 0x7c, 0x9a, 0xc2, 0x67, 0x1c, 0x1c,
-	0x8a, 0x31, 0x82, 0x1b, 0xa6, 0x81, 0x55, 0x34, 0x01, 0xc8, 0x73, 0xa0, 0x56, 0x23, 0x4e, 0xe0,
-	0x11, 0xee, 0xd8, 0xae, 0xb1, 0x9c, 0x34, 0xe0, 0x62, 0xad, 0xd5, 0x6c, 0xb8, 0x18, 0x5d, 0x0d,
-	0x60, 0xea, 0x25, 0x98, 0x46, 0xb7, 0xc5, 0xe4, 0x98, 0x0a, 0x80, 0xb2, 0x00, 0x31, 0x2c, 0xa5,
-	0xc5, 0x0a, 0x0d, 0xd1, 0x13, 0x46, 0x13, 0x15, 0xa0, 0x5f, 0x6e, 0x63, 0xa2, 0xa9, 0x62, 0x4c,
-	0xe0, 0xe5, 0x24, 0x90, 0xdb, 0x98, 0x2a, 0x09, 0x77, 0xe1, 0x08, 0x89, 0x04, 0x33, 0xfd, 0x76,
-	0x65, 0x76, 0x51, 0xd6, 0x5b, 0x2c, 0x6c, 0xe8, 0x26, 0x0c, 0x78, 0xf6, 0x0d, 0xa5, 0x2a, 0xb7,
-	0x31, 0x0d, 0xfc, 0x68, 0x31, 0xa6, 0x3f, 0x8a, 0x51, 0x17, 0xca, 0xbb, 0xd7, 0x37, 0x0a, 0x9c,
-	0x74, 0xc0, 0xc5, 0x65, 0x28, 0xa5, 0x36, 0x16, 0x3a, 0x70, 0x34, 0xc1, 0x30, 0x4d, 0xc3, 0x3b,
-	0x00, 0x2d, 0xac, 0x54, 0xdb, 0xf6, 0x4b, 0x66, 0x73, 0x3c, 0xd5, 0xe6, 0x7c, 0xc3, 0x52, 0x15,
-	0xb6, 0x4f, 0x79, 0xff, 0xe6, 0x46, 0x21, 0xc7, 0x9e, 0xb0, 0x94, 0x6b, 0x61, 0xc5, 0xf9, 0x29,
-	0x5c, 0x83, 0xe7, 0x9d, 0xec, 0x2f, 0x56, 0xc2, 0xee, 0x8a, 0xc1, 0x78, 0x39, 0xc1, 0x3e, 0xb0,
-	0xb9, 0x51, 0x00, 0xcf, 0xa1, 0x40, 0xfc, 0x7e, 0xe4, 0x42, 0x7e, 0x54, 0x74, 0x19, 0x2f, 0xd3,
-	0x5e, 0xf8, 0x5f, 0x23, 0x18, 0xea, 0x86, 0xde, 0xc7, 0xee, 0x86, 0x55, 0x38, 0x18, 0x01, 0x5f,
-	0xee, 0xcc, 0xcd, 0xa2, 0x93, 0xd0, 0x87, 0xed, 0x17, 0x55, 0x4d, 0xa1, 0x91, 0xe8, 0xdf, 0xdc,
-	0x28, 0xec, 0x75, 0x84, 0x66, 0xa5, 0xbd, 0x64, 0x71, 0x4e, 0x41, 0x17, 0x60, 0xb7, 0x66, 0xdc,
-	0x32, 0x5d, 0x08, 0x69, 0x5e, 0x79, 0xe1, 0x21, 0x3a, 0xc2, 0xf7, 0x1c, 0xe4, 0x93, 0xe2, 0x47,
-	0x0b, 0x61, 0x01, 0x0e, 0xc8, 0xba, 0x5e, 0xa5, 0x50, 0x6c, 0x43, 0x76, 0x2f, 0x6e, 0x57, 0x0c,
-	0x01, 0x57, 0xa4, 0x7d, 0xb2, 0xae, 0xbb, 0x6f, 0x76, 0xae, 0x67, 0xab, 0x70, 0x38, 0x00, 0xfe,
-	0x92, 0x69, 0xe0, 0xeb, 0x6a, 0x87, 0xa5, 0x7e, 0x1c, 0x06, 0x23, 0x27, 0x89, 0x13, 0x49, 0xe9,
-	0xd9, 0xd0, 0x41, 0x82, 0x86, 0x61, 0x4f, 0x6d, 0x59, 0xd6, 0x0c, 0xda, 0xa3, 0xce, 0x83, 0xf0,
-	0x11, 0x17, 0xea, 0x4f, 0xd7, 0x02, 0x0d, 0x4e, 0x09, 0xa0, 0xd1, 0x5a, 0xd2, 0xb5, 0x5a, 0xf5,
-	0xb6, 0xda, 0xa1, 0x75, 0x75, 0xa4, 0xe8, 0x1d, 0xdb, 0x45, 0xe7, 0xd8, 0x2e, 0x2e, 0x10, 0xa1,
-	0xeb, 0x6a, 0xa7, 0xbc, 0xfb, 0xd1, 0x46, 0xa1, 0x47, 0xca, 0x35, 0xd8, 0x0b, 0x74, 0x14, 0xc0,
-	0x6c, 0x58, 0x9a, 0x51, 0xaf, 0x9a, 0x2d, 0x8b, 0x98, 0xef, 0x93, 0x72, 0xce, 0x9b, 0xf9, 0x96,
-	0x25, 0xd4, 0xa0, 0x10, 0x41, 0xc0, 0x3a, 0x61, 0xc7, 0xfc, 0xfc, 0x00, 0x8e, 0x25, 0x1b, 0xa1,
-	0xae, 0x1e, 0x86, 0x5c, 0xcd, 0x34, 0xb0, 0x7f, 0xf7, 0xbe, 0x1a, 0x95, 0xdb, 0xce, 0x89, 0xfb,
-	0x1c, 0x8c, 0x85, 0x4f, 0x7c, 0x1a, 0x4a, 0x5c, 0xee, 0x5c, 0xb2, 0x31, 0xcc, 0xcd, 0x32, 0x77,
-	0x5c, 0x88, 0x9c, 0x0f, 0xe2, 0x8e, 0xb5, 0xdb, 0x4f, 0x1c, 0x9c, 0xca, 0x00, 0x85, 0x3a, 0xbd,
-	0xe8, 0x1b, 0x46, 0xc4, 0x7b, 0x7b, 0xfe, 0xd2, 0x06, 0x18, 0x4b, 0x6d, 0x00, 0xba, 0xe7, 0x82,
-	0xac, 0x35, 0xbd, 0xb1, 0xc5, 0x0c, 0xed, 0x5c, 0x0b, 0x3c, 0xe4, 0x60, 0x28, 0xc6, 0x64, 0x57,
-	0x35, 0x31, 0x13, 0x28, 0xe2, 0xde, 0xed, 0x8b, 0x38, 0xb9, 0x7c, 0x77, 0x85, 0x33, 0xff, 0x49,
-	0x42, 0xb8, 0xc9, 0xf4, 0x7e, 0xca, 0xa9, 0x5f, 0xe7, 0x60, 0x3c, 0x0b, 0x16, 0x9a, 0xfb, 0x77,
-	0x61, 0x28, 0x98, 0x7b, 0x8f, 0x89, 0xf4, 0x4f, 0x9d, 0xda, 0x36, 0xf9, 0xf6, 0xae, 0x24, 0xfb,
-	0x83, 0x66, 0xd8, 0xd6, 0xce, 0xa5, 0xff, 0x43, 0x18, 0x8e, 0xb3, 0xd9, 0x55, 0xfa, 0x03, 0x8d,
-	0xdd, 0x9b, 0xda, 0xd8, 0x91, 0xf4, 0x9e, 0x07, 0x21, 0xc2, 0xe4, 0xca, 0x9d, 0xf9, 0x86, 0x35,
-	0x67, 0x94, 0x16, 0x2b, 0x2c, 0xad, 0x03, 0xb0, 0x8b, 0x8d, 0xdd, 0x9c, 0x64, 0xff, 0x14, 0xae,
-	0xc1, 0x89, 0x54, 0x3d, 0x9a, 0x82, 0x13, 0x3e, 0xfa, 0xa5, 0x6b, 0xd8, 0xa2, 0x34, 0xd0, 0x25,
-	0x59, 0x37, 0x34, 0x6c, 0x09, 0x33, 0x94, 0x02, 0x94, 0x74, 0xbd, 0xb4, 0x58, 0x21, 0xdb, 0x38,
-	0xab, 0xcc, 0x3c, 0x0f, 0x7d, 0x4c, 0x81, 0x1d, 0x5c, 0xec, 0x59, 0x98, 0xa1, 0xf3, 0x2f, 0x46,
-	0x99, 0x62, 0x38, 0x04, 0x7d, 0x36, 0x27, 0xf1, 0x99, 0xdf, 0x2b, 0xb7, 0x31, 0xb1, 0x6c, 0xc0,
-	0x10, 0x3d, 0x36, 0xad, 0xa7, 0x41, 0x39, 0x84, 0x36, 0x3c, 0x47, 0xec, 0x2d, 0xb2, 0xbb, 0x05,
-	0x7e, 0x3a, 0x8d, 0xf3, 0x15, 0x47, 0x29, 0x9b, 0xdf, 0x30, 0x0d, 0xcf, 0x1c, 0x80, 0x7b, 0xd5,
-	0x61, 0xcd, 0x91, 0x8f, 0x75, 0xd3, 0x55, 0x2e, 0xe7, 0xec, 0x19, 0xf8, 0xe5, 0xdf, 0xdf, 0x8c,
-	0x73, 0x92, 0x4f, 0x79, 0xe7, 0xba, 0xa2, 0x05, 0x07, 0x83, 0x70, 0xbd, 0x1b, 0x0c, 0x72, 0xed,
-	0x85, 0xfa, 0x22, 0x85, 0xd3, 0x0f, 0xb8, 0x3a, 0xe9, 0x53, 0x54, 0x0e, 0xa7, 0xc7, 0x0d, 0xd2,
-	0x55, 0xc8, 0xb9, 0x7b, 0xd0, 0x52, 0xe8, 0x22, 0x46, 0x9e, 0xee, 0xd4, 0x5f, 0x07, 0x61, 0x0f,
-	0xb1, 0x81, 0x3e, 0xe7, 0x60, 0x30, 0x30, 0xb3, 0x09, 0xb5, 0x8a, 0x2f, 0xb0, 0xe8, 0x35, 0x91,
-	0x3f, 0x9e, 0x5a, 0x89, 0xb6, 0x94, 0x70, 0xe1, 0xe3, 0x5f, 0xff, 0x7c, 0xd0, 0x3b, 0x8d, 0xa6,
-	0xc4, 0xb8, 0xfb, 0xad, 0x5b, 0xe1, 0x36, 0x25, 0x14, 0x57, 0x03, 0xb7, 0xa4, 0x35, 0xf4, 0x05,
-	0x43, 0xe7, 0x6f, 0x70, 0x74, 0x26, 0xd6, 0x68, 0xd2, 0x7d, 0x93, 0x2f, 0x66, 0x15, 0x77, 0xa2,
-	0x2c, 0x8c, 0x13, 0xc0, 0x2f, 0x20, 0x21, 0x16, 0xb0, 0x4d, 0x62, 0x4d, 0x17, 0xca, 0xcf, 0x61,
-	0xe2, 0x4b, 0x87, 0xe7, 0x15, 0xb3, 0x49, 0xe7, 0x00, 0x7a, 0x29, 0xd9, 0x7c, 0x3c, 0xe1, 0xe4,
-	0x27, 0xbb, 0xd0, 0xa0, 0x98, 0xaf, 0x11, 0xcc, 0xb3, 0xa8, 0x9c, 0x1e, 0x64, 0xc6, 0x3d, 0xfc,
-	0x81, 0xa6, 0xe5, 0xbb, 0x26, 0xae, 0x92, 0xf2, 0x5b, 0x43, 0x1b, 0x1c, 0x3d, 0x8d, 0x63, 0x68,
-	0x9c, 0xcf, 0xaf, 0xe9, 0x6c, 0x28, 0x83, 0x24, 0x93, 0x3f, 0xd7, 0xa5, 0x16, 0xf5, 0xef, 0x3a,
-	0xf1, 0xef, 0x32, 0xba, 0x94, 0xc1, 0x3f, 0xdb, 0x9b, 0x54, 0x07, 0x7f, 0xe7, 0xe0, 0xf8, 0xb6,
-	0xdc, 0x0d, 0x5d, 0xcc, 0x54, 0x36, 0x49, 0xf4, 0x93, 0x7f, 0xed, 0x71, 0xd5, 0xa9, 0xc7, 0x33,
-	0xc4, 0xe3, 0x73, 0xe8, 0xec, 0xb6, 0x55, 0xe8, 0x31, 0x4a, 0xd7, 0xc3, 0x7f, 0x38, 0x7a, 0x74,
-	0x85, 0xef, 0xe5, 0x28, 0x43, 0x6d, 0x85, 0x6e, 0xd3, 0xfc, 0x54, 0x37, 0x2a, 0x14, 0x7d, 0x8b,
-	0xa0, 0x37, 0xd1, 0x8a, 0x98, 0xf8, 0x7d, 0xce, 0xc3, 0xef, 0x7e, 0x20, 0xf0, 0x67, 0xcd, 0x19,
-	0x78, 0xc5, 0xe0, 0x81, 0x10, 0x23, 0xe0, 0xbb, 0xe8, 0xaf, 0xa1, 0x07, 0x1c, 0x0c, 0x84, 0x3f,
-	0x0a, 0xa0, 0x89, 0x94, 0x4c, 0x44, 0xbe, 0x1d, 0xf0, 0x42, 0xac, 0xf4, 0xac, 0x5a, 0x23, 0x52,
-	0x57, 0x34, 0x55, 0x57, 0x84, 0x33, 0xc4, 0xbb, 0x51, 0xf4, 0x62, 0xac, 0x77, 0x11, 0x00, 0xff,
-	0x72, 0xf4, 0x44, 0x8f, 0xdc, 0x6a, 0x51, 0x86, 0xd8, 0x86, 0x3f, 0x45, 0xf0, 0x67, 0xbb, 0xd2,
-	0xa1, 0x09, 0x69, 0x13, 0xc8, 0x0d, 0x64, 0x64, 0x49, 0x88, 0x77, 0x49, 0x7f, 0xe2, 0x8c, 0x6c,
-	0x71, 0x51, 0x6a, 0x17, 0x25, 0xcb, 0x28, 0x7b, 0xb7, 0xc4, 0x32, 0x7e, 0xfe, 0xf5, 0xc7, 0xd6,
-	0xa7, 0xf1, 0x79, 0x95, 0xc4, 0xe7, 0x3c, 0x9a, 0xce, 0xd8, 0x6e, 0x84, 0xc4, 0xbb, 0xfd, 0xf6,
-	0x88, 0xf3, 0xc8, 0xa3, 0x3b, 0x50, 0x6e, 0x6a, 0xd6, 0x32, 0xa3, 0xa2, 0xe8, 0xe5, 0x6c, 0x43,
-	0x28, 0x42, 0x7a, 0xf9, 0x57, 0xba, 0x57, 0xa4, 0x2e, 0x4d, 0x13, 0x97, 0x8a, 0x68, 0x22, 0xe1,
-	0xcc, 0xb4, 0xc4, 0x00, 0x29, 0x16, 0x57, 0xe5, 0x36, 0x5e, 0x43, 0xdf, 0xb1, 0x62, 0x8d, 0x50,
-	0xd9, 0xb4, 0x62, 0x4d, 0x22, 0xcd, 0x69, 0xc5, 0x9a, 0xc8, 0x95, 0x33, 0x20, 0x67, 0x54, 0xda,
-	0x2b, 0xbf, 0x35, 0xf4, 0x03, 0x07, 0xfb, 0xfc, 0x3c, 0x1a, 0x8d, 0xa5, 0x35, 0x8a, 0x9f, 0x6a,
-	0xf3, 0xf9, 0x04, 0x1a, 0x63, 0xa9, 0x0a, 0xe1, 0x30, 0x2a, 0x01, 0x54, 0x45, 0xef, 0x27, 0x01,
-	0xda, 0x99, 0x66, 0x79, 0xc8, 0x01, 0x78, 0xdc, 0x18, 0x9d, 0x4e, 0xc6, 0x1f, 0xa1, 0xee, 0xfc,
-	0x44, 0x36, 0x61, 0x16, 0xe1, 0xfb, 0x36, 0x25, 0x24, 0x5e, 0x9d, 0x42, 0xa3, 0x62, 0xea, 0x7f,
-	0x1e, 0xbc, 0x32, 0xff, 0x9a, 0x83, 0x9c, 0xbb, 0x19, 0x1a, 0xcf, 0x60, 0x91, 0xa1, 0x3b, 0x9d,
-	0x49, 0x96, 0x82, 0x7b, 0xc3, 0x03, 0x77, 0x11, 0xcd, 0xa4, 0x83, 0x13, 0x57, 0xa3, 0x4c, 0xdc,
-	0x9d, 0xf4, 0xe5, 0x1b, 0x8f, 0x36, 0xf3, 0xdc, 0xfa, 0x66, 0x9e, 0xfb, 0x63, 0x33, 0xcf, 0x7d,
-	0xba, 0x95, 0xef, 0x59, 0xdf, 0xca, 0xf7, 0xfc, 0xb6, 0x95, 0xef, 0x79, 0x6f, 0xaa, 0xae, 0x59,
-	0xcb, 0xad, 0xa5, 0x62, 0xcd, 0x5c, 0x11, 0x2f, 0x3b, 0x06, 0xde, 0x54, 0xad, 0xbb, 0x66, 0xf3,
-	0xb6, 0x6b, 0xef, 0x9e, 0x67, 0xd1, 0xea, 0x34, 0x54, 0xbc, 0xf4, 0x0c, 0xf9, 0x87, 0xc9, 0xd9,
-	0xff, 0x02, 0x00, 0x00, 0xff, 0xff, 0x2c, 0x83, 0xae, 0xb1, 0x74, 0x1a, 0x00, 0x00,
+	// 1732 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x59, 0xcb, 0x6f, 0xdb, 0x46,
+	0x1a, 0x37, 0xed, 0x3c, 0xac, 0x71, 0x92, 0xb5, 0xc7, 0x4e, 0xe2, 0x30, 0x89, 0xe4, 0x30, 0xbb,
+	0xb1, 0x63, 0xd8, 0xe4, 0xda, 0x71, 0xb2, 0x8b, 0x78, 0xb3, 0x0b, 0x29, 0xce, 0xc3, 0x71, 0xb0,
+	0xf6, 0x52, 0x58, 0x67, 0xb7, 0x40, 0x2b, 0xd0, 0xe2, 0x44, 0x62, 0x43, 0x73, 0x14, 0x0e, 0xa5,
+	0x44, 0x30, 0x5c, 0x14, 0x3d, 0xb5, 0xb7, 0x22, 0xb9, 0x14, 0x28, 0x5a, 0x14, 0xfd, 0x1b, 0x0a,
+	0xb4, 0x45, 0x0f, 0xed, 0x31, 0x87, 0x1e, 0xdc, 0xf6, 0xd2, 0x93, 0x5b, 0xd8, 0xfd, 0x0b, 0x7a,
+	0xe8, 0xb9, 0xe0, 0x70, 0x86, 0x14, 0xc5, 0x87, 0x64, 0xc7, 0xcd, 0xcd, 0x24, 0xe7, 0xfb, 0xbe,
+	0xdf, 0xf7, 0xfe, 0x8d, 0x0c, 0x72, 0xe8, 0x29, 0x2e, 0x63, 0x1b, 0x29, 0xb8, 0x86, 0x6c, 0xcd,
+	0xc1, 0xb6, 0xd2, 0x98, 0x51, 0x1e, 0xd7, 0x91, 0xdd, 0x94, 0x6b, 0x36, 0x76, 0x30, 0x1c, 0x66,
+	0x07, 0x64, 0x7e, 0x40, 0x6e, 0xcc, 0x88, 0x93, 0x65, 0x4c, 0xd6, 0x31, 0x51, 0xd6, 0x34, 0x82,
+	0xbc, 0xd3, 0x4a, 0x63, 0x66, 0x0d, 0x39, 0xda, 0x8c, 0x52, 0xd3, 0x2a, 0x86, 0xa5, 0x39, 0x06,
+	0xb6, 0x3c, 0x05, 0xe2, 0x19, 0xef, 0x6c, 0x89, 0x3e, 0x29, 0xde, 0x03, 0xfb, 0x74, 0x2e, 0xce,
+	0xb8, 0xf3, 0x94, 0x7d, 0x1d, 0xa9, 0xe0, 0x0a, 0xf6, 0xa4, 0xdc, 0xbf, 0xb8, 0x4c, 0x05, 0xe3,
+	0x8a, 0x89, 0x14, 0xad, 0x66, 0x28, 0x9a, 0x65, 0x61, 0x87, 0xda, 0xf2, 0x35, 0x3a, 0xc8, 0xd2,
+	0x91, 0xbd, 0x6e, 0x58, 0x8e, 0x52, 0xb6, 0x9b, 0x35, 0x07, 0x2b, 0x8f, 0x50, 0x93, 0x7d, 0x95,
+	0x8a, 0x00, 0xde, 0x41, 0xce, 0x32, 0x33, 0xb6, 0x68, 0x3d, 0xc4, 0x2a, 0x7a, 0x0c, 0x6f, 0x80,
+	0xe3, 0xdc, 0x7e, 0x49, 0xd3, 0x75, 0x7b, 0x54, 0x18, 0x13, 0x26, 0x32, 0x85, 0xd1, 0xef, 0x3f,
+	0x9b, 0x1e, 0x61, 0x70, 0xf3, 0xba, 0x6e, 0x23, 0x42, 0x8a, 0x8e, 0x6d, 0x58, 0x15, 0xf5, 0x18,
+	0x3f, 0xee, 0xbe, 0x96, 0xd6, 0xc0, 0xe8, 0x7f, 0xdc, 0x08, 0xe4, 0x4d, 0x93, 0x6b, 0x26, 0x2a,
+	0x7a, 0x5c, 0x47, 0xc4, 0x81, 0xb7, 0x01, 0x08, 0xe2, 0x41, 0xf5, 0x0e, 0xcc, 0x5e, 0x92, 0x99,
+	0x52, 0x37, 0x78, 0xb2, 0x17, 0x6a, 0x16, 0x3c, 0x79, 0x45, 0xab, 0x20, 0x26, 0xab, 0xb6, 0x48,
+	0x4a, 0xcf, 0x04, 0x70, 0x26, 0xc6, 0x08, 0xa9, 0x61, 0x8b, 0x20, 0x38, 0x05, 0x60, 0xe0, 0x40,
+	0xb9, 0x4c, 0x9d, 0x20, 0xa3, 0xc2, 0x58, 0xdf, 0x44, 0x46, 0x1d, 0xf4, 0xb1, 0x96, 0xcb, 0x2e,
+	0x5c, 0x02, 0xef, 0x84, 0x30, 0xf5, 0x52, 0x4c, 0xe3, 0x1d, 0x31, 0x79, 0xa6, 0x42, 0xa0, 0x1c,
+	0x00, 0x39, 0x96, 0xfc, 0x6a, 0x91, 0x85, 0xe8, 0x25, 0xa3, 0x09, 0x73, 0x60, 0x40, 0x6b, 0x10,
+	0x2a, 0x89, 0x08, 0xa1, 0xf0, 0x32, 0x2a, 0xd0, 0x1a, 0x84, 0x09, 0x49, 0x4f, 0xc0, 0x39, 0x1a,
+	0x09, 0x6e, 0xfa, 0xbf, 0xc5, 0x85, 0x55, 0xcd, 0xac, 0xf3, 0xb0, 0xc1, 0x07, 0x60, 0x30, 0xb0,
+	0x6f, 0xe9, 0x25, 0xad, 0x41, 0x58, 0xe0, 0xc7, 0xe5, 0x98, 0x52, 0x96, 0xa3, 0x2e, 0x14, 0x0e,
+	0x6d, 0x6d, 0xe7, 0x04, 0xf5, 0x84, 0x8f, 0xcb, 0xd2, 0xf3, 0x0d, 0x22, 0x35, 0xc1, 0xf9, 0x04,
+	0xc3, 0x2c, 0x0d, 0xff, 0x03, 0xa0, 0x4e, 0xf4, 0x52, 0xc3, 0x7d, 0xc9, 0x6d, 0x4e, 0xa6, 0xda,
+	0x5c, 0xae, 0x39, 0x48, 0xe7, 0x7a, 0x0a, 0xc7, 0x77, 0xb6, 0x73, 0x19, 0xfe, 0x44, 0xd4, 0x4c,
+	0x9d, 0xe8, 0xde, 0x9f, 0xd2, 0x3d, 0x70, 0xda, 0xcb, 0xfe, 0x6a, 0xb1, 0xdd, 0x5d, 0x25, 0x1c,
+	0x2f, 0x2f, 0xd8, 0x27, 0x76, 0xb6, 0x73, 0x20, 0x70, 0x28, 0x14, 0xbf, 0x6f, 0x84, 0x36, 0x3f,
+	0x8a, 0xa6, 0x46, 0xaa, 0xac, 0x17, 0xfe, 0xd0, 0x08, 0xb6, 0x75, 0x43, 0xef, 0xbe, 0xbb, 0x61,
+	0x03, 0x9c, 0x8c, 0x80, 0x2f, 0x34, 0x17, 0x17, 0xe0, 0x25, 0xd0, 0x4f, 0xdc, 0x17, 0x25, 0x43,
+	0x67, 0x91, 0x18, 0xd8, 0xd9, 0xce, 0x1d, 0xf5, 0x0e, 0x2d, 0xa8, 0x47, 0xe9, 0xc7, 0x45, 0x1d,
+	0x5e, 0x07, 0x87, 0x0c, 0xeb, 0x21, 0xf6, 0x21, 0xa4, 0x79, 0x15, 0x84, 0x87, 0xca, 0x48, 0x5f,
+	0x09, 0x20, 0x9b, 0x14, 0x3f, 0x56, 0x08, 0x2b, 0xe0, 0x84, 0x66, 0x9a, 0x25, 0x06, 0xc5, 0x35,
+	0xe4, 0xf6, 0x62, 0xa7, 0x62, 0x08, 0xb9, 0xa2, 0x1e, 0xd3, 0x4c, 0xd3, 0x7f, 0x73, 0x70, 0x3d,
+	0x5b, 0x02, 0x67, 0x43, 0xe0, 0x6f, 0x62, 0x8b, 0x2c, 0xa1, 0x26, 0x4f, 0xfd, 0x24, 0x18, 0x8a,
+	0x4c, 0x12, 0x2f, 0x92, 0xea, 0x9f, 0xda, 0x06, 0x09, 0x1c, 0x01, 0x87, 0xcb, 0x55, 0xcd, 0xb0,
+	0x58, 0x8f, 0x7a, 0x0f, 0xd2, 0xdb, 0x42, 0x5b, 0x7f, 0xfa, 0x16, 0x58, 0x70, 0xf2, 0x00, 0xd4,
+	0xea, 0x6b, 0xa6, 0x51, 0x2e, 0x3d, 0x42, 0x4d, 0x56, 0x57, 0xe7, 0xe4, 0x60, 0x6c, 0xcb, 0xde,
+	0xd8, 0x96, 0x57, 0xe8, 0xa1, 0x25, 0xd4, 0x2c, 0x1c, 0x7a, 0xb1, 0x9d, 0xeb, 0x51, 0x33, 0x35,
+	0xfe, 0x02, 0x9e, 0x07, 0x00, 0xd7, 0x1c, 0xc3, 0xaa, 0x94, 0x70, 0xdd, 0xa1, 0xe6, 0xfb, 0xd5,
+	0x8c, 0xf7, 0x66, 0xb9, 0xee, 0x48, 0x65, 0x90, 0x8b, 0x20, 0xe0, 0x9d, 0x70, 0x60, 0x7e, 0xbe,
+	0x01, 0xc6, 0x92, 0x8d, 0x30, 0x57, 0xcf, 0x82, 0x4c, 0x19, 0x5b, 0xa4, 0x55, 0x7b, 0x7f, 0x99,
+	0x9d, 0xeb, 0xe4, 0xc4, 0xbb, 0x02, 0x98, 0x68, 0x9f, 0xf8, 0x2c, 0x94, 0xa4, 0xd0, 0xbc, 0xe9,
+	0x62, 0x58, 0x5c, 0xe0, 0xee, 0xf8, 0x10, 0x85, 0x16, 0x88, 0x07, 0xd6, 0x6e, 0xdf, 0x0a, 0xe0,
+	0x72, 0x17, 0x50, 0x98, 0xd3, 0xab, 0x2d, 0xcb, 0x88, 0x7a, 0xef, 0xee, 0x5f, 0xd6, 0x00, 0x13,
+	0xa9, 0x0d, 0xc0, 0x74, 0xae, 0x68, 0x86, 0x1d, 0xac, 0x2d, 0x6e, 0xe8, 0xe0, 0x5a, 0xe0, 0x23,
+	0x01, 0x0c, 0xc7, 0x98, 0xdc, 0x53, 0x4d, 0xcc, 0x87, 0x8a, 0xb8, 0xb7, 0x73, 0x11, 0x27, 0x97,
+	0x6f, 0x5f, 0x7b, 0xe6, 0xdf, 0x4b, 0x08, 0x37, 0xdd, 0xde, 0xaf, 0x38, 0xf5, 0x5b, 0x02, 0x98,
+	0xec, 0x06, 0x0b, 0xcb, 0xfd, 0xff, 0xc1, 0x70, 0x38, 0xf7, 0x01, 0x13, 0x19, 0x98, 0xbd, 0xdc,
+	0x31, 0xf9, 0xae, 0x56, 0x9a, 0xfd, 0x21, 0xdc, 0x6e, 0xeb, 0xe0, 0xd2, 0xff, 0x16, 0x18, 0x89,
+	0xb3, 0xb9, 0xa7, 0xf4, 0x87, 0x1a, 0xbb, 0x37, 0xb5, 0xb1, 0x23, 0xe9, 0xbd, 0x06, 0xa4, 0x08,
+	0x93, 0x2b, 0x34, 0x97, 0x6b, 0xce, 0xa2, 0x95, 0x5f, 0x2d, 0xf2, 0xb4, 0x0e, 0x82, 0x3e, 0xbe,
+	0x76, 0x33, 0xaa, 0xfb, 0xa7, 0x74, 0x0f, 0x5c, 0x4c, 0x95, 0x63, 0x29, 0xb8, 0xd8, 0x42, 0xbf,
+	0x4c, 0x83, 0x38, 0x8c, 0x06, 0xfa, 0x24, 0xeb, 0xbe, 0x41, 0x1c, 0x69, 0x9e, 0x51, 0x80, 0xbc,
+	0x69, 0xe6, 0x57, 0x8b, 0x54, 0x8d, 0xf7, 0x95, 0x9b, 0x17, 0x41, 0x3f, 0x17, 0xe0, 0x83, 0x8b,
+	0x3f, 0x4b, 0xf3, 0x6c, 0xff, 0xc5, 0x08, 0x33, 0x0c, 0x67, 0x40, 0xbf, 0xcb, 0x49, 0x5a, 0xcc,
+	0x1f, 0xd5, 0x1a, 0x84, 0x5a, 0xb6, 0xc0, 0x30, 0x1b, 0x9b, 0xce, 0xab, 0xa0, 0x1c, 0xd2, 0x0c,
+	0xf3, 0xb4, 0x68, 0x69, 0x35, 0x52, 0xc5, 0x4e, 0xde, 0xd2, 0xef, 0x22, 0xb3, 0x86, 0xec, 0xe4,
+	0x40, 0x2f, 0x72, 0x91, 0x1a, 0x2a, 0x1b, 0x0f, 0x0d, 0xa4, 0x73, 0xd9, 0x44, 0x11, 0x78, 0x0a,
+	0x1c, 0xa9, 0x22, 0xa3, 0x52, 0xf5, 0xe6, 0x78, 0x9f, 0xca, 0x9e, 0xa4, 0x0f, 0x04, 0x30, 0xb6,
+	0x8a, 0xdd, 0xcc, 0xaf, 0xe0, 0x27, 0xc8, 0xe6, 0x8a, 0x1e, 0x18, 0x4e, 0x75, 0x09, 0x35, 0xef,
+	0xd2, 0x43, 0x50, 0x06, 0xc3, 0x84, 0x7d, 0x70, 0xa7, 0x49, 0x89, 0x69, 0x12, 0xa8, 0xa6, 0x21,
+	0xfe, 0x29, 0x38, 0xbf, 0x00, 0xfa, 0xf9, 0x4b, 0xd6, 0x07, 0xf1, 0x63, 0x35, 0xc6, 0xb0, 0xea,
+	0x4b, 0x4a, 0x84, 0x53, 0x4a, 0xd3, 0xec, 0xec, 0xdf, 0x41, 0x8d, 0x93, 0x2f, 0x84, 0xe0, 0xae,
+	0x14, 0x58, 0x65, 0x55, 0x53, 0x04, 0x19, 0x8e, 0x8e, 0x8f, 0x8c, 0xab, 0xdd, 0x3a, 0x16, 0x8a,
+	0xa8, 0x1a, 0xe8, 0x39, 0xb0, 0xb1, 0x31, 0xfb, 0xec, 0x34, 0x38, 0x4c, 0xa1, 0xc3, 0x0f, 0x05,
+	0x30, 0x14, 0x5a, 0xfd, 0x94, 0xa1, 0xc5, 0xd7, 0x69, 0xf4, 0xb6, 0x29, 0x5e, 0x48, 0x2d, 0x68,
+	0xf7, 0x94, 0x74, 0xfd, 0x9d, 0x1f, 0x7e, 0x79, 0xde, 0x3b, 0x07, 0x67, 0x95, 0xb8, 0xfb, 0xb1,
+	0xdf, 0x28, 0x2e, 0xb3, 0x54, 0x36, 0x42, 0x97, 0xad, 0x4d, 0xf8, 0x31, 0x47, 0xd7, 0x3a, 0x27,
+	0xe0, 0x74, 0xac, 0xd1, 0xa4, 0x6b, 0xab, 0x28, 0x77, 0x7b, 0xdc, 0x0b, 0x94, 0x34, 0x49, 0x01,
+	0xff, 0x19, 0x4a, 0xb1, 0x80, 0x5d, 0x2e, 0x8c, 0x7d, 0x28, 0xdf, 0xb5, 0xf3, 0x67, 0xb6, 0x83,
+	0x6f, 0x63, 0x9b, 0xad, 0x13, 0xf8, 0xd7, 0x64, 0xf3, 0xf1, 0xbc, 0x55, 0x9c, 0xd9, 0x83, 0x04,
+	0xc3, 0x7c, 0x8f, 0x62, 0x5e, 0x80, 0x85, 0xf4, 0x20, 0x73, 0x0a, 0xd3, 0x1a, 0x68, 0xb6, 0x1d,
+	0x36, 0x95, 0x0d, 0xba, 0x6d, 0x37, 0xe1, 0xb6, 0xc0, 0x86, 0x7a, 0x0c, 0x1b, 0x6c, 0xf1, 0x6b,
+	0xae, 0x3b, 0x94, 0x61, 0xae, 0x2a, 0x5e, 0xdd, 0xa3, 0x14, 0xf3, 0x6f, 0x89, 0xfa, 0x77, 0x0b,
+	0xde, 0xec, 0xc2, 0x3f, 0xd7, 0x9b, 0x54, 0x07, 0x7f, 0x12, 0xc0, 0x85, 0x8e, 0x14, 0x10, 0xde,
+	0xe8, 0xaa, 0x6c, 0x92, 0x58, 0xac, 0xf8, 0xcf, 0xfd, 0x8a, 0x33, 0x8f, 0xe7, 0xa9, 0xc7, 0x57,
+	0xe1, 0x95, 0x8e, 0x55, 0x18, 0x10, 0x53, 0xdf, 0xc3, 0x5f, 0x05, 0x70, 0x32, 0xf6, 0x7a, 0x0f,
+	0xbb, 0xa8, 0xad, 0xb6, 0x4b, 0xb9, 0x38, 0xbb, 0x17, 0x11, 0x86, 0xde, 0xa6, 0xe8, 0x4d, 0xf8,
+	0x66, 0x2c, 0xfa, 0x58, 0xd9, 0xd6, 0x94, 0x79, 0x4b, 0x53, 0x0e, 0x4f, 0x83, 0x98, 0x03, 0x2d,
+	0x3f, 0x16, 0x6c, 0xc2, 0xe7, 0x02, 0x18, 0x6c, 0xff, 0x61, 0x01, 0x4e, 0xa5, 0xa4, 0x21, 0xf2,
+	0xfb, 0x83, 0x28, 0xc5, 0x9e, 0x5e, 0x40, 0x65, 0x7a, 0xea, 0xb6, 0x81, 0x4c, 0x5d, 0x9a, 0xa6,
+	0xae, 0x8d, 0xc3, 0xbf, 0x24, 0xbb, 0xd6, 0x0a, 0xe0, 0x37, 0x01, 0x9c, 0x8a, 0xbf, 0x61, 0xc3,
+	0x2e, 0x02, 0xdb, 0xfe, 0x73, 0x86, 0x78, 0x65, 0x4f, 0x32, 0x2c, 0x1b, 0x84, 0x42, 0x5e, 0x87,
+	0x8f, 0x3a, 0x67, 0xc3, 0x17, 0x7e, 0xe9, 0x74, 0xec, 0x0a, 0x51, 0x6e, 0x18, 0x65, 0xdb, 0xb0,
+	0xfb, 0x3e, 0x89, 0xbd, 0x32, 0x88, 0xff, 0xda, 0xb7, 0x3c, 0x0b, 0xce, 0x3f, 0x68, 0x70, 0xae,
+	0xc1, 0xb9, 0x2e, 0x1b, 0x8d, 0xde, 0x02, 0xfc, 0x4e, 0x7b, 0x21, 0x04, 0xec, 0xd3, 0x5f, 0x25,
+	0xee, 0x02, 0xe7, 0x5c, 0x16, 0xfe, 0xad, 0xbb, 0xf5, 0x13, 0x61, 0xcd, 0xe2, 0xdf, 0xf7, 0x2e,
+	0xc8, 0x5c, 0x9a, 0xa3, 0x2e, 0xc9, 0x70, 0x2a, 0x61, 0x5a, 0x3a, 0x4a, 0x88, 0x55, 0x2b, 0x1b,
+	0x5a, 0x83, 0x6c, 0xc2, 0xcf, 0x79, 0xa5, 0x46, 0xb8, 0x70, 0x5a, 0xa5, 0x26, 0xb1, 0xee, 0xb4,
+	0x4a, 0x4d, 0x24, 0xdb, 0x5d, 0x20, 0xe7, 0x5c, 0x3c, 0x28, 0xbf, 0x4d, 0xf8, 0xb5, 0x00, 0x8e,
+	0xb5, 0x12, 0x71, 0x38, 0x91, 0xd6, 0x25, 0xad, 0x5c, 0x5d, 0xcc, 0x26, 0x10, 0x18, 0x07, 0xe9,
+	0x94, 0xbd, 0x20, 0x0a, 0xa8, 0x04, 0x5f, 0x4f, 0x02, 0x14, 0x21, 0x2e, 0xfb, 0x6a, 0x96, 0x4f,
+	0x05, 0x76, 0x95, 0xe0, 0x1c, 0xd0, 0xe3, 0xf5, 0x69, 0x81, 0x4f, 0xba, 0x04, 0x88, 0x17, 0x63,
+	0x65, 0xc2, 0x8a, 0xa5, 0x59, 0xea, 0xd7, 0x14, 0x9c, 0x8c, 0xf5, 0xcb, 0xa7, 0xf0, 0x55, 0x7a,
+	0x9a, 0x15, 0xc8, 0x97, 0xbc, 0x40, 0x22, 0x97, 0x89, 0x54, 0x9c, 0x09, 0x37, 0x0f, 0x71, 0x7f,
+	0x7c, 0xb8, 0x43, 0x89, 0x70, 0xe4, 0x1e, 0x64, 0x65, 0xc3, 0xbb, 0x7f, 0x6c, 0xc2, 0x4f, 0xfc,
+	0xe5, 0x10, 0x90, 0xf5, 0xd4, 0xe5, 0x10, 0xb9, 0x49, 0x88, 0xd3, 0x5d, 0x9e, 0x66, 0xa5, 0xac,
+	0x50, 0x9c, 0x97, 0xe1, 0x78, 0xe2, 0x5c, 0x09, 0x63, 0x2d, 0xdc, 0x7f, 0xb1, 0x93, 0x15, 0xb6,
+	0x76, 0xb2, 0xc2, 0xcf, 0x3b, 0x59, 0xe1, 0xfd, 0xdd, 0x6c, 0xcf, 0xd6, 0x6e, 0xb6, 0xe7, 0xc7,
+	0xdd, 0x6c, 0xcf, 0x6b, 0xb3, 0x15, 0xc3, 0xa9, 0xd6, 0xd7, 0xe4, 0x32, 0x5e, 0x57, 0x6e, 0x79,
+	0xca, 0xfe, 0x8d, 0x9c, 0x27, 0xd8, 0x0e, 0x06, 0xfa, 0xd3, 0x40, 0xbb, 0xd3, 0xac, 0x21, 0xb2,
+	0x76, 0x84, 0xfe, 0x93, 0xe8, 0xca, 0xef, 0x01, 0x00, 0x00, 0xff, 0xff, 0x8d, 0x71, 0x2b, 0x92,
+	0x13, 0x1b, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1750,12 +1816,12 @@ type QueryClient interface {
 	QueryAllAVSsByOperator(ctx context.Context, in *QueryAllAVSsByOperatorRequest, opts ...grpc.CallOption) (*QueryAllAVSsByOperatorResponse, error)
 	// QueryOptInfo queries specified opted information.
 	QueryOptInfo(ctx context.Context, in *QueryOptInfoRequest, opts ...grpc.CallOption) (*OptedInfo, error)
-	// Validators queries all validators that match the given status.
-	// When called from another module, this query might consume a high amount of
-	// gas if the pagination field is incorrectly set.
-	Validators(ctx context.Context, in *QueryValidatorsRequest, opts ...grpc.CallOption) (*QueryValidatorsResponse, error)
-	// Validator queries validator info for given validator address.
-	Validator(ctx context.Context, in *QueryValidatorRequest, opts ...grpc.CallOption) (*QueryValidatorResponse, error)
+	// QuerySnapshotHelper queries the snapshot helper of the AVS
+	QuerySnapshotHelper(ctx context.Context, in *QuerySnapshotAndHelperRequest, opts ...grpc.CallOption) (*SnapshotHelper, error)
+	// QuerySnapshotHelper queries the snapshot helper of the AVS
+	QuerySpecifiedSnapshot(ctx context.Context, in *QuerySpecifiedSnapshotRequest, opts ...grpc.CallOption) (*VotingPowerSnapshotWithKeyHeight, error)
+	// QueryAllSnapshot queries all voting power snapshot for the specified AVS
+	QueryAllSnapshot(ctx context.Context, in *QueryAllSnapshotRequest, opts ...grpc.CallOption) (*QueryAllSnapshotResponse, error)
 }
 
 type queryClient struct {
@@ -1874,18 +1940,27 @@ func (c *queryClient) QueryOptInfo(ctx context.Context, in *QueryOptInfoRequest,
 	return out, nil
 }
 
-func (c *queryClient) Validators(ctx context.Context, in *QueryValidatorsRequest, opts ...grpc.CallOption) (*QueryValidatorsResponse, error) {
-	out := new(QueryValidatorsResponse)
-	err := c.cc.Invoke(ctx, "/exocore.operator.v1.Query/Validators", in, out, opts...)
+func (c *queryClient) QuerySnapshotHelper(ctx context.Context, in *QuerySnapshotAndHelperRequest, opts ...grpc.CallOption) (*SnapshotHelper, error) {
+	out := new(SnapshotHelper)
+	err := c.cc.Invoke(ctx, "/exocore.operator.v1.Query/QuerySnapshotHelper", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) Validator(ctx context.Context, in *QueryValidatorRequest, opts ...grpc.CallOption) (*QueryValidatorResponse, error) {
-	out := new(QueryValidatorResponse)
-	err := c.cc.Invoke(ctx, "/exocore.operator.v1.Query/Validator", in, out, opts...)
+func (c *queryClient) QuerySpecifiedSnapshot(ctx context.Context, in *QuerySpecifiedSnapshotRequest, opts ...grpc.CallOption) (*VotingPowerSnapshotWithKeyHeight, error) {
+	out := new(VotingPowerSnapshotWithKeyHeight)
+	err := c.cc.Invoke(ctx, "/exocore.operator.v1.Query/QuerySpecifiedSnapshot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) QueryAllSnapshot(ctx context.Context, in *QueryAllSnapshotRequest, opts ...grpc.CallOption) (*QueryAllSnapshotResponse, error) {
+	out := new(QueryAllSnapshotResponse)
+	err := c.cc.Invoke(ctx, "/exocore.operator.v1.Query/QueryAllSnapshot", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1920,12 +1995,12 @@ type QueryServer interface {
 	QueryAllAVSsByOperator(context.Context, *QueryAllAVSsByOperatorRequest) (*QueryAllAVSsByOperatorResponse, error)
 	// QueryOptInfo queries specified opted information.
 	QueryOptInfo(context.Context, *QueryOptInfoRequest) (*OptedInfo, error)
-	// Validators queries all validators that match the given status.
-	// When called from another module, this query might consume a high amount of
-	// gas if the pagination field is incorrectly set.
-	Validators(context.Context, *QueryValidatorsRequest) (*QueryValidatorsResponse, error)
-	// Validator queries validator info for given validator address.
-	Validator(context.Context, *QueryValidatorRequest) (*QueryValidatorResponse, error)
+	// QuerySnapshotHelper queries the snapshot helper of the AVS
+	QuerySnapshotHelper(context.Context, *QuerySnapshotAndHelperRequest) (*SnapshotHelper, error)
+	// QuerySnapshotHelper queries the snapshot helper of the AVS
+	QuerySpecifiedSnapshot(context.Context, *QuerySpecifiedSnapshotRequest) (*VotingPowerSnapshotWithKeyHeight, error)
+	// QueryAllSnapshot queries all voting power snapshot for the specified AVS
+	QueryAllSnapshot(context.Context, *QueryAllSnapshotRequest) (*QueryAllSnapshotResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -1968,11 +2043,14 @@ func (*UnimplementedQueryServer) QueryAllAVSsByOperator(ctx context.Context, req
 func (*UnimplementedQueryServer) QueryOptInfo(ctx context.Context, req *QueryOptInfoRequest) (*OptedInfo, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method QueryOptInfo not implemented")
 }
-func (*UnimplementedQueryServer) Validators(ctx context.Context, req *QueryValidatorsRequest) (*QueryValidatorsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Validators not implemented")
+func (*UnimplementedQueryServer) QuerySnapshotHelper(ctx context.Context, req *QuerySnapshotAndHelperRequest) (*SnapshotHelper, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QuerySnapshotHelper not implemented")
 }
-func (*UnimplementedQueryServer) Validator(ctx context.Context, req *QueryValidatorRequest) (*QueryValidatorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Validator not implemented")
+func (*UnimplementedQueryServer) QuerySpecifiedSnapshot(ctx context.Context, req *QuerySpecifiedSnapshotRequest) (*VotingPowerSnapshotWithKeyHeight, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QuerySpecifiedSnapshot not implemented")
+}
+func (*UnimplementedQueryServer) QueryAllSnapshot(ctx context.Context, req *QueryAllSnapshotRequest) (*QueryAllSnapshotResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryAllSnapshot not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -2195,38 +2273,56 @@ func _Query_QueryOptInfo_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_Validators_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryValidatorsRequest)
+func _Query_QuerySnapshotHelper_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySnapshotAndHelperRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Validators(ctx, in)
+		return srv.(QueryServer).QuerySnapshotHelper(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/exocore.operator.v1.Query/Validators",
+		FullMethod: "/exocore.operator.v1.Query/QuerySnapshotHelper",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Validators(ctx, req.(*QueryValidatorsRequest))
+		return srv.(QueryServer).QuerySnapshotHelper(ctx, req.(*QuerySnapshotAndHelperRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_Validator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryValidatorRequest)
+func _Query_QuerySpecifiedSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QuerySpecifiedSnapshotRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).Validator(ctx, in)
+		return srv.(QueryServer).QuerySpecifiedSnapshot(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/exocore.operator.v1.Query/Validator",
+		FullMethod: "/exocore.operator.v1.Query/QuerySpecifiedSnapshot",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).Validator(ctx, req.(*QueryValidatorRequest))
+		return srv.(QueryServer).QuerySpecifiedSnapshot(ctx, req.(*QuerySpecifiedSnapshotRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_QueryAllSnapshot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllSnapshotRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryAllSnapshot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/exocore.operator.v1.Query/QueryAllSnapshot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryAllSnapshot(ctx, req.(*QueryAllSnapshotRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2284,12 +2380,16 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_QueryOptInfo_Handler,
 		},
 		{
-			MethodName: "Validators",
-			Handler:    _Query_Validators_Handler,
+			MethodName: "QuerySnapshotHelper",
+			Handler:    _Query_QuerySnapshotHelper_Handler,
 		},
 		{
-			MethodName: "Validator",
-			Handler:    _Query_Validator_Handler,
+			MethodName: "QuerySpecifiedSnapshot",
+			Handler:    _Query_QuerySpecifiedSnapshot_Handler,
+		},
+		{
+			MethodName: "QueryAllSnapshot",
+			Handler:    _Query_QueryAllSnapshot_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -3277,7 +3377,7 @@ func (m *QueryOptInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryValidatorsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QuerySnapshotAndHelperRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3287,39 +3387,27 @@ func (m *QueryValidatorsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryValidatorsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QuerySnapshotAndHelperRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryValidatorsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QuerySnapshotAndHelperRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Chain) > 0 {
-		i -= len(m.Chain)
-		copy(dAtA[i:], m.Chain)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Chain)))
+	if len(m.Avs) > 0 {
+		i -= len(m.Avs)
+		copy(dAtA[i:], m.Avs)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Avs)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryValidatorsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QuerySpecifiedSnapshotRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3329,12 +3417,87 @@ func (m *QueryValidatorsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryValidatorsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QuerySpecifiedSnapshotRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QuerySpecifiedSnapshotRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Avs) > 0 {
+		i -= len(m.Avs)
+		copy(dAtA[i:], m.Avs)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Avs)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *VotingPowerSnapshotWithKeyHeight) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *VotingPowerSnapshotWithKeyHeight) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *VotingPowerSnapshotWithKeyHeight) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Snapshot != nil {
+		{
+			size, err := m.Snapshot.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.SnapshotKeyHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.SnapshotKeyHeight))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllSnapshotRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllSnapshotRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllSnapshotRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -3351,10 +3514,52 @@ func (m *QueryValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Validators) > 0 {
-		for iNdEx := len(m.Validators) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.Avs) > 0 {
+		i -= len(m.Avs)
+		copy(dAtA[i:], m.Avs)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Avs)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllSnapshotResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllSnapshotResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllSnapshotResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Snapshots) > 0 {
+		for iNdEx := len(m.Snapshots) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Validators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.Snapshots[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -3365,76 +3570,6 @@ func (m *QueryValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 			dAtA[i] = 0xa
 		}
 	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryValidatorRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryValidatorRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryValidatorRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Chain) > 0 {
-		i -= len(m.Chain)
-		copy(dAtA[i:], m.Chain)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Chain)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.ValidatorAccAddr) > 0 {
-		i -= len(m.ValidatorAccAddr)
-		copy(dAtA[i:], m.ValidatorAccAddr)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ValidatorAccAddr)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryValidatorResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryValidatorResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryValidatorResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	{
-		size, err := m.Validator.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintQuery(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0xa
 	return len(dAtA) - i, nil
 }
 
@@ -3848,13 +3983,58 @@ func (m *QueryOptInfoRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryValidatorsRequest) Size() (n int) {
+func (m *QuerySnapshotAndHelperRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Chain)
+	l = len(m.Avs)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QuerySpecifiedSnapshotRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Avs)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	return n
+}
+
+func (m *VotingPowerSnapshotWithKeyHeight) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SnapshotKeyHeight != 0 {
+		n += 1 + sovQuery(uint64(m.SnapshotKeyHeight))
+	}
+	if m.Snapshot != nil {
+		l = m.Snapshot.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryAllSnapshotRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Avs)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -3865,14 +4045,14 @@ func (m *QueryValidatorsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryValidatorsResponse) Size() (n int) {
+func (m *QueryAllSnapshotResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.Validators) > 0 {
-		for _, e := range m.Validators {
+	if len(m.Snapshots) > 0 {
+		for _, e := range m.Snapshots {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -3881,34 +4061,6 @@ func (m *QueryValidatorsResponse) Size() (n int) {
 		l = m.Pagination.Size()
 		n += 1 + l + sovQuery(uint64(l))
 	}
-	return n
-}
-
-func (m *QueryValidatorRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.ValidatorAccAddr)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	l = len(m.Chain)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryValidatorResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = m.Validator.Size()
-	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
 
@@ -6527,7 +6679,7 @@ func (m *QueryOptInfoRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryValidatorsRequest) Unmarshal(dAtA []byte) error {
+func (m *QuerySnapshotAndHelperRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6550,15 +6702,15 @@ func (m *QueryValidatorsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryValidatorsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QuerySnapshotAndHelperRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryValidatorsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QuerySnapshotAndHelperRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Chain", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Avs", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -6586,7 +6738,295 @@ func (m *QueryValidatorsRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Chain = string(dAtA[iNdEx:postIndex])
+			m.Avs = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QuerySpecifiedSnapshotRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QuerySpecifiedSnapshotRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QuerySpecifiedSnapshotRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Avs", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Avs = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *VotingPowerSnapshotWithKeyHeight) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: VotingPowerSnapshotWithKeyHeight: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: VotingPowerSnapshotWithKeyHeight: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SnapshotKeyHeight", wireType)
+			}
+			m.SnapshotKeyHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SnapshotKeyHeight |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Snapshot", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Snapshot == nil {
+				m.Snapshot = &VotingPowerSnapshot{}
+			}
+			if err := m.Snapshot.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllSnapshotRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllSnapshotRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllSnapshotRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Avs", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Avs = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -6645,7 +7085,7 @@ func (m *QueryValidatorsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryValidatorsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryAllSnapshotResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6668,15 +7108,15 @@ func (m *QueryValidatorsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryValidatorsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryAllSnapshotResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryValidatorsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryAllSnapshotResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Validators", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Snapshots", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6703,8 +7143,8 @@ func (m *QueryValidatorsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Validators = append(m.Validators, Validator{})
-			if err := m.Validators[len(m.Validators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Snapshots = append(m.Snapshots, &VotingPowerSnapshotWithKeyHeight{})
+			if err := m.Snapshots[len(m.Snapshots)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -6741,203 +7181,6 @@ func (m *QueryValidatorsResponse) Unmarshal(dAtA []byte) error {
 				m.Pagination = &query.PageResponse{}
 			}
 			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryValidatorRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryValidatorRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryValidatorRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAccAddr", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ValidatorAccAddr = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Chain", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Chain = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryValidatorResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryValidatorResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryValidatorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Validator", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if err := m.Validator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
