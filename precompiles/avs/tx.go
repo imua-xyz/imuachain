@@ -360,6 +360,10 @@ func (p Precompile) OperatorSubmitTask(
 	}
 	resultParams.TaskResponse = taskResponse
 
+	if len(taskResponse) == 0 {
+		resultParams.TaskResponse = nil
+	}
+
 	blsSignature, ok := args[3].([]byte)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "[]byte", blsSignature)

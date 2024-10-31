@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -66,7 +67,7 @@ func (p Precompile) GetOptedInOperatorAccAddrs(
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "string", addr)
 	}
 
-	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, addr.String())
+	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(addr.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +116,7 @@ func (p Precompile) GetOperatorOptedUSDValue(
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", operatorAddr)
 	}
-	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, avsAddr.String(), operatorAddr)
+	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddr.String()), operatorAddr)
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack(common.Big0)
