@@ -18,9 +18,9 @@ interface IAVSManager {
     event OperatorJoined(address indexed avsAddr, string sender);
     event OperatorLeft(address indexed avsAddr, string sender);
     event TaskCreated(
-        string sender,
-        uint64 taskId,
         address indexed taskContractAddress,
+        uint64 indexed taskId,
+        string sender,
         string name,
         bytes hash,
         uint64 taskResponsePeriod,
@@ -33,11 +33,11 @@ interface IAVSManager {
     );
     event PublicKeyRegistered(string sender, string name);
     event TaskSubmittedByOperator(
+        address indexed taskContractAddress,
+        uint64 indexed taskId,
         string sender,
-        uint64 taskID,
         bytes taskResponse,
         bytes blsSignature,
-        address indexed taskContractAddress,
         uint8 phase
     );
 

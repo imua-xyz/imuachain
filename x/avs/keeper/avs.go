@@ -91,6 +91,7 @@ func (k *Keeper) GetAVSInfoByTaskAddress(ctx sdk.Context, taskAddr string) types
 	if taskAddr == "" || taskAddr == (common.Address{}).String() {
 		return avs
 	}
+	taskAddr = strings.ToLower(taskAddr)
 	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) (stop bool) {
 		if taskAddr == avsInfo.GetTaskAddr() {
 			avs = avsInfo

@@ -172,22 +172,22 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "sender",
-				"type": "string"
+				"indexed": true,
+				"internalType": "address",
+				"name": "taskContractAddress",
+				"type": "address"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "uint64",
 				"name": "taskId",
 				"type": "uint64"
 			},
 			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "taskContractAddress",
-				"type": "address"
+				"indexed": false,
+				"internalType": "string",
+				"name": "sender",
+				"type": "string"
 			},
 			{
 				"indexed": false,
@@ -233,16 +233,22 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "taskContractAddress",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint64",
+				"name": "taskId",
+				"type": "uint64"
+			},
+			{
 				"indexed": false,
 				"internalType": "string",
 				"name": "sender",
 				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint64",
-				"name": "taskID",
-				"type": "uint64"
 			},
 			{
 				"indexed": false,
@@ -255,12 +261,6 @@
 				"internalType": "bytes",
 				"name": "blsSignature",
 				"type": "bytes"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "taskContractAddress",
-				"type": "address"
 			},
 			{
 				"indexed": false,
