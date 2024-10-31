@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
@@ -107,9 +108,9 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 
 		avs := &types.AVSInfo{
 			Name:                params.AvsName,
-			AvsAddress:          params.AvsAddress.String(),
-			RewardAddr:          params.RewardContractAddr.String(),
-			SlashAddr:           params.SlashContractAddr.String(),
+			AvsAddress:          strings.ToLower(params.AvsAddress.String()),
+			RewardAddr:          strings.ToLower(params.RewardContractAddr.String()),
+			SlashAddr:           strings.ToLower(params.SlashContractAddr.String()),
 			AvsOwnerAddress:     params.AvsOwnerAddress,
 			AssetIDs:            params.AssetID,
 			MinSelfDelegation:   params.MinSelfDelegation,
@@ -117,7 +118,7 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			EpochIdentifier:     epochIdentifier,
 			StartingEpoch:       startingEpoch,
 			MinOptInOperators:   params.MinOptInOperators,
-			TaskAddr:            params.TaskAddr.String(),
+			TaskAddr:            strings.ToLower(params.TaskAddr.String()),
 			MinStakeAmount:      params.MinStakeAmount, // Effective at CurrentEpoch+1, avoid immediate effects and ensure that the first epoch time of avs is equal to a normal identifier
 			MinTotalStakeAmount: params.MinTotalStakeAmount,
 			// #nosec G115
@@ -168,13 +169,13 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			avs.MinStakeAmount = params.MinStakeAmount
 		}
 		if params.TaskAddr.String() != "" {
-			avs.TaskAddr = params.TaskAddr.String()
+			avs.TaskAddr = strings.ToLower(params.TaskAddr.String())
 		}
 		if params.SlashContractAddr.String() != "" {
-			avs.SlashAddr = params.SlashContractAddr.String()
+			avs.SlashAddr = strings.ToLower(params.SlashContractAddr.String())
 		}
 		if params.RewardContractAddr.String() != "" {
-			avs.RewardAddr = params.RewardContractAddr.String()
+			avs.RewardAddr = strings.ToLower(params.RewardContractAddr.String())
 		}
 		if params.AvsOwnerAddress != nil {
 			avs.AvsOwnerAddress = params.AvsOwnerAddress
@@ -252,7 +253,7 @@ func (k Keeper) CreateAVSTask(ctx sdk.Context, params *types.TaskInfoParams) (ui
 	task := &types.TaskInfo{
 		Name:                  params.TaskName,
 		Hash:                  params.Hash,
-		TaskContractAddress:   params.TaskContractAddress.String(),
+		TaskContractAddress:   strings.ToLower(params.TaskContractAddress.String()),
 		TaskId:                params.TaskID,
 		TaskChallengePeriod:   params.TaskChallengePeriod,
 		ThresholdPercentage:   params.ThresholdPercentage,
@@ -280,7 +281,7 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	}
 	bls := &types.BlsPubKeyInfo{
 		Name:     params.Name,
-		Operator: params.OperatorAddress.String(),
+		Operator: strings.ToLower(params.OperatorAddress.String()),
 		PubKey:   params.PubKey,
 	}
 	return k.SetOperatorPubKey(ctx, bls)
@@ -302,9 +303,9 @@ func (k Keeper) OperatorOptAction(ctx sdk.Context, params *types.OperatorOptPara
 
 	switch params.Action {
 	case types.RegisterAction:
-		return k.operatorKeeper.OptIn(ctx, opAccAddr, params.AvsAddress.String())
+		return k.operatorKeeper.OptIn(ctx, opAccAddr, strings.ToLower(params.AvsAddress.String()))
 	case types.DeRegisterAction:
-		return k.operatorKeeper.OptOut(ctx, opAccAddr, params.AvsAddress.String())
+		return k.operatorKeeper.OptOut(ctx, opAccAddr, strings.ToLower(params.AvsAddress.String()))
 	default:
 		return errorsmod.Wrap(types.ErrInvalidAction, fmt.Sprintf("Invalid action: %d", params.Action))
 	}
