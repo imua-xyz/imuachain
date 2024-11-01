@@ -91,7 +91,7 @@ func (suite *OperatorTestSuite) runToEpochEnd() {
 	}
 }
 
-func (suite *OperatorTestSuite) printAllSnapshot() {
+func (suite *OperatorTestSuite) printAllSnapshot(avs string) {
 	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
 	suite.True(found)
 	fmt.Println("epoch", epochInfo.CurrentEpoch, "startHeight", epochInfo.CurrentEpochStartHeight)
@@ -102,7 +102,7 @@ func (suite *OperatorTestSuite) printAllSnapshot() {
 		fmt.Println(string(bytes))
 		return nil
 	}
-	err := suite.App.OperatorKeeper.IterateVotingPowerSnapshot(suite.Ctx, suite.avsAddr, false, opFunc)
+	err := suite.App.OperatorKeeper.IterateVotingPowerSnapshot(suite.Ctx, avs, false, opFunc)
 	suite.NoError(err)
 }
 
@@ -296,7 +296,6 @@ func (suite *OperatorTestSuite) TestGenesisSnapshot() {
 		suite.NoError(err)
 		suite.Equal(firstBlockHeight, snapshotHelper.LastChangedHeight)
 	}
-	suite.printAllSnapshot()
 }
 
 func (suite *OperatorTestSuite) TestSnapshotPruning() {
@@ -325,6 +324,31 @@ func (suite *OperatorTestSuite) TestSnapshotPruning() {
 		suite.runToEpochEnd()
 	}
 	key = types.KeyForVotingPowerSnapshot(common.HexToAddress(suite.avsAddr), firstSnapshotHeight)
+	_, err = suite.App.OperatorKeeper.GetVotingPowerSnapshot(suite.Ctx, key)
+	suite.Error(err)
+
+	// Test pruning of slash-created snapshots
+	slashParam := &types.SlashInputInfo{
+		IsDogFood:        false,
+		Power:            0,
+		SlashType:        0,
+		Operator:         testHelper.operators[index],
+		AVSAddr:          suite.avsAddr,
+		SlashID:          "testSlashID",
+		SlashEventHeight: suite.Ctx.BlockHeight(),
+		SlashProportion:  sdkmath.LegacyMustNewDecFromStr("0.1"),
+	}
+	err = suite.App.OperatorKeeper.Slash(suite.Ctx, slashParam)
+	suite.NoError(err)
+	_, snapshotAfterSlash, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
+	suite.NoError(err)
+	suite.Equal(suite.Ctx.BlockHeight(), snapshotAfterSlash.LastChangedHeight)
+	suite.runToEpochEnd()
+	suite.prepareDelegation(true, testHelper.stakers[index], usdtAddr, testHelper.operators[index], testHelper.delegateAmount)
+	for i := uint64(0); i < runEpochNumber; i++ {
+		suite.runToEpochEnd()
+	}
+	key = types.KeyForVotingPowerSnapshot(common.HexToAddress(suite.avsAddr), snapshotAfterSlash.LastChangedHeight)
 	_, err = suite.App.OperatorKeeper.GetVotingPowerSnapshot(suite.Ctx, key)
 	suite.Error(err)
 }

@@ -226,9 +226,9 @@ message QueryOptInfoRequest {
   OperatorAVSAddress operator_and_avs = 1 [(gogoproto.embed) = true];
 }
 
-// QuerySnapshotAndHelperRequest is the request to obtain the voting power snapshot
-// and helper information.
-message QuerySnapshotAndHelperRequest {
+// QuerySnapshotHelperRequest is the request to obtain the voting power snapshot
+// helper information.
+message QuerySnapshotHelperRequest {
   // avs address
   string avs = 1;
 }
@@ -242,9 +242,9 @@ message QuerySpecifiedSnapshotRequest {
   int64 height = 2;
 }
 
-// VotingPowerSnapshotWithKeyHeight is used in the response of QuerySpecifiedSnapshot
+// VotingPowerSnapshotKeyHeight is used in the response of QuerySpecifiedSnapshot
 // and QueryAllSnapshot
-message VotingPowerSnapshotWithKeyHeight {
+message VotingPowerSnapshotKeyHeight {
   // snapshot_key_height when it is used in QuerySpecifiedSnapshot, it's the latest
   // height with a snapshot key found based on the input height; this height is typically
   // the start height of the epoch in which the input height is located.
@@ -270,7 +270,7 @@ message QueryAllSnapshotRequest {
 // for the specified AVS
 message QueryAllSnapshotResponse {
   // snapshots is a list of all snapshots for the specified AVS.
-  repeated VotingPowerSnapshotWithKeyHeight snapshots = 1;
+  repeated VotingPowerSnapshotKeyHeight snapshots = 1;
   // pagination related response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -313,20 +313,22 @@ service Query {
   }
 
   // QueryOperatorUSDValue queries the opted-in USD value for the operator
-  rpc QueryOperatorUSDValue(QueryOperatorUSDValueRequest) returns (QueryOperatorUSDValueResponse) {
-    option (google.api.http).get = "/exocore/operator/v1/query_operator_usd_value/{operator_and_avs.operator_addr}/"
-                                   "{operator_and_avs.avs_address}";
+  rpc QueryOperatorUSDValue(QueryOperatorUSDValueRequest) returns(QueryOperatorUSDValueResponse){
+    option (google.api.http).get =
+    "/exocore/operator/v1/operator_usd_value/{operator_and_avs.operator_addr}/"
+        "{operator_and_avs.avs_address}";
   }
 
   // QueryAVSUSDValue queries the USD value for the AVS
-  rpc QueryAVSUSDValue(QueryAVSUSDValueRequest) returns (DecValueField) {
-    option (google.api.http).get = "/exocore/operator/v1/QueryAVSUSDValue";
+  rpc QueryAVSUSDValue(QueryAVSUSDValueRequest) returns(DecValueField){
+    option (google.api.http).get = "/exocore/operator/v1/avs_usd_value";
   }
 
   // QueryOperatorSlashInfo queries the slash information for the specified operator and AVS
-  rpc QueryOperatorSlashInfo(QueryOperatorSlashInfoRequest) returns (QueryOperatorSlashInfoResponse) {
-    option (google.api.http).get = "/exocore/operator/v1/query_operator_slash_info/{operator_and_avs.operator_addr}/"
-                                   "{operator_and_avs.avs_address}";
+  rpc QueryOperatorSlashInfo(QueryOperatorSlashInfoRequest) returns(QueryOperatorSlashInfoResponse){
+    option (google.api.http).get =
+    "/exocore/operator/v1/operator_slash_info/{operator_and_avs.operator_addr}/"
+        "{operator_and_avs.avs_address}";
   }
 
   // QueryAllOperatorConsAddrsByChainID queries all operators and their consensus addresses
@@ -339,7 +341,8 @@ service Query {
   }
 
   // QueryAllOperatorsWithOptInAVS queries  operator list by avs.
-  rpc QueryAllOperatorsWithOptInAVS(QueryAllOperatorsByOptInAVSRequest) returns (QueryAllOperatorsByOptInAVSResponse) {
+  rpc QueryAllOperatorsWithOptInAVS(QueryAllOperatorsByOptInAVSRequest) returns (
+      QueryAllOperatorsByOptInAVSResponse) {
     option (google.api.http) = {
       get: "/exocore/operator/v1/opt/operator_list/{avs}"
     };
@@ -360,12 +363,12 @@ service Query {
   }
 
   // QuerySnapshotHelper queries the snapshot helper of the AVS
-  rpc QuerySnapshotHelper(QuerySnapshotAndHelperRequest) returns (SnapshotHelper) {
+  rpc QuerySnapshotHelper(QuerySnapshotHelperRequest) returns (SnapshotHelper) {
     option (google.api.http).get = "/exocore/operator/v1/snapshot_helper/{avs}";
   }
 
-  // QuerySnapshotHelper queries the snapshot helper of the AVS
-  rpc QuerySpecifiedSnapshot(QuerySpecifiedSnapshotRequest) returns (VotingPowerSnapshotWithKeyHeight) {
+  // QuerySpecifiedSnapshot queries the voting power snapshot of specified AVS and height
+  rpc QuerySpecifiedSnapshot(QuerySpecifiedSnapshotRequest) returns (VotingPowerSnapshotKeyHeight) {
     option (google.api.http).get = "/exocore/operator/v1/snapshot/{avs}/{height}";
   }
 

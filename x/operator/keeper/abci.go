@@ -161,7 +161,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	}
 	votingPowerSnapshot.LastChangedHeight = snapshotHelper.LastChangedHeight
 
-	err = k.SetSnapshotHelper(cc, avsAddr, &snapshotHelper)
+	err = k.SetSnapshotHelper(cc, avsAddr, snapshotHelper)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const InitialEpochNumber int64 = 1
+
 func (k *Keeper) SetVotingPowerSnapshot(ctx sdk.Context, key []byte, snapshot *types.VotingPowerSnapshot) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	bz := k.cdc.MustMarshal(snapshot)
@@ -54,6 +56,12 @@ func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, isU
 }
 
 func (k *Keeper) GetSnapshotHeightAndKey(ctx sdk.Context, avsAddr string, height int64) (int64, []byte, error) {
+	if !common.IsHexAddress(avsAddr) {
+		return 0, nil, types.ErrParameterInvalid.Wrapf("invalid AVS address format: %s", avsAddr)
+	}
+	if height < 0 {
+		return 0, nil, types.ErrParameterInvalid.Wrapf("the input height is negative, height:%v", height)
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	// If there is no snapshot for the input height, we need to find the correct key.
 	// The snapshot closest to the input height is the one used for its voting
@@ -82,6 +90,9 @@ func (k *Keeper) GetSnapshotHeightAndKey(ctx sdk.Context, avsAddr string, height
 }
 
 func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, optOutHeight int64) (int64, error) {
+	if optOutHeight < 0 {
+		return 0, types.ErrParameterInvalid.Wrapf("the opt out height is negative, optOutHeight:%v", optOutHeight)
+	}
 	findHeight, findKey, err := k.GetSnapshotHeightAndKey(ctx, avsAddr, optOutHeight)
 	if err != nil {
 		return 0, err
@@ -126,6 +137,9 @@ func (k *Keeper) LoadVotingPowerSnapshot(ctx sdk.Context, avsAddr string, height
 
 // RemoveVotingPowerSnapshot remove all snapshots older than the input epoch number.
 func (k *Keeper) RemoveVotingPowerSnapshot(ctx sdk.Context, avsAddr string, epochNumber int64) error {
+	if epochNumber < 0 {
+		return types.ErrParameterInvalid.Wrapf("the input epoch number is negative, epochNumber:%v", epochNumber)
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	iterator := sdk.KVStorePrefixIterator(store, common.HexToAddress(avsAddr).Bytes())
 	defer iterator.Close()
@@ -192,16 +206,19 @@ func (k *Keeper) SetLastChangedHeight(ctx sdk.Context, avsAddr string, lastChang
 	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
 }
 
-func (k *Keeper) SetSnapshotHelper(ctx sdk.Context, avsAddr string, snapshotHelper *types.SnapshotHelper) error {
+func (k *Keeper) SetSnapshotHelper(ctx sdk.Context, avsAddr string, snapshotHelper types.SnapshotHelper) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixSnapshotHelper)
-	bz := k.cdc.MustMarshal(snapshotHelper)
+	bz := k.cdc.MustMarshal(&snapshotHelper)
 	store.Set([]byte(avsAddr), bz)
 	return nil
 }
 
 func (k *Keeper) GetSnapshotHelper(ctx sdk.Context, avsAddr string) (types.SnapshotHelper, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixSnapshotHelper)
 	var ret types.SnapshotHelper
+	if !common.IsHexAddress(avsAddr) {
+		return ret, types.ErrParameterInvalid.Wrapf("invalid AVS address format: %s", avsAddr)
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixSnapshotHelper)
 	value := store.Get([]byte(avsAddr))
 	if value == nil {
 		return ret, types.ErrNoKeyInTheStore.Wrapf("GetSnapshotHelper: the key is %s", avsAddr)
@@ -241,7 +258,7 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 		epochNumber := epochInfo.CurrentEpoch
 		// set the epoch number to 1 when epoch start for the first time.
 		if !epochInfo.EpochCountingStarted {
-			epochNumber = 1
+			epochNumber = InitialEpochNumber
 		}
 		bz := k.cdc.MustMarshal(&types.VotingPowerSnapshot{
 			TotalVotingPower:     avsUSDValue.Amount,

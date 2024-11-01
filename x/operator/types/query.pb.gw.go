@@ -846,7 +846,7 @@ func local_request_Query_QueryOptInfo_0(ctx context.Context, marshaler runtime.M
 }
 
 func request_Query_QuerySnapshotHelper_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QuerySnapshotAndHelperRequest
+	var protoReq QuerySnapshotHelperRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -873,7 +873,7 @@ func request_Query_QuerySnapshotHelper_0(ctx context.Context, marshaler runtime.
 }
 
 func local_request_Query_QuerySnapshotHelper_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QuerySnapshotAndHelperRequest
+	var protoReq QuerySnapshotHelperRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -1753,11 +1753,11 @@ var (
 
 	pattern_Query_QueryAllOperatorConsKeysByChainID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "operator", "v1", "all_operator_cons_keys", "chain"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryOperatorUSDValue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "operator", "v1", "QueryOperatorUSDValue", "operator_and_avs.operator_addr", "operator_and_avs.avs_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryOperatorUSDValue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "operator", "v1", "operator_usd_value", "operator_and_avs.operator_addr", "operator_and_avs.avs_address"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryAVSUSDValue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "operator", "v1", "QueryAVSUSDValue"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryAVSUSDValue_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "operator", "v1", "avs_usd_value"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryOperatorSlashInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "operator", "v1", "QueryOperatorSlashInfo", "operator_and_avs.operator_addr", "operator_and_avs.avs_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryOperatorSlashInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "operator", "v1", "operator_slash_info", "operator_and_avs.operator_addr", "operator_and_avs.avs_address"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_QueryAllOperatorConsAddrsByChainID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "operator", "v1", "all_operator_cons_addrs", "chain"}, "", runtime.AssumeColonVerbOpt(false)))
 

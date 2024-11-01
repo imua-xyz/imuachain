@@ -82,10 +82,11 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	newSlashProportion = sdkmath.LegacyMinDec(sdkmath.LegacyNewDec(1), newSlashProportion)
 
 	executionInfo := &types.SlashExecutionInfo{
-		SlashProportion:    newSlashProportion,
-		SlashValue:         slashUSDValue,
-		SlashUndelegations: make([]types.SlashFromUndelegation, 0),
-		SlashAssetsPool:    make([]types.SlashFromAssetsPool, 0),
+		SlashProportion:          newSlashProportion,
+		SlashValue:               slashUSDValue,
+		SlashUndelegations:       make([]types.SlashFromUndelegation, 0),
+		SlashAssetsPool:          make([]types.SlashFromAssetsPool, 0),
+		UndelegationFilterHeight: snapshotHeight,
 	}
 	// slash from the unbonding stakers
 	if parameter.SlashEventHeight < ctx.BlockHeight() {

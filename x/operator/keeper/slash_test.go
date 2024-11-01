@@ -12,6 +12,7 @@ import (
 )
 
 func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
+	// current height: 1 epoch: 1
 	// prepare the deposit and delegation
 	suite.prepareOperator()
 	depositAmount := sdkmath.NewIntWithDecimal(200, assetDecimal)
@@ -25,21 +26,29 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	avsAddr := avstypes.GenerateAVSAddr(avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()))
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, avsAddr)
 	suite.NoError(err)
+
 	// call the EndBlock to update the voting power
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
-	infractionHeight := suite.Ctx.BlockHeight() + 1
+
+	// current height: 2 epoch: 2
 	optedUSDValues, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, avsAddr, suite.operatorAddr.String())
 	suite.NoError(err)
 	// get the historical voting power
 	power := optedUSDValues.TotalUSDValue.TruncateInt64()
 	// run to next block
 	suite.NextBlock()
+	// current height: 3 epoch: 2
+	infractionHeight := suite.Ctx.BlockHeight()
+	// undelegationFilterHeight should be the first height of this epoch, it should be 2
+	undelegationFilterHeight := infractionHeight - 1
+	suite.Equal(int64(3), infractionHeight)
 
 	// delegates new amount to the operator
 	newDelegateAmount := sdkmath.NewIntWithDecimal(20, assetDecimal)
 	suite.prepareDelegation(true, suite.Address, suite.assetAddr, suite.operatorAddr, newDelegateAmount)
 	// updating the voting power
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
+	// current height: 4 epoch: 3
 	newOptedUSDValues, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, avsAddr, suite.operatorAddr.String())
 	suite.NoError(err)
 	// submits an undelegation to test the slashFromUndelegation
@@ -50,6 +59,9 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	completedHeight := suite.App.OperatorKeeper.GetUnbondingExpirationBlockNumber(suite.Ctx, suite.operatorAddr, startHeight)
 
 	// trigger the slash with a downtime event
+	// run to next block
+	suite.CommitAfter(time.Hour + time.Nanosecond)
+	// current height: 5 epoch: 3
 	slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
 	slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
 	exoSlashValue := suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.operatorAddr, infractionHeight, power, slashFactor, slashType)
@@ -76,6 +88,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 		AssetID: suite.assetID,
 		Amount:  newSlashProportion.MulInt(delegationRemaining).TruncateInt(),
 	}, slashInfo.ExecutionInfo.SlashAssetsPool[0])
+	suite.Equal(undelegationFilterHeight, slashInfo.ExecutionInfo.UndelegationFilterHeight)
 
 	// check the assets state of undelegation and assets pool
 	assetsInfo, err := suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, suite.operatorAddr, suite.assetID)

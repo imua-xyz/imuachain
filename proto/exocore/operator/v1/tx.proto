@@ -7,7 +7,6 @@ import "cosmos/staking/v1beta1/staking.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 
@@ -216,6 +215,8 @@ message SlashExecutionInfo {
   repeated SlashFromUndelegation slash_undelegations = 3 [(gogoproto.nullable) = false];
   // SlashFromAssetsPool records all slash info related to the assets pool
   repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
+  // undelegation_filter_height records the height before which undelegations are not slashed
+  int64 undelegation_filter_height = 5;
 }
 
 // OperatorSlashInfo is the slash info of operator

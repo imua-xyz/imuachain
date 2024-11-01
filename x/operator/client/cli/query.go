@@ -476,7 +476,7 @@ func QuerySnapshotHelper() *cobra.Command {
 				return err
 			}
 			queryClient := operatortypes.NewQueryClient(clientCtx)
-			req := &operatortypes.QuerySnapshotAndHelperRequest{
+			req := &operatortypes.QuerySnapshotHelperRequest{
 				Avs: strings.ToLower(args[0]),
 			}
 			res, err := queryClient.QuerySnapshotHelper(context.Background(), req)
@@ -536,9 +536,12 @@ func QuerySpecifiedSnapshot() *cobra.Command {
 			if !common.IsHexAddress(args[0]) {
 				return xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidAddr)
 			}
-			height, err := strconv.ParseUint(args[1], 10, 64)
+			height, err := strconv.ParseInt(args[1], 10, 64)
 			if err != nil {
 				return err
+			}
+			if height < 0 {
+				return xerrors.Errorf("negative height,height:%s", args[1])
 			}
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -547,7 +550,7 @@ func QuerySpecifiedSnapshot() *cobra.Command {
 			queryClient := operatortypes.NewQueryClient(clientCtx)
 			req := &operatortypes.QuerySpecifiedSnapshotRequest{
 				Avs:    strings.ToLower(args[0]),
-				Height: int64(height), // #nosec G115
+				Height: height,
 			}
 			res, err := queryClient.QuerySpecifiedSnapshot(context.Background(), req)
 			if err != nil {
