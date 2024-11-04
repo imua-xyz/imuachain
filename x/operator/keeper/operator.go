@@ -236,7 +236,7 @@ func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([
 		if err != nil {
 			return nil, err
 		}
-		if avsAddr == keys[1] {
+		if strings.ToLower(avsAddr) == keys[1] {
 			operatorList = append(operatorList, keys[0])
 		}
 	}

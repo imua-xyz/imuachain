@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
@@ -27,7 +28,7 @@ func (k *Keeper) UpdateOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr s
 	if operatorAddr == "" {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "UpdateOperatorUSDValue the operatorAddr is empty")
 	}
-	key = assetstype.GetJoinedStoreKey(avsAddr, operatorAddr)
+	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 
 	usdInfo := operatortypes.OperatorOptedUSDValue{
 		SelfUSDValue:   sdkmath.LegacyNewDec(0),
@@ -62,7 +63,7 @@ func (k *Keeper) InitOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr str
 	if operatorAddr == "" {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "InitOperatorUSDValue the operatorAddr is empty")
 	}
-	key = assetstype.GetJoinedStoreKey(avsAddr, operatorAddr)
+	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	if store.Has(key) {
 		return errorsmod.Wrap(operatortypes.ErrKeyAlreadyExist, fmt.Sprintf("avsAddr operatorAddr is: %s, %s", avsAddr, operatorAddr))
 	}
@@ -87,7 +88,7 @@ func (k *Keeper) DeleteOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr s
 	if operatorAddr == "" {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "DeleteOperatorUSDValue the operatorAddr is empty")
 	}
-	key = assetstype.GetJoinedStoreKey(avsAddr, operatorAddr)
+	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	store.Delete(key)
 
 	return nil
@@ -95,7 +96,7 @@ func (k *Keeper) DeleteOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr s
 
 func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForOperator)
-	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(avsAddr))
+	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -126,7 +127,7 @@ func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr
 	if operatorAddr == "" {
 		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrParameterInvalid, "GetOperatorOptedUSDValue the operatorAddr is empty")
 	}
-	key = assetstype.GetJoinedStoreKey(avsAddr, operatorAddr)
+	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	value := store.Get(key)
 	if value == nil {
 		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorOptedUSDValue: key is %s", key))
@@ -147,7 +148,7 @@ func (k *Keeper) UpdateAVSUSDValue(ctx sdk.Context, avsAddr string, opAmount sdk
 		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("UpdateAVSUSDValue the opAmount is:%v", opAmount))
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
-	key := []byte(avsAddr)
+	key := []byte(strings.ToLower(avsAddr))
 	totalValue := operatortypes.DecValueField{Amount: sdkmath.LegacyNewDec(0)}
 	value := store.Get(key)
 	if value != nil {
@@ -169,7 +170,7 @@ func (k *Keeper) SetAVSUSDValue(ctx sdk.Context, avsAddr string, amount sdkmath.
 		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("SetAVSUSDValue the amount is:%v", amount))
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
-	key := []byte(avsAddr)
+	key := []byte(strings.ToLower(avsAddr))
 	setValue := operatortypes.DecValueField{Amount: amount}
 	bz := k.cdc.MustMarshal(&setValue)
 	store.Set(key, bz)
@@ -178,7 +179,7 @@ func (k *Keeper) SetAVSUSDValue(ctx sdk.Context, avsAddr string, amount sdkmath.
 
 func (k *Keeper) DeleteAVSUSDValue(ctx sdk.Context, avsAddr string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
-	key := []byte(avsAddr)
+	key := []byte(strings.ToLower(avsAddr))
 	store.Delete(key)
 	return nil
 }
@@ -192,7 +193,7 @@ func (k *Keeper) GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.Legacy
 		operatortypes.KeyPrefixUSDValueForAVS,
 	)
 	var ret operatortypes.DecValueField
-	key := []byte(avsAddr)
+	key := []byte(strings.ToLower(avsAddr))
 	value := store.Get(key)
 	if value == nil {
 		return sdkmath.LegacyDec{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetAVSUSDValue: key is %s", key))
@@ -206,7 +207,7 @@ func (k *Keeper) GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.Legacy
 // `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
 func (k *Keeper) IterateOperatorsForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForOperator)
-	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(avsAddr))
+	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
