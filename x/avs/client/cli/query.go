@@ -133,7 +133,7 @@ func QuerySubmitTaskResult() *cobra.Command {
 		Use:     "SubmitTaskResult <task-address-in-hex> <task-id> <operator-addreess>",
 		Short:   "Query the SubmitTaskResult by taskAddr  taskID operatorAddr",
 		Long:    "Query the currently submitted Task Result",
-		Example: "exocored query avs ChallengeInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 exo1mq6pj6f5tafmgkk6lehew5radfq3w20gpegzs5",
+		Example: "exocored query avs SubmitTaskResult 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 exo1mq6pj6f5tafmgkk6lehew5radfq3w20gpegzs5",
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
