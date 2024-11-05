@@ -20,7 +20,7 @@ var _ types.MsgServer = &MsgServerImpl{}
 func (m MsgServerImpl) SubmitTaskResult(goCtx context.Context, req *types.SubmitTaskResultReq) (*types.SubmitTaskResultResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if err := m.keeper.SetTaskResultInfo(ctx, req.FromAddress, req.Info); err != nil {
+	if err := m.keeper.SubmitTaskResult(ctx, req.FromAddress, req.Info); err != nil {
 		return nil, err
 	}
 	return &types.SubmitTaskResultResponse{}, nil

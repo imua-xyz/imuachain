@@ -2,6 +2,7 @@ syntax = "proto3";
 package exocore.feedistribution.v1;
 
 import "amino/amino.proto";
+import "exocore/feedistribution/v1/distribution.proto";
 import "exocore/feedistribution/v1/params.proto";
 import "gogoproto/gogo.proto";
 
@@ -14,4 +15,61 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  // fee_pool is the global fee pool for distribution.
+  // It holds decimal coins. Once whole those coins can be burned or distributed to the community pool.
+  FeePool fee_pool = 2 [(gogoproto.nullable) = false];
+  // validator_accumulated_commissions represents accumulated commission
+  // for a validator kept as a running counter, can be withdrawn at any time.
+  repeated ValidatorAccumulatedCommissions validator_accumulated_commissions = 3 [(gogoproto.nullable) = false];
+  // validator_current_rewards_list represents current rewards and current
+  // period for a validator kept as a running counter and incremented
+  // each block as long as the validator's tokens remain constant.
+  repeated ValidatorCurrentRewardsList validator_current_rewards_list = 4 [(gogoproto.nullable) = false];
+
+  // validator_outstanding_rewards_list represents outstanding (un-withdrawn) rewards
+  // for a validator inexpensive to track, allows simple sanity checks.
+  repeated ValidatorOutstandingRewardsList validator_outstanding_rewards_list = 5 [(gogoproto.nullable) = false];
+  // staker_outstanding_rewards_list represents outstanding (un-withdrawn) rewards
+  // for a staker inexpensive to track, allows simple sanity checks.
+  repeated StakerOutstandingRewardsList staker_outstanding_rewards_list = 6 [(gogoproto.nullable) = false];
+
+}
+
+// ValidatorAccumulatedCommissions is helper structure to store
+// the validator accumulated commissions for the genesis state.
+message ValidatorAccumulatedCommissions {
+  // val_addr is the address of validator
+  string val_addr = 1;
+
+  // ValidatorAccumulatedCommission represents accumulated commission
+  // for a validator kept as a running counter, can be withdrawn at any time.
+  ValidatorAccumulatedCommission commission = 2;
+}
+// ValidatorCurrentRewardsList is helper structure to store the validator current rewards  for the genesis state.
+message ValidatorCurrentRewardsList {
+  // val_addr is the address of validator
+  string val_addr = 1;
+
+  // ValidatorCurrentRewards represents current rewards and current
+  // period for a validator kept as a running counter and incremented
+  // each block as long as the validator's tokens remain constant.
+  ValidatorCurrentRewards current_rewards = 2;
+}
+// TaskID is helper structure to store the validator outstanding rewards  for the genesis state.
+message ValidatorOutstandingRewardsList {
+  // val_addr is the address of validator
+  string val_addr = 1;
+
+  // ValidatorOutstandingRewards represents outstanding (un-withdrawn) rewards
+  // for a validator inexpensive to track, allows simple sanity checks.
+  ValidatorOutstandingRewards outstanding_rewards = 2;
+}
+// StakerOutstandingRewardsList is helper structure to store the staker outstanding rewards  for the genesis state.
+message StakerOutstandingRewardsList {
+  // val_addr is the address of validator
+  string val_addr = 1;
+
+  // StakerOutstandingRewards represents outstanding (un-withdrawn) rewards
+  // for a staker inexpensive to track, allows simple sanity checks.
+  StakerOutstandingRewards staker_outstanding_rewards = 2;
 }

@@ -1,11 +1,14 @@
 package keeper
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
@@ -439,4 +442,167 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 	}
 	return k.SetTaskChallengedInfo(ctx, params.TaskID, params.OperatorAddress.String(), params.CallerAddress.String(),
 		params.TaskContractAddress)
+}
+
+func (k *Keeper) GetAllAVSInfos(ctx sdk.Context) ([]types.AVSInfo, error) {
+	var ret []types.AVSInfo
+	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) bool {
+		ret = append(ret, avsInfo)
+		return false
+	})
+	return ret, nil
+}
+
+func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskResultInfo) error {
+	// the operator's `addr` must match the from address.
+	if addr != info.OperatorAddress {
+		return errorsmod.Wrap(
+			types.ErrInvalidAddr,
+			"SetTaskResultInfo:from address is not equal to the operator address",
+		)
+	}
+	opAccAddr, _ := sdk.AccAddressFromBech32(info.OperatorAddress)
+	// check operator
+	if !k.operatorKeeper.IsOperator(ctx, opAccAddr) {
+		return errorsmod.Wrap(
+			delegationtypes.ErrOperatorNotExist,
+			fmt.Sprintf("SetTaskResultInfo:invalid operator address:%s", opAccAddr),
+		)
+	}
+	// check operator bls pubkey
+	keyInfo, err := k.GetOperatorPubKey(ctx, info.OperatorAddress)
+	if err != nil || keyInfo.PubKey == nil {
+		return errorsmod.Wrap(
+			types.ErrPubKeyIsNotExists,
+			fmt.Sprintf("SetTaskResultInfo:get operator address:%s", opAccAddr),
+		)
+	}
+	pubKey, err := blst.PublicKeyFromBytes(keyInfo.PubKey)
+	if err != nil || pubKey == nil {
+		return errorsmod.Wrap(
+			types.ErrParsePubKey,
+			fmt.Sprintf("SetTaskResultInfo:get operator address:%s", opAccAddr),
+		)
+	}
+	//	check task contract
+	task, err := k.GetTaskInfo(ctx, strconv.FormatUint(info.TaskId, 10), info.TaskContractAddress)
+	if err != nil || task.TaskContractAddress == "" {
+		return errorsmod.Wrap(
+			types.ErrTaskIsNotExists,
+			fmt.Sprintf("SetTaskResultInfo: task info not found: %s (Task ID: %d)",
+				info.TaskContractAddress, info.TaskId),
+		)
+	}
+
+	//  check prescribed period
+	//  If submitted in the first phase, in order  to avoid plagiarism by other operators,
+	//	TaskResponse and TaskResponseHash must be null values
+	//	At the same time, it must be submitted within the response deadline in the first phase
+	avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
+	if avsInfo.AvsAddress == "" {
+		return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the taskaddr is :%s", info.TaskContractAddress))
+	}
+	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
+	if !found {
+		return errorsmod.Wrap(types.ErrEpochNotFound, fmt.Sprintf("epoch info not found %s",
+			avsInfo.EpochIdentifier))
+	}
+
+	switch info.Phase {
+	case types.PhasePrepare:
+		if k.IsExistTaskResultInfo(ctx, info.OperatorAddress, info.TaskContractAddress, info.TaskId) {
+			return errorsmod.Wrap(
+				types.ErrResAlreadyExists,
+				fmt.Sprintf("SetTaskResultInfo: task result is already exists, "+
+					"OperatorAddress: %s (TaskContractAddress: %s),(Task ID: %d)",
+					info.OperatorAddress, info.TaskContractAddress, info.TaskId),
+			)
+		}
+		// check parameters
+		if info.BlsSignature == nil {
+			return errorsmod.Wrap(
+				types.ErrParamNotEmptyError,
+				fmt.Sprintf("SetTaskResultInfo: invalid param BlsSignature is not be null (BlsSignature: %s)", info.BlsSignature),
+			)
+		}
+		if info.TaskResponseHash != "" || info.TaskResponse != nil {
+			return errorsmod.Wrap(
+				types.ErrParamNotEmptyError,
+				fmt.Sprintf("SetTaskResultInfo: invalid param TaskResponseHash: %s (TaskResponse: %d)",
+					info.TaskResponseHash, info.TaskResponse),
+			)
+		}
+		// check epoch，The first phase submission must be within the response window period
+		// #nosec G115
+		if epoch.CurrentEpoch > int64(task.StartingEpoch)+int64(task.TaskResponsePeriod) {
+			return errorsmod.Wrap(
+				types.ErrSubmitTooLateError,
+				fmt.Sprintf("SetTaskResultInfo:submit  too late, CurrentEpoch:%d", epoch.CurrentEpoch),
+			)
+		}
+		k.SetTaskResultInfo(ctx, info)
+		return nil
+
+	case types.PhaseDoCommit:
+		// check task response
+		if info.TaskResponse == nil {
+			return errorsmod.Wrap(
+				types.ErrNotNull,
+				fmt.Sprintf("SetTaskResultInfo: invalid param  (TaskResponse: %d)",
+					info.TaskResponse),
+			)
+		}
+		// check parameters
+		res, err := k.GetTaskResultInfo(ctx, info.OperatorAddress, info.TaskContractAddress, info.TaskId)
+		if err != nil || !bytes.Equal(res.BlsSignature, info.BlsSignature) {
+			return errorsmod.Wrap(
+				types.ErrInconsistentParams,
+				fmt.Sprintf("SetTaskResultInfo: invalid param OperatorAddress: %s ,(TaskContractAddress: %s)"+
+					",(TaskId: %d),(BlsSignature: %s)",
+					info.OperatorAddress, info.TaskContractAddress, info.TaskId, info.BlsSignature),
+			)
+		}
+		//  check epoch，The second phase submission must be within the statistical window period
+		// #nosec G115
+		if epoch.CurrentEpoch <= int64(task.StartingEpoch)+int64(task.TaskResponsePeriod) {
+			return errorsmod.Wrap(
+				types.ErrSubmitTooSoonError,
+				fmt.Sprintf("SetTaskResultInfo:the TaskResponse period has not started , CurrentEpoch:%d", epoch.CurrentEpoch),
+			)
+		}
+		if epoch.CurrentEpoch > int64(task.StartingEpoch)+int64(task.TaskResponsePeriod)+int64(task.TaskStatisticalPeriod) {
+			return errorsmod.Wrap(
+				types.ErrSubmitTooLateError,
+				fmt.Sprintf("SetTaskResultInfo:submit  too late, CurrentEpoch:%d", epoch.CurrentEpoch),
+			)
+		}
+
+		// calculate hash by original task
+		taskResponseDigest := crypto.Keccak256Hash(info.TaskResponse)
+		info.TaskResponseHash = taskResponseDigest.String()
+		// check taskID
+		resp, err := types.UnmarshalTaskResponse(info.TaskResponse)
+		if err != nil || info.TaskId != resp.TaskID {
+			return errorsmod.Wrap(
+				types.ErrInconsistentParams,
+				fmt.Sprintf("SetTaskResultInfo: invalid TaskId param value:%s", info.TaskResponse),
+			)
+		}
+		// check bls sig
+		flag, err := blst.VerifySignature(info.BlsSignature, taskResponseDigest, pubKey)
+		if !flag || err != nil {
+			return errorsmod.Wrap(
+				types.ErrSigVerifyError,
+				fmt.Sprintf("SetTaskResultInfo: invalid task address: %s (Task ID: %d)", info.TaskContractAddress, info.TaskId),
+			)
+		}
+
+		k.SetTaskResultInfo(ctx, info)
+		return nil
+	default:
+		return errorsmod.Wrap(
+			types.ErrParamError,
+			fmt.Sprintf("SetTaskResultInfo: invalid param value:%d", info.Phase),
+		)
+	}
 }

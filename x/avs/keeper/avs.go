@@ -194,3 +194,21 @@ func (k Keeper) GetChainIDByAVSAddr(ctx sdk.Context, avsAddr string) (string, bo
 	}
 	return string(bz), true
 }
+
+func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSAddressToChainID)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	ret := make([]types.ChainIDInfo, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		avsAddr := strings.ToLower(common.BytesToAddress(iterator.Key()).Hex())
+		chainID := string(iterator.Value())
+
+		ret = append(ret, types.ChainIDInfo{
+			AvsAddress: avsAddr,
+			ChainId:    chainID,
+		})
+	}
+	return ret, nil
+}

@@ -203,7 +203,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseOne_Mul() {
 			BlsSignature:        sig.Marshal(),
 			Phase:               avstypes.Phase(avstypes.PhasePrepare),
 		}
-		err := suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, operatorAddress, info)
+		err := suite.App.AVSManagerKeeper.SubmitTaskResult(suite.Ctx, operatorAddress, info)
 		suite.Require().NoError(err)
 	}
 }
@@ -231,7 +231,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseTwo_Mul() {
 			BlsSignature:        sig.Marshal(),
 			Phase:               avstypes.Phase(avstypes.PhaseDoCommit),
 		}
-		err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, operatorAddress, info)
+		err = suite.App.AVSManagerKeeper.SubmitTaskResult(suite.Ctx, operatorAddress, info)
 		suite.NoError(err)
 	}
 }

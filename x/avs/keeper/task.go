@@ -1,23 +1,18 @@
 package keeper
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
 	"strconv"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/crypto"
-
 	errorsmod "cosmossdk.io/errors"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 )
 
 func (k Keeper) SetTaskInfo(ctx sdk.Context, task *types.TaskInfo) (err error) {
@@ -46,6 +41,15 @@ func (k *Keeper) GetTaskInfo(ctx sdk.Context, taskID, taskContractAddress string
 	ret := types.TaskInfo{}
 	k.cdc.MustUnmarshal(value, &ret)
 	return &ret, nil
+}
+
+func (k Keeper) GetAllTaskInfos(ctx sdk.Context) ([]types.TaskInfo, error) {
+	var taskInfos []types.TaskInfo
+	k.IterateTaskAVSInfo(ctx, func(_ int64, taskInfo types.TaskInfo) bool {
+		taskInfos = append(taskInfos, taskInfo)
+		return false
+	})
+	return taskInfos, nil
 }
 
 func (k *Keeper) IsExistTask(ctx sdk.Context, taskID, taskContractAddress string) bool {
@@ -84,6 +88,34 @@ func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, addr string) (pub *types.Bls
 	return &ret, nil
 }
 
+func (k *Keeper) GetAllBlsPubKeys(ctx sdk.Context) ([]types.BlsPubKeyInfo, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
+	// Count items first for optimal slice allocation
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	// Pre-allocate the slice for better performance by counting items first.
+	count := 0
+	for ; iterator.Valid(); iterator.Next() {
+		count++
+	}
+	iterator.Close()
+
+	// Reset iterator
+	iterator = sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	pubKeys := make([]types.BlsPubKeyInfo, 0, count)
+	for ; iterator.Valid(); iterator.Next() {
+		var pubKey types.BlsPubKeyInfo
+		err := k.cdc.Unmarshal(iterator.Value(), &pubKey)
+		if err != nil {
+			return nil, errorsmod.Wrap(err, "GetAllBlsPubKeys: failed to unmarshal pubkey")
+		}
+		pubKeys = append(pubKeys, pubKey)
+	}
+
+	return pubKeys, nil
+}
+
 func (k *Keeper) IsExistPubKey(ctx sdk.Context, addr string) bool {
 	opAccAddr, _ := sdk.AccAddressFromBech32(addr)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
@@ -112,6 +144,14 @@ func (k Keeper) IterateTaskAVSInfo(ctx sdk.Context, fn func(index int64, taskInf
 	}
 }
 
+func (k Keeper) SetTaskID(ctx sdk.Context, taskAddr common.Address, id uint64) {
+	if taskAddr == (common.Address{}) {
+		panic("invalid task address")
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLatestTaskNum)
+	store.Set(taskAddr.Bytes(), sdk.Uint64ToBigEndian(id))
+}
+
 // GetTaskID Increase the task ID by 1 each time.
 func (k Keeper) GetTaskID(ctx sdk.Context, taskAddr common.Address) uint64 {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLatestTaskNum)
@@ -127,169 +167,38 @@ func (k Keeper) GetTaskID(ctx sdk.Context, taskAddr common.Address) uint64 {
 	return id
 }
 
+// GetAllTaskNums returns a map containing all task addresses and their corresponding task IDs.
+func (k *Keeper) GetAllTaskNums(ctx sdk.Context) ([]types.TaskID, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixLatestTaskNum)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+	ret := make([]types.TaskID, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		taskAddr := strings.ToLower(common.BytesToAddress(iterator.Key()).Hex())
+		id := sdk.BigEndianToUint64(iterator.Value())
+		ret = append(ret, types.TaskID{
+			TaskAddr: taskAddr,
+			TaskId:   id,
+		})
+	}
+	return ret, nil
+}
+
 // SetTaskResultInfo is used to store the operator's sign task information.
 func (k *Keeper) SetTaskResultInfo(
-	ctx sdk.Context, addr string, info *types.TaskResultInfo,
-) (err error) {
-	// the operator's `addr` must match the from address.
-	if addr != info.OperatorAddress {
-		return errorsmod.Wrap(
-			types.ErrInvalidAddr,
-			"SetTaskResultInfo:from address is not equal to the operator address",
-		)
+	ctx sdk.Context, info *types.TaskResultInfo,
+) {
+	if _, err := sdk.AccAddressFromBech32(info.OperatorAddress); err != nil {
+		panic(fmt.Sprintf("invalid operator address: %s", info.OperatorAddress))
 	}
-	opAccAddr, _ := sdk.AccAddressFromBech32(info.OperatorAddress)
-	// check operator
-	if !k.operatorKeeper.IsOperator(ctx, opAccAddr) {
-		return errorsmod.Wrap(
-			delegationtypes.ErrOperatorNotExist,
-			fmt.Sprintf("SetTaskResultInfo:invalid operator address:%s", opAccAddr),
-		)
+	if !common.IsHexAddress(info.TaskContractAddress) {
+		panic(fmt.Sprintf("invalid task contract address: %s", info.TaskContractAddress))
 	}
-	// check operator bls pubkey
-	keyInfo, err := k.GetOperatorPubKey(ctx, info.OperatorAddress)
-	if err != nil || keyInfo.PubKey == nil {
-		return errorsmod.Wrap(
-			types.ErrPubKeyIsNotExists,
-			fmt.Sprintf("SetTaskResultInfo:get operator address:%s", opAccAddr),
-		)
-	}
-	pubKey, err := blst.PublicKeyFromBytes(keyInfo.PubKey)
-	if err != nil || pubKey == nil {
-		return errorsmod.Wrap(
-			types.ErrParsePubKey,
-			fmt.Sprintf("SetTaskResultInfo:get operator address:%s", opAccAddr),
-		)
-	}
-	//	check task contract
-	task, err := k.GetTaskInfo(ctx, strconv.FormatUint(info.TaskId, 10), info.TaskContractAddress)
-	if err != nil || task.TaskContractAddress == "" {
-		return errorsmod.Wrap(
-			types.ErrTaskIsNotExists,
-			fmt.Sprintf("SetTaskResultInfo: task info not found: %s (Task ID: %d)",
-				info.TaskContractAddress, info.TaskId),
-		)
-	}
-
-	//  check prescribed period
-	//  If submitted in the first phase, in order  to avoid plagiarism by other operators,
-	//	TaskResponse and TaskResponseHash must be null values
-	//	At the same time, it must be submitted within the response deadline in the first phase
-	avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
-	if avsInfo.AvsAddress == "" {
-		return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the taskaddr is :%s", info.TaskContractAddress))
-	}
-	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
-	if !found {
-		return errorsmod.Wrap(types.ErrEpochNotFound, fmt.Sprintf("epoch info not found %s",
-			avsInfo.EpochIdentifier))
-	}
-
-	switch info.Phase {
-	case types.PhasePrepare:
-		if k.IsExistTaskResultInfo(ctx, info.OperatorAddress, info.TaskContractAddress, info.TaskId) {
-			return errorsmod.Wrap(
-				types.ErrResAlreadyExists,
-				fmt.Sprintf("SetTaskResultInfo: task result is already exists, "+
-					"OperatorAddress: %s (TaskContractAddress: %s),(Task ID: %d)",
-					info.OperatorAddress, info.TaskContractAddress, info.TaskId),
-			)
-		}
-		// check parameters
-		if info.BlsSignature == nil {
-			return errorsmod.Wrap(
-				types.ErrParamNotEmptyError,
-				fmt.Sprintf("SetTaskResultInfo: invalid param BlsSignature is not be null (BlsSignature: %s)", info.BlsSignature),
-			)
-		}
-		if info.TaskResponseHash != "" || info.TaskResponse != nil {
-			return errorsmod.Wrap(
-				types.ErrParamNotEmptyError,
-				fmt.Sprintf("SetTaskResultInfo: invalid param TaskResponseHash: %s (TaskResponse: %d)",
-					info.TaskResponseHash, info.TaskResponse),
-			)
-		}
-		// check epoch，The first phase submission must be within the response window period
-		// #nosec G115
-		if epoch.CurrentEpoch > int64(task.StartingEpoch)+int64(task.TaskResponsePeriod) {
-			return errorsmod.Wrap(
-				types.ErrSubmitTooLateError,
-				fmt.Sprintf("SetTaskResultInfo:submit  too late, CurrentEpoch:%d", epoch.CurrentEpoch),
-			)
-		}
-		infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(info.OperatorAddress), strings.ToLower(info.TaskContractAddress),
-			strconv.FormatUint(info.TaskId, 10))
-		store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskResult)
-		bz := k.cdc.MustMarshal(info)
-		store.Set(infoKey, bz)
-		return nil
-
-	case types.PhaseDoCommit:
-		// check task response
-		if info.TaskResponse == nil {
-			return errorsmod.Wrap(
-				types.ErrNotNull,
-				fmt.Sprintf("SetTaskResultInfo: invalid param  (TaskResponse: %d)",
-					info.TaskResponse),
-			)
-		}
-		// check parameters
-		res, err := k.GetTaskResultInfo(ctx, info.OperatorAddress, info.TaskContractAddress, info.TaskId)
-		if err != nil || !bytes.Equal(res.BlsSignature, info.BlsSignature) {
-			return errorsmod.Wrap(
-				types.ErrInconsistentParams,
-				fmt.Sprintf("SetTaskResultInfo: invalid param OperatorAddress: %s ,(TaskContractAddress: %s)"+
-					",(TaskId: %d),(BlsSignature: %s)",
-					info.OperatorAddress, info.TaskContractAddress, info.TaskId, info.BlsSignature),
-			)
-		}
-		//  check epoch，The second phase submission must be within the statistical window period
-		// #nosec G115
-		if epoch.CurrentEpoch <= int64(task.StartingEpoch)+int64(task.TaskResponsePeriod) {
-			return errorsmod.Wrap(
-				types.ErrSubmitTooSoonError,
-				fmt.Sprintf("SetTaskResultInfo:the TaskResponse period has not started , CurrentEpoch:%d", epoch.CurrentEpoch),
-			)
-		}
-		if epoch.CurrentEpoch > int64(task.StartingEpoch)+int64(task.TaskResponsePeriod)+int64(task.TaskStatisticalPeriod) {
-			return errorsmod.Wrap(
-				types.ErrSubmitTooLateError,
-				fmt.Sprintf("SetTaskResultInfo:submit  too late, CurrentEpoch:%d", epoch.CurrentEpoch),
-			)
-		}
-
-		// calculate hash by original task
-		taskResponseDigest := crypto.Keccak256Hash(info.TaskResponse)
-		info.TaskResponseHash = taskResponseDigest.String()
-		// check taskID
-		resp, err := types.UnmarshalTaskResponse(info.TaskResponse)
-		if err != nil || info.TaskId != resp.TaskID {
-			return errorsmod.Wrap(
-				types.ErrInconsistentParams,
-				fmt.Sprintf("SetTaskResultInfo: invalid TaskId param value:%s", info.TaskResponse),
-			)
-		}
-		// check bls sig
-		flag, err := blst.VerifySignature(info.BlsSignature, taskResponseDigest, pubKey)
-		if !flag || err != nil {
-			return errorsmod.Wrap(
-				types.ErrSigVerifyError,
-				fmt.Sprintf("SetTaskResultInfo: invalid task address: %s (Task ID: %d)", info.TaskContractAddress, info.TaskId),
-			)
-		}
-
-		infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(info.OperatorAddress), strings.ToLower(info.TaskContractAddress), strconv.FormatUint(info.TaskId, 10))
-
-		store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskResult)
-		bz := k.cdc.MustMarshal(info)
-		store.Set(infoKey, bz)
-		return nil
-	default:
-		return errorsmod.Wrap(
-			types.ErrParamError,
-			fmt.Sprintf("SetTaskResultInfo: invalid param value:%d", info.Phase),
-		)
-	}
+	infoKey := assetstype.GetJoinedStoreKey(info.OperatorAddress, strings.ToLower(info.TaskContractAddress),
+		strconv.FormatUint(info.TaskId, 10))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskResult)
+	bz := k.cdc.MustMarshal(info)
+	store.Set(infoKey, bz)
 }
 
 func (k *Keeper) IsExistTaskResultInfo(ctx sdk.Context, operatorAddress, taskContractAddress string, taskID uint64) bool {
@@ -397,4 +306,67 @@ func (k *Keeper) GetTaskChallengedInfo(ctx sdk.Context, operatorAddress, taskCon
 	}
 
 	return common.Bytes2Hex(value), nil
+}
+
+// GetAllTaskResultInfos returns a slice containing all task result information.
+func (k *Keeper) GetAllTaskResultInfos(ctx sdk.Context) ([]types.TaskResultInfo, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskResult)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	ret := make([]types.TaskResultInfo, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		task := types.TaskResultInfo{}
+		err := k.cdc.Unmarshal(iterator.Value(), &task)
+		if err != nil {
+			return nil, errorsmod.Wrap(err, "GetAllTaskResultInfos: failed to unmarshal task result info")
+		}
+		ret = append(ret, task)
+	}
+	return ret, nil
+}
+
+func (k *Keeper) SetAllTaskChallengedInfo(ctx sdk.Context, states []types.ChallengeInfo) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
+	for i := range states {
+		state := states[i]
+		bz, err := sdk.AccAddressFromBech32(state.ChallengeAddr)
+		if err != nil {
+			return err
+		}
+		store.Set([]byte(state.Key), bz)
+	}
+	return nil
+}
+
+func (k *Keeper) GetAllChallengeInfos(ctx sdk.Context) ([]types.ChallengeInfo, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	// Count items first for optimal slice allocation
+	count := 0
+	for ; iterator.Valid(); iterator.Next() {
+		count++
+	}
+	iterator.Close()
+
+	// Reset iterator
+	iterator = sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	ret := make([]types.ChallengeInfo, 0, count)
+	for ; iterator.Valid(); iterator.Next() {
+		key := string(iterator.Key())
+		challengeAddr := sdk.AccAddress(iterator.Value())
+		if len(challengeAddr) == 0 {
+			return nil, errorsmod.Wrap(types.ErrInvalidAddr, "invalid challenge address")
+		}
+
+		ret = append(ret, types.ChallengeInfo{
+			Key:           key,
+			ChallengeAddr: challengeAddr.String(),
+		})
+	}
+	return ret, nil
 }
