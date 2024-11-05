@@ -45,8 +45,8 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
-	feelPool := k.GetFeePool(ctx)
-	genesis.FeePool = *feelPool
+	feePool := k.GetFeePool(ctx)
+	genesis.FeePool = *feePool
 	validatorData, err := k.GetAllValidatorData(ctx)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "Error getting validator data").Error())
