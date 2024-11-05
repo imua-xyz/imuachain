@@ -144,6 +144,10 @@ func (k Keeper) RegisterAVSWithChainID(
 	}
 	avsAddrStr := types.GenerateAVSAddr(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
+	// check that the AVS is registered
+	if isAvs, _ := k.IsAVS(ctx, avsAddrStr); isAvs {
+		return avsAddr, nil
+	}
 	defer func() {
 		if err == nil {
 			// store the reverse lookup from AVSAddress to ChainID
