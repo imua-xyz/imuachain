@@ -2,11 +2,12 @@ package avs_test
 
 import (
 	"fmt"
+	"math/big"
+	"time"
+
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
-	"math/big"
-	"time"
 
 	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 
@@ -494,6 +495,7 @@ func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 		})
 	}
 }
+
 func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetTaskInfo]
 	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
@@ -553,6 +555,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 		})
 	}
 }
+
 func (suite *AVSManagerPrecompileSuite) TestGetCurrentEpoch() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetCurrentEpoch]
 	testCases := []avsTestCases{

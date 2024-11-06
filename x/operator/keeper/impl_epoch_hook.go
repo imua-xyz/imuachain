@@ -30,7 +30,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 	avsList := wrapper.keeper.avsKeeper.GetEpochEndAVSs(ctx, epochIdentifier, epochNumber)
 	for _, avs := range avsList {
 		// avs address is checksummed hex, we should convert it to lowercase
-		err := wrapper.keeper.UpdateVotingPower(ctx, avs)
+		err := wrapper.keeper.UpdateVotingPower(ctx, avs, epochIdentifier, epochNumber, false)
 		if err != nil {
 			ctx.Logger().Error("Failed to update voting power", "avs", avs, "error", err)
 			// Handle the error gracefully, continue to the next AVS

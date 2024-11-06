@@ -10,6 +10,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"

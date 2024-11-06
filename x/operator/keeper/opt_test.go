@@ -9,7 +9,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
@@ -96,7 +95,7 @@ func (suite *OperatorTestSuite) prepare() {
 func (suite *OperatorTestSuite) prepareAvs(assetIDs []string, epochIdentifier string) {
 	suite.avsAddr = common.BytesToAddress([]byte("avsTestAddr")).String()
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
-		Action:          avskeeper.RegisterAction,
+		Action:          avstypes.RegisterAction,
 		EpochIdentifier: epochIdentifier,
 		AvsAddress:      common.HexToAddress(suite.avsAddr),
 		AssetID:         assetIDs,
