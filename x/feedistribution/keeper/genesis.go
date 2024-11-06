@@ -43,7 +43,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 // ExportGenesis returns the module's exported genesis
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	genesis := types.DefaultGenesis()
+	genesis := types.GenesisState{}
 	genesis.Params = k.GetParams(ctx)
 	feePool := k.GetFeePool(ctx)
 	if feePool == nil {
@@ -78,6 +78,5 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	} else {
 		panic("Failed to assert StakerOutstandingRewardsList type")
 	}
-
-	return genesis
+	return &genesis
 }
