@@ -64,6 +64,7 @@ func DefaultGenesis() *GenesisState {
 
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
+// Explanation: The existence of the operator was not checked as it depends on the operator module that needs to be loaded first
 func (gs GenesisState) Validate() error {
 	// Check for duplicated avs address
 	avsAddresses := make(map[string]bool)

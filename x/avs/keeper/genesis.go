@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strings"
+
 	errorsmod "cosmossdk.io/errors"
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +17,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
 	k.evmKeeper.SetCode(ctx, types.ChainIDCodeHash.Bytes(), types.ChainIDCode)
 	// Set all the avs infos
 	for _, avs := range state.AvsInfos {
+		avs.AvsAddress = strings.ToLower(avs.AvsAddress)
+		avs.TaskAddr = strings.ToLower(avs.TaskAddr)
+		avs.RewardAddr = strings.ToLower(avs.RewardAddr)
+		avs.SlashAddr = strings.ToLower(avs.SlashAddr)
 		err := k.SetAVSInfo(ctx, &avs) //nolint:gosec
 		if err != nil {
 			panic(errorsmod.Wrap(err, "failed to set all avs info"))
@@ -22,6 +28,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
 	}
 	// Set all the task infos
 	for _, elem := range state.TaskInfos {
+		elem.TaskContractAddress = strings.ToLower(elem.TaskContractAddress)
 		err := k.SetTaskInfo(ctx, &elem) //nolint:gosec
 		if err != nil {
 			panic(errorsmod.Wrap(err, "failed to set all task info"))
@@ -36,10 +43,12 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
 	}
 	// Set all the taskNum infos
 	for _, elem := range state.TaskNums {
+		elem.TaskAddr = strings.ToLower(elem.TaskAddr)
 		k.SetTaskID(ctx, common.HexToAddress(elem.TaskAddr), elem.TaskId)
 	}
 	// Set all the task result infos
 	for _, elem := range state.TaskResultInfos {
+		elem.TaskContractAddress = strings.ToLower(elem.TaskContractAddress)
 		k.SetTaskResultInfo(ctx, &elem) //nolint:gosec
 	}
 	// Set all the task challenge infos
@@ -49,6 +58,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
 	}
 	// Set all the chainID infos
 	for _, elem := range state.ChainIdInfos {
+		elem.AvsAddress = strings.ToLower(elem.AvsAddress)
 		k.SetAVSAddrToChainID(ctx, common.HexToAddress(elem.AvsAddress), elem.ChainId)
 	}
 }

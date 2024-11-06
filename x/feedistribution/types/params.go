@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -40,5 +42,13 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
+	if p.EpochIdentifier == "" {
+		p.EpochIdentifier = DefaultEpochIdentifier
+	}
+	if p.EpochIdentifier != epochstypes.WeekEpochID && p.EpochIdentifier != epochstypes.DayEpochID &&
+		p.EpochIdentifier != epochstypes.HourEpochID && p.EpochIdentifier != epochstypes.MinuteEpochID {
+		return fmt.Errorf("EpochIdentifier does not exist")
+	}
+
 	return nil
 }

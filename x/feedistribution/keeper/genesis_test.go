@@ -37,5 +37,7 @@ func (suite *KeeperTestSuite) TestExportGenesis() {
 		suite.Require().NotNil(currentRewards)
 	}
 	genesis := suite.App.DistrKeeper.ExportGenesis(suite.Ctx)
+	suite.App.DistrKeeper.InitGenesis(suite.Ctx, *genesis)
+	suite.Require().NotNil(genesis, "Exported genesis should not be nil")
 	fmt.Println(genesis)
 }
