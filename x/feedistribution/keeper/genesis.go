@@ -22,17 +22,20 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 	// Set all the validatorAccumulatedCommission
 	for _, elem := range genState.ValidatorAccumulatedCommissions {
-		k.SetValidatorAccumulatedCommission(ctx, sdk.ValAddress(elem.ValAddr), *elem.Commission)
+		validatorAddr, _ := sdk.AccAddressFromBech32(elem.ValAddr)
+		k.SetValidatorAccumulatedCommission(ctx, sdk.ValAddress(validatorAddr), *elem.Commission)
 	}
 
 	// Set all the validatorCurrentRewards
 	for _, elem := range genState.ValidatorCurrentRewardsList {
-		k.SetValidatorCurrentRewards(ctx, sdk.ValAddress(elem.ValAddr), *elem.CurrentRewards)
+		validatorAddr, _ := sdk.AccAddressFromBech32(elem.ValAddr)
+		k.SetValidatorCurrentRewards(ctx, sdk.ValAddress(validatorAddr), *elem.CurrentRewards)
 	}
 
 	// Set all the validatorOutstandingRewards
 	for _, elem := range genState.ValidatorOutstandingRewardsList {
-		k.SetValidatorOutstandingRewards(ctx, sdk.ValAddress(elem.ValAddr), *elem.OutstandingRewards)
+		validatorAddr, _ := sdk.AccAddressFromBech32(elem.ValAddr)
+		k.SetValidatorOutstandingRewards(ctx, sdk.ValAddress(validatorAddr), *elem.OutstandingRewards)
 	}
 
 	// Set all the stakerRewards
