@@ -1,7 +1,6 @@
 package common
 
 import (
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
 	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
@@ -60,6 +59,6 @@ type KeeperDogfood = interface {
 
 	GetAllExocoreValidators(ctx sdk.Context) (validators []dogfoodtypes.ExocoreValidator)
 	ValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAddress) stakingtypes.ValidatorI
-	SlashWithInfractionReason(ctx sdk.Context, addr sdk.ConsAddress, infractionHeight, power int64, slashFactor sdk.Dec, infraction stakingtypes.Infraction) math.Int
+	SlashWithInfractionReason(ctx sdk.Context, addr sdk.ConsAddress, infractionHeight, power int64, slashFactor sdk.Dec, infraction stakingtypes.Infraction) sdkmath.Int
 	Jail(ctx sdk.Context, addr sdk.ConsAddress)
 }

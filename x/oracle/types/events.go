@@ -16,7 +16,7 @@ const (
 	AttributeKeyFeederIDs         = "feeder_ids"
 	AttributeKeyNativeTokenUpdate = "native_token_update"
 	AttributeKeyNativeTokenChange = "native_token_change"
-	AttributeKeyValidatorKey      = "validator"
+	AttributeKeyValidatorKey      = "validator_key"
 	AttributeKeyMissedRounds      = "missed_rounds"
 	AttributeKeyHeight            = "height"
 	AttributeKeyPower             = "power"

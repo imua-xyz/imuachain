@@ -9,7 +9,7 @@ import (
 	gogotypes "github.com/cosmos/gogoproto/types"
 )
 
-// InitValidatorReportInfo creates an new item for a first seen validator to tracking their performance
+// InitValidatorReportInfo creates a new item for a first-seen validator to track their performance
 func (k Keeper) InitValidatorReportInfo(ctx sdk.Context, validator string, height int64) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.SlashingValidatorReportInfoKey(validator)
@@ -24,7 +24,7 @@ func (k Keeper) InitValidatorReportInfo(ctx sdk.Context, validator string, heigh
 	}
 }
 
-// SetValidatorReportInfo sets the validator reporting info to a valdiator
+// SetValidatorReportInfo sets the reporting info for a validator
 func (k Keeper) SetValidatorReportInfo(ctx sdk.Context, validator string, info types.ValidatorReportInfo) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&info)
@@ -114,7 +114,7 @@ func (k Keeper) IterateValidatorReportInfos(ctx sdk.Context, handler func(addres
 	iterator.Close()
 }
 
-func (k Keeper) IterateValidatorMissedRoundBitArray(ctx sdk.Context, validator string, handler func(index int64, missed bool) (strop bool)) {
+func (k Keeper) IterateValidatorMissedRoundBitArray(ctx sdk.Context, validator string, handler func(index int64, missed bool) (stop bool)) {
 	//	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SlashingMissedBitArrayPrefix(validator))
 	store := ctx.KVStore(k.storeKey)
 	index := int64(0)

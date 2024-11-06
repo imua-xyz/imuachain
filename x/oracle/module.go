@@ -209,7 +209,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 			continue
 		}
 		// TODO: for the round calculation, now only sourceID=1 is used so {feederID, sourceID} have only one value for each feederID which corresponding to one round.
-		// But when we came to multiple sources, we should consider the round corresponding to feedeerID instead of {feederID, srouceID}
+		// But when we came to multiple sources, we should consider the round corresponding to feedeerID instead of {feederID, sourceID}
 		for _, finalPrice := range agc.GetFinalPriceListForFeederIDs(windowClosed) {
 			exist, matched := agc.PerformanceReview(finalPrice, validator)
 			if exist && !matched {
