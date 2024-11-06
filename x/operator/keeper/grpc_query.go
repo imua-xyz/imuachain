@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"google.golang.org/grpc/codes"
 
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -14,6 +15,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"google.golang.org/grpc/status"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 var _ types.QueryServer = &Keeper{}
@@ -253,4 +257,84 @@ func (k *Keeper) QueryAllAVSsByOperator(goCtx context.Context, req *types.QueryA
 func (k *Keeper) QueryOptInfo(goCtx context.Context, req *types.QueryOptInfoRequest) (*types.OptedInfo, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	return k.GetOptedInfo(ctx, req.OperatorAddr, req.AvsAddress)
+}
+
+func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest) (*types.QueryValidatorsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	vals := make([]stakingtypes.Validator, 0)
+	var chainIDWithoutRevision string
+
+	if len(req.ChainId) == 0 {
+		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	} else {
+		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(req.ChainId)
+	}
+	chainPrefix := types.ChainIDAndAddrKey(
+		types.BytePrefixForChainIDAndOperatorToConsKey,
+		chainIDWithoutRevision, nil,
+	)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), chainPrefix)
+	pageRes, err := query.Paginate(store, req.Pagination, func(_ []byte, value []byte) error {
+		ret := &tmprotocrypto.PublicKey{}
+		// don't use MustUnmarshal to not panic for queries
+		if err := ret.Unmarshal(value); err != nil {
+			return status.Errorf(codes.Internal, "failed to unmarshal public key: %v", err)
+		}
+		wrappedKey := keytypes.NewWrappedConsKeyFromTmProtoKey(ret)
+		if wrappedKey == nil {
+			return status.Error(codes.Internal, "invalid consensus key")
+		}
+		val, found := k.ValidatorByConsAddrForChainID(
+			ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+		)
+		if found {
+			vals = append(vals, val)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryValidatorsResponse{Validators: vals, Pagination: pageRes}, nil
+}
+
+// Validator queries validator info for given validator address
+func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) (*types.QueryValidatorResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	if req.ValidatorAddr == "" {
+		return nil, status.Error(codes.InvalidArgument, "validator address cannot be empty")
+	}
+
+	valAddr, err := sdk.ValAddressFromBech32(req.ValidatorAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	accAddr := sdk.AccAddress(valAddr)
+	found, wrappedKey, err := k.GetOperatorConsKeyForChainID(
+		ctx, accAddr, avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+	)
+
+	if !found || err != nil || wrappedKey == nil {
+		if err != nil {
+			return &types.QueryValidatorResponse{}, err
+		}
+		return &types.QueryValidatorResponse{}, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
+	}
+
+	val, found := k.ValidatorByConsAddrForChainID(
+		ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+	)
+
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
+	}
+
+	return &types.QueryValidatorResponse{Validator: val}, nil
 }

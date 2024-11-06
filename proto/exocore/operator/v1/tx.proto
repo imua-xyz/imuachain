@@ -13,8 +13,7 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 // DecValueField is a field that holds a value of sdk.LegacyDec type.
 message DecValueField {
   // amount is the USD value of the asset, as an sdk.LegacyDec.
-  string amount = 1
-  [
+  string amount = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -24,16 +23,14 @@ message DecValueField {
 // OperatorOptedUSDValue records the self and total opted-in USD value for the specified operator and AVS
 message OperatorOptedUSDValue {
   // self_usd_value is the USD value owned by the operator itself.
-  string self_usd_value = 1
-  [
+  string self_usd_value = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "SelfUSDValue"
   ];
   // total_usd_value is the total opted-in USD value for the specified operator and AVS
-  string total_usd_value = 2
-  [
+  string total_usd_value = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false,
@@ -42,8 +39,7 @@ message OperatorOptedUSDValue {
   // active_usd_value is the active opted-in USD value for the specified operator and AVS
   // this field will be zero if the operator's self staking isn't sufficient. Of course, it will
   // be equal to total_usd_value if the operator's self staking meets the AVS requirement.
-  string active_usd_value = 3
-  [
+  string active_usd_value = 3 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false,
@@ -62,7 +58,7 @@ message ClientChainEarningAddrList {
 // ClientChainEarningAddrInfo is the client chain earning address info.
 message ClientChainEarningAddrInfo {
   // lz_client_chain_id is the layer0 client chain id.
-  uint64 lz_client_chain_id = 1  [(gogoproto.customname) = "LzClientChainID"];
+  uint64 lz_client_chain_id = 1 [(gogoproto.customname) = "LzClientChainID"];
   // client_chain_earning_addr is the client chain earning address.
   string client_chain_earning_addr = 2;
 }
@@ -97,15 +93,13 @@ message OptedInfo {
 // OptedInAssetState is the state of opted-in asset
 message OptedInAssetState {
   // amount of the opted-in asset
-  string amount = 1
-  [
+  string amount = 1 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   // value is the USD value of the opted-in asset
-  string value = 2
-  [
+  string value = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -131,8 +125,7 @@ message SlashFromUndelegation {
   // asset_id is the asset id.
   string asset_id = 2 [(gogoproto.customname) = "AssetID"];
   // amount is the slashed amount from the undelegation.
-  string amount = 3
-  [
+  string amount = 3 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -143,35 +136,31 @@ message SlashFromAssetsPool {
   // asset_id is the asset id.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
   // amount is the slashed amount from the assets pool.
-  string amount = 2
-  [
+  string amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
 }
 
-
 // SlashExecutionInfo is the actual execution state for a slash event
 message SlashExecutionInfo {
   // slash_proportion is the new calculated proportion when execute the slash
-  string slash_proportion = 1
-  [
+  string slash_proportion = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // slash_value is the usd value of all slashed assets
-  string slash_value = 2
-  [
+  string slash_value = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // SlashUndelegations records all slash info related to the undelegation
-  repeated SlashFromUndelegation slash_undelegations = 3 [(gogoproto.nullable) = false] ;
+  repeated SlashFromUndelegation slash_undelegations = 3 [(gogoproto.nullable) = false];
   // SlashFromAssetsPool records all slash info related to the assets pool
-  repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false] ;
+  repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
 }
 
 // OperatorSlashInfo is the slash info of operator
@@ -185,8 +174,7 @@ message OperatorSlashInfo {
   // is_vetoed is a flag to indicate if this slash is vetoed
   bool is_vetoed = 4;
   // slash_proportion is the proportion of assets that need to be slashed
-  string slash_proportion = 5
-  [
+  string slash_proportion = 5 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -205,8 +193,7 @@ message RegisterOperatorReq {
   option (gogoproto.goproto_getters) = false;
 
   // from_address is the address of the operator (sdk.AccAddress).
-  string from_address = 1
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // info is the operator info.
   OperatorInfo info = 2;
 }
@@ -222,8 +209,7 @@ message OptIntoAVSReq {
   option (gogoproto.goproto_getters) = false;
 
   // from_address is the address of the operator (sdk.AccAddress).
-  string from_address = 1
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // avs_address is the address of the AVS.
   string avs_address = 2;
   // public_key_json is an optional parameter to provide the consensus key.
@@ -243,8 +229,7 @@ message OptOutOfAVSReq {
   option (gogoproto.goproto_getters) = false;
 
   // from_address is the address of the operator (sdk.AccAddress).
-  string from_address = 1
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // avs_address is the address of the AVS.
   string avs_address = 2;
 }
