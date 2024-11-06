@@ -84,10 +84,12 @@ func (gs GenesisState) Validate() error {
 		if !common.IsHexAddress(info.TaskContractAddress) {
 			return fmt.Errorf("invalid hex address: %s", info.TaskContractAddress)
 		}
-		if taskInfoMap[info.TaskContractAddress] {
+		infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(info.TaskContractAddress), strconv.FormatUint(info.TaskId, 10))
+
+		if taskInfoMap[string(infoKey)] {
 			return fmt.Errorf("duplicate task address: %s", info.TaskContractAddress)
 		}
-		taskInfoMap[info.TaskContractAddress] = true
+		taskInfoMap[string(infoKey)] = true
 	}
 
 	// Check for duplicated taskID
