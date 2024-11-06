@@ -2,6 +2,7 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	"fmt"
 	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,9 +15,8 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 	if !found {
 		// the panic is suitable here because it is being done at genesis, when the node
 		// is not running. it means that the genesis file is malformed.
-		panic("not found the epoch info")
+		panic(fmt.Sprintf("epoch info not found %s", epochID))
 	}
-
 	// Set fee pool
 	k.SetFeePool(ctx, &genState.FeePool)
 

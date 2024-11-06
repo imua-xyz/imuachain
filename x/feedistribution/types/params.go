@@ -42,13 +42,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	if p.EpochIdentifier == "" {
-		p.EpochIdentifier = DefaultEpochIdentifier
+	if err := epochstypes.ValidateEpochIdentifierInterface(p.EpochIdentifier); err != nil {
+		return fmt.Errorf("epoch identifier: %w", err)
 	}
-	if p.EpochIdentifier != epochstypes.WeekEpochID && p.EpochIdentifier != epochstypes.DayEpochID &&
-		p.EpochIdentifier != epochstypes.HourEpochID && p.EpochIdentifier != epochstypes.MinuteEpochID {
-		return fmt.Errorf("EpochIdentifier does not exist")
-	}
-
 	return nil
 }

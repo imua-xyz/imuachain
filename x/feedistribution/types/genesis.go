@@ -23,8 +23,7 @@ func NewGenesisState(p Params) *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	err := gs.FeePool.CommunityPool.Validate()
-	if err != nil {
+	if err := gs.FeePool.CommunityPool.Validate(); err != nil {
 		return fmt.Errorf("invalid FeePool: %s", err)
 	}
 	// Check val address and Commission
