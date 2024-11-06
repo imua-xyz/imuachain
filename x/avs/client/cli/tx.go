@@ -19,7 +19,7 @@ const (
 	FlagBlsSignature        = "bls-signature"
 	FlagTaskContractAddress = "task-contract-address"
 	FlagTaskID              = "task-id"
-	FlagStage               = "stage"
+	FlagPhase               = "phase"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -54,8 +54,10 @@ func CmdSubmitTaskResult() *cobra.Command {
 				return err
 			}
 
-			msg := newBuildMsg(clientCtx, cmd.Flags())
-
+			msg, err := newBuildMsg(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 			// this calls ValidateBasic internally so we don't need to do that.
 			return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 		},
@@ -78,14 +80,14 @@ func CmdSubmitTaskResult() *cobra.Command {
 	f.Uint64(
 		FlagTaskID, 1, "The  task id",
 	)
-	f.String(
-		FlagStage, "", "The stage is a two-stage submission with two values, 1 and 2",
+	f.Uint32(
+		FlagPhase, 0, "The phase is a two-phase submission with two values, 1 and 2",
 	)
 	// #nosec G703 // this only errors if the flag isn't defined.
 	_ = cmd.MarkFlagRequired(FlagTaskID)
 	_ = cmd.MarkFlagRequired(FlagBlsSignature)
 	_ = cmd.MarkFlagRequired(FlagTaskContractAddress)
-	_ = cmd.MarkFlagRequired(FlagStage)
+	_ = cmd.MarkFlagRequired(FlagPhase)
 
 	// transaction level flags from the SDK
 	flags.AddTxFlagsToCmd(cmd)
@@ -95,21 +97,29 @@ func CmdSubmitTaskResult() *cobra.Command {
 
 func newBuildMsg(
 	clientCtx client.Context, fs *pflag.FlagSet,
-) *types.SubmitTaskResultReq {
+) (*types.SubmitTaskResultReq, error) {
 	sender := clientCtx.GetFromAddress()
 	operatorAddress, _ := fs.GetString(FlagOperatorAddress)
 	if operatorAddress == "" {
 		operatorAddress = sender.String()
 	}
 	taskResponse, _ := fs.GetString(FlagTaskResponse)
-	taskRes, _ := hex.DecodeString(taskResponse)
+	taskRes, err := hex.DecodeString(taskResponse)
+	if err != nil {
+		return nil, err
+	}
 	blsSignature, _ := fs.GetString(FlagBlsSignature)
-	sig, _ := hex.DecodeString(blsSignature)
+	sig, err := hex.DecodeString(blsSignature)
+	if err != nil {
+		return nil, err
+	}
 	taskContractAddress, _ := fs.GetString(FlagTaskContractAddress)
 
 	taskID, _ := fs.GetUint64(FlagTaskID)
-	stage, _ := fs.GetString(FlagStage)
-
+	phase, _ := fs.GetUint32(FlagPhase)
+	if err := types.ValidatePhase(types.Phase(phase)); err != nil {
+		return nil, err
+	}
 	msg := &types.SubmitTaskResultReq{
 		FromAddress: sender.String(),
 		Info: &types.TaskResultInfo{
@@ -118,8 +128,8 @@ func newBuildMsg(
 			BlsSignature:        sig,
 			TaskContractAddress: taskContractAddress,
 			TaskId:              taskID,
-			Stage:               stage,
+			Phase:               types.Phase(phase),
 		},
 	}
-	return msg
+	return msg, nil
 }

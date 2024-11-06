@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -46,7 +47,9 @@ func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, e
 	if err != nil {
 		return "", errorsmod.Wrap(err, fmt.Sprintf("GetAVSSlashContract: key is %s", avsAddr))
 	}
-
+	if avsInfo.Info.SlashAddr == (common.Address{}).String() {
+		return "", nil
+	}
 	return avsInfo.Info.SlashAddr, nil
 }
 
@@ -72,7 +75,7 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 		// it should be returned here, since the operator module should start tracking this.
 		// #nosec G115
 		if epochIdentifier == avsInfo.EpochIdentifier && endingEpochNumber >= int64(avsInfo.StartingEpoch)-1 {
-			avsList = append(avsList, avsInfo.AvsAddress)
+			avsList = append(avsList, strings.ToLower(avsInfo.AvsAddress))
 		}
 		return false
 	})
@@ -85,9 +88,10 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 // TODO:this function is frequently used while its implementation iterates over existing avs to find the target avs by task contract address,  we should use a reverse mapping to avoid iteration
 func (k *Keeper) GetAVSInfoByTaskAddress(ctx sdk.Context, taskAddr string) types.AVSInfo {
 	var avs types.AVSInfo
-	if taskAddr == "" {
+	if taskAddr == "" || taskAddr == (common.Address{}).String() {
 		return avs
 	}
+	taskAddr = strings.ToLower(taskAddr)
 	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) (stop bool) {
 		if taskAddr == avsInfo.GetTaskAddr() {
 			avs = avsInfo
@@ -103,6 +107,9 @@ func (k *Keeper) GetTaskStatisticalEpochEndAVSs(ctx sdk.Context, epochIdentifier
 	var taskResList []types.TaskResultInfo
 	k.IterateResultInfo(ctx, func(_ int64, info types.TaskResultInfo) (stop bool) {
 		avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
+		if avsInfo.AvsAddress == "" {
+			return false
+		}
 		taskInfo, err := k.GetTaskInfo(ctx, strconv.FormatUint(info.TaskId, 10), info.TaskContractAddress)
 		if err != nil {
 			return false
@@ -161,8 +168,8 @@ func (k Keeper) RegisterAVSWithChainID(
 		return common.Address{}, err
 	}
 	// SetAVSInfo expects HexAddress for the AvsAddress
-	params.AvsAddress = avsAddrStr
-	params.Action = RegisterAction
+	params.AvsAddress = avsAddr
+	params.Action = types.RegisterAction
 
 	if err := k.UpdateAVSInfo(ctx, params); err != nil {
 		return common.Address{}, err

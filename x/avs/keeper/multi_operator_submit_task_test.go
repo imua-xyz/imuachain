@@ -7,7 +7,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
@@ -86,13 +85,13 @@ func (suite *AVSTestSuite) prepareMulDelegation(operatorAddress sdk.AccAddress, 
 func (suite *AVSTestSuite) prepareMulAvs(assetIDs []string) {
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:             "avs01",
-		Action:              avskeeper.RegisterAction,
+		Action:              avstypes.RegisterAction,
 		EpochIdentifier:     epochstypes.HourEpochID,
-		AvsAddress:          suite.avsAddr,
+		AvsAddress:          common.HexToAddress(suite.avsAddr),
 		AssetID:             assetIDs,
-		TaskAddr:            suite.taskAddress.String(),
-		SlashContractAddr:   "",
-		RewardContractAddr:  "",
+		TaskAddr:            suite.taskAddress,
+		SlashContractAddr:   common.Address{},
+		RewardContractAddr:  common.Address{},
 		MinSelfDelegation:   0,
 		AvsOwnerAddress:     nil,
 		UnbondingPeriod:     7,
@@ -202,7 +201,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseOne_Mul() {
 			TaskResponseHash:    "",
 			TaskResponse:        nil,
 			BlsSignature:        sig.Marshal(),
-			Stage:               avstypes.TwoPhaseCommitOne,
+			Phase:               avstypes.Phase(avstypes.PhasePrepare),
 		}
 		err := suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, operatorAddress, info)
 		suite.Require().NoError(err)
@@ -230,7 +229,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseTwo_Mul() {
 			TaskResponseHash:    hash.String(),
 			TaskResponse:        jsonData,
 			BlsSignature:        sig.Marshal(),
-			Stage:               avstypes.TwoPhaseCommitTwo,
+			Phase:               avstypes.Phase(avstypes.PhaseDoCommit),
 		}
 		err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, operatorAddress, info)
 		suite.NoError(err)

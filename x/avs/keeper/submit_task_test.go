@@ -1,15 +1,15 @@
 package keeper_test
 
 import (
-	"github.com/ethereum/go-ethereum/common/math"
 	"math/big"
 	"strconv"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/math"
+
 	sdkmath "cosmossdk.io/math"
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
@@ -79,13 +79,13 @@ func (suite *AVSTestSuite) prepareDelegation(isDelegation bool, assetAddr common
 func (suite *AVSTestSuite) prepareAvs(assetIDs []string) {
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:             "avs01",
-		Action:              avskeeper.RegisterAction,
+		Action:              avstypes.RegisterAction,
 		EpochIdentifier:     epochstypes.HourEpochID,
-		AvsAddress:          suite.avsAddr,
+		AvsAddress:          common.HexToAddress(suite.avsAddr),
 		AssetID:             assetIDs,
-		TaskAddr:            suite.taskAddress.String(),
-		SlashContractAddr:   "",
-		RewardContractAddr:  "",
+		TaskAddr:            suite.taskAddress,
+		SlashContractAddr:   common.Address{},
+		RewardContractAddr:  common.Address{},
 		MinSelfDelegation:   3,
 		AvsOwnerAddress:     nil,
 		UnbondingPeriod:     7,
@@ -143,7 +143,7 @@ func (suite *AVSTestSuite) prepareTaskInfo() {
 	err = suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
 	suite.NoError(err)
 
-	getTaskInfo, err := suite.App.AVSManagerKeeper.GetTaskInfo(suite.Ctx, strconv.FormatUint(suite.taskId, 10), common.Address(suite.taskAddress.Bytes()).String())
+	getTaskInfo, err := suite.App.AVSManagerKeeper.GetTaskInfo(suite.Ctx, strconv.Itoa(int(suite.taskId)), common.Address(suite.taskAddress.Bytes()).String())
 	suite.NoError(err)
 	suite.Equal(*info, *getTaskInfo)
 }
@@ -188,7 +188,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseOne() {
 		TaskResponseHash:    "",
 		TaskResponse:        nil,
 		BlsSignature:        sig.Marshal(),
-		Stage:               avstypes.TwoPhaseCommitOne,
+		Phase:               avstypes.Phase(avstypes.PhasePrepare),
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, suite.operatorAddr.String(), info)
 	suite.NoError(err)
@@ -217,7 +217,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseTwo() {
 		TaskResponseHash:    hash.String(),
 		TaskResponse:        jsonData,
 		BlsSignature:        sig.Marshal(),
-		Stage:               avstypes.TwoPhaseCommitTwo,
+		Phase:               avstypes.Phase(avstypes.PhaseDoCommit),
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, suite.operatorAddr.String(), info)
 	suite.NoError(err)

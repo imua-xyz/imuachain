@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"strings"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 
@@ -203,7 +204,7 @@ func (k *Keeper) QueryOperatorSlashInfo(goCtx context.Context, req *types.QueryO
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorSlashInfoByID, 0)
 
-	slashPrefix := types.AppendMany(types.KeyPrefixOperatorSlashInfo, assetstype.GetJoinedStoreKeyForPrefix(req.OperatorAddr, req.AvsAddress))
+	slashPrefix := types.AppendMany(types.KeyPrefixOperatorSlashInfo, assetstype.GetJoinedStoreKeyForPrefix(req.OperatorAddr, strings.ToLower(req.AvsAddress)))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), slashPrefix)
 	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
 		ret := &types.OperatorSlashInfo{}

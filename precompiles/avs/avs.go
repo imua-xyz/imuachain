@@ -123,7 +123,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.CreateAVSTask(ctx, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
-			bz, err = method.Outputs.Pack(false)
+			bz, err = method.Outputs.Pack(false, uint64(0))
 		}
 	case MethodRegisterBLSPublicKey:
 		bz, err = p.RegisterBLSPublicKey(ctx, evm.Origin, contract, stateDB, method, args)
@@ -133,13 +133,41 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		}
 	case MethodGetOptinOperators:
 		bz, err = p.GetOptedInOperatorAccAddrs(ctx, contract, method, args)
-	case MethodGetRegisteredPubkey:
-		bz, err = p.GetRegisteredPubkey(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack([]string{})
+		}
+	case MethodGetAVSEpochIdentifier:
+		bz, err = p.GetAVSEpochIdentifier(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack("")
+		}
+	case MethodGetTaskInfo:
+		bz, err = p.GetTaskInfo(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack([]uint64{})
+		}
+	case MethodIsOperator:
+		bz, err = p.IsOperator(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(false)
+		}
+
 	case MethodGetAVSUSDValue:
 		bz, err = p.GetAVSUSDValue(ctx, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(common.Big0)
+		}
+
+	case MethodGetRegisteredPubkey:
+		bz, err = p.GetRegisteredPubkey(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack([]byte{})
 		}
 	case MethodGetOperatorOptedUSDValue:
 		bz, err = p.GetOperatorOptedUSDValue(ctx, contract, method, args)
@@ -147,8 +175,21 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(common.Big0)
 		}
+	case MethodGetCurrentEpoch:
+		bz, err = p.GetCurrentEpoch(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(int64(0))
+		}
 	case MethodChallenge:
 		bz, err = p.Challenge(ctx, evm.Origin, contract, stateDB, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(false)
+		}
+
+	case MethodOperatorSubmitTask:
+		bz, err = p.OperatorSubmitTask(ctx, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(false)
@@ -175,9 +216,10 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 func (Precompile) IsTransaction(methodID string) bool {
 	switch methodID {
 	case MethodRegisterAVS, MethodDeregisterAVS, MethodUpdateAVS, MethodRegisterOperatorToAVS,
-		MethodDeregisterOperatorFromAVS, MethodCreateAVSTask, MethodRegisterBLSPublicKey, MethodChallenge:
+		MethodDeregisterOperatorFromAVS, MethodCreateAVSTask, MethodRegisterBLSPublicKey, MethodChallenge, MethodOperatorSubmitTask:
 		return true
-	case MethodGetRegisteredPubkey, MethodGetOptinOperators, MethodGetAVSUSDValue, MethodGetOperatorOptedUSDValue:
+	case MethodGetRegisteredPubkey, MethodGetOptinOperators, MethodGetAVSUSDValue, MethodGetOperatorOptedUSDValue,
+		MethodGetAVSEpochIdentifier, MethodGetTaskInfo, MethodIsOperator, MethodGetCurrentEpoch:
 		return false
 	default:
 		return false

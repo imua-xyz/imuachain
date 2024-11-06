@@ -3,11 +3,13 @@ package keeper_test
 import (
 	"cosmossdk.io/math"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
+	"strings"
 	"time"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -26,7 +28,7 @@ func (suite *AVSTestSuite) TestAVS() {
 		SlashAddr:           utiltx.GenerateAddress().String(),
 		AvsOwnerAddress:     avsOwnerAddress,
 		AssetIDs:            assetID,
-		AvsUnbondingPeriod:  7,
+		AvsUnbondingPeriod:  2,
 		MinSelfDelegation:   10,
 		EpochIdentifier:     epochstypes.DayEpochID,
 		StartingEpoch:       1,
@@ -62,20 +64,20 @@ func (suite *AVSTestSuite) TestAVS() {
 }
 
 func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
-	avsName, avsAddres, slashAddress, rewardAddress := "avsTest", "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsName, avsAddres, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
 	assetID := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
 		AvsName:            avsName,
-		AvsAddress:         avsAddres,
+		AvsAddress:         common.HexToAddress(avsAddres),
 		Action:             avstypes.RegisterAction,
-		RewardContractAddr: rewardAddress,
+		RewardContractAddr: common.HexToAddress(rewardAddress),
 		AvsOwnerAddress:    avsOwnerAddress,
 		AssetID:            assetID,
 		MinSelfDelegation:  uint64(10),
-		UnbondingPeriod:    uint64(7),
-		SlashContractAddr:  slashAddress,
+		UnbondingPeriod:    uint64(2),
+		SlashContractAddr:  common.HexToAddress(slashAddress),
 		EpochIdentifier:    epochstypes.DayEpochID,
 	}
 
@@ -85,7 +87,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddres)
 
 	suite.NoError(err)
-	suite.Equal(avsAddres, info.GetInfo().AvsAddress)
+	suite.Equal(strings.ToLower(avsAddres), info.GetInfo().AvsAddress)
 
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.Error(err)
@@ -94,19 +96,19 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 
 func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	// Test case setup
-	avsName, avsAddres, slashAddress := "avsTest", suite.avsAddress.String(), "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutash"
+	avsName, avsAddress, slashAddress := "avsTest", suite.avsAddress.String(), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
 	assetID := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
 		AvsName:           avsName,
-		AvsAddress:        avsAddres,
+		AvsAddress:        common.HexToAddress(avsAddress),
 		Action:            avstypes.DeRegisterAction,
 		AvsOwnerAddress:   avsOwnerAddress,
 		AssetID:           assetID,
 		MinSelfDelegation: uint64(10),
-		UnbondingPeriod:   uint64(7),
-		SlashContractAddr: slashAddress,
+		UnbondingPeriod:   uint64(2),
+		SlashContractAddr: common.HexToAddress(slashAddress),
 		EpochIdentifier:   epochstypes.DayEpochID,
 	}
 
@@ -117,40 +119,47 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	avsParams.Action = avstypes.RegisterAction
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
-	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddres)
-	suite.Equal(avsAddres, info.GetInfo().AvsAddress)
+	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)
+	suite.Equal(strings.ToLower(avsAddress), info.GetInfo().AvsAddress)
+
+	epoch, _ := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
+	// Numbered loops for epoch ends
+	for epochEnd := epoch.CurrentEpoch; epochEnd <= int64(info.Info.StartingEpoch)+2; epochEnd++ {
+		suite.CommitAfter(time.Hour * 24)
+		epoch, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
+		suite.Equal(found, true)
+		suite.Equal(epoch.CurrentEpoch, epochEnd+1)
+	}
 
 	avsParams.Action = avstypes.DeRegisterAction
-	avsParams.CallerAddress = "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	avsParams.CallerAddress, err = sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
-	info, err = suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddres)
+	info, err = suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)
 	suite.Error(err)
 	suite.Contains(err.Error(), types.ErrNoKeyInTheStore.Error())
 }
 
 func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	avsAddress := suite.avsAddress
-	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
+	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 
-	opAccAddr, err := sdk.AccAddressFromBech32(operatorAddress)
-	suite.NoError(err)
 	operatorParams := &avstypes.OperatorOptParams{
-		AvsAddress:      avsAddress.String(),
+		AvsAddress:      avsAddress,
 		Action:          avstypes.RegisterAction,
 		OperatorAddress: operatorAddress,
 	}
 	//  operator Not Exist
-	err = suite.App.AVSManagerKeeper.OperatorOptAction(suite.Ctx, operatorParams)
+	err := suite.App.AVSManagerKeeper.OperatorOptAction(suite.Ctx, operatorParams)
 	suite.Error(err)
 	suite.Contains(err.Error(), delegationtypes.ErrOperatorNotExist.Error())
 
 	// register operator but avs not register
 	// register operator
 	registerReq := &operatorTypes.RegisterOperatorReq{
-		FromAddress: opAccAddr.String(),
+		FromAddress: operatorAddress.String(),
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr: opAccAddr.String(),
+			EarningsAddr: operatorAddress.String(),
 		},
 	}
 	_, err = suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)
@@ -161,7 +170,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.LayerZeroChainID, "", asset.Address)
 	selfDelegateAmount := big.NewInt(10)
 	minPrecisionSelfDelegateAmount := big.NewInt(0).Mul(selfDelegateAmount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(int64(asset.Decimals)), nil))
-	err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, opAccAddr, assetID, assetstypes.DeltaOperatorSingleAsset{
+	err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, operatorAddress, assetID, assetstypes.DeltaOperatorSingleAsset{
 		TotalAmount:   math.NewIntFromBigInt(minPrecisionSelfDelegateAmount),
 		TotalShare:    math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
 		OperatorShare: math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),

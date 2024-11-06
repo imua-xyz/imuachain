@@ -19,6 +19,9 @@ var (
 	// maxDetId each validator can submit, so the calculator can cache maximum of maxDetId*count(validators) values, this is for resistance of malicious validator submmiting invalid detId
 	MaxDetID int32 = 5
 
+	// for each token at most MaxSizePrices round of prices will be keep in store
+	MaxSizePrices = 100
+
 	// consensus mode: v1: as soon as possbile
 	Mode types.ConsensusMode = types.ConsensusModeASAP
 )

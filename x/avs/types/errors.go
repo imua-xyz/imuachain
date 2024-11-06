@@ -76,12 +76,12 @@ var (
 
 	ErrParamError = errorsmod.Register(
 		ModuleName, 18,
-		"The parameter must be 1 or 2",
+		"The parameter must be 0 or 1",
 	)
 
 	ErrParamNotEmptyError = errorsmod.Register(
 		ModuleName, 19,
-		"In the first stage, the parameter must be empty.",
+		"In the first phase, the parameter must be empty.",
 	)
 	ErrSubmitTooLateError = errorsmod.Register(
 		ModuleName, 20,

@@ -42,6 +42,8 @@ type OperatorKeeper interface {
 	GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([]string, error)
 	GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error)
 	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
+	SetOperatorInfo(ctx sdk.Context, addr string, info *operatortypes.OperatorInfo) (err error)
+	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
 }
 
 // AssetsKeeper represents the expected keeper interface for the assets module.

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	avskeep "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,7 +23,7 @@ func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	avsParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	avsParams.CallerAddress = callerAddress[:]
 	avsName, ok := args[1].(string)
 	if !ok || avsName == "" {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", avsName)
@@ -41,19 +40,19 @@ func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*
 	if !ok || taskAddr == (common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 3, "common.Address", taskAddr)
 	}
-	avsParams.TaskAddr = taskAddr.String()
+	avsParams.TaskAddr = taskAddr
 
 	slashContractAddr, ok := args[4].(common.Address)
 	if !ok || (slashContractAddr == common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 4, "common.Address", slashContractAddr)
 	}
-	avsParams.SlashContractAddr = slashContractAddr.String()
+	avsParams.SlashContractAddr = slashContractAddr
 
 	rewardContractAddr, ok := args[5].(common.Address)
 	if !ok || (rewardContractAddr == common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 5, "common.Address", rewardContractAddr)
 	}
-	avsParams.RewardContractAddr = rewardContractAddr.String()
+	avsParams.RewardContractAddr = rewardContractAddr
 
 	// bech32
 	avsOwnerAddress, ok := args[6].([]string)
@@ -126,7 +125,7 @@ func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	avsParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	avsParams.CallerAddress = callerAddress[:]
 
 	avsName, ok := args[1].(string)
 	if !ok {
@@ -144,19 +143,19 @@ func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface
 	if !ok || taskAddr == (common.Address{}) {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 3, "common.Address", taskAddr)
 	}
-	avsParams.TaskAddr = taskAddr.String()
+	avsParams.TaskAddr = taskAddr
 
 	slashContractAddr, ok := args[4].(common.Address)
 	if !ok {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 4, "common.Address", slashContractAddr)
 	}
-	avsParams.SlashContractAddr = slashContractAddr.String()
+	avsParams.SlashContractAddr = slashContractAddr
 
 	rewardContractAddr, ok := args[5].(common.Address)
 	if !ok {
 		return nil, xerrors.Errorf(exocmn.ErrContractInputParaOrType, 5, "common.Address", rewardContractAddr)
 	}
-	avsParams.RewardContractAddr = rewardContractAddr.String()
+	avsParams.RewardContractAddr = rewardContractAddr
 
 	// bech32
 	avsOwnerAddress, ok := args[6].([]string)
@@ -220,16 +219,16 @@ func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface
 	return avsParams, nil
 }
 
-func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (*avskeep.TaskInfoParams, error) {
+func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (*avstypes.TaskInfoParams, error) {
 	if len(args) != len(p.ABI.Methods[MethodCreateAVSTask].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 3, len(args))
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodCreateAVSTask].Inputs), len(args))
 	}
-	taskParams := &avskeep.TaskInfoParams{}
+	taskParams := &avstypes.TaskInfoParams{}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
 	}
-	taskParams.CallerAddress = sdk.AccAddress(callerAddress[:]).String()
+	taskParams.CallerAddress = callerAddress[:]
 	name, ok := args[1].(string)
 	if !ok || name == "" {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", name)

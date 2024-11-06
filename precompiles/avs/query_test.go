@@ -2,6 +2,9 @@ package avs_test
 
 import (
 	"fmt"
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 	"math/big"
 	"time"
 
@@ -12,8 +15,10 @@ import (
 	avsManagerPrecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
 	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	avstype "github.com/ExocoreNetwork/exocore/x/avs/types"
 	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -308,6 +313,282 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 			} else {
 				s.Require().NoError(err)
 				s.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+
+func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubkey]
+	privateKey, err := blst.RandKey()
+	suite.NoError(err)
+	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+
+	publicKey := privateKey.PublicKey()
+	setUp := func() {
+		suite.prepareOperator()
+
+		blsPub := &avstype.BlsPubKeyInfo{
+			Operator: operatorAddr,
+			PubKey:   publicKey.Marshal(),
+			Name:     "",
+		}
+		err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
+		suite.NoError(err)
+	}
+	testCases := []avsTestCases{
+		{
+			"success - existent pubKey",
+			func() []interface{} {
+				setUp()
+				return []interface{}{
+					operatorAddr,
+				}
+			},
+			func(bz []byte) {
+				var out []byte
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetRegisteredPubkey, bz)
+				suite.Require().NoError(err, "failed to unpack output", err)
+				suite.Require().Equal(48, len(out))
+				suite.Require().Equal(publicKey.Marshal(), out)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.GetRegisteredPubkey(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+
+func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetAVSEpochIdentifier]
+	avsAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	testAVSUnbondingPeriod := 7
+	testMinSelfDelegation := 10
+	testMinOptInOperators := 100
+	testMinTotalStakeAmount := 1000
+	testStartingEpoch := 1
+	setUp := func() {
+		avsName := "avsTest"
+		avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
+		assetID := suite.AssetIDs
+		avs := &avstype.AVSInfo{
+			Name:                avsName,
+			AvsAddress:          avsAddress,
+			SlashAddr:           utiltx.GenerateAddress().String(),
+			AvsOwnerAddress:     avsOwnerAddress,
+			AssetIDs:            assetID,
+			AvsUnbondingPeriod:  uint64(testAVSUnbondingPeriod),
+			MinSelfDelegation:   uint64(testMinSelfDelegation),
+			EpochIdentifier:     epochstypes.DayEpochID,
+			StartingEpoch:       uint64(testStartingEpoch),
+			MinOptInOperators:   uint64(testMinOptInOperators),
+			MinTotalStakeAmount: uint64(testMinTotalStakeAmount),
+			AvsSlash:            sdk.MustNewDecFromStr("0.001"),
+			AvsReward:           sdk.MustNewDecFromStr("0.002"),
+			TaskAddr:            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+		}
+
+		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
+		suite.NoError(err)
+	}
+	testCases := []avsTestCases{
+		{
+			"success - existent avs",
+			func() []interface{} {
+				setUp()
+				return []interface{}{
+					common.HexToAddress(avsAddress),
+				}
+			},
+			func(bz []byte) {
+				var out string
+
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetAVSEpochIdentifier, bz)
+				suite.Require().NoError(err, "failed to unpack output", err)
+				suite.Require().Equal(epochstypes.DayEpochID, out)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.GetAVSEpochIdentifier(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+
+func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodIsOperator]
+	opAccAddr, _ := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+
+	testCases := []avsTestCases{
+		{
+			"success - existent operator",
+			func() []interface{} {
+				suite.prepareOperator()
+				return []interface{}{
+					common.BytesToAddress(opAccAddr),
+				}
+			},
+			func(bz []byte) {
+				var out bool
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodIsOperator, bz)
+				suite.Require().NoError(err, "failed to unpack output", err)
+				suite.Require().Equal(true, out)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.IsOperator(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetTaskInfo]
+	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+
+	setUp := func() {
+		info := &avstype.TaskInfo{
+			TaskContractAddress:   taskAddress,
+			Name:                  "test-avstask-01",
+			TaskId:                uint64(3),
+			Hash:                  []byte("active"),
+			TaskResponsePeriod:    10,
+			StartingEpoch:         5,
+			TaskStatisticalPeriod: 60,
+			TaskTotalPower:        sdk.Dec(sdkmath.NewInt(0)),
+		}
+		err := suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
+		suite.NoError(err)
+	}
+	testCases := []avsTestCases{
+		{
+			"success - existent task",
+			func() []interface{} {
+				setUp()
+				return []interface{}{
+					common.HexToAddress(taskAddress),
+					uint64(3),
+				}
+			},
+			func(bz []byte) {
+				var out []uint64
+
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetTaskInfo, bz)
+				suite.Require().NoError(err, "failed to unpack output", err)
+				suite.Require().Equal([]uint64{5, 10, 60}, out)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.GetTaskInfo(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+func (suite *AVSManagerPrecompileSuite) TestGetCurrentEpoch() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetCurrentEpoch]
+	testCases := []avsTestCases{
+		{
+			"success - existent avs",
+			func() []interface{} {
+				return []interface{}{
+					epochstypes.DayEpochID,
+				}
+			},
+			func(bz []byte) {
+				var out int64
+
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetCurrentEpoch, bz)
+				suite.Require().NoError(err, "failed to unpack output", err)
+				suite.Require().Equal(int64(1), out)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.GetCurrentEpoch(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
 				tc.postCheck(bz)
 			}
 		})

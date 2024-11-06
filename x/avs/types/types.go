@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
@@ -46,19 +48,21 @@ var (
 	ChainIDPrefix = []byte("chain-id-prefix")
 )
 
+const InvalidTaskID = 0
+
 type AVSRegisterOrDeregisterParams struct {
 	// AvsName is the name of the AVS as an arbitrary string.
 	AvsName string
 	// AvsAddress is the hex address of the AVS.
-	AvsAddress string
+	AvsAddress common.Address
 	// MinStakeAmount is the minimum amount of stake for a task to be considered valid.
 	MinStakeAmount uint64
 	// TaskAddr is the hex address of the task contract.
-	TaskAddr string
+	TaskAddr common.Address
 	// SlashContractAddr is the hex address of the slash contract.
-	SlashContractAddr string
+	SlashContractAddr common.Address
 	// RewardContractAddr is the hex address of the reward contract.
-	RewardContractAddr string
+	RewardContractAddr common.Address
 	// AvsOwnerAddress is the list of bech32 addresses of the AVS owners.
 	AvsOwnerAddress []string
 	// AssetID is the list of asset IDs that the AVS is allowed to use.
@@ -69,12 +73,11 @@ type AVSRegisterOrDeregisterParams struct {
 	EpochIdentifier     string
 	MinOptInOperators   uint64
 	MinTotalStakeAmount uint64
-	// CallerAddress is the bech32 address of the precompile caller.
-	CallerAddress string
-	ChainID       string
-	AvsReward     uint64
-	AvsSlash      uint64
-	Action        uint64
+	CallerAddress       sdk.AccAddress
+	ChainID             string
+	AvsReward           uint64
+	AvsSlash            uint64
+	Action              OperatorAction
 }
 
 var (

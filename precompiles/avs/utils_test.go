@@ -8,7 +8,6 @@ import (
 	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 
@@ -102,11 +101,11 @@ func (suite *AVSManagerPrecompileSuite) prepareAvs(assetIDs []string, task strin
 		"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2",
 	}
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
-		Action:          avskeeper.RegisterAction,
+		Action:          avstypes.RegisterAction,
 		EpochIdentifier: epochstypes.HourEpochID,
-		AvsAddress:      suite.avsAddr,
+		AvsAddress:      common.HexToAddress(suite.avsAddr),
 		AssetID:         assetIDs,
-		TaskAddr:        task,
+		TaskAddr:        common.HexToAddress(task),
 		AvsOwnerAddress: avsOwnerAddress,
 	})
 	suite.NoError(err)

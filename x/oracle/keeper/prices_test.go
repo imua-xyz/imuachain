@@ -43,7 +43,6 @@ func TestPricesGet(t *testing.T) {
 	rst, found := keeper.GetPrices(ctx, 1)
 	require.True(t, found)
 	pRes := testdata.P1
-	pRes.PriceList = append([]*types.PriceTimeRound{{}}, testdata.P1.PriceList...)
 	require.Equal(t, pRes, rst)
 }
 

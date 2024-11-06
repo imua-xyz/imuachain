@@ -199,12 +199,15 @@ func ResetAggregatorContextCheckTx() {
 	agcCheckTx = nil
 }
 
+// setCommonParams save static fields in params in memory cache since these fields will not change during node running
+// TODO: further when params is abled to be updated through tx/gov, this cache should be taken care if any is available to be changed
 func setCommonParams(p *types.Params) {
 	common.MaxNonce = p.MaxNonce
 	common.ThresholdA = p.ThresholdA
 	common.ThresholdB = p.ThresholdB
 	common.MaxDetID = p.MaxDetId
 	common.Mode = p.Mode
+	common.MaxSizePrices = int(p.MaxSizePrices)
 }
 
 func ResetUpdatedFeederIDs() {

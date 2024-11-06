@@ -37,7 +37,7 @@ message QueryAVSTaskInfoReq {
   // task_addr is the task contract address,its type should be a sdk.AccAddress
   string task_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // task_id is the task identifier
-  string task_id = 2 ;
+  string task_id = 2;
 }
 
 // QuerySubmitTaskResultReq is the request to obtain the task information.
@@ -45,10 +45,9 @@ message QuerySubmitTaskResultReq {
   // task_addr is the task contract address,its type should be a sdk.AccAddress
   string task_addr = 1 [(gogoproto.customname) = "TaskAddress"];
   // task_id is the task identifier
-  string task_id = 2 ;
+  string task_id = 2;
   // operator_addr is the operator address,its type should be a sdk.AccAddress
-  string operator_addr = 3
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string operator_addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // QueryChallengeInfoReq is the request to obtain the task information.
@@ -58,10 +57,8 @@ message QueryChallengeInfoReq {
   // task_id is the task identifier
   string task_id = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // operator_addr is the operator address,its type should be a sdk.AccAddress
-  string operator_addr = 3
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string operator_addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
-
 
 // QuerySubmitTaskResultResponse is the response of avs related information
 message QuerySubmitTaskResultResponse {

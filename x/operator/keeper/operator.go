@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -106,7 +107,7 @@ func (k *Keeper) HandleOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string, 
 		return errorsmod.Wrap(err, "HandleOptedInfo: error occurred when parse acc address from Bech32")
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
-	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, avsAddr)
+	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
 	// get info from the store
 	value := store.Get(infoKey)
 	if value == nil {
@@ -130,7 +131,7 @@ func (k *Keeper) SetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string, inf
 	if err != nil {
 		return assetstype.ErrInvalidOperatorAddr
 	}
-	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, avsAddr)
+	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
 
 	bz := k.cdc.MustMarshal(info)
 	store.Set(infoKey, bz)
@@ -143,7 +144,7 @@ func (k *Keeper) GetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string) (in
 		return nil, errorsmod.Wrap(err, "GetOptedInfo: error occurred when parse acc address from Bech32")
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
-	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, avsAddr)
+	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
 	value := store.Get(infoKey)
 	if value == nil {
 		return nil, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOptedInfo: operator is %s, avs address is %s", opAccAddr, avsAddr))
@@ -235,7 +236,7 @@ func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([
 		if err != nil {
 			return nil, err
 		}
-		if avsAddr == keys[1] {
+		if strings.ToLower(avsAddr) == keys[1] {
 			operatorList = append(operatorList, keys[0])
 		}
 	}
