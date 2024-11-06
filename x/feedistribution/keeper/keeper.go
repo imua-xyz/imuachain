@@ -211,9 +211,9 @@ func (k Keeper) processStakerOutstandingRewards(key, value []byte, stakerList *[
 		return err
 	}
 	prefix := types.GetStakerOutstandingRewardsKey("")
-	valAddr := bytes.TrimPrefix(key, prefix)
+	stakerAddr := bytes.TrimPrefix(key, prefix)
 	*stakerList = append(*stakerList, types.StakerOutstandingRewardsList{
-		ValAddr:                  string(valAddr[1:]),
+		StakerAddr:               string(stakerAddr[1:]),
 		StakerOutstandingRewards: &stakerRewards,
 	})
 	return nil

@@ -249,7 +249,7 @@ func (m *ChallengeInfo) GetChallengeAddr() string {
 type ChainIDInfo struct {
 	// avs_address is the address of avs as a hex string.
 	AvsAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
-	// chain_id is a dogfood parameter
+	// chain_id is an optional parameter to specify the chain_id of the AVS, if any
 	ChainId string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 }
 

@@ -56,6 +56,6 @@ message ChallengeInfo {
 message ChainIDInfo {
   // avs_address is the address of avs as a hex string.
   string avs_address = 1;
-  // chain_id is a dogfood parameter
+  // chain_id is an optional parameter to specify the chain_id of the AVS, if any
   string chain_id = 2;
 }

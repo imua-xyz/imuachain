@@ -66,8 +66,8 @@ message ValidatorOutstandingRewardsList {
 }
 // StakerOutstandingRewardsList is helper structure to store the staker outstanding rewards  for the genesis state.
 message StakerOutstandingRewardsList {
-  // val_addr is the address of validator
-  string val_addr = 1;
+  // staker_addr is the address of staker
+  string staker_addr = 1;
 
   // StakerOutstandingRewards represents outstanding (un-withdrawn) rewards
   // for a staker inexpensive to track, allows simple sanity checks.

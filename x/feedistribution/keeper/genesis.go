@@ -37,7 +37,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 	// Set all the stakerRewards
 	for _, elem := range genState.StakerOutstandingRewardsList {
-		k.SetStakerRewards(ctx, elem.ValAddr, *elem.StakerOutstandingRewards)
+		k.SetStakerRewards(ctx, elem.StakerAddr, *elem.StakerOutstandingRewards)
 	}
 }
 
@@ -46,6 +46,9 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
 	feePool := k.GetFeePool(ctx)
+	if feePool == nil {
+		panic("fee pool cannot be nil in genesis export")
+	}
 	genesis.FeePool = *feePool
 	validatorData, err := k.GetAllValidatorData(ctx)
 	if err != nil {
