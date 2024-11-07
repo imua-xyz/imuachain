@@ -9,6 +9,7 @@ import "tendermint/crypto/keys.proto";
 import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "exocore/operator/v1/tx.proto";
+import "exocore/operator/v1/validator.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
@@ -330,7 +331,7 @@ message QueryValidatorsRequest {
 // QueryValidatorsResponse is response type for the Query/Validators RPC method
 message QueryValidatorsResponse {
   // validators contains all the queried validators.
-  repeated cosmos.staking.v1beta1.Validator validators = 1
+  repeated Validator validators = 1
       [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 
   // pagination defines the pagination in the response.
@@ -346,5 +347,5 @@ message QueryValidatorRequest {
 // QueryValidatorResponse is response type for the Query/Validator RPC method
 message QueryValidatorResponse {
   // validator defines the validator info.
-  cosmos.staking.v1beta1.Validator validator = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Validator validator = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 }
