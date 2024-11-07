@@ -1,16 +1,18 @@
 syntax = "proto3";
 package exocore.operator.v1;
 
-import "google/api/annotations.proto";
+import "amino/amino.proto";
+
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
-import "cosmos/staking/v1beta1/staking.proto";
-import "tendermint/crypto/keys.proto";
-import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
+
 import "exocore/operator/v1/tx.proto";
 import "exocore/operator/v1/validator.proto";
 import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+
+import "tendermint/crypto/keys.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 

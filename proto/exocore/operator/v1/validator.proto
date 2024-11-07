@@ -33,17 +33,17 @@ message Validator {
   bool jailed = 3;
   // status is the validator status (bonded/unbonding/unbonded).
   cosmos.staking.v1beta1.BondStatus status = 4;
-  // voting_power define the delegated tokens (incl. self-delegation).
+  // voting_power define the validator voting power.
   string voting_power = 5 [
-    (cosmos_proto.scalar)  = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
   ];
   // delegator_shares defines total shares issued to a validator's delegators.
   string delegator_shares = 6 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
   ];
   // description defines the description terms for the validator.
   cosmos.staking.v1beta1.Description description = 7 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
@@ -60,26 +60,27 @@ message Validator {
 
   // list of unbonding ids, each uniquely identifing an unbonding of this validator
   repeated uint64 unbonding_ids = 12;
-  // avs_infos is the list of registered avs infos,
-  // that are supported at chain genesis (or restart).
+  // delegator_tokens is the list of asset infos
   repeated DelegatorInfo delegator_tokens = 13 [(gogoproto.nullable) = false];
 }
 
-// DelegatorInfo records the self and total opted-in USD value for the specified operator and AVS
+// DelegatorInfo records the total opted-in USD value for the specified operator
 message DelegatorInfo {
   // asset_id is the asset for which the query is made.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
   // symbol of the asset, like "USDT"
   string symbol = 2;
+  // name of the asset, like "Tether USD"
+  string name = 3;
   // amount is the total amount of the asset which delegation.
-  string amount = 3
+  string amount = 4
   [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   // total_usd_value is the total delegation USD value for the validator
-  string total_usd_value = 4 [
+  string total_usd_value = 5 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false,

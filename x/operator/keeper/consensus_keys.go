@@ -3,6 +3,12 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
+	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
+	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
+
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -562,4 +568,126 @@ func (k *Keeper) GetAllOperatorConsKeyRecords(ctx sdk.Context) ([]types.Operator
 		previousOperator = operator.String()
 	}
 	return ret, nil
+}
+
+// NewValidatorByConsAddrForChainID returns a exocore types.Validator for the given consensus
+// address and chain id.
+func (k Keeper) NewValidatorByConsAddrForChainID(
+	ctx sdk.Context, consAddr sdk.ConsAddress, chainIDWithoutRevision string,
+) (types.Validator, bool) {
+	isAvs, avsAddrStr := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
+	if !isAvs {
+		ctx.Logger().Error("ValidatorByConsAddrForChainID the chainIDWithoutRevision is not supported by AVS", "chainIDWithoutRevision", chainIDWithoutRevision)
+		return types.Validator{}, false
+	}
+	// this value is stored using chainIDWithoutRevision + consAddr and only deleted when
+	// advised by the dogfood module to delete. hence, even if the consensus key
+	// changes, this lookup is available.
+	found, operatorAddr := k.GetOperatorAddressForChainIDAndConsAddr(
+		ctx, chainIDWithoutRevision, consAddr,
+	)
+	if !found {
+		ctx.Logger().Error("ValidatorByConsAddrForChainID the operator isn't found by the chainIDWithoutRevision and consensus address", "consAddress", consAddr, "chainIDWithoutRevision", chainIDWithoutRevision)
+		return types.Validator{}, false
+	}
+	found, wrappedKey, err := k.GetOperatorConsKeyForChainID(ctx, operatorAddr, chainIDWithoutRevision)
+	if !found || err != nil {
+		ctx.Logger().Error("ValidatorByConsAddrForChainID the consensus key isn't found by the chainIDWithoutRevision and operator address", "operatorAddr", operatorAddr, "chainIDWithoutRevision", chainIDWithoutRevision, "err", err)
+		return types.Validator{}, false
+	}
+	// since we are sending the address, we have to send the consensus key as well.
+	// this is because the presence of a non-empty address triggers a call to Validator
+	// which triggers a call to fetch the consensus key, in the slashing module.
+	val, err := types.NewValidator(
+		operatorAddr, wrappedKey.ToSdkKey(), stakingtypes.Description{},
+	)
+	if err != nil {
+		ctx.Logger().Error("ValidatorByConsAddrForChainID new validator error", "err", err)
+		return types.Validator{}, false
+	}
+	val.Jailed = k.IsOperatorJailedForChainID(ctx, consAddr, chainIDWithoutRevision)
+
+	if err != nil {
+		ctx.Logger().Error("new validator error", "err", err)
+		return types.Validator{}, false
+	}
+
+	ops, err := k.OperatorInfo(ctx, operatorAddr.String())
+	if err != nil {
+		ctx.Logger().Error(" new validator error", "err", err)
+		return types.Validator{}, false
+	}
+	val.Commission = ops.Commission
+
+	assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddrStr)
+	if err != nil {
+		return types.Validator{}, false
+	}
+	if assets == nil {
+		return types.Validator{}, false
+	}
+	// get the prices and decimals of assets
+	decimals, err := k.assetsKeeper.GetAssetsDecimal(ctx, assets)
+	if err != nil {
+		return types.Validator{}, false
+	}
+	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
+	if err != nil {
+		ctx.Logger().Error(" new validator error", "err", err)
+		return types.Validator{}, false
+	}
+
+	ret := types.OperatorStakingInfo{
+		Staking:                 sdkmath.LegacyNewDec(0),
+		SelfStaking:             sdkmath.LegacyNewDec(0),
+		StakingAndWaitUnbonding: sdkmath.LegacyNewDec(0),
+	}
+	delegatorTokens := make([]types.DelegatorInfo, 0)
+
+	opFunc := func(assetID string, state *assetstypes.OperatorAssetInfo) error {
+		//		var price operatortypes.Price
+		var price oracletype.Price
+		var decimal uint32
+		if prices == nil {
+			return errorsmod.Wrap(types.ErrValueIsNilOrZero, "CalculateUSDValueForOperator prices map is nil")
+		}
+		price, ok := prices[assetID]
+		if !ok {
+			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: prices, key: assetID")
+		}
+		decimal, ok = decimals[assetID]
+		if !ok {
+			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: decimals, key: assetID")
+		}
+		ret.Staking = ret.Staking.Add(CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
+		// calculate the token amount from the share for the operator
+		selfAmount, err := delegationkeeper.TokensFromShares(state.OperatorShare, state.TotalShare, state.TotalAmount)
+		if err != nil {
+			return err
+		}
+		ret.SelfStaking = ret.SelfStaking.Add(CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal))
+		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
+		if err != nil {
+			return err
+		}
+
+		info := types.DelegatorInfo{
+			AssetID:       assetID,
+			Symbol:        assetInfo.AssetBasicInfo.Symbol,
+			Name:          assetInfo.AssetBasicInfo.Name,
+			Amount:        state.TotalAmount,
+			TotalUSDValue: ret.Staking,
+		}
+		delegatorTokens = append(delegatorTokens, info)
+
+		return nil
+	}
+
+	k.assetsKeeper.IterateAssetsForOperator(ctx, false, operatorAddr.String(), assets, opFunc) //nolint:errcheck
+
+	val.VotingPower = ret.Staking
+	val.DelegatorShares = ret.Staking.Sub(ret.SelfStaking).TruncateInt()
+	val.DelegatorTokens = delegatorTokens
+
+	return val, true
 }

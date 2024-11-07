@@ -2,24 +2,19 @@ package keeper
 
 import (
 	"context"
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	"errors"
+	"strings"
+
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
-	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"strings"
-
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 var _ types.QueryServer = &Keeper{}
@@ -263,7 +258,7 @@ func (k *Keeper) QueryOptInfo(goCtx context.Context, req *types.QueryOptInfoRequ
 
 func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest) (*types.QueryValidatorsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	vals := make([]stakingtypes.Validator, 0)
+	vals := make([]types.Validator, 0)
 	var chainIDWithoutRevision string
 
 	if len(req.ChainId) == 0 {
@@ -286,7 +281,7 @@ func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest
 		if wrappedKey == nil {
 			return status.Error(codes.Internal, "invalid consensus key")
 		}
-		val, found := k.ValidatorByConsAddrForChainID(
+		val, found := k.NewValidatorByConsAddrForChainID(
 			ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
 		)
 		if found {
@@ -306,7 +301,6 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
-
 	if req.ValidatorAddr == "" {
 		return nil, status.Error(codes.InvalidArgument, "validator address cannot be empty")
 	}
@@ -329,93 +323,12 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 		return &types.QueryValidatorResponse{}, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
 	}
 
-	val, found := k.ValidatorByConsAddrForChainID(
+	val, found := k.NewValidatorByConsAddrForChainID(
 		ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
 	)
 	if !found {
 		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
 	}
 
-	vall, err := types.NewValidator(
-		accAddr, wrappedKey.ToSdkKey(), stakingtypes.Description{},
-	)
-	if err != nil {
-		ctx.Logger().Error("new validator error", "err", err)
-		return &types.QueryValidatorResponse{}, nil
-	}
-	if err != nil {
-		ctx.Logger().Error(" new validator error", "err", err)
-		return &types.QueryValidatorResponse{}, nil
-	}
-	vall.VotingPower = val.Tokens
-	vall.Jailed = val.Jailed
-	ops, _ := k.OperatorInfo(ctx, accAddr.String())
-	vall.Commission = ops.Commission
-
-	_, avsAddrStr := k.avsKeeper.IsAVSByChainID(ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()))
-
-	assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddrStr)
-	if err != nil {
-		return &types.QueryValidatorResponse{}, err
-	}
-	if assets == nil {
-		return &types.QueryValidatorResponse{}, err
-	}
-	// get the prices and decimals of assets
-	decimals, err := k.assetsKeeper.GetAssetsDecimal(ctx, assets)
-	if err != nil {
-		return &types.QueryValidatorResponse{}, err
-	}
-	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
-	ret := types.OperatorStakingInfo{
-		Staking:                 sdkmath.LegacyNewDec(0),
-		SelfStaking:             sdkmath.LegacyNewDec(0),
-		StakingAndWaitUnbonding: sdkmath.LegacyNewDec(0),
-	}
-	delegatorTokens := make([]types.DelegatorInfo, 0)
-
-	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
-		//		var price operatortypes.Price
-		var price oracletype.Price
-		var decimal uint32
-		if prices == nil {
-			return errorsmod.Wrap(types.ErrValueIsNilOrZero, "CalculateUSDValueForOperator prices map is nil")
-		}
-		price, ok := prices[assetID]
-		if !ok {
-			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: prices, key: assetID")
-		}
-		decimal, ok = decimals[assetID]
-		if !ok {
-			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: decimals, key: assetID")
-		}
-		ret.Staking = ret.Staking.Add(CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
-		// calculate the token amount from the share for the operator
-		selfAmount, err := delegationkeeper.TokensFromShares(state.OperatorShare, state.TotalShare, state.TotalAmount)
-		if err != nil {
-			return err
-		}
-		ret.SelfStaking = ret.SelfStaking.Add(CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal))
-		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
-		if err != nil {
-			return err
-		}
-
-		info := types.DelegatorInfo{
-			AssetID:       assetID,
-			Symbol:        assetInfo.AssetBasicInfo.Symbol,
-			Amount:        state.TotalAmount,
-			TotalUSDValue: ret.Staking,
-		}
-		delegatorTokens = append(delegatorTokens, info)
-
-		return nil
-	}
-
-	err = k.assetsKeeper.IterateAssetsForOperator(ctx, false, accAddr.String(), assets, opFuncToIterateAssets)
-
-	vall.DelegatorShares = ret.Staking.Sub(ret.SelfStaking)
-	vall.DelegatorTokens = delegatorTokens
-
-	return &types.QueryValidatorResponse{Validator: vall}, nil
+	return &types.QueryValidatorResponse{Validator: val}, nil
 }
