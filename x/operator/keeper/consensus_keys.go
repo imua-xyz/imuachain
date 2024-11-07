@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -632,9 +633,14 @@ func (k Keeper) NewValidatorByConsAddrForChainID(
 		return types.Validator{}, false
 	}
 	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
+	// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
 	if err != nil {
-		ctx.Logger().Error(" new validator error", "err", err)
-		return types.Validator{}, false
+		// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
+		if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
+			ctx.Logger().Error("fail to get price from oracle, since current assetID is not bonded with oracle token", "details:", err)
+			return types.Validator{}, false
+		}
+		// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
 	}
 
 	ret := types.OperatorStakingInfo{
