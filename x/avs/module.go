@@ -117,6 +117,7 @@ func (am AppModule) GenerateGenesisState(_ *module.SimulationState) {
 }
 
 // InitGenesis performs the module's genesis initialization. It returns no validator updates.
+
 func (am AppModule) InitGenesis(
 	ctx sdk.Context,
 	cdc codec.JSONCodec,
@@ -126,7 +127,9 @@ func (am AppModule) InitGenesis(
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
-	return am.keeper.InitGenesis(ctx, genState)
+	am.keeper.InitGenesis(ctx, genState)
+
+	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the module's exported genesis state as raw JSON bytes.

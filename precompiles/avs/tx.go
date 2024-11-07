@@ -399,7 +399,7 @@ func (p Precompile) OperatorSubmitTask(
 		BlsSignature:        resultParams.BlsSignature,
 		Phase:               phaseEnum,
 	}
-	err := p.avsKeeper.SetTaskResultInfo(ctx, resultParams.CallerAddress.String(), result)
+	err := p.avsKeeper.SubmitTaskResult(ctx, resultParams.CallerAddress.String(), result)
 	if err != nil {
 		return nil, err
 	}

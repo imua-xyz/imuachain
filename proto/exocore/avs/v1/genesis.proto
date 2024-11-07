@@ -1,0 +1,61 @@
+syntax = "proto3";
+package exocore.avs.v1;
+
+import "exocore/avs/v1/tx.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/ExocoreNetwork/exocore/x/avs/types";
+
+// GenesisState defines the avs module's state. It needs to encompass
+// all of the state that is required to start the chain from the genesis
+// or in the event of a restart.
+message GenesisState {
+  // avs_infos is the list of registered avs infos,
+  // that are supported at chain genesis (or restart).
+  repeated AVSInfo avs_infos = 1 [(gogoproto.nullable) = false];
+  // task_infos is the tasks issued by avs owner, indexed by
+  // task address and task id
+  // that are supported at chain genesis (or restart).
+  repeated TaskInfo task_infos = 2 [(gogoproto.nullable) = false];
+  // bls_pub_keys is the list of operator pubKey info, indexed by operator address
+  // The struct is the `BlsPubKeyInfo`
+  // which contains blsPubKey,  operator address.
+  repeated BlsPubKeyInfo bls_pub_keys = 3 [(gogoproto.nullable) = false];
+
+  // task_result_infos is the task result  informations, indexed
+  // by the operator address ,task address and the task id. The struct is the `TaskResultInfo`
+  repeated TaskResultInfo task_result_infos = 4 [(gogoproto.nullable) = false];
+  // challenge_infos is the task challenge  informations, indexed
+  // by the operator address ,task address and the task id. The struct is the `ChallengeInfo`
+  repeated ChallengeInfo challenge_infos = 5 [(gogoproto.nullable) = false];
+  // task_nums is the task id, indexed
+  // by the task address. The struct is the `TaskID`
+  repeated TaskID task_nums = 6 [(gogoproto.nullable) = false];
+  // chain_id_infos is the dogfood chain id  informations, indexed
+  // by the avs address. The struct is the `ChainIDInfo`
+  repeated ChainIDInfo chain_id_infos = 7 [(gogoproto.nullable) = false];
+
+}
+
+// TaskID is helper structure to store the task id information for the genesis state.
+message TaskID {
+  // task_addr is the address of task as a hex string
+  string task_addr = 1;
+  // id of task.
+  uint64 task_id = 2;
+}
+// ChallengeInfo is helper structure to store the task challenge information for the genesis state.
+message ChallengeInfo {
+  // key is used for storing the ChallengeInfos,
+  // which is a combination of the operator address ,task address and task id.
+  string key = 1;
+  // challenge_addr is the address of the challenger
+  string challenge_addr = 2;
+}
+// ChainIDInfo is helper structure to store the dogfood ChainID information for the genesis state.
+message ChainIDInfo {
+  // avs_address is the address of avs as a hex string.
+  string avs_address = 1;
+  // chain_id is an optional parameter to specify the chain_id of the AVS, if any
+  string chain_id = 2;
+}

@@ -144,6 +144,10 @@ func (k Keeper) RegisterAVSWithChainID(
 	}
 	avsAddrStr := types.GenerateAVSAddr(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
+	// check that the AVS is registered
+	if isAvs, _ := k.IsAVS(ctx, avsAddrStr); isAvs {
+		return avsAddr, nil
+	}
 	defer func() {
 		if err == nil {
 			// store the reverse lookup from AVSAddress to ChainID
@@ -193,4 +197,22 @@ func (k Keeper) GetChainIDByAVSAddr(ctx sdk.Context, avsAddr string) (string, bo
 		return "", false
 	}
 	return string(bz), true
+}
+
+func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSAddressToChainID)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	ret := make([]types.ChainIDInfo, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		avsAddr := strings.ToLower(common.BytesToAddress(iterator.Key()).Hex())
+		chainID := string(iterator.Value())
+
+		ret = append(ret, types.ChainIDInfo{
+			AvsAddress: avsAddr,
+			ChainId:    chainID,
+		})
+	}
+	return ret, nil
 }

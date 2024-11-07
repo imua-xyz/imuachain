@@ -28,6 +28,22 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type GenesisState struct {
 	// params defines all the parameters of the module.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	// fee_pool is the global fee pool for distribution.
+	// It holds decimal coins. Once whole those coins can be burned or distributed to the community pool.
+	FeePool FeePool `protobuf:"bytes,2,opt,name=fee_pool,json=feePool,proto3" json:"fee_pool"`
+	// validator_accumulated_commissions represents accumulated commission
+	// for a validator kept as a running counter, can be withdrawn at any time.
+	ValidatorAccumulatedCommissions []ValidatorAccumulatedCommissions `protobuf:"bytes,3,rep,name=validator_accumulated_commissions,json=validatorAccumulatedCommissions,proto3" json:"validator_accumulated_commissions"`
+	// validator_current_rewards_list represents current rewards and current
+	// period for a validator kept as a running counter and incremented
+	// each block as long as the validator's tokens remain constant.
+	ValidatorCurrentRewardsList []ValidatorCurrentRewardsList `protobuf:"bytes,4,rep,name=validator_current_rewards_list,json=validatorCurrentRewardsList,proto3" json:"validator_current_rewards_list"`
+	// validator_outstanding_rewards_list represents outstanding (un-withdrawn) rewards
+	// for a validator inexpensive to track, allows simple sanity checks.
+	ValidatorOutstandingRewardsList []ValidatorOutstandingRewardsList `protobuf:"bytes,5,rep,name=validator_outstanding_rewards_list,json=validatorOutstandingRewardsList,proto3" json:"validator_outstanding_rewards_list"`
+	// staker_outstanding_rewards_list represents outstanding (un-withdrawn) rewards
+	// for a staker inexpensive to track, allows simple sanity checks.
+	StakerOutstandingRewardsList []StakerOutstandingRewardsList `protobuf:"bytes,6,rep,name=staker_outstanding_rewards_list,json=stakerOutstandingRewardsList,proto3" json:"staker_outstanding_rewards_list"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -70,8 +86,273 @@ func (m *GenesisState) GetParams() Params {
 	return Params{}
 }
 
+func (m *GenesisState) GetFeePool() FeePool {
+	if m != nil {
+		return m.FeePool
+	}
+	return FeePool{}
+}
+
+func (m *GenesisState) GetValidatorAccumulatedCommissions() []ValidatorAccumulatedCommissions {
+	if m != nil {
+		return m.ValidatorAccumulatedCommissions
+	}
+	return nil
+}
+
+func (m *GenesisState) GetValidatorCurrentRewardsList() []ValidatorCurrentRewardsList {
+	if m != nil {
+		return m.ValidatorCurrentRewardsList
+	}
+	return nil
+}
+
+func (m *GenesisState) GetValidatorOutstandingRewardsList() []ValidatorOutstandingRewardsList {
+	if m != nil {
+		return m.ValidatorOutstandingRewardsList
+	}
+	return nil
+}
+
+func (m *GenesisState) GetStakerOutstandingRewardsList() []StakerOutstandingRewardsList {
+	if m != nil {
+		return m.StakerOutstandingRewardsList
+	}
+	return nil
+}
+
+// ValidatorAccumulatedCommissions is helper structure to store
+// the validator accumulated commissions for the genesis state.
+type ValidatorAccumulatedCommissions struct {
+	// val_addr is the address of validator
+	ValAddr string `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
+	// ValidatorAccumulatedCommission represents accumulated commission
+	// for a validator kept as a running counter, can be withdrawn at any time.
+	Commission *ValidatorAccumulatedCommission `protobuf:"bytes,2,opt,name=commission,proto3" json:"commission,omitempty"`
+}
+
+func (m *ValidatorAccumulatedCommissions) Reset()         { *m = ValidatorAccumulatedCommissions{} }
+func (m *ValidatorAccumulatedCommissions) String() string { return proto.CompactTextString(m) }
+func (*ValidatorAccumulatedCommissions) ProtoMessage()    {}
+func (*ValidatorAccumulatedCommissions) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ee00a1c72b4ca316, []int{1}
+}
+func (m *ValidatorAccumulatedCommissions) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ValidatorAccumulatedCommissions) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ValidatorAccumulatedCommissions.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ValidatorAccumulatedCommissions) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValidatorAccumulatedCommissions.Merge(m, src)
+}
+func (m *ValidatorAccumulatedCommissions) XXX_Size() int {
+	return m.Size()
+}
+func (m *ValidatorAccumulatedCommissions) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValidatorAccumulatedCommissions.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValidatorAccumulatedCommissions proto.InternalMessageInfo
+
+func (m *ValidatorAccumulatedCommissions) GetValAddr() string {
+	if m != nil {
+		return m.ValAddr
+	}
+	return ""
+}
+
+func (m *ValidatorAccumulatedCommissions) GetCommission() *ValidatorAccumulatedCommission {
+	if m != nil {
+		return m.Commission
+	}
+	return nil
+}
+
+// ValidatorCurrentRewardsList is helper structure to store the validator current rewards  for the genesis state.
+type ValidatorCurrentRewardsList struct {
+	// val_addr is the address of validator
+	ValAddr string `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
+	// ValidatorCurrentRewards represents current rewards and current
+	// period for a validator kept as a running counter and incremented
+	// each block as long as the validator's tokens remain constant.
+	CurrentRewards *ValidatorCurrentRewards `protobuf:"bytes,2,opt,name=current_rewards,json=currentRewards,proto3" json:"current_rewards,omitempty"`
+}
+
+func (m *ValidatorCurrentRewardsList) Reset()         { *m = ValidatorCurrentRewardsList{} }
+func (m *ValidatorCurrentRewardsList) String() string { return proto.CompactTextString(m) }
+func (*ValidatorCurrentRewardsList) ProtoMessage()    {}
+func (*ValidatorCurrentRewardsList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ee00a1c72b4ca316, []int{2}
+}
+func (m *ValidatorCurrentRewardsList) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ValidatorCurrentRewardsList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ValidatorCurrentRewardsList.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ValidatorCurrentRewardsList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValidatorCurrentRewardsList.Merge(m, src)
+}
+func (m *ValidatorCurrentRewardsList) XXX_Size() int {
+	return m.Size()
+}
+func (m *ValidatorCurrentRewardsList) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValidatorCurrentRewardsList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValidatorCurrentRewardsList proto.InternalMessageInfo
+
+func (m *ValidatorCurrentRewardsList) GetValAddr() string {
+	if m != nil {
+		return m.ValAddr
+	}
+	return ""
+}
+
+func (m *ValidatorCurrentRewardsList) GetCurrentRewards() *ValidatorCurrentRewards {
+	if m != nil {
+		return m.CurrentRewards
+	}
+	return nil
+}
+
+// TaskID is helper structure to store the validator outstanding rewards  for the genesis state.
+type ValidatorOutstandingRewardsList struct {
+	// val_addr is the address of validator
+	ValAddr string `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
+	// ValidatorOutstandingRewards represents outstanding (un-withdrawn) rewards
+	// for a validator inexpensive to track, allows simple sanity checks.
+	OutstandingRewards *ValidatorOutstandingRewards `protobuf:"bytes,2,opt,name=outstanding_rewards,json=outstandingRewards,proto3" json:"outstanding_rewards,omitempty"`
+}
+
+func (m *ValidatorOutstandingRewardsList) Reset()         { *m = ValidatorOutstandingRewardsList{} }
+func (m *ValidatorOutstandingRewardsList) String() string { return proto.CompactTextString(m) }
+func (*ValidatorOutstandingRewardsList) ProtoMessage()    {}
+func (*ValidatorOutstandingRewardsList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ee00a1c72b4ca316, []int{3}
+}
+func (m *ValidatorOutstandingRewardsList) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ValidatorOutstandingRewardsList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ValidatorOutstandingRewardsList.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ValidatorOutstandingRewardsList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValidatorOutstandingRewardsList.Merge(m, src)
+}
+func (m *ValidatorOutstandingRewardsList) XXX_Size() int {
+	return m.Size()
+}
+func (m *ValidatorOutstandingRewardsList) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValidatorOutstandingRewardsList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValidatorOutstandingRewardsList proto.InternalMessageInfo
+
+func (m *ValidatorOutstandingRewardsList) GetValAddr() string {
+	if m != nil {
+		return m.ValAddr
+	}
+	return ""
+}
+
+func (m *ValidatorOutstandingRewardsList) GetOutstandingRewards() *ValidatorOutstandingRewards {
+	if m != nil {
+		return m.OutstandingRewards
+	}
+	return nil
+}
+
+// StakerOutstandingRewardsList is helper structure to store the staker outstanding rewards  for the genesis state.
+type StakerOutstandingRewardsList struct {
+	// staker_addr is the address of staker
+	StakerAddr string `protobuf:"bytes,1,opt,name=staker_addr,json=stakerAddr,proto3" json:"staker_addr,omitempty"`
+	// StakerOutstandingRewards represents outstanding (un-withdrawn) rewards
+	// for a staker inexpensive to track, allows simple sanity checks.
+	StakerOutstandingRewards *StakerOutstandingRewards `protobuf:"bytes,2,opt,name=staker_outstanding_rewards,json=stakerOutstandingRewards,proto3" json:"staker_outstanding_rewards,omitempty"`
+}
+
+func (m *StakerOutstandingRewardsList) Reset()         { *m = StakerOutstandingRewardsList{} }
+func (m *StakerOutstandingRewardsList) String() string { return proto.CompactTextString(m) }
+func (*StakerOutstandingRewardsList) ProtoMessage()    {}
+func (*StakerOutstandingRewardsList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ee00a1c72b4ca316, []int{4}
+}
+func (m *StakerOutstandingRewardsList) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *StakerOutstandingRewardsList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_StakerOutstandingRewardsList.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *StakerOutstandingRewardsList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StakerOutstandingRewardsList.Merge(m, src)
+}
+func (m *StakerOutstandingRewardsList) XXX_Size() int {
+	return m.Size()
+}
+func (m *StakerOutstandingRewardsList) XXX_DiscardUnknown() {
+	xxx_messageInfo_StakerOutstandingRewardsList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_StakerOutstandingRewardsList proto.InternalMessageInfo
+
+func (m *StakerOutstandingRewardsList) GetStakerAddr() string {
+	if m != nil {
+		return m.StakerAddr
+	}
+	return ""
+}
+
+func (m *StakerOutstandingRewardsList) GetStakerOutstandingRewards() *StakerOutstandingRewards {
+	if m != nil {
+		return m.StakerOutstandingRewards
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "exocore.feedistribution.v1.GenesisState")
+	proto.RegisterType((*ValidatorAccumulatedCommissions)(nil), "exocore.feedistribution.v1.ValidatorAccumulatedCommissions")
+	proto.RegisterType((*ValidatorCurrentRewardsList)(nil), "exocore.feedistribution.v1.ValidatorCurrentRewardsList")
+	proto.RegisterType((*ValidatorOutstandingRewardsList)(nil), "exocore.feedistribution.v1.ValidatorOutstandingRewardsList")
+	proto.RegisterType((*StakerOutstandingRewardsList)(nil), "exocore.feedistribution.v1.StakerOutstandingRewardsList")
 }
 
 func init() {
@@ -79,22 +360,43 @@ func init() {
 }
 
 var fileDescriptor_ee00a1c72b4ca316 = []byte{
-	// 227 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x48, 0xad, 0xc8, 0x4f,
-	0xce, 0x2f, 0x4a, 0xd5, 0x4f, 0x4b, 0x4d, 0x4d, 0xc9, 0x2c, 0x2e, 0x29, 0xca, 0x4c, 0x2a, 0x2d,
-	0xc9, 0xcc, 0xcf, 0xd3, 0x2f, 0x33, 0xd4, 0x4f, 0x4f, 0xcd, 0x4b, 0x2d, 0xce, 0x2c, 0xd6, 0x2b,
-	0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0x82, 0xaa, 0xd4, 0x43, 0x53, 0xa9, 0x57, 0x66, 0x28, 0x25,
-	0x98, 0x98, 0x9b, 0x99, 0x97, 0xaf, 0x0f, 0x26, 0x21, 0xca, 0xa5, 0xd4, 0xf1, 0x18, 0x5c, 0x90,
-	0x58, 0x94, 0x98, 0x0b, 0x35, 0x57, 0x4a, 0x24, 0x3d, 0x3f, 0x3d, 0x1f, 0xcc, 0xd4, 0x07, 0xb1,
-	0x20, 0xa2, 0x4a, 0xa1, 0x5c, 0x3c, 0xee, 0x10, 0xeb, 0x83, 0x4b, 0x12, 0x4b, 0x52, 0x85, 0x5c,
-	0xb9, 0xd8, 0x20, 0xba, 0x24, 0x18, 0x15, 0x18, 0x35, 0xb8, 0x8d, 0x94, 0xf4, 0x70, 0x3b, 0x47,
-	0x2f, 0x00, 0xac, 0xd2, 0x89, 0xf3, 0xc4, 0x3d, 0x79, 0x86, 0x15, 0xcf, 0x37, 0x68, 0x31, 0x06,
-	0x41, 0x35, 0x3b, 0x05, 0x9f, 0x78, 0x24, 0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72,
-	0x8c, 0x13, 0x1e, 0xcb, 0x31, 0x5c, 0x78, 0x2c, 0xc7, 0x70, 0xe3, 0xb1, 0x1c, 0x43, 0x94, 0x65,
-	0x7a, 0x66, 0x49, 0x46, 0x69, 0x92, 0x5e, 0x72, 0x7e, 0xae, 0xbe, 0x2b, 0xc4, 0x68, 0xbf, 0xd4,
-	0x92, 0xf2, 0xfc, 0xa2, 0x6c, 0x7d, 0x98, 0x4f, 0x2a, 0x30, 0xfc, 0x52, 0x52, 0x59, 0x90, 0x5a,
-	0x9c, 0xc4, 0x06, 0x76, 0xb2, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x9a, 0x7b, 0xe3, 0xe2, 0x4c,
-	0x01, 0x00, 0x00,
+	// 571 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x4f, 0x6b, 0x13, 0x41,
+	0x18, 0xc6, 0x33, 0xb6, 0x4d, 0xdb, 0x89, 0x28, 0x8e, 0x1e, 0x62, 0x5a, 0x36, 0x75, 0x3d, 0x18,
+	0x04, 0x77, 0x69, 0x2b, 0xd4, 0x3f, 0xa7, 0xa6, 0x56, 0x2f, 0xa2, 0x65, 0x03, 0x1e, 0x8a, 0xb0,
+	0x4c, 0x76, 0x27, 0xe9, 0xd0, 0xdd, 0x9d, 0x30, 0x33, 0xbb, 0xad, 0x57, 0xc1, 0xa3, 0xe2, 0x49,
+	0xfc, 0x04, 0xe2, 0x51, 0xf0, 0x4b, 0xd4, 0x5b, 0x8f, 0x9e, 0x44, 0x92, 0x83, 0x5f, 0x43, 0xba,
+	0x33, 0x65, 0x93, 0xa6, 0x19, 0x6d, 0x2e, 0xcb, 0xce, 0xf0, 0xbc, 0xcf, 0xfc, 0x78, 0xdf, 0x87,
+	0x17, 0x36, 0xc8, 0x21, 0x0b, 0x18, 0x27, 0x6e, 0x87, 0x90, 0x90, 0x0a, 0xc9, 0x69, 0x3b, 0x95,
+	0x94, 0x25, 0x6e, 0xb6, 0xea, 0x76, 0x49, 0x42, 0x04, 0x15, 0x4e, 0x8f, 0x33, 0xc9, 0x50, 0x4d,
+	0x2b, 0x9d, 0x33, 0x4a, 0x27, 0x5b, 0xad, 0x5d, 0xc3, 0x31, 0x4d, 0x98, 0x9b, 0x7f, 0x95, 0xbc,
+	0x76, 0xcf, 0x60, 0x3c, 0x52, 0xae, 0xe4, 0x77, 0x0c, 0xf2, 0x1e, 0xe6, 0x38, 0xd6, 0x18, 0xb5,
+	0x1b, 0x5d, 0xd6, 0x65, 0xf9, 0xaf, 0x7b, 0xf2, 0xa7, 0x6e, 0xed, 0x1f, 0x73, 0xf0, 0xf2, 0x33,
+	0x85, 0xdb, 0x92, 0x58, 0x12, 0xb4, 0x0d, 0xcb, 0xaa, 0xac, 0x0a, 0x56, 0x40, 0xa3, 0xb2, 0x66,
+	0x3b, 0x93, 0xf1, 0x9d, 0x9d, 0x5c, 0xd9, 0x5c, 0x3c, 0xfa, 0x55, 0x2f, 0x7d, 0xfd, 0xf3, 0xed,
+	0x2e, 0xf0, 0x74, 0x31, 0x7a, 0x02, 0x17, 0x3a, 0x84, 0xf8, 0x3d, 0xc6, 0xa2, 0xea, 0xa5, 0xdc,
+	0xe8, 0xb6, 0xc9, 0xe8, 0x29, 0x21, 0x3b, 0x8c, 0x45, 0xcd, 0xd9, 0x13, 0x27, 0x6f, 0xbe, 0xa3,
+	0x8e, 0xe8, 0x3d, 0x80, 0xb7, 0x32, 0x1c, 0xd1, 0x10, 0x4b, 0xc6, 0x7d, 0x1c, 0x04, 0x69, 0x9c,
+	0x46, 0x58, 0x92, 0xd0, 0x0f, 0x58, 0x1c, 0x53, 0x21, 0x28, 0x4b, 0x44, 0x75, 0x66, 0x65, 0xa6,
+	0x51, 0x59, 0x7b, 0x6c, 0xf2, 0x7f, 0x75, 0x6a, 0xb2, 0x59, 0x78, 0x6c, 0x15, 0x16, 0xfa, 0xdd,
+	0x7a, 0x66, 0x96, 0xa1, 0xb7, 0x00, 0x5a, 0x05, 0x4f, 0x90, 0x72, 0x4e, 0x12, 0xe9, 0x73, 0x72,
+	0x80, 0x79, 0x28, 0xfc, 0x88, 0x0a, 0x59, 0x9d, 0xcd, 0x61, 0x36, 0xfe, 0x0b, 0x66, 0x4b, 0x19,
+	0x78, 0xaa, 0xfe, 0x39, 0x15, 0x52, 0x83, 0x2c, 0x65, 0x93, 0x25, 0xe8, 0x03, 0x80, 0x76, 0x01,
+	0xc1, 0x52, 0x29, 0x24, 0x4e, 0x42, 0x9a, 0x74, 0x47, 0x41, 0xe6, 0x2e, 0xd0, 0x95, 0x97, 0x85,
+	0xc9, 0x38, 0x4c, 0xd1, 0x95, 0xf3, 0x65, 0xe8, 0x1d, 0x80, 0x75, 0x21, 0xf1, 0x3e, 0x31, 0xd0,
+	0x94, 0x73, 0x9a, 0x07, 0x26, 0x9a, 0x56, 0x6e, 0x61, 0x44, 0x59, 0x16, 0x06, 0x8d, 0xfd, 0x19,
+	0xc0, 0xfa, 0x3f, 0x06, 0x8d, 0x6e, 0xc2, 0x85, 0x0c, 0x47, 0x3e, 0x0e, 0x43, 0x9e, 0x07, 0x7c,
+	0xd1, 0x9b, 0xcf, 0x70, 0xb4, 0x19, 0x86, 0x1c, 0xed, 0x42, 0x58, 0xa4, 0x4a, 0x87, 0xf6, 0xd1,
+	0xf4, 0xa1, 0xf2, 0x86, 0xdc, 0xec, 0x4f, 0x00, 0x2e, 0x19, 0xc6, 0x6e, 0xc2, 0x7a, 0x0d, 0xaf,
+	0x9e, 0x09, 0x9a, 0x66, 0x5b, 0x9f, 0x22, 0x63, 0xde, 0x95, 0x60, 0xe4, 0x6c, 0x7f, 0x19, 0xee,
+	0xd9, 0x84, 0xf9, 0x1a, 0xe0, 0xf6, 0xe0, 0xf5, 0x73, 0x46, 0xae, 0x01, 0x37, 0xa6, 0xcc, 0x9e,
+	0x87, 0xd8, 0xd8, 0x9d, 0xfd, 0x1d, 0xc0, 0x65, 0x53, 0x42, 0x50, 0x1d, 0x56, 0x74, 0x08, 0x87,
+	0x40, 0xa1, 0xba, 0xca, 0x59, 0x39, 0xac, 0x4d, 0x4e, 0xa9, 0x46, 0xbe, 0x3f, 0x4d, 0x40, 0xbd,
+	0xea, 0xa4, 0x58, 0x36, 0x5b, 0x47, 0x7d, 0x0b, 0x1c, 0xf7, 0x2d, 0xf0, 0xbb, 0x6f, 0x81, 0x8f,
+	0x03, 0xab, 0x74, 0x3c, 0xb0, 0x4a, 0x3f, 0x07, 0x56, 0x69, 0xf7, 0x61, 0x97, 0xca, 0xbd, 0xb4,
+	0xed, 0x04, 0x2c, 0x76, 0xb7, 0xd5, 0x9b, 0x2f, 0x88, 0x3c, 0x60, 0x7c, 0xdf, 0x3d, 0xdd, 0xe8,
+	0x87, 0x63, 0x3b, 0x5d, 0xbe, 0xe9, 0x11, 0xd1, 0x2e, 0xe7, 0xab, 0x7b, 0xfd, 0x6f, 0x00, 0x00,
+	0x00, 0xff, 0xff, 0xe5, 0x7a, 0x93, 0xf8, 0x83, 0x06, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -117,6 +419,72 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.StakerOutstandingRewardsList) > 0 {
+		for iNdEx := len(m.StakerOutstandingRewardsList) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.StakerOutstandingRewardsList[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.ValidatorOutstandingRewardsList) > 0 {
+		for iNdEx := len(m.ValidatorOutstandingRewardsList) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ValidatorOutstandingRewardsList[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if len(m.ValidatorCurrentRewardsList) > 0 {
+		for iNdEx := len(m.ValidatorCurrentRewardsList) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ValidatorCurrentRewardsList[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.ValidatorAccumulatedCommissions) > 0 {
+		for iNdEx := len(m.ValidatorAccumulatedCommissions) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ValidatorAccumulatedCommissions[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	{
+		size, err := m.FeePool.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
 	{
 		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
@@ -127,6 +495,174 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	}
 	i--
 	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *ValidatorAccumulatedCommissions) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ValidatorAccumulatedCommissions) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ValidatorAccumulatedCommissions) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Commission != nil {
+		{
+			size, err := m.Commission.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ValAddr) > 0 {
+		i -= len(m.ValAddr)
+		copy(dAtA[i:], m.ValAddr)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ValAddr)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ValidatorCurrentRewardsList) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ValidatorCurrentRewardsList) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ValidatorCurrentRewardsList) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.CurrentRewards != nil {
+		{
+			size, err := m.CurrentRewards.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ValAddr) > 0 {
+		i -= len(m.ValAddr)
+		copy(dAtA[i:], m.ValAddr)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ValAddr)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ValidatorOutstandingRewardsList) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ValidatorOutstandingRewardsList) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ValidatorOutstandingRewardsList) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.OutstandingRewards != nil {
+		{
+			size, err := m.OutstandingRewards.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ValAddr) > 0 {
+		i -= len(m.ValAddr)
+		copy(dAtA[i:], m.ValAddr)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ValAddr)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *StakerOutstandingRewardsList) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *StakerOutstandingRewardsList) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *StakerOutstandingRewardsList) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.StakerOutstandingRewards != nil {
+		{
+			size, err := m.StakerOutstandingRewards.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.StakerAddr) > 0 {
+		i -= len(m.StakerAddr)
+		copy(dAtA[i:], m.StakerAddr)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.StakerAddr)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -149,6 +685,100 @@ func (m *GenesisState) Size() (n int) {
 	_ = l
 	l = m.Params.Size()
 	n += 1 + l + sovGenesis(uint64(l))
+	l = m.FeePool.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	if len(m.ValidatorAccumulatedCommissions) > 0 {
+		for _, e := range m.ValidatorAccumulatedCommissions {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.ValidatorCurrentRewardsList) > 0 {
+		for _, e := range m.ValidatorCurrentRewardsList {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.ValidatorOutstandingRewardsList) > 0 {
+		for _, e := range m.ValidatorOutstandingRewardsList {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.StakerOutstandingRewardsList) > 0 {
+		for _, e := range m.StakerOutstandingRewardsList {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *ValidatorAccumulatedCommissions) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ValAddr)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.Commission != nil {
+		l = m.Commission.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *ValidatorCurrentRewardsList) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ValAddr)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.CurrentRewards != nil {
+		l = m.CurrentRewards.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *ValidatorOutstandingRewardsList) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ValAddr)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.OutstandingRewards != nil {
+		l = m.OutstandingRewards.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *StakerOutstandingRewardsList) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakerAddr)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.StakerOutstandingRewards != nil {
+		l = m.StakerOutstandingRewards.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
 	return n
 }
 
@@ -217,6 +847,647 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FeePool", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.FeePool.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAccumulatedCommissions", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorAccumulatedCommissions = append(m.ValidatorAccumulatedCommissions, ValidatorAccumulatedCommissions{})
+			if err := m.ValidatorAccumulatedCommissions[len(m.ValidatorAccumulatedCommissions)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorCurrentRewardsList", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorCurrentRewardsList = append(m.ValidatorCurrentRewardsList, ValidatorCurrentRewardsList{})
+			if err := m.ValidatorCurrentRewardsList[len(m.ValidatorCurrentRewardsList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorOutstandingRewardsList", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorOutstandingRewardsList = append(m.ValidatorOutstandingRewardsList, ValidatorOutstandingRewardsList{})
+			if err := m.ValidatorOutstandingRewardsList[len(m.ValidatorOutstandingRewardsList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerOutstandingRewardsList", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakerOutstandingRewardsList = append(m.StakerOutstandingRewardsList, StakerOutstandingRewardsList{})
+			if err := m.StakerOutstandingRewardsList[len(m.StakerOutstandingRewardsList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ValidatorAccumulatedCommissions) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ValidatorAccumulatedCommissions: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ValidatorAccumulatedCommissions: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValAddr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Commission", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Commission == nil {
+				m.Commission = &ValidatorAccumulatedCommission{}
+			}
+			if err := m.Commission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ValidatorCurrentRewardsList) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ValidatorCurrentRewardsList: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ValidatorCurrentRewardsList: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValAddr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.CurrentRewards == nil {
+				m.CurrentRewards = &ValidatorCurrentRewards{}
+			}
+			if err := m.CurrentRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ValidatorOutstandingRewardsList) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ValidatorOutstandingRewardsList: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ValidatorOutstandingRewardsList: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValAddr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OutstandingRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.OutstandingRewards == nil {
+				m.OutstandingRewards = &ValidatorOutstandingRewards{}
+			}
+			if err := m.OutstandingRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *StakerOutstandingRewardsList) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: StakerOutstandingRewardsList: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: StakerOutstandingRewardsList: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakerAddr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerOutstandingRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.StakerOutstandingRewards == nil {
+				m.StakerOutstandingRewards = &StakerOutstandingRewards{}
+			}
+			if err := m.StakerOutstandingRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -106,6 +107,116 @@ func (k Keeper) GetValidatorAccumulatedCommission(ctx sdk.Context, val sdk.ValAd
 	}
 	k.cdc.MustUnmarshal(b, &commission)
 	return
+}
+
+// GetAllValidatorData returns a slice containing all accumulated commissions for validators.
+func (k Keeper) GetAllValidatorData(ctx sdk.Context) (map[string]interface{}, error) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	commissions := make([]types.ValidatorAccumulatedCommissions, 0)
+	currentList := make([]types.ValidatorCurrentRewardsList, 0)
+	outList := make([]types.ValidatorOutstandingRewardsList, 0)
+	stakerList := make([]types.StakerOutstandingRewardsList, 0)
+
+	for ; iterator.Valid(); iterator.Next() {
+		key := iterator.Key()
+		value := iterator.Value()
+
+		switch {
+		case bytes.HasPrefix(key, types.GetValidatorAccumulatedCommissionKey(sdk.ValAddress{})):
+			if err := k.processValidatorAccumulatedCommission(key, value, &commissions); err != nil {
+				return nil, err
+			}
+		case bytes.HasPrefix(key, types.GetValidatorCurrentRewardsKey(sdk.ValAddress{})):
+			if err := k.processValidatorCurrentRewards(key, value, &currentList); err != nil {
+				return nil, err
+			}
+		case bytes.HasPrefix(key, types.GetValidatorOutstandingRewardsKey(sdk.ValAddress{})):
+			if err := k.processValidatorOutstandingRewards(key, value, &outList); err != nil {
+				return nil, err
+			}
+		case bytes.HasPrefix(key, types.GetStakerOutstandingRewardsKey("")):
+			if err := k.processStakerOutstandingRewards(key, value, &stakerList); err != nil {
+				return nil, err
+			}
+		default:
+			continue
+		}
+	}
+
+	validatorData := map[string]interface{}{
+		"ValidatorAccumulatedCommissions": commissions,
+		"ValidatorCurrentRewardsList":     currentList,
+		"ValidatorOutstandingRewardsList": outList,
+		"StakerOutstandingRewardsList":    stakerList,
+	}
+
+	return validatorData, nil
+}
+
+// processValidatorAccumulatedCommission unmarshals a validator accumulated commission from a store value
+func (k Keeper) processValidatorAccumulatedCommission(key, value []byte, commissions *[]types.ValidatorAccumulatedCommissions) error {
+	var commission types.ValidatorAccumulatedCommission
+	if err := k.cdc.Unmarshal(value, &commission); err != nil {
+		return err
+	}
+	valAddrKey := bytes.TrimPrefix(key, types.GetValidatorAccumulatedCommissionKey(sdk.ValAddress{}))
+	valAddr := sdk.ValAddress(valAddrKey[1:])
+	*commissions = append(*commissions, types.ValidatorAccumulatedCommissions{
+		ValAddr:    sdk.AccAddress(valAddr).String(),
+		Commission: &commission,
+	})
+	return nil
+}
+
+// processValidatorCurrentRewards unmarshals a validator current rewards from a store value
+func (k Keeper) processValidatorCurrentRewards(key, value []byte, currentList *[]types.ValidatorCurrentRewardsList) error {
+	var rewards types.ValidatorCurrentRewards
+	if err := k.cdc.Unmarshal(value, &rewards); err != nil {
+		return err
+	}
+	valAddrKey := bytes.TrimPrefix(key, types.GetValidatorCurrentRewardsKey(sdk.ValAddress{}))
+	valAddr := sdk.ValAddress(valAddrKey[1:])
+	*currentList = append(*currentList, types.ValidatorCurrentRewardsList{
+		ValAddr:        sdk.AccAddress(valAddr).String(),
+		CurrentRewards: &rewards,
+	})
+	return nil
+}
+
+// processValidatorOutstandingRewards unmarshals a validator outstanding rewards from a store value
+func (k Keeper) processValidatorOutstandingRewards(key, value []byte, outList *[]types.ValidatorOutstandingRewardsList) error {
+	var outstandingRewards types.ValidatorOutstandingRewards
+	if err := k.cdc.Unmarshal(value, &outstandingRewards); err != nil {
+		return err
+	}
+	valAddrKey := bytes.TrimPrefix(key, types.GetValidatorOutstandingRewardsKey(sdk.ValAddress{}))
+	valAddr := sdk.ValAddress(valAddrKey[1:])
+	if len(valAddr) == 0 {
+		return fmt.Errorf("failed to parse validator address from valAddrKey")
+	}
+	*outList = append(*outList, types.ValidatorOutstandingRewardsList{
+		ValAddr:            sdk.AccAddress(valAddr).String(),
+		OutstandingRewards: &outstandingRewards,
+	})
+	return nil
+}
+
+// processStakerOutstandingRewards unmarshals a staker outstanding rewards from a store value
+func (k Keeper) processStakerOutstandingRewards(key, value []byte, stakerList *[]types.StakerOutstandingRewardsList) error {
+	var stakerRewards types.StakerOutstandingRewards
+	if err := k.cdc.Unmarshal(value, &stakerRewards); err != nil {
+		return err
+	}
+	prefix := types.GetStakerOutstandingRewardsKey("")
+	stakerAddr := bytes.TrimPrefix(key, prefix)
+	*stakerList = append(*stakerList, types.StakerOutstandingRewardsList{
+		StakerAddr:               string(stakerAddr[1:]),
+		StakerOutstandingRewards: &stakerRewards,
+	})
+	return nil
 }
 
 // set accumulated commission for a validator
