@@ -263,6 +263,7 @@ replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.5-evmos.2
+
 	//fix cosmos-sdk error
 	github.com/cosmos/gogoproto => github.com/cosmos/gogoproto v1.4.10
 	// use Evmos geth fork

@@ -39,6 +39,7 @@ import (
 	"github.com/evmos/evmos/v16/server"
 	evmostypes "github.com/evmos/evmos/v16/types"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
 )
 
 func startInProcess(cfg Config, val *Validator) error {
@@ -168,9 +169,24 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	authGenState.Accounts = append(authGenState.Accounts, accounts...)
 	cfg.GenesisState[authtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&authGenState)
 
+	var feemarketGenState feemarkettypes.GenesisState
+	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[feemarkettypes.ModuleName], &feemarketGenState)
+	l := len(cfg.MinGasPrices) - len(cfg.NativeDenom)
+	minGasPrice := sdkmath.ZeroInt()
+	if l > 0 {
+		minGasPriceStr := cfg.MinGasPrices[:l]
+		minGasPrice, _ = sdkmath.NewIntFromString(minGasPriceStr)
+		if err != nil {
+			return err
+		}
+	}
+	feemarketGenState.Params.BaseFee = minGasPrice
+	cfg.GenesisState[feemarkettypes.ModuleName] = cfg.Codec.MustMarshalJSON(&feemarketGenState)
+
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState
 	bankGenState.Balances = genBalances
+	bankGenState.Params.DefaultSendEnabled = true
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
 	var govGenState govv1.GenesisState

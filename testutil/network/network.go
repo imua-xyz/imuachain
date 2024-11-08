@@ -50,6 +50,9 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+
+	exocorecrypto "github.com/ExocoreNetwork/exocore/crypto"
+	cosmoshd "github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/evmos/evmos/v16/crypto/hd"
 
 	// ekeyring "github.com/evmos/evmos/v16/crypto/keyring"
@@ -124,8 +127,9 @@ func DefaultConfig() Config {
 		PruningStrategy: pruningtypes.PruningOptionNothing,
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.EthSecp256k1Type),
-		KeyringOptions:  []keyring.Option{hd.EthSecp256k1Option()},
-		PrintMnemonic:   false,
+		// KeyringOptions:  []keyring.Option{hd.EthSecp256k1Option()},
+		KeyringOptions: []keyring.Option{exocorecrypto.Ed25519Option()},
+		PrintMnemonic:  false,
 	}
 }
 
@@ -335,7 +339,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		logger := log.NewNopLogger()
 		if cfg.EnableTMLogging {
 			logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-			logger, _ = tmflags.ParseLogLevel("info", logger, tmcfg.DefaultLogLevel)
+			logger, _ = tmflags.ParseLogLevel("debug", logger, tmcfg.DefaultLogLevel)
 		}
 
 		ctx.Logger = logger
@@ -372,8 +376,23 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		tmCfg.P2P.AddrBookStrict = false
 		tmCfg.P2P.AllowDuplicateIP = true
 
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.Codec, cfg.KeyringOptions...)
+		if err != nil {
+			return nil, err
+		}
+
+		keyringAlgos, _ := kb.SupportedAlgorithms()
+		algo, err := keyring.NewSigningAlgoFromString(string(cosmoshd.Ed25519Type), keyringAlgos)
+		if err != nil {
+			return nil, err
+		}
+		_, mnemonic, err := kb.NewMnemonic(fmt.Sprintf("valconskey%d", i), keyring.English, sdk.GetConfig().GetBech32AccountPubPrefix(), keyring.DefaultBIP39Passphrase, algo)
+		if err != nil {
+			return nil, err
+		}
+
 		// initialize nodekey, consensus_priv_key under nodeDir
-		nodeID, pubKey, err := genutil.InitializeNodeValidatorFiles(tmCfg)
+		nodeID, pubKey, err := genutil.InitializeNodeValidatorFilesFromMnemonic(tmCfg, mnemonic)
 		if err != nil {
 			return nil, err
 		}
@@ -386,13 +405,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		addressesIPs[i] = fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
 		valPubKeys[i] = pubKey
 
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.Codec, cfg.KeyringOptions...)
-		if err != nil {
-			return nil, err
-		}
-
-		keyringAlgos, _ := kb.SupportedAlgorithms()
-		algo, err := keyring.NewSigningAlgoFromString(cfg.SigningAlgo, keyringAlgos)
+		algo, err = keyring.NewSigningAlgoFromString(cfg.SigningAlgo, keyringAlgos)
 		if err != nil {
 			return nil, err
 		}
@@ -453,7 +466,9 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			WithCodec(cfg.Codec).
 			WithLegacyAmino(cfg.LegacyAmino).
 			WithTxConfig(cfg.TxConfig).
-			WithAccountRetriever(cfg.AccountRetriever)
+			WithAccountRetriever(cfg.AccountRetriever).
+			WithFromName(nodeDirName).
+			WithFrom(addr.String())
 
 		network.Validators[i] = &Validator{
 			AppConfig:  appCfg,

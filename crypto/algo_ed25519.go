@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	SupportedAlgorithms = keyring.SigningAlgoList{evmoshd.EthSecp256k1, hd.Secp256k1}
+	SupportedAlgorithms = keyring.SigningAlgoList{evmoshd.EthSecp256k1, hd.Secp256k1, Ed25519}
 	Ed25519             = ed25519Algo{}
 )
 
