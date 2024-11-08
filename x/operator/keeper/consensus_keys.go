@@ -645,17 +645,11 @@ func (k Keeper) NewValidatorByConsAddrForChainID(
 	delegatorTokens := make([]types.DelegatorInfo, 0)
 
 	opFunc := func(assetID string, state *assetstypes.OperatorAssetInfo) error {
-		//		var price operatortypes.Price
-		var price oracletype.Price
-		var decimal uint32
-		if prices == nil {
-			return errorsmod.Wrap(types.ErrValueIsNilOrZero, "CalculateUSDValueForOperator prices map is nil")
-		}
 		price, ok := prices[assetID]
 		if !ok {
 			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: prices, key: assetID")
 		}
-		decimal, ok = decimals[assetID]
+		decimal, ok := decimals[assetID]
 		if !ok {
 			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: decimals, key: assetID")
 		}
