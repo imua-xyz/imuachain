@@ -607,12 +607,6 @@ func (k Keeper) NewValidatorByConsAddrForChainID(
 		return types.Validator{}, false
 	}
 	val.Jailed = k.IsOperatorJailedForChainID(ctx, consAddr, chainIDWithoutRevision)
-
-	if err != nil {
-		ctx.Logger().Error("new validator error", "err", err)
-		return types.Validator{}, false
-	}
-
 	ops, err := k.OperatorInfo(ctx, operatorAddr.String())
 	if err != nil {
 		ctx.Logger().Error(" new validator error", "err", err)
@@ -689,8 +683,10 @@ func (k Keeper) NewValidatorByConsAddrForChainID(
 		return nil
 	}
 
-	k.assetsKeeper.IterateAssetsForOperator(ctx, false, operatorAddr.String(), assets, opFunc) //nolint:errcheck
-
+	if err := k.assetsKeeper.IterateAssetsForOperator(ctx, false, operatorAddr.String(), assets, opFunc); err != nil {
+		ctx.Logger().Error("IterateAssetsForOperator error", "err", err)
+		return types.Validator{}, false
+	}
 	val.VotingPower = ret.Staking
 	val.DelegatorShares = ret.Staking.Sub(ret.SelfStaking).TruncateInt()
 	val.DelegatorTokens = delegatorTokens

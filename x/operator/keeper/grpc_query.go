@@ -261,10 +261,10 @@ func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest
 	vals := make([]types.Validator, 0)
 	var chainIDWithoutRevision string
 
-	if len(req.ChainId) == 0 {
+	if len(req.Chain) == 0 {
 		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	} else {
-		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(req.ChainId)
+		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(req.Chain)
 	}
 	chainPrefix := types.ChainIDAndAddrKey(
 		types.BytePrefixForChainIDAndOperatorToConsKey,
@@ -304,23 +304,29 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	if req.ValidatorAddr == "" {
 		return nil, status.Error(codes.InvalidArgument, "validator address cannot be empty")
 	}
+	ctx := sdk.UnwrapSDKContext(c)
 
+	var chainIDWithoutRevision string
+
+	if len(req.Chain) == 0 {
+		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	} else {
+		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(req.Chain)
+	}
 	accAddr, err := sdk.AccAddressFromBech32(req.ValidatorAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-
 	found, wrappedKey, err := k.GetOperatorConsKeyForChainID(
-		ctx, accAddr, avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, accAddr, avstypes.ChainIDWithoutRevision(chainIDWithoutRevision),
 	)
 
 	if !found || err != nil || wrappedKey == nil {
 		if err != nil {
-			return &types.QueryValidatorResponse{}, err
+			return nil, err
 		}
-		return &types.QueryValidatorResponse{}, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
+		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
 	}
 
 	val, found := k.NewValidatorByConsAddrForChainID(
