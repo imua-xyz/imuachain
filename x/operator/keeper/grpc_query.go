@@ -293,7 +293,7 @@ func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryValidatorsResponse{Validators: nil, Pagination: pageRes}, nil
+	return &types.QueryValidatorsResponse{Validators: vals, Pagination: pageRes}, nil
 }
 
 // Validator queries validator info for given validator address
