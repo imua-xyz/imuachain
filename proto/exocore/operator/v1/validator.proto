@@ -2,8 +2,8 @@ syntax = "proto3";
 package exocore.operator.v1;
 
 import "amino/amino.proto";
-import "cosmos_proto/cosmos.proto";
 import "cosmos/staking/v1beta1/staking.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
@@ -54,7 +54,7 @@ message Validator {
   // commission defines the commission parameters.
   cosmos.staking.v1beta1.Commission commission = 10 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
 
-    // strictly positive if this validator's unbonding has been stopped by external modules
+  // strictly positive if this validator's unbonding has been stopped by external modules
   int64 unbonding_on_hold_ref_count = 11;
 
   // list of unbonding ids, each uniquely identifing an unbonding of this validator
