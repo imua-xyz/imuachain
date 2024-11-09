@@ -33,7 +33,7 @@ func (k Keeper) SetValidatorReportInfo(ctx sdk.Context, validator string, info t
 	store.Set(types.SlashingValidatorReportInfoKey(validator), bz)
 }
 
-// GetValidatorReportInfo retruns the ValidatorReportInfo for a specific validator
+// GetValidatorReportInfo returns the ValidatorReportInfo for a specific validator
 func (k Keeper) GetValidatorReportInfo(ctx sdk.Context, validator string) (info types.ValidatorReportInfo, found bool) {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.SlashingValidatorReportInfoKey(validator))
