@@ -1,11 +1,9 @@
 package types
 
 import (
-	"strings"
-	"time"
-
 	"cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -21,18 +19,14 @@ func NewValidator(operator sdk.AccAddress, pubKey cryptotypes.PubKey, descriptio
 	}
 
 	return Validator{
-		OperatorEarningsAddr:    operator.String(),
-		ConsensusPubkey:         pkAny,
-		Jailed:                  false,
-		Status:                  stakingtypes.Bonded,
-		VotingPower:             math.LegacyZeroDec(),
-		DelegatorShares:         math.ZeroInt(),
-		Description:             description,
-		UnbondingHeight:         int64(0),
-		UnbondingTime:           time.Unix(0, 0).UTC(),
-		Commission:              stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
-		UnbondingOnHoldRefCount: 0,
-		DelegatorTokens:         []DelegatorInfo{},
+		OperatorEarningsAddr: operator.String(),
+		ConsensusPubkey:      pkAny,
+		Jailed:               false,
+		Status:               stakingtypes.Bonded,
+		VotingPower:          math.LegacyZeroDec(),
+		DelegatorShares:      math.ZeroInt(),
+		Commission:           stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
+		DelegatorTokens:      []DelegatorInfo{},
 	}, nil
 }
 
