@@ -145,7 +145,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 
 func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 	method := s.precompile.Methods[avsManagerPrecompile.MethodGetAVSUSDValue]
-	expectedUSDvalue := sdkmath.LegacyNewDec(0)
+	expectedUSDvalue := sdkmath.LegacyZeroDec()
 
 	setUp := func() {
 		suite.prepare()
@@ -163,7 +163,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 			suite.Ctx,
 			&assetstype.StakingAssetInfo{
 				AssetBasicInfo:     usdcClientChainAsset,
-				StakingTotalAmount: sdkmath.NewInt(0),
+				StakingTotalAmount: sdkmath.ZeroInt(),
 			},
 		)
 		suite.NoError(err)
@@ -233,7 +233,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 
 func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 	method := s.precompile.Methods[avsManagerPrecompile.MethodGetOperatorOptedUSDValue]
-	expectedUSDvalue := sdkmath.LegacyNewDec(0)
+	expectedUSDvalue := sdkmath.LegacyZeroDec()
 
 	setUp := func() {
 		suite.prepare()
@@ -251,7 +251,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 			suite.Ctx,
 			&assetstype.StakingAssetInfo{
 				AssetBasicInfo:     usdcClientChainAsset,
-				StakingTotalAmount: sdkmath.NewInt(0),
+				StakingTotalAmount: sdkmath.ZeroInt(),
 			},
 		)
 		suite.NoError(err)
@@ -509,7 +509,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 			TaskResponsePeriod:    10,
 			StartingEpoch:         5,
 			TaskStatisticalPeriod: 60,
-			TaskTotalPower:        sdk.Dec(sdkmath.NewInt(0)),
+			TaskTotalPower:        sdk.Dec(sdkmath.ZeroInt()),
 		}
 		err := suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
 		suite.NoError(err)

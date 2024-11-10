@@ -77,7 +77,7 @@ func (k Keeper) IterateDelegationsForStaker(ctx sdk.Context, stakerID string, op
 // TotalDelegatedAmountForStakerAsset query the total delegation amount of the specified staker and asset.
 // It needs to be calculated from the share and amount of the asset pool.
 func (k Keeper) TotalDelegatedAmountForStakerAsset(ctx sdk.Context, stakerID string, assetID string) (amount sdkmath.Int, err error) {
-	amount = sdkmath.NewInt(0)
+	amount = sdkmath.ZeroInt()
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		if amounts.UndelegatableShare.IsZero() {
 			return false, nil
@@ -143,8 +143,8 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 	}
 	singleStateKey := assetstype.GetJoinedStoreKey(stakerID, assetID, opAddr)
 	delegationState := delegationtype.DelegationAmounts{
-		WaitUndelegationAmount: sdkmath.NewInt(0),
-		UndelegatableShare:     sdkmath.LegacyNewDec(0),
+		WaitUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:     sdkmath.LegacyZeroDec(),
 	}
 
 	value := store.Get(singleStateKey)
@@ -305,7 +305,7 @@ func (k *Keeper) SetStakerShareToZero(ctx sdk.Context, operator, assetID string,
 		if value != nil {
 			delegationState := delegationtype.DelegationAmounts{}
 			k.cdc.MustUnmarshal(value, &delegationState)
-			delegationState.UndelegatableShare = sdkmath.LegacyNewDec(0)
+			delegationState.UndelegatableShare = sdkmath.LegacyZeroDec()
 			bz := k.cdc.MustMarshal(&delegationState)
 			store.Set(singleStateKey, bz)
 		}

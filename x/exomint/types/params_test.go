@@ -59,7 +59,7 @@ func TestValidate(t *testing.T) {
 			name: "zero reward",
 			params: types.Params{
 				MintDenom:       "aevmos",
-				EpochReward:     sdkmath.NewInt(0),
+				EpochReward:     sdkmath.ZeroInt(),
 				EpochIdentifier: "day",
 			},
 			expResult: true,
@@ -150,11 +150,11 @@ func TestOverrideIfRequired(t *testing.T) {
 			next: types.DefaultParams(),
 			over: types.NewParams(
 				types.DefaultMintDenom,
-				sdkmath.NewInt(0), // 0 is not overridden
+				sdkmath.ZeroInt(), // 0 is not overridden
 				types.DefaultEpochIdentifier,
 			),
 			malleate: func(next *types.Params) {
-				next.EpochReward = sdkmath.NewInt(0)
+				next.EpochReward = sdkmath.ZeroInt()
 			},
 		},
 		{

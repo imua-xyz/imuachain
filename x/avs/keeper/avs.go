@@ -58,7 +58,7 @@ func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, e
 func (k *Keeper) GetAVSMinimumSelfDelegation(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return sdkmath.LegacyNewDec(0), errorsmod.Wrap(err, fmt.Sprintf("GetAVSMinimumSelfDelegation: key is %s", avsAddr))
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, fmt.Sprintf("GetAVSMinimumSelfDelegation: key is %s", avsAddr))
 	}
 	// #nosec G115
 	return sdkmath.LegacyNewDec(int64(avsInfo.Info.MinSelfDelegation)), nil

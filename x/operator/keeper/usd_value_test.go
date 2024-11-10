@@ -59,7 +59,7 @@ func (suite *OperatorTestSuite) TestCalculatedUSDValueOverflow() {
 	amount = sdkmath.NewInt(1)
 	assetDecimal = uint32(assetstype.MaxDecimal)
 	usdValue = operatorKeeper.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
-	expectedValue = sdkmath.LegacyNewDec(0)
+	expectedValue = sdkmath.LegacyZeroDec()
 	suite.Equal(expectedValue.String(), usdValue.String())
 
 	price = sdkmath.NewInt(1)
@@ -89,7 +89,7 @@ func (suite *OperatorTestSuite) TestAVSUSDValue() {
 		suite.Ctx,
 		&assetstype.StakingAssetInfo{
 			AssetBasicInfo:     usdcClientChainAsset,
-			StakingTotalAmount: sdkmath.NewInt(0),
+			StakingTotalAmount: sdkmath.ZeroInt(),
 		},
 	)
 	suite.NoError(err)

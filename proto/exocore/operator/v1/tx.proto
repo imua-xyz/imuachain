@@ -61,7 +61,10 @@ message OperatorVotingPower {
   ];
 }
 
-// VotingPowerSnapshot is used to record the historical voting power for AVSs
+// VotingPowerSnapshot records historical voting power for AVSs at specific epochs
+// or after slashing events.These snapshots are created at the end of each epoch and
+// when slashing occurs, enabling historical queries of operator voting power at
+// specific points in time.
 message VotingPowerSnapshot {
   // total_voting_power is the total voting power of specified AVS
   string total_voting_power = 1
@@ -74,7 +77,7 @@ message VotingPowerSnapshot {
   // for the specified AVS
   repeated OperatorVotingPower operator_voting_powers = 2;
   // last_changed_height is used to indicate the height of most recent change when
-  // the voting_power_set is nil, which can help to fall back to the correct epoch height.
+  // the operator_voting_powers is nil, which can help to fall back to the correct epoch height.
   int64 last_changed_height = 3;
   // epoch_identifier record the epoch info
   string epoch_identifier = 4;

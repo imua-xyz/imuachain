@@ -23,7 +23,7 @@ func (suite *KeeperTestSuite) TestEpochHooks() {
 			suite.Ctx,
 			feeCollector,
 			params.MintDenom,
-		).Amount.Equal(sdkmath.NewInt(0)),
+		).Amount.Equal(sdkmath.ZeroInt()),
 	)
 
 	// now go to one day

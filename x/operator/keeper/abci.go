@@ -58,7 +58,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	// update the voting power of operators and AVS
 	isSnapshotChanged := false
 	votingPowerSet := make([]*operatortypes.OperatorVotingPower, 0)
-	avsVotingPower := sdkmath.LegacyNewDec(0)
+	avsVotingPower := sdkmath.LegacyZeroDec()
 	hasOptedOperator := false
 	opFunc := func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error {
 		if !hasOptedOperator {
@@ -67,9 +67,9 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		// clear the old voting power for the operator
 		lastOptedUSDValue := *optedUSDValues
 		*optedUSDValues = operatortypes.OperatorOptedUSDValue{
-			TotalUSDValue:  sdkmath.LegacyNewDec(0),
-			SelfUSDValue:   sdkmath.LegacyNewDec(0),
-			ActiveUSDValue: sdkmath.LegacyNewDec(0),
+			TotalUSDValue:  sdkmath.LegacyZeroDec(),
+			SelfUSDValue:   sdkmath.LegacyZeroDec(),
+			ActiveUSDValue: sdkmath.LegacyZeroDec(),
 		}
 		stakingInfo, err := k.CalculateUSDValueForOperator(ctx, false, operator, assets, decimals, prices)
 		if err != nil {

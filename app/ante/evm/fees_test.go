@@ -60,7 +60,7 @@ func (suite *AnteTestSuite) TestEthMinGasPriceDecorator() {
 					ToAddress:   "evmos1dx67l23hz9l0k9hcher8xz04uj7wf3yu26l2yn",
 					Amount:      sdk.Coins{sdk.Coin{Amount: sdkmath.NewInt(10), Denom: denom}},
 				}
-				txBuilder := suite.CreateTestCosmosTxBuilder(sdkmath.NewInt(0), denom, &testMsg)
+				txBuilder := suite.CreateTestCosmosTxBuilder(sdkmath.ZeroInt(), denom, &testMsg)
 				return txBuilder.GetTx()
 			},
 			false,

@@ -313,7 +313,7 @@ func (k Keeper) UpdateNSTByBalanceChange(ctx sdk.Context, assetID string, rawDat
 func (k Keeper) getDecimal(ctx sdk.Context, assetID string) (int, sdkmath.Int, error) {
 	decimalMap, err := k.assetsKeeper.GetAssetsDecimal(ctx, map[string]interface{}{assetID: nil})
 	if err != nil {
-		return 0, sdkmath.NewInt(0), err
+		return 0, sdkmath.ZeroInt(), err
 	}
 	decimal := decimalMap[assetID]
 	return int(decimal), sdkmath.NewIntWithDecimal(1, int(decimal)), nil

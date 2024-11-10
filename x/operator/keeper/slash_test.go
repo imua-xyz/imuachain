@@ -65,7 +65,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
 	slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
 	exoSlashValue := suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.operatorAddr, infractionHeight, power, slashFactor, slashType)
-	suite.Equal(sdkmath.NewInt(0), exoSlashValue)
+	suite.Equal(sdkmath.ZeroInt(), exoSlashValue)
 
 	// verify the state after the slash
 	slashID := keeper.GetSlashIDForDogfood(slashType, infractionHeight)

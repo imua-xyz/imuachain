@@ -18,7 +18,7 @@ func (suite *AVSTestSuite) TestTaskInfo() {
 		TaskResponsePeriod:  10000,
 		TaskChallengePeriod: 5000,
 		ThresholdPercentage: 60,
-		TaskTotalPower:      sdk.Dec(sdkmath.NewInt(0)),
+		TaskTotalPower:      sdk.Dec(sdkmath.ZeroInt()),
 	}
 	err := suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
 	suite.NoError(err)

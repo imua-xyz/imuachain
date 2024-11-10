@@ -31,7 +31,7 @@ func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slas
 	// reduce the actual_completed_amount in the record
 	if slashAmount.GTE(undelegation.ActualCompletedAmount) {
 		slashAmount = undelegation.ActualCompletedAmount
-		undelegation.ActualCompletedAmount = sdkmath.NewInt(0)
+		undelegation.ActualCompletedAmount = sdkmath.ZeroInt()
 	} else {
 		undelegation.ActualCompletedAmount = undelegation.ActualCompletedAmount.Sub(slashAmount)
 	}
@@ -131,8 +131,8 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 			if err != nil {
 				return err
 			}
-			state.TotalShare = sdkmath.LegacyNewDec(0)
-			state.OperatorShare = sdkmath.LegacyNewDec(0)
+			state.TotalShare = sdkmath.LegacyZeroDec()
+			state.OperatorShare = sdkmath.LegacyZeroDec()
 		}
 		state.TotalAmount = remainingAmount
 		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashFromAssetsPool{
@@ -226,7 +226,7 @@ func (k Keeper) SlashWithInfractionReason(
 	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
 	if !isAvs {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)
-		return sdkmath.NewInt(0)
+		return sdkmath.ZeroInt()
 	}
 	slashID := GetSlashIDForDogfood(infraction, infractionHeight)
 	slashParam := &types.SlashInputInfo{
@@ -242,11 +242,11 @@ func (k Keeper) SlashWithInfractionReason(
 	err := k.Slash(ctx, slashParam)
 	if err != nil {
 		k.Logger(ctx).Error("error when executing slash", "error", err, "avsAddr", avsAddr)
-		return sdkmath.NewInt(0)
+		return sdkmath.ZeroInt()
 	}
 	// todo: The returned value should be the amount of burned Exo if we considering a slash from the reward
 	// Now it doesn't slash from the reward, so just return 0
-	return sdkmath.NewInt(0)
+	return sdkmath.ZeroInt()
 }
 
 // IsOperatorJailedForChainID returns whether an operator is jailed for a specific chainID.

@@ -156,7 +156,7 @@ func (p Precompile) RegisterToken(
 
 	stakingAsset := &assetstypes.StakingAssetInfo{
 		AssetBasicInfo:     asset,
-		StakingTotalAmount: sdkmath.NewInt(0),
+		StakingTotalAmount: sdkmath.ZeroInt(),
 	}
 
 	if err := p.assetsKeeper.RegisterNewTokenAndSetTokenFeeder(ctx, &oInfo); err != nil {
