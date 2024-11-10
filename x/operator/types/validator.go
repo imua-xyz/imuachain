@@ -21,10 +21,10 @@ func NewValidator(operator sdk.AccAddress, pubKey cryptotypes.PubKey, descriptio
 	}
 
 	return Validator{
-		OperatorAddress:         operator.String(),
+		OperatorEarningsAddr:    operator.String(),
 		ConsensusPubkey:         pkAny,
 		Jailed:                  false,
-		Status:                  stakingtypes.Unbonded,
+		Status:                  stakingtypes.Bonded,
 		VotingPower:             math.LegacyZeroDec(),
 		DelegatorShares:         math.ZeroInt(),
 		Description:             description,

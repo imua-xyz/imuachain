@@ -571,9 +571,9 @@ func (k *Keeper) GetAllOperatorConsKeyRecords(ctx sdk.Context) ([]types.Operator
 	return ret, nil
 }
 
-// NewValidatorByConsAddrForChainID returns a exocore types.Validator for the given consensus
+// GetValidatorByConsAddrForChainID returns a exocore types.Validator for the given consensus
 // address and chain id.
-func (k Keeper) NewValidatorByConsAddrForChainID(
+func (k Keeper) GetValidatorByConsAddrForChainID(
 	ctx sdk.Context, consAddr sdk.ConsAddress, chainIDWithoutRevision string,
 ) (types.Validator, bool) {
 	isAvs, avsAddrStr := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
@@ -612,6 +612,10 @@ func (k Keeper) NewValidatorByConsAddrForChainID(
 		ctx.Logger().Error(" new validator error", "err", err)
 		return types.Validator{}, false
 	}
+	val.OperatorEarningsAddr = ops.EarningsAddr
+	val.OperatorApproveAddr = ops.ApproveAddr
+	val.OperatorMetaInfo = ops.OperatorMetaInfo
+	val.ConsAddress = consAddr.String()
 	val.Commission = ops.Commission
 
 	assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddrStr)

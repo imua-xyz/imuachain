@@ -281,7 +281,7 @@ func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest
 		if wrappedKey == nil {
 			return status.Error(codes.Internal, "invalid consensus key")
 		}
-		val, found := k.NewValidatorByConsAddrForChainID(
+		val, found := k.GetValidatorByConsAddrForChainID(
 			ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
 		)
 		if found {
@@ -329,7 +329,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
 	}
 
-	val, found := k.NewValidatorByConsAddrForChainID(
+	val, found := k.GetValidatorByConsAddrForChainID(
 		ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
 	)
 	if !found {
