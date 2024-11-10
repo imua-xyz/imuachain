@@ -5,7 +5,7 @@ package exocore.oracle.v1;
 import "amino/amino.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
-import "exocore/oracle/v1/params.proto";
+import "exocore/oracle/v2/params.proto";
 import "exocore/oracle/v1/price.proto";
 import "gogoproto/gogo.proto";
 
@@ -47,7 +47,7 @@ message MsgUpdateParams {
   // params defines the x/staking parameters to update.
   //
   // NOTE: All parameters must be supplied.
-  Params params = 2 [
+  exocore.oracle.v2.Params params = 2 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];

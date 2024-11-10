@@ -235,7 +235,8 @@ func (m *ValidatorCurrentRewardsList) GetCurrentRewards() *ValidatorCurrentRewar
 	return nil
 }
 
-// TaskID is helper structure to store the validator outstanding rewards  for the genesis state.
+// ValidatorOutstandingRewardsList is a helper structure to store
+// the validator outstanding rewards for the genesis state.
 type ValidatorOutstandingRewardsList struct {
 	// val_addr is the address of validator
 	ValAddr string `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`

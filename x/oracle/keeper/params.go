@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
+	cv1types "github.com/ExocoreNetwork/exocore/x/oracle/migrations/cv1/types"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -14,6 +15,15 @@ const (
 	startAfterBlocks = 10
 	defaultInterval  = 30
 )
+
+func (k Keeper) GetV1Params(ctx sdk.Context) (params cv1types.Params) {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.ParamsKey)
+	if bz != nil {
+		k.cdc.MustUnmarshal(bz, &params)
+	}
+	return
+}
 
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	store := ctx.KVStore(k.storeKey)

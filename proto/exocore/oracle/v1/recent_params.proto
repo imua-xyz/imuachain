@@ -1,7 +1,7 @@
 syntax = "proto3";
 package exocore.oracle.v1;
 
-import "exocore/oracle/v1/params.proto";
+import "exocore/oracle/v2/params.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
 
@@ -10,5 +10,5 @@ message RecentParams {
   // block height of which the params from
   uint64 block = 1;
   // params the module params
-  Params params = 2;
+  exocore.oracle.v2.Params params = 2;
 }

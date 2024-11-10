@@ -5,7 +5,7 @@ package exocore.oracle.v1;
 import "exocore/oracle/v1/index_recent_msg.proto";
 import "exocore/oracle/v1/index_recent_params.proto";
 import "exocore/oracle/v1/native_token.proto";
-import "exocore/oracle/v1/params.proto";
+import "exocore/oracle/v2/params.proto";
 import "exocore/oracle/v1/prices.proto";
 import "exocore/oracle/v1/recent_msg.proto";
 import "exocore/oracle/v1/recent_params.proto";
@@ -17,7 +17,7 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
 // GenesisState defines the oracle module's genesis state.
 message GenesisState {
   // module params
-  Params params = 1 [(gogoproto.nullable) = false];
+  exocore.oracle.v2.Params params = 1 [(gogoproto.nullable) = false];
   // prices of all tokens
   repeated Prices prices_list = 2 [(gogoproto.nullable) = false];
 

@@ -6,7 +6,7 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "exocore/oracle/v1/index_recent_msg.proto";
 import "exocore/oracle/v1/index_recent_params.proto";
 import "exocore/oracle/v1/native_token.proto";
-import "exocore/oracle/v1/params.proto";
+import "exocore/oracle/v2/params.proto";
 import "exocore/oracle/v1/price.proto";
 import "exocore/oracle/v1/prices.proto";
 import "exocore/oracle/v1/recent_msg.proto";
@@ -41,7 +41,7 @@ service Query {
 
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v1/params";
+    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v2/params";
   }
 
   // Queries a list of Prices items.
@@ -66,7 +66,7 @@ service Query {
 
   // Queries a IndexRecentParams by index.
   rpc IndexRecentParams(QueryGetIndexRecentParamsRequest) returns (QueryGetIndexRecentParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v1/index_recent_params";
+    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v2/index_recent_params";
   }
 
   // Queries a IndexRecentMsg by index.
@@ -86,12 +86,12 @@ service Query {
 
   // Queries a list of RecentParams items.
   rpc RecentParams(QueryGetRecentParamsRequest) returns (QueryGetRecentParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v1/recent_params/{block}";
+    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v2/recent_params/{block}";
   }
 
   // RecentParamsAll query all RecentParams.
   rpc RecentParamsAll(QueryAllRecentParamsRequest) returns (QueryAllRecentParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v1/recent_params";
+    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/v2/recent_params";
   }
 }
 
@@ -157,7 +157,7 @@ message QueryParamsRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  exocore.oracle.v2.Params params = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryGetPricesRequest is request type for all prices of a specific token

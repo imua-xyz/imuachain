@@ -204,6 +204,8 @@ import (
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	upgradev1tov2 "github.com/ExocoreNetwork/exocore/app/upgrades/v1tov2"
 )
 
 // Name defines the application binary name
@@ -1074,6 +1076,9 @@ func NewExocoreApp(
 	app.setPostHandler()
 	app.SetEndBlocker(app.EndBlocker)
 
+	// this should be invoked before app.LoadLatestVersion, in case that there are any storeUpgrade{add, rename, delete}
+	app.setUpgradeHandlers()
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			logger.Error("error on loading last version", "err", err)
@@ -1395,4 +1400,33 @@ func (app *ExocoreApp) BlockedAddrs() map[string]bool {
 // GetScopedIBCKeeper implements the TestingApp interface.
 func (app *ExocoreApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 	return app.ScopedIBCKeeper
+}
+
+func (app *ExocoreApp) setUpgradeHandlers() {
+	app.UpgradeKeeper.SetUpgradeHandler(
+		upgradev1tov2.UpgradeName,
+		func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+			return app.mm.RunMigrations(ctx, app.configurator, vm)
+		},
+	)
+
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(err)
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+
+	var storeUpgrades *storetypes.StoreUpgrades
+	// StoreUpgrades defines a series of transformations to apply the multistore db upon load
+	// type StoreUpgrades struct {
+	// 	Added   []string      `json:"added"`
+	// 	Renamed []StoreRename `json:"renamed"`
+	// 	Deleted []string      `json:"deleted"`
+	// }
+	if storeUpgrades != nil {
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+	}
 }

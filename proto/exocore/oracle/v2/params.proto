@@ -1,25 +1,25 @@
 syntax = "proto3";
-package exocore.oracle.v1;
+package exocore.oracle.v2;
 
 import "exocore/oracle/v1/info.proto";
 import "exocore/oracle/v1/token_feeder.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/migrations/cv1/types";
+option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
 
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
   // chains represents the blockchains info
-  repeated Chain chains = 1;
+  repeated exocore.oracle.v1.Chain chains = 1;
   // tokens info
-  repeated Token tokens = 2;
+  repeated exocore.oracle.v1.Token tokens = 2;
   // sources info from where the price data would be fetched
-  repeated Source sources = 3;
+  repeated exocore.oracle.v1.Source sources = 3;
   // rules specified on how to decide the provided price source to be accept
-  repeated RuleSource rules = 4;
+  repeated exocore.oracle.v1.RuleSource rules = 4;
   // each tokenFeeder represents an active token whose price being updated
-  repeated TokenFeeder token_feeders = 5;
+  repeated exocore.oracle.v1.TokenFeeder token_feeders = 5;
   // for each round allow at most max_nonce transactions to be sent by one validator, [1,max_nonce]
   int32 max_nonce = 6;
   // voting power need to reach more than threshold_a/threshold_b
@@ -32,6 +32,8 @@ message Params {
   int32 max_det_id = 10;
   // for each token, only keep max_size_prices round of prices
   int32 max_size_prices = 11;
+
+  string new_migration_info = 12;
 }
 
 // ConsensusMode defines the consensus mode for the prices.
