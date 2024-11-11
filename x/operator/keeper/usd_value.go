@@ -470,7 +470,7 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 		return sdkmath.LegacyDec{}, err
 	}
 	if optedUSDValues.ActiveUSDValue.IsZero() {
-		return sdkmath.LegacyZeroDec(), err
+		return sdkmath.LegacyZeroDec(), nil
 	}
 
 	// calculate the active voting power for staker

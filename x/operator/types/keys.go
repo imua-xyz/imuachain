@@ -4,8 +4,6 @@ import (
 	"encoding/binary"
 	"math"
 
-	"github.com/ExocoreNetwork/exocore/utils"
-
 	"golang.org/x/xerrors"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -165,7 +163,7 @@ func KeyForVotingPowerSnapshot(avs common.Address, height int64) []byte {
 	return AppendMany(
 		avs.Bytes(),
 		// Append the height
-		utils.EncodeHeightBytes(uint64(height)),
+		sdk.Uint64ToBigEndian(uint64(height)),
 	)
 }
 

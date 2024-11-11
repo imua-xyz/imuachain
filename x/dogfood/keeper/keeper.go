@@ -86,8 +86,8 @@ func (k Keeper) Hooks() types.DogfoodHooks {
 	return types.MultiDogfoodHooks{}
 }
 
-// MarkUpdateValidatorSetFlag marks the end of the epoch. It is called within the BeginBlocker to inform
-// the module to apply the validator updates at the end of this block.
+// MarkUpdateValidatorSetFlag marks that the validator set needs to be updated at the end of this block.
+// Mostly, these updates occur in response to the epoch ending. In other cases, they are the result of slashing.
 func (k Keeper) MarkUpdateValidatorSetFlag(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.ShouldUpdateValidatorSetByteKey()

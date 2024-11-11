@@ -200,7 +200,10 @@ func (m *OperatorVotingPower) GetOperatorAddr() string {
 	return ""
 }
 
-// VotingPowerSnapshot is used to record the historical voting power for AVSs
+// VotingPowerSnapshot records historical voting power for AVSs at specific epochs
+// or after slashing events.These snapshots are created at the end of each epoch and
+// when slashing occurs, enabling historical queries of operator voting power at
+// specific points in time.
 type VotingPowerSnapshot struct {
 	// total_voting_power is the total voting power of specified AVS
 	TotalVotingPower github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=total_voting_power,json=totalVotingPower,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"total_voting_power"`
@@ -208,7 +211,7 @@ type VotingPowerSnapshot struct {
 	// for the specified AVS
 	OperatorVotingPowers []*OperatorVotingPower `protobuf:"bytes,2,rep,name=operator_voting_powers,json=operatorVotingPowers,proto3" json:"operator_voting_powers,omitempty"`
 	// last_changed_height is used to indicate the height of most recent change when
-	// the voting_power_set is nil, which can help to fall back to the correct epoch height.
+	// the operator_voting_powers is nil, which can help to fall back to the correct epoch height.
 	LastChangedHeight int64 `protobuf:"varint,3,opt,name=last_changed_height,json=lastChangedHeight,proto3" json:"last_changed_height,omitempty"`
 	// epoch_identifier record the epoch info
 	EpochIdentifier string `protobuf:"bytes,4,opt,name=epoch_identifier,json=epochIdentifier,proto3" json:"epoch_identifier,omitempty"`

@@ -248,7 +248,7 @@ func (k *Keeper) GetImpactfulAVSForOperator(ctx sdk.Context, operatorAddr string
 				return err
 			}
 			// #nosec G115
-			if epochNumber+int64(unbondingDuration) <= epochInfo.CurrentEpoch {
+			if epochNumber >= epochInfo.CurrentEpoch-int64(unbondingDuration) {
 				avsList = append(avsList, avsAddr)
 			}
 		}

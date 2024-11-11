@@ -390,10 +390,9 @@ func (k Keeper) GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.Epoc
 		return nil, err
 	}
 	avsInfo := avsInfoResp.Info
-	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
-	if !found {
-		return nil, types.ErrEpochNotFound.Wrapf("epoch info not found %s", avsInfo.EpochIdentifier)
-	}
+	// Epoch information must be available because it is checked when setting AVS information.
+	// Therefore, we don’t need to check it here.
+	epochInfo, _ := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
 	return &epochInfo, nil
 }
 

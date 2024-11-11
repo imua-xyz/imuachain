@@ -13,7 +13,6 @@ import (
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
