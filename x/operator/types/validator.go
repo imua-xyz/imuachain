@@ -1,9 +1,10 @@
 package types
 
 import (
+	"strings"
+
 	"cosmossdk.io/math"
 	"sigs.k8s.io/yaml"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -12,7 +13,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-func NewValidator(operator sdk.AccAddress, pubKey cryptotypes.PubKey, description stakingtypes.Description) (Validator, error) {
+func NewValidator(operator sdk.AccAddress, pubKey cryptotypes.PubKey) (Validator, error) {
 	pkAny, err := codectypes.NewAnyWithValue(pubKey)
 	if err != nil {
 		return Validator{}, err

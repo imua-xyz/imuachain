@@ -599,9 +599,7 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 	// since we are sending the address, we have to send the consensus key as well.
 	// this is because the presence of a non-empty address triggers a call to Validator
 	// which triggers a call to fetch the consensus key, in the slashing module.
-	val, err := types.NewValidator(
-		operatorAddr, wrappedKey.ToSdkKey(), stakingtypes.Description{},
-	)
+	val, err := types.NewValidator(operatorAddr, wrappedKey.ToSdkKey())
 	if err != nil {
 		ctx.Logger().Error("ValidatorByConsAddrForChainID new validator error", "err", err)
 		return types.Validator{}, false
