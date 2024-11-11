@@ -655,13 +655,15 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		if !ok {
 			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: decimals, key: assetID")
 		}
-		ret.Staking = ret.Staking.Add(CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
+		currentAssetTotalUSD := CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
+		ret.Staking = ret.Staking.Add(currentAssetTotalUSD)
 		// calculate the token amount from the share for the operator
 		selfAmount, err := delegationkeeper.TokensFromShares(state.OperatorShare, state.TotalShare, state.TotalAmount)
 		if err != nil {
 			return err
 		}
-		ret.SelfStaking = ret.SelfStaking.Add(CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal))
+		currentAssetSelfUSD := CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal)
+		ret.SelfStaking = ret.SelfStaking.Add(currentAssetSelfUSD)
 		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 		if err != nil {
 			return err
@@ -671,8 +673,10 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 			AssetID:       assetID,
 			Symbol:        assetInfo.AssetBasicInfo.Symbol,
 			Name:          assetInfo.AssetBasicInfo.Name,
-			Amount:        state.TotalAmount,
-			TotalUSDValue: ret.Staking,
+			SelfAmount:    selfAmount,
+			TotalAmount:   state.TotalAmount,
+			SelfUSDValue:  currentAssetSelfUSD,
+			TotalUSDValue: currentAssetTotalUSD,
 		}
 		delegatorTokens = append(delegatorTokens, info)
 

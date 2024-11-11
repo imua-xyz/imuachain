@@ -64,15 +64,29 @@ message DelegatorInfo {
   string symbol = 2;
   // name of the asset, like "Tether USD"
   string name = 3;
-  // amount is the total amount of the asset which delegation
-  string amount = 4
+  // self_amount is the self amount of the asset which delegation
+  string self_amount = 4
   [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // total_amount is the total amount of the asset which delegation
+  string total_amount = 5
+  [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // self_usd_value is the self delegation USD value for the validator
+  string self_usd_value = 6 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "SelfUSDValue"
+  ];
   // total_usd_value is the total delegation USD value for the validator
-  string total_usd_value = 5 [
+  string total_usd_value = 7 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false,
