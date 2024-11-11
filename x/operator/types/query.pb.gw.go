@@ -928,15 +928,15 @@ func request_Query_Validator_0(ctx context.Context, marshaler runtime.Marshaler,
 		_   = err
 	)
 
-	val, ok = pathParams["validator_addr"]
+	val, ok = pathParams["validator_acc_addr"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "validator_addr")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "validator_acc_addr")
 	}
 
-	protoReq.ValidatorAddr, err = runtime.String(val)
+	protoReq.ValidatorAccAddr, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "validator_addr", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "validator_acc_addr", err)
 	}
 
 	val, ok = pathParams["chain"]
@@ -966,15 +966,15 @@ func local_request_Query_Validator_0(ctx context.Context, marshaler runtime.Mars
 		_   = err
 	)
 
-	val, ok = pathParams["validator_addr"]
+	val, ok = pathParams["validator_acc_addr"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "validator_addr")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "validator_acc_addr")
 	}
 
-	protoReq.ValidatorAddr, err = runtime.String(val)
+	protoReq.ValidatorAccAddr, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "validator_addr", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "validator_acc_addr", err)
 	}
 
 	val, ok = pathParams["chain"]
@@ -1672,7 +1672,7 @@ var (
 
 	pattern_Query_Validators_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "operator", "v1", "validators", "chain"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_Validator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "operator", "v1", "validator", "validator_addr", "chain"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Validator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "operator", "v1", "validator", "validator_acc_addr", "chain"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

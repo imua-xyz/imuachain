@@ -37,7 +37,7 @@ message Validator {
   // jailed defined whether the validator has been jailed from bonded status or not
   bool jailed = 6;
   // status is the validator status (bonded/unbonding/unbonded)
-  cosmos.staking.v1beta1.BondStatus status =7;
+  cosmos.staking.v1beta1.BondStatus status = 7;
   // voting_power define the validator voting power
   string voting_power = 8 [
     (cosmos_proto.scalar)  = "cosmos.Dec",

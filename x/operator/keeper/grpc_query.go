@@ -301,7 +301,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
-	if req.ValidatorAddr == "" {
+	if req.ValidatorAccAddr == "" {
 		return nil, status.Error(codes.InvalidArgument, "validator address cannot be empty")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
@@ -313,7 +313,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	} else {
 		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(req.Chain)
 	}
-	accAddr, err := sdk.AccAddressFromBech32(req.ValidatorAddr)
+	accAddr, err := sdk.AccAddressFromBech32(req.ValidatorAccAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -326,14 +326,14 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 		if err != nil {
 			return nil, err
 		}
-		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
+		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAccAddr)
 	}
 
 	val, found := k.GetValidatorByConsAddrForChainID(
 		ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
 	)
 	if !found {
-		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAddr)
+		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAccAddr)
 	}
 
 	return &types.QueryValidatorResponse{Validator: val}, nil
