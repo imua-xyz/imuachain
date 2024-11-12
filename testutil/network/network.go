@@ -396,7 +396,6 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		p2pURL, err := url.Parse(p2pAddr)
 		if err != nil {
 			return nil, err

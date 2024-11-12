@@ -70,8 +70,7 @@ func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate b
 			return ctx, err
 		}
 		for i, pk := range pubKeys {
-			// addrFromPubk, err := sdk.AccAddressFromBech32(sdk.AccAddress(pk).String())
-			if !bytes.Equal(signers[i], pk.Address()) {
+			if !simulate && !bytes.Equal(signers[i], pk.Address()) {
 				return ctx, sdkerrors.ErrInvalidPubKey.Wrapf("pubKey does not match signer address %s with signer index: %d", signers[i], i)
 			}
 		}
