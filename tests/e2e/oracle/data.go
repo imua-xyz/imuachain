@@ -35,9 +35,25 @@ func (p priceTime) updateTimestamp() priceTime {
 	return p
 }
 
+func (p priceTime) generateRealTimeStructs(detID string, sourceID uint64) (priceTime, oracletypes.PriceSource) {
+	retP := p.updateTimestamp()
+	pTimeDetID := retP.getPriceTimeDetID(detID)
+	return retP, oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			&pTimeDetID,
+		},
+	}
+}
+
 var (
 	price1 = priceTime{
 		Price:     "199999",
+		Decimal:   18,
+		Timestamp: time.Now().UTC().Format(layout),
+	}
+	price2 = priceTime{
+		Price:     "299999",
 		Decimal:   18,
 		Timestamp: time.Now().UTC().Format(layout),
 	}

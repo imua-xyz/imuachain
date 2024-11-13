@@ -75,14 +75,14 @@ func (r *roundPricesList) copy4CheckTx() *roundPricesList {
 	for _, v := range r.roundPricesList {
 		tmpRP := &roundPrices{
 			detID:     v.detID,
-			price:     big.NewInt(0).Set(v.price),
+			price:     copyBigInt(v.price),
 			prices:    make([]*priceAndPower, 0, len(v.prices)),
 			timestamp: v.timestamp,
 		}
 		for _, pNP := range v.prices {
 			tmpPNP := *pNP
 			// power will be modified during execution
-			tmpPNP.power = big.NewInt(0).Set(pNP.power)
+			tmpPNP.power = copyBigInt(pNP.power)
 			tmpRP.prices = append(tmpRP.prices, &tmpPNP)
 		}
 
