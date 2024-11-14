@@ -35,7 +35,7 @@ func NewGenesisState(p Params) *GenesisState {
 	}
 }
 
-func NewMissedRound(index int64, missed bool) *MissedRound {
+func NewMissedRound(index uint64, missed bool) *MissedRound {
 	return &MissedRound{
 		Index:  index,
 		Missed: missed,

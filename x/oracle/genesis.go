@@ -47,7 +47,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// set vlidatorMissedRounds
 	for _, elem := range genState.ValidatorMissedRounds {
 		for _, missedRound := range elem.MissedRounds {
-			k.SetValidatorMissedRoundBitArray(ctx, elem.Address, uint64(missedRound.Index), missedRound.Missed)
+			k.SetValidatorMissedRoundBitArray(ctx, elem.Address, missedRound.Index, missedRound.Missed)
 		}
 	}
 	// this line is used by starport scaffolding # genesis/module/init

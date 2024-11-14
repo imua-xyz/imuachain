@@ -117,7 +117,7 @@ func (k Keeper) IterateValidatorReportInfos(ctx sdk.Context, handler func(addres
 }
 
 // IterateValidatorMissedRoundBitArrray iterates all missed rounds in one performance window of rounds
-func (k Keeper) IterateValidatorMissedRoundBitArray(ctx sdk.Context, validator string, handler func(index int64, missed bool) (stop bool)) {
+func (k Keeper) IterateValidatorMissedRoundBitArray(ctx sdk.Context, validator string, handler func(index uint64, missed bool) (stop bool)) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SlashingMissedBitArrayPrefix(validator))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
@@ -127,7 +127,7 @@ func (k Keeper) IterateValidatorMissedRoundBitArray(ctx sdk.Context, validator s
 		if err := k.cdc.Unmarshal(iterator.Value(), &missed); err != nil {
 			panic(fmt.Sprintf("failed to unmarshal missed round: %v", err))
 		}
-		if handler(int64(index), missed.Value) {
+		if handler(index, missed.Value) {
 			break
 		}
 	}
@@ -135,7 +135,7 @@ func (k Keeper) IterateValidatorMissedRoundBitArray(ctx sdk.Context, validator s
 
 func (k Keeper) GetValidatorMissedRounds(ctx sdk.Context, address string) []*types.MissedRound {
 	missedRounds := []*types.MissedRound{}
-	k.IterateValidatorMissedRoundBitArray(ctx, address, func(index int64, missed bool) (stop bool) {
+	k.IterateValidatorMissedRoundBitArray(ctx, address, func(index uint64, missed bool) (stop bool) {
 		missedRounds = append(missedRounds, types.NewMissedRound(index, missed))
 		return false
 	})
