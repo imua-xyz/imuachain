@@ -17,7 +17,7 @@ type priceWithTimeAndRound struct {
 
 type reportPrice struct {
 	validator string
-	// final price, set to -1 as initial
+	// final price, nil as initial stands for no aggregated price reached yet
 	price *big.Int
 	// sourceId->priceWithTimeAndRound
 	prices map[uint64]*priceWithTimeAndRound
@@ -217,6 +217,8 @@ func (agg *aggregator) getFinalPriceList(feederID uint64) []*types.AggFinalPrice
 				DetID:    price.detRoundID,
 				Price:    price.price.String(),
 			})
+			// {feederID,soruceID} has been found, skip other reports
+			break
 		}
 	}
 	return ret

@@ -128,6 +128,8 @@ func (k Keeper) CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederI
 		}
 		return 0, errors.New("feeder not found")
 	}
+	validatorset := k.GetAggregatorContext(ctx).GetValidators()
+	ctx.Logger().Debug("current validatorset:%v", validatorset)
 	return 0, fmt.Errorf("validator for the consKey which signed the create-price tx is not included in active validator set, signer consAddr:%s", validator)
 }
 

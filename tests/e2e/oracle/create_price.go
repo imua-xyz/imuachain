@@ -6,6 +6,7 @@ import (
 
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -45,7 +46,7 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 		},
 	}
 
-	// case_1.
+	// case_1. update price to p1 {reporter: v0, v1, v2. miss:v3}
 	s.moveToAndCheck(10)
 	// send create-price from validator-0
 	msg0 := oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 10, 1)
@@ -68,13 +69,13 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
 
-	s.moveToAndCheck(12)
+	s.moveToAndCheck(13)
 	// query final price
 	res, err := s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	s.Require().Equal(priceTest1R1.getPriceTimeRound(1), res.Price)
 
-	// case_2.
+	// case_2. failed to update price to p2, keep p1
 	// timestamp need to be updated
 	priceTest2R2 := price2.updateTimestamp()
 	priceTimeDetID2R2 := priceTest2R2.getPriceTimeDetID("10")
@@ -101,7 +102,7 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 	// price update fail, round 2 still have price{p1}
 	s.Require().Equal(priceTest1R1.getPriceTimeRound(2), res.Price)
 
-	// case_3.
+	// case_3. update price to p2{reporter:v0,v1,v2, miss:v3}, v3 should be slash for now(require 1 report at least, but got 0)
 	// update timestamp
 	priceTest2R3 := price2.updateTimestamp()
 	priceTimeDetID2R3 := priceTest2R3.getPriceTimeDetID("11")
@@ -128,22 +129,17 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
 
-	s.moveToAndCheck(32)
+	s.moveToAndCheck(33)
 	res, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price updated, round 3 has price{p2}
 	s.Require().Equal(priceTest2R3.getPriceTimeRound(3), res.Price)
+	// case_slahsing: validator 3 is jailed
+	resSigningInfo, err := s.network.QuerySlashing().SigningInfo(context.Background(), &slashingtypes.QuerySigningInfoRequest{ConsAddress: sdk.ConsAddress(s.network.Validators[3].PubKey.Address()).String()})
+	s.Require().NoError(err)
+	s.Require().True(true, resSigningInfo.ValSigningInfo.JailedUntil.After(time.Now()))
 
-	// case_4.
-	// update timestamp
-	//	priceTest1R4 := price2.updateTimestamp()
-	//	priceTimeDetID2R3 := priceTest2R3.getPriceTimeDetID("10")
-	//	priceSource2R3 := oracletypes.PriceSource{
-	//		SourceID: 1,
-	//		Prices: []*oracletypes.PriceTimeDetID{
-	//			&priceTimeDetID2R3,
-	//		},
-	//	}
+	// case_4. update price to p1{reporter:v0,v1,v2, miss:v3}
 	s.moveToAndCheck(40)
 	priceTest1R4, priceSource1R4 := price1.generateRealTimeStructs("12", 1)
 	msg0 = oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource1R4}, 40, 1)
@@ -160,14 +156,9 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 	s.Require().NoError(err)
 	// price updated, round 4 has price{p1}
 	s.Require().Equal(priceTest1R4.getPriceTimeRound(4), res.Price)
-
 }
 
 func (s *E2ETestSuite) TestCreatePriceNST() {
-
-}
-
-func (s *E2ETestSuite) TestSlashing() {
 
 }
 

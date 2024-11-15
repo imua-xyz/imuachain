@@ -158,13 +158,11 @@ func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	// TODO: try better way to init caches and aggregatorContext than beginBlock
 	_ = am.keeper.GetCaches()
 	agc := am.keeper.GetAggregatorContext(ctx)
-	once.Do(func() {
-		validatorPowers := agc.GetValidatorPowers()
-		// set validatorReportInfo to track performance
-		for validator := range validatorPowers {
-			am.keeper.InitValidatorReportInfo(ctx, validator, ctx.BlockHeight())
-		}
-	})
+	validatorPowers := agc.GetValidatorPowers()
+	// set validatorReportInfo to track performance
+	for validator := range validatorPowers {
+		am.keeper.InitValidatorReportInfo(ctx, validator, ctx.BlockHeight())
+	}
 }
 
 // EndBlock contains the logic that is automatically triggered at the end of each block
@@ -215,7 +213,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 		}
 		// TODO: for the round calculation, now only sourceID=1 is used so {feederID, sourceID} have only one value for each feederID which corresponding to one round.
 		// But when we came to multiple sources, we should consider the round corresponding to feedeerID instead of {feederID, sourceID}
-		for _, finalPrice := range agc.GetFinalPriceListForFeederIDs(windowClosed) {
+		for i, finalPrice := range agc.GetFinalPriceListForFeederIDs(windowClosed) {
 			exist, matched := agc.PerformanceReview(ctx, finalPrice, validator)
 			if exist && !matched {
 				// TODO: malicious price, just slash&jail immediately
@@ -276,7 +274,6 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 			default:
 				// Array value at this index has not changed, no need to update counter
 			}
-
 			minReportedPerWindow := am.keeper.GetMinReportedPerWindow(ctx)
 
 			if missed {

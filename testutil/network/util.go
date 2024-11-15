@@ -483,5 +483,6 @@ func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount 
 }
 
 func NewGenStateOracle() (oracletypes.GenesisState, error) {
+	DefaultGenStateOracle.Params.Slashing.ReportedRoundsWindow = 2
 	return DefaultGenStateOracle, nil
 }

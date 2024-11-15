@@ -107,7 +107,7 @@ func DefaultParams() Params {
 		MaxDetId:      5,
 		MaxSizePrices: 100,
 		Slashing: &SlashingParams{
-			ReportedRoundsWindow:        100,
+			ReportedRoundsWindow:        30,
 			MinReportedPerWindow:        sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2)),
 			OracleMissJailDuration:      600 * time.Second,
 			OracleMaliciousJailDuration: 30 * 24 * time.Hour,
