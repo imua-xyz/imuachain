@@ -213,7 +213,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 		}
 		// TODO: for the round calculation, now only sourceID=1 is used so {feederID, sourceID} have only one value for each feederID which corresponding to one round.
 		// But when we came to multiple sources, we should consider the round corresponding to feedeerID instead of {feederID, sourceID}
-		for i, finalPrice := range agc.GetFinalPriceListForFeederIDs(windowClosed) {
+		for _, finalPrice := range agc.GetFinalPriceListForFeederIDs(windowClosed) {
 			exist, matched := agc.PerformanceReview(ctx, finalPrice, validator)
 			if exist && !matched {
 				// TODO: malicious price, just slash&jail immediately
