@@ -113,7 +113,7 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 				return err
 			}
 			err = SignSendEvmTxAndWait(m.DefaultEvmTxRequirements, &EvmTxInQueue{
-				ToAddr: &AssetsPrecompileAddr,
+				ToAddr: &AVSPrecompileAddr,
 				Value:  big.NewInt(0),
 				Data:   data,
 			})

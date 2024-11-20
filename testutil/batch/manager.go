@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"fmt"
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"math/big"
 	"os"
 	"strings"
@@ -50,8 +51,8 @@ var (
 	ExoDecimalReduction  = new(big.Int).Exp(big.NewInt(10), big.NewInt(types.BaseDenomUnit), nil)
 	logger               = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	AssetsPrecompileAddr = common.HexToAddress("0x0000000000000000000000000000000000000804")
-
-	AllEpochs = []string{
+	AVSPrecompileAddr    = common.HexToAddress("0x0000000000000000000000000000000000000901")
+	AllEpochs            = []string{
 		epochstypes.MinuteEpochID,
 		epochstypes.HourEpochID,
 		epochstypes.DayEpochID,
@@ -68,6 +69,7 @@ type Manager struct {
 	db     *gorm.DB
 	lock   sync.Mutex
 
+	DogfoodAddr              string
 	FaucetSK                 *ecdsa.PrivateKey
 	KeyRing                  keyring.Keyring
 	NodeEVMHTTPClients       []*ethclient.Client
@@ -110,13 +112,13 @@ func NewManager(ctx context.Context, config EndToEndConfig) (*Manager, error) {
 		db:                 db,
 		FaucetSK:           sk,
 		KeyRing:            KeyRing,
+		DogfoodAddr:        avstypes.GenerateAVSAddr(avstypes.ChainIDWithoutRevision(config.ChainID)),
 		NodeEVMHTTPClients: make([]*ethclient.Client, config.ChainValidatorNumber),
 		NodeEVMWSClients:   make([]*ethclient.Client, config.ChainValidatorNumber),
 		NodeClientCtx:      make([]client.Context, config.ChainValidatorNumber),
 		TxsQueue:           make(chan interface{}, config.TxsQueueBufferSize),
 		Shutdown:           make(chan bool),
 	}
-	_, err = LoadObjectByID[HelperRecord](manager, SqliteDefaultStartID)
 	if err != nil {
 		err = SaveObject[HelperRecord](manager, HelperRecord{CurrentBatchID: 0})
 		if err != nil {
@@ -222,6 +224,29 @@ func (m *Manager) CreateStakers() error {
 	return CreateObjects(m, &Staker{}, int64(m.config.StakerNumber), createNewStaker)
 }
 
+func (m *Manager) fetchAndSaveDogfoodAVS() error {
+	dogfoodAvs, err := LoadObjectByID[AVS](m, SqliteDefaultStartID)
+	if err != nil || dogfoodAvs. {
+		return err
+	}
+
+	queryClient := avstypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
+	req := &avstypes.QueryAVSInfoReq{
+		AVSAddress: m.DogfoodAddr,
+	}
+	res, err := queryClient.QueryAVSInfo(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	// save the dogfood avs to local db
+	err = SaveObject[AVS](m, AVS{})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Manager) CreateAVS() error {
 	createNewAVS := func(id uint) (*AVS, error) {
 		addr, privKey := testutiltx.NewAddrKey()
@@ -266,4 +291,9 @@ func (m *Manager) CreateOperators() error {
 	}
 	// create a new Staker
 	return CreateObjects(m, &Operator{}, int64(m.config.OperatorNumber), createNewOperator)
+}
+
+func (m *Manager) Start() error {
+
+	return nil
 }
