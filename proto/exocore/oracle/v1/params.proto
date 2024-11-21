@@ -2,12 +2,10 @@ syntax = "proto3";
 package exocore.oracle.v1;
 
 import "amino/amino.proto";
-import "cosmos_proto/cosmos.proto";
 import "exocore/oracle/v1/info.proto";
 import "exocore/oracle/v1/token_feeder.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
-import "google/protobuf/timestamp.proto";
 option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
 
 // Params defines the parameters for the module.
@@ -60,7 +58,7 @@ message SlashingParams {
     (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
-  // oracle_miss_jail_duraion defines the duration one validator should be jailed for missing reporting price
+  // oracle_miss_jail_duration defines the duration one validator should be jailed for missing reporting price
   google.protobuf.Duration oracle_miss_jail_duration = 3 
       [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
   // oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior
