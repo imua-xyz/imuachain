@@ -108,7 +108,8 @@ func (w *worker) seal() {
 	}
 	w.sealed = true
 	w.price = w.a.aggregate().String()
-	w.f = nil
+	// filter is kept for performance evaluation
+	//	w.f = nil
 	w.c = nil
 	// aggregator is kept for performance evaluation
 	// w.a = nil

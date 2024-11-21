@@ -201,6 +201,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	defer func() {
 		for _, feederID := range windowClosed {
 			agc.RemoveWorker(feederID)
+			am.keeper.RemoveNonceWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
 		}
 	}()
 	// update&check slashing info

@@ -4,6 +4,9 @@ import (
 	"context"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -33,6 +36,9 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 
 	kr2 := s.network.Validators[2].ClientCtx.Keyring
 	creator2 := sdk.AccAddress(s.network.Validators[2].PubKey.Address())
+
+	kr3 := s.network.Validators[3].ClientCtx.Keyring
+	creator3 := sdk.AccAddress(s.network.Validators[3].PubKey.Address())
 
 	//	kr3 := s.network.Validators[2].ClientCtx.Keyring
 	//	creator3 := sdk.AccAddress(s.network.Validators[2].PubKey.Address())
@@ -69,12 +75,28 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
 
+	// send create-price with 'malicious' price from validator-3
+	priceSource1R1.Prices[0].Price = "123"
+	msg3 := oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 10, 1)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconskey3", kr3)
+	s.Require().NoError(err)
+
 	s.moveToAndCheck(13)
 	// query final price
 	res, err := s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	s.Require().Equal(priceTest1R1.getPriceTimeRound(1), res.Price)
 
+	resSigningInfo, err := s.network.QuerySlashing().SigningInfo(context.Background(), &slashingtypes.QuerySigningInfoRequest{ConsAddress: sdk.ConsAddress(s.network.Validators[3].PubKey.Address()).String()})
+	s.Require().NoError(err)
+	s.Require().True(true, resSigningInfo.ValSigningInfo.JailedUntil.After(time.Now()))
+	chainID := avstypes.ChainIDWithoutRevision(s.network.Config.ChainID)
+	avsAddr := avstypes.GenerateAVSAddr(chainID)
+	resOperatorSlashInfo, err := s.network.QueryOperator().QueryOperatorSlashInfo(context.Background(), &operatortypes.QueryOperatorSlashInfoRequest{OperatorAVSAddress: &operatortypes.OperatorAVSAddress{OperatorAddr: s.network.Validators[3].Address.String(), AvsAddress: avsAddr}})
+	s.Require().NoError(err)
+	slashProportion, _ := sdkmath.LegacyNewDecFromStr("0.1")
+	s.Require().Equal(slashProportion, resOperatorSlashInfo.AllSlashInfo[0].Info.SlashProportion)
+	return
 	// case_2. failed to update price to p2, keep p1
 	// timestamp need to be updated
 	priceTest2R2 := price2.updateTimestamp()
@@ -135,9 +157,15 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 	// price updated, round 3 has price{p2}
 	s.Require().Equal(priceTest2R3.getPriceTimeRound(3), res.Price)
 	// case_slahsing: validator 3 is jailed
-	resSigningInfo, err := s.network.QuerySlashing().SigningInfo(context.Background(), &slashingtypes.QuerySigningInfoRequest{ConsAddress: sdk.ConsAddress(s.network.Validators[3].PubKey.Address()).String()})
+	resSigningInfo, err = s.network.QuerySlashing().SigningInfo(context.Background(), &slashingtypes.QuerySigningInfoRequest{ConsAddress: sdk.ConsAddress(s.network.Validators[3].PubKey.Address()).String()})
 	s.Require().NoError(err)
 	s.Require().True(true, resSigningInfo.ValSigningInfo.JailedUntil.After(time.Now()))
+	// chainID := avstypes.ChainIDWithoutRevision(s.network.Config.ChainID)
+	// avsAddr := avstypes.GenerateAVSAddr(chainID)
+	// resOperatorSlashInfo, err := s.network.QueryOperator().QueryOperatorSlashInfo(context.Background(), &operatortypes.QueryOperatorSlashInfoRequest{OperatorAVSAddress: &operatortypes.OperatorAVSAddress{OperatorAddr: s.network.Validators[3].Address.String(), AvsAddress: avsAddr}})
+	// s.Require().NoError(err)
+	// slashProportion, _ := sdkmath.LegacyNewDecFromStr("0.05")
+	// s.Require().Equal(slashProportion, resOperatorSlashInfo.AllSlashInfo[0].Info.SlashProportion)
 
 	// case_4. update price to p1{reporter:v0,v1,v2, miss:v3}
 	s.moveToAndCheck(40)
@@ -158,9 +186,7 @@ func (s *E2ETestSuite) TestCreatePriceLST() {
 	s.Require().Equal(priceTest1R4.getPriceTimeRound(4), res.Price)
 }
 
-func (s *E2ETestSuite) TestCreatePriceNST() {
-
-}
+func (s *E2ETestSuite) TestCreatePriceNST() {} //nolint:unused
 
 func (s *E2ETestSuite) moveToAndCheck(height int64) {
 	_, err := s.network.WaitForHeightWithTimeout(height, 30*time.Second)

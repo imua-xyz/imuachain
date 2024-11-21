@@ -11,6 +11,6 @@ func TestE2ESuite(t *testing.T) {
 	cfg := network.DefaultConfig()
 	cfg.NumValidators = 4
 	cfg.CleanupDir = true
-	cfg.EnableTMLogging = true
+	cfg.EnableTMLogging = false
 	suite.Run(t, NewE2ETestSuite(cfg))
 }

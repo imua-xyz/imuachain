@@ -128,9 +128,19 @@ func (agc *AggregatorContext) checkMsg(msg *types.MsgCreatePrice) error {
 
 	// check feeder is active
 	feederContext := agc.rounds[msg.FeederID]
-	if feederContext == nil || feederContext.status != roundStatusOpen {
-		// feederId does not exist or not alive
-		return errors.New("context not exist or not available")
+	if feederContext == nil {
+		return fmt.Errorf("context not exist for feederID:%d", msg.FeederID)
+	}
+	// This round had been sealed but current window not closed
+	if feederContext.status != roundStatusOpen {
+
+		if feederWorker := agc.aggregators[msg.FeederID]; feederWorker != nil {
+			if _, list4Aggregator := feederWorker.filtrate(msg); list4Aggregator != nil {
+				// record this message for performance evaluation(used for slashing)
+				feederWorker.recordMessage(msg.Creator, msg.FeederID, list4Aggregator)
+			}
+		}
+		return fmt.Errorf("context is available for feederID:%d", msg.FeederID)
 	}
 	// senity check on basedBlock
 	if msg.BasedBlock != feederContext.basedBlock {
@@ -153,6 +163,7 @@ func (agc *AggregatorContext) checkMsg(msg *types.MsgCreatePrice) error {
 }
 
 func (agc *AggregatorContext) FillPrice(msg *types.MsgCreatePrice) (*PriceItemKV, *cache.ItemM, error) {
+
 	feederWorker := agc.aggregators[msg.FeederID]
 	// worker initialzed here reduce workload for Endblocker
 	if feederWorker == nil {
