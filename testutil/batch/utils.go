@@ -103,7 +103,7 @@ func IterateObjects[T any](m *Manager, model T, opFunc func(id uint, objectNumbe
 	return nil
 }
 
-func FundingObjects[T Addressable](m *Manager, model T, needExo int64) error {
+func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) error {
 	if m.config.AddrNumberInMultiSend <= 0 {
 		return xerrors.Errorf("invalid AddrNumberInMultiSend:%d", m.config.AddrNumberInMultiSend)
 	}
@@ -118,6 +118,10 @@ func FundingObjects[T Addressable](m *Manager, model T, needExo int64) error {
 	inputAmount := sdktypes.ZeroInt()
 	addrNumberInOneMsg := 0
 	opFunc := func(id uint, objectNumber int64, object T) error {
+		if !object.ShouldFund() {
+			// skip this object then continue the other objects
+			return nil
+		}
 		// select evm http client
 		selectNode := int(id) % len(m.NodeEVMHTTPClients)
 		balance, err := m.NodeEVMHTTPClients[selectNode].BalanceAt(m.ctx, object.EvmAddress(), nil)

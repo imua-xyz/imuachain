@@ -48,9 +48,9 @@ func SignAndSendEvmTx(basicInfo *BasicEvmTxRequirements, txInfo *EvmTxInQueue) (
 		To:   txInfo.ToAddr,
 		Data: txInfo.Data,
 	}
-	sk := txInfo.sk
+	sk := txInfo.Sk
 	if sk == nil {
-		// using default sk to send this transaction
+		// using default Sk to send this transaction
 		msg.From = basicInfo.caller
 		sk = basicInfo.sk
 	}

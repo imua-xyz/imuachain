@@ -3,13 +3,21 @@ package batch
 import (
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"math/big"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ExocoreNetwork/exocore/precompiles/assets"
+	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ExocoreNetwork/exocore/types"
@@ -37,14 +45,16 @@ import (
 )
 
 const (
-	AppName             = "e2e-tool"
-	DefaultAssetDecimal = 6
-	DefaultTestSKName   = "default-test-sk"
-	AssetNamePrefix     = "testAsset"
-	StakerNamePrefix    = "testStaker"
-	AVSNamePrefix       = "testAVS"
-	OperatorNamePrefix  = "testOperator"
-	DefaultNodeIndex    = 0
+	AppName                   = "e2e-tool"
+	DefaultAssetDecimal       = 6
+	DefaultTestSKName         = "default-test-Sk"
+	AssetNamePrefix           = "testAsset"
+	StakerNamePrefix          = "testStaker"
+	AVSNamePrefix             = "testAVS"
+	DogfoodAVSName            = "dogfood"
+	OperatorNamePrefix        = "testOperator"
+	DefaultOperatorNamePrefix = "defaultOperator"
+	DefaultNodeIndex          = 0
 )
 
 var (
@@ -81,7 +91,7 @@ type Manager struct {
 	Shutdown chan bool
 }
 
-func NewManager(ctx context.Context, config EndToEndConfig) (*Manager, error) {
+func NewManager(ctx context.Context, config *EndToEndConfig) (*Manager, error) {
 	// open the sqlite db
 	dsn := "file:" + config.DBPathOrURL + "?cache=shared&_journal_mode=WAL"
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
@@ -93,7 +103,7 @@ func NewManager(ctx context.Context, config EndToEndConfig) (*Manager, error) {
 	// most test transactions will be signed by this private key.
 	sk, err := crypto.HexToECDSA(config.FaucetSk)
 	if err != nil {
-		return nil, xerrors.Errorf("invalid faucet sk, err:%s", err)
+		return nil, xerrors.Errorf("invalid faucet Sk, err:%s", err)
 	}
 
 	registry := codectypes.NewInterfaceRegistry()
@@ -165,7 +175,7 @@ func NewManager(ctx context.Context, config EndToEndConfig) (*Manager, error) {
 		caller:       crypto.PubkeyToAddress(sk.PublicKey),
 		signer:       ethSigner,
 		ethC:         manager.NodeEVMHTTPClients[DefaultNodeIndex],
-		WaitDuration: time.Duration(config.TxCheckInterval),
+		WaitDuration: time.Duration(config.SingleTxCheckInterval),
 	}
 	return manager, nil
 }
@@ -210,12 +220,13 @@ func (m *Manager) CreateStakers() error {
 	createNewStaker := func(id uint) (*Staker, error) {
 		addr, privKey := testutiltx.NewAddrKey()
 		name := fmt.Sprintf("%s%d", StakerNamePrefix, id)
-		// add the sk to key ring
+		// add the Sk to key ring
 		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), secp256k1.KeyType)
 		if err != nil {
 			return nil, err
 		}
 		return &Staker{
+			Name:    name,
 			Address: addr,
 			Sk:      privKey.Bytes(),
 		}, nil
@@ -224,22 +235,27 @@ func (m *Manager) CreateStakers() error {
 	return CreateObjects(m, &Staker{}, int64(m.config.StakerNumber), createNewStaker)
 }
 
-func (m *Manager) fetchAndSaveDogfoodAVS() error {
-	dogfoodAvs, err := LoadObjectByID[AVS](m, SqliteDefaultStartID)
-	if err != nil || dogfoodAvs. {
-		return err
+func (m *Manager) SaveDogfoodAVS() error {
+	if m.GetDB().Migrator().HasTable(&AVS{}) {
+		var avs AVS
+		// Query the database for the AVS record with the specified address.
+		err := m.GetDB().Where("address = ?", m.DogfoodAddr).First(&avs).Error
+		// Check if the error is "record not found", indicating that the address does not exist in the database.
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			// For other types of errors, return a detailed error message.
+			return xerrors.Errorf("Failed to load AVS with address %s, err: %s", m.DogfoodAddr, err)
+		} else if err == nil {
+			// the dogfood AVS has been saved.
+			logger.Info("SaveDogfoodAVS, already saved")
+			return nil
+		}
 	}
 
-	queryClient := avstypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
-	req := &avstypes.QueryAVSInfoReq{
-		AVSAddress: m.DogfoodAddr,
-	}
-	res, err := queryClient.QueryAVSInfo(context.Background(), req)
-	if err != nil {
-		return err
-	}
 	// save the dogfood avs to local db
-	err = SaveObject[AVS](m, AVS{})
+	err := SaveObject[AVS](m, AVS{
+		Name:    DogfoodAVSName,
+		Address: m.DogfoodAddr,
+	})
 	if err != nil {
 		return err
 	}
@@ -247,17 +263,65 @@ func (m *Manager) fetchAndSaveDogfoodAVS() error {
 	return nil
 }
 
+func (m *Manager) AddAssetsToDogfoodAVS(allAssetsID []string) error {
+	clientCtx := m.NodeClientCtx[DefaultNodeIndex]
+	queryClient := dogfoodtypes.NewQueryClient(clientCtx)
+
+	res, err := queryClient.Params(m.ctx, &dogfoodtypes.QueryParamsRequest{})
+	if err != nil {
+		return err
+	}
+	// Create a set (using a map) to keep track of existing AssetIDs in res.Params.AssetIDs
+	existingAssets := make(map[string]struct{})
+
+	// Populate the map with the current AssetIDs
+	for _, id := range res.Params.AssetIDs {
+		existingAssets[id] = struct{}{}
+	}
+
+	// Iterate through allAssetsID to find any missing IDs
+	isUpdateParam := false
+	for _, id := range allAssetsID {
+		if _, exists := existingAssets[id]; !exists {
+			// If the ID is missing, add it to the existing AssetIDs
+			res.Params.AssetIDs = append(res.Params.AssetIDs, id)
+			isUpdateParam = true
+		}
+	}
+	if isUpdateParam {
+		record, err := m.KeyRing.Key(DefaultTestSKName)
+		if err != nil {
+			return err
+		}
+		// Retrieve the address from the Record
+		address, err := record.GetAddress()
+		if err != nil {
+			return err
+		}
+		msg := &dogfoodtypes.MsgUpdateParams{
+			Authority: address.String(),
+			Params:    res.Params,
+		}
+		err = SignAndSendMultiMsgs(clientCtx, DefaultTestSKName, flags.BroadcastSync, msg)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (m *Manager) CreateAVS() error {
 	createNewAVS := func(id uint) (*AVS, error) {
 		addr, privKey := testutiltx.NewAddrKey()
 		name := fmt.Sprintf("%s%d", AVSNamePrefix, id)
-		// add the sk to key ring
+		// add the Sk to key ring
 		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), secp256k1.KeyType)
 		if err != nil {
 			return nil, err
 		}
 		return &AVS{
-			Address: addr,
+			Name:    name,
+			Address: strings.ToLower(addr.String()),
 			Sk:      privKey.Bytes(),
 		}, nil
 	}
@@ -265,11 +329,49 @@ func (m *Manager) CreateAVS() error {
 	return CreateObjects(m, &AVS{}, int64(m.config.AVSNumber), createNewAVS)
 }
 
+func (m *Manager) SaveDefaultOperator() error {
+	clientCtx := m.NodeClientCtx[DefaultNodeIndex]
+	queryClient := operatortypes.NewQueryClient(clientCtx)
+	req := &operatortypes.QueryAllOperatorsRequest{
+		Pagination: &query.PageRequest{},
+	}
+	res, err := queryClient.QueryAllOperators(context.Background(), req)
+	if err != nil {
+		return err
+	}
+	for i, operatorAddr := range res.OperatorAccAddrs {
+		if m.GetDB().Migrator().HasTable(&Operator{}) {
+			var operator Operator
+			// Query the database for the operator record with the specified address.
+			err := m.GetDB().Where("address = ?", operatorAddr).First(&operator).Error
+			// Check if the error is "record not found", indicating that the address does not exist in the database.
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				// For other types of errors, return a detailed error message.
+				return xerrors.Errorf("Failed to load operator with address %s, err: %s", operatorAddr, err)
+			} else if err == nil {
+				logger.Info("SaveDogfoodAVS, already saved", "operator", operatorAddr)
+				continue
+			}
+		}
+
+		// save the dogfood avs to local db
+		err := SaveObject[Operator](m, Operator{
+			Address: operatorAddr,
+			Name:    fmt.Sprintf("%s%d", DefaultOperatorNamePrefix, i),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (m *Manager) CreateOperators() error {
 	createNewOperator := func(id uint) (*Operator, error) {
 		addr, privKey := testutiltx.NewAccAddressAndKey()
 		name := fmt.Sprintf("%s%d", OperatorNamePrefix, id)
-		// add the sk to key ring
+		// add the Sk to key ring
 		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), secp256k1.KeyType)
 		if err != nil {
 			return nil, err
@@ -293,7 +395,128 @@ func (m *Manager) CreateOperators() error {
 	return CreateObjects(m, &Operator{}, int64(m.config.OperatorNumber), createNewOperator)
 }
 
-func (m *Manager) Start() error {
+func (m *Manager) Prepare() error {
+	// save the dogfood AVS and the default operators to the local db
+	if err := m.SaveDogfoodAVS(); err != nil {
+		return xerrors.Errorf("failed to save dogfood AVS,err:%s", err)
+	}
+	if err := m.SaveDefaultOperator(); err != nil {
+		return xerrors.Errorf("failed to save default operators,err:%s", err)
+	}
+	// create the assets, stakers, operators and AVSs for batch test
+	if err := m.CreateAssets(); err != nil {
+		return xerrors.Errorf("failed to create assets,err:%s", err)
+	}
+	if err := m.CreateAVS(); err != nil {
+		return xerrors.Errorf("failed to create AVSs,err:%s", err)
+	}
+	if err := m.CreateStakers(); err != nil {
+		return xerrors.Errorf("failed to create stakers,err:%s", err)
+	}
+	if err := m.CreateOperators(); err != nil {
+		return xerrors.Errorf("failed to create operators,err:%s", err)
+	}
+	logger.Info("finish creating and saving test objects, next step: funding")
+	// funding all test objects
+	if err := m.Funding(); err != nil {
+		return xerrors.Errorf("failed to fund the test objects,err:%s", err)
+	}
+	logger.Info("finish funding test objects, next step: registration")
+	// register the test objects
+	assets, err := m.RegisterAssets()
+	if err != nil {
+		return xerrors.Errorf("failed to register assets,err:%s", err)
+	}
+	if err = m.RegisterOperators(); err != nil {
+		return xerrors.Errorf("failed to register operators,err:%s", err)
+	}
+	if err = m.RegisterAVSs(assets); err != nil {
+		return xerrors.Errorf("failed to register AVss,err:%s", err)
+	}
+	// add the test assets to the supported list of dogfood AVS
+	if err = m.AddAssetsToDogfoodAVS(assets); err != nil {
+		return xerrors.Errorf("failed to add the test assets to the dofood AVS,err:%s", err)
+	}
+	// opt all test operators to all test AVSs
+	if err = m.OptOperatorsIntoAVSs(); err != nil {
+		return xerrors.Errorf("failed to opt all operators to all AVSs,err:%s", err)
+	}
+	logger.Info("finish the preparation for the batch test")
+	return nil
+}
 
+func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
+	helperRecord, err := LoadObjectByID[HelperRecord](m, SqliteDefaultStartID)
+	if err != nil {
+		logger.Error("EnqueueAndCheckTxsInBatch: failed to load the helper record", "err", err)
+		return err
+	}
+	var enqueueTxsFunc func(msgType string) error
+	var txsCheckFunc func(batchID uint, msgType string) error
+	switch msgType {
+	case assets.MethodDepositLST, assets.MethodWithdrawLST:
+		enqueueTxsFunc = m.EnqueueDepositWithdrawLSTTxs
+		txsCheckFunc = m.DepositWithdrawLSTCheck
+	case delegation.MethodDelegate, delegation.MethodUndelegate:
+		enqueueTxsFunc = m.EnqueueDelegationTxs
+		txsCheckFunc = m.EvmDelegationCheck
+	default:
+		return xerrors.Errorf("EnqueueAndCheckTxsInBatch, invalid msgType:%s", msgType)
+	}
+	if err := enqueueTxsFunc(msgType); err != nil {
+		logger.Error("EnqueueAndCheckTxsInBatch: failed to test transactions in batch", "msgType", msgType, "err", err)
+		return err
+	}
+	// When configuring this interval, the durations of sending and on-chain processing should be taken into account.
+	time.Sleep(time.Duration(m.config.BatchTxsCheckInterval) * time.Second)
+	if err := m.TxOnChainCheck(helperRecord.CurrentBatchID, assets.MethodDepositLST); err != nil {
+		logger.Error("EnqueueAndCheckTxsInBatch: failed to check whether the txs are on chain", "err", err)
+		return err
+	}
+	if err := txsCheckFunc(helperRecord.CurrentBatchID, assets.MethodDepositLST); err != nil {
+		logger.Error("EnqueueAndCheckTxsInBatch: failed to check the txs", "msgType", msgType, "err", err)
+		return err
+	}
+	// increase the batch id if the msg type is withdrawal
+	if msgType == assets.MethodWithdrawLST {
+		helperRecord.CurrentBatchID++
+		if err := SaveObject(m, helperRecord); err != nil {
+			logger.Error("EnqueueAndCheckTxsInBatch: can't save the helper record")
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Manager) Start() error {
+	if err := m.Prepare(); err != nil {
+		return err
+	}
+	// send test transactions in batch
+	go func() {
+		// deposit
+		if err := m.EnqueueAndCheckTxsInBatch(assets.MethodDepositLST); err != nil {
+			return
+		}
+		// delegation
+		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodDelegate); err != nil {
+			return
+		}
+		// undelegate
+		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodUndelegate); err != nil {
+			return
+		}
+		// withdrawal
+		if err := m.EnqueueAndCheckTxsInBatch(assets.MethodWithdrawLST); err != nil {
+			return
+		}
+		time.Sleep(time.Duration(m.config.EachTestInterval) * time.Second)
+	}()
+	// Dequeue the transactions and send them to the node.
+	// This function will be blocked unless it receives the signal for shutting down.
+	if err := m.DequeueAndSignSendTxs(); err != nil {
+		logger.Error("DequeueAndSignSendTxs, err:%s", err)
+		return err
+	}
 	return nil
 }

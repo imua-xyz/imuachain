@@ -3,6 +3,7 @@ package batch
 import (
 	"crypto/ecdsa"
 	"math/big"
+	"strings"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,7 +31,7 @@ type EndToEndConfig struct {
 
 	// the private key of faucet
 	// and the Exo amount that should be sent to the test addresses
-	FaucetSk          string `mapstructure:"faucet-sk"`
+	FaucetSk          string `mapstructure:"faucet-Sk"`
 	StakerExoAmount   int64  `mapstructure:"staker-exo-amount"`
 	OperatorExoAmount int64  `mapstructure:"operator-exo-amount"`
 	AVSExoAmount      int64  `mapstructure:"avs-exo-amount"`
@@ -60,8 +61,10 @@ type EndToEndConfig struct {
 	// EachTestInterval indicates the interval of single test. The staker will start another test
 	// After this interval.
 	EachTestInterval int64 `mapstructure:"each-test-interval"`
-	// TxCheckInterval is an interval waiting to check the transaction.
-	TxCheckInterval int64 `mapstructure:"tx-check-interval"`
+	// SingleTxCheckInterval is an interval waiting to check the transaction.
+	SingleTxCheckInterval int64 `mapstructure:"single-tx-check-interval"`
+	// BatchTxsCheckInterval is an interval waiting to check the batch transactions.
+	BatchTxsCheckInterval int64 `mapstructure:"batch-txs-check-interval"`
 	// AddrNumberInMultiSend is the number of address included in a multisend message, in order to
 	// prevent the message from becoming too large and causing the transaction to exceed the packing limit
 	AddrNumberInMultiSend int `mapstructure:"addr-number-in-multi-send"`
@@ -85,7 +88,8 @@ type Asset struct {
 }
 
 type Staker struct {
-	ID           uint           `gorm:"primaryKey"`                   // primary key
+	ID           uint `gorm:"primaryKey"` // primary key
+	Name         string
 	Address      common.Address `gorm:"column:address;type:char(42)"` // eth address
 	Sk           []byte         // private key
 	Transactions []Transaction  `gorm:"foreignKey:StakerID"`
@@ -123,22 +127,32 @@ type Operator struct {
 }
 
 type AVS struct {
-	ID      uint           `gorm:"primaryKey"`                   // primary key
-	Address common.Address `gorm:"column:address;type:char(42)"` // eth address
-	Sk      []byte         // private key
+	ID      uint `gorm:"primaryKey"` // primary key
+	Name    string
+	Address string // eth address
+	Sk      []byte // private key
 }
 
-type Addressable interface {
+type AddressForFunding interface {
 	AccAddress() sdktypes.AccAddress
 	EvmAddress() common.Address
+	ShouldFund() bool
 }
 
 func (a AVS) AccAddress() sdktypes.AccAddress {
-	return a.Address.Bytes()
+	return common.HexToAddress(a.Address).Bytes()
 }
 
 func (a AVS) EvmAddress() common.Address {
-	return a.Address
+	return common.HexToAddress(a.Address)
+}
+
+func (a AVS) ShouldFund() bool {
+	return !a.IsDogfood()
+}
+
+func (a AVS) IsDogfood() bool {
+	return a.Name == DogfoodAVSName
 }
 
 func (o Operator) AccAddress() sdktypes.AccAddress {
@@ -151,6 +165,14 @@ func (o Operator) EvmAddress() common.Address {
 	return common.BytesToAddress(accAddr[:common.AddressLength])
 }
 
+func (o Operator) ShouldFund() bool {
+	return !o.IsDefaultOperator()
+}
+
+func (o Operator) IsDefaultOperator() bool {
+	return strings.HasPrefix(o.Name, DefaultOperatorNamePrefix)
+}
+
 func (s Staker) AccAddress() sdktypes.AccAddress {
 	return s.Address.Bytes()
 }
@@ -159,8 +181,12 @@ func (s Staker) EvmAddress() common.Address {
 	return s.Address
 }
 
+func (s Staker) ShouldFund() bool {
+	return true
+}
+
 type EvmTxInQueue struct {
-	sk               *ecdsa.PrivateKey
+	Sk               *ecdsa.PrivateKey
 	From             common.Address
 	UseExternalNonce bool
 	Nonce            uint64

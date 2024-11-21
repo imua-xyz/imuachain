@@ -162,6 +162,9 @@ func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
 }
 
 func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
+	if msgType != delegation.MethodDelegate && msgType != delegation.MethodUndelegate {
+		return xerrors.Errorf("EvmDelegationCheck invalid msg type:%s", msgType)
+	}
 	expectedAmount := sdkmath.LegacyZeroDec()
 	queryClient := delegationtype.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	stakerOpFunc := func(stakerDBID uint, _ int64, staker *Staker) error {

@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/ExocoreNetwork/exocore/precompiles/assets"
 	avsprecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
 	"github.com/ExocoreNetwork/exocore/testutil/tx"
@@ -84,9 +86,13 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 	minSelfDelegation := uint64(0)
 	params := []uint64{2, 3, 4, 4}
 	opFunc := func(id uint, _ int64, avs *AVS) error {
+		if avs.IsDogfood() {
+			// skip the dogfood AVS and continue addressing the other AVSs
+			return nil
+		}
 		// check if the avs has been registered.
 		req := &avstypes.QueryAVSInfoReq{
-			AVSAddress: strings.ToLower(avs.Address.String()),
+			AVSAddress: avs.Address,
 		}
 		_, err := queryClient.QueryAVSInfo(m.ctx, req)
 		if err != nil {
@@ -112,10 +118,15 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 			if err != nil {
 				return err
 			}
+			sk, err := crypto.ToECDSA(avs.Sk)
+			if err != nil {
+				return xerrors.Errorf("can't convert the Sk to ecdsa private key,avs:%v,err:%s", avs, err)
+			}
 			err = SignSendEvmTxAndWait(m.DefaultEvmTxRequirements, &EvmTxInQueue{
 				ToAddr: &AVSPrecompileAddr,
 				Value:  big.NewInt(0),
 				Data:   data,
+				Sk:     sk,
 			})
 			if err != nil {
 				return err
@@ -133,6 +144,10 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 func (m *Manager) RegisterOperators() error {
 	queryClient := operatortypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	opFunc := func(_ uint, _ int64, operator *Operator) error {
+		if operator.IsDefaultOperator() {
+			// skip the default operator and continue addressing the test operators
+			return nil
+		}
 		// check if the operator has been registered.
 		req := &operatortypes.GetOperatorInfoReq{
 			OperatorAddr: operator.Address,
@@ -169,13 +184,22 @@ func (m *Manager) RegisterOperators() error {
 func (m *Manager) OptOperatorsIntoAVSs() error {
 	queryClient := operatortypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	operatorOpFunc := func(_ uint, _ int64, operator *Operator) error {
+		if operator.IsDefaultOperator() {
+			// skip the default operator and continue addressing the test operators
+			// todo: the related private key need to be imported if we want to address the default operator
+			return nil
+		}
 		avsOpFunc := func(_ uint, _ int64, avs *AVS) error {
-			avsAddrStr := strings.ToLower(avs.Address.String())
+			if avs.IsDogfood() {
+				// skip the dogfood AVS and continue addressing the other AVSs
+				// todo: the test operators need to launch the Exocore node if they want to opt into the dogfood
+				return nil
+			}
 			// check if the operator has been registered.
 			req := &operatortypes.QueryOptInfoRequest{
 				OperatorAVSAddress: &operatortypes.OperatorAVSAddress{
 					OperatorAddr: operator.Address,
-					AvsAddress:   avsAddrStr,
+					AvsAddress:   avs.Address,
 				},
 			}
 			optInfo, err := queryClient.QueryOptInfo(m.ctx, req)
@@ -183,7 +207,7 @@ func (m *Manager) OptOperatorsIntoAVSs() error {
 				// register operator
 				msg := &operatortypes.OptIntoAVSReq{
 					FromAddress:   operator.Address,
-					AvsAddress:    avsAddrStr,
+					AvsAddress:    avs.Address,
 					PublicKeyJSON: operator.ConsensusPubKey,
 				}
 				clientCtx := m.NodeClientCtx[DefaultNodeIndex]

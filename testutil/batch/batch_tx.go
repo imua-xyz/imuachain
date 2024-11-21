@@ -55,11 +55,11 @@ func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
 	// send the tx info to the queue
 	sk, err := crypto.ToECDSA(params.staker.Sk)
 	if err != nil {
-		return xerrors.Errorf("can't convert the sk to ecdsa private key,staker:%v,err:%s", params.staker.ID, err)
+		return xerrors.Errorf("can't convert the Sk to ecdsa private key,staker:%v,err:%s", params.staker.ID, err)
 	}
 
 	evmTxInQueue := &EvmTxInQueue{
-		sk:               sk,
+		Sk:               sk,
 		From:             params.staker.EvmAddress(),
 		UseExternalNonce: true,
 		Nonce:            *params.nonce,
@@ -68,21 +68,29 @@ func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
 		Data:             params.msgData,
 		TxRecordID:       txRecord.ID,
 	}
-	m.TxsQueue <- evmTxInQueue
+	select {
+	case m.TxsQueue <- evmTxInQueue:
+		// Successfully sent to the channel
+	case <-m.Shutdown:
+		// Received a shutdown signal, return immediately
+		fmt.Println("Received shutdown signal, stopping...")
+		return nil
+	}
 	// increase the nonce
 	*params.nonce++
 	return nil
 }
 
-func (m *Manager) EnqueueDepositWithdrawLSTTxs(isWithdrawal bool) error {
+func (m *Manager) EnqueueDepositWithdrawLSTTxs(msgType string) error {
+	if msgType != assets.MethodDepositLST && msgType != assets.MethodWithdrawLST {
+		return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs invalid msg type:%s", msgType)
+	}
 	assetsAbi, err := abi.JSON(strings.NewReader(assets.AssetsABI))
 	if err != nil {
 		return err
 	}
 	opAmount := DefaultDepositAmount
-	msgType := assets.MethodDepositLST
-	if isWithdrawal {
-		msgType = assets.MethodWithdrawLST
+	if msgType == assets.MethodWithdrawLST {
 		// The remaining amount has been delegated to the operators.
 		// Therefore, we use half of the total deposit amount as the withdrawal amount.
 		opAmount = HalfDefaultDepositAmount
@@ -129,7 +137,10 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(isWithdrawal bool) error {
 	return nil
 }
 
-func (m *Manager) EnqueueDelegationTxs(isUndelegation bool) error {
+func (m *Manager) EnqueueDelegationTxs(msgType string) error {
+	if msgType != delegation.MethodDelegate && msgType != delegation.MethodUndelegate {
+		return xerrors.Errorf("EnqueueDelegationTxs invalid msg type:%s", msgType)
+	}
 	delegationAbi, err := abi.JSON(strings.NewReader(delegation.DelegationABI))
 	if err != nil {
 		return err
@@ -137,10 +148,6 @@ func (m *Manager) EnqueueDelegationTxs(isUndelegation bool) error {
 	operatorNumber, err := ObjectsNumber(m, &Operator{})
 	if err != nil {
 		return err
-	}
-	msgType := delegation.MethodDelegate
-	if isUndelegation {
-		msgType = delegation.MethodUndelegate
 	}
 
 	ethHTTPClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
