@@ -136,9 +136,9 @@ func (k Keeper) GetStakerList(ctx sdk.Context, assetID string) types.StakerList 
 
 // GetAllStakerListAssets return stakerList combined with assetIDs they belong to, used for genesisstate exporting
 func (k Keeper) GetAllStakerListAssets(ctx sdk.Context) (ret []types.StakerListAssets) {
-	store := ctx.KVStore(k.storeKey)
 	// set assetID with "" to iterate all stakerList with every assetIDs
-	iterator := sdk.KVStorePrefixIterator(store, types.NativeTokenStakerListKey(""))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NativeTokenStakerListKey(""))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 	ret = make([]types.StakerListAssets, 0)
 	for ; iterator.Valid(); iterator.Next() {
