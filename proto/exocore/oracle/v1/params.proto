@@ -29,7 +29,7 @@ message Params {
   int32 threshold_b = 8;
   // for v1, mode=1, get final price as soon as voting power reach threshold_a/threshold_b
   ConsensusMode mode = 9;
-  // for each round, a validator only allowed to provide at most max_det_id continuous rounds of prices for DS
+  // for each round, a validator only allowed to provide at most max_det_id consecutive rounds of prices for DS
   int32 max_det_id = 10;
   // for each token, only keep max_size_prices round of prices
   int32 max_size_prices = 11;
@@ -70,7 +70,7 @@ message SlashingParams {
     (gogoproto.nullable)   = false,
     (amino.dont_omitempty) = true
   ];
-  // slash_fraction_miss defines the fraction one validator should be punished for malicious behavior
+  // slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior
   bytes slash_fraction_malicious = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false,

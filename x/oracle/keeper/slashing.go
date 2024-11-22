@@ -16,7 +16,7 @@ func (k Keeper) InitValidatorReportInfo(ctx sdk.Context, validator string, heigh
 	store := ctx.KVStore(k.storeKey)
 	key := types.SlashingValidatorReportInfoKey(validator)
 	if !store.Has(key) {
-		// set the record for validator to tracking performance of oracle service
+		// set the record for the validator to track performance of the oracle service
 		reportInfo := &types.ValidatorReportInfo{
 			Address:     validator,
 			StartHeight: height,
@@ -26,7 +26,7 @@ func (k Keeper) InitValidatorReportInfo(ctx sdk.Context, validator string, heigh
 	}
 }
 
-// SetValidatorReportInfo sets the reporting info for a validator
+// SetValidatorReportInfo sets the validator reporting info to a validator
 func (k Keeper) SetValidatorReportInfo(ctx sdk.Context, validator string, info types.ValidatorReportInfo) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&info)
@@ -53,7 +53,7 @@ func (k Keeper) SetValidatorMissedRoundBitArray(ctx sdk.Context, validator strin
 	store.Set(types.SlashingMissedBitArrayKey(validator, index), bz)
 }
 
-// GetValidatorMissedBlocks returns array of missed rounds for given validator
+// GetValidatorMissedRoundBitArray returns whether a validator missed a specific reporting round
 func (k Keeper) GetValidatorMissedRoundBitArray(ctx sdk.Context, validator string, index uint64) bool {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.SlashingMissedBitArrayKey(validator, index))
@@ -80,10 +80,10 @@ func (k Keeper) GetSlashFractionMalicious(ctx sdk.Context) (res sdk.Dec) {
 	return k.GetParams(ctx).Slashing.SlashFractionMalicious
 }
 
-// GetMinReportedPerWindow minimum blocks repored prices per window
+// GetMinReportedPerWindow returns the minimum number of blocks that must report prices per window
 func (k Keeper) GetMinReportedPerWindow(ctx sdk.Context) int64 {
 	params := k.GetParams(ctx)
-	reportedRoundsWindow := k.GetReportedRoundsWindow(ctx)
+	reportedRoundsWindow := params.Slashing.ReportedRoundsWindow
 
 	// NOTE: RoundInt64 will never panic as minReportedPerWindow is
 	//       less than 1.
