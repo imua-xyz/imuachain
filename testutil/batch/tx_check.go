@@ -1,10 +1,12 @@
 package batch
 
 import (
-	"math/big"
+	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
 	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
 	assettypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
@@ -43,6 +45,46 @@ func (m *Manager) GetPendingTxIDsByBatchAndType(batchID uint, txType string) ([]
 	}
 
 	return ids, int64(len(ids)), nil
+}
+
+func (m *Manager) QueryBalance(addr sdktypes.AccAddress) (*banktypes.QueryAllBalancesResponse, error) {
+	params := banktypes.NewQueryAllBalancesRequest(addr, &query.PageRequest{})
+	queryClient := banktypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
+	return queryClient.AllBalances(m.ctx, params)
+}
+
+func (m *Manager) QueryStakerAssetInfo(clientChainLzID uint64, stakerAddr, assetAddr string) (*assettypes.StakerAssetInfo, error) {
+	queryClient := assettypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
+	stakerID, assetID := assettypes.GetStakerIDAndAssetIDFromStr(clientChainLzID, stakerAddr, assetAddr)
+	req := &assettypes.QuerySpecifiedAssetAmountReq{
+		StakerID: stakerID, // already lowercase
+		AssetID:  assetID,  // already lowercase
+	}
+	return queryClient.QueStakerSpecifiedAssetAmount(m.ctx, req)
+}
+
+func (m *Manager) QueryDelegatedAmount(clientChainLzID uint64, stakerAddr, assetAddr, operatorAddr string) (sdkmath.Int, error) {
+	queryDelegationClient := delegationtype.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
+	stakerID, assetID := assettypes.GetStakerIDAndAssetIDFromStr(clientChainLzID, stakerAddr, assetAddr)
+	req := &delegationtype.SingleDelegationInfoReq{
+		StakerID:     stakerID,     // already lowercase
+		AssetID:      assetID,      // already lowercase
+		OperatorAddr: operatorAddr, // already lowercase
+	}
+	delegationInfo, err := queryDelegationClient.QuerySingleDelegationInfo(m.ctx, req)
+	if err != nil {
+		return sdkmath.ZeroInt(), err
+	}
+	operatorAssetReq := &assettypes.QueryOperatorSpecifiedAssetAmountReq{
+		OperatorAddr: operatorAddr, // already lowercase
+		AssetID:      assetID,      // already lowercase
+	}
+	queryAssetsClient := assettypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
+	operatorAssetInfo, err := queryAssetsClient.QueOperatorSpecifiedAssetAmount(m.ctx, operatorAssetReq)
+	if err != nil {
+		return sdkmath.ZeroInt(), err
+	}
+	return delegationkeeper.TokensFromShares(delegationInfo.UndelegatableShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
 }
 
 func (m *Manager) TxOnChainCheck(batchID uint, msgType string) error {
@@ -98,30 +140,11 @@ func (m *Manager) TxOnChainCheck(batchID uint, msgType string) error {
 // 2. After the withdrawal tests are completed, the totalDepositAmount should be:
 // (DefaultDepositAmount / 2) * (batchID + 1).
 func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
-	var expectedAmount *big.Int
-	switch msgType {
-	case assets.MethodDepositLST:
-		expectedAmount = big.NewInt(0).Add(
-			DefaultDepositAmount,
-			big.NewInt(0).Mul(HalfDefaultDepositAmount, big.NewInt(int64(batchID))),
-		)
-	case assets.MethodWithdrawLST:
-		expectedAmount = big.NewInt(0).Mul(HalfDefaultDepositAmount, big.NewInt(int64(batchID+1)))
-	default:
-		return xerrors.Errorf("DepositWithdrawLSTCheck, invalid msgType:%s", msgType)
-	}
-
-	queryClient := assettypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	stakerOpFunc := func(stakerDBID uint, _ int64, staker *Staker) error {
 		assetOpFunc := func(assetDBID uint, _ int64, asset *Asset) error {
-			stakerID, assetID := assettypes.GetStakerIDAndAssetIDFromStr(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
-			req := &assettypes.QuerySpecifiedAssetAmountReq{
-				StakerID: stakerID, // already lowercase
-				AssetID:  assetID,  // already lowercase
-			}
-			res, err := queryClient.QueStakerSpecifiedAssetAmount(m.ctx, req)
+			res, err := m.QueryStakerAssetInfo(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
 			if err != nil {
-				logger.Error("DepositWithdrawLSTCheck, error occurs when calling QueStakerSpecifiedAssetAmount",
+				logger.Error("DepositWithdrawLSTCheck, error occurs when querying the staker asset info",
 					"stakerDBID", stakerDBID, "assetDBID", assetDBID, "err", err)
 				// return nil to continue the next check
 				return nil
@@ -138,14 +161,19 @@ func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
 				// return nil to continue the next check
 				return nil
 			}
-			if res.TotalDepositAmount.Equal(sdkmath.NewIntFromBigInt(expectedAmount)) {
+			expectedCheckAmount, ok := sdkmath.NewIntFromString(transaction.ExpectedCheckValue)
+			if !ok {
+				logger.Error("DepositWithdrawLSTCheck, can't parse the expected check value",
+					"stakerDBID", stakerDBID, "assetDBID", assetDBID, "expectedCheckValue", transaction.ExpectedCheckValue, "err", err)
+				// return nil to continue the next check
+				return nil
+			}
+			if res.TotalDepositAmount.Equal(expectedCheckAmount) {
 				transaction.CheckResult = Successful
 			} else {
 				transaction.CheckResult = failed
-				transaction.ExpectedCheckValue = expectedAmount.String()
 				transaction.ActualCheckValue = res.TotalDepositAmount.String()
 			}
-
 			return nil
 		}
 		err := IterateObjects(m, &Asset{}, assetOpFunc)
@@ -165,18 +193,10 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 	if msgType != delegation.MethodDelegate && msgType != delegation.MethodUndelegate {
 		return xerrors.Errorf("EvmDelegationCheck invalid msg type:%s", msgType)
 	}
-	expectedAmount := sdkmath.LegacyZeroDec()
-	queryClient := delegationtype.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	stakerOpFunc := func(stakerDBID uint, _ int64, staker *Staker) error {
 		assetOpFunc := func(assetDBID uint, _ int64, asset *Asset) error {
 			operatorOpFunc := func(_ uint, _ int64, operator *Operator) error {
-				stakerID, assetID := assettypes.GetStakerIDAndAssetIDFromStr(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
-				req := &delegationtype.SingleDelegationInfoReq{
-					StakerID:     stakerID,         // already lowercase
-					AssetID:      assetID,          // already lowercase
-					OperatorAddr: operator.Address, // already lowercase
-				}
-				res, err := queryClient.QuerySingleDelegationInfo(m.ctx, req)
+				delegatedAmount, err := m.QueryDelegatedAmount(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String(), operator.Address)
 				if err != nil {
 					return err
 				}
@@ -192,22 +212,19 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 					// return nil to continue the next check
 					return nil
 				}
-				if msgType == delegation.MethodDelegate {
-					expectedAmount, err = sdkmath.LegacyNewDecFromStr(transaction.OpAmount)
-					if err != nil {
-						logger.Error("EvmDelegationCheck, can't get the expectedAmount",
-							"stakerDBID", stakerDBID, "assetDBID", assetDBID, "operator", operator.Address,
-							"OpAmount", transaction.OpAmount, "err", err)
-						// return nil to continue the next check
-						return nil
-					}
+
+				expectedCheckAmount, ok := sdkmath.NewIntFromString(transaction.ExpectedCheckValue)
+				if !ok {
+					logger.Error("EvmDelegationCheck, can't parse the expected check value",
+						"stakerDBID", stakerDBID, "assetDBID", assetDBID, "operator", operator.Address, "expectedCheckValue", transaction.ExpectedCheckValue, "err", err)
+					// return nil to continue the next check
+					return nil
 				}
-				if res.UndelegatableShare.Equal(expectedAmount) {
+				if delegatedAmount.Equal(expectedCheckAmount) {
 					transaction.CheckResult = Successful
 				} else {
 					transaction.CheckResult = failed
-					transaction.ExpectedCheckValue = expectedAmount.String()
-					transaction.ActualCheckValue = res.UndelegatableShare.String()
+					transaction.ActualCheckValue = delegatedAmount.String()
 				}
 				return nil
 			}

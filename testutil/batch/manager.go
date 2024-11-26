@@ -7,9 +7,15 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ExocoreNetwork/exocore/app"
+	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
+	"github.com/evmos/evmos/v16/crypto/hd"
+	"github.com/evmos/evmos/v16/encoding"
 
 	"github.com/ExocoreNetwork/exocore/precompiles/assets"
 	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
@@ -23,12 +29,8 @@ import (
 	"github.com/ExocoreNetwork/exocore/types"
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	"github.com/cometbft/cometbft/crypto/secp256k1"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,7 +77,7 @@ var (
 
 type Manager struct {
 	ctx    context.Context
-	config *EndToEndConfig
+	config *TestToolConfig
 	db     *gorm.DB
 	lock   sync.Mutex
 
@@ -91,9 +93,9 @@ type Manager struct {
 	Shutdown chan bool
 }
 
-func NewManager(ctx context.Context, config *EndToEndConfig) (*Manager, error) {
+func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*Manager, error) {
 	// open the sqlite db
-	dsn := "file:" + config.DBPathOrURL + "?cache=shared&_journal_mode=WAL"
+	dsn := "file:" + filepath.Join(homePath, SqliteDBFileName) + "?cache=shared&_journal_mode=WAL"
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, xerrors.Errorf("can't open sqlite db, err:%s", err)
@@ -103,22 +105,25 @@ func NewManager(ctx context.Context, config *EndToEndConfig) (*Manager, error) {
 	// most test transactions will be signed by this private key.
 	sk, err := crypto.HexToECDSA(config.FaucetSk)
 	if err != nil {
-		return nil, xerrors.Errorf("invalid faucet Sk, err:%s", err)
+		return nil, xerrors.Errorf("invalid faucet Sk:%s, err:%s", config.FaucetSk, err)
 	}
 
-	registry := codectypes.NewInterfaceRegistry()
-	cryptocodec.RegisterInterfaces(registry)
-	cdc := codec.NewProtoCodec(registry)
-	KeyRing, err := keyring.New(AppName, keyring.BackendTest, config.KeyRingDir, nil, cdc)
+	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	KeyRing, err := keyring.New(AppName, keyring.BackendTest, homePath, nil, encodingConfig.Codec, hd.EthSecp256k1Option())
 	if err != nil {
 		return nil, xerrors.Errorf("can't new a test key ring, err:%s", err)
 	}
-	err = KeyRing.ImportPrivKeyHex(DefaultTestSKName, config.FaucetSk, secp256k1.KeyType)
+	_, err = KeyRing.Key(DefaultTestSKName)
 	if err != nil {
-		return nil, xerrors.Errorf("can't import the faucet private key, err:%s", err)
+		err = KeyRing.ImportPrivKeyHex(DefaultTestSKName, config.FaucetSk, ethsecp256k1.KeyType)
+		if err != nil {
+			return nil, xerrors.Errorf("can't import the faucet private key, err:%s", err)
+		}
 	}
+
 	manager := &Manager{
 		ctx:                ctx,
+		config:             config,
 		db:                 db,
 		FaucetSK:           sk,
 		KeyRing:            KeyRing,
@@ -137,31 +142,66 @@ func NewManager(ctx context.Context, config *EndToEndConfig) (*Manager, error) {
 	}
 	// creat the evm clients
 	// http clients
-	for _, url := range config.NodesEVMRPCHTTP {
+	for i, url := range config.NodesEVMRPCHTTP {
+		if i >= config.ChainValidatorNumber {
+			return nil, xerrors.Errorf("too many http rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
+		}
+		fmt.Println("http url", url)
 		rc, err := rpc.DialContext(context.Background(), url)
 		if err != nil {
 			return nil, xerrors.Errorf("can't creat the evm http rpc, err:%s, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
-		manager.NodeEVMHTTPClients = append(manager.NodeEVMHTTPClients, c)
+		fmt.Println("the evm http rpc is:", c)
+		manager.NodeEVMHTTPClients[i] = c
+
+		fmt.Println("the node evm http clients is:", len(manager.NodeEVMHTTPClients), manager.NodeEVMHTTPClients)
+		evmChainID, err := manager.NodeEVMHTTPClients[DefaultNodeIndex].ChainID(ctx)
+		if err != nil {
+			return nil, xerrors.Errorf("can't get the evm chainID, err:%s", err)
+		}
+		fmt.Println("http the evm chain id is:", evmChainID)
 	}
 	// websocket clients
-	for _, url := range config.NodesEVMRPCWebsocket {
+	for i, url := range config.NodesEVMRPCWebsocket {
+		if i >= config.ChainValidatorNumber {
+			return nil, xerrors.Errorf("too many websocket rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
+		}
+		fmt.Println("websocket url", url)
 		rc, err := rpc.DialContext(context.Background(), url)
 		if err != nil {
 			return nil, xerrors.Errorf("can't creat the evm websocket rpc, err:%s, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
-		manager.NodeEVMWSClients = append(manager.NodeEVMWSClients, c)
+		fmt.Println("the evm ws rpc is:", c)
+		manager.NodeEVMWSClients[i] = c
+
+		evmChainID, err := manager.NodeEVMWSClients[DefaultNodeIndex].ChainID(ctx)
+		if err != nil {
+			return nil, xerrors.Errorf("can't get the evm chainID, err:%s", err)
+		}
+		fmt.Println("ws the evm chain id is:", evmChainID)
 	}
 	// creat client context for the nodes
-	for _, url := range config.NodesRPC {
+	for i, url := range config.NodesRPC {
+		if i >= config.ChainValidatorNumber {
+			return nil, xerrors.Errorf("too many node rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
+		}
+		fmt.Println("node rpc url", url)
 		// Create a client context to connect to the Cosmos node
 		clientCtx := client.Context{}.
 			WithNodeURI(url).            // gRPC address of the Cosmos node
 			WithChainID(config.ChainID). // Chain ID of the Cosmos blockchain
-			WithKeyring(KeyRing)
-		manager.NodeClientCtx = append(manager.NodeClientCtx, clientCtx)
+			WithKeyring(KeyRing).
+			WithKeyringOptions(hd.EthSecp256k1Option())
+		fmt.Println("the node client ctx:", clientCtx)
+
+		client, err := client.NewClientFromNode(url)
+		if err != nil {
+			return nil, xerrors.Errorf("can't new client from node,url:%s,err:%s", url, err)
+		}
+		clientCtx = clientCtx.WithClient(client)
+		manager.NodeClientCtx[i] = clientCtx
 	}
 
 	evmChainID, err := manager.NodeEVMHTTPClients[DefaultNodeIndex].ChainID(ctx)
@@ -196,14 +236,14 @@ func (m *Manager) GetDB() *gorm.DB {
 }
 
 func (m *Manager) CreateAssets() error {
-	createNewAsset := func(id uint) (*Asset, error) {
+	createNewAsset := func(id uint) (Asset, error) {
 		addr, _ := testutiltx.NewAddrKey()
 		name := fmt.Sprintf("%s%d", AssetNamePrefix, id)
 		metaInfo := fmt.Sprintf("the meta info of %s", name)
 		oracleInfo := fmt.Sprintf(
 			"%s,Ethereum,%d,10,0xB82381A3fBD3FaFA77B3a7bE693342618240067b",
 			name, DefaultAssetDecimal)
-		return &Asset{
+		return Asset{
 			Address:       addr,
 			ClientChainID: m.config.DefaultClientChainID,
 			Decimal:       DefaultAssetDecimal,
@@ -213,26 +253,27 @@ func (m *Manager) CreateAssets() error {
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m, &Asset{}, int64(m.config.AsssetNumber), createNewAsset)
+	fmt.Println("m.config", m.config, m.config.AsssetNumber)
+	return CreateObjects(m, Asset{}, int64(m.config.AsssetNumber), createNewAsset)
 }
 
 func (m *Manager) CreateStakers() error {
-	createNewStaker := func(id uint) (*Staker, error) {
+	createNewStaker := func(id uint) (Staker, error) {
 		addr, privKey := testutiltx.NewAddrKey()
 		name := fmt.Sprintf("%s%d", StakerNamePrefix, id)
 		// add the Sk to key ring
-		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), secp256k1.KeyType)
+		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), ethsecp256k1.KeyType)
 		if err != nil {
-			return nil, err
+			return Staker{}, err
 		}
-		return &Staker{
+		return Staker{
 			Name:    name,
 			Address: addr,
 			Sk:      privKey.Bytes(),
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m, &Staker{}, int64(m.config.StakerNumber), createNewStaker)
+	return CreateObjects(m, Staker{}, int64(m.config.StakerNumber), createNewStaker)
 }
 
 func (m *Manager) SaveDogfoodAVS() error {
@@ -311,22 +352,22 @@ func (m *Manager) AddAssetsToDogfoodAVS(allAssetsID []string) error {
 }
 
 func (m *Manager) CreateAVS() error {
-	createNewAVS := func(id uint) (*AVS, error) {
+	createNewAVS := func(id uint) (AVS, error) {
 		addr, privKey := testutiltx.NewAddrKey()
 		name := fmt.Sprintf("%s%d", AVSNamePrefix, id)
 		// add the Sk to key ring
-		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), secp256k1.KeyType)
+		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), ethsecp256k1.KeyType)
 		if err != nil {
-			return nil, err
+			return AVS{}, err
 		}
-		return &AVS{
+		return AVS{
 			Name:    name,
 			Address: strings.ToLower(addr.String()),
 			Sk:      privKey.Bytes(),
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m, &AVS{}, int64(m.config.AVSNumber), createNewAVS)
+	return CreateObjects(m, AVS{}, int64(m.config.AVSNumber), createNewAVS)
 }
 
 func (m *Manager) SaveDefaultOperator() error {
@@ -349,7 +390,7 @@ func (m *Manager) SaveDefaultOperator() error {
 				// For other types of errors, return a detailed error message.
 				return xerrors.Errorf("Failed to load operator with address %s, err: %s", operatorAddr, err)
 			} else if err == nil {
-				logger.Info("SaveDogfoodAVS, already saved", "operator", operatorAddr)
+				logger.Info("SaveDefaultOperator, already saved", "operator", operatorAddr)
 				continue
 			}
 		}
@@ -368,22 +409,22 @@ func (m *Manager) SaveDefaultOperator() error {
 }
 
 func (m *Manager) CreateOperators() error {
-	createNewOperator := func(id uint) (*Operator, error) {
+	createNewOperator := func(id uint) (Operator, error) {
 		addr, privKey := testutiltx.NewAccAddressAndKey()
 		name := fmt.Sprintf("%s%d", OperatorNamePrefix, id)
 		// add the Sk to key ring
-		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), secp256k1.KeyType)
+		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), ethsecp256k1.KeyType)
 		if err != nil {
-			return nil, err
+			return Operator{}, err
 		}
 
 		privVal := mock.NewPV()
 		pubKey, err := privVal.GetPubKey()
 		if err != nil {
-			return nil, err
+			return Operator{}, err
 		}
 		consensusKey := keytypes.NewWrappedConsKeyFromHex(hexutil.Encode(pubKey.Bytes()))
-		return &Operator{
+		return Operator{
 			Name:            name,
 			Address:         strings.ToLower(addr.String()),
 			Sk:              privKey.Bytes(),
@@ -392,7 +433,7 @@ func (m *Manager) CreateOperators() error {
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m, &Operator{}, int64(m.config.OperatorNumber), createNewOperator)
+	return CreateObjects(m, Operator{}, int64(m.config.OperatorNumber), createNewOperator)
 }
 
 func (m *Manager) Prepare() error {
@@ -502,7 +543,7 @@ func (m *Manager) Start() error {
 		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodDelegate); err != nil {
 			return
 		}
-		// undelegate
+		// undelegation
 		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodUndelegate); err != nil {
 			return
 		}

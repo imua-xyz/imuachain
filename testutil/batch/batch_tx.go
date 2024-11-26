@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/ExocoreNetwork/exocore/precompiles/assets"
 	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -14,20 +16,20 @@ import (
 )
 
 var (
-	AssetDecimalReduction    = new(big.Int).Exp(big.NewInt(10), big.NewInt(DefaultAssetDecimal), nil)
-	DefaultDepositAmount     = big.NewInt(0).Mul(big.NewInt(10000), AssetDecimalReduction)
-	HalfDefaultDepositAmount = big.NewInt(0).Quo(DefaultDepositAmount, big.NewInt(2))
+	AssetDecimalReduction = new(big.Int).Exp(big.NewInt(10), big.NewInt(DefaultAssetDecimal), nil)
+	DefaultDepositAmount  = big.NewInt(0).Mul(big.NewInt(10000), AssetDecimalReduction)
 )
 
 type EnqueueTxParams struct {
-	staker     *Staker
-	nonce      *uint64
-	msgType    string
-	IsCosmosTx bool
-	opAmount   *big.Int
-	msgData    []byte
-	assetID    uint
-	operatorID uint
+	staker             *Staker
+	nonce              *uint64
+	msgType            string
+	IsCosmosTx         bool
+	opAmount           sdkmath.Int
+	msgData            []byte
+	assetID            uint
+	operatorID         uint
+	expectedCheckValue sdkmath.Int
 }
 
 func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
@@ -37,16 +39,17 @@ func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
 		return err
 	}
 	txRecord := &Transaction{
-		StakerID:    params.staker.ID,
-		Type:        params.msgType,
-		IsCosmosTx:  params.IsCosmosTx,
-		OpAmount:    params.opAmount.String(),
-		Nonce:       *params.nonce,
-		Status:      Queued,
-		CheckResult: WaitToCheck,
-		TestBatchID: helperRecord.CurrentBatchID,
-		AssetID:     params.assetID,
-		OperatorID:  params.operatorID,
+		StakerID:           params.staker.ID,
+		Type:               params.msgType,
+		IsCosmosTx:         params.IsCosmosTx,
+		OpAmount:           params.opAmount.String(),
+		Nonce:              *params.nonce,
+		Status:             Queued,
+		CheckResult:        WaitToCheck,
+		TestBatchID:        helperRecord.CurrentBatchID,
+		AssetID:            params.assetID,
+		OperatorID:         params.operatorID,
+		ExpectedCheckValue: params.expectedCheckValue.String(),
 	}
 	err = SaveObject(m, txRecord)
 	if err != nil {
@@ -89,12 +92,7 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(msgType string) error {
 	if err != nil {
 		return err
 	}
-	opAmount := DefaultDepositAmount
-	if msgType == assets.MethodWithdrawLST {
-		// The remaining amount has been delegated to the operators.
-		// Therefore, we use half of the total deposit amount as the withdrawal amount.
-		opAmount = HalfDefaultDepositAmount
-	}
+	opAmount := sdkmath.NewIntFromBigInt(DefaultDepositAmount)
 
 	ethHTTPClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
 	// construct and push all messages into the queue
@@ -110,14 +108,35 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(msgType string) error {
 			if err != nil {
 				return err
 			}
+			// get the total deposit amount before deposit or withdrawal
+			stakerAssetInfo, err := m.QueryStakerAssetInfo(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
+			if err != nil {
+				logger.Error("EnqueueDepositWithdrawLSTTxs, error occurs when querying the staker asset info",
+					"staker", staker.EvmAddress().String(), "asset", asset.Address.String(), "err", err)
+				return err
+			}
+			expectedCheckValue := stakerAssetInfo.TotalDepositAmount
+			if msgType == assets.MethodDepositLST {
+				expectedCheckValue = expectedCheckValue.Add(opAmount)
+			} else {
+				if !stakerAssetInfo.WithdrawableAmount.IsPositive() {
+					logger.Error("EnqueueDepositWithdrawLSTTxs, the WithdrawableAmount isn't positive, skip the withdrawal", "staker", staker.EvmAddress().String(), "asset", asset.Address.String())
+					return nil
+				}
+				// withdraw all amount
+				opAmount = stakerAssetInfo.WithdrawableAmount
+				expectedCheckValue = expectedCheckValue.Sub(opAmount)
+			}
+
 			err = m.enqueueTxAndSaveRecord(&EnqueueTxParams{
-				staker:     staker,
-				nonce:      &nonce,
-				msgType:    msgType,
-				IsCosmosTx: false,
-				opAmount:   opAmount,
-				msgData:    data,
-				assetID:    assetId,
+				staker:             staker,
+				nonce:              &nonce,
+				msgType:            msgType,
+				IsCosmosTx:         false,
+				opAmount:           opAmount,
+				msgData:            data,
+				assetID:            assetId,
+				expectedCheckValue: expectedCheckValue,
 			})
 			if err != nil {
 				return err
@@ -151,6 +170,8 @@ func (m *Manager) EnqueueDelegationTxs(msgType string) error {
 	}
 
 	ethHTTPClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
+	opAmount := sdkmath.ZeroInt()
+	expectedCheckValue := sdkmath.ZeroInt()
 	// construct and push all messages into the queue
 	stakerOpFunc := func(stakerId uint, _ int64, staker *Staker) error {
 		nonce, err := ethHTTPClient.NonceAt(m.ctx, staker.Address, nil)
@@ -159,31 +180,52 @@ func (m *Manager) EnqueueDelegationTxs(msgType string) error {
 				"BatchDeposit: can't get staker's nonce, stakerId:%d, addr:%s,err:%s",
 				stakerId, staker.Address.String(), err)
 		}
-		// using DefaultDepositAmount/(2*operatorNumber) as the amount of each delegation.
-		// then we can use DefaultDepositAmount/2 as the withdrawal amount.
-		totalDelegationAmount := HalfDefaultDepositAmount
-
-		// todo: When calculating the delegation amount for the last operator, it's necessary
-		// to account for the precision loss caused by integer division. Otherwise, it could
-		// lead to failures in the deposit and withdrawal checks.
-		singleDelegationAmount := big.NewInt(0).Quo(totalDelegationAmount, big.NewInt(operatorNumber))
 
 		assetOpFunc := func(assetId uint, _ int64, asset *Asset) error {
 			// Each asset needs to perform delegate and undelegate operations on all operators.
+			stakerAssetInfo, err := m.QueryStakerAssetInfo(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
+			if err != nil {
+				logger.Error("EnqueueDelegationTxs, error occurs when querying the staker asset info",
+					"staker", staker.EvmAddress().String(), "asset", asset.Address.String(), "err", err)
+				return err
+			}
+			if msgType == delegation.MethodDelegate {
+				if !stakerAssetInfo.WithdrawableAmount.IsPositive() {
+					logger.Error("EnqueueDelegationTxs, the WithdrawableAmount isn't positive, skip the delegation", "staker", staker.EvmAddress().String(), "asset", asset.Address.String())
+					return nil
+				}
+				// delegates half of the withdrawable amount to the operators
+				opAmount = stakerAssetInfo.WithdrawableAmount.Quo(sdkmath.NewInt(2)).Quo(sdkmath.NewInt(operatorNumber))
+			}
 			operatorOpFunc := func(operatorId uint, _ int64, operator *Operator) error {
-				data, err := delegationAbi.Pack(msgType, asset.ClientChainID, nonce, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), []byte(operator.Address), singleDelegationAmount)
+				delegatedAmount, err := m.QueryDelegatedAmount(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String(), operator.Address)
+				if err != nil {
+					return err
+				}
+				if msgType == delegation.MethodUndelegate {
+					// undelegates all amount.
+					opAmount = delegatedAmount
+				} else {
+					expectedCheckValue = delegatedAmount.Add(opAmount)
+				}
+				if !opAmount.IsPositive() {
+					logger.Error("EnqueueDelegationTxs, the opAmount isn't positive, skip the test", "msgType", msgType, "staker", staker.EvmAddress().String(), "asset", asset.Address.String())
+					return nil
+				}
+				data, err := delegationAbi.Pack(msgType, asset.ClientChainID, nonce, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), []byte(operator.Address), opAmount)
 				if err != nil {
 					return err
 				}
 				err = m.enqueueTxAndSaveRecord(&EnqueueTxParams{
-					staker:     staker,
-					nonce:      &nonce,
-					msgType:    msgType,
-					IsCosmosTx: false,
-					opAmount:   singleDelegationAmount,
-					msgData:    data,
-					assetID:    assetId,
-					operatorID: operatorId,
+					staker:             staker,
+					nonce:              &nonce,
+					msgType:            msgType,
+					IsCosmosTx:         false,
+					opAmount:           opAmount,
+					msgData:            data,
+					assetID:            assetId,
+					operatorID:         operatorId,
+					expectedCheckValue: expectedCheckValue,
 				})
 				if err != nil {
 					return err

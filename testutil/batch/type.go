@@ -22,32 +22,34 @@ const (
 	failed
 )
 
-type EndToEndConfig struct {
+const (
+	SqliteDBFileName = "sqlite.db"
+	ConfigFileName   = "test-tool-config.toml"
+)
+
+type TestToolConfig struct {
 	// the numbers of staker, opeartor and AVS for e2e tests
-	StakerNumber   int `mapstructure:"staker-number"`
-	OperatorNumber int `mapstructure:"operator-number"`
-	AVSNumber      int `mapstructure:"avs-number"`
-	AsssetNumber   int `mapstructure:"asset-number"`
+	StakerNumber   int `mapstructure:"staker-number" toml:"staker-number"`
+	OperatorNumber int `mapstructure:"operator-number" toml:"operator-number"`
+	AVSNumber      int `mapstructure:"avs-number" toml:"avs-number"`
+	AsssetNumber   int `mapstructure:"asset-number" toml:"asset-number"`
 
 	// the private key of faucet
 	// and the Exo amount that should be sent to the test addresses
-	FaucetSk          string `mapstructure:"faucet-Sk"`
-	StakerExoAmount   int64  `mapstructure:"staker-exo-amount"`
-	OperatorExoAmount int64  `mapstructure:"operator-exo-amount"`
-	AVSExoAmount      int64  `mapstructure:"avs-exo-amount"`
+	FaucetSk          string `mapstructure:"faucet-Sk" toml:"faucet-Sk"`
+	StakerExoAmount   int64  `mapstructure:"staker-exo-amount" toml:"staker-exo-amount"`
+	OperatorExoAmount int64  `mapstructure:"operator-exo-amount" toml:"operator-exo-amount"`
+	AVSExoAmount      int64  `mapstructure:"avs-exo-amount" toml:"avs-exo-amount"`
 
 	// parameters for the testnet
-	ChainValidatorNumber int    `mapstructure:"chain-validator-number"`
-	ChainID              string `mapstructure:"chain-id"`
-	DefaultClientChainID uint64 `mapstructure:"default-client-chain-id"`
-	BlockDuration        int64  `mapstructure:"block-duration"`
+	ChainValidatorNumber int    `mapstructure:"chain-validator-number" toml:"chain-validator-number"`
+	ChainID              string `mapstructure:"chain-id" toml:"chain-id"`
+	DefaultClientChainID uint64 `mapstructure:"default-client-chain-id" toml:"default-client-chain-id"`
 
-	// the file path or URL of local DB, and the RPCs of the Exocore chain nodes
-	KeyRingDir           string   `mapstructure:"key-ring-dir"`
-	DBPathOrURL          string   `mapstructure:"db-path-or-url"`
-	NodesRPC             []string `mapstructure:"nodes-rpc"`
-	NodesEVMRPCHTTP      []string `mapstructure:"nodes-evm-rpc-http"`
-	NodesEVMRPCWebsocket []string `mapstructure:"nodes-evm-rpc-websocket"`
+	// the RPCs of the Exocore chain nodes
+	NodesRPC             []string `mapstructure:"nodes-rpc" toml:"nodes-rpc"`
+	NodesEVMRPCHTTP      []string `mapstructure:"nodes-evm-rpc-http" toml:"nodes-evm-rpc-http"`
+	NodesEVMRPCWebsocket []string `mapstructure:"nodes-evm-rpc-websocket" toml:"nodes-evm-rpc-websocket"`
 
 	// the config of test strategy
 	// the process of single test for each staker:
@@ -56,20 +58,47 @@ type EndToEndConfig struct {
 	// 3. undelegation -> wait for transaction check(only check whether the transaction is on chain)
 	// 4. withdraw -> wait for transaction check
 	// TxNumberPerSec indicates the number of transactions sent to Exocore chain per second.
-	TxNumberPerSec    int `mapstructure:"tx-number-per-second"`
-	TxChecksPerSecond int `mapstructure:"tx-checks-per-second"`
+	TxNumberPerSec    int `mapstructure:"tx-number-per-second" toml:"tx-number-per-second"`
+	TxChecksPerSecond int `mapstructure:"tx-checks-per-second" toml:"tx-checks-per-second"`
 	// EachTestInterval indicates the interval of single test. The staker will start another test
 	// After this interval.
-	EachTestInterval int64 `mapstructure:"each-test-interval"`
+	EachTestInterval int64 `mapstructure:"each-test-interval" toml:"each-test-interval"`
 	// SingleTxCheckInterval is an interval waiting to check the transaction.
-	SingleTxCheckInterval int64 `mapstructure:"single-tx-check-interval"`
+	SingleTxCheckInterval int64 `mapstructure:"single-tx-check-interval" toml:"single-tx-check-interval"`
 	// BatchTxsCheckInterval is an interval waiting to check the batch transactions.
-	BatchTxsCheckInterval int64 `mapstructure:"batch-txs-check-interval"`
+	BatchTxsCheckInterval int64 `mapstructure:"batch-txs-check-interval" toml:"batch-txs-check-interval"`
+
 	// AddrNumberInMultiSend is the number of address included in a multisend message, in order to
 	// prevent the message from becoming too large and causing the transaction to exceed the packing limit
-	AddrNumberInMultiSend int `mapstructure:"addr-number-in-multi-send"`
+	AddrNumberInMultiSend int `mapstructure:"addr-number-in-multi-send" toml:"addr-number-in-multi-send"`
 	// it's used to indicate the channel size
-	TxsQueueBufferSize int `mapstructure:"tx-queue-buffer-size"`
+	TxsQueueBufferSize int `mapstructure:"tx-queue-buffer-size" toml:"tx-queue-buffer-size"`
+}
+
+// DefaultTestToolConfig is a default config for test by a local node
+var DefaultTestToolConfig = TestToolConfig{
+	StakerNumber:   5,
+	OperatorNumber: 3,
+	AVSNumber:      1,
+	AsssetNumber:   5,
+	// this private key is from the local_node.sh
+	FaucetSk:              "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE",
+	StakerExoAmount:       100,
+	OperatorExoAmount:     10,
+	AVSExoAmount:          10,
+	ChainValidatorNumber:  1,
+	ChainID:               "exocoretestnet_233-1",
+	DefaultClientChainID:  101,
+	NodesRPC:              []string{"http://127.0.0.1:26657"},
+	NodesEVMRPCHTTP:       []string{"http://127.0.0.1:8545"},
+	NodesEVMRPCWebsocket:  []string{"ws://127.0.0.1:8546"},
+	TxNumberPerSec:        10,
+	TxChecksPerSecond:     10,
+	EachTestInterval:      600, // 10 minutes
+	SingleTxCheckInterval: 12,  // 12 seconds
+	BatchTxsCheckInterval: 60,  // 1 minutes
+	AddrNumberInMultiSend: 10,
+	TxsQueueBufferSize:    100,
 }
 
 type HelperRecord struct {

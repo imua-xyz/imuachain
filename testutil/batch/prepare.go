@@ -19,6 +19,7 @@ import (
 )
 
 func (m *Manager) Funding() error {
+	//
 	err := FundingObjects(m, &Staker{}, m.config.StakerExoAmount)
 	if err != nil {
 		return xerrors.Errorf("can't fund stakers,err:%s", err)

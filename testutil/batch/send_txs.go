@@ -3,8 +3,13 @@ package batch
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"math"
 	"time"
+
+	"github.com/ExocoreNetwork/exocore/app"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/evmos/evmos/v16/encoding"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -111,17 +116,35 @@ func SignAndSendMultiMsgs(
 	clientCtx client.Context, fromName string,
 	broadcastMode string, msgs ...sdktypes.Msg,
 ) error {
+	encCfg := encoding.MakeConfig(app.ModuleBasics)
+
+	keyRecord, err := clientCtx.Keyring.Key(fromName)
+	if err != nil {
+		return xerrors.Errorf("SignAndSendMultiMsgs, can't get key record,fromName:%s,err:%s", fromName, err)
+	}
+	fromAddr, err := keyRecord.GetAddress()
+	if err != nil {
+		return xerrors.Errorf("SignAndSendMultiMsgs, can't get address from the key record,fromName:%s,err:%s", fromName, err)
+	}
+	fmt.Println("from Addr is:", fromAddr)
+
+	clientCtx = clientCtx.
+		WithAccountRetriever(authtypes.AccountRetriever{}).
+		WithFrom(fromName).
+		WithFromAddress(fromAddr).
+		WithBroadcastMode(broadcastMode).
+		WithTxConfig(encCfg.TxConfig)
+
 	txFactory := tx.Factory{}
 	txFactory = txFactory.
 		WithChainID(clientCtx.ChainID).
 		WithKeybase(clientCtx.Keyring).
 		WithTxConfig(clientCtx.TxConfig).
 		WithGasAdjustment(GasAdjustment).
-		WithSimulateAndExecute(true)
-	clientCtx.WithFrom(fromName)
-	clientCtx.WithBroadcastMode(broadcastMode)
+		WithSimulateAndExecute(true).
+		WithAccountRetriever(clientCtx.AccountRetriever)
 	for _, msg := range msgs {
-		err := tx.BroadcastTx(clientCtx, txFactory, msg)
+		err = tx.BroadcastTx(clientCtx, txFactory, msg)
 		if err != nil {
 			return xerrors.Errorf("failed to broadcast tx, error:%s", err.Error())
 		}

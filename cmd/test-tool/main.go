@@ -5,29 +5,38 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
+
+	"github.com/BurntSushi/toml"
 
 	"github.com/ExocoreNetwork/exocore/testutil/batch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var configPath string
+var homePath string
 
 // Root command
 var rootCmd = &cobra.Command{
 	Use:   "app",
 	Short: "test tool application with external configuration",
 	Long:  `This is a test tool application that loads configuration from an external file.`,
-	PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+	PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+		// Check if the subcommand is "init"
+		if cmd.Name() == initCmd.Name() {
+			// Skip manager initialization for the "init" command
+			return nil
+		}
 		// Initialize the manager before executing any command
 		var err error
-		config, err := loadConfig(configPath)
+		config, err := loadConfig(filepath.Join(homePath, batch.ConfigFileName))
 		if err != nil {
 			return fmt.Errorf("failed to load config: %v", err)
 		}
+
 		// Initialize the manager with the provided configuration file
-		appManager, err = batch.NewManager(context.Background(), config)
+		appManager, err = batch.NewManager(context.Background(), homePath, config)
 		if err != nil {
 			return fmt.Errorf("failed to initialize manager: %v", err)
 		}
@@ -64,8 +73,30 @@ var startCmd = &cobra.Command{
 	},
 }
 
+// init command
+var initCmd = &cobra.Command{
+	Use:   "init",
+	Short: "init the default config for the test tool",
+	Args:  cobra.NoArgs,
+	Run: func(_ *cobra.Command, _ []string) {
+		configFilePath := filepath.Join(homePath, batch.ConfigFileName)
+		// Create or open the configuration file
+		file, err := os.Create(configFilePath)
+		if err != nil {
+			fmt.Printf("failed to create config file: %s", err)
+		}
+		defer file.Close()
+
+		// Serialize the default configuration to TOML format
+		encoder := toml.NewEncoder(file)
+		if err := encoder.Encode(batch.DefaultTestToolConfig); err != nil {
+			fmt.Printf("failed to encode config to TOML: %err", err)
+		}
+	},
+}
+
 // loadConfig loads the configuration file and parses it into the Config struct
-func loadConfig(configPath string) (*batch.EndToEndConfig, error) {
+func loadConfig(configPath string) (*batch.TestToolConfig, error) {
 	// Set the config file path and type (can be "yaml", "json", etc.)
 	viper.SetConfigFile(configPath)
 
@@ -75,7 +106,7 @@ func loadConfig(configPath string) (*batch.EndToEndConfig, error) {
 	}
 
 	// Unmarshal the config into a Config struct
-	var cfg batch.EndToEndConfig
+	var cfg batch.TestToolConfig
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("unable to decode into struct, %v", err)
 	}
@@ -85,10 +116,9 @@ func loadConfig(configPath string) (*batch.EndToEndConfig, error) {
 
 func main() {
 	// Add persistent flag for the configuration file
-	rootCmd.PersistentFlags().StringVar(&configPath, "config", "test-tool-config.toml", "Path to the configuration file")
-
+	rootCmd.PersistentFlags().StringVar(&homePath, "home", ".", "Path to the config, db and keyRing file")
 	// Add subcommands
-	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(startCmd, initCmd)
 
 	// Execute the root command
 	if err := rootCmd.Execute(); err != nil {
