@@ -310,7 +310,7 @@ func (k Keeper) UpdateNSTByBalanceChange(ctx sdk.Context, assetID string, rawDat
 		// in one same block: withdraw v2, v3, v5, balance of v2, v3, v5 all be slashed by -16
 		// => amount: 32*4->32(by withdraw), the validatorList of feeder will be updated on next block, so it will report the balance change of v5: -16 as in the staker's balance change, result to: 32*4->32-> 32-16*3 = -16
 		// we will just ignore this misbehavior introduced by synchronize-issue, and this will be correct in next block/round
-		if balance > maxBalance || balance <= 0 {
+		if balance > maxBalance || balance < 0 {
 			// balance should not be able to be reduced to 0 by balance change
 			return errors.New("effective balance should never exceeds 32 for one validator and should be positive")
 		}
@@ -352,8 +352,8 @@ func parseBalanceChangeCapped(rawData []byte, sl types.StakerList) (map[string]i
 	// the first 32 bytes are information to indicates effective-balance of which staker has changed, 1 means changed, 0 means not. 32 bytes can represents changes for at most 256 stakers
 	indexes := rawData[:32]
 	// bytes after first 32 are details of effective-balance change for each staker which has been marked with 1 in the first 32 bytes, for those who are marked with 0 will just be ignored
-	// For each staker we support at most 256 validators to join, so the biggest effective-balance change we would have is 256*16, then we need 12 bits to represents the number for each staker. And for compression we use 4 bits to tell then length of bits without leading 0 this number has.
-	// Then with the symbol we need at most 17 bits for each staker's effective-balance change: 0000.0.0000-0000-0000 (the leading 0 will be ignored for the last 12 bits)
+	// For each staker we support at most 256 validators to join, so the biggest effective-balance change we would have is 256*32, then we need 13 bits to represents the number for each staker. And for compression we use 4 bits to tell the length of bits without leading 0 this number has.
+	// Then with the symbol we need at most 18 bits for each staker's effective-balance change: 0000.0.0000-0000-0000 (the leading 0 will be ignored for the last 13 bits)
 	changes := rawData[32:]
 	index := -1
 	byteIndex := 0
@@ -383,6 +383,7 @@ func parseBalanceChangeCapped(rawData []byte, sl types.StakerList) (map[string]i
 				symbol := lenValue & 1
 				lenValue >>= 1
 				if lenValue <= 0 {
+					// the range of length we accept is 1-15(the max we will use is actually 13)
 					return stakerChanges, errors.New("length of change value must be at least 1 bit")
 				}
 
