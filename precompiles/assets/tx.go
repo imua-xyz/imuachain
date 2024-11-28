@@ -66,7 +66,7 @@ func (p Precompile) DepositOrWithdraw(
 			depositWithdrawParams.StakerAddress, depositWithdrawParams.AssetsAddress)
 		err = p.assetsKeeper.UpdateNSTValidatorListForStaker(ctx, assetID,
 			hexutil.Encode(depositWithdrawParams.StakerAddress),
-			hexutil.Encode(depositWithdrawParams.ValidatorPubkey),
+			hexutil.Encode(depositWithdrawParams.ValidatorID),
 			opAmount)
 		if err != nil {
 			return nil, err
