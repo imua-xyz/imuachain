@@ -50,7 +50,7 @@
       },
       {
         "internalType": "bytes",
-        "name": "validatorPubkey",
+        "name": "validatorID",
         "type": "bytes"
       },
       {
@@ -300,7 +300,7 @@
       },
       {
         "internalType": "bytes",
-        "name": "validatorPubkey",
+        "name": "validatorID",
         "type": "bytes"
       },
       {
