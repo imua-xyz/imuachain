@@ -36,11 +36,11 @@ func Test_RPC(t *testing.T) {
 	fmt.Println("the chain ID is:", chainID)
 }
 
-func Test_QueryBalance(t *testing.T) {
+func Test_QueryAllBalance(t *testing.T) {
 	appManager, err := NewManager(context.Background(), "/home/timmy/tests/test-tool", &DefaultTestToolConfig)
 	assert.NoError(t, err)
 	clientCtx := appManager.NodeClientCtx[DefaultNodeIndex]
-	keyRecord, err := clientCtx.Keyring.Key(DefaultTestSKName)
+	keyRecord, err := clientCtx.Keyring.Key(FaucetSKName)
 	assert.NoError(t, err)
 	fromAddr, err := keyRecord.GetAddress()
 	assert.NoError(t, err)
@@ -48,7 +48,7 @@ func Test_QueryBalance(t *testing.T) {
 
 	fromAddr, err = sdktypes.AccAddressFromBech32("exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph")
 	assert.NoError(t, err)
-	balances, err := appManager.QueryBalance(fromAddr)
+	balances, err := appManager.QueryAllBalance(fromAddr)
 	assert.NoError(t, err)
 	fmt.Println(balances)
 }
@@ -58,7 +58,7 @@ func Test_FaucetSk(t *testing.T) {
 	assert.NoError(t, err)
 
 	keyRing := appManager.KeyRing
-	keyRecord, err := keyRing.Key(DefaultTestSKName)
+	keyRecord, err := keyRing.Key(FaucetSKName)
 	assert.NoError(t, err)
 	keyRecordAddr, err := keyRecord.GetAddress()
 	assert.NoError(t, err)

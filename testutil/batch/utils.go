@@ -3,6 +3,8 @@ package batch
 import (
 	"math/big"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/ExocoreNetwork/exocore/cmd/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
@@ -116,6 +118,7 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 
 	multiSendMsgs := make([]sdktypes.Msg, 0)
 	inputAmount := sdktypes.ZeroInt()
+	totalInputAmount := sdktypes.ZeroInt()
 	addrNumberInOneMsg := 0
 	opFunc := func(id uint, objectNumber int64, object T) error {
 		if !object.ShouldFund() {
@@ -129,19 +132,25 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 			return xerrors.Errorf("can't get balance,addr:%s, err: %s", object.EvmAddress().String(), err)
 		}
 		exoBalance := big.NewInt(0).Quo(balance, ExoDecimalReduction).Int64()
+		logger.Info("the exo balance is:", "addr", object.EvmAddress(), "exoBalance", exoBalance, "needExo", needExo)
 		if exoBalance < needExo {
 			objectAccAddr := object.AccAddress()
 			amount := sdktypes.NewInt(needExo - exoBalance)
 
 			addrNumberInOneMsg++
 			inputAmount = inputAmount.Add(amount)
+			huaAmount := amount.Mul(sdkmath.NewIntFromBigInt(ExoDecimalReduction))
 			outputs = append(outputs, banktypes.Output{
 				Address: objectAccAddr.String(), // Sender address
-				Coins:   sdktypes.Coins{sdktypes.NewCoin(config.DisplayDenom, amount)},
+				Coins:   sdktypes.Coins{sdktypes.NewCoin(config.BaseDenom, huaAmount)},
 			})
 		}
-		if addrNumberInOneMsg == m.config.AddrNumberInMultiSend || id == uint(objectNumber) {
-			input.Coins = sdktypes.Coins{sdktypes.NewCoin(config.DisplayDenom, inputAmount)}
+		logger.Info("generate inputs and outputs", "id", id, "objectNumber", objectNumber, "addrNumberInOneMsg", addrNumberInOneMsg, "AddrNumberInMultiSend", m.config.AddrNumberInMultiSend)
+		if addrNumberInOneMsg != 0 &&
+			(addrNumberInOneMsg == m.config.AddrNumberInMultiSend || id == uint(objectNumber)) {
+			inputHuaAmount := inputAmount.Mul(sdkmath.NewIntFromBigInt(ExoDecimalReduction))
+			totalInputAmount = totalInputAmount.Add(inputHuaAmount)
+			input.Coins = sdktypes.Coins{sdktypes.NewCoin(config.BaseDenom, inputHuaAmount)}
 			multiSendMsgs = append(multiSendMsgs, &banktypes.MsgMultiSend{
 				Inputs:  []banktypes.Input{input},
 				Outputs: outputs,
@@ -159,9 +168,48 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 	if err != nil {
 		return err
 	}
+	// check if the object needs to be funded
+	if len(multiSendMsgs) == 0 {
+		logger.Info("FundingObjects: no object needs to be funded", "object", model)
+		return nil
+	}
+	// check if the faucet balance is enough
+	faucetBalance, err := m.QueryBalance(faucetAddr, config.BaseDenom)
+	if err != nil {
+		return err
+	}
+	totalInputCoin := sdktypes.NewCoin(config.BaseDenom, totalInputAmount)
+	if faucetBalance.Balance.IsLT(totalInputCoin) {
+		return xerrors.Errorf("insufficient faucet balance,addr:%s, need:%v,current:%v", faucetAddr, totalInputCoin, faucetBalance.Balance)
+	}
 
 	clientCtx := m.NodeClientCtx[DefaultNodeIndex]
-	err = SignAndSendMultiMsgs(clientCtx, DefaultTestSKName, flags.BroadcastSync, multiSendMsgs...)
+	err = m.SignSendMultiMsgsAndWait(clientCtx, FaucetSKName, flags.BroadcastSync, multiSendMsgs...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func CheckObjectsBalance[T AddressForFunding](m *Manager, model T, needExo int64) error {
+	ethClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
+	opFunc := func(_ uint, _ int64, object T) error {
+		if !object.ShouldFund() {
+			// skip this object then continue the other objects
+			return nil
+		}
+		balance, err := ethClient.BalanceAt(m.ctx, object.EvmAddress(), nil)
+		if err != nil {
+			return xerrors.Errorf("can't get balance,addr:%s, err: %s", object.EvmAddress().String(), err)
+		}
+		exoBalance := big.NewInt(0).Quo(balance, ExoDecimalReduction).Int64()
+		if exoBalance < needExo {
+			logger.Info("the exo balance isn't enough:", "object", object.ObjectName(), "addr", object.EvmAddress(), "exoBalance", exoBalance, "needExo", needExo)
+			return xerrors.Errorf("the exo balance isn't enough, object:%s, need:%d, cur:%d", object.ObjectName(), needExo, exoBalance)
+		}
+		return nil
+	}
+	err := IterateObjects(m, model, opFunc)
 	if err != nil {
 		return err
 	}

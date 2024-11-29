@@ -65,6 +65,8 @@ type TestToolConfig struct {
 	EachTestInterval int64 `mapstructure:"each-test-interval" toml:"each-test-interval"`
 	// SingleTxCheckInterval is an interval waiting to check the transaction.
 	SingleTxCheckInterval int64 `mapstructure:"single-tx-check-interval" toml:"single-tx-check-interval"`
+	// TxWaitExpiration defines the timeout period for checking a transaction.
+	TxWaitExpiration int64 `mapstructure:"tx-wait-expiration" toml:"tx-wait-expiration"`
 	// BatchTxsCheckInterval is an interval waiting to check the batch transactions.
 	BatchTxsCheckInterval int64 `mapstructure:"batch-txs-check-interval" toml:"batch-txs-check-interval"`
 
@@ -95,7 +97,8 @@ var DefaultTestToolConfig = TestToolConfig{
 	TxNumberPerSec:        10,
 	TxChecksPerSecond:     10,
 	EachTestInterval:      600, // 10 minutes
-	SingleTxCheckInterval: 12,  // 12 seconds
+	SingleTxCheckInterval: 6,   // 6 seconds
+	TxWaitExpiration:      60,  // 1 minutes
 	BatchTxsCheckInterval: 60,  // 1 minutes
 	AddrNumberInMultiSend: 10,
 	TxsQueueBufferSize:    100,
@@ -166,6 +169,7 @@ type AddressForFunding interface {
 	AccAddress() sdktypes.AccAddress
 	EvmAddress() common.Address
 	ShouldFund() bool
+	ObjectName() string
 }
 
 func (a AVS) AccAddress() sdktypes.AccAddress {
@@ -182,6 +186,10 @@ func (a AVS) ShouldFund() bool {
 
 func (a AVS) IsDogfood() bool {
 	return a.Name == DogfoodAVSName
+}
+
+func (a AVS) ObjectName() string {
+	return a.Name
 }
 
 func (o Operator) AccAddress() sdktypes.AccAddress {
@@ -202,6 +210,10 @@ func (o Operator) IsDefaultOperator() bool {
 	return strings.HasPrefix(o.Name, DefaultOperatorNamePrefix)
 }
 
+func (o Operator) ObjectName() string {
+	return o.Name
+}
+
 func (s Staker) AccAddress() sdktypes.AccAddress {
 	return s.Address.Bytes()
 }
@@ -212,6 +224,10 @@ func (s Staker) EvmAddress() common.Address {
 
 func (s Staker) ShouldFund() bool {
 	return true
+}
+
+func (s Staker) ObjectName() string {
+	return s.Name
 }
 
 type EvmTxInQueue struct {

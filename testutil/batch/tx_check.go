@@ -1,6 +1,8 @@
 package batch
 
 import (
+	"math/big"
+
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -47,10 +49,21 @@ func (m *Manager) GetPendingTxIDsByBatchAndType(batchID uint, txType string) ([]
 	return ids, int64(len(ids)), nil
 }
 
-func (m *Manager) QueryBalance(addr sdktypes.AccAddress) (*banktypes.QueryAllBalancesResponse, error) {
+func (m *Manager) QueryAllBalance(addr sdktypes.AccAddress) (*banktypes.QueryAllBalancesResponse, error) {
 	params := banktypes.NewQueryAllBalancesRequest(addr, &query.PageRequest{})
 	queryClient := banktypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	return queryClient.AllBalances(m.ctx, params)
+}
+
+func (m *Manager) QueryBalance(addr sdktypes.AccAddress, denom string) (*banktypes.QueryBalanceResponse, error) {
+	balanceReq := banktypes.NewQueryBalanceRequest(addr, denom)
+	queryClient := banktypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
+	return queryClient.Balance(m.ctx, balanceReq)
+}
+
+func (m *Manager) GasPrice() (*big.Int, error) {
+	evmHTTPClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
+	return evmHTTPClient.SuggestGasPrice(m.ctx)
 }
 
 func (m *Manager) QueryStakerAssetInfo(clientChainLzID uint64, stakerAddr, assetAddr string) (*assettypes.StakerAssetInfo, error) {
@@ -241,6 +254,22 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 		return nil
 	}
 	err := IterateObjects(m, &Staker{}, stakerOpFunc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Manager) FundingCheck() error {
+	err := CheckObjectsBalance(m, &Staker{}, m.config.StakerExoAmount)
+	if err != nil {
+		return err
+	}
+	err = CheckObjectsBalance(m, &Operator{}, m.config.OperatorExoAmount)
+	if err != nil {
+		return err
+	}
+	err = CheckObjectsBalance(m, &AVS{}, m.config.AVSExoAmount)
 	if err != nil {
 		return err
 	}

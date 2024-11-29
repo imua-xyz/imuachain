@@ -256,7 +256,7 @@ func (m *Manager) SignAndSendTxs(tx interface{}) error {
 	var txID string
 	evmTx, ok := tx.(*EvmTxInQueue)
 	if ok {
-		txHash, err := SignAndSendEvmTx(m.DefaultEvmTxRequirements, evmTx)
+		txHash, err := m.SignAndSendEvmTx(evmTx)
 		if err != nil {
 			logger.Error("can't sign and send the evm tx", "txHash", txHash, "err", err)
 			return err

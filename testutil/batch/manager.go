@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 	"github.com/evmos/evmos/v16/crypto/hd"
@@ -20,9 +22,7 @@ import (
 	"github.com/ExocoreNetwork/exocore/precompiles/assets"
 	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
 	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
@@ -49,7 +49,7 @@ import (
 const (
 	AppName                   = "e2e-tool"
 	DefaultAssetDecimal       = 6
-	DefaultTestSKName         = "default-test-Sk"
+	FaucetSKName              = "faucet-Sk"
 	AssetNamePrefix           = "testAsset"
 	StakerNamePrefix          = "testStaker"
 	AVSNamePrefix             = "testAVS"
@@ -81,13 +81,16 @@ type Manager struct {
 	db     *gorm.DB
 	lock   sync.Mutex
 
-	DogfoodAddr              string
-	FaucetSK                 *ecdsa.PrivateKey
-	KeyRing                  keyring.Keyring
-	NodeEVMHTTPClients       []*ethclient.Client
-	NodeEVMWSClients         []*ethclient.Client
-	NodeClientCtx            []client.Context
-	DefaultEvmTxRequirements *BasicEvmTxRequirements
+	DogfoodAddr        string
+	FaucetSK           *ecdsa.PrivateKey
+	Sequences          sync.Map
+	KeyRing            keyring.Keyring
+	NodeEVMHTTPClients []*ethclient.Client
+	NodeEVMWSClients   []*ethclient.Client
+	NodeClientCtx      []client.Context
+	EthSigner          ethtypes.Signer
+	WaitDuration       time.Duration
+	WaitExpiration     time.Duration
 
 	TxsQueue chan interface{}
 	Shutdown chan bool
@@ -113,9 +116,9 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 	if err != nil {
 		return nil, xerrors.Errorf("can't new a test key ring, err:%s", err)
 	}
-	_, err = KeyRing.Key(DefaultTestSKName)
+	_, err = KeyRing.Key(FaucetSKName)
 	if err != nil {
-		err = KeyRing.ImportPrivKeyHex(DefaultTestSKName, config.FaucetSk, ethsecp256k1.KeyType)
+		err = KeyRing.ImportPrivKeyHex(FaucetSKName, config.FaucetSk, ethsecp256k1.KeyType)
 		if err != nil {
 			return nil, xerrors.Errorf("can't import the faucet private key, err:%s", err)
 		}
@@ -193,7 +196,12 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 			WithNodeURI(url).            // gRPC address of the Cosmos node
 			WithChainID(config.ChainID). // Chain ID of the Cosmos blockchain
 			WithKeyring(KeyRing).
-			WithKeyringOptions(hd.EthSecp256k1Option())
+			WithKeyringOptions(hd.EthSecp256k1Option()).
+			WithCodec(encodingConfig.Codec).
+			WithTxConfig(encodingConfig.TxConfig).
+			WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+			WithAccountRetriever(authtypes.AccountRetriever{}).
+			WithSkipConfirmation(true)
 		fmt.Println("the node client ctx:", clientCtx)
 
 		client, err := client.NewClientFromNode(url)
@@ -209,14 +217,9 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		return nil, xerrors.Errorf("can't get the evm chainID, err:%s", err)
 	}
 	ethSigner := ethtypes.LatestSignerForChainID(evmChainID)
-	manager.DefaultEvmTxRequirements = &BasicEvmTxRequirements{
-		ctx:          manager.ctx,
-		sk:           manager.FaucetSK,
-		caller:       crypto.PubkeyToAddress(sk.PublicKey),
-		signer:       ethSigner,
-		ethC:         manager.NodeEVMHTTPClients[DefaultNodeIndex],
-		WaitDuration: time.Duration(config.SingleTxCheckInterval),
-	}
+	manager.EthSigner = ethSigner
+	manager.WaitDuration = time.Duration(config.SingleTxCheckInterval) * time.Second
+	manager.WaitExpiration = time.Duration(config.TxWaitExpiration) * time.Second
 	return manager, nil
 }
 
@@ -301,53 +304,6 @@ func (m *Manager) SaveDogfoodAVS() error {
 		return err
 	}
 
-	return nil
-}
-
-func (m *Manager) AddAssetsToDogfoodAVS(allAssetsID []string) error {
-	clientCtx := m.NodeClientCtx[DefaultNodeIndex]
-	queryClient := dogfoodtypes.NewQueryClient(clientCtx)
-
-	res, err := queryClient.Params(m.ctx, &dogfoodtypes.QueryParamsRequest{})
-	if err != nil {
-		return err
-	}
-	// Create a set (using a map) to keep track of existing AssetIDs in res.Params.AssetIDs
-	existingAssets := make(map[string]struct{})
-
-	// Populate the map with the current AssetIDs
-	for _, id := range res.Params.AssetIDs {
-		existingAssets[id] = struct{}{}
-	}
-
-	// Iterate through allAssetsID to find any missing IDs
-	isUpdateParam := false
-	for _, id := range allAssetsID {
-		if _, exists := existingAssets[id]; !exists {
-			// If the ID is missing, add it to the existing AssetIDs
-			res.Params.AssetIDs = append(res.Params.AssetIDs, id)
-			isUpdateParam = true
-		}
-	}
-	if isUpdateParam {
-		record, err := m.KeyRing.Key(DefaultTestSKName)
-		if err != nil {
-			return err
-		}
-		// Retrieve the address from the Record
-		address, err := record.GetAddress()
-		if err != nil {
-			return err
-		}
-		msg := &dogfoodtypes.MsgUpdateParams{
-			Authority: address.String(),
-			Params:    res.Params,
-		}
-		err = SignAndSendMultiMsgs(clientCtx, DefaultTestSKName, flags.BroadcastSync, msg)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -458,29 +414,60 @@ func (m *Manager) Prepare() error {
 		return xerrors.Errorf("failed to create operators,err:%s", err)
 	}
 	logger.Info("finish creating and saving test objects, next step: funding")
-	// funding all test objects
+	// init the sequences
+	if err := m.InitSequences(); err != nil {
+		return xerrors.Errorf("failed to init the sequences,err:%s", err)
+	}
+	// funding all test objects, EthSigner is faucet sk, tx type is cosmos
 	if err := m.Funding(); err != nil {
 		return xerrors.Errorf("failed to fund the test objects,err:%s", err)
 	}
+	if err := m.FundingCheck(); err != nil {
+		return xerrors.Errorf("failed to check funding, err:%s", err)
+	}
 	logger.Info("finish funding test objects, next step: registration")
-	// register the test objects
+	// register the test objects, EthSigner is faucet sk, tx type is evm
 	assets, err := m.RegisterAssets()
 	if err != nil {
 		return xerrors.Errorf("failed to register assets,err:%s", err)
 	}
+	err = m.AssetsCheck(nil)
+	if err != nil {
+		return xerrors.Errorf("failed to check assets,err:%s", err)
+	}
+	// register the operators, EthSigner is the operator sk, tx type is cosmos
 	if err = m.RegisterOperators(); err != nil {
 		return xerrors.Errorf("failed to register operators,err:%s", err)
 	}
+	err = m.OperatorsCheck(nil)
+	if err != nil {
+		return xerrors.Errorf("failed to check operators,err:%s", err)
+	}
+	// EthSigner is the AVS sk, tx type is evm
 	if err = m.RegisterAVSs(assets); err != nil {
 		return xerrors.Errorf("failed to register AVss,err:%s", err)
 	}
-	// add the test assets to the supported list of dogfood AVS
+	err = m.AVSsCheck(nil)
+	if err != nil {
+		return xerrors.Errorf("failed to check AVSs,err:%s", err)
+	}
+	// add the test assets to the supported list of dogfood AVS, EthSigner is the AVS sk
+	// tx type is cosmos
 	if err = m.AddAssetsToDogfoodAVS(assets); err != nil {
 		return xerrors.Errorf("failed to add the test assets to the dofood AVS,err:%s", err)
 	}
-	// opt all test operators to all test AVSs
+	_, isUpdate, err := m.DogfoodAssetsCheck(assets)
+	if err != nil || isUpdate {
+		return xerrors.Errorf("failed to check the assets list of dogfood,isUpdate:%v,err:%s", isUpdate, err)
+	}
+	// opt all test operators to all test AVSs, EthSigner is the operator sk
+	// tx type is cosmos
 	if err = m.OptOperatorsIntoAVSs(); err != nil {
 		return xerrors.Errorf("failed to opt all operators to all AVSs,err:%s", err)
+	}
+	err = m.OperatorsOptInCheck(nil)
+	if err != nil {
+		return xerrors.Errorf("failed to check the operator's opt-in status,err:%s", err)
 	}
 	logger.Info("finish the preparation for the batch test")
 	return nil
