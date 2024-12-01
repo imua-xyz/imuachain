@@ -17,38 +17,6 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (m *Manager) GetPendingTxIDsByBatchAndType(batchID uint, txType string) ([]uint, int64, error) {
-	var ids []uint
-	pageSize := 1000
-	page := 1
-	var err error
-	// Query only the ID field of transactions with the given TestBatchID and Type
-	for {
-		var pageIDs []uint
-		err = m.GetDB().
-			Model(&Transaction{}).
-			Where("test_batch_id = ? AND type = ? AND status = ?", batchID, txType, Pending).
-			Order("id ASC").
-			Limit(pageSize).
-			Offset((page-1)*pageSize).
-			Pluck("id", &pageIDs).
-			Error
-
-		if err != nil || len(pageIDs) == 0 {
-			break
-		}
-
-		ids = append(ids, pageIDs...)
-		page++
-	}
-
-	if err != nil {
-		return nil, 0, xerrors.Errorf("Failed to retrieve transaction IDs with TestBatchID %d and Type %s, err: %s", batchID, txType, err)
-	}
-
-	return ids, int64(len(ids)), nil
-}
-
 func (m *Manager) QueryAllBalance(addr sdktypes.AccAddress) (*banktypes.QueryAllBalancesResponse, error) {
 	params := banktypes.NewQueryAllBalancesRequest(addr, &query.PageRequest{})
 	queryClient := banktypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
@@ -100,17 +68,20 @@ func (m *Manager) QueryDelegatedAmount(clientChainLzID uint64, stakerAddr, asset
 	return delegationkeeper.TokensFromShares(delegationInfo.UndelegatableShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
 }
 
-func (m *Manager) TxOnChainCheck(batchID uint, msgType string) error {
+func (m *Manager) PrecompileTxOnChainCheck(batchID uint, msgType string) error {
 	isEndTicker := false
-	txIDs, count, err := m.GetPendingTxIDsByBatchAndType(batchID, msgType)
+	txIDs, count, err := GetTxIDsByBatchTypeAndStatus(m.GetDB(), batchID, msgType, Pending)
 	if err != nil {
 		return err
+	}
+	if count <= 0 {
+		return xerrors.Errorf("PrecompileTxOnChainCheck, there isn't any pending txs,msgType:%s,batchID:%d", msgType, batchID)
 	}
 	txIndex := int64(0)
 	evmNodeClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
 	handle := func() (bool, error) {
 		txID := txIDs[txIndex]
-		txRecord, err := LoadObjectByID[Transaction](m, txID)
+		txRecord, err := LoadObjectByID[Transaction](m.GetDB(), txID)
 		if err != nil {
 			return false, err
 		}
@@ -119,17 +90,23 @@ func (m *Manager) TxOnChainCheck(batchID uint, msgType string) error {
 			receipt, err := evmNodeClient.TransactionReceipt(m.ctx, common.HexToHash(txRecord.TxHash))
 			if err != nil {
 				// If the receipt isn't found, continue addressing the next txRecord
-				logger.Error("TxOnChainCheck, can't get the evm txRecord receipt", "txID", txRecord.TxHash, "err", err)
+				logger.Error("PrecompileTxOnChainCheck, can't get the evm txRecord receipt", "txID", txRecord.TxHash, "err", err)
 			} else {
 				// update the transaction status
+				// TODO: The status will always show as successful because we package the result as a successful execution,
+				// even if an error occurs. To verify whether the execution is truly successful, some event logs need to be
+				// emitted in the precompile. We can then perform the check based on the log.
+				// Currently, we only verify if the transaction is on-chain. The actual success of the execution can be
+				// determined through the subsequent asset state check.
 				if receipt.Status == types.ReceiptStatusSuccessful {
 					txRecord.Status = OnChainAndSuccessful
 				} else {
 					txRecord.Status = OnChainButFailed
 				}
-				err = SaveObject[Transaction](m, txRecord)
+				logger.Info("PrecompileTxOnChainCheck, the evm tx has been on chain successfully", "status", receipt.Status, "msgType", msgType, "batchID", batchID, "height", receipt.BlockNumber, "txID", receipt.TxHash)
+				err = SaveObject[Transaction](m.GetDB(), txRecord)
 				if err != nil {
-					logger.Error("TxOnChainCheck, can't save the evm txRecord receipt", "txID", txRecord.TxHash, "err", err)
+					logger.Error("PrecompileTxOnChainCheck, can't save the evm txRecord receipt", "txID", txRecord.TxHash, "err", err)
 				}
 			}
 		}
@@ -137,6 +114,7 @@ func (m *Manager) TxOnChainCheck(batchID uint, msgType string) error {
 
 		txIndex++
 		if txIndex == count {
+			logger.Info("end the ticker for PrecompileTxOnChainCheck")
 			isEndTicker = true
 		}
 		return isEndTicker, nil
@@ -153,12 +131,12 @@ func (m *Manager) TxOnChainCheck(batchID uint, msgType string) error {
 // 2. After the withdrawal tests are completed, the totalDepositAmount should be:
 // (DefaultDepositAmount / 2) * (batchID + 1).
 func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
-	stakerOpFunc := func(stakerDBID uint, _ int64, staker *Staker) error {
-		assetOpFunc := func(assetDBID uint, _ int64, asset *Asset) error {
-			res, err := m.QueryStakerAssetInfo(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
+	stakerOpFunc := func(_ uint, _ int64, staker *Staker) error {
+		assetOpFunc := func(_ uint, _ int64, asset *Asset) error {
+			res, err := m.QueryStakerAssetInfo(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String())
 			if err != nil {
 				logger.Error("DepositWithdrawLSTCheck, error occurs when querying the staker asset info",
-					"stakerDBID", stakerDBID, "assetDBID", assetDBID, "err", err)
+					"staker", staker.Name, "asset", asset.Name, "err", err)
 				// return nil to continue the next check
 				return nil
 			}
@@ -170,32 +148,45 @@ func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
 				Error
 			if err != nil {
 				logger.Error("DepositWithdrawLSTCheck, can't get the tx record",
-					"stakerDBID", stakerDBID, "assetDBID", assetDBID, "err", err)
+					"staker", staker.Name, "asset", asset.Name, "err", err)
 				// return nil to continue the next check
 				return nil
 			}
 			expectedCheckAmount, ok := sdkmath.NewIntFromString(transaction.ExpectedCheckValue)
 			if !ok {
 				logger.Error("DepositWithdrawLSTCheck, can't parse the expected check value",
-					"stakerDBID", stakerDBID, "assetDBID", assetDBID, "expectedCheckValue", transaction.ExpectedCheckValue, "err", err)
+					"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
+					"asset", asset.Name, "assetAddr", asset.Address,
+					"expectedCheckValue", transaction.ExpectedCheckValue, "err", err)
 				// return nil to continue the next check
 				return nil
 			}
 			if res.TotalDepositAmount.Equal(expectedCheckAmount) {
+				logger.Info("DepositWithdrawLSTCheck, the check is successful", "txID", transaction.TxHash,
+					"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
+					"asset", asset.Name, "assetAddr", asset.Address)
 				transaction.CheckResult = Successful
 			} else {
+				logger.Info("DepositWithdrawLSTCheck, the check is failed", "txID", transaction.TxHash,
+					"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
+					"asset", asset.Name, "assetAddr", asset.Address)
 				transaction.CheckResult = failed
 				transaction.ActualCheckValue = res.TotalDepositAmount.String()
 			}
+			// update the transaction record.
+			err = SaveObject[Transaction](m.GetDB(), transaction)
+			if err != nil {
+				logger.Error("DepositWithdrawLSTCheck, can't update the transaction record", "txID", transaction.TxHash, "staker", staker.Name, "asset", asset.Name, "err", err)
+			}
 			return nil
 		}
-		err := IterateObjects(m, &Asset{}, assetOpFunc)
+		err := IterateObjects(m.GetDB(), &Asset{}, assetOpFunc)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	err := IterateObjects(m, &Staker{}, stakerOpFunc)
+	err := IterateObjects(m.GetDB(), &Staker{}, stakerOpFunc)
 	if err != nil {
 		return err
 	}
@@ -206,10 +197,10 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 	if msgType != delegation.MethodDelegate && msgType != delegation.MethodUndelegate {
 		return xerrors.Errorf("EvmDelegationCheck invalid msg type:%s", msgType)
 	}
-	stakerOpFunc := func(stakerDBID uint, _ int64, staker *Staker) error {
-		assetOpFunc := func(assetDBID uint, _ int64, asset *Asset) error {
+	stakerOpFunc := func(_ uint, _ int64, staker *Staker) error {
+		assetOpFunc := func(_ uint, _ int64, asset *Asset) error {
 			operatorOpFunc := func(_ uint, _ int64, operator *Operator) error {
-				delegatedAmount, err := m.QueryDelegatedAmount(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String(), operator.Address)
+				delegatedAmount, err := m.QueryDelegatedAmount(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String(), operator.Address)
 				if err != nil {
 					return err
 				}
@@ -221,7 +212,7 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 					Error
 				if err != nil {
 					logger.Error("EvmDelegationCheck, can't get the tx record",
-						"stakerDBID", stakerDBID, "assetDBID", assetDBID, "operator", operator.Address, "err", err)
+						"staker", staker.Name, "asset", asset.Name, "operator", operator.Name, "err", err)
 					// return nil to continue the next check
 					return nil
 				}
@@ -229,31 +220,45 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 				expectedCheckAmount, ok := sdkmath.NewIntFromString(transaction.ExpectedCheckValue)
 				if !ok {
 					logger.Error("EvmDelegationCheck, can't parse the expected check value",
-						"stakerDBID", stakerDBID, "assetDBID", assetDBID, "operator", operator.Address, "expectedCheckValue", transaction.ExpectedCheckValue, "err", err)
+						"staker", staker.Name, "asset", asset.Name, "operator", operator.Name,
+						"expectedCheckValue", transaction.ExpectedCheckValue, "err", err)
 					// return nil to continue the next check
 					return nil
 				}
 				if delegatedAmount.Equal(expectedCheckAmount) {
+					logger.Info("EvmDelegationCheck, the check is successful", "txID", transaction.TxHash,
+						"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
+						"asset", asset.Name, "assetAddr", asset.Address,
+						"operatorName", operator.Name, "operatorAddr", operator.AccAddress())
 					transaction.CheckResult = Successful
 				} else {
+					logger.Info("EvmDelegationCheck, the check is failed", "txID", transaction.TxHash,
+						"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
+						"asset", asset.Name, "assetAddr", asset.Address,
+						"operatorName", operator.Name, "operatorAddr", operator.AccAddress())
 					transaction.CheckResult = failed
 					transaction.ActualCheckValue = delegatedAmount.String()
 				}
+				// update the transaction record.
+				err = SaveObject[Transaction](m.GetDB(), transaction)
+				if err != nil {
+					logger.Error("EvmDelegationCheck, can't update the transaction record", "txID", transaction.TxHash, "staker", staker.Name, "asset", asset.Name, "operator", operator.Name, "err", err)
+				}
 				return nil
 			}
-			err := IterateObjects(m, &Operator{}, operatorOpFunc)
+			err := IterateObjects(m.GetDB(), &Operator{}, operatorOpFunc)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
-		err := IterateObjects(m, &Asset{}, assetOpFunc)
+		err := IterateObjects(m.GetDB(), &Asset{}, assetOpFunc)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	err := IterateObjects(m, &Staker{}, stakerOpFunc)
+	err := IterateObjects(m.GetDB(), &Staker{}, stakerOpFunc)
 	if err != nil {
 		return err
 	}

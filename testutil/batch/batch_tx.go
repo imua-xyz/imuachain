@@ -1,10 +1,11 @@
 package batch
 
 import (
-	"fmt"
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -24,36 +25,30 @@ type EnqueueTxParams struct {
 	staker             *Staker
 	nonce              *uint64
 	msgType            string
-	IsCosmosTx         bool
+	toAddr             *common.Address
+	isCosmosTx         bool
 	opAmount           sdkmath.Int
 	msgData            []byte
 	assetID            uint
 	operatorID         uint
+	testBatchID        uint
 	expectedCheckValue sdkmath.Int
 }
 
 func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
-	// save the tx info in the local db for the future check
-	helperRecord, err := LoadObjectByID[HelperRecord](m, SqliteDefaultStartID)
-	if err != nil {
-		return err
-	}
+	// construct the tx for the future check
 	txRecord := &Transaction{
 		StakerID:           params.staker.ID,
 		Type:               params.msgType,
-		IsCosmosTx:         params.IsCosmosTx,
+		IsCosmosTx:         params.isCosmosTx,
 		OpAmount:           params.opAmount.String(),
 		Nonce:              *params.nonce,
 		Status:             Queued,
 		CheckResult:        WaitToCheck,
-		TestBatchID:        helperRecord.CurrentBatchID,
+		TestBatchID:        params.testBatchID,
 		AssetID:            params.assetID,
 		OperatorID:         params.operatorID,
 		ExpectedCheckValue: params.expectedCheckValue.String(),
-	}
-	err = SaveObject(m, txRecord)
-	if err != nil {
-		return err
 	}
 	// send the tx info to the queue
 	sk, err := crypto.ToECDSA(params.staker.Sk)
@@ -66,17 +61,17 @@ func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
 		From:             params.staker.EvmAddress(),
 		UseExternalNonce: true,
 		Nonce:            *params.nonce,
-		ToAddr:           &AssetsPrecompileAddr,
+		ToAddr:           params.toAddr,
 		Value:            big.NewInt(0),
 		Data:             params.msgData,
-		TxRecordID:       txRecord.ID,
+		TxRecord:         txRecord,
 	}
 	select {
 	case m.TxsQueue <- evmTxInQueue:
 		// Successfully sent to the channel
 	case <-m.Shutdown:
 		// Received a shutdown signal, return immediately
-		fmt.Println("Received shutdown signal, stopping...")
+		logger.Info("Received shutdown signal, stopping...")
 		return nil
 	}
 	// increase the nonce
@@ -84,58 +79,68 @@ func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
 	return nil
 }
 
-func (m *Manager) EnqueueDepositWithdrawLSTTxs(msgType string) error {
+func (m *Manager) EnqueueDepositWithdrawLSTTxs(batchID uint, msgType string) error {
 	if msgType != assets.MethodDepositLST && msgType != assets.MethodWithdrawLST {
 		return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs invalid msg type:%s", msgType)
 	}
 	assetsAbi, err := abi.JSON(strings.NewReader(assets.AssetsABI))
 	if err != nil {
-		return err
+		return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assets abi.JSON,err:%s", err)
 	}
 	opAmount := sdkmath.NewIntFromBigInt(DefaultDepositAmount)
 
 	ethHTTPClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
 	// construct and push all messages into the queue
-	stakerOpFunc := func(stakerId uint, _ int64, staker *Staker) error {
+	stakerOpFunc := func(stakerId uint, _ int64, staker Staker) error {
 		nonce, err := ethHTTPClient.NonceAt(m.ctx, staker.Address, nil)
 		if err != nil {
 			return xerrors.Errorf(
 				"BatchDeposit: can't get staker's nonce, stakerId:%d, addr:%s,err:%s",
 				stakerId, staker.Address.String(), err)
 		}
-		assetOpFunc := func(assetId uint, _ int64, asset *Asset) error {
-			data, err := assetsAbi.Pack(msgType, asset.ClientChainID, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), opAmount)
+		assetOpFunc := func(assetId uint, _ int64, asset Asset) error {
+			data, err := assetsAbi.Pack(msgType, asset.ClientChainID, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), opAmount.BigInt())
 			if err != nil {
-				return err
+				return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assetsAbi.Pack,err:%s", err)
 			}
 			// get the total deposit amount before deposit or withdrawal
-			stakerAssetInfo, err := m.QueryStakerAssetInfo(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
-			if err != nil {
-				logger.Error("EnqueueDepositWithdrawLSTTxs, error occurs when querying the staker asset info",
-					"staker", staker.EvmAddress().String(), "asset", asset.Address.String(), "err", err)
-				return err
-			}
-			expectedCheckValue := stakerAssetInfo.TotalDepositAmount
+			stakerAssetInfo, err := m.QueryStakerAssetInfo(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String())
+			var expectedCheckValue sdkmath.Int
 			if msgType == assets.MethodDepositLST {
-				expectedCheckValue = expectedCheckValue.Add(opAmount)
+				if err == nil {
+					// the staker has already owned this asset
+					expectedCheckValue = stakerAssetInfo.TotalDepositAmount.Add(opAmount)
+				} else {
+					// the staker hasn't owned this asset
+					expectedCheckValue = opAmount
+				}
 			} else {
+				if err != nil {
+					// the staker asset info must exist if the msg type is withdrawal.
+					logger.Error("EnqueueDepositWithdrawLSTTxs, error occurs when querying the staker asset info, skip this test tx",
+						"msgType", msgType, "staker", staker.EvmAddress().String(),
+						"asset", asset.Address.String(), "err", err)
+					return nil
+				}
 				if !stakerAssetInfo.WithdrawableAmount.IsPositive() {
 					logger.Error("EnqueueDepositWithdrawLSTTxs, the WithdrawableAmount isn't positive, skip the withdrawal", "staker", staker.EvmAddress().String(), "asset", asset.Address.String())
 					return nil
 				}
 				// withdraw all amount
 				opAmount = stakerAssetInfo.WithdrawableAmount
-				expectedCheckValue = expectedCheckValue.Sub(opAmount)
+				expectedCheckValue = stakerAssetInfo.TotalDepositAmount.Sub(opAmount)
 			}
 
 			err = m.enqueueTxAndSaveRecord(&EnqueueTxParams{
-				staker:             staker,
+				staker:             &staker,
 				nonce:              &nonce,
+				toAddr:             &AssetsPrecompileAddr,
 				msgType:            msgType,
-				IsCosmosTx:         false,
+				isCosmosTx:         false,
 				opAmount:           opAmount,
 				msgData:            data,
 				assetID:            assetId,
+				testBatchID:        batchID,
 				expectedCheckValue: expectedCheckValue,
 			})
 			if err != nil {
@@ -143,20 +148,20 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(msgType string) error {
 			}
 			return nil
 		}
-		err = IterateObjects(m, &Asset{}, assetOpFunc)
+		err = IterateObjects(m.GetDB(), Asset{}, assetOpFunc)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	err = IterateObjects(m, &Staker{}, stakerOpFunc)
+	err = IterateObjects(m.GetDB(), Staker{}, stakerOpFunc)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *Manager) EnqueueDelegationTxs(msgType string) error {
+func (m *Manager) EnqueueDelegationTxs(batchID uint, msgType string) error {
 	if msgType != delegation.MethodDelegate && msgType != delegation.MethodUndelegate {
 		return xerrors.Errorf("EnqueueDelegationTxs invalid msg type:%s", msgType)
 	}
@@ -164,7 +169,7 @@ func (m *Manager) EnqueueDelegationTxs(msgType string) error {
 	if err != nil {
 		return err
 	}
-	operatorNumber, err := ObjectsNumber(m, &Operator{})
+	operatorNumber, err := ObjectsNumber(m.GetDB(), Operator{})
 	if err != nil {
 		return err
 	}
@@ -173,7 +178,7 @@ func (m *Manager) EnqueueDelegationTxs(msgType string) error {
 	opAmount := sdkmath.ZeroInt()
 	expectedCheckValue := sdkmath.ZeroInt()
 	// construct and push all messages into the queue
-	stakerOpFunc := func(stakerId uint, _ int64, staker *Staker) error {
+	stakerOpFunc := func(stakerId uint, _ int64, staker Staker) error {
 		nonce, err := ethHTTPClient.NonceAt(m.ctx, staker.Address, nil)
 		if err != nil {
 			return xerrors.Errorf(
@@ -181,9 +186,9 @@ func (m *Manager) EnqueueDelegationTxs(msgType string) error {
 				stakerId, staker.Address.String(), err)
 		}
 
-		assetOpFunc := func(assetId uint, _ int64, asset *Asset) error {
+		assetOpFunc := func(assetId uint, _ int64, asset Asset) error {
 			// Each asset needs to perform delegate and undelegate operations on all operators.
-			stakerAssetInfo, err := m.QueryStakerAssetInfo(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String())
+			stakerAssetInfo, err := m.QueryStakerAssetInfo(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String())
 			if err != nil {
 				logger.Error("EnqueueDelegationTxs, error occurs when querying the staker asset info",
 					"staker", staker.EvmAddress().String(), "asset", asset.Address.String(), "err", err)
@@ -197,34 +202,43 @@ func (m *Manager) EnqueueDelegationTxs(msgType string) error {
 				// delegates half of the withdrawable amount to the operators
 				opAmount = stakerAssetInfo.WithdrawableAmount.Quo(sdkmath.NewInt(2)).Quo(sdkmath.NewInt(operatorNumber))
 			}
-			operatorOpFunc := func(operatorId uint, _ int64, operator *Operator) error {
-				delegatedAmount, err := m.QueryDelegatedAmount(asset.ClientChainID, staker.EvmAddress().String(), asset.Address.String(), operator.Address)
-				if err != nil {
-					return err
-				}
+			operatorOpFunc := func(operatorId uint, _ int64, operator Operator) error {
+				delegatedAmount, err := m.QueryDelegatedAmount(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String(), operator.Address)
 				if msgType == delegation.MethodUndelegate {
-					// undelegates all amount.
-					opAmount = delegatedAmount
+					if err == nil {
+						// undelegates all amount, the expected check value will be zero
+						opAmount = delegatedAmount
+					}
+					// opAmount will be zero if the delegation amount can't be quried, then the undelegation
+					// will be skipped when checking the opAmount.
 				} else {
-					expectedCheckValue = delegatedAmount.Add(opAmount)
+					if err != nil {
+						// it's the first delegation if the delegation amount can't be quired, then the expected
+						// amount should be equl to the opAmount
+						expectedCheckValue = opAmount
+					} else {
+						expectedCheckValue = delegatedAmount.Add(opAmount)
+					}
 				}
 				if !opAmount.IsPositive() {
 					logger.Error("EnqueueDelegationTxs, the opAmount isn't positive, skip the test", "msgType", msgType, "staker", staker.EvmAddress().String(), "asset", asset.Address.String())
 					return nil
 				}
-				data, err := delegationAbi.Pack(msgType, asset.ClientChainID, nonce, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), []byte(operator.Address), opAmount)
+				data, err := delegationAbi.Pack(msgType, asset.ClientChainID, nonce, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), []byte(operator.Address), opAmount.BigInt())
 				if err != nil {
 					return err
 				}
 				err = m.enqueueTxAndSaveRecord(&EnqueueTxParams{
-					staker:             staker,
+					staker:             &staker,
 					nonce:              &nonce,
 					msgType:            msgType,
-					IsCosmosTx:         false,
+					toAddr:             &DelegationPrecompileAddr,
+					isCosmosTx:         false,
 					opAmount:           opAmount,
 					msgData:            data,
 					assetID:            assetId,
 					operatorID:         operatorId,
+					testBatchID:        batchID,
 					expectedCheckValue: expectedCheckValue,
 				})
 				if err != nil {
@@ -232,19 +246,19 @@ func (m *Manager) EnqueueDelegationTxs(msgType string) error {
 				}
 				return nil
 			}
-			err = IterateObjects(m, &Operator{}, operatorOpFunc)
+			err = IterateObjects(m.GetDB(), Operator{}, operatorOpFunc)
 			if err != nil {
 				return err
 			}
 			return nil
 		}
-		err = IterateObjects(m, &Asset{}, assetOpFunc)
+		err = IterateObjects(m.GetDB(), Asset{}, assetOpFunc)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	err = IterateObjects(m, &Staker{}, stakerOpFunc)
+	err = IterateObjects(m.GetDB(), Staker{}, stakerOpFunc)
 	if err != nil {
 		return err
 	}
@@ -266,19 +280,15 @@ func (m *Manager) SignAndSendTxs(tx interface{}) error {
 	// todo: address the cosmos transaction for the delegation/undelegation of Exo token.
 
 	// update the tx record in the local db for future check
-	txRecord, err := LoadObjectByID[Transaction](m, evmTx.TxRecordID)
-	if err != nil {
-		return err
-	}
 	height, err := m.NodeEVMHTTPClients[DefaultNodeIndex].BlockNumber(m.ctx)
 	if err != nil {
 		return err
 	}
-	txRecord.SendTime = time.Now().String()
-	txRecord.Status = Pending
-	txRecord.SendHeight = height
-	txRecord.TxHash = txID
-	err = SaveObject[Transaction](m, txRecord)
+	evmTx.TxRecord.SendTime = time.Now().String()
+	evmTx.TxRecord.Status = Pending
+	evmTx.TxRecord.SendHeight = height
+	evmTx.TxRecord.TxHash = txID
+	err = SaveObject[Transaction](m.GetDB(), *evmTx.TxRecord)
 	if err != nil {
 		return err
 	}
@@ -307,7 +317,7 @@ func (m *Manager) TickHandle(handleRate int, handle func() (bool, error)) error 
 				return nil
 			}
 		case <-m.Shutdown:
-			fmt.Println("Shutting down")
+			logger.Info("Shutting down")
 			return nil
 		default:
 			continue
@@ -324,6 +334,7 @@ func (m *Manager) DequeueAndSignSendTxs() error {
 				logger.Error("DequeueAndSignSendTxs: can't sign and send the tx", "err", err)
 				return false, err
 			}
+			logger.Info("DequeueAndSignSendTxs, sign and send tx successfully")
 		default:
 			return false, nil
 		}

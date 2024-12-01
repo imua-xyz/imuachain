@@ -1,11 +1,20 @@
 //go:build skiptests
 
+// Used to debug the test tool. Standard unit tests should launch a running node
+// through the startInProcess function, similar to the tests in the network directory.
 package batch
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"testing"
+
+	"github.com/ExocoreNetwork/exocore/precompiles/assets"
+	"github.com/ethereum/go-ethereum/common"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 
 	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -96,6 +105,100 @@ func Test_ImportPrivKeyHex(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println("the key record address is:", keyRecordAddr.String())
 	assert.Equal(t, exoAddr.String(), keyRecordAddr.String())
+}
+
+func Test_queryEvmTx(t *testing.T) {
+	appManager, err := NewManager(context.Background(), "/home/timmy/tests/test-tool", &DefaultTestToolConfig)
+	assert.NoError(t, err)
+	txID := common.HexToHash("0x1c48a4a180d68ee52bb4e3d4fc479f5eee99d9a83b770a20850fca9f38043b8f")
+	evmHTTPClient := appManager.NodeEVMHTTPClients[DefaultNodeIndex]
+	receipt, err := evmHTTPClient.TransactionReceipt(appManager.ctx, txID)
+	assert.NoError(t, err)
+	receiptBytes, err := json.MarshalIndent(receipt, " ", " ")
+	assert.NoError(t, err)
+	fmt.Println(string(receiptBytes))
+}
+
+func Test_LoadAllAVSs(t *testing.T) {
+	// open the sqlite db
+	homePath := "/home/timmy/tests/test-tool"
+	dsn := "file:" + filepath.Join(homePath, SqliteDBFileName) + "?cache=shared&_journal_mode=WAL"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	assert.NoError(t, err)
+	opFunc := func(id uint, objectNumber int64, object AVS) error {
+		objectBytes, err := json.MarshalIndent(&object, " ", " ")
+		assert.NoError(t, err)
+		fmt.Println(string(objectBytes))
+		fmt.Println("the evm and cosmos address is:", object.EvmAddress(), object.AccAddress().String())
+		return nil
+	}
+	err = IterateObjects(db, AVS{}, opFunc)
+	assert.NoError(t, err)
+}
+
+func Test_LoadTxRecords(t *testing.T) {
+	// open the sqlite db
+	homePath := "/home/timmy/tests/test-tool"
+	dsn := "file:" + filepath.Join(homePath, SqliteDBFileName) + "?cache=shared&_journal_mode=WAL"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	assert.NoError(t, err)
+	txDbIDs, _, err := GetTxIDsByBatchTypeAndStatus(db, 0, assets.MethodDepositLST, Pending)
+	assert.NoError(t, err)
+	for _, txDbID := range txDbIDs {
+		txRecord, err := LoadObjectByID[Transaction](db, txDbID)
+		assert.NoError(t, err)
+		txRecordBytes, err := json.MarshalIndent(&txRecord, " ", " ")
+		assert.NoError(t, err)
+		fmt.Println(string(txRecordBytes))
+	}
+}
+
+func Test_LoadAllTxRecords(t *testing.T) {
+	// open the sqlite db
+	homePath := "/home/timmy/tests/test-tool"
+	dsn := "file:" + filepath.Join(homePath, SqliteDBFileName) + "?cache=shared&_journal_mode=WAL"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	assert.NoError(t, err)
+	opFunc := func(id uint, objectNumber int64, object Transaction) error {
+		objectBytes, err := json.MarshalIndent(&object, " ", " ")
+		assert.NoError(t, err)
+		fmt.Println(string(objectBytes))
+		return nil
+	}
+	err = IterateObjects(db, Transaction{}, opFunc)
+	assert.NoError(t, err)
+}
+
+func Test_LoadAllStakers(t *testing.T) {
+	// open the sqlite db
+	homePath := "/home/timmy/tests/test-tool"
+	dsn := "file:" + filepath.Join(homePath, SqliteDBFileName) + "?cache=shared&_journal_mode=WAL"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	assert.NoError(t, err)
+	opFunc := func(id uint, objectNumber int64, object Staker) error {
+		objectBytes, err := json.MarshalIndent(&object, " ", " ")
+		assert.NoError(t, err)
+		fmt.Println(string(objectBytes))
+		return nil
+	}
+	err = IterateObjects(db, Staker{}, opFunc)
+	assert.NoError(t, err)
+}
+
+func Test_LoadAllAssets(t *testing.T) {
+	// open the sqlite db
+	homePath := "/home/timmy/tests/test-tool"
+	dsn := "file:" + filepath.Join(homePath, SqliteDBFileName) + "?cache=shared&_journal_mode=WAL"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	assert.NoError(t, err)
+	opFunc := func(id uint, objectNumber int64, object Asset) error {
+		objectBytes, err := json.MarshalIndent(&object, " ", " ")
+		assert.NoError(t, err)
+		fmt.Println(string(objectBytes))
+		return nil
+	}
+	err = IterateObjects(db, Asset{}, opFunc)
+	assert.NoError(t, err)
 }
 
 func Test_Start(t *testing.T) {

@@ -44,7 +44,7 @@ type TestToolConfig struct {
 	// parameters for the testnet
 	ChainValidatorNumber int    `mapstructure:"chain-validator-number" toml:"chain-validator-number"`
 	ChainID              string `mapstructure:"chain-id" toml:"chain-id"`
-	DefaultClientChainID uint64 `mapstructure:"default-client-chain-id" toml:"default-client-chain-id"`
+	DefaultClientChainID uint32 `mapstructure:"default-client-chain-id" toml:"default-client-chain-id"`
 
 	// the RPCs of the Exocore chain nodes
 	NodesRPC             []string `mapstructure:"nodes-rpc" toml:"nodes-rpc"`
@@ -81,7 +81,7 @@ type TestToolConfig struct {
 var DefaultTestToolConfig = TestToolConfig{
 	StakerNumber:   5,
 	OperatorNumber: 3,
-	AVSNumber:      1,
+	AVSNumber:      2,
 	AsssetNumber:   5,
 	// this private key is from the local_node.sh
 	FaucetSk:              "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE",
@@ -99,7 +99,7 @@ var DefaultTestToolConfig = TestToolConfig{
 	EachTestInterval:      600, // 10 minutes
 	SingleTxCheckInterval: 6,   // 6 seconds
 	TxWaitExpiration:      60,  // 1 minutes
-	BatchTxsCheckInterval: 60,  // 1 minutes
+	BatchTxsCheckInterval: 120, // 2 minutes
 	AddrNumberInMultiSend: 10,
 	TxsQueueBufferSize:    100,
 }
@@ -112,7 +112,7 @@ type HelperRecord struct {
 type Asset struct {
 	ID            uint           `gorm:"primaryKey"`                   // primary key
 	Address       common.Address `gorm:"column:address;type:char(42)"` // eth address
-	ClientChainID uint64
+	ClientChainID uint32
 	Decimal       uint8
 	Name          string `gorm:"type:varchar(50)"`
 	MetaInfo      string `gorm:"type:varchar(200)"`
@@ -238,7 +238,7 @@ type EvmTxInQueue struct {
 	ToAddr           *common.Address
 	Value            *big.Int
 	Data             []byte
-	TxRecordID       uint
+	TxRecord         *Transaction
 }
 
 type CosmosMsgInQueue struct{}

@@ -60,11 +60,12 @@ const (
 )
 
 var (
-	ExoDecimalReduction  = new(big.Int).Exp(big.NewInt(10), big.NewInt(types.BaseDenomUnit), nil)
-	logger               = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-	AssetsPrecompileAddr = common.HexToAddress("0x0000000000000000000000000000000000000804")
-	AVSPrecompileAddr    = common.HexToAddress("0x0000000000000000000000000000000000000901")
-	AllEpochs            = []string{
+	ExoDecimalReduction      = new(big.Int).Exp(big.NewInt(10), big.NewInt(types.BaseDenomUnit), nil)
+	logger                   = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	AssetsPrecompileAddr     = common.HexToAddress("0x0000000000000000000000000000000000000804")
+	DelegationPrecompileAddr = common.HexToAddress("0x0000000000000000000000000000000000000805")
+	AVSPrecompileAddr        = common.HexToAddress("0x0000000000000000000000000000000000000901")
+	AllEpochs                = []string{
 		epochstypes.MinuteEpochID,
 		epochstypes.HourEpochID,
 		epochstypes.DayEpochID,
@@ -103,6 +104,8 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 	if err != nil {
 		return nil, xerrors.Errorf("can't open sqlite db, err:%s", err)
 	}
+	// SQLite waits for 600000 milliseconds (10 minute) when encountering a lock conflict.
+	db.Exec("PRAGMA busy_timeout = 600000;")
 
 	// get the private key for the virtual exocore gateway address
 	// most test transactions will be signed by this private key.
@@ -137,11 +140,18 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		TxsQueue:           make(chan interface{}, config.TxsQueueBufferSize),
 		Shutdown:           make(chan bool),
 	}
+	helperRecord, err := LoadObjectByID[HelperRecord](db, SqliteDefaultStartID)
+	logger.Info("NewManager load helper record", "err", err, "helperRecord", helperRecord)
+	batchID := uint(0)
+	if err == nil {
+		// increase the batch id, because we use a new batch id to avoid check error
+		// every time the test-tool is started
+		batchID = helperRecord.CurrentBatchID + 1
+	}
+	logger.Info("NewManager the new test batch ID is:", "batchID", batchID)
+	err = SaveObject[HelperRecord](manager.GetDB(), HelperRecord{CurrentBatchID: batchID, ID: SqliteDefaultStartID})
 	if err != nil {
-		err = SaveObject[HelperRecord](manager, HelperRecord{CurrentBatchID: 0})
-		if err != nil {
-			return nil, xerrors.Errorf("can't init the helper record, err:%s", err)
-		}
+		return nil, xerrors.Errorf("can't init the helper record, err:%s", err)
 	}
 	// creat the evm clients
 	// http clients
@@ -149,48 +159,33 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		if i >= config.ChainValidatorNumber {
 			return nil, xerrors.Errorf("too many http rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
 		}
-		fmt.Println("http url", url)
+		logger.Info("http url", "url", url)
 		rc, err := rpc.DialContext(context.Background(), url)
 		if err != nil {
 			return nil, xerrors.Errorf("can't creat the evm http rpc, err:%s, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
-		fmt.Println("the evm http rpc is:", c)
 		manager.NodeEVMHTTPClients[i] = c
-
-		fmt.Println("the node evm http clients is:", len(manager.NodeEVMHTTPClients), manager.NodeEVMHTTPClients)
-		evmChainID, err := manager.NodeEVMHTTPClients[DefaultNodeIndex].ChainID(ctx)
-		if err != nil {
-			return nil, xerrors.Errorf("can't get the evm chainID, err:%s", err)
-		}
-		fmt.Println("http the evm chain id is:", evmChainID)
 	}
 	// websocket clients
 	for i, url := range config.NodesEVMRPCWebsocket {
 		if i >= config.ChainValidatorNumber {
 			return nil, xerrors.Errorf("too many websocket rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
 		}
-		fmt.Println("websocket url", url)
+		logger.Info("websocket url", "url", url)
 		rc, err := rpc.DialContext(context.Background(), url)
 		if err != nil {
 			return nil, xerrors.Errorf("can't creat the evm websocket rpc, err:%s, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
-		fmt.Println("the evm ws rpc is:", c)
 		manager.NodeEVMWSClients[i] = c
-
-		evmChainID, err := manager.NodeEVMWSClients[DefaultNodeIndex].ChainID(ctx)
-		if err != nil {
-			return nil, xerrors.Errorf("can't get the evm chainID, err:%s", err)
-		}
-		fmt.Println("ws the evm chain id is:", evmChainID)
 	}
 	// creat client context for the nodes
 	for i, url := range config.NodesRPC {
 		if i >= config.ChainValidatorNumber {
 			return nil, xerrors.Errorf("too many node rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
 		}
-		fmt.Println("node rpc url", url)
+		logger.Info("node rpc url", "url", url)
 		// Create a client context to connect to the Cosmos node
 		clientCtx := client.Context{}.
 			WithNodeURI(url).            // gRPC address of the Cosmos node
@@ -202,7 +197,6 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 			WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
 			WithAccountRetriever(authtypes.AccountRetriever{}).
 			WithSkipConfirmation(true)
-		fmt.Println("the node client ctx:", clientCtx)
 
 		client, err := client.NewClientFromNode(url)
 		if err != nil {
@@ -256,8 +250,7 @@ func (m *Manager) CreateAssets() error {
 		}, nil
 	}
 	// create a new Staker
-	fmt.Println("m.config", m.config, m.config.AsssetNumber)
-	return CreateObjects(m, Asset{}, int64(m.config.AsssetNumber), createNewAsset)
+	return CreateObjects(m.GetDB(), Asset{}, int64(m.config.AsssetNumber), createNewAsset)
 }
 
 func (m *Manager) CreateStakers() error {
@@ -276,7 +269,7 @@ func (m *Manager) CreateStakers() error {
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m, Staker{}, int64(m.config.StakerNumber), createNewStaker)
+	return CreateObjects(m.GetDB(), Staker{}, int64(m.config.StakerNumber), createNewStaker)
 }
 
 func (m *Manager) SaveDogfoodAVS() error {
@@ -296,7 +289,7 @@ func (m *Manager) SaveDogfoodAVS() error {
 	}
 
 	// save the dogfood avs to local db
-	err := SaveObject[AVS](m, AVS{
+	err := SaveObject[AVS](m.GetDB(), AVS{
 		Name:    DogfoodAVSName,
 		Address: m.DogfoodAddr,
 	})
@@ -323,7 +316,7 @@ func (m *Manager) CreateAVS() error {
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m, AVS{}, int64(m.config.AVSNumber), createNewAVS)
+	return CreateObjects(m.GetDB(), AVS{}, int64(m.config.AVSNumber), createNewAVS)
 }
 
 func (m *Manager) SaveDefaultOperator() error {
@@ -352,7 +345,7 @@ func (m *Manager) SaveDefaultOperator() error {
 		}
 
 		// save the dogfood avs to local db
-		err := SaveObject[Operator](m, Operator{
+		err := SaveObject[Operator](m.GetDB(), Operator{
 			Address: operatorAddr,
 			Name:    fmt.Sprintf("%s%d", DefaultOperatorNamePrefix, i),
 		})
@@ -389,7 +382,7 @@ func (m *Manager) CreateOperators() error {
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m, Operator{}, int64(m.config.OperatorNumber), createNewOperator)
+	return CreateObjects(m.GetDB(), Operator{}, int64(m.config.OperatorNumber), createNewOperator)
 }
 
 func (m *Manager) Prepare() error {
@@ -435,6 +428,7 @@ func (m *Manager) Prepare() error {
 	if err != nil {
 		return xerrors.Errorf("failed to check assets,err:%s", err)
 	}
+	logger.Info("finish registering test assets, next step: operator registration")
 	// register the operators, EthSigner is the operator sk, tx type is cosmos
 	if err = m.RegisterOperators(); err != nil {
 		return xerrors.Errorf("failed to register operators,err:%s", err)
@@ -443,6 +437,7 @@ func (m *Manager) Prepare() error {
 	if err != nil {
 		return xerrors.Errorf("failed to check operators,err:%s", err)
 	}
+	logger.Info("finish registering test operators, next step: AVS registration")
 	// EthSigner is the AVS sk, tx type is evm
 	if err = m.RegisterAVSs(assets); err != nil {
 		return xerrors.Errorf("failed to register AVss,err:%s", err)
@@ -451,6 +446,7 @@ func (m *Manager) Prepare() error {
 	if err != nil {
 		return xerrors.Errorf("failed to check AVSs,err:%s", err)
 	}
+	logger.Info("finish registering test AVSs, next step: add assets to dogfood")
 	// add the test assets to the supported list of dogfood AVS, EthSigner is the AVS sk
 	// tx type is cosmos
 	if err = m.AddAssetsToDogfoodAVS(assets); err != nil {
@@ -460,6 +456,7 @@ func (m *Manager) Prepare() error {
 	if err != nil || isUpdate {
 		return xerrors.Errorf("failed to check the assets list of dogfood,isUpdate:%v,err:%s", isUpdate, err)
 	}
+	logger.Info("finish adding assets to dogfood, next step: opts the operators to AVSs")
 	// opt all test operators to all test AVSs, EthSigner is the operator sk
 	// tx type is cosmos
 	if err = m.OptOperatorsIntoAVSs(); err != nil {
@@ -474,12 +471,13 @@ func (m *Manager) Prepare() error {
 }
 
 func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
-	helperRecord, err := LoadObjectByID[HelperRecord](m, SqliteDefaultStartID)
+	helperRecord, err := LoadObjectByID[HelperRecord](m.GetDB(), SqliteDefaultStartID)
+	logger.Info("EnqueueAndCheckTxsInBatch load helper record", "err", err, "helperRecord", helperRecord)
 	if err != nil {
 		logger.Error("EnqueueAndCheckTxsInBatch: failed to load the helper record", "err", err)
 		return err
 	}
-	var enqueueTxsFunc func(msgType string) error
+	var enqueueTxsFunc func(batchID uint, msgType string) error
 	var txsCheckFunc func(batchID uint, msgType string) error
 	switch msgType {
 	case assets.MethodDepositLST, assets.MethodWithdrawLST:
@@ -491,27 +489,39 @@ func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
 	default:
 		return xerrors.Errorf("EnqueueAndCheckTxsInBatch, invalid msgType:%s", msgType)
 	}
-	if err := enqueueTxsFunc(msgType); err != nil {
+	logger.Info("EnqueueAndCheckTxsInBatch: call enqueueTxsFunc", "msgType", msgType, "batchID", helperRecord.CurrentBatchID)
+	if err := enqueueTxsFunc(helperRecord.CurrentBatchID, msgType); err != nil {
 		logger.Error("EnqueueAndCheckTxsInBatch: failed to test transactions in batch", "msgType", msgType, "err", err)
 		return err
 	}
 	// When configuring this interval, the durations of sending and on-chain processing should be taken into account.
 	time.Sleep(time.Duration(m.config.BatchTxsCheckInterval) * time.Second)
-	if err := m.TxOnChainCheck(helperRecord.CurrentBatchID, assets.MethodDepositLST); err != nil {
+	// Check if all test transactions have been dequeued; if not, wait for them to be dequeued.
+	for {
+		if len(m.TxsQueue) != 0 {
+			time.Sleep(time.Duration(m.config.BatchTxsCheckInterval) * time.Second)
+		} else {
+			break
+		}
+	}
+	logger.Info("EnqueueAndCheckTxsInBatch: call PrecompileTxOnChainCheck", "msgType", msgType, "batchID", helperRecord.CurrentBatchID)
+	if err := m.PrecompileTxOnChainCheck(helperRecord.CurrentBatchID, msgType); err != nil {
 		logger.Error("EnqueueAndCheckTxsInBatch: failed to check whether the txs are on chain", "err", err)
 		return err
 	}
-	if err := txsCheckFunc(helperRecord.CurrentBatchID, assets.MethodDepositLST); err != nil {
+	logger.Info("EnqueueAndCheckTxsInBatch: call txsCheckFunc", "msgType", msgType)
+	if err := txsCheckFunc(helperRecord.CurrentBatchID, msgType); err != nil {
 		logger.Error("EnqueueAndCheckTxsInBatch: failed to check the txs", "msgType", msgType, "err", err)
 		return err
 	}
 	// increase the batch id if the msg type is withdrawal
 	if msgType == assets.MethodWithdrawLST {
 		helperRecord.CurrentBatchID++
-		if err := SaveObject(m, helperRecord); err != nil {
+		if err := SaveObject(m.GetDB(), helperRecord); err != nil {
 			logger.Error("EnqueueAndCheckTxsInBatch: can't save the helper record")
 			return err
 		}
+		logger.Info("EnqueueAndCheckTxsInBatch update the batchID", "batchID", helperRecord.CurrentBatchID)
 	}
 	return nil
 }
@@ -524,20 +534,28 @@ func (m *Manager) Start() error {
 	go func() {
 		// deposit
 		if err := m.EnqueueAndCheckTxsInBatch(assets.MethodDepositLST); err != nil {
+			close(m.Shutdown)
 			return
 		}
+		logger.Info("Start: finish enqueuing and checking all deposit txs")
 		// delegation
 		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodDelegate); err != nil {
+			close(m.Shutdown)
 			return
 		}
+		logger.Info("Start: finish enqueuing and checking all delegation txs")
 		// undelegation
 		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodUndelegate); err != nil {
+			close(m.Shutdown)
 			return
 		}
+		logger.Info("Start: finish enqueuing and checking all undelegation txs")
 		// withdrawal
 		if err := m.EnqueueAndCheckTxsInBatch(assets.MethodWithdrawLST); err != nil {
+			close(m.Shutdown)
 			return
 		}
+		logger.Info("Start: finish enqueuing and checking all withdrawal txs")
 		time.Sleep(time.Duration(m.config.EachTestInterval) * time.Second)
 	}()
 	// Dequeue the transactions and send them to the node.

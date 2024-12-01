@@ -2,7 +2,6 @@ package batch
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -25,7 +24,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const GasAdjustment = 1.25
+const GasAdjustment = 2
 
 // WaitForEvmTxReceipt Wait for the transaction receipt and confirm if it's mined successfully
 func WaitForEvmTxReceipt(client *ethclient.Client, txHash common.Hash, waitDuration, waitExpiration time.Duration) (*types.Receipt, error) {
@@ -78,7 +77,6 @@ func (m *Manager) SignAndSendEvmTx(txInfo *EvmTxInQueue) (common.Hash, error) {
 		nonceFromSyncMap = true
 		nonce = loadNonce
 	}
-
 	if !txInfo.UseExternalNonce && !nonceFromSyncMap {
 		nonce, err = ethC.NonceAt(m.ctx, msg.From, nil)
 		if err != nil {
@@ -103,6 +101,9 @@ func (m *Manager) SignAndSendEvmTx(txInfo *EvmTxInQueue) (common.Hash, error) {
 		GasPrice: gasPrice,
 		Data:     msg.Data,
 	})
+	logger.Info("SignAndSendEvmTx", "from", txInfo.From, "to", retTx.To(),
+		"nonce", retTx.Nonce(), "value", retTx.Value(), "gasPrice", retTx.GasPrice(),
+		"gas", retTx.Gas(), "dataLength", len(retTx.Data()), "time", time.Now().String())
 	signTx, err := types.SignTx(retTx, m.EthSigner, sk)
 	if err != nil {
 		return common.Hash{}, err
@@ -115,7 +116,7 @@ func (m *Manager) SignAndSendEvmTx(txInfo *EvmTxInQueue) (common.Hash, error) {
 
 	if nonceFromSyncMap {
 		// update the sequence if we use faucet sk to sign the tx
-		m.Sequences.Store(crypto.PubkeyToAddress(m.FaucetSK.PublicKey), nonce+1)
+		m.Sequences.Store(crypto.PubkeyToAddress(sk.PublicKey), loadNonce+1)
 	}
 	return signTx.Hash(), nil
 }
@@ -130,8 +131,10 @@ func (m *Manager) SignSendEvmTxAndWait(txInfo *EvmTxInQueue) error {
 		return err
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
+		logger.Info(" the evm tx has been on chain but the execution is failed", "txHash", txHash)
 		return xerrors.Errorf("failed evm tx receipt, txID:%s", txHash)
 	}
+	logger.Info("the evm tx has been on chain successfully", "txID", txHash)
 	return nil
 }
 
@@ -140,7 +143,6 @@ func (m *Manager) SignSendEvmTxAndWait(txInfo *EvmTxInQueue) error {
 // the result to enable waiting for on-chain confirmation.
 func BroadcastTxWithRes(clientCtx client.Context, txf sdktx.Factory, msgs ...sdktypes.Msg) (res *sdktypes.TxResponse, err error) {
 	txf, err = txf.Prepare(clientCtx)
-	fmt.Println("call Prepare end", err)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +153,6 @@ func BroadcastTxWithRes(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk
 		}
 
 		_, adjusted, err := sdktx.CalculateGas(clientCtx, txf, msgs...)
-		fmt.Println("call CalculateGas end", err)
 		if err != nil {
 			return nil, err
 		}
@@ -165,13 +166,11 @@ func BroadcastTxWithRes(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk
 	}
 
 	tx, err := txf.BuildUnsignedTx(msgs...)
-	fmt.Println("call BuildUnsignedTx end", err)
 	if err != nil {
 		return nil, err
 	}
 
 	err = sdktx.Sign(txf, clientCtx.GetFromName(), tx, true)
-	fmt.Println("call sign end", err)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +197,7 @@ func (m *Manager) SignAndSendMultiMsgs(
 	if err != nil {
 		return nil, xerrors.Errorf("SignAndSendMultiMsgs, can't get address from the key record,fromName:%s,err:%s", fromName, err)
 	}
-	fmt.Println("from Addr is:", fromAddr)
+	logger.Info("from name and Addr is:", "fromName", fromName, "fromAddr", fromAddr.String())
 	clientCtx = clientCtx.
 		WithFromName(fromName).
 		WithFromAddress(fromAddr).
@@ -220,19 +219,17 @@ func (m *Manager) SignAndSendMultiMsgs(
 		if err != nil {
 			return nil, err
 		}
+		logger.Info("the sequence loaded from the sync map is:",
+			"fromAddr", common.BytesToAddress(fromAddr), "sequence", sequence)
 		txFactory = txFactory.WithSequence(sequence)
 	}
 	responseList := make([]*sdktypes.TxResponse, 0)
 	for _, msg := range msgs {
-		msgBytes, _ := json.MarshalIndent(msg, " ", " ")
-		fmt.Println("the msg is")
-		fmt.Println(string(msgBytes))
 		// get gas price
 		suggestGasPrice, err := m.GasPrice()
 		if err != nil {
 			return nil, xerrors.Errorf("failed to get suggest gas price, error:%s", err.Error())
 		}
-		fmt.Println("the suggestGasPrice is:", suggestGasPrice)
 		gasPrices := sdktypes.NewDecCoins(
 			sdktypes.NewDecCoin(
 				config.BaseDenom,
@@ -242,8 +239,6 @@ func (m *Manager) SignAndSendMultiMsgs(
 		txFactory = txFactory.
 			WithGasPrices(gasPrices).
 			WithFeePayer(fromAddr)
-		fmt.Println("call BroadcastTx, gas price is:", txFactory.GasPrices())
-		fmt.Println("call BroadcastTx, fee is:", txFactory.Fees())
 		res, err := BroadcastTxWithRes(clientCtx, txFactory, msg)
 		if err != nil {
 			return nil, xerrors.Errorf("failed to broadcast tx, error:%s", err.Error())
@@ -260,6 +255,8 @@ func (m *Manager) SignAndSendMultiMsgs(
 		if fromName == FaucetSKName ||
 			strings.HasPrefix(fromName, OperatorNamePrefix) ||
 			strings.HasPrefix(fromName, AVSNamePrefix) {
+			logger.Info("save the sequence",
+				"fromAddr", common.BytesToAddress(fromAddr).String(), "nextSequence", nextSequence)
 			m.Sequences.Store(common.BytesToAddress(fromAddr), nextSequence)
 		}
 		sleepDur := time.Duration(1000/m.config.TxNumberPerSec) * time.Millisecond
@@ -279,10 +276,9 @@ func (m *Manager) WaitForCosmosTxs(responseList []*sdktypes.TxResponse, waitDura
 
 			queryRes, err := tx.QueryTx(m.NodeClientCtx[DefaultNodeIndex], res.TxHash)
 			if err != nil {
-				logger.Error("can't query the cosmos tx", "txHash", res.TxHash, "err", err)
+				logger.Info("can't query the cosmos tx, continue waiting", "txHash", res.TxHash, "err", err)
 				// Wait for the specified duration before retrying
 				// Log a message indicating the receipt is not yet available
-				logger.Info("can't get the receipt of EVM transaction, continue waiting", "err", err)
 				time.Sleep(waitDuration)
 				continue
 			}

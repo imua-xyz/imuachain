@@ -50,7 +50,7 @@ func (m *Manager) InitSequences() error {
 		m.Sequences.Store(operator.EvmAddress(), seq)
 		return nil
 	}
-	err = IterateObjects(m, Operator{}, opOperatorFunc)
+	err = IterateObjects(m.GetDB(), Operator{}, opOperatorFunc)
 	if err != nil {
 		return err
 	}
@@ -71,7 +71,7 @@ func (m *Manager) InitSequences() error {
 		m.Sequences.Store(avs.EvmAddress(), seq)
 		return nil
 	}
-	err = IterateObjects(m, AVS{}, opAVSFunc)
+	err = IterateObjects(m.GetDB(), AVS{}, opAVSFunc)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (m *Manager) AssetsCheck(opFuncIfCheckFail func(assetID string, asset *Asse
 	opFunc := func(_ uint, _ int64, asset *Asset) error {
 		// check if the asset has been registered.
 		_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(
-			asset.ClientChainID, "", asset.Address.String())
+			uint64(asset.ClientChainID), "", asset.Address.String())
 		req := &assetstypes.QueryStakingAssetInfo{
 			AssetID: assetID, // already lowercase
 		}
@@ -129,7 +129,7 @@ func (m *Manager) AssetsCheck(opFuncIfCheckFail func(assetID string, asset *Asse
 		}
 		return nil
 	}
-	err := IterateObjects(m, &Asset{}, opFunc)
+	err := IterateObjects(m.GetDB(), &Asset{}, opFunc)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (m *Manager) RegisterAssets() ([]string, error) {
 	allAssetsID := make([]string, 0)
 	opFuncIfCheckFail := func(assetID string, asset *Asset) error {
 		// register the asset.
-		data, err := assetsAbi.Pack(assets.MethodRegisterToken, asset.ClientChainID, asset.Address, asset.Decimal, asset.Name, asset.MetaInfo, asset.OracleInfo)
+		data, err := assetsAbi.Pack(assets.MethodRegisterToken, asset.ClientChainID, PaddingAddressTo32(asset.Address), asset.Decimal, asset.Name, asset.MetaInfo, asset.OracleInfo)
 		if err != nil {
 			return err
 		}
@@ -195,7 +195,7 @@ func (m *Manager) AVSsCheck(opFuncIfCheckFail func(id uint, avs *AVS) error) err
 		}
 		return nil
 	}
-	err := IterateObjects(m, &AVS{}, opFunc)
+	err := IterateObjects(m.GetDB(), &AVS{}, opFunc)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 		avsUnbondingPeriod := uint64(id) % MaxUnbondingDuration
 		data, err := avsAbi.Pack(
 			avsprecompile.MethodRegisterAVS,
-			avs.Address,
+			avs.EvmAddress(),
 			name,
 			minStakeAmount,
 			tx.GenerateAddress(),
@@ -238,6 +238,7 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 		if err != nil {
 			return xerrors.Errorf("can't convert the Sk to ecdsa private key,avs:%v,err:%s", avs, err)
 		}
+		logger.Info("the caller and AVS address is:", "caller", crypto.PubkeyToAddress(sk.PublicKey), "avsAddr", avs.EvmAddress())
 		err = m.SignSendEvmTxAndWait(&EvmTxInQueue{
 			From:   crypto.PubkeyToAddress(sk.PublicKey),
 			ToAddr: &AVSPrecompileAddr,
@@ -282,7 +283,7 @@ func (m *Manager) OperatorsCheck(opFuncIfCheckFail func(operator *Operator) erro
 		}
 		return nil
 	}
-	err := IterateObjects(m, &Operator{}, opFunc)
+	err := IterateObjects(m.GetDB(), &Operator{}, opFunc)
 	if err != nil {
 		return err
 	}
@@ -394,7 +395,7 @@ func (m *Manager) OperatorsOptInCheck(opFuncIfCheckFail func(operator *Operator,
 				},
 			}
 			optInfo, err := queryClient.QueryOptInfo(m.ctx, req)
-			if err != nil || optInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
+			if err != nil || optInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight {
 				// opts the operator into the AVS
 				if opFuncIfCheckFail != nil {
 					err = opFuncIfCheckFail(operator, avs)
@@ -407,13 +408,13 @@ func (m *Manager) OperatorsOptInCheck(opFuncIfCheckFail func(operator *Operator,
 			}
 			return nil
 		}
-		err := IterateObjects(m, &AVS{}, avsOpFunc)
+		err := IterateObjects(m.GetDB(), &AVS{}, avsOpFunc)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
-	err := IterateObjects(m, &Operator{}, operatorOpFunc)
+	err := IterateObjects(m.GetDB(), &Operator{}, operatorOpFunc)
 	if err != nil {
 		return err
 	}
@@ -426,9 +427,11 @@ func (m *Manager) OptOperatorsIntoAVSs() error {
 	opFuncIfCheckFail := func(operator *Operator, avs *AVS) error {
 		// opts the operator into the AVS
 		msg := &operatortypes.OptIntoAVSReq{
-			FromAddress:   operator.Address,
-			AvsAddress:    avs.Address,
-			PublicKeyJSON: operator.ConsensusPubKey,
+			FromAddress: operator.Address,
+			AvsAddress:  avs.Address,
+		}
+		if avs.IsDogfood() {
+			msg.PublicKeyJSON = operator.ConsensusPubKey
 		}
 		err := m.SignSendMultiMsgsAndWait(clientCtx, operator.Name, flags.BroadcastSync, msg)
 		if err != nil {

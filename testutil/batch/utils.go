@@ -2,6 +2,9 @@ package batch
 
 import (
 	"math/big"
+	"reflect"
+
+	"gorm.io/gorm"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -16,10 +19,10 @@ import (
 
 var SqliteDefaultStartID = uint(1)
 
-func ObjectsNumber[T any](m *Manager, model T) (int64, error) {
+func ObjectsNumber[T any](db *gorm.DB, model T) (int64, error) {
 	// Get the current count of objects in the table
 	var count int64
-	err := m.GetDB().Model(&model).Count(&count).Error
+	err := db.Model(&model).Count(&count).Error
 	if err != nil {
 		return 0, xerrors.Errorf("Failed to count %T objects, err: %s", model, err)
 	}
@@ -27,15 +30,15 @@ func ObjectsNumber[T any](m *Manager, model T) (int64, error) {
 }
 
 // CreateObjects now accepts a `createNewObject` function to customize how objects are created
-func CreateObjects[T any](m *Manager, model T, targetCount int64, createNewObject func(id uint) (T, error)) error {
+func CreateObjects[T any](db *gorm.DB, model T, targetCount int64, createNewObject func(id uint) (T, error)) error {
 	// Automatically migrate the schema for the model
-	err := m.GetDB().AutoMigrate(&model)
+	err := db.AutoMigrate(&model)
 	if err != nil {
 		return xerrors.Errorf("Auto migration failed for %T table, err: %s", model, err)
 	}
 
 	// Get the current count of objects in the table
-	count, err := ObjectsNumber(m, model)
+	count, err := ObjectsNumber(db, model)
 	if err != nil {
 		return err
 	}
@@ -53,7 +56,7 @@ func CreateObjects[T any](m *Manager, model T, targetCount int64, createNewObjec
 		}
 
 		// Insert the new objects into the database
-		err = m.GetDB().Create(&objects).Error
+		err = db.Create(&objects).Error
 		if err != nil {
 			return xerrors.Errorf("Failed to insert new %T objects, err: %s", model, err)
 		}
@@ -62,38 +65,38 @@ func CreateObjects[T any](m *Manager, model T, targetCount int64, createNewObjec
 	return nil
 }
 
-func LoadObjectByID[T any](m *Manager, id uint) (T, error) {
+func LoadObjectByID[T any](db *gorm.DB, id uint) (T, error) {
 	var obj T
-	err := m.GetDB().First(&obj, id).Error
+	err := db.First(&obj, id).Error
 	if err != nil {
 		return obj, xerrors.Errorf("Failed to load %T object with ID %d, err: %s", obj, id, err)
 	}
 	return obj, nil
 }
 
-func SaveObject[T any](m *Manager, obj T) error {
+func SaveObject[T any](db *gorm.DB, obj T) error {
 	// Automatically migrate the schema, creating the table if it doesn't exist
-	if err := m.GetDB().AutoMigrate(&obj); err != nil {
+	if err := db.AutoMigrate(&obj); err != nil {
 		return xerrors.Errorf("Failed to auto migrate schema for %T, err: %s", obj, err)
 	}
 
 	// Now save the object
-	err := m.GetDB().Save(&obj).Error
+	err := db.Save(&obj).Error
 	if err != nil {
 		return xerrors.Errorf("Failed to save %T object, err: %s", obj, err)
 	}
 	return nil
 }
 
-func IterateObjects[T any](m *Manager, model T, opFunc func(id uint, objectNumber int64, object T) error) error {
-	objectNumber, err := ObjectsNumber(m, model)
+func IterateObjects[T any](db *gorm.DB, model T, opFunc func(id uint, objectNumber int64, object T) error) error {
+	objectNumber, err := ObjectsNumber(db, model)
 	if err != nil {
 		return err
 	}
 
 	for id := uint(1); id <= uint(objectNumber); id++ {
 		// check if the balance is enough
-		object, err := LoadObjectByID[T](m, id)
+		object, err := LoadObjectByID[T](db, id)
 		if err != nil {
 			return err
 		}
@@ -103,6 +106,38 @@ func IterateObjects[T any](m *Manager, model T, opFunc func(id uint, objectNumbe
 		}
 	}
 	return nil
+}
+
+func GetTxIDsByBatchTypeAndStatus(db *gorm.DB, batchID uint, txType string, status int) ([]uint, int64, error) {
+	var ids []uint
+	pageSize := 1000
+	page := 1
+	var err error
+	// Query only the ID field of transactions with the given TestBatchID and Type
+	for {
+		var pageIDs []uint
+		err = db.
+			Model(&Transaction{}).
+			Where("test_batch_id = ? AND type = ? AND status = ?", batchID, txType, status).
+			Order("id ASC").
+			Limit(pageSize).
+			Offset((page-1)*pageSize).
+			Pluck("id", &pageIDs).
+			Error
+
+		if err != nil || len(pageIDs) == 0 {
+			break
+		}
+
+		ids = append(ids, pageIDs...)
+		page++
+	}
+
+	if err != nil {
+		return nil, 0, xerrors.Errorf("Failed to retrieve transaction IDs with TestBatchID %d and Type %s, err: %s", batchID, txType, err)
+	}
+
+	return ids, int64(len(ids)), nil
 }
 
 func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) error {
@@ -132,7 +167,7 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 			return xerrors.Errorf("can't get balance,addr:%s, err: %s", object.EvmAddress().String(), err)
 		}
 		exoBalance := big.NewInt(0).Quo(balance, ExoDecimalReduction).Int64()
-		logger.Info("the exo balance is:", "addr", object.EvmAddress(), "exoBalance", exoBalance, "needExo", needExo)
+		logger.Info("the exo balance is:", "addr", object.EvmAddress(), "balance", balance, "exoBalance", exoBalance, "needExo", needExo)
 		if exoBalance < needExo {
 			objectAccAddr := object.AccAddress()
 			amount := sdktypes.NewInt(needExo - exoBalance)
@@ -164,13 +199,13 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 		return nil
 	}
 
-	err := IterateObjects(m, model, opFunc)
+	err := IterateObjects(m.GetDB(), model, opFunc)
 	if err != nil {
 		return err
 	}
 	// check if the object needs to be funded
 	if len(multiSendMsgs) == 0 {
-		logger.Info("FundingObjects: no object needs to be funded", "object", model)
+		logger.Info("FundingObjects: no object needs to be funded", "objectType", reflect.TypeOf(model))
 		return nil
 	}
 	// check if the faucet balance is enough
@@ -209,7 +244,7 @@ func CheckObjectsBalance[T AddressForFunding](m *Manager, model T, needExo int64
 		}
 		return nil
 	}
-	err := IterateObjects(m, model, opFunc)
+	err := IterateObjects(m.GetDB(), model, opFunc)
 	if err != nil {
 		return err
 	}

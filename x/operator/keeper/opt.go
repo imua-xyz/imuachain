@@ -1,8 +1,12 @@
 package keeper
 
 import (
+	"errors"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
+	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
@@ -37,7 +41,10 @@ func (k *Keeper) OptIn(
 	// configured by the AVS. This is used to prevent a DDOS attack from zero-USD value opting in.
 	operatorUSDValues, err := k.GetOrCalculateOperatorUSDValues(ctx, operatorAddress, avsAddr)
 	if err != nil {
-		return errorsmod.Wrapf(err, "OptIn: error when calculating operator USD value, operator:%s avsAddr:%s", operatorAddress.String(), avsAddr)
+		if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
+			return errorsmod.Wrapf(err, "OptIn: error when calculating operator USD value, operator:%s avsAddr:%s", operatorAddress.String(), avsAddr)
+		}
+		operatorUSDValues.SelfUSDValue = sdkmath.LegacyZeroDec()
 	}
 	minSelfDelegation, err := k.avsKeeper.GetAVSMinimumSelfDelegation(ctx, avsAddr)
 	if err != nil {
