@@ -78,7 +78,7 @@ func (k Keeper) GetStakerInfo(ctx sdk.Context, assetID, stakerAddr string) types
 func (k Keeper) GetStakerInfos(ctx sdk.Context, req *types.QueryStakerInfosRequest) (*types.QueryStakerInfosResponse, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NativeTokenStakerKeyPrefix(req.AssetId))
 	retStakerInfos := make([]*types.StakerInfo, 0)
-	resPage, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
+	resPage, err := query.Paginate(store, req.Pagination, func(_ []byte, value []byte) error {
 		sInfo := types.StakerInfo{}
 		k.cdc.MustUnmarshal(value, &sInfo)
 		// keep only the latest effective-balance
