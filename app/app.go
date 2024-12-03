@@ -786,7 +786,7 @@ func NewExocoreApp(
 
 	(&app.EpochsKeeper).SetHooks(
 		epochstypes.NewMultiEpochHooks(
-			app.ExomintKeeper.EpochsHooks(),    // however, this may change once we have distribution
+			app.ExomintKeeper.EpochsHooks(),    // exomint hooks should be executed before distribution hooks
 			app.DistrKeeper.EpochsHooks(),      // come first for using the voting power of last epoch
 			app.OperatorKeeper.EpochsHooks(),   // must come before staking keeper so it can set the USD value
 			app.StakingKeeper.EpochsHooks(),    // at this point, the order is irrelevant.
