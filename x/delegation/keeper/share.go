@@ -18,14 +18,14 @@ import (
 // caused by the bankers rounding.
 func TokensFromShares(stakerShare, totalShare sdkmath.LegacyDec, totalAmount sdkmath.Int) (sdkmath.Int, error) {
 	if stakerShare.GT(totalShare) {
-		return sdkmath.NewInt(0), errorsmod.Wrapf(delegationtypes.ErrInsufficientShares, "the stakerShare is:%v the totalShare is:%v", stakerShare, totalShare)
+		return sdkmath.ZeroInt(), errorsmod.Wrapf(delegationtypes.ErrInsufficientShares, "the stakerShare is:%v the totalShare is:%v", stakerShare, totalShare)
 	}
 	if totalShare.IsZero() {
 		if totalAmount.IsZero() {
 			// this can happen if everyone exits.
-			return sdkmath.NewInt(0), nil
+			return sdkmath.ZeroInt(), nil
 		}
-		return sdkmath.NewInt(0), delegationtypes.ErrDivisorIsZero
+		return sdkmath.ZeroInt(), delegationtypes.ErrDivisorIsZero
 	}
 	return (stakerShare.MulInt(totalAmount)).Quo(totalShare).TruncateInt(), nil
 }

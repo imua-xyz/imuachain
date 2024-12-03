@@ -315,7 +315,7 @@ func (m *AVSUSDValue) GetValue() DecValueField {
 // it's corresponding to the kvStore `KeyPrefixUSDValueForOperator`
 type OperatorUSDValue struct {
 	// key is used for storing the voting power of specified operator and AVS,
-	// which is the combination of operator and AVS address.
+	// which is the combination of AVS and operator address.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// value is the USD value states for the AVS address
 	OptedUSDValue OperatorOptedUSDValue `protobuf:"bytes,2,opt,name=opted_usd_value,json=optedUsdValue,proto3" json:"opted_usd_value"`

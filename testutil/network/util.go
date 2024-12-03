@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
@@ -13,23 +14,34 @@ import (
 	"github.com/cometbft/cometbft/proxy"
 	"github.com/cometbft/cometbft/rpc/client/local"
 	"github.com/cometbft/cometbft/types"
-	tmtime "github.com/cometbft/cometbft/types/time"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	cmttime "github.com/cometbft/cometbft/types/time"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/evmos/evmos/v16/server"
+	evmostypes "github.com/evmos/evmos/v16/types"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
 )
+
+const MaxOptedOutHeight uint64 = 18446744073709551615
 
 func startInProcess(cfg Config, val *Validator) error {
 	logger := val.Ctx.Logger
@@ -145,42 +157,7 @@ func startInProcess(cfg Config, val *Validator) error {
 	return nil
 }
 
-func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
-	genTime := tmtime.Now()
-
-	for i := 0; i < cfg.NumValidators; i++ {
-		tmCfg := vals[i].Ctx.Config
-
-		nodeDir := filepath.Join(outputDir, vals[i].Moniker, "evmosd")
-		gentxsDir := filepath.Join(outputDir, "gentxs")
-
-		tmCfg.Moniker = vals[i].Moniker
-		tmCfg.SetRoot(nodeDir)
-
-		initCfg := genutiltypes.NewInitConfig(cfg.ChainID, gentxsDir, vals[i].NodeID, vals[i].PubKey)
-
-		genFile := tmCfg.GenesisFile()
-		genDoc, err := types.GenesisDocFromFile(genFile)
-		if err != nil {
-			return err
-		}
-
-		appState, err := genutil.GenAppStateFromConfig(cfg.Codec, cfg.TxConfig,
-			tmCfg, initCfg, *genDoc, banktypes.GenesisBalancesIterator{}, genutiltypes.DefaultMessageValidator)
-		if err != nil {
-			return err
-		}
-
-		// overwrite each validator's genesis file to have a canonical genesis time
-		if err := genutil.ExportGenesisFileWithTime(genFile, cfg.ChainID, nil, appState, genTime); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
+func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string, validators []*Validator, commissionRate sdkmath.LegacyDec) error {
 	// set the accounts in the genesis state
 	var authGenState authtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &authGenState)
@@ -193,28 +170,81 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	authGenState.Accounts = append(authGenState.Accounts, accounts...)
 	cfg.GenesisState[authtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&authGenState)
 
+	var feemarketGenState feemarkettypes.GenesisState
+	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[feemarkettypes.ModuleName], &feemarketGenState)
+	l := len(cfg.MinGasPrices) - len(cfg.NativeDenom)
+	minGasPrice := sdkmath.ZeroInt()
+	if l > 0 {
+		minGasPriceStr := cfg.MinGasPrices[:l]
+		minGasPrice, _ = sdkmath.NewIntFromString(minGasPriceStr)
+	}
+	feemarketGenState.Params.BaseFee = minGasPrice
+	cfg.GenesisState[feemarkettypes.ModuleName] = cfg.Codec.MustMarshalJSON(&feemarketGenState)
+
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState
 	bankGenState.Balances = genBalances
+	bankGenState.Params.DefaultSendEnabled = true
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
 	var govGenState govv1.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[govtypes.ModuleName], &govGenState)
 
-	govGenState.Params.MinDeposit[0].Denom = cfg.BondDenom
+	govGenState.Params.MinDeposit[0].Denom = cfg.NativeDenom
 	cfg.GenesisState[govtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&govGenState)
 
 	var crisisGenState crisistypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[crisistypes.ModuleName], &crisisGenState)
 
-	crisisGenState.ConstantFee.Denom = cfg.BondDenom
+	crisisGenState.ConstantFee.Denom = cfg.NativeDenom
 	cfg.GenesisState[crisistypes.ModuleName] = cfg.Codec.MustMarshalJSON(&crisisGenState)
 
 	var evmGenState evmtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[evmtypes.ModuleName], &evmGenState)
 
-	evmGenState.Params.EvmDenom = cfg.BondDenom
+	evmGenState.Params.EvmDenom = cfg.NativeDenom
 	cfg.GenesisState[evmtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&evmGenState)
+
+	// set validators related modules: assets, operator, dogfood
+	operatorAccAddresses := make([]sdk.AccAddress, 0, len(validators))
+	consPubKeys := make([]string, 0, len(validators))
+	for _, validator := range validators {
+		operatorAccAddresses = append(operatorAccAddresses, validator.Address)
+		// the bytes in vmmostype, tmproto, tmcryptointerface are actually the same, we skip the conversion in test scenario
+		consPubKeys = append(consPubKeys, hexutil.Encode(validator.PubKey.Bytes()))
+	}
+
+	assetsGenState, err := NewGenStateAssets(operatorAccAddresses, cfg.DepositedTokens, cfg.StakingTokens)
+	if err != nil {
+		return err
+	}
+	cfg.GenesisState[assetstypes.ModuleName] = cfg.Codec.MustMarshalJSON(&assetsGenState)
+
+	avsAddrStr := avstypes.GenerateAVSAddr(avstypes.ChainIDWithoutRevision(cfg.ChainID))
+	operatorGenState, err := NewGenStateOperator(operatorAccAddresses, consPubKeys, commissionRate, cfg.ChainID, []string{avsAddrStr}, cfg.StakingTokens, assetsGenState)
+	if err != nil {
+		return err
+	}
+	cfg.GenesisState[operatortypes.ModuleName] = cfg.Codec.MustMarshalJSON(&operatorGenState)
+
+	dogfoodGenState, err := NewGenStateDogfood(consPubKeys, cfg.StakingTokens, assetsGenState)
+	if err != nil {
+		return err
+	}
+	cfg.GenesisState[dogfoodtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&dogfoodGenState)
+
+	delegationGenState, err := NewGenStateDelegation(operatorAccAddresses, cfg.StakingTokens, assetsGenState)
+	if err != nil {
+		return err
+	}
+	cfg.GenesisState[delegationtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&delegationGenState)
+
+	// set oracle genesis statse
+	oracleGenState, err := NewGenStateOracle()
+	if err != nil {
+		return err
+	}
+	cfg.GenesisState[oracletypes.ModuleName] = cfg.Codec.MustMarshalJSON(&oracleGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
@@ -228,7 +258,15 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	}
 
 	// generate empty genesis files for each validator and save
+	gTime := cmttime.Now()
 	for i := 0; i < cfg.NumValidators; i++ {
+		if genDoc.InitialHeight == 0 {
+			genDoc.InitialHeight = 1
+		}
+		genDoc.GenesisTime = gTime
+		if err := genDoc.ValidateAndComplete(); err != nil {
+			return err
+		}
 		if err := genDoc.SaveAs(genFiles[i]); err != nil {
 			return err
 		}
@@ -246,4 +284,202 @@ func WriteFile(name string, dir string, contents []byte) error {
 	}
 
 	return tmos.WriteFile(file, contents, 0o644)
+}
+
+// The NewGenState.. is mainlly used for validatorset related config
+
+// set deposits and operator_assets for assets genesisState
+func NewGenStateAssets(operatorAccAddresses []sdk.AccAddress, depositAmount, stakingAmount sdkmath.Int) (assetstypes.GenesisState, error) {
+	if stakingAmount.GT(depositAmount) {
+		return DefaultGenStateAssets, fmt.Errorf("stakingAmount %v should be less than depositAmount %v", stakingAmount, depositAmount)
+	}
+	n := len(operatorAccAddresses)
+	nInt := sdkmath.NewInt(int64(n))
+	totalDepositAmount := depositAmount.Mul(nInt)
+	depositsByStakers := make([]assetstypes.DepositsByStaker, 0, len(DefaultGenStateAssets.Tokens)*n)
+	operatorsAssets := make([]assetstypes.AssetsByOperator, 0, n)
+	nAssets := len(DefaultGenStateAssets.Tokens)
+	for i := 0; i < nAssets; i++ {
+		DefaultGenStateAssets.Tokens[i].StakingTotalAmount = totalDepositAmount
+	}
+	for _, operatorAccAddress := range operatorAccAddresses {
+		// use the same address []byte for operator(exo..) and staker(0x...), both derived from the same pubkey and since evmos use ethsecp256k1, this address is generated from keccak-256(.) instead of ripemd160(sha256(.))
+		stakerAddrStr := hexutil.Encode(operatorAccAddress)
+		depositsByAssets := make([]assetstypes.DepositByAsset, 0, nAssets)
+		assetsStates := make([]assetstypes.AssetByID, 0, nAssets)
+		stakerID := ""
+		assetID := ""
+		for _, asset := range DefaultGenStateAssets.Tokens {
+			stakerID, assetID = assetstypes.GetStakerIDAndAssetIDFromStr(asset.AssetBasicInfo.LayerZeroChainID, stakerAddrStr, asset.AssetBasicInfo.Address)
+			depositsByAssets = append(depositsByAssets, assetstypes.DepositByAsset{
+				AssetID: assetID,
+				Info: assetstypes.StakerAssetInfo{
+					TotalDepositAmount:        depositAmount,
+					WithdrawableAmount:        depositAmount.Sub(stakingAmount),
+					PendingUndelegationAmount: sdkmath.ZeroInt(),
+				},
+			})
+			assetsStates = append(assetsStates, assetstypes.AssetByID{
+				AssetID: assetID,
+				Info: assetstypes.OperatorAssetInfo{
+					TotalAmount:               stakingAmount,
+					PendingUndelegationAmount: sdkmath.ZeroInt(),
+					TotalShare:                sdkmath.LegacyNewDecFromInt(stakingAmount),
+					// only take self delegation for genesis state
+					OperatorShare: sdkmath.LegacyNewDecFromInt(stakingAmount),
+				},
+			})
+		}
+		depositsByStakers = append(depositsByStakers, assetstypes.DepositsByStaker{
+			StakerID: stakerID,
+			Deposits: depositsByAssets,
+		})
+		operatorsAssets = append(operatorsAssets, assetstypes.AssetsByOperator{
+			Operator:    operatorAccAddress.String(),
+			AssetsState: assetsStates,
+		})
+	}
+
+	DefaultGenStateAssets.Deposits = depositsByStakers
+	DefaultGenStateAssets.OperatorAssets = operatorsAssets
+
+	return DefaultGenStateAssets, nil
+}
+
+// stakingAmount, each operator opt in evry AVS with stakingAmount of every assets
+// each avs suppport all assets
+// each operator opts in every avs
+// each operator deposited and self staked all assets with: (depsitAmount, stakingAmount)
+// initial price for every asset is 1 USD
+func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []string, commissionRate sdkmath.LegacyDec, chainID string, optedAVSAddresses []string, stakingAmount sdkmath.Int, genStateAssets assetstypes.GenesisState) (operatortypes.GenesisState, error) {
+	// total stakingAmount one operator holds among all assets
+	stakingAmount = stakingAmount.Mul(sdkmath.NewInt(int64(len(genStateAssets.Tokens))))
+	if len(operatorAccAddresses) != len(consPubKeys) {
+		return DefaultGenStateOperator, fmt.Errorf("length of operatorAccAddresses %d should be equal to length of consPubKeys %d", len(operatorAccAddresses), len(consPubKeys))
+	}
+	n := len(operatorAccAddresses)
+	totalStakingAmount := stakingAmount.Mul(sdkmath.NewInt(int64(n)))
+	for i, operatorAccAddress := range operatorAccAddresses {
+		// operators
+		DefaultGenStateOperator.Operators = append(DefaultGenStateOperator.Operators, operatortypes.OperatorDetail{
+			OperatorAddress: operatorAccAddress.String(),
+			OperatorInfo: operatortypes.OperatorInfo{
+				EarningsAddr:     operatorAccAddress.String(),
+				OperatorMetaInfo: fmt.Sprintf("operator_%d", i),
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          commissionRate,
+						MaxRate:       commissionRate.Mul(sdkmath.LegacyNewDec(2)),
+						MaxChangeRate: sdkmath.LegacyNewDecWithPrec(1, 1),
+					},
+				},
+			},
+		})
+		// operator_records
+		DefaultGenStateOperator.OperatorRecords = append(DefaultGenStateOperator.OperatorRecords, operatortypes.OperatorConsKeyRecord{
+			OperatorAddress: operatorAccAddress.String(),
+			Chains: []operatortypes.ChainDetails{
+				{
+					ChainID:      avstypes.ChainIDWithoutRevision(chainID),
+					ConsensusKey: consPubKeys[i],
+				},
+			},
+		})
+		// OptStates
+		for _, AVSAddress := range optedAVSAddresses {
+			DefaultGenStateOperator.OptStates = append(DefaultGenStateOperator.OptStates, operatortypes.OptedState{
+				Key: operatorAccAddress.String() + "/" + AVSAddress,
+				OptInfo: operatortypes.OptedInfo{
+					OptedInHeight:  1,
+					OptedOutHeight: 18446744073709551615,
+					Jailed:         false,
+				},
+			})
+			// OperatorUSDValues
+			// the price unit of assets is 1 not decimal 18
+			stakingValue := sdk.TokensToConsensusPower(stakingAmount, evmostypes.PowerReduction)
+			DefaultGenStateOperator.OperatorUSDValues = append(DefaultGenStateOperator.OperatorUSDValues, operatortypes.OperatorUSDValue{
+				Key: AVSAddress + "/" + operatorAccAddress.String(),
+				OptedUSDValue: operatortypes.OperatorOptedUSDValue{
+					SelfUSDValue:   sdkmath.LegacyNewDec(stakingValue),
+					TotalUSDValue:  sdkmath.LegacyNewDec(stakingValue),
+					ActiveUSDValue: sdkmath.LegacyNewDec(stakingValue),
+				},
+			})
+		}
+	}
+	// AVSUSDValues
+	for _, AVSAddress := range optedAVSAddresses {
+		DefaultGenStateOperator.AVSUSDValues = append(DefaultGenStateOperator.AVSUSDValues, operatortypes.AVSUSDValue{
+			AVSAddr: AVSAddress,
+			Value: operatortypes.DecValueField{
+				// the price unit of assets is 1 not decimal 18
+				Amount: sdkmath.LegacyNewDec(sdk.TokensToConsensusPower(totalStakingAmount, evmostypes.PowerReduction)),
+			},
+		})
+	}
+	return DefaultGenStateOperator, nil
+}
+
+// NewGenStateDogfood generates dogfood genesis state from default
+// stakingAmount is the amount each operator have for every single asset defined in assets module, so for a single operator the total stakingAmount they have is stakingAmount*count(assets)
+// assets genesis state is required as input argument to provide assets information. It should be called with NewGenStateAssets to update default assets genesis state for test
+func NewGenStateDogfood(consPubKeys []string, stakingAmount sdkmath.Int, genStateAssets assetstypes.GenesisState) (dogfoodtypes.GenesisState, error) {
+	power := sdk.TokensToConsensusPower(stakingAmount.Mul(sdkmath.NewInt(int64(len(genStateAssets.Tokens)))), evmostypes.PowerReduction)
+	DefaultGenStateDogfood.Params.EpochIdentifier = "minute"
+	DefaultGenStateDogfood.Params.EpochsUntilUnbonded = 5
+	DefaultGenStateDogfood.Params.MinSelfDelegation = sdkmath.NewInt(100)
+	assetIDs := make(map[string]bool)
+	for _, assetID := range DefaultGenStateDogfood.Params.AssetIDs {
+		assetIDs[assetID] = true
+	}
+	for _, asset := range genStateAssets.Tokens {
+		_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.AssetBasicInfo.LayerZeroChainID, "", asset.AssetBasicInfo.Address)
+		if assetIDs[assetID] {
+			continue
+		}
+		DefaultGenStateDogfood.Params.AssetIDs = append(DefaultGenStateDogfood.Params.AssetIDs, assetID)
+	}
+	for _, consPubKey := range consPubKeys {
+		DefaultGenStateDogfood.ValSet = append(DefaultGenStateDogfood.ValSet, dogfoodtypes.GenesisValidator{
+			PublicKey: consPubKey,
+			Power:     power,
+		})
+	}
+	DefaultGenStateDogfood.LastTotalPower = sdkmath.NewInt(power * int64(len(consPubKeys)))
+	return DefaultGenStateDogfood, nil
+}
+
+func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount sdkmath.Int, genStateAssets assetstypes.GenesisState) (delegationtypes.GenesisState, error) {
+	for _, operator := range operatorAccAddresses {
+		stakerIDsLinked := make(map[string]bool)
+		for _, asset := range genStateAssets.Tokens {
+			stakerID, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.AssetBasicInfo.LayerZeroChainID, hexutil.Encode(operator), asset.AssetBasicInfo.Address)
+			if !stakerIDsLinked[stakerID] {
+				DefaultGenStateDelegation.Associations = append(DefaultGenStateDelegation.Associations, delegationtypes.StakerToOperator{
+					StakerID: stakerID,
+					Operator: operator.String(),
+				})
+				stakerIDsLinked[stakerID] = true
+			}
+			DefaultGenStateDelegation.DelegationStates = append(DefaultGenStateDelegation.DelegationStates, delegationtypes.DelegationStates{
+				Key: stakerID + "/" + assetID + "/" + operator.String(),
+				States: delegationtypes.DelegationAmounts{
+					UndelegatableShare:     sdkmath.LegacyNewDecFromInt(stakingAmount),
+					WaitUndelegationAmount: sdkmath.ZeroInt(),
+				},
+			})
+			DefaultGenStateDelegation.StakersByOperator = append(DefaultGenStateDelegation.StakersByOperator, delegationtypes.StakersByOperator{
+				Key: operator.String() + "/" + assetID,
+				Stakers: []string{
+					stakerID,
+				},
+			})
+		}
+	}
+	return DefaultGenStateDelegation, nil
+}
+
+func NewGenStateOracle() (oracletypes.GenesisState, error) {
+	return DefaultGenStateOracle, nil
 }

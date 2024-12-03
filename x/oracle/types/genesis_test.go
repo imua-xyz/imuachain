@@ -2,7 +2,9 @@ package types_test
 
 import (
 	"testing"
+	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
@@ -55,6 +57,14 @@ func TestGenesisState_Validate(t *testing.T) {
 					Mode:          types.ConsensusModeASAP,
 					MaxDetId:      5,
 					MaxSizePrices: 100,
+					Slashing: &types.SlashingParams{
+						ReportedRoundsWindow:        100,
+						MinReportedPerWindow:        sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2)),
+						OracleMissJailDuration:      600 * time.Second,
+						OracleMaliciousJailDuration: 30 * 24 * time.Hour,
+						SlashFractionMiss:           sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(20)),
+						SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
+					},
 				},
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
@@ -151,7 +161,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: false,
 		},
 		{
-			desc: "valid",
+			desc: "invalid",
 			genState: &types.GenesisState{
 				StakerListAssets: []types.StakerListAssets{
 					{

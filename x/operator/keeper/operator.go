@@ -180,21 +180,83 @@ func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr sdk.AccAddress, avsAddr 
 	return true
 }
 
-func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
+func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) error) error {
 	// get all opted-in info
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(operatorAddr))
+	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
-	avsList := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		var optedInfo operatortypes.OptedInfo
+		k.cdc.MustUnmarshal(iterator.Value(), &optedInfo)
+		err := opFunc(iterator.Key(), &optedInfo)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		if k.IsOptedIn(ctx, keys[0], keys[1]) {
+		if isUpdate {
+			bz := k.cdc.MustMarshal(&optedInfo)
+			store.Set(iterator.Key(), bz)
+		}
+	}
+	return nil
+}
+
+func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
+	avsList := make([]string, 0)
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
+			keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+			if err != nil {
+				return err
+			}
 			avsList = append(avsList, keys[1])
 		}
+		return nil
+	}
+	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	if err != nil {
+		return nil, err
+	}
+	return avsList, nil
+}
+
+func (k *Keeper) GetImpactfulAVSForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
+	avsList := make([]string, 0)
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		avsAddr := keys[1]
+		if err != nil {
+			return err
+		}
+		// add AVS currently opting in to the operator's list.
+		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
+			avsList = append(avsList, avsAddr)
+		} else {
+			// Add AVS that have opted out but are still within the unbonding duration,
+			// and therefore still affect the operator, to the list.
+			// #nosec G115
+			epochNumber, err := k.GetEpochNumberByOptOutHeight(ctx, avsAddr, int64(optedInfo.OptedOutHeight))
+			if err != nil {
+				return err
+			}
+			epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+			if err != nil {
+				return err
+			}
+			unbondingDuration, err := k.avsKeeper.GetAVSUnbondingDuration(ctx, avsAddr)
+			if err != nil {
+				return err
+			}
+			// #nosec G115
+			if epochNumber >= epochInfo.CurrentEpoch-int64(unbondingDuration) {
+				avsList = append(avsList, avsAddr)
+			}
+		}
+		return nil
+	}
+	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	if err != nil {
+		return nil, err
 	}
 	return avsList, nil
 }
@@ -210,37 +272,38 @@ func (k *Keeper) SetAllOptedInfo(ctx sdk.Context, optedStates []operatortypes.Op
 }
 
 func (k *Keeper) GetAllOptedInfo(ctx sdk.Context) ([]operatortypes.OptedState, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
-	defer iterator.Close()
-
 	ret := make([]operatortypes.OptedState, 0)
-	for ; iterator.Valid(); iterator.Next() {
-		var optedInfo operatortypes.OptedInfo
-		k.cdc.MustUnmarshal(iterator.Value(), &optedInfo)
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
 		ret = append(ret, operatortypes.OptedState{
-			Key:     string(iterator.Key()),
-			OptInfo: optedInfo,
+			Key:     string(key),
+			OptInfo: *optedInfo,
 		})
+		return nil
+	}
+	err := k.IterateOptInfo(ctx, false, []byte{}, opFunc)
+	if err != nil {
+		return nil, err
 	}
 	return ret, nil
 }
 
 func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([]string, error) {
-	// get all opted-in info
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
-	iterator := sdk.KVStorePrefixIterator(store, nil)
-	defer iterator.Close()
-
 	operatorList := make([]string, 0)
-	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
-		if err != nil {
-			return nil, err
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
+			keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+			if err != nil {
+				return err
+			}
+			if strings.ToLower(avsAddr) == keys[1] {
+				operatorList = append(operatorList, keys[0])
+			}
 		}
-		if strings.ToLower(avsAddr) == keys[1] && k.IsOptedIn(ctx, keys[0], keys[1]) {
-			operatorList = append(operatorList, keys[0])
-		}
+		return nil
+	}
+	err := k.IterateOptInfo(ctx, false, []byte{}, opFunc)
+	if err != nil {
+		return nil, err
 	}
 	return operatorList, nil
 }

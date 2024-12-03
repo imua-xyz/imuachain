@@ -588,6 +588,7 @@ func NewExocoreApp(
 		appCodec, keys[oracleTypes.StoreKey], memKeys[oracleTypes.MemStoreKey],
 		app.GetSubspace(oracleTypes.ModuleName), app.StakingKeeper,
 		&app.DelegationKeeper, &app.AssetsKeeper, authAddrString,
+		&app.SlashingKeeper,
 	)
 
 	// the SDK slashing module is used to slash validators in the case of downtime. it tracks
@@ -713,19 +714,6 @@ func NewExocoreApp(
 		app.EpochsKeeper,
 	)
 
-	app.EvmKeeper.WithPrecompiles(
-		evmkeeper.AvailablePrecompiles(
-			app.AuthzKeeper,
-			app.TransferKeeper,
-			app.IBCKeeper.ChannelKeeper,
-			app.DelegationKeeper,
-			app.AssetsKeeper,
-			app.ExoSlashKeeper,
-			app.RewardKeeper,
-			app.AVSManagerKeeper,
-		),
-	)
-
 	app.Erc20Keeper = erc20keeper.NewKeeper(
 		keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.EvmKeeper, app.StakingKeeper,
@@ -818,6 +806,21 @@ func NewExocoreApp(
 		),
 	)
 
+	// This should be done only after all keepers have been fully initialized
+	// or all their internal fields have been set, as it relies on the keeper object.
+	// If any field in the keeper, such as hook, is not set, it may cause issues when accessed.
+	app.EvmKeeper.WithPrecompiles(
+		evmkeeper.AvailablePrecompiles(
+			app.AuthzKeeper,
+			app.TransferKeeper,
+			app.IBCKeeper.ChannelKeeper,
+			app.DelegationKeeper,
+			app.AssetsKeeper,
+			app.ExoSlashKeeper,
+			app.RewardKeeper,
+			app.AVSManagerKeeper,
+		),
+	)
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
@@ -1179,7 +1182,6 @@ func (app *ExocoreApp) InitChainer(
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
-
 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.mm.GetVersionMap())
 
 	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)

@@ -1,12 +1,13 @@
 package avs_test
 
 import (
-	"cosmossdk.io/math"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	"math/big"
 	"strconv"
 	"time"
+
+	"cosmossdk.io/math"
+	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/ExocoreNetwork/exocore/x/avs/types"
 
 	sdkmath "cosmossdk.io/math"
 	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
@@ -650,7 +651,6 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 }
 
 func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
-
 	// from := s.Address
 	operatorAddress := sdk.AccAddress(suite.Address.Bytes())
 	assetID := suite.AssetIDs
@@ -835,7 +835,7 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 			suite.Ctx,
 			&assetstypes.StakingAssetInfo{
 				AssetBasicInfo:     usdcClientChainAsset,
-				StakingTotalAmount: sdkmath.NewInt(0),
+				StakingTotalAmount: sdkmath.ZeroInt(),
 			},
 		)
 		suite.NoError(err)

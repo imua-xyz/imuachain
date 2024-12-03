@@ -21,6 +21,7 @@ import (
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
+	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -52,6 +53,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		delegationkeeper.Keeper{},
 		assetskeeper.Keeper{},
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		slashingkeeper.Keeper{},
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{

@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
@@ -380,6 +382,18 @@ func (k Keeper) IterateAVSInfo(ctx sdk.Context, fn func(index int64, avsInfo typ
 		}
 		i++
 	}
+}
+
+func (k Keeper) GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error) {
+	avsInfoResp, err := k.GetAVSInfo(ctx, addr)
+	if err != nil {
+		return nil, err
+	}
+	avsInfo := avsInfoResp.Info
+	// Epoch information must be available because it is checked when setting AVS information.
+	// Therefore, we don’t need to check it here.
+	epochInfo, _ := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
+	return &epochInfo, nil
 }
 
 func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.ChallengeParams) error {

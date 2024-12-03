@@ -41,7 +41,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			var taskAddr string
 			var avsAddr string
 			var operatorPowers []*types.OperatorActivePowerInfo
-			operatorPowerTotal := sdkmath.LegacyNewDec(0)
+			operatorPowerTotal := sdkmath.LegacyZeroDec()
 			for _, res := range value {
 				// Find signed operators
 				if res.BlsSignature != nil {

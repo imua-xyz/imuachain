@@ -66,7 +66,7 @@ func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdatePara
 	}
 	// set updated new params
 	ms.SetParams(ctx, p)
-	_ = GetAggregatorContext(ctx, ms.Keeper)
-	cs.AddCache(cache.ItemP(p))
+	_ = ms.Keeper.GetAggregatorContext(ctx)
+	ms.Keeper.GetCaches().AddCache(cache.ItemP(p))
 	return &types.MsgUpdateParamsResponse{}, nil
 }

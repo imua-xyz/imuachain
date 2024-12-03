@@ -63,14 +63,16 @@ func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, a
 			depositWithdrawParams.Action = assetstypes.WithdrawLST
 		}
 	case MethodDepositNST, MethodWithdrawNST:
-		validatorPubkey, ok := args[1].([]byte)
-		if !ok || len(validatorPubkey) == 0 {
+		validatorID, ok := args[1].([]byte)
+		// the length of the public key / identifier is not fixed. it depends on the source chain.
+		// for example, in Ethereum we have a uint256 == validator index but in Sui it is 96 bytes.
+		if !ok || len(validatorID) == 0 {
 			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
 		}
 		// generate the virtual address for native restaking asset
 		depositWithdrawParams.AssetsAddress = assetstypes.GenerateNSTAddr(clientChainAddrLength)
 		// todo: add a check for the validator pubkey
-		depositWithdrawParams.ValidatorPubkey = validatorPubkey
+		depositWithdrawParams.ValidatorID = validatorID
 		if method.Name == MethodDepositNST {
 			depositWithdrawParams.Action = assetstypes.DepositNST
 		} else {

@@ -23,23 +23,23 @@ func (suite *DelegationTestSuite) TestTokensFromShares() {
 			totalAmount:  sdkmath.NewInt(50),
 			stakerShare:  sdkmath.LegacyNewDec(51),
 			innerError:   delegationtypes.ErrInsufficientShares,
-			stakerAmount: sdkmath.NewInt(0),
+			stakerAmount: sdkmath.ZeroInt(),
 		},
 		{
-			totalShare:   sdkmath.LegacyNewDec(0),
+			totalShare:   sdkmath.LegacyZeroDec(),
 			totalAmount:  sdkmath.NewInt(50),
-			stakerShare:  sdkmath.LegacyNewDec(0),
+			stakerShare:  sdkmath.LegacyZeroDec(),
 			innerError:   delegationtypes.ErrDivisorIsZero,
-			stakerAmount: sdkmath.NewInt(0),
+			stakerAmount: sdkmath.ZeroInt(),
 		},
 
 		// the share will be equal to the amount if there isn't a slash event
 		{
 			totalShare:   sdkmath.LegacyNewDec(50),
 			totalAmount:  sdkmath.NewInt(50),
-			stakerShare:  sdkmath.LegacyNewDec(0),
+			stakerShare:  sdkmath.LegacyZeroDec(),
 			innerError:   nil,
-			stakerAmount: sdkmath.NewInt(0),
+			stakerAmount: sdkmath.ZeroInt(),
 		},
 		{
 			totalShare:   sdkmath.LegacyNewDec(50),
@@ -60,9 +60,9 @@ func (suite *DelegationTestSuite) TestTokensFromShares() {
 		{
 			totalShare:   sdkmath.LegacyNewDec(70),
 			totalAmount:  sdkmath.NewInt(50),
-			stakerShare:  sdkmath.LegacyNewDec(0),
+			stakerShare:  sdkmath.LegacyZeroDec(),
 			innerError:   nil,
-			stakerAmount: sdkmath.NewInt(0),
+			stakerAmount: sdkmath.ZeroInt(),
 		},
 		{
 			totalShare:   sdkmath.LegacyNewDec(70),
@@ -81,10 +81,10 @@ func (suite *DelegationTestSuite) TestTokensFromShares() {
 
 		// all exit
 		{
-			totalShare:   sdkmath.LegacyNewDec(0),
-			stakerShare:  sdkmath.LegacyNewDec(0),
-			totalAmount:  sdkmath.NewInt(0),
-			stakerAmount: sdkmath.NewInt(0),
+			totalShare:   sdkmath.LegacyZeroDec(),
+			stakerShare:  sdkmath.LegacyZeroDec(),
+			totalAmount:  sdkmath.ZeroInt(),
+			stakerAmount: sdkmath.ZeroInt(),
 			innerError:   nil,
 		},
 	}
@@ -114,19 +114,19 @@ func (suite *DelegationTestSuite) TestSharesFromTokens() {
 		// error cases
 		{
 			totalShare:   sdkmath.LegacyNewDec(50),
-			totalAmount:  sdkmath.NewInt(0),
-			stakerAmount: sdkmath.NewInt(0),
+			totalAmount:  sdkmath.ZeroInt(),
+			stakerAmount: sdkmath.ZeroInt(),
 			innerError:   delegationtypes.ErrDivisorIsZero,
-			stakerShare:  sdkmath.LegacyNewDec(0),
+			stakerShare:  sdkmath.LegacyZeroDec(),
 		},
 
 		// the share will be equal to the amount if there isn't a slash event
 		{
 			totalShare:   sdkmath.LegacyNewDec(50),
 			totalAmount:  sdkmath.NewInt(50),
-			stakerAmount: sdkmath.NewInt(0),
+			stakerAmount: sdkmath.ZeroInt(),
 			innerError:   nil,
-			stakerShare:  sdkmath.LegacyNewDec(0),
+			stakerShare:  sdkmath.LegacyZeroDec(),
 		},
 		{
 			totalShare:   sdkmath.LegacyNewDec(50),
@@ -154,9 +154,9 @@ func (suite *DelegationTestSuite) TestSharesFromTokens() {
 		{
 			totalShare:   sdkmath.LegacyNewDec(70),
 			totalAmount:  sdkmath.NewInt(50),
-			stakerAmount: sdkmath.NewInt(0),
+			stakerAmount: sdkmath.ZeroInt(),
 			innerError:   nil,
-			stakerShare:  sdkmath.LegacyNewDec(0),
+			stakerShare:  sdkmath.LegacyZeroDec(),
 		},
 		{
 			totalShare:   sdkmath.LegacyNewDec(70),
@@ -175,11 +175,11 @@ func (suite *DelegationTestSuite) TestSharesFromTokens() {
 
 		// all exit
 		{
-			totalShare:   sdkmath.LegacyNewDec(0),
-			totalAmount:  sdkmath.NewInt(0),
-			stakerAmount: sdkmath.NewInt(0),
+			totalShare:   sdkmath.LegacyZeroDec(),
+			totalAmount:  sdkmath.ZeroInt(),
+			stakerAmount: sdkmath.ZeroInt(),
 			innerError:   nil,
-			stakerShare:  sdkmath.LegacyNewDec(0),
+			stakerShare:  sdkmath.LegacyZeroDec(),
 		},
 	}
 
@@ -204,8 +204,8 @@ func (suite *DelegationTestSuite) TestCalculateShare() {
 
 	// test the case that the asset amount of operator is zero
 	err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, suite.opAccAddr, assetID, assetstype.DeltaOperatorSingleAsset{
-		TotalAmount: sdkmath.NewInt(0),
-		TotalShare:  sdkmath.LegacyNewDec(0),
+		TotalAmount: sdkmath.ZeroInt(),
+		TotalShare:  sdkmath.LegacyZeroDec(),
 	})
 	suite.NoError(err)
 	share, err = suite.App.DelegationKeeper.CalculateShare(suite.Ctx, suite.opAccAddr, assetID, assetAmount)
@@ -229,7 +229,7 @@ func (suite *DelegationTestSuite) TestValidateUndelegationAmount() {
 	suite.prepareDelegation(suite.delegationAmount, suite.opAccAddr)
 	stakerID, assetID := assetstype.GetStakerIDAndAssetID(suite.clientChainLzID, suite.Address[:], suite.assetAddr[:])
 
-	undelegationAmount := sdkmath.NewInt(0)
+	undelegationAmount := sdkmath.ZeroInt()
 	_, err := suite.App.DelegationKeeper.ValidateUndelegationAmount(suite.Ctx, suite.opAccAddr, stakerID, assetID, undelegationAmount)
 	suite.Error(err, delegationtypes.ErrAmountIsNotPositive)
 
@@ -249,7 +249,7 @@ func (suite *DelegationTestSuite) TestCalculateSlashShare() {
 	suite.prepareDeposit(suite.depositAmount)
 	suite.prepareDelegation(suite.delegationAmount, suite.opAccAddr)
 	stakerID, assetID := assetstype.GetStakerIDAndAssetID(suite.clientChainLzID, suite.Address[:], suite.assetAddr[:])
-	slashAmount := sdkmath.NewInt(0)
+	slashAmount := sdkmath.ZeroInt()
 	_, err := suite.App.DelegationKeeper.CalculateSlashShare(suite.Ctx, suite.opAccAddr, stakerID, assetID, slashAmount)
 	suite.Error(err, delegationtypes.ErrAmountIsNotPositive)
 
@@ -327,7 +327,7 @@ func (suite *DelegationTestSuite) TestRemoveShare() {
 	suite.Equal(removeShare.TruncateInt(), removeToken)
 	delegationInfo, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, suite.opAccAddr.String())
 	suite.NoError(err)
-	suite.Equal(sdkmath.LegacyNewDec(0), delegationInfo.UndelegatableShare)
+	suite.Equal(sdkmath.LegacyZeroDec(), delegationInfo.UndelegatableShare)
 	suite.Equal(removeShare.TruncateInt(), delegationInfo.WaitUndelegationAmount)
 	stakerAssetInfo, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
 	suite.NoError(err)

@@ -66,7 +66,7 @@ func (p Precompile) DepositOrWithdraw(
 			depositWithdrawParams.StakerAddress, depositWithdrawParams.AssetsAddress)
 		err = p.assetsKeeper.UpdateNSTValidatorListForStaker(ctx, assetID,
 			hexutil.Encode(depositWithdrawParams.StakerAddress),
-			hexutil.Encode(depositWithdrawParams.ValidatorPubkey),
+			hexutil.Encode(depositWithdrawParams.ValidatorID),
 			opAmount)
 		if err != nil {
 			return nil, err
@@ -156,7 +156,7 @@ func (p Precompile) RegisterToken(
 
 	stakingAsset := &assetstypes.StakingAssetInfo{
 		AssetBasicInfo:     asset,
-		StakingTotalAmount: sdkmath.NewInt(0),
+		StakingTotalAmount: sdkmath.ZeroInt(),
 	}
 
 	if err := p.assetsKeeper.RegisterNewTokenAndSetTokenFeeder(ctx, &oInfo); err != nil {

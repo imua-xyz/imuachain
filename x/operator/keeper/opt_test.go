@@ -4,12 +4,12 @@ import (
 	"strings"
 	"time"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/ExocoreNetwork/exocore/x/epochs/types"
 
 	sdkmath "cosmossdk.io/math"
+	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
 	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -26,49 +26,51 @@ type StateForCheck struct {
 	StakerShare      sdkmath.LegacyDec
 }
 
-func (suite *OperatorTestSuite) prepareOperator() {
-	opAccAddr, err := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
-	suite.operatorAddr = opAccAddr
-	suite.NoError(err)
+func (suite *OperatorTestSuite) registerOperator(operator string) {
 	// register operator
 	registerReq := &operatorTypes.RegisterOperatorReq{
-		FromAddress: suite.operatorAddr.String(),
+		FromAddress: operator,
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr: suite.operatorAddr.String(),
+			EarningsAddr: operator,
 		},
 	}
-	_, err = s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
+	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
 	suite.NoError(err)
 }
 
-func (suite *OperatorTestSuite) prepareDeposit(assetAddr common.Address, amount sdkmath.Int) {
-	clientChainLzID := uint64(101)
-	suite.avsAddr = common.BytesToAddress([]byte("avsTestAddr")).String()
+func (suite *OperatorTestSuite) prepareOperator() {
+	operator := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	opAccAddr, err := sdk.AccAddressFromBech32(operator)
+	suite.operatorAddr = opAccAddr
+	suite.NoError(err)
+	// register operator
+	suite.registerOperator(operator)
+}
+
+func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Address, amount sdkmath.Int) {
 	suite.assetAddr = assetAddr
-	suite.assetDecimal = 6
-	suite.clientChainLzID = clientChainLzID
-	suite.depositAmount = amount
-	suite.updatedAmountForOptIn = sdkmath.NewInt(20)
-	suite.stakerID, suite.assetID = assetstypes.GetStakerIDAndAssetID(suite.clientChainLzID, suite.Address[:], suite.assetAddr[:])
+	suite.assetDecimal = uint32(assetDecimal)
+	suite.clientChainLzID = defaultClientChainID
+	suite.stakerID, suite.assetID = assetstypes.GetStakerIDAndAssetID(suite.clientChainLzID, stakerAddr[:], assetAddr[:])
 	// staking assets
 	depositParam := &assetskeeper.DepositWithdrawParams{
 		ClientChainLzID: suite.clientChainLzID,
 		Action:          assetstypes.DepositLST,
-		StakerAddress:   suite.Address[:],
-		OpAmount:        suite.depositAmount,
+		StakerAddress:   stakerAddr[:],
+		OpAmount:        amount,
 		AssetsAddress:   assetAddr[:],
 	}
 	err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
 	suite.NoError(err)
 }
 
-func (suite *OperatorTestSuite) prepareDelegation(isDelegation bool, assetAddr common.Address, amount sdkmath.Int) {
+func (suite *OperatorTestSuite) prepareDelegation(isDelegation bool, staker, assetAddr common.Address, operator sdk.AccAddress, amount sdkmath.Int) {
 	suite.delegationAmount = amount
 	param := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   suite.clientChainLzID,
 		AssetsAddress:   assetAddr[:],
-		OperatorAddress: suite.operatorAddr,
-		StakerAddress:   suite.Address[:],
+		OperatorAddress: operator,
+		StakerAddress:   staker[:],
 		OpAmount:        amount,
 		LzNonce:         0,
 		TxHash:          common.HexToHash("0x24c4a315d757249c12a7a1d7b6fb96261d49deee26f06a3e1787d008b445c3ac"),
@@ -83,20 +85,21 @@ func (suite *OperatorTestSuite) prepareDelegation(isDelegation bool, assetAddr c
 }
 
 func (suite *OperatorTestSuite) prepare() {
-	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	depositAmount := sdkmath.NewInt(100)
 	delegationAmount := sdkmath.NewInt(50)
 	suite.prepareOperator()
-	suite.prepareDeposit(usdtAddress, depositAmount)
-	suite.prepareDelegation(true, usdtAddress, delegationAmount)
+	suite.prepareDeposit(suite.Address, usdtAddr, depositAmount)
+	suite.prepareDelegation(true, suite.Address, usdtAddr, suite.operatorAddr, delegationAmount)
 }
 
-func (suite *OperatorTestSuite) prepareAvs(assetIDs []string) {
+func (suite *OperatorTestSuite) prepareAvs(assetIDs []string, epochIdentifier string) {
+	suite.avsAddr = common.BytesToAddress([]byte("avsTestAddr")).String()
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		Action:          avstypes.RegisterAction,
-		EpochIdentifier: epochstypes.HourEpochID,
+		EpochIdentifier: epochIdentifier,
 		AvsAddress:      common.HexToAddress(suite.avsAddr),
 		AssetID:         assetIDs,
+		UnbondingPeriod: 5,
 	})
 	suite.NoError(err)
 }
@@ -130,7 +133,7 @@ func (suite *OperatorTestSuite) CheckState(expectedState *StateForCheck) {
 
 func (suite *OperatorTestSuite) TestOptIn() {
 	suite.prepare()
-	suite.prepareAvs([]string{"0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"})
+	suite.prepareAvs([]string{usdtAssetID}, types.HourEpochID)
 	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
 	// check if the related state is correct
@@ -158,7 +161,7 @@ func (suite *OperatorTestSuite) TestOptIn() {
 
 func (suite *OperatorTestSuite) TestOptInList() {
 	suite.prepare()
-	suite.prepareAvs([]string{"0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"})
+	suite.prepareAvs([]string{usdtAssetID}, types.HourEpochID)
 	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
 	// check if the related state is correct
@@ -174,7 +177,7 @@ func (suite *OperatorTestSuite) TestOptInList() {
 
 func (suite *OperatorTestSuite) TestOptOut() {
 	suite.prepare()
-	suite.prepareAvs([]string{"0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"})
+	suite.prepareAvs([]string{usdtAssetID}, types.HourEpochID)
 	err := suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.EqualError(err, operatorTypes.ErrNotOptedIn.Error())
 
@@ -191,8 +194,8 @@ func (suite *OperatorTestSuite) TestOptOut() {
 			OptedInHeight:  uint64(optInHeight),
 			OptedOutHeight: uint64(suite.Ctx.BlockHeight()),
 		},
-		AVSTotalShare:    sdkmath.LegacyNewDec(0),
-		AVSOperatorShare: sdkmath.LegacyNewDec(0),
+		AVSTotalShare:    sdkmath.LegacyZeroDec(),
+		AVSOperatorShare: sdkmath.LegacyZeroDec(),
 		AssetState:       nil,
 		OperatorShare:    sdkmath.LegacyDec{},
 		StakerShare:      sdkmath.LegacyDec{},

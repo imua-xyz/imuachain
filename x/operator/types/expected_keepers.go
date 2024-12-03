@@ -6,6 +6,7 @@ import (
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -110,6 +111,8 @@ type AVSKeeper interface {
 	// IsAVS returns true if the address is a registered AVS address.
 	IsAVS(ctx sdk.Context, addr string) (bool, error)
 	IsAVSByChainID(ctx sdk.Context, chainID string) (bool, string)
+	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error)
+	GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error)
 }
 
 type SlashKeeper interface {
@@ -117,19 +120,23 @@ type SlashKeeper interface {
 }
 
 type OperatorHooks interface {
-	// This hook is called when an operator declares the consensus key for the provided chain.
+	// AfterOperatorKeySet This hook is called when an operator declares the consensus key for the provided chain.
 	AfterOperatorKeySet(
 		ctx sdk.Context, addr sdk.AccAddress, chainID string,
 		pubKey keytypes.WrappedConsKey,
 	)
-	// This hook is called when an operator's consensus key is replaced for a chain.
+	// AfterOperatorKeyReplaced This hook is called when an operator's consensus key is replaced for a chain.
 	AfterOperatorKeyReplaced(
 		ctx sdk.Context, addr sdk.AccAddress, oldKey keytypes.WrappedConsKey,
 		newKey keytypes.WrappedConsKey, chainID string,
 	)
-	// This hook is called when an operator initiates the removal of a consensus key for a
+	// AfterOperatorKeyRemovalInitiated This hook is called when an operator initiates the removal of a consensus key for a
 	// chain.
 	AfterOperatorKeyRemovalInitiated(
 		ctx sdk.Context, addr sdk.AccAddress, chainID string, key keytypes.WrappedConsKey,
+	)
+	// AfterSlash This hook is called when an operator is slashed
+	AfterSlash(
+		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []string,
 	)
 }

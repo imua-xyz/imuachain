@@ -43,7 +43,7 @@ func (suite *DelegationTestSuite) TestUpdateNSTBalance() {
 	suite.NoError(err)
 	expectAssetInfo := assettypes.StakerAssetInfo{
 		TotalDepositAmount: depositAmount.Sub(actualSlashAmount),
-		WithdrawableAmount: sdkmath.NewInt(0),
+		WithdrawableAmount: sdkmath.ZeroInt(),
 		// it will be decreased when the undelegation is completed.
 		PendingUndelegationAmount: undelegateAmountFromDefaultOperator,
 	}
@@ -52,7 +52,7 @@ func (suite *DelegationTestSuite) TestUpdateNSTBalance() {
 	// check the undelegation state after slashing
 	records, err := suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, stakerID, assetID)
 	suite.NoError(err)
-	suite.Equal(sdkmath.NewInt(0), records[0].ActualCompletedAmount)
+	suite.Equal(sdkmath.ZeroInt(), records[0].ActualCompletedAmount)
 
 	// check the delegated share for two operators
 	delegationForDefaultOperator, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, suite.opAccAddr.String())

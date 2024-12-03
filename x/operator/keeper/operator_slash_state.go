@@ -107,7 +107,7 @@ func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperat
 	}
 
 	key = assetstype.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID, stakerOrOperator)
-	slashAmount := assetstype.ValueField{Amount: sdkmath.NewInt(0)}
+	slashAmount := assetstype.ValueField{Amount: sdkmath.ZeroInt()}
 	value := store.Get(key)
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &slashAmount)
@@ -121,7 +121,7 @@ func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperat
 	store.Set(key, bz)
 
 	key = assetstype.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID)
-	totalSlashAmount := assetstype.ValueField{Amount: sdkmath.NewInt(0)}
+	totalSlashAmount := assetstype.ValueField{Amount: sdkmath.ZeroInt()}
 	value = store.Get(key)
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &totalSlashAmount)

@@ -395,15 +395,13 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 
 	// init chain will set the validator set and initialize the genesis accounts
 	suite.InitTime = time.Now().UTC()
-	app.InitChain(
-		abci.RequestInitChain{
-			Time:            suite.InitTime,
-			ChainId:         utils.DefaultChainID,
-			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: exocoreapp.DefaultConsensusParams,
-			AppStateBytes:   stateBytes,
-		},
-	)
+	app.InitChain(abci.RequestInitChain{
+		Time:            suite.InitTime,
+		ChainId:         utils.DefaultChainID,
+		Validators:      []abci.ValidatorUpdate{},
+		ConsensusParams: exocoreapp.DefaultConsensusParams,
+		AppStateBytes:   stateBytes,
+	})
 	// committing the chain now is not required. doing so will skip the first block.
 
 	// instantiate new header

@@ -364,7 +364,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 				slash,
 			)
 		}
-		if slash.Info.SlashProportion.IsNil() || slash.Info.SlashProportion.LTE(sdkmath.LegacyNewDec(0)) {
+		if slash.Info.SlashProportion.IsNil() || slash.Info.SlashProportion.LTE(sdkmath.LegacyZeroDec()) {
 			return errorsmod.Wrapf(
 				ErrInvalidGenesisData,
 				"invalid slash proportion, it's nil, zero, or negative: %+v",
@@ -390,7 +390,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 		}
 		// validate the slashing record regarding undelegation
 		SlashFromUndelegationVal := func(_ int, slashFromUndelegation SlashFromUndelegation) error {
-			if slashFromUndelegation.Amount.IsNil() || slashFromUndelegation.Amount.LTE(sdkmath.NewInt(0)) {
+			if slashFromUndelegation.Amount.IsNil() || slashFromUndelegation.Amount.LTE(sdkmath.ZeroInt()) {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"invalid slashing amount from the undelegation, it's nil, zero, or negative: %+v",
@@ -409,7 +409,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 		}
 		// validate the slashing record regarding assets pool
 		SlashFromAssetsPoolVal := func(_ int, slashFromAssetsPool SlashFromAssetsPool) error {
-			if slashFromAssetsPool.Amount.IsNil() || slashFromAssetsPool.Amount.LTE(sdkmath.NewInt(0)) {
+			if slashFromAssetsPool.Amount.IsNil() || slashFromAssetsPool.Amount.LTE(sdkmath.ZeroInt()) {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"invalid slashing amount from the assets pool, it's nil, zero, or negative: %+v",

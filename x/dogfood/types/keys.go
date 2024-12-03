@@ -58,8 +58,8 @@ const (
 	// mature at the end of the current block.
 	PendingUndelegationsByte
 
-	// EpochEndByte is the byte key for the epoch end store.
-	EpochEndByte
+	// ShouldUpdateValidatorSetByte is the byte key for the epoch end store.
+	ShouldUpdateValidatorSetByte
 
 	// HistoricalInfoBytePrefix is the byte prefix for the historical info store.
 	HistoricalInfoBytePrefix
@@ -143,9 +143,9 @@ func PendingUndelegationsKey() []byte {
 	return []byte{PendingUndelegationsByte}
 }
 
-// EpochEndKey returns the key for the epoch end store.
-func EpochEndKey() []byte {
-	return []byte{EpochEndByte}
+// ShouldUpdateValidatorSetByteKey returns the key for the epoch end store.
+func ShouldUpdateValidatorSetByteKey() []byte {
+	return []byte{ShouldUpdateValidatorSetByte}
 }
 
 // UndelegationMaturityEpochKey returns the key for the undelegation maturity epoch store.

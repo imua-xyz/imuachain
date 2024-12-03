@@ -24,7 +24,7 @@ func SafeInt64(value uint64) (int64, error) {
 // SafeNewIntFromBigInt constructs Int from big.Int, return error if more than 256bits
 func SafeNewIntFromBigInt(i *big.Int) (sdkmath.Int, error) {
 	if !IsValidInt256(i) {
-		return sdkmath.NewInt(0), fmt.Errorf("big int out of bound: %s", i)
+		return sdkmath.ZeroInt(), fmt.Errorf("big int out of bound: %s", i)
 	}
 	return sdkmath.NewIntFromBigInt(i), nil
 }

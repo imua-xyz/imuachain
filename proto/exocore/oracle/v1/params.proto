@@ -1,10 +1,11 @@
 syntax = "proto3";
 package exocore.oracle.v1;
 
+import "amino/amino.proto";
 import "exocore/oracle/v1/info.proto";
 import "exocore/oracle/v1/token_feeder.proto";
 import "gogoproto/gogo.proto";
-
+import "google/protobuf/duration.proto";
 option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
 
 // Params defines the parameters for the module.
@@ -28,10 +29,13 @@ message Params {
   int32 threshold_b = 8;
   // for v1, mode=1, get final price as soon as voting power reach threshold_a/threshold_b
   ConsensusMode mode = 9;
-  // for each round, a validator only allowed to provide at most max_det_id continuos rounds of prices for DS
+  // for each round, a validator only allowed to provide at most max_det_id consecutive rounds of prices for DS
   int32 max_det_id = 10;
   // for each token, only keep max_size_prices round of prices
   int32 max_size_prices = 11;
+
+  // slashing defines the slashing related params
+  SlashingParams slashing = 12;
 }
 
 // ConsensusMode defines the consensus mode for the prices.
@@ -42,4 +46,35 @@ enum ConsensusMode {
   // CONSENSUS_MODE_ASAP defines the mode to get final price immediately when the voting power
   // exceeds the threshold.
   CONSENSUS_MODE_ASAP = 1 [(gogoproto.enumvalue_customname) = "ConsensusModeASAP"];
+}
+
+// slashing related params
+message SlashingParams {
+  // reported_rounds_window defines how many rounds included in one window for performance review of missing report
+  int64 reported_rounds_window  = 1;
+  // min_reported_perwindow defines at least how many rounds should be reported, this is a percentage of window
+  bytes min_reported_per_window = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // oracle_miss_jail_duration defines the duration one validator should be jailed for missing reporting price
+  google.protobuf.Duration oracle_miss_jail_duration = 3 
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  // oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior
+  google.protobuf.Duration oracle_malicious_jail_duration =4 
+      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  // slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price
+  bytes slash_fraction_miss = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+  // slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior
+  bytes slash_fraction_malicious = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
+  ];
+
 }

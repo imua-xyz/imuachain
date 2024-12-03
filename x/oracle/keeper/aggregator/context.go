@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
@@ -120,17 +121,31 @@ func (agc *AggregatorContext) sanityCheck(msg *types.MsgCreatePrice) error {
 	return nil
 }
 
-func (agc *AggregatorContext) checkMsg(msg *types.MsgCreatePrice) error {
+func (agc *AggregatorContext) checkMsg(msg *types.MsgCreatePrice, isCheckMode bool) error {
 	if err := agc.sanityCheck(msg); err != nil {
 		return err
 	}
 
 	// check feeder is active
 	feederContext := agc.rounds[msg.FeederID]
-	if feederContext == nil || feederContext.status != roundStatusOpen {
-		// feederId does not exist or not alive
-		return errors.New("context not exist or not available")
+	if feederContext == nil {
+		return fmt.Errorf("context not exist for feederID:%d", msg.FeederID)
 	}
+	// This round had been sealed but current window not closed
+	if feederContext.status != roundStatusOpen {
+		if feederWorker := agc.aggregators[msg.FeederID]; feederWorker != nil {
+			if _, list4Aggregator := feederWorker.filtrate(msg); list4Aggregator != nil {
+				// record this message for performance evaluation(used for slashing)
+				feederWorker.recordMessage(msg.Creator, msg.FeederID, list4Aggregator)
+			}
+		}
+		// if the validator send a tx inside an alive window but the status had been changed to closed by enough power collected
+		// we should ignore the error for simulation to complete
+		if !isCheckMode {
+			return fmt.Errorf("context is not available for feederID:%d", msg.FeederID)
+		}
+	}
+
 	// senity check on basedBlock
 	if msg.BasedBlock != feederContext.basedBlock {
 		return errors.New("baseblock not match")
@@ -160,15 +175,20 @@ func (agc *AggregatorContext) FillPrice(msg *types.MsgCreatePrice) (*PriceItemKV
 	}
 
 	if feederWorker.sealed {
+		if _, list4Aggregator := feederWorker.filtrate(msg); list4Aggregator != nil {
+			// record this message for performance evaluation(used for slashing)
+			feederWorker.recordMessage(msg.Creator, msg.FeederID, list4Aggregator)
+		}
 		return nil, nil, types.ErrPriceProposalIgnored.Wrap("price aggregation for this round has sealed")
 	}
 
 	if listFilled := feederWorker.do(msg); listFilled != nil {
-		if finalPrice := feederWorker.aggregate(); finalPrice != nil {
+		feederWorker.recordMessage(msg.Creator, msg.FeederID, listFilled)
+		if finalPrice := feederWorker.aggregate(); len(finalPrice) > 0 {
 			agc.rounds[msg.FeederID].status = roundStatusClosed
 			feederWorker.seal()
 			return &PriceItemKV{agc.params.GetTokenFeeder(msg.FeederID).TokenID, types.PriceTimeRound{
-				Price:   finalPrice.String(),
+				Price:   finalPrice,
 				Decimal: agc.params.GetTokenInfo(msg.FeederID).Decimal,
 				// TODO: check the format
 				Timestamp: msg.Prices[0].Prices[0].Timestamp,
@@ -184,8 +204,8 @@ func (agc *AggregatorContext) FillPrice(msg *types.MsgCreatePrice) (*PriceItemKV
 
 // NewCreatePrice receives msgCreatePrice message, and goes process: filter->aggregator, filter->calculator->aggregator
 // non-deterministic data will goes directly into aggregator, and deterministic data will goes into calculator first to get consensus on the deterministic id.
-func (agc *AggregatorContext) NewCreatePrice(_ sdk.Context, msg *types.MsgCreatePrice) (*PriceItemKV, *cache.ItemM, error) {
-	if err := agc.checkMsg(msg); err != nil {
+func (agc *AggregatorContext) NewCreatePrice(ctx sdk.Context, msg *types.MsgCreatePrice) (*PriceItemKV, *cache.ItemM, error) {
+	if err := agc.checkMsg(msg, ctx.IsCheckTx()); err != nil {
 		return nil, nil, types.ErrInvalidMsg.Wrap(err.Error())
 	}
 	return agc.FillPrice(msg)
@@ -196,26 +216,46 @@ func (agc *AggregatorContext) NewCreatePrice(_ sdk.Context, msg *types.MsgCreate
 // including possible aggregation and state update
 // when validatorSet update, set force to true, to seal all alive round
 // returns: 1st successful sealed, need to be written to KVStore, 2nd: failed sealed tokenID, use previous price to write to KVStore
-func (agc *AggregatorContext) SealRound(ctx sdk.Context, force bool) (success []*PriceItemKV, failed []uint64, sealed []uint64) {
-	for feederID, round := range agc.rounds {
+func (agc *AggregatorContext) SealRound(ctx sdk.Context, force bool) (success []*PriceItemKV, failed []uint64, sealed []uint64, windowClosed []uint64) {
+	feederIDs := make([]uint64, 0, len(agc.rounds))
+	for fID := range agc.rounds {
+		feederIDs = append(feederIDs, fID)
+	}
+	sort.Slice(feederIDs, func(i, j int) bool {
+		return feederIDs[i] < feederIDs[j]
+	})
+	height := uint64(ctx.BlockHeight())
+	// make sure feederIDs are accessed in order to calculate the indexOffset for slashing
+	windowClosedMap := make(map[uint64]bool)
+	for _, feederID := range feederIDs {
+		if agc.windowEnd(feederID, height) {
+			windowClosed = append(windowClosed, feederID)
+			windowClosedMap[feederID] = true
+		}
+		round := agc.rounds[feederID]
 		if round.status == roundStatusOpen {
 			feeder := agc.params.GetTokenFeeder(feederID)
 			// TODO: for mode=1, we don't do aggregate() here, since if it donesn't success in the transaction execution stage, it won't success here
 			// but it's not always the same for other modes, switch modes
 			switch common.Mode {
 			case types.ConsensusModeASAP:
-				expired := feeder.EndBlock > 0 && uint64(ctx.BlockHeight()) >= feeder.EndBlock
-				outOfWindow := uint64(ctx.BlockHeight())-round.basedBlock >= uint64(common.MaxNonce)
+				offset := height - round.basedBlock
+				expired := feeder.EndBlock > 0 && height >= feeder.EndBlock
+				outOfWindow := offset >= uint64(common.MaxNonce)
+
+				// an open round reach its end of window, increase offsetIndex for active valdiator and chech the performance(missing/malicious)
+
 				if expired || outOfWindow || force {
 					failed = append(failed, feeder.TokenID)
-					if expired {
-						delete(agc.rounds, feederID)
-					} else {
+					if !expired {
 						round.status = roundStatusClosed
 					}
 					// TODO: optimize operformance
 					sealed = append(sealed, feederID)
-					delete(agc.aggregators, feederID)
+					if !windowClosedMap[feederID] {
+						// this should be clear after performanceReview
+						agc.RemoveWorker(feederID)
+					}
 				}
 			default:
 				ctx.Logger().Info("mode other than 1 is not support now")
@@ -223,11 +263,10 @@ func (agc *AggregatorContext) SealRound(ctx sdk.Context, force bool) (success []
 		}
 		// all status: 1->2, remove its aggregator
 		if agc.aggregators[feederID] != nil && agc.aggregators[feederID].sealed {
-			delete(agc.aggregators, feederID)
 			sealed = append(sealed, feederID)
 		}
 	}
-	return success, failed, sealed
+	return success, failed, sealed, windowClosed
 }
 
 // PrepareEndBlock is called at EndBlock stage, to prepare the roundInfo for the next block(of input block)
@@ -279,9 +318,10 @@ func (agc *AggregatorContext) PrepareRoundEndBlock(block uint64) (newRoundFeeder
 				// set nonce for corresponding feederID for new roud start
 				newRoundFeederIDs = append(newRoundFeederIDs, feederIDUint64)
 				// drop previous worker
-				delete(agc.aggregators, feederIDUint64)
+				agc.RemoveWorker(feederIDUint64)
 			} else if round.status == roundStatusOpen && left >= uint64(common.MaxNonce) {
 				// this shouldn't happen, if do sealround properly before prepareRound, basically for test only
+				// TODO: print error log here
 				round.status = roundStatusClosed
 				// TODO: just modify the status here, since sealRound should do all the related seal actions already when parepare invoked
 			}
@@ -333,6 +373,54 @@ func (agc *AggregatorContext) GetParams() types.Params {
 
 func (agc *AggregatorContext) GetParamsMaxSizePrices() uint64 {
 	return uint64(agc.params.MaxSizePrices)
+}
+
+// GetFinalPriceListForFeederIDs get final price list for required feederIDs in format []{feederID, sourceID, detID, price} with asc of {feederID, sourceID}
+// feederIDs is required to be ordered asc
+func (agc *AggregatorContext) GetFinalPriceListForFeederIDs(feederIDs []uint64) []*types.AggFinalPrice {
+	ret := make([]*types.AggFinalPrice, 0, len(feederIDs))
+	for _, feederID := range feederIDs {
+		feederWorker := agc.aggregators[feederID]
+		if feederWorker != nil {
+			if pList := feederWorker.getFinalPriceList(feederID); len(pList) > 0 {
+				ret = append(ret, pList...)
+			}
+		}
+	}
+	return ret
+}
+
+// PerformanceReview compare results to decide whether the validator is effective, honest
+func (agc *AggregatorContext) PerformanceReview(ctx sdk.Context, finalPrice *types.AggFinalPrice, validator string) (exist, matched bool) {
+	feederWorker := agc.aggregators[finalPrice.FeederID]
+	if feederWorker == nil {
+		// Log unexpected nil feederWorker for debugging
+		ctx.Logger().Error(
+			"unexpected nil feederWorker in PerformanceReview",
+			"feederID", finalPrice.FeederID,
+			"validator", validator,
+		)
+		// Treat validator as effective & honest to avoid unfair penalties
+		exist = true
+		matched = true
+		return
+	}
+	exist, matched = feederWorker.check(validator, finalPrice.FeederID, finalPrice.SourceID, finalPrice.Price, finalPrice.DetID)
+	return
+}
+
+func (agc AggregatorContext) windowEnd(feederID, height uint64) bool {
+	feeder := agc.params.TokenFeeders[feederID]
+	if (feeder.EndBlock > 0 && feeder.EndBlock <= height) || feeder.StartBaseBlock > height {
+		return false
+	}
+	delta := height - feeder.StartBaseBlock
+	left := delta % feeder.Interval
+	return left == uint64(common.MaxNonce)
+}
+
+func (agc *AggregatorContext) RemoveWorker(feederID uint64) {
+	delete(agc.aggregators, feederID)
 }
 
 // NewAggregatorContext returns a new instance of AggregatorContext

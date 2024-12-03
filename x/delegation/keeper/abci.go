@@ -116,6 +116,7 @@ func (k *Keeper) EndBlock(
 			continue
 		}
 
+		// TODO: the field IsPending in types.UndelegationRecord is useless since when a record is completed it will be removed, so the record is either existing&pending or unexist&completed, and the IsPending is not used nowhere(like slashFromUndelegation doesn't check this field either), good to remove this field. And types.UndelegationRecord is actually PendingUndelegationRecord
 		// delete the Undelegation records that have been complemented
 		err = k.DeleteUndelegationRecord(cc, record)
 		if err != nil {

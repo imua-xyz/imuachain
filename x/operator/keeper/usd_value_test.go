@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+
 	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -14,7 +16,15 @@ const (
 	MaxDecForTotalSupply = 38
 )
 
-var MaxAssetTotalSupply = sdkmath.NewIntWithDecimal(1, MaxDecForTotalSupply)
+var (
+	MaxAssetTotalSupply  = sdkmath.NewIntWithDecimal(1, MaxDecForTotalSupply)
+	defaultClientChainID = uint64(101)
+	assetDecimal         = 6
+	usdcAddr             = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+	usdcAssetID          = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65"
+	usdtAddr             = common.HexToAddress("0xdac17f958d2ee523a2206206994597c13d831ec7")
+	usdtAssetID          = "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"
+)
 
 func (suite *OperatorTestSuite) TestCalculateUSDValue() {
 	suite.prepare()
@@ -49,7 +59,7 @@ func (suite *OperatorTestSuite) TestCalculatedUSDValueOverflow() {
 	amount = sdkmath.NewInt(1)
 	assetDecimal = uint32(assetstype.MaxDecimal)
 	usdValue = operatorKeeper.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
-	expectedValue = sdkmath.LegacyNewDec(0)
+	expectedValue = sdkmath.LegacyZeroDec()
 	suite.Equal(expectedValue.String(), usdValue.String())
 
 	price = sdkmath.NewInt(1)
@@ -67,25 +77,24 @@ func (suite *OperatorTestSuite) TestCalculatedUSDValueOverflow() {
 func (suite *OperatorTestSuite) TestAVSUSDValue() {
 	suite.prepare()
 	// register the new token
-	usdcAddr := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 	usdcClientChainAsset := assetstype.AssetInfo{
 		Name:             "USD coin",
 		Symbol:           "USDC",
 		Address:          usdcAddr.String(),
-		Decimals:         6,
-		LayerZeroChainID: 101,
+		Decimals:         uint32(assetDecimal),
+		LayerZeroChainID: defaultClientChainID,
 		MetaInfo:         "USDC",
 	}
 	err := suite.App.AssetsKeeper.SetStakingAssetInfo(
 		suite.Ctx,
 		&assetstype.StakingAssetInfo{
 			AssetBasicInfo:     usdcClientChainAsset,
-			StakingTotalAmount: sdkmath.NewInt(0),
+			StakingTotalAmount: sdkmath.ZeroInt(),
 		},
 	)
 	suite.NoError(err)
 	// register the new AVS
-	suite.prepareAvs([]string{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65", "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"})
+	suite.prepareAvs([]string{usdcAssetID, usdtAssetID}, types.HourEpochID)
 	// opt in
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
@@ -94,11 +103,11 @@ func (suite *OperatorTestSuite) TestAVSUSDValue() {
 	usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 	// deposit and delegate another asset to the operator
 	suite.NoError(err)
-	suite.prepareDeposit(usdcAddr, sdkmath.NewInt(1e8))
+	suite.prepareDeposit(suite.Address, usdcAddr, sdkmath.NewInt(1e8))
 	usdcPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 	suite.NoError(err)
 	delegatedAmount := sdkmath.NewIntWithDecimal(8, 7)
-	suite.prepareDelegation(true, usdcAddr, delegatedAmount)
+	suite.prepareDelegation(true, suite.Address, usdcAddr, suite.operatorAddr, delegatedAmount)
 
 	// updating the new voting power
 	usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
@@ -143,14 +152,14 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	assetAddr := common.HexToAddress(asset.Address)
 	depositAmount := sdkmath.NewIntWithDecimal(2, int(asset.Decimals))
 	delegationAmount := sdkmath.NewIntWithDecimal(int64(addPower), int(asset.Decimals))
-	suite.prepareDeposit(assetAddr, depositAmount)
+	suite.prepareDeposit(suite.Address, assetAddr, depositAmount)
 	// the order here is unknown, so we need to check which operator has the highest power
 	if powers[0] > powers[1] {
 		suite.operatorAddr = operators[0]
 	} else {
 		suite.operatorAddr = operators[1]
 	}
-	suite.prepareDelegation(true, assetAddr, delegationAmount)
+	suite.prepareDelegation(true, suite.Address, assetAddr, suite.operatorAddr, delegationAmount)
 	optedUSDValues, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, avsAddress, suite.operatorAddr.String())
 	suite.NoError(err)
 	initialOperatorUSDValue := optedUSDValues.TotalUSDValue
@@ -167,7 +176,7 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	suite.NoError(err)
 	suite.True(found)
 
-	suite.App.StakingKeeper.MarkEpochEnd(suite.Ctx)
+	suite.App.StakingKeeper.MarkUpdateValidatorSetFlag(suite.Ctx)
 	validatorUpdates := suite.App.StakingKeeper.EndBlock(suite.Ctx)
 	suite.Equal(1, len(validatorUpdates))
 	for i, update := range validatorUpdates {

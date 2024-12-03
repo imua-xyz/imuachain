@@ -30,7 +30,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		return nil, types.ErrPriceProposalFormatInvalid.Wrap(err.Error())
 	}
 
-	agc := GetAggregatorContext(ctx, ms.Keeper)
+	agc := ms.Keeper.GetAggregatorContext(ctx)
 	newItem, caches, err := agc.NewCreatePrice(ctx, msg)
 	if err != nil {
 		logger.Info("price proposal failed", "error", err, "height", ctx.BlockHeight(), "feederID", msg.FeederID)
@@ -58,7 +58,6 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		} else {
 			logger.Info("final price aggregation done", "feederID", msg.FeederID, "roundID", newItem.PriceTR.RoundID, "price", newItem.PriceTR.Price)
 		}
-		ms.Keeper.RemoveNonceWithFeederIDForValidators(ctx, msg.FeederID, agc.GetValidators())
 
 		decimalStr := strconv.FormatInt(int64(newItem.PriceTR.Decimal), 10)
 		tokenIDStr := strconv.FormatUint(newItem.TokenID, 10)
@@ -70,11 +69,11 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess)),
 		)
 		if !ctx.IsCheckTx() {
-			cs.RemoveCache(caches)
+			ms.Keeper.GetCaches().RemoveCache(caches)
 		}
-		AppendUpdatedFeederIDs(msg.FeederID)
+		ms.Keeper.AppendUpdatedFeederIDs(msg.FeederID)
 	} else if !ctx.IsCheckTx() {
-		cs.AddCache(caches)
+		ms.Keeper.GetCaches().AddCache(caches)
 	}
 
 	return &types.MsgCreatePriceResponse{}, nil

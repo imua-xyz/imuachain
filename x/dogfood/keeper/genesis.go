@@ -110,6 +110,16 @@ func (k Keeper) InitGenesis(
 	// ApplyValidatorChanges only gets changes and hence the vote power must be set here.
 	k.SetLastTotalPower(ctx, genState.LastTotalPower)
 
+	// init the voting power snapshot for all default opting-in AVSs
+	// todo: It was originally intended to be called in the initGenesis function of the operator module,
+	// but since the dogfood AVS is currently initialized in this module,and this function depends on the
+	// AVS epoch configuration, it is temporarily called here. Once the initialization of dogfood
+	// AVS is implemented in the initGenesis function of the AVS module, it can be moved back to
+	// the operator module.
+	err = k.operatorKeeper.InitGenesisVPSnapshot(ctx)
+	if err != nil {
+		panic(fmt.Sprintf("cant init genesis voting power snapshot,err: %s", err))
+	}
 	// ApplyValidatorChanges will sort it internally
 	return k.ApplyValidatorChanges(
 		ctx, out,

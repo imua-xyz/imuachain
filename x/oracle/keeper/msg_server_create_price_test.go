@@ -6,7 +6,6 @@ import (
 	math "cosmossdk.io/math"
 	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
 	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/testdata"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
@@ -45,7 +44,7 @@ var _ = Describe("MsgCreatePrice", func() {
 			}
 		})
 
-		Expect(ks.ctx.BlockHeight()).To(Equal(int64(2)))
+		Expect(ks.ctx.BlockHeight()).To(Equal(int64(12)))
 	})
 
 	AfterEach(func() {
@@ -61,11 +60,12 @@ var _ = Describe("MsgCreatePrice", func() {
 				Creator:    ks.mockConsAddr1.String(),
 				FeederID:   1,
 				Prices:     testdata.PS1,
-				BasedBlock: 1,
+				BasedBlock: 11,
 				Nonce:      1,
 			})
 
-			c = keeper.GetCaches()
+			c = ks.App.OracleKeeper.GetCaches()
+			// c = ks.ms.Keeper.GetCaches()
 			var pRes cache.ItemP
 			c.GetCache(&pRes)
 			p4Test := types.DefaultParams()
@@ -82,7 +82,7 @@ var _ = Describe("MsgCreatePrice", func() {
 				Creator:    ks.mockConsAddr2.String(),
 				FeederID:   1,
 				Prices:     testdata.PS2,
-				BasedBlock: 1,
+				BasedBlock: 11,
 				Nonce:      1,
 			},
 			)
@@ -94,7 +94,7 @@ var _ = Describe("MsgCreatePrice", func() {
 				Creator:    ks.mockConsAddr3.String(),
 				FeederID:   1,
 				Prices:     testdata.PS4,
-				BasedBlock: 1,
+				BasedBlock: 11,
 				Nonce:      1,
 			},
 			)
@@ -103,13 +103,19 @@ var _ = Describe("MsgCreatePrice", func() {
 			prices := ks.k.GetAllPrices(sdk.UnwrapSDKContext(ks.ctx))
 			Expect(prices[0]).Should(BeEquivalentTo(types.Prices{
 				TokenID:     1,
-				NextRoundID: 2,
+				NextRoundID: 3,
 				PriceList: []*types.PriceTimeRound{
+					{
+						Price:     "1",
+						Decimal:   0,
+						Timestamp: "",
+						RoundID:   1,
+					},
 					{
 						Price:     testdata.PTD2.Price,
 						Decimal:   testdata.PTD2.Decimal,
-						Timestamp: prices[0].PriceList[0].Timestamp,
-						RoundID:   1,
+						Timestamp: prices[0].PriceList[1].Timestamp,
+						RoundID:   2,
 					},
 				},
 			}))

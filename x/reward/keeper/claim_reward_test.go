@@ -40,7 +40,7 @@ func (suite *RewardTestSuite) TestClaimWithdrawRequest() {
 	// suite.Equal(types.StakerAssetInfo{
 	// 	TotalDepositAmount:        sdkmath.NewInt(10),
 	// 	WithdrawableAmount:        sdkmath.NewInt(10),
-	// 	PendingUndelegationAmount: sdkmath.NewInt(0),
+	// 	PendingUndelegationAmount: sdkmath.ZeroInt(),
 	// }, *info)
 
 	// assetInfo, err := suite.App.AssetsKeeper.GetStakingAssetInfo(suite.Ctx, assetID)

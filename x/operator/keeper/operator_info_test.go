@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
-
 	"cosmossdk.io/math"
 
 	operatortype "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -17,13 +15,12 @@ func (suite *OperatorTestSuite) TestOperatorInfo() {
 		OperatorMetaInfo: "test operator",
 		ClientChainEarningsAddr: &operatortype.ClientChainEarningAddrList{
 			EarningInfoList: []*operatortype.ClientChainEarningAddrInfo{
-				{101, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"},
+				{defaultClientChainID, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"},
 			},
 		},
 		Commission: stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
 	}
 	suite.Equal(operatortype.AccAddressLength, len(suite.AccAddress))
-	fmt.Println("the acc address length is:", len(suite.AccAddress))
 	err := suite.App.OperatorKeeper.SetOperatorInfo(suite.Ctx, suite.AccAddress.String(), info)
 	suite.NoError(err)
 

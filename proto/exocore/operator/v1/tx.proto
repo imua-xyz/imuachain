@@ -47,6 +47,63 @@ message OperatorOptedUSDValue {
   ];
 }
 
+// OperatorVotingPower represents the voting power for the specified operator address
+message OperatorVotingPower {
+  // operator_addr is the operator address,its type should be a sdk.AccAddress
+  string operator_addr = 1
+  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // voting_power is the active voting power for the above operator address
+  string voting_power = 2
+  [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// VotingPowerSnapshot records historical voting power for AVSs at specific epochs
+// or after slashing events.These snapshots are created at the end of each epoch and
+// when slashing occurs, enabling historical queries of operator voting power at
+// specific points in time.
+message VotingPowerSnapshot {
+  // total_voting_power is the total voting power of specified AVS
+  string total_voting_power = 1
+  [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // operator_voting_powers records the active voting power of all operators
+  // for the specified AVS
+  repeated OperatorVotingPower operator_voting_powers = 2;
+  // last_changed_height is used to indicate the height of most recent change when
+  // the operator_voting_powers is nil, which can help to fall back to the correct epoch height.
+  int64 last_changed_height = 3;
+  // epoch_identifier record the epoch info
+  string epoch_identifier = 4;
+  // epoch_number indicates which epoch this snapshot serve for
+  int64  epoch_number = 5;
+}
+
+// SnapshotHelper is used to record the helper information for voting power snapshot update
+message SnapshotHelper {
+  // last_changed_height indicates the height of the most recent change.
+  // It is used to set the `last_changed_height` field in `VotingPowerSnapshot`.
+  int64 last_changed_height = 1;
+
+  // has_opt_out is used to indicate whether there has been any opt-out operation from
+  // the most recently saved snapshot to the current height. This is because,
+  // when an opt-out operation occurs, the related AVS validator information changes,
+  // and the snapshot needs to be updated.
+  // Currently, a boolean variable is used instead of an operator list
+  // because the snapshot is set by default to store all operator information related to AVS.
+  // Therefore, as long as any operator has opted out, the snapshot needs to be updated.
+  // If we later introduce a limit on the maximum number of validators in AVS,
+  // similar to the MaxValidatorNumber in Dogfood, this may need to be changed to an operator list
+  // to track all operators that have opted out, thereby assisting with the correct snapshot update.
+  bool has_opt_out = 2;
+}
+
 // ClientChainEarningAddrList is the list of client chain earning addresses.
 // Because the reward token provide by the AVS might be located at different client chain, the operator need to
 // provide the different client chain address to receive the token rewards.
@@ -161,6 +218,8 @@ message SlashExecutionInfo {
   repeated SlashFromUndelegation slash_undelegations = 3 [(gogoproto.nullable) = false];
   // SlashFromAssetsPool records all slash info related to the assets pool
   repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
+  // undelegation_filter_height records the height before which undelegations are not slashed
+  int64 undelegation_filter_height = 5;
 }
 
 // OperatorSlashInfo is the slash info of operator

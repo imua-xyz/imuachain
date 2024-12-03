@@ -2,11 +2,17 @@ package keeper
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
+	"fmt"
+	"math"
 	"strings"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
+	"github.com/ethereum/go-ethereum/common"
+
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+
+	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
@@ -337,4 +343,59 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	}
 
 	return &types.QueryValidatorResponse{Validator: val}, nil
+}
+
+func (k *Keeper) QuerySnapshotHelper(goCtx context.Context, req *types.QuerySnapshotHelperRequest) (*types.SnapshotHelper, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	snapshotHelper, err := k.GetSnapshotHelper(ctx, strings.ToLower(req.Avs))
+	if err != nil {
+		return nil, err
+	}
+	return &snapshotHelper, nil
+}
+
+func (k *Keeper) QuerySpecifiedSnapshot(goCtx context.Context, req *types.QuerySpecifiedSnapshotRequest) (*types.VotingPowerSnapshotKeyHeight, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	findHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, strings.ToLower(req.Avs), req.Height)
+	if err != nil {
+		return nil, err
+	}
+	return &types.VotingPowerSnapshotKeyHeight{
+		SnapshotKeyHeight: findHeight,
+		Snapshot:          snapshot,
+	}, nil
+}
+
+func (k *Keeper) QueryAllSnapshot(goCtx context.Context, req *types.QueryAllSnapshotRequest) (*types.QueryAllSnapshotResponse, error) {
+	if !common.IsHexAddress(req.Avs) {
+		return nil, fmt.Errorf("invalid AVS address format: %s", req.Avs)
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	res := make([]*types.VotingPowerSnapshotKeyHeight, 0)
+
+	snapshotPrefix := types.AppendMany(types.KeyPrefixVotingPowerSnapshot, common.HexToAddress(req.Avs).Bytes())
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), snapshotPrefix)
+	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
+		ret := &types.VotingPowerSnapshot{}
+		// don't use MustUnmarshal to not panic for queries
+		if err := ret.Unmarshal(value); err != nil {
+			return err
+		}
+		height := binary.BigEndian.Uint64(key)
+		if height > math.MaxInt64 {
+			return fmt.Errorf("height exceeds int64 max value: %d", height)
+		}
+		res = append(res, &types.VotingPowerSnapshotKeyHeight{
+			SnapshotKeyHeight: int64(height),
+			Snapshot:          ret,
+		})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryAllSnapshotResponse{
+		Snapshots:  res,
+		Pagination: pageRes,
+	}, nil
 }

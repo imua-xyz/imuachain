@@ -1,7 +1,6 @@
 package assets_test
 
 import (
-	"fmt"
 	"math/big"
 	"strings"
 
@@ -316,7 +315,6 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 			OpAmount:      depositAmount,
 		}
 		err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
-		fmt.Println("Debug---", assetAddress, len(assetAddress))
 		s.Require().NoError(err)
 	}
 
@@ -376,7 +374,6 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 			readOnly:    false,
 			expPass:     true,
 			extra: func() {
-
 				stakerID, assetID := assetstype.GetStakerIDAndAssetID(s.ClientChains[0].LayerZeroChainID, s.Address.Bytes(), NSTAddress)
 				// check depositNST successfully updated stakerAssetInfo in assets_module
 				stakerAssetInfo, _ := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(s.Ctx, stakerID, assetID)

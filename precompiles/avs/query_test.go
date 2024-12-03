@@ -2,11 +2,12 @@ package avs_test
 
 import (
 	"fmt"
+	"math/big"
+	"time"
+
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
-	"math/big"
-	"time"
 
 	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 
@@ -144,7 +145,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 
 func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 	method := s.precompile.Methods[avsManagerPrecompile.MethodGetAVSUSDValue]
-	expectedUSDvalue := sdkmath.LegacyNewDec(0)
+	expectedUSDvalue := sdkmath.LegacyZeroDec()
 
 	setUp := func() {
 		suite.prepare()
@@ -162,7 +163,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 			suite.Ctx,
 			&assetstype.StakingAssetInfo{
 				AssetBasicInfo:     usdcClientChainAsset,
-				StakingTotalAmount: sdkmath.NewInt(0),
+				StakingTotalAmount: sdkmath.ZeroInt(),
 			},
 		)
 		suite.NoError(err)
@@ -232,7 +233,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 
 func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 	method := s.precompile.Methods[avsManagerPrecompile.MethodGetOperatorOptedUSDValue]
-	expectedUSDvalue := sdkmath.LegacyNewDec(0)
+	expectedUSDvalue := sdkmath.LegacyZeroDec()
 
 	setUp := func() {
 		suite.prepare()
@@ -250,7 +251,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 			suite.Ctx,
 			&assetstype.StakingAssetInfo{
 				AssetBasicInfo:     usdcClientChainAsset,
-				StakingTotalAmount: sdkmath.NewInt(0),
+				StakingTotalAmount: sdkmath.ZeroInt(),
 			},
 		)
 		suite.NoError(err)
@@ -494,6 +495,7 @@ func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 		})
 	}
 }
+
 func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetTaskInfo]
 	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
@@ -507,7 +509,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 			TaskResponsePeriod:    10,
 			StartingEpoch:         5,
 			TaskStatisticalPeriod: 60,
-			TaskTotalPower:        sdk.Dec(sdkmath.NewInt(0)),
+			TaskTotalPower:        sdk.Dec(sdkmath.ZeroInt()),
 		}
 		err := suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
 		suite.NoError(err)
@@ -553,6 +555,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 		})
 	}
 }
+
 func (suite *AVSManagerPrecompileSuite) TestGetCurrentEpoch() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetCurrentEpoch]
 	testCases := []avsTestCases{

@@ -31,9 +31,9 @@ func (k *Keeper) UpdateOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr s
 	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 
 	usdInfo := operatortypes.OperatorOptedUSDValue{
-		SelfUSDValue:   sdkmath.LegacyNewDec(0),
-		TotalUSDValue:  sdkmath.LegacyNewDec(0),
-		ActiveUSDValue: sdkmath.LegacyNewDec(0),
+		SelfUSDValue:   sdkmath.LegacyZeroDec(),
+		TotalUSDValue:  sdkmath.LegacyZeroDec(),
+		ActiveUSDValue: sdkmath.LegacyZeroDec(),
 	}
 	value := store.Get(key)
 	if value != nil {
@@ -68,9 +68,9 @@ func (k *Keeper) InitOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr str
 		return errorsmod.Wrap(operatortypes.ErrKeyAlreadyExist, fmt.Sprintf("avsAddr operatorAddr is: %s, %s", avsAddr, operatorAddr))
 	}
 	initValue := operatortypes.OperatorOptedUSDValue{
-		SelfUSDValue:   sdkmath.LegacyNewDec(0),
-		TotalUSDValue:  sdkmath.LegacyNewDec(0),
-		ActiveUSDValue: sdkmath.LegacyNewDec(0),
+		SelfUSDValue:   sdkmath.LegacyZeroDec(),
+		TotalUSDValue:  sdkmath.LegacyZeroDec(),
+		ActiveUSDValue: sdkmath.LegacyZeroDec(),
 	}
 	bz := k.cdc.MustMarshal(&initValue)
 	store.Set(key, bz)
@@ -115,9 +115,9 @@ func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr
 	// return zero if the operator has opted-out of the AVS
 	if !k.IsOptedIn(ctx, operatorAddr, avsAddr) {
 		return operatortypes.OperatorOptedUSDValue{
-			SelfUSDValue:   sdkmath.LegacyNewDec(0),
-			TotalUSDValue:  sdkmath.LegacyNewDec(0),
-			ActiveUSDValue: sdkmath.LegacyNewDec(0),
+			SelfUSDValue:   sdkmath.LegacyZeroDec(),
+			TotalUSDValue:  sdkmath.LegacyZeroDec(),
+			ActiveUSDValue: sdkmath.LegacyZeroDec(),
 		}, nil
 	}
 
@@ -149,7 +149,7 @@ func (k *Keeper) UpdateAVSUSDValue(ctx sdk.Context, avsAddr string, opAmount sdk
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
 	key := []byte(strings.ToLower(avsAddr))
-	totalValue := operatortypes.DecValueField{Amount: sdkmath.LegacyNewDec(0)}
+	totalValue := operatortypes.DecValueField{Amount: sdkmath.LegacyZeroDec()}
 	value := store.Get(key)
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &totalValue)
@@ -270,7 +270,7 @@ func (k *Keeper) SetAllOperatorUSDValues(ctx sdk.Context, usdValues []operatorty
 	for i := range usdValues {
 		usdValue := usdValues[i]
 		bz := k.cdc.MustMarshal(&usdValue.OptedUSDValue)
-		store.Set([]byte(usdValue.Key), bz)
+		store.Set([]byte(strings.ToLower(usdValue.Key)), bz)
 	}
 	return nil
 }
@@ -302,19 +302,42 @@ func (k *Keeper) SetAllAVSUSDValues(ctx sdk.Context, usdValues []operatortypes.A
 	return nil
 }
 
+func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context, isUpdate bool, opFunc func(avsAddr string, avsUSDValue *operatortypes.DecValueField) error) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var usdValue operatortypes.DecValueField
+		k.cdc.MustUnmarshal(iterator.Value(), &usdValue)
+		err := opFunc(string(iterator.Key()), &usdValue)
+		if err != nil {
+			return err
+		}
+		if isUpdate {
+			bz := k.cdc.MustMarshal(&usdValue)
+			store.Set(iterator.Key(), bz)
+		}
+	}
+	return nil
+}
+
 func (k *Keeper) GetAllAVSUSDValues(ctx sdk.Context) ([]operatortypes.AVSUSDValue, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 
 	ret := make([]operatortypes.AVSUSDValue, 0)
-	for ; iterator.Valid(); iterator.Next() {
-		var usdValue operatortypes.DecValueField
-		k.cdc.MustUnmarshal(iterator.Value(), &usdValue)
+	opFunc := func(avsAddr string, avsUSDValue *operatortypes.DecValueField) error {
 		ret = append(ret, operatortypes.AVSUSDValue{
-			AVSAddr: string(iterator.Key()),
-			Value:   usdValue,
+			AVSAddr: avsAddr,
+			Value:   *avsUSDValue,
 		})
+		return nil
+	}
+	err := k.IterateAVSUSDValues(ctx, false, opFunc)
+	if err != nil {
+		return nil, err
 	}
 	return ret, nil
 }
@@ -343,13 +366,12 @@ func (k *Keeper) CalculateUSDValueForOperator(
 ) (operatortypes.OperatorStakingInfo, error) {
 	var err error
 	ret := operatortypes.OperatorStakingInfo{
-		Staking:                 sdkmath.LegacyNewDec(0),
-		SelfStaking:             sdkmath.LegacyNewDec(0),
-		StakingAndWaitUnbonding: sdkmath.LegacyNewDec(0),
+		Staking:                 sdkmath.LegacyZeroDec(),
+		SelfStaking:             sdkmath.LegacyZeroDec(),
+		StakingAndWaitUnbonding: sdkmath.LegacyZeroDec(),
 	}
 	// iterate all assets owned by the operator to calculate its voting power
 	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
-		//		var price operatortypes.Price
 		var price oracletype.Price
 		var decimal uint32
 		if isForSlash {
@@ -440,14 +462,14 @@ func (k Keeper) GetOrCalculateOperatorUSDValues(
 
 func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr string, operator sdk.AccAddress) (sdkmath.LegacyDec, error) {
 	if !k.IsActive(ctx, operator, avsAddr) {
-		return sdkmath.LegacyNewDec(0), nil
+		return sdkmath.LegacyZeroDec(), nil
 	}
 	optedUSDValues, err := k.GetOperatorOptedUSDValue(ctx, avsAddr, operator.String())
 	if err != nil {
 		return sdkmath.LegacyDec{}, err
 	}
 	if optedUSDValues.ActiveUSDValue.IsZero() {
-		return sdkmath.LegacyNewDec(0), err
+		return sdkmath.LegacyZeroDec(), nil
 	}
 
 	// calculate the active voting power for staker
@@ -456,7 +478,7 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 		return sdkmath.LegacyDec{}, err
 	}
 	if assets == nil {
-		return sdkmath.LegacyNewDec(0), nil
+		return sdkmath.LegacyZeroDec(), nil
 	}
 	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
 	// we don't ignore the error regarding the price round not found here, because it's used to
@@ -467,7 +489,7 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 	if prices == nil {
 		return sdkmath.LegacyDec{}, errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, "CalculateUSDValueForStaker prices map is nil")
 	}
-	totalUSDValue := sdkmath.LegacyNewDec(0)
+	totalUSDValue := sdkmath.LegacyZeroDec()
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// Return true to stop iteration, false to continue iterating
 		if keys.OperatorAddr == operator.String() {

@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"strconv"
 
-	sdkmath "cosmossdk.io/math"
 	types "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +17,7 @@ func (suite *AVSTestSuite) TestTaskInfo() {
 		TaskResponsePeriod:  10000,
 		TaskChallengePeriod: 5000,
 		ThresholdPercentage: 60,
-		TaskTotalPower:      sdk.Dec(sdkmath.NewInt(0)),
+		TaskTotalPower:      sdk.ZeroDec(),
 	}
 	err := suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
 	suite.NoError(err)

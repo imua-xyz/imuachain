@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"encoding/binary"
+	"fmt"
+	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
@@ -63,8 +65,8 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 
 	var p types.Params
 	// get params from cache if exists
-	if agc != nil {
-		p = agc.GetParams()
+	if k.memStore.agc != nil {
+		p = k.memStore.agc.GetParams()
 	} else {
 		p = k.GetParams(ctx)
 	}
@@ -97,8 +99,8 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]interface{}) (prices map[string]types.Price, err error) {
 	var p types.Params
 	// get params from cache if exists
-	if agc != nil {
-		p = agc.GetParams()
+	if k.memStore.agc != nil {
+		p = k.memStore.agc.GetParams()
 	} else {
 		p = k.GetParams(ctx)
 	}
@@ -207,7 +209,7 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	store := k.getPriceTRStore(ctx, tokenID)
 	b := k.cdc.MustMarshal(&priceTR)
 	store.Set(types.PricesRoundKey(nextRoundID), b)
-	if expiredRoundID := nextRoundID - agc.GetParamsMaxSizePrices(); expiredRoundID > 0 {
+	if expiredRoundID := nextRoundID - k.memStore.agc.GetParamsMaxSizePrices(); expiredRoundID > 0 {
 		store.Delete(types.PricesRoundKey(expiredRoundID))
 	}
 	roundID := k.IncreaseNextRoundID(ctx, tokenID)
@@ -216,15 +218,15 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	// TODO: set hooks as a genral approach
 	var p types.Params
 	// get params from cache if exists
-	if agc != nil {
-		p = agc.GetParams()
+	if k.memStore.agc != nil {
+		p = k.memStore.agc.GetParams()
 	} else {
 		p = k.GetParams(ctx)
 	}
 	assetIDs := p.GetAssetIDsFromTokenID(tokenID)
 	for _, assetID := range assetIDs {
-		if assetstypes.IsNST(assetID) {
-			if err := k.UpdateNSTByBalanceChange(ctx, assetID, []byte(priceTR.Price), roundID); err != nil {
+		if nstChain, ok := strings.CutPrefix(assetID, types.NSTIDPrefix); ok {
+			if err := k.UpdateNSTByBalanceChange(ctx, fmt.Sprintf("%s%s", NSTETHAssetAddr, nstChain), []byte(priceTR.Price), roundID); err != nil {
 				// we just report this error in log to notify validators
 				k.Logger(ctx).Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err)
 			}

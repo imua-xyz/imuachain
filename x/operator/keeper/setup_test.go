@@ -18,16 +18,14 @@ type OperatorTestSuite struct {
 	testutil.BaseTestSuite
 
 	// needed by test
-	operatorAddr          sdk.AccAddress
-	avsAddr               string
-	assetID               string
-	stakerID              string
-	assetAddr             common.Address
-	assetDecimal          uint32
-	clientChainLzID       uint64
-	depositAmount         sdkmath.Int
-	delegationAmount      sdkmath.Int
-	updatedAmountForOptIn sdkmath.Int
+	operatorAddr     sdk.AccAddress
+	avsAddr          string
+	assetID          string
+	stakerID         string
+	assetAddr        common.Address
+	assetDecimal     uint32
+	clientChainLzID  uint64
+	delegationAmount sdkmath.Int
 }
 
 func TestOperatorTestSuite(t *testing.T) {

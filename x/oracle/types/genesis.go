@@ -35,6 +35,13 @@ func NewGenesisState(p Params) *GenesisState {
 	}
 }
 
+func NewMissedRound(index uint64, missed bool) *MissedRound {
+	return &MissedRound{
+		Index:  index,
+		Missed: missed,
+	}
+}
+
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {

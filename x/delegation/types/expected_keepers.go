@@ -23,7 +23,7 @@ func (VirtualSlashKeeper) IsOperatorFrozen(_ sdk.Context, _ sdk.AccAddress) bool
 }
 
 func (VirtualSlashKeeper) OperatorAssetSlashedProportion(_ sdk.Context, _ sdk.AccAddress, _ string, _, _ uint64) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(0)
+	return sdkmath.LegacyZeroDec()
 }
 
 // DelegationHooks are event hooks triggered by the delegation module

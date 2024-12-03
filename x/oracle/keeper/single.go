@@ -11,58 +11,52 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var updatedFeederIDs []string
-
-var cs *cache.Cache
-
-var agc, agcCheckTx *aggregator.AggregatorContext
-
-func GetCaches() *cache.Cache {
-	if cs != nil {
-		return cs
+func (k *Keeper) GetCaches() *cache.Cache {
+	if k.memStore.cs != nil {
+		return k.memStore.cs
 	}
-	cs = cache.NewCache()
-	return cs
+	k.memStore.cs = cache.NewCache()
+	return k.memStore.cs
 }
 
 // GetAggregatorContext returns singleton aggregatorContext used to calculate final price for each round of each tokenFeeder
-func GetAggregatorContext(ctx sdk.Context, k Keeper) *aggregator.AggregatorContext {
+func (k *Keeper) GetAggregatorContext(ctx sdk.Context) *aggregator.AggregatorContext {
 	if ctx.IsCheckTx() {
-		if agcCheckTx != nil {
-			return agcCheckTx
+		if k.memStore.agcCheckTx != nil {
+			return k.memStore.agcCheckTx
 		}
-		if agc == nil {
-			c := GetCaches()
+		if k.memStore.agc == nil {
+			c := k.GetCaches()
 			c.ResetCaches()
-			agcCheckTx = aggregator.NewAggregatorContext()
-			if ok := recacheAggregatorContext(ctx, agcCheckTx, k, c); !ok {
+			k.memStore.agcCheckTx = aggregator.NewAggregatorContext()
+			if ok := k.recacheAggregatorContext(ctx, k.memStore.agcCheckTx, c); !ok {
 				// this is the very first time oracle has been started, fill relalted info as initialization
-				initAggregatorContext(ctx, agcCheckTx, k, c)
+				initAggregatorContext(ctx, k.memStore.agcCheckTx, k, c)
 			}
-			return agcCheckTx
+			return k.memStore.agcCheckTx
 		}
-		agcCheckTx = agc.Copy4CheckTx()
-		return agcCheckTx
+		k.memStore.agcCheckTx = k.memStore.agc.Copy4CheckTx()
+		return k.memStore.agcCheckTx
 	}
 
-	if agc != nil {
-		return agc
+	if k.memStore.agc != nil {
+		return k.memStore.agc
 	}
 
-	c := GetCaches()
+	c := k.GetCaches()
 	c.ResetCaches()
-	agc = aggregator.NewAggregatorContext()
-	if ok := recacheAggregatorContext(ctx, agc, k, c); !ok {
+	k.memStore.agc = aggregator.NewAggregatorContext()
+	if ok := k.recacheAggregatorContext(ctx, k.memStore.agc, c); !ok {
 		// this is the very first time oracle has been started, fill relalted info as initialization
-		initAggregatorContext(ctx, agc, k, c)
+		initAggregatorContext(ctx, k.memStore.agc, k, c)
 	} else {
 		// this is when a node restart and use the persistent state to refill cache, we don't need to commit these data again
 		c.SkipCommit()
 	}
-	return agc
+	return k.memStore.agc
 }
 
-func recacheAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext, k Keeper, c *cache.Cache) bool {
+func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext, c *cache.Cache) bool {
 	logger := k.Logger(ctx)
 	from := ctx.BlockHeight() - int64(common.MaxNonce) + 1
 	to := ctx.BlockHeight()
@@ -163,7 +157,7 @@ func recacheAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext
 	return true
 }
 
-func initAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext, k common.KeeperOracle, c *cache.Cache) {
+func initAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext, k *Keeper, c *cache.Cache) {
 	ctx.Logger().Info("initAggregatorContext", "height", ctx.BlockHeight())
 	// set params
 	p := k.GetParams(ctx)
@@ -187,16 +181,16 @@ func initAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext, k
 	agc.PrepareRoundEndBlock(uint64(ctx.BlockHeight()) - 1)
 }
 
-func ResetAggregatorContext() {
-	agc = nil
+func (k *Keeper) ResetAggregatorContext() {
+	k.memStore.agc = nil
 }
 
-func ResetCache() {
-	cs = nil
+func (k *Keeper) ResetCache() {
+	k.memStore.cs = nil
 }
 
-func ResetAggregatorContextCheckTx() {
-	agcCheckTx = nil
+func (k *Keeper) ResetAggregatorContextCheckTx() {
+	k.memStore.agcCheckTx = nil
 }
 
 // setCommonParams save static fields in params in memory cache since these fields will not change during node running
@@ -210,16 +204,16 @@ func setCommonParams(p *types.Params) {
 	common.MaxSizePrices = int(p.MaxSizePrices)
 }
 
-func ResetUpdatedFeederIDs() {
-	if updatedFeederIDs != nil {
-		updatedFeederIDs = nil
+func (k *Keeper) ResetUpdatedFeederIDs() {
+	if k.memStore.updatedFeederIDs != nil {
+		k.memStore.updatedFeederIDs = nil
 	}
 }
 
-func GetUpdatedFeederIDs() []string {
-	return updatedFeederIDs
+func (k Keeper) GetUpdatedFeederIDs() []string {
+	return k.memStore.updatedFeederIDs
 }
 
-func AppendUpdatedFeederIDs(id uint64) {
-	updatedFeederIDs = append(updatedFeederIDs, strconv.FormatUint(id, 10))
+func (k *Keeper) AppendUpdatedFeederIDs(id uint64) {
+	k.memStore.updatedFeederIDs = append(k.memStore.updatedFeederIDs, strconv.FormatUint(id, 10))
 }

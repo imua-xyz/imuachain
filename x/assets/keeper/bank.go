@@ -15,7 +15,7 @@ type DepositWithdrawParams struct {
 	AssetsAddress   []byte
 	StakerAddress   []byte
 	OpAmount        sdkmath.Int
-	ValidatorPubkey []byte
+	ValidatorID     []byte
 }
 
 // PerformDepositOrWithdraw the assets precompile contract will call this function to update asset state

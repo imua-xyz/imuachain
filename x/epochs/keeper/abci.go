@@ -63,6 +63,7 @@ func (k Keeper) BeginBlocker(ctx sdk.Context) {
 					"ending epoch",
 					"identifier", epochInfo.Identifier,
 					"number", epochInfo.CurrentEpoch,
+					"height", ctx.BlockHeight(),
 				)
 				ctx.EventManager().EmitEvent(
 					sdk.NewEvent(

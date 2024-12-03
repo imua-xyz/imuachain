@@ -25,3 +25,12 @@ func ChainIDWithLenKey(chainID string) []byte {
 		[]byte(chainID),
 	)
 }
+
+func GetSpecifiedVotingPower(operator string, votingPowerSet []*OperatorVotingPower) *OperatorVotingPower {
+	for _, vp := range votingPowerSet {
+		if vp.OperatorAddr == operator {
+			return vp
+		}
+	}
+	return nil
+}

@@ -86,27 +86,27 @@ func (k Keeper) Hooks() types.DogfoodHooks {
 	return types.MultiDogfoodHooks{}
 }
 
-// MarkEpochEnd marks the end of the epoch. It is called within the BeginBlocker to inform
-// the module to apply the validator updates at the end of this block.
-func (k Keeper) MarkEpochEnd(ctx sdk.Context) {
+// MarkUpdateValidatorSetFlag marks that the validator set needs to be updated at the end of this block.
+// Mostly, these updates occur in response to the epoch ending. In other cases, they are the result of slashing.
+func (k Keeper) MarkUpdateValidatorSetFlag(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.EpochEndKey()
+	key := types.ShouldUpdateValidatorSetByteKey()
 	store.Set(key, []byte{1})
 }
 
-// IsEpochEnd returns true if the epoch ended in the beginning of this block, or the end of the
+// ShouldUpdateValidatorSet returns true if the epoch ended in the beginning of this block, or the end of the
 // previous block.
-func (k Keeper) IsEpochEnd(ctx sdk.Context) bool {
+func (k Keeper) ShouldUpdateValidatorSet(ctx sdk.Context) bool {
 	store := ctx.KVStore(k.storeKey)
-	key := types.EpochEndKey()
+	key := types.ShouldUpdateValidatorSetByteKey()
 	return store.Has(key)
 }
 
-// ClearEpochEnd clears the epoch end marker. It is called after the epoch end operations are
+// ClearValidatorSetUpdateFlag clears the epoch end marker. It is called after the epoch end operations are
 // applied.
-func (k Keeper) ClearEpochEnd(ctx sdk.Context) {
+func (k Keeper) ClearValidatorSetUpdateFlag(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-	key := types.EpochEndKey()
+	key := types.ShouldUpdateValidatorSetByteKey()
 	store.Delete(key)
 }
 

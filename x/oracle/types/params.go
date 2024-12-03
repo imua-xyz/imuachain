@@ -3,7 +3,9 @@ package types
 import (
 	"errors"
 	"strings"
+	"time"
 
+	sdkmath "cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -14,6 +16,7 @@ var (
 	KeySources      = []byte("Sources")
 	KeyRules        = []byte("Rules")
 	KeyTokenFeeders = []byte("TokenFeeders")
+	oneDec          = sdkmath.LegacyNewDec(1)
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -103,6 +106,14 @@ func DefaultParams() Params {
 		Mode:          ConsensusModeASAP,
 		MaxDetId:      5,
 		MaxSizePrices: 100,
+		Slashing: &SlashingParams{
+			ReportedRoundsWindow:        100,
+			MinReportedPerWindow:        sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2)),
+			OracleMissJailDuration:      600 * time.Second,
+			OracleMaliciousJailDuration: 30 * 24 * time.Hour,
+			SlashFractionMiss:           sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(20)),
+			SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
+		},
 	}
 }
 
@@ -127,6 +138,31 @@ func (p Params) Validate() error {
 	// Mode: tells how and when to confirm a final price, expect for voting power threshold, v1 set this value to 1 means final price will be confirmed as soon as it has reached the threshold of total voting power, and just ignore any remaining transactions followed for current round.
 	if p.MaxNonce < 1 || p.MaxDetId < 1 || p.ThresholdA < 1 || p.ThresholdB < p.ThresholdA || p.Mode != ConsensusModeASAP || p.MaxSizePrices < 1 {
 		return ErrInvalidParams.Wrapf("invalid maxNonce/maxDetID/Threshold/Mode/MaxSizePrices: %d, %d, %d, %d, %d, %d", p.MaxNonce, p.MaxDetId, p.ThresholdA, p.ThresholdB, p.Mode, p.MaxSizePrices)
+	}
+
+	slashing := p.Slashing
+
+	if slashing == nil {
+		return ErrInvalidParams.Wrap("slashing params must not be nil")
+	}
+
+	if slashing.ReportedRoundsWindow < 1 {
+		return ErrInvalidParams.Wrapf("ReportedRoundsWindow must be at least 1, got %d", slashing.ReportedRoundsWindow)
+	}
+	if slashing.MinReportedPerWindow.GT(oneDec) || !slashing.MinReportedPerWindow.IsPositive() {
+		return ErrInvalidParams.Wrapf("MinReportedPerWindow must be in (0, 1], got %v", slashing.MinReportedPerWindow)
+	}
+	if slashing.SlashFractionMiss.GT(oneDec) || !slashing.SlashFractionMiss.IsPositive() {
+		return ErrInvalidParams.Wrapf("SlashFractionMiss must be in (0, 1], got %v", slashing.SlashFractionMiss)
+	}
+	if slashing.SlashFractionMalicious.GT(oneDec) || !slashing.SlashFractionMalicious.IsPositive() {
+		return ErrInvalidParams.Wrapf("SlashFractionMalicious must be in (0, 1], got %v", slashing.SlashFractionMalicious)
+	}
+	if slashing.OracleMissJailDuration <= 0 {
+		return ErrInvalidParams.Wrapf("OracleMissJailDuration must be positive, got %v", slashing.OracleMissJailDuration)
+	}
+	if slashing.OracleMaliciousJailDuration <= 0 {
+		return ErrInvalidParams.Wrapf("OracleMaliciousJailDuration must be positive, got %v", slashing.OracleMaliciousJailDuration)
 	}
 
 	// validate tokenFeeders

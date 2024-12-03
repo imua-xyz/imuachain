@@ -34,11 +34,7 @@ func (ecv ExocoreValidator) UnpackInterfaces(unpacker codectypes.AnyUnpacker) er
 func (ecv ExocoreValidator) ConsPubKey() (cryptotypes.PubKey, error) {
 	pk, ok := ecv.Pubkey.GetCachedValue().(cryptotypes.PubKey)
 	if !ok {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidType,
-			"expecting cryptotypes.PubKey, got %T",
-			pk,
-		)
+		return nil, sdkerrors.ErrInvalidType.Wrap("fail to get the expected type cryptotypes.PubKey")
 	}
 
 	return pk, nil

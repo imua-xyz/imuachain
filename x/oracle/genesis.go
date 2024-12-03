@@ -40,6 +40,16 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, elem := range genState.StakerInfosAssets {
 		k.SetStakerInfos(ctx, elem.AssetId, elem.StakerInfos)
 	}
+	// set validatorReportInfos
+	for _, elem := range genState.ValidatorReportInfos {
+		k.SetValidatorReportInfo(ctx, elem.Address, elem)
+	}
+	// set validatorMissedRounds
+	for _, elem := range genState.ValidatorMissedRounds {
+		for _, missedRound := range elem.MissedRounds {
+			k.SetValidatorMissedRoundBitArray(ctx, elem.Address, missedRound.Index, missedRound.Missed)
+		}
+	}
 	// this line is used by starport scaffolding # genesis/module/init
 	k.SetParams(ctx, genState.Params)
 }
@@ -47,9 +57,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 // ExportGenesis returns the module's exported genesis
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
+	// params
 	genesis.Params = k.GetParams(ctx)
 
+	// priceList
 	genesis.PricesList = k.GetAllPrices(ctx)
+
+	// cache recovery related, used by agc
 	// Get all validatorUpdateBlock
 	validatorUpdateBlock, found := k.GetValidatorUpdateBlock(ctx)
 	if found {
@@ -67,9 +81,25 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis.RecentMsgList = k.GetAllRecentMsg(ctx)
 	genesis.RecentParamsList = k.GetAllRecentParams(ctx)
-	// TODO: export stakerListAssets, and stakerInfosAssets
+
+	// NST related
 	genesis.StakerInfosAssets = k.GetAllStakerInfosAssets(ctx)
 	genesis.StakerListAssets = k.GetAllStakerListAssets(ctx)
+
+	// slashing related
+	reportInfos := make([]types.ValidatorReportInfo, 0)
+	validatorMissedRounds := make([]types.ValidatorMissedRounds, 0)
+	k.IterateValidatorReportInfos(ctx, func(validator string, reportInfo types.ValidatorReportInfo) bool {
+		reportInfos = append(reportInfos, reportInfo)
+		missedRounds := k.GetValidatorMissedRounds(ctx, validator)
+		validatorMissedRounds = append(validatorMissedRounds, types.ValidatorMissedRounds{
+			Address:      validator,
+			MissedRounds: missedRounds,
+		})
+		return false
+	})
+	genesis.ValidatorReportInfos = reportInfos
+	genesis.ValidatorMissedRounds = validatorMissedRounds
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis

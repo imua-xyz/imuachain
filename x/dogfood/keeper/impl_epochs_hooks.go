@@ -33,7 +33,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 		// note that this hook is called during BeginBlock, and the "pending" operations will be
 		// applied within this block. however, for clarity, it is highlighted that unbonding
 		// takes N epochs + 1 block to complete.
-		wrapper.keeper.MarkEpochEnd(ctx)
+		wrapper.keeper.MarkUpdateValidatorSetFlag(ctx)
 		ctx.Logger().Info("mark epoch end", "height", ctx.BlockHeight(), "identifier", identifier, "epoch", epoch)
 		// find the opt outs that mature when this epoch ends, and move them to pending.
 		optOuts := wrapper.keeper.GetOptOutsToFinish(ctx, epoch)

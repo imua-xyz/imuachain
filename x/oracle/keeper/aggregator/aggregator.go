@@ -2,13 +2,14 @@ package aggregator
 
 import (
 	"math/big"
+	"sort"
 
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 )
 
 type priceWithTimeAndRound struct {
-	price      *big.Int
+	price      string
 	decimal    int32
 	timestamp  string
 	detRoundID string // roundId from source if exists
@@ -17,26 +18,31 @@ type priceWithTimeAndRound struct {
 type reportPrice struct {
 	validator string
 	// final price, set to -1 as initial
-	price *big.Int
+	price string
 	// sourceId->priceWithTimeAndRound
 	prices map[uint64]*priceWithTimeAndRound
 	power  *big.Int
 }
 
-func (r *reportPrice) aggregate() *big.Int {
-	if r.price != nil {
+func (r *reportPrice) aggregate() string {
+	if len(r.price) > 0 {
 		return r.price
 	}
 	tmp := make([]*big.Int, 0, len(r.prices))
 	for _, p := range r.prices {
-		tmp = append(tmp, p.price)
+		priceInt, ok := new(big.Int).SetString(p.price, 10)
+		// price is not a number (NST), we will just return instead of calculation
+		if !ok {
+			return p.price
+		}
+		tmp = append(tmp, priceInt)
 	}
-	r.price = common.BigIntList(tmp).Median()
+	r.price = common.BigIntList(tmp).Median().String()
 	return r.price
 }
 
 type aggregator struct {
-	finalPrice *big.Int
+	finalPrice string
 	reports    []*reportPrice
 	// total valiadtor power who has submitted price
 	reportPower *big.Int
@@ -50,9 +56,9 @@ type aggregator struct {
 
 func (agg *aggregator) copy4CheckTx() *aggregator {
 	ret := &aggregator{
-		finalPrice:  big.NewInt(0).Set(agg.finalPrice),
-		reportPower: big.NewInt(0).Set(agg.reportPower),
-		totalPower:  big.NewInt(0).Set(agg.totalPower),
+		finalPrice:  agg.finalPrice,
+		reportPower: copyBigInt(agg.reportPower),
+		totalPower:  copyBigInt(agg.totalPower),
 
 		reports:  make([]*reportPrice, 0, len(agg.reports)),
 		dsPrices: make(map[uint64]string),
@@ -62,13 +68,13 @@ func (agg *aggregator) copy4CheckTx() *aggregator {
 	}
 	for _, report := range agg.reports {
 		rTmp := *report
-		rTmp.price = big.NewInt(0).Set(report.price)
-		rTmp.power = big.NewInt(0).Set(report.power)
+		rTmp.price = report.price
+		rTmp.power = copyBigInt(report.power)
 
 		for k, v := range report.prices {
 			// prices are information submitted by validators, these data will not change under deterministic sources, but with non-deterministic sources they might be overwrite by later prices
 			tmpV := *v
-			tmpV.price = big.NewInt(0).Set(v.price)
+			tmpV.price = v.price
 			rTmp.prices[k] = &tmpV
 		}
 
@@ -97,33 +103,29 @@ func (agg *aggregator) fillPrice(pSources []*types.PriceSource, validator string
 			// this is an NS price report, price will just be updated instead of append
 			if pTR := report.prices[pSource.SourceID]; pTR == nil {
 				pTmp := pSource.Prices[0]
-				priceBigInt, _ := (&big.Int{}).SetString(pTmp.Price, 10)
 				pTR = &priceWithTimeAndRound{
-					price:     priceBigInt,
+					price:     pTmp.Price,
 					decimal:   pTmp.Decimal,
 					timestamp: pTmp.Timestamp,
-					//			detRoundId: p.DetId,
 				}
 				report.prices[pSource.SourceID] = pTR
 			} else {
-				pTR.price, _ = (&big.Int{}).SetString(pSource.Prices[0].Price, 10)
+				pTR.price = pSource.Prices[0].Price
 			}
 		} else {
 			// this is an DS price report
 			if pTR := report.prices[pSource.SourceID]; pTR == nil {
 				pTmp := pSource.Prices[0]
 				pTR = &priceWithTimeAndRound{
-					// price:     nil,
 					decimal: pTmp.Decimal,
-					//	timestamp: "",
-					// detRoundId: "",
 				}
 				if len(agg.dsPrices[pSource.SourceID]) > 0 {
 					for _, reportTmp := range agg.reports {
-						if priceTmp := reportTmp.prices[pSource.SourceID]; priceTmp != nil && priceTmp.price != nil {
-							pTR.price = new(big.Int).Set(priceTmp.price)
+						if priceTmp := reportTmp.prices[pSource.SourceID]; priceTmp != nil && len(priceTmp.price) > 0 {
+							pTR.price = priceTmp.price
 							pTR.detRoundID = priceTmp.detRoundID
 							pTR.timestamp = priceTmp.timestamp
+							break
 						}
 					}
 				}
@@ -143,7 +145,7 @@ func (agg *aggregator) confirmDSPrice(confirmedRounds []*confirmedPrice) {
 		if id := agg.dsPrices[priceSourceRound.sourceID]; len(id) == 0 || (len(id) > 0 && id < priceSourceRound.detID) {
 			agg.dsPrices[priceSourceRound.sourceID] = priceSourceRound.detID
 			for _, report := range agg.reports {
-				if report.price != nil {
+				if len(report.price) > 0 {
 					// price of IVA has completed
 					continue
 				}
@@ -151,7 +153,7 @@ func (agg *aggregator) confirmDSPrice(confirmedRounds []*confirmedPrice) {
 					price.detRoundID = priceSourceRound.detID
 					price.timestamp = priceSourceRound.timestamp
 					price.price = priceSourceRound.price
-				} // else TODO: panice in V1
+				} // else TODO: panic in V1
 			}
 		}
 	}
@@ -166,8 +168,8 @@ func (agg *aggregator) getReport(validator string) *reportPrice {
 	return nil
 }
 
-func (agg *aggregator) aggregate() *big.Int {
-	if agg.finalPrice != nil {
+func (agg *aggregator) aggregate() string {
+	if len(agg.finalPrice) > 0 {
 		return agg.finalPrice
 	}
 	// TODO: implemetn different MODE for definition of consensus,
@@ -181,14 +183,51 @@ func (agg *aggregator) aggregate() *big.Int {
 			validatorPrices := make([]*big.Int, 0, len(agg.reports))
 			// do the aggregation to find out the 'final price'
 			for _, validatorReport := range agg.reports {
-				validatorPrices = append(validatorPrices, validatorReport.aggregate())
+				priceInt, ok := new(big.Int).SetString(validatorReport.aggregate(), 10)
+				if !ok {
+					// price is not number, we just return the price when power exceeds threshold
+					agg.finalPrice = validatorReport.aggregate()
+					return agg.finalPrice
+				}
+				validatorPrices = append(validatorPrices, priceInt)
 			}
 			// vTmp := bigIntList(validatorPrices)
-			agg.finalPrice = common.BigIntList(validatorPrices).Median()
+			agg.finalPrice = common.BigIntList(validatorPrices).Median().String()
 			// clear relative aggregator for this feeder, all the aggregator,calculator, filter can be removed since this round has been sealed
 		}
 	}
 	return agg.finalPrice
+}
+
+// TODO: this only suites for DS. check source type for extension
+// GetFinaPriceListForFeederIDs retrieve final price info as an array ordered by sourceID asc
+func (agg *aggregator) getFinalPriceList(feederID uint64) []*types.AggFinalPrice {
+	sourceIDs := make([]uint64, 0, len(agg.dsPrices))
+	for sID := range agg.dsPrices {
+		sourceIDs = append(sourceIDs, sID)
+	}
+	sort.Slice(sourceIDs, func(i, j int) bool {
+		return sourceIDs[i] < sourceIDs[j]
+	})
+	ret := make([]*types.AggFinalPrice, 0, len(sourceIDs))
+	for _, sID := range sourceIDs {
+		for _, report := range agg.reports {
+			price := report.prices[sID]
+			if price == nil || price.detRoundID != agg.dsPrices[sID] {
+				// the DetID mismatch should not happen
+				continue
+			}
+			ret = append(ret, &types.AggFinalPrice{
+				FeederID: feederID,
+				SourceID: sID,
+				DetID:    price.detRoundID,
+				Price:    price.price,
+			})
+			// {feederID, sourceID} has been found, skip rest reports
+			break
+		}
+	}
+	return ret
 }
 
 func newAggregator(validatorSetLength int, totalPower *big.Int) *aggregator {

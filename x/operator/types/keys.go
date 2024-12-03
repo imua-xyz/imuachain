@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/binary"
 	"math"
 
 	"golang.org/x/xerrors"
@@ -67,6 +68,13 @@ const (
 	// BytePrefixForOperatorKeyRemovalForChainID is the prefix to store that the operator with
 	// the given address is in the process of unbonding their key for the given chainID.
 	BytePrefixForOperatorKeyRemovalForChainID
+
+	// BytePrefixForVotingPowerSnapshot is the prefix to store the voting power snapshot for all AVSs
+	BytePrefixForVotingPowerSnapshot
+
+	// BytePrefixForSnapshotHelper is the prefix used to store helper information
+	// for voting power snapshot updates.
+	BytePrefixForSnapshotHelper
 )
 
 var (
@@ -94,6 +102,22 @@ var (
 	// processedSlashHeight + '/' + assetID + '/' + stakerID -> SlashAmount
 	// processedSlashHeight + '/' + assetID + '/' + operatorAddr -> SlashAmount
 	KeyPrefixSlashAssetsState = []byte{prefixSlashAssetsState}
+
+	// KeyPrefixVotingPowerSnapshot key-value:
+	// In general, the key used to store the voting power snapshot is based on the epoch number as
+	// the smallest unit, since our voting power is updated once per epoch. When saving the snapshot, we use
+	// the `start_height` of current epoch to represent the whole epoch. Therefore, when in use,
+	// you only need to find the largest height that is less than or equal to the input height,
+	// which will be the correct snapshot key.
+	// Additionally, when a slash event occurs,
+	// the voting power needs to be updated immediately to ensure the slash takes effect for the relevant operator.
+	// In this case, we need to store an additional snapshot at the height where the slash is executed.
+	// AVSAddr+ '/' + Height -> VotingPowerSnapshot
+	KeyPrefixVotingPowerSnapshot = []byte{BytePrefixForVotingPowerSnapshot}
+
+	// KeyPrefixSnapshotHelper key-value:
+	// avsAddr -> SnapshotHelper
+	KeyPrefixSnapshotHelper = []byte{BytePrefixForSnapshotHelper}
 )
 
 // ModuleAddress is the native module address for EVM
@@ -133,6 +157,24 @@ func KeyForOperatorAndChainIDToConsKey(addr sdk.AccAddress, chainID string) []by
 		BytePrefixForOperatorAndChainIDToConsKey,
 		addr, chainID,
 	)
+}
+
+func KeyForVotingPowerSnapshot(avs common.Address, height int64) []byte {
+	return AppendMany(
+		avs.Bytes(),
+		// Append the height
+		sdk.Uint64ToBigEndian(uint64(height)),
+	)
+}
+
+func ParseVotingPowerSnapshotKey(key []byte) (string, int64, error) {
+	if len(key) != common.AddressLength+ByteLengthForUint64 {
+		return "", 0, xerrors.Errorf("invalid snapshot key length,expected:%d,got:%d", common.AddressLength+ByteLengthForUint64, len(key))
+	}
+	avsAddr := common.Address(key[:common.AddressLength])
+	height := binary.BigEndian.Uint64(key[common.AddressLength:])
+	// #nosec G115
+	return avsAddr.String(), int64(height), nil
 }
 
 func ParseKeyForOperatorAndChainIDToConsKey(key []byte) (addr sdk.AccAddress, chainID string, err error) {

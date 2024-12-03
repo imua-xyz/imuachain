@@ -15,13 +15,14 @@ func (k Keeper) BeginBlock(ctx sdk.Context) {
 }
 
 func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
-	if !k.IsEpochEnd(ctx) {
+	if !k.ShouldUpdateValidatorSet(ctx) {
 		k.SetValidatorUpdates(ctx, []abci.ValidatorUpdate{})
 		return []abci.ValidatorUpdate{}
 	}
-	defer k.ClearEpochEnd(ctx)
+	defer k.ClearValidatorSetUpdateFlag(ctx)
 	logger := k.Logger(ctx)
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.
@@ -31,10 +32,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	for _, undelegation := range undelegations.GetList() {
 		err := k.delegationKeeper.DecrementUndelegationHoldCount(ctx, undelegation)
 		if err != nil {
-			logger.Error(
-				"error decrementing undelegation hold count",
-				"error", err,
-			)
+			logger.Error("error decrementing undelegation hold count", "error", err)
 		}
 		k.ClearUndelegationMaturityEpoch(ctx, undelegation)
 	}
@@ -46,10 +44,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 			ctx, addr, chainIDWithoutRevision,
 		)
 		if err != nil {
-			logger.Error(
-				"error completing operator key removal",
-				"error", err,
-			)
+			logger.Error("error completing operator key removal", "error", err)
 		}
 	}
 	k.ClearPendingOptOuts(ctx)
@@ -80,10 +75,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 		pubKey, err := validator.ConsPubKey()
 		if err != nil {
 			// indicates an error in deserialization, and should never happen.
-			logger.Error(
-				"error deserializing consensus public key",
-				"error", err,
-			)
+			logger.Error("error deserializing consensus public key", "error", err)
 			continue
 		}
 		addressString := sdk.GetConsAddress(pubKey).String()
@@ -94,10 +86,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 		ctx, operators, chainIDWithoutRevision,
 	)
 	if err != nil {
-		logger.Error(
-			"error getting vote power for chain",
-			"error", err,
-		)
+		logger.Error("error getting vote power for chain", "error", err)
 		return []abci.ValidatorUpdate{}
 	}
 	operators, keys, powers = utils.SortByPower(operators, keys, powers)

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package exocore.oracle.v1;
+
+option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
+
+// ValidatorReportInfo represents the information to describe the miss status of a validator reporting prices
+message ValidatorReportInfo {
+  // address of the validtor
+  string address = 1;
+  // start_height for the performance round of the configured window of rounds
+  int64 start_height = 2;
+  // index_offset track the offset of current window
+  int64 index_offset = 3;
+  // missed_rounds_counter counts the number of missed rounds for this window
+  int64 missed_rounds_counter = 4;
+}

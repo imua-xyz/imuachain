@@ -45,6 +45,8 @@ func (k Keeper) UpdateNSTBalance(
 		pendingSlashAmount := slashFromWithdrawable.Sub(assetInfo.WithdrawableAmount)
 		if pendingSlashAmount.IsPositive() {
 			slashFromWithdrawable = assetInfo.WithdrawableAmount
+		} else {
+			pendingSlashAmount = sdkmath.ZeroInt()
 		}
 		err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
 			TotalDepositAmount: slashFromWithdrawable.Neg(),

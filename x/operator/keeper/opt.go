@@ -145,5 +145,11 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 	if err != nil {
 		return err
 	}
+
+	// mark opt out in the snapshot helper
+	err = k.SetOptOutFlag(ctx, avsAddr, true)
+	if err != nil {
+		return err
+	}
 	return nil
 }

@@ -36,10 +36,21 @@ type Price struct {
 	Decimal uint8
 }
 
+type AggFinalPrice struct {
+	FeederID uint64
+	SourceID uint64
+	DetID    string
+	Price    string
+}
+
 const (
 	DefaultPriceValue   = 1
 	DefaultPriceDecimal = 0
+
+	NSTIDPrefix = "NST"
 )
+
+var DelimiterForCombinedKey = byte('/')
 
 func Uint64Bytes(value uint64) []byte {
 	valueBytes := make([]byte, 8)

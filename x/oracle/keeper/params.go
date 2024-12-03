@@ -74,8 +74,8 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 			t.AssetID = strings.Join([]string{t.AssetID, oInfo.AssetID}, ",")
 			k.SetParams(ctx, p)
 			if !ctx.IsCheckTx() {
-				_ = GetAggregatorContext(ctx, k)
-				cs.AddCache(cache.ItemP(p))
+				_ = k.GetAggregatorContext(ctx)
+				k.GetCaches().AddCache(cache.ItemP(p))
 			}
 			// there should have been existing tokenFeeder running(currently we register tokens from assets-module and with infinite endBlock)
 			return nil
@@ -108,8 +108,8 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	// skip cache update if this is not deliverTx
 	// for normal cosmostx, checkTx will skip actual message exucution and do anteHandler only, but from ethc.callContract the message will be executed without anteHandler check as checkTx mode.
 	if !ctx.IsCheckTx() {
-		_ = GetAggregatorContext(ctx, k)
-		cs.AddCache(cache.ItemP(p))
+		_ = k.GetAggregatorContext(ctx)
+		k.GetCaches().AddCache(cache.ItemP(p))
 	}
 	return nil
 }

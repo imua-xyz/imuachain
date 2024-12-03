@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
@@ -127,7 +128,7 @@ func (k Keeper) CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederI
 		}
 		return 0, errors.New("feeder not found")
 	}
-	return 0, errors.New("validator not found")
+	return 0, fmt.Errorf("validator for the consKey which signed the create-price tx is not included in active validator set, signer consAddr:%s", validator)
 }
 
 // internal usage for avoiding duplicated 'NewStore'

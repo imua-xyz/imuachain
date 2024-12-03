@@ -10,13 +10,13 @@ import (
 type confirmedPrice struct {
 	sourceID  uint64
 	detID     string
-	price     *big.Int
+	price     string
 	timestamp string
 }
 
 // internal struct
 type priceAndPower struct {
-	price *big.Int
+	price string
 	power *big.Int
 }
 
@@ -24,7 +24,7 @@ type priceAndPower struct {
 type roundPrices struct { // 0 means NS
 	detID     string
 	prices    []*priceAndPower
-	price     *big.Int
+	price     string
 	timestamp string
 	// confirmed bool
 }
@@ -32,12 +32,12 @@ type roundPrices struct { // 0 means NS
 // udpate priceAndPower for a specific DSRoundID, if the price exists, increase its power with provided data
 // return confirmed=true, when detect power exceeds the threshold
 func (r *roundPrices) updatePriceAndPower(pw *priceAndPower, totalPower *big.Int) (updated bool, confirmed bool) {
-	if r.price != nil {
+	if len(r.price) > 0 {
 		confirmed = true
 		return
 	}
 	for _, item := range r.prices {
-		if item.price.Cmp(pw.price) == 0 {
+		if item.price == pw.price {
 			item.power = new(big.Int).Add(item.power, pw.power)
 			updated = true
 			if common.ExceedsThreshold(item.power, totalPower) {
@@ -52,7 +52,6 @@ func (r *roundPrices) updatePriceAndPower(pw *priceAndPower, totalPower *big.Int
 		updated = true
 		if common.ExceedsThreshold(pw.power, totalPower) {
 			r.price = pw.price
-			//			r.confirmed = true
 			confirmed = true
 		}
 	}
@@ -75,14 +74,14 @@ func (r *roundPricesList) copy4CheckTx() *roundPricesList {
 	for _, v := range r.roundPricesList {
 		tmpRP := &roundPrices{
 			detID:     v.detID,
-			price:     big.NewInt(0).Set(v.price),
+			price:     v.price,
 			prices:    make([]*priceAndPower, 0, len(v.prices)),
 			timestamp: v.timestamp,
 		}
 		for _, pNP := range v.prices {
 			tmpPNP := *pNP
 			// power will be modified during execution
-			tmpPNP.power = big.NewInt(0).Set(pNP.power)
+			tmpPNP.power = copyBigInt(pNP.power)
 			tmpRP.prices = append(tmpRP.prices, &tmpPNP)
 		}
 
@@ -94,7 +93,7 @@ func (r *roundPricesList) copy4CheckTx() *roundPricesList {
 // to tell if any round of this DS has reached consensus/confirmed
 func (r *roundPricesList) hasConfirmedDetID() bool {
 	for _, round := range r.roundPricesList {
-		if round.price != nil {
+		if len(round.price) > 0 {
 			return true
 		}
 	}
@@ -106,7 +105,7 @@ func (r *roundPricesList) hasConfirmedDetID() bool {
 func (r *roundPricesList) getOrNewRound(detID string, timestamp string) (round *roundPrices) {
 	for _, round = range r.roundPricesList {
 		if round.detID == detID {
-			if round.price != nil {
+			if len(round.price) > 0 {
 				round = nil
 			}
 			return
@@ -171,16 +170,13 @@ func (c *calculator) fillPrice(pSources []*types.PriceSource, _ string, power *b
 			break
 		}
 		for _, pDetID := range pSource.Prices {
-
 			round := rounds.getOrNewRound(pDetID.DetID, pDetID.Timestamp)
 			if round == nil {
 				// this sourceId has reach the limitation of different detId, or has confirmed
 				continue
 			}
 
-			roundPrice, _ := new(big.Int).SetString(pDetID.Price, 10)
-
-			updated, confirmed := round.updatePriceAndPower(&priceAndPower{roundPrice, power}, c.totalPower)
+			updated, confirmed := round.updatePriceAndPower(&priceAndPower{pDetID.Price, power}, c.totalPower)
 			if updated && confirmed {
 				// sourceId, detId, price
 				confirmedRounds = append(confirmedRounds, &confirmedPrice{pSource.SourceID, round.detID, round.price, round.timestamp}) // TODO: just in v1 with mode==1, we use asap, so we just ignore any further data from this DS, even higher detId may get to consensus, in this way, in most case, we can complete the calculation in the transaction execution process. Release the pressure in EndBlocker

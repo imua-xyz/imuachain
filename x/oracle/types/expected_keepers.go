@@ -1,6 +1,8 @@
 package types
 
 import (
+	time "time"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -25,4 +27,8 @@ type DelegationKeeper interface {
 
 type AssetsKeeper interface {
 	GetAssetsDecimal(ctx sdk.Context, assets map[string]interface{}) (decimals map[string]uint32, err error)
+}
+
+type SlashingKeeper interface {
+	JailUntil(sdk.Context, sdk.ConsAddress, time.Time)
 }

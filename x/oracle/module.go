@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-	"sync"
 
 	// this line is used by starport scaffolding # 1
 
@@ -24,12 +23,12 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 var (
-	_    module.AppModule      = AppModule{}
-	_    module.AppModuleBasic = AppModuleBasic{}
-	once                       = sync.Once{}
+	_ module.AppModule      = AppModule{}
+	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
@@ -155,25 +154,34 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	// init caches and aggregatorContext for node restart
 	// TODO: try better way to init caches and aggregatorContext than beginBlock
-	once.Do(func() {
-		_ = keeper.GetCaches()
-		_ = keeper.GetAggregatorContext(ctx, am.keeper)
-	})
+	_ = am.keeper.GetCaches()
+	agc := am.keeper.GetAggregatorContext(ctx)
+	validatorPowers := agc.GetValidatorPowers()
+	// set validatorReportInfo to track performance
+	for validator := range validatorPowers {
+		am.keeper.InitValidatorReportInfo(ctx, validator, ctx.BlockHeight())
+	}
 }
 
 // EndBlock contains the logic that is automatically triggered at the end of each block
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	cs := keeper.GetCaches()
+	cs := am.keeper.GetCaches()
 	validatorUpdates := am.keeper.GetValidatorUpdates(ctx)
 	forceSeal := false
-	agc := keeper.GetAggregatorContext(ctx, am.keeper)
+	agc := am.keeper.GetAggregatorContext(ctx)
 
 	logger := am.keeper.Logger(ctx)
+	height := ctx.BlockHeight()
 	if len(validatorUpdates) > 0 {
 		validatorList := make(map[string]*big.Int)
 		for _, vu := range validatorUpdates {
 			pubKey, _ := cryptocodec.FromTmProtoPublicKey(vu.PubKey)
-			validatorList[sdk.ConsAddress(pubKey.Address()).String()] = big.NewInt(vu.Power)
+			validatorStr := sdk.ConsAddress(pubKey.Address()).String()
+			validatorList[validatorStr] = big.NewInt(vu.Power)
+			// add possible new added validator info for slashing tracking
+			if vu.Power > 0 {
+				am.keeper.InitValidatorReportInfo(ctx, validatorStr, height)
+			}
 		}
 		// update validator set information in cache
 		cs.AddCache(cache.ItemV(validatorList))
@@ -183,21 +191,170 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 		agc.SetValidatorPowers(validatorPowers)
 		// TODO: seal all alive round since validatorSet changed here
 		forceSeal = true
-		logger.Info("validator set changed, force seal all active rounds", "height", ctx.BlockHeight())
+		logger.Info("validator set changed, force seal all active rounds", "height", height)
 	}
 
 	// TODO: for v1 use mode==1, just check the failed feeders
-	_, failed, sealed := agc.SealRound(ctx, forceSeal)
-	for _, feederID := range sealed {
-		am.keeper.RemoveNonceWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
+	_, failed, _, windowClosed := agc.SealRound(ctx, forceSeal)
+	defer func() {
+		for _, feederID := range windowClosed {
+			agc.RemoveWorker(feederID)
+			am.keeper.RemoveNonceWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
+		}
+	}()
+	// update&check slashing info
+	validatorPowers := agc.GetValidatorPowers()
+	for validator, power := range validatorPowers {
+		reportedInfo, found := am.keeper.GetValidatorReportInfo(ctx, validator)
+		if !found {
+			logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
+			continue
+		}
+		// TODO: for the round calculation, now only sourceID=1 is used so {feederID, sourceID} have only one value for each feederID which corresponding to one round.
+		// But when we came to multiple sources, we should consider the round corresponding to feedeerID instead of {feederID, sourceID}
+		for _, finalPrice := range agc.GetFinalPriceListForFeederIDs(windowClosed) {
+			exist, matched := agc.PerformanceReview(ctx, finalPrice, validator)
+			if exist && !matched {
+				// TODO: malicious price, just slash&jail immediately
+				logger.Info(
+					"confirmed malicious price",
+					"validator", validator,
+					"infraction_height", height,
+					"infraction_time", ctx.BlockTime(),
+					"feederID", finalPrice.FeederID,
+					"detID", finalPrice.DetID,
+					"sourceID", finalPrice.SourceID,
+					"finalPrice", finalPrice.Price,
+				)
+				consAddr, err := sdk.ConsAddressFromBech32(validator)
+				if err != nil {
+					panic("invalid consAddr string")
+				}
+
+				operator := am.keeper.ValidatorByConsAddr(ctx, consAddr)
+				if operator != nil && !operator.IsJailed() {
+					coinsBurned := am.keeper.SlashWithInfractionReason(ctx, consAddr, height, power.Int64(), am.keeper.GetSlashFractionMalicious(ctx), stakingtypes.Infraction_INFRACTION_UNSPECIFIED)
+					ctx.EventManager().EmitEvent(
+						sdk.NewEvent(
+							types.EventTypeOracleSlash,
+							sdk.NewAttribute(types.AttributeKeyValidatorKey, validator),
+							sdk.NewAttribute(types.AttributeKeyPower, fmt.Sprintf("%d", power)),
+							sdk.NewAttribute(types.AttributeKeyReason, types.AttributeValueMaliciousReportPrice),
+							sdk.NewAttribute(types.AttributeKeyJailed, validator),
+							sdk.NewAttribute(types.AttributeKeyBurnedCoins, coinsBurned.String()),
+						),
+					)
+					am.keeper.Jail(ctx, consAddr)
+					jailUntil := ctx.BlockHeader().Time.Add(am.keeper.GetMaliciousJailDuration(ctx))
+					am.keeper.JailUntil(ctx, consAddr, jailUntil)
+					reportedInfo.MissedRoundsCounter = 0
+					reportedInfo.IndexOffset = 0
+					am.keeper.ClearValidatorMissedRoundBitArray(ctx, validator)
+				}
+				continue
+			}
+
+			index := uint64(reportedInfo.IndexOffset % am.keeper.GetReportedRoundsWindow(ctx))
+			reportedInfo.IndexOffset++
+			// Update reported round bit array & counter
+			// This counter just tracks the sum of the bit array
+			// That way we avoid needing to read/write the whole array each time
+			previous := am.keeper.GetValidatorMissedRoundBitArray(ctx, validator, index)
+			missed := !exist
+			switch {
+			case !previous && missed:
+				// Array value has changed from not missed to missed, increment counter
+				am.keeper.SetValidatorMissedRoundBitArray(ctx, validator, index, true)
+				reportedInfo.MissedRoundsCounter++
+			case previous && !missed:
+				// Array value has changed from missed to not missed, decrement counter
+				am.keeper.SetValidatorMissedRoundBitArray(ctx, validator, index, false)
+				reportedInfo.MissedRoundsCounter--
+			default:
+				// Array value at this index has not changed, no need to update counter
+			}
+
+			minReportedPerWindow := am.keeper.GetMinReportedPerWindow(ctx)
+
+			if missed {
+				ctx.EventManager().EmitEvent(
+					sdk.NewEvent(
+						types.EventTypeOracleLiveness,
+						sdk.NewAttribute(types.AttributeKeyValidatorKey, validator),
+						sdk.NewAttribute(types.AttributeKeyMissedRounds, fmt.Sprintf("%d", reportedInfo.MissedRoundsCounter)),
+						sdk.NewAttribute(types.AttributeKeyHeight, fmt.Sprintf("%d", height)),
+					),
+				)
+
+				logger.Debug(
+					"absent validator",
+					"height", ctx.BlockHeight(),
+					"validator", validator,
+					"missed", reportedInfo.MissedRoundsCounter,
+					"threshold", minReportedPerWindow,
+				)
+			}
+
+			minHeight := reportedInfo.StartHeight + am.keeper.GetReportedRoundsWindow(ctx)
+			maxMissed := am.keeper.GetReportedRoundsWindow(ctx) - minReportedPerWindow
+			// if we are past the minimum height and the validator has missed too many rounds reporting prices, punish them
+			if height > minHeight && reportedInfo.MissedRoundsCounter > maxMissed {
+				consAddr, err := sdk.ConsAddressFromBech32(validator)
+				if err != nil {
+					panic("invalid consAddr string")
+				}
+				operator := am.keeper.ValidatorByConsAddr(ctx, consAddr)
+				if operator != nil && !operator.IsJailed() {
+					// missing rounds confirmed: slash and jail the validator
+					coinsBurned := am.keeper.SlashWithInfractionReason(ctx, consAddr, height, power.Int64(), am.keeper.GetSlashFractionMiss(ctx), stakingtypes.Infraction_INFRACTION_UNSPECIFIED)
+					ctx.EventManager().EmitEvent(
+						sdk.NewEvent(
+							types.EventTypeOracleSlash,
+							sdk.NewAttribute(types.AttributeKeyValidatorKey, validator),
+							sdk.NewAttribute(types.AttributeKeyPower, fmt.Sprintf("%d", power)),
+							sdk.NewAttribute(types.AttributeKeyReason, types.AttributeValueMissingReportPrice),
+							sdk.NewAttribute(types.AttributeKeyJailed, validator),
+							sdk.NewAttribute(types.AttributeKeyBurnedCoins, coinsBurned.String()),
+						),
+					)
+					am.keeper.Jail(ctx, consAddr)
+					jailUntil := ctx.BlockHeader().Time.Add(am.keeper.GetMissJailDuration(ctx))
+					am.keeper.JailUntil(ctx, consAddr, jailUntil)
+
+					// We need to reset the counter & array so that the validator won't be immediately slashed for miss report info upon rebonding.
+					reportedInfo.MissedRoundsCounter = 0
+					reportedInfo.IndexOffset = 0
+					am.keeper.ClearValidatorMissedRoundBitArray(ctx, validator)
+
+					logger.Info(
+						"slashing and jailing validator due to liveness fault",
+						"height", height,
+						"validator", consAddr.String(),
+						"min_height", minHeight,
+						"threshold", minReportedPerWindow,
+						"slashed", am.keeper.GetSlashFractionMiss(ctx).String(),
+						"jailed_until", jailUntil,
+					)
+				} else {
+					// validator was (a) not found or (b) already jailed so we do not slash
+					logger.Info(
+						"validator would have been slashed for too many missed repoerting price, but was either not found in store or already jailed",
+						"validator", validator,
+					)
+				}
+			}
+			// Set the updated reportInfo
+			am.keeper.SetValidatorReportInfo(ctx, validator, reportedInfo)
+		}
 	}
-	// append new round with previous price for fail-seal token
+
+	// append new round with previous price for fail-sealed token
 	for _, tokenID := range failed {
 		prevPrice, nextRoundID := am.keeper.GrowRoundID(ctx, tokenID)
 		logger.Info("add new round with previous price under fail aggregation", "tokenID", tokenID, "roundID", nextRoundID, "price", prevPrice)
 	}
 
-	keeper.ResetAggregatorContextCheckTx()
+	am.keeper.ResetAggregatorContextCheckTx()
 
 	if _, _, paramsUpdated := cs.CommitCache(ctx, false, am.keeper); paramsUpdated {
 		var p cache.ItemP
@@ -210,14 +367,14 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 		))
 	}
 
-	if feederIDs := keeper.GetUpdatedFeederIDs(); len(feederIDs) > 0 {
+	if feederIDs := am.keeper.GetUpdatedFeederIDs(); len(feederIDs) > 0 {
 		feederIDsStr := strings.Join(feederIDs, "_")
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			types.EventTypeCreatePrice,
 			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess),
 			sdk.NewAttribute(types.AttributeKeyFeederIDs, feederIDsStr),
 		))
-		keeper.ResetUpdatedFeederIDs()
+		am.keeper.ResetUpdatedFeederIDs()
 	}
 
 	newRoundFeederIDs := agc.PrepareRoundEndBlock(uint64(ctx.BlockHeight()))

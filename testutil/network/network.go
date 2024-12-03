@@ -10,12 +10,13 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
 	tmflags "github.com/cometbft/cometbft/libs/cli/flags"
@@ -33,7 +34,6 @@ import (
 	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -49,8 +49,12 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	exocorecrypto "github.com/ExocoreNetwork/exocore/crypto"
+	cosmoshd "github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/evmos/evmos/v16/crypto/hd"
+
+	// ekeyring "github.com/evmos/evmos/v16/crypto/keyring"
 
 	"github.com/evmos/evmos/v16/encoding"
 	"github.com/evmos/evmos/v16/server/config"
@@ -77,22 +81,23 @@ type Config struct {
 	AppConstructor    AppConstructor      // the ABCI application constructor
 	GenesisState      simapp.GenesisState // custom gensis state to provide
 	TimeoutCommit     time.Duration       // the consensus commitment timeout
-	AccountTokens     math.Int            // the amount of unique validator tokens (e.g. 1000node0)
-	StakingTokens     math.Int            // the amount of tokens each validator has available to stake
-	BondedTokens      math.Int            // the amount of tokens each validator stakes
-	NumValidators     int                 // the total number of validators to create and bond
-	ChainID           string              // the network chain-id
-	BondDenom         string              // the staking bond denomination
-	MinGasPrices      string              // the minimum gas prices each validator will accept
-	PruningStrategy   string              // the pruning strategy each validator will have
-	SigningAlgo       string              // signing algorithm for keys
-	RPCAddress        string              // RPC listen address (including port)
-	JSONRPCAddress    string              // JSON-RPC listen address (including port)
-	APIAddress        string              // REST API listen address (including port)
-	GRPCAddress       string              // GRPC server listen address (including port)
-	EnableTMLogging   bool                // enable Tendermint logging to STDOUT
-	CleanupDir        bool                // remove base temporary directory during cleanup
-	PrintMnemonic     bool                // print the mnemonic of first validator as log output for testing
+	AccountTokens     sdkmath.Int         // the amount of system tokens(e.g. 1000hua)
+	DepositedTokens   sdkmath.Int
+	StakingTokens     sdkmath.Int // the amount of tokens each validator stakes for every supporte asset
+	NumValidators     int         // the total number of validators to create and bond
+	ChainID           string      // the network chain-id
+	// BondDenom         string   // the staking bond denomination
+	NativeDenom     string // denomination for native token
+	MinGasPrices    string // the minimum gas prices each validator will accept
+	PruningStrategy string // the pruning strategy each validator will have
+	SigningAlgo     string // signing algorithm for keys
+	RPCAddress      string // RPC listen address (including port)
+	JSONRPCAddress  string // JSON-RPC listen address (including port)
+	APIAddress      string // REST API listen address (including port)
+	GRPCAddress     string // GRPC server listen address (including port)
+	EnableTMLogging bool   // enable Tendermint logging to STDOUT
+	CleanupDir      bool   // remove base temporary directory during cleanup
+	PrintMnemonic   bool   // print the mnemonic of first validator as log output for testing
 }
 
 // DefaultConfig returns a sane default configuration suitable for nearly all
@@ -108,19 +113,20 @@ func DefaultConfig() Config {
 		AccountRetriever:  authtypes.AccountRetriever{},
 		AppConstructor:    NewAppConstructor(encCfg, chainID),
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Codec),
-		TimeoutCommit:     3 * time.Second,
+		TimeoutCommit:     2 * time.Second,
 		ChainID:           chainID,
 		NumValidators:     4,
-		BondDenom:         "hua",
-		MinGasPrices:      fmt.Sprintf("0.000006%s", evmostypes.AttoEvmos),
-		AccountTokens:     sdk.TokensFromConsensusPower(1000000000000000000, evmostypes.PowerReduction),
-		StakingTokens:     sdk.TokensFromConsensusPower(500000000000000000, evmostypes.PowerReduction),
-		BondedTokens:      sdk.TokensFromConsensusPower(100000000000000000, evmostypes.PowerReduction),
+		NativeDenom:       "hua",
+		MinGasPrices:      "10hua",
+		AccountTokens:     sdk.TokensFromConsensusPower(1000, evmostypes.PowerReduction),
+		DepositedTokens:   sdk.TokensFromConsensusPower(500, evmostypes.PowerReduction),
+		StakingTokens:     sdk.TokensFromConsensusPower(200, evmostypes.PowerReduction),
 		PruningStrategy:   pruningtypes.PruningOptionNothing,
 		CleanupDir:        true,
 		SigningAlgo:       string(hd.EthSecp256k1Type),
-		KeyringOptions:    []keyring.Option{hd.EthSecp256k1Option()},
-		PrintMnemonic:     false,
+		// KeyringOptions:  []keyring.Option{hd.EthSecp256k1Option()},
+		KeyringOptions: []keyring.Option{exocorecrypto.Ed25519Option()},
+		PrintMnemonic:  false,
 	}
 }
 
@@ -235,6 +241,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 	monikers := make([]string, cfg.NumValidators)
 	nodeIDs := make([]string, cfg.NumValidators)
 	valPubKeys := make([]cryptotypes.PubKey, cfg.NumValidators)
+	addressesIPs := make([]string, cfg.NumValidators)
 
 	var (
 		genAccounts []authtypes.GenesisAccount
@@ -247,8 +254,8 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 	// generate private keys, node IDs, and initial transactions
 	for i := 0; i < cfg.NumValidators; i++ {
 		appCfg := config.DefaultConfig()
-		appCfg.Pruning = cfg.PruningStrategy
 		appCfg.MinGasPrices = cfg.MinGasPrices
+		appCfg.Pruning = cfg.PruningStrategy
 		appCfg.API.Enable = true
 		appCfg.API.Swagger = false
 		appCfg.Telemetry.Enabled = false
@@ -334,9 +341,8 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		ctx.Logger = logger
 
 		nodeDirName := fmt.Sprintf("node%d", i)
-		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "evmosd")
-		clientDir := filepath.Join(network.BaseDir, nodeDirName, "evmoscli")
-		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
+		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "exocored")
+		clientDir := filepath.Join(network.BaseDir, nodeDirName, "exocorecli")
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), 0o750)
 		if err != nil {
@@ -366,20 +372,35 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		tmCfg.P2P.AddrBookStrict = false
 		tmCfg.P2P.AllowDuplicateIP = true
 
-		nodeID, pubKey, err := genutil.InitializeNodeValidatorFiles(tmCfg)
-		if err != nil {
-			return nil, err
-		}
-		nodeIDs[i] = nodeID
-		valPubKeys[i] = pubKey
-
 		kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, clientDir, buf, cfg.Codec, cfg.KeyringOptions...)
 		if err != nil {
 			return nil, err
 		}
 
 		keyringAlgos, _ := kb.SupportedAlgorithms()
-		algo, err := keyring.NewSigningAlgoFromString(cfg.SigningAlgo, keyringAlgos)
+		algo, err := keyring.NewSigningAlgoFromString(string(cosmoshd.Ed25519Type), keyringAlgos)
+		if err != nil {
+			return nil, err
+		}
+		_, mnemonic, err := kb.NewMnemonic(fmt.Sprintf("valconskey%d", i), keyring.English, sdk.GetConfig().GetBech32AccountPubPrefix(), keyring.DefaultBIP39Passphrase, algo)
+		if err != nil {
+			return nil, err
+		}
+
+		// initialize nodekey, consensus_priv_key under nodeDir
+		nodeID, pubKey, err := genutil.InitializeNodeValidatorFilesFromMnemonic(tmCfg, mnemonic)
+		if err != nil {
+			return nil, err
+		}
+		p2pURL, err := url.Parse(p2pAddr)
+		if err != nil {
+			return nil, err
+		}
+		nodeIDs[i] = nodeID
+		addressesIPs[i] = fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
+		valPubKeys[i] = pubKey
+
+		algo, err = keyring.NewSigningAlgoFromString(cfg.SigningAlgo, keyringAlgos)
 		if err != nil {
 			return nil, err
 		}
@@ -401,15 +422,16 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		// save private key seed words
+		// save private key seed words of account used as validator
 		err = WriteFile(fmt.Sprintf("%v.json", "key_seed"), clientDir, infoBz)
 		if err != nil {
 			return nil, err
 		}
 
 		balances := sdk.NewCoins(
-			sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), cfg.AccountTokens),
-			sdk.NewCoin(cfg.BondDenom, cfg.StakingTokens),
+			//	sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), cfg.AccountTokens),
+			// sdk.NewCoin(cfg.BondDenom, cfg.DepositedTokens),
+			sdk.NewCoin(cfg.NativeDenom, cfg.AccountTokens),
 		)
 
 		genFiles = append(genFiles, tmCfg.GenesisFile())
@@ -419,60 +441,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
 		})
 
-		commission, err := sdk.NewDecFromStr("0.5")
-		if err != nil {
-			return nil, err
-		}
-
-		createValMsg, err := stakingtypes.NewMsgCreateValidator(
-			sdk.ValAddress(addr),
-			valPubKeys[i],
-			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
-			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
-			sdk.OneInt(),
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		p2pURL, err := url.Parse(p2pAddr)
-		if err != nil {
-			return nil, err
-		}
-
-		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
-		fee := sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(0)))
-		txBuilder := cfg.TxConfig.NewTxBuilder()
-		err = txBuilder.SetMsgs(createValMsg)
-		if err != nil {
-			return nil, err
-		}
-		txBuilder.SetFeeAmount(fee)    // Arbitrary fee
-		txBuilder.SetGasLimit(1000000) // Need at least 100386
-		txBuilder.SetMemo(memo)
-
-		txFactory := tx.Factory{}
-		txFactory = txFactory.
-			WithChainID(cfg.ChainID).
-			WithMemo(memo).
-			WithKeybase(kb).
-			WithTxConfig(cfg.TxConfig)
-
-		if err := tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
-			return nil, err
-		}
-
-		txBz, err := cfg.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
-		if err != nil {
-			return nil, err
-		}
-
-		if err := WriteFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz); err != nil {
-			return nil, err
-		}
-
-		customAppTemplate, _ := config.AppConfig(evmostypes.AttoEvmos)
+		customAppTemplate, _ := config.AppConfig("hua")
 		srvconfig.SetConfigTemplate(customAppTemplate)
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appCfg)
 
@@ -492,7 +461,9 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			WithCodec(cfg.Codec).
 			WithLegacyAmino(cfg.LegacyAmino).
 			WithTxConfig(cfg.TxConfig).
-			WithAccountRetriever(cfg.AccountRetriever)
+			WithAccountRetriever(cfg.AccountRetriever).
+			WithFromName(nodeDirName).
+			WithFrom(addr.String())
 
 		network.Validators[i] = &Validator{
 			AppConfig:  appCfg,
@@ -510,11 +481,30 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 	}
 
-	err := initGenFiles(cfg, genAccounts, genBalances, genFiles)
-	if err != nil {
-		return nil, err
+	sort.Strings(addressesIPs)
+	// set persistentPeers for tendermintConfig and write into configFile for each valdiator
+	for i := 0; i < cfg.NumValidators; i++ {
+		cfgTmp := network.Validators[i].Ctx.Config
+		IPs := make([]string, 0, cfg.NumValidators-1)
+		IPs = append(IPs, addressesIPs[0:i]...)
+		IPs = append(IPs, addressesIPs[i+1:]...)
+		cfgTmp.P2P.PersistentPeers = strings.Join(IPs, ",")
+		tmcfg.WriteConfigFile(filepath.Join(cfgTmp.RootDir, "config", "config.toml"), cfgTmp)
 	}
-	err = collectGenFiles(cfg, network.Validators, network.BaseDir)
+
+	commissionRate, _ := sdkmath.LegacyNewDecFromStr("0.5")
+	balances := sdk.NewCoins(
+		sdk.NewCoin(cfg.NativeDenom, cfg.AccountTokens),
+	)
+	gateWayAddressStr := "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph"
+	gateWayAddr, _ := sdk.AccAddressFromBech32(gateWayAddressStr)
+	genBalances = append(genBalances, banktypes.Balance{Address: gateWayAddressStr, Coins: balances.Sort()})
+	genAccounts = append(genAccounts, &evmostypes.EthAccount{
+		BaseAccount: authtypes.NewBaseAccount(gateWayAddr, nil, 0, 0),
+		CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
+	})
+
+	err := initGenFiles(cfg, genAccounts, genBalances, genFiles, network.Validators, commissionRate)
 	if err != nil {
 		return nil, err
 	}
@@ -547,19 +537,20 @@ func (n *Network) LatestHeight() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-
 	return status.SyncInfo.LatestBlockHeight, nil
 }
 
 // WaitForHeight performs a blocking check where it waits for a block to be
 // committed after a given block. If that height is not reached within a timeout,
 // an error is returned. Regardless, the latest height queried is returned.
+// check for block height, not guaranteed state height
 func (n *Network) WaitForHeight(h int64) (int64, error) {
 	return n.WaitForHeightWithTimeout(h, 10*time.Second)
 }
 
 // WaitForHeightWithTimeout is the same as WaitForHeight except the caller can
 // provide a custom timeout.
+// check for block height, not guaranteed for state height
 func (n *Network) WaitForHeightWithTimeout(h int64, t time.Duration) (int64, error) {
 	ticker := time.NewTicker(time.Second)
 	timeout := time.After(t)
@@ -588,6 +579,59 @@ func (n *Network) WaitForHeightWithTimeout(h int64, t time.Duration) (int64, err
 	}
 }
 
+// LatestHeight returns the latest height of the network or an error if the
+// query fails or no validators exist.
+func (n *Network) LatestStateHeight() (int64, error) {
+	if len(n.Validators) == 0 {
+		return 0, errors.New("no validators available")
+	}
+
+	abciRes, err := n.Validators[0].RPCClient.ABCIInfo(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	return abciRes.Response.LastBlockHeight, nil
+}
+
+// WaitForStateHeight performs a blocking check where it waits for a block to be
+// committed after a given block. If that height is not reached within a timeout,
+// an error is returned. Regardless, the latest height queried is returned.
+// guaranteed for state height
+func (n *Network) WaitForStateHeight(h int64) (int64, error) {
+	return n.WaitForStateHeightWithTimeout(h, 10*time.Second)
+}
+
+// WaitForStateHeightWithTimeout is the same as WaitForHeight except the caller can
+// provide a custom timeout.
+// guaranteed for state height
+func (n *Network) WaitForStateHeightWithTimeout(h int64, t time.Duration) (int64, error) {
+	ticker := time.NewTicker(time.Second)
+	timeout := time.After(t)
+
+	if len(n.Validators) == 0 {
+		return 0, errors.New("no validators available")
+	}
+
+	var latestHeight int64
+	val := n.Validators[0]
+
+	for {
+		select {
+		case <-timeout:
+			ticker.Stop()
+			return latestHeight, errors.New("timeout exceeded waiting for block")
+		case <-ticker.C:
+			abciRes, err := val.RPCClient.ABCIInfo(context.Background())
+			if err == nil && abciRes != nil {
+				latestHeight = abciRes.Response.LastBlockHeight
+				if latestHeight >= h {
+					return latestHeight, nil
+				}
+			}
+		}
+	}
+}
+
 // WaitForNextBlock waits for the next block to be committed, returning an error
 // upon failure.
 func (n *Network) WaitForNextBlock() error {
@@ -597,6 +641,22 @@ func (n *Network) WaitForNextBlock() error {
 	}
 
 	_, err = n.WaitForHeight(lastBlock + 1)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// WaitForNextBlock waits for the next block to be committed, returning an error
+// upon failure.
+func (n *Network) WaitForStateNextBlock() error {
+	lastBlock, err := n.LatestStateHeight()
+	if err != nil {
+		return err
+	}
+
+	_, err = n.WaitForStateHeight(lastBlock + 1)
 	if err != nil {
 		return err
 	}
