@@ -71,7 +71,6 @@ func TestQueryStakerInfosPaginated(t *testing.T) {
 		_, err := keeper.StakerInfos(wctx, nil)
 		require.ErrorIs(t, err, status.Error(codes.InvalidArgument, "invalid request"))
 	})
-
 }
 
 func createNStakerInfos(keeper *keeper.Keeper, ctx sdk.Context, assetID string, n int) []*types.StakerInfo {
