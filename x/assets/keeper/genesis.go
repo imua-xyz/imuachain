@@ -2,7 +2,9 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
+	"github.com/ExocoreNetwork/exocore/utils"
 	"github.com/ExocoreNetwork/exocore/x/assets/types"
+	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -46,6 +48,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 		}
 	}
 
+	exoDelegation := sdk.ZeroInt()
 	for _, assets := range data.OperatorAssets {
 		for _, assetInfo := range assets.AssetsState {
 			// #nosec G703 // already validated
@@ -55,7 +58,24 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 			if err != nil {
 				panic(errorsmod.Wrap(err, "failed to set operator asset info"))
 			}
+			if assetInfo.AssetID == types.ExocoreAssetID {
+				exoDelegation = exoDelegation.Add(assetInfo.Info.TotalAmount)
+			}
 		}
+	}
+
+	// check that this exoDelegation amount is reflected in x/bank
+	address := k.ak.GetModuleAccount(ctx, delegationtypes.DelegatedPoolName).GetAddress()
+	balance := k.bk.GetBalance(ctx, address, utils.BaseDenom)
+	// due to slashing, which is currently not applied on x/bank, but rather in bank.go
+	// at the time of withdrawals, the total delegation amount for the native asset can
+	// be greater than the balance of the delegated pool account.
+	if exoDelegation.GT(balance.Amount) {
+		panic(errorsmod.Wrapf(
+			types.ErrInvalidGenesisData,
+			"delegated pool account balance is too low, exoDelegation: %s, balance: %s",
+			exoDelegation, balance.Amount,
+		).Error())
 	}
 }
 

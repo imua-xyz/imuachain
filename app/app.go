@@ -547,7 +547,7 @@ func NewExocoreApp(
 
 	// asset and client chain registry.
 	app.AssetsKeeper = assetsKeeper.NewKeeper(
-		keys[assetsTypes.StoreKey], appCodec, &app.OracleKeeper,
+		keys[assetsTypes.StoreKey], appCodec, &app.OracleKeeper, app.AccountKeeper,
 		app.BankKeeper, &app.DelegationKeeper, authAddrString,
 	)
 
