@@ -67,9 +67,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 	// check that this exoDelegation amount is reflected in x/bank
 	address := k.ak.GetModuleAccount(ctx, delegationtypes.DelegatedPoolName).GetAddress()
 	balance := k.bk.GetBalance(ctx, address, utils.BaseDenom)
-	// due to slashing, which is currently not applied on x/bank, but rather in bank.go
-	// at the time of withdrawals, the total delegation amount for the native asset can
-	// be greater than the balance of the delegated pool account.
+	// slashing is lazily applied at the time of withdrawal. it means that
+	// exoDelegation may have been slashed, but balance will never be slashed.
+	// it implies that exoDelegation should be less than or equal to balance.
+	// or conversely, if exoDelegation is greater than balance, we have a problem.
 	if exoDelegation.GT(balance.Amount) {
 		panic(errorsmod.Wrapf(
 			types.ErrInvalidGenesisData,
