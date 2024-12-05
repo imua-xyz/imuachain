@@ -7,7 +7,6 @@ import (
 	"cosmossdk.io/math"
 	"github.com/ExocoreNetwork/exocore/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // NewGenesis returns a new genesis state with the given inputs.
@@ -83,15 +82,6 @@ func (gs GenesisState) ValidateTokens(lzIDs map[uint64]struct{}) (map[string]mat
 			return errorsmod.Wrapf(
 				ErrInvalidGenesisData,
 				"contains uppercase characters for token %s, address: %s",
-				info.AssetBasicInfo.Name, address,
-			)
-		}
-		// build for 0x addresses only.
-		// TODO: consider removing this check for non-EVM client chains.
-		if !common.IsHexAddress(address) {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"not hex address for token %s, address: %s",
 				info.AssetBasicInfo.Name, address,
 			)
 		}
@@ -255,8 +245,10 @@ func (gs GenesisState) ValidateOperatorAssets(tokensTotalStaking map[string]math
 					assets.Operator, asset.AssetID,
 				)
 			}
-			// the sum amount of operators shouldn't be greater than the total staking amount of this asset
-			if asset.Info.TotalAmount.Add(asset.Info.PendingUndelegationAmount).GT(totalStaking) {
+			// the sum amount of operators shouldn't be greater than the total staking amount of this asset.
+			// however, this line should not apply for the native asset, since that is handled by x/bank.
+			if asset.Info.TotalAmount.Add(asset.Info.PendingUndelegationAmount).GT(totalStaking) &&
+				asset.AssetID != ExocoreAssetID {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"operator's sum amount exceeds the total staking amount for %s: %+v",

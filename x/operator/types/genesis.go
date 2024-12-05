@@ -409,10 +409,12 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 		}
 		// validate the slashing record regarding assets pool
 		SlashFromAssetsPoolVal := func(_ int, slashFromAssetsPool SlashFromAssetsPool) error {
-			if slashFromAssetsPool.Amount.IsNil() || slashFromAssetsPool.Amount.LTE(sdkmath.ZeroInt()) {
+			// when the data is exported, no check for 0 value is added, that is, even 0 values are exported.
+			// to maintain consistency, we allow 0 values here.
+			if slashFromAssetsPool.Amount.IsNil() || slashFromAssetsPool.Amount.LT(sdkmath.ZeroInt()) {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
-					"invalid slashing amount from the assets pool, it's nil, zero, or negative: %+v",
+					"invalid slashing amount from the assets pool, it's nil or negative: %+v",
 					slash,
 				)
 			}
