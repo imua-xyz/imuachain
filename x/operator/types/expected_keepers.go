@@ -44,7 +44,7 @@ type DelegationKeeper interface {
 	) error
 	DeleteStakersListForOperator(ctx sdk.Context, operator, assetID string) error
 
-	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationkeeper.DelegationOpFunc) error
+	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
 }
 
 type PriceChange struct {

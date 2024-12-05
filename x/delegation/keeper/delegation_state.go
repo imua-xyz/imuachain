@@ -12,8 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type DelegationOpFunc func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error)
-
 func (k Keeper) AllDelegationStates(ctx sdk.Context) (delegationStates []delegationtype.DelegationStates, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
@@ -41,7 +39,7 @@ func (k Keeper) SetAllDelegationStates(ctx sdk.Context, delegationStates []deleg
 	return nil
 }
 
-func (k Keeper) IterateDelegations(ctx sdk.Context, iteratorPrefix []byte, opFunc DelegationOpFunc) error {
+func (k Keeper) IterateDelegations(ctx sdk.Context, iteratorPrefix []byte, opFunc delegationtype.DelegationOpFunc) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
 	iterator := sdk.KVStorePrefixIterator(store, iteratorPrefix)
 	defer iterator.Close()
@@ -66,11 +64,11 @@ func (k Keeper) IterateDelegations(ctx sdk.Context, iteratorPrefix []byte, opFun
 
 // IterateDelegationsForStakerAndAsset processes all operations
 // that require iterating over delegations for a specified staker and asset.
-func (k Keeper) IterateDelegationsForStakerAndAsset(ctx sdk.Context, stakerID string, assetID string, opFunc DelegationOpFunc) error {
+func (k Keeper) IterateDelegationsForStakerAndAsset(ctx sdk.Context, stakerID string, assetID string, opFunc delegationtype.DelegationOpFunc) error {
 	return k.IterateDelegations(ctx, delegationtype.IteratorPrefixForStakerAsset(stakerID, assetID), opFunc)
 }
 
-func (k Keeper) IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc DelegationOpFunc) error {
+func (k Keeper) IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error {
 	return k.IterateDelegations(ctx, []byte(stakerID), opFunc)
 }
 

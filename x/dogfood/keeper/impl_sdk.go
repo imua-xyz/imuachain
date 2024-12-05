@@ -140,6 +140,7 @@ func (k Keeper) Unjail(ctx sdk.Context, addr sdk.ConsAddress) {
 // module. The slashing module uses it to obtain the delegation information of a validator
 // before unjailing it. If the slashing module's unjail function is never called, this
 // function will never be called either.
+// NOTE: this is not a universal function, it not actually get delegation for {delegator, validator}, but only returns {validator}'s self delegation, only suites for special invoke
 func (k Keeper) Delegation(
 	ctx sdk.Context, delegator sdk.AccAddress, validator sdk.ValAddress,
 ) stakingtypes.DelegationI {
@@ -230,15 +231,22 @@ func (k Keeper) IterateBondedValidatorsByPower(
 // TotalBondedTokens is an implementation of the staking interface expected by the SDK's
 // gov module. This is not implemented intentionally, since the tokens securing this chain
 // are many and span across multiple chains and assets.
-func (k Keeper) TotalBondedTokens(sdk.Context) math.Int {
-	panic("unimplemented on this keeper")
+func (k Keeper) TotalBondedTokens(ctx sdk.Context) math.Int {
+	// TODO: return totalBondedPower(virtual tokens from power) compatible with multi-assets staking
+	totalPower := math.ZeroInt()
+	k.IterateBondedValidatorsByPower(ctx, func(_ int64, v stakingtypes.ValidatorI) bool {
+		totalPower = totalPower.Add(v.GetTokens())
+		return false
+	})
+	return totalPower
 }
 
 // IterateDelegations is an implementation of the staking interface expected by the SDK's
 // gov module. See note above to understand why this is not implemented.
 func (k Keeper) IterateDelegations(
-	sdk.Context, sdk.AccAddress,
-	func(int64, stakingtypes.DelegationI) bool,
+	ctx sdk.Context, _ sdk.AccAddress,
+	_ func(int64, stakingtypes.DelegationI) bool,
 ) {
-	panic("unimplemented on this keeper")
+	// for now we don't have mechabnism to bond delegatorAddress from clientChain to their cosmossdk address(for EVM when can force user use the same ethsecp256k1 instead of secp256k1 to retrieve default bonded addresses, but that not a universal approach), we'll just ignore any delegator's vote, and validator will have the total power including all the delegated assts, and that's reasonanble
+	ctx.Logger().Info("IterateDelegations from gov tally will just return, which means operator/validator will have all the powers delegated to them when voting proposal")
 }

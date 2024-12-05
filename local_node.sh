@@ -130,6 +130,9 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["oracle"]["params"]["tokens"][1]["asset_id"]="0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["token_feeders"][1]["start_base_block"]="20"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
+	# x/feemarket
+	jq '.app_state["feemarket"]["params"]["base_fee"]="10"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
 	# x/operator
 	jq '.app_state["operator"]["operators"][0]["operator_address"]="'"$LOCAL_ADDRESS_EXO"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operators"][0]["operator_info"]["earnings_addr"]="'"$LOCAL_ADDRESS_EXO"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
