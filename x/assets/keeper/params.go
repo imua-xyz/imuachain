@@ -3,8 +3,6 @@ package keeper
 import (
 	"strings"
 
-	errorsmod "cosmossdk.io/errors"
-
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,13 +46,18 @@ func (k Keeper) GetExocoreGatewayAddress(ctx sdk.Context) (common.Address, error
 }
 
 func (k Keeper) CheckExocoreGatewayAddr(ctx sdk.Context, addr common.Address) error {
-	param, err := k.GetParams(ctx)
-	if err != nil {
-		return err
-	}
-	exoCoreLzAppAddr := common.HexToAddress(param.ExocoreLzAppAddress)
-	if addr != exoCoreLzAppAddr {
-		return errorsmod.Wrapf(assetstypes.ErrNotEqualToLzAppAddr, "addr:%s,param.ExocoreGatewayAddress:%s", addr, param.ExocoreLzAppAddress)
-	}
+	// This is customized for testing, as the test tool sends batch transactions
+	// to the precompiled contracts directly from different addresses.
+	// Therefore, the check should be skipped when the Exocore node is used for testing.
+	// Note: This should NOT be merged into the release branches.
+
+	/*	param, err := k.GetParams(ctx)
+		if err != nil {
+			return err
+		}
+		exoCoreLzAppAddr := common.HexToAddress(param.ExocoreLzAppAddress)
+		if addr != exoCoreLzAppAddr {
+			return errorsmod.Wrapf(assetstypes.ErrNotEqualToLzAppAddr, "addr:%s,param.ExocoreGatewayAddress:%s", addr, param.ExocoreLzAppAddress)
+		}*/
 	return nil
 }

@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -110,10 +112,16 @@ func InitCmd(mbm module.BasicManager, defaultNodeHome string) *cobra.Command {
 				}
 			}
 
-			nodeID, _, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
+			nodeID, pubKey, err := genutil.InitializeNodeValidatorFilesFromMnemonic(config, mnemonic)
 			if err != nil {
 				return err
 			}
+			// it's used to check whether the node is in the validator set of genesis file.
+			convKey, err := cryptocodec.ToTmPubKeyInterface(pubKey)
+			if err != nil {
+				return fmt.Errorf("can't convert the pubkey to tmcrypto.PubKey,err:%s", err)
+			}
+			fmt.Println("the nodeID and validator pubkey is:", clientCtx.HomeDir, nodeID, hexutil.Encode(convKey.Bytes()))
 
 			config.Moniker = args[0]
 

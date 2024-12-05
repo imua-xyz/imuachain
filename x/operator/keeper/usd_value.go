@@ -483,8 +483,13 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
 	// we don't ignore the error regarding the price round not found here, because it's used to
 	// distribute the reward.
+	// TODO: This code is used only for testing purposes because the price feeder is not enabled in the test.
+	// It allows testing of the reward distribution but must be removed once the price feeder is enabled.
+	// This code should exist only in the pressure-test branch.
 	if err != nil {
-		return sdkmath.LegacyDec{}, err
+		if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
+			return sdkmath.LegacyDec{}, err
+		}
 	}
 	if prices == nil {
 		return sdkmath.LegacyDec{}, errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, "CalculateUSDValueForStaker prices map is nil")
