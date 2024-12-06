@@ -648,6 +648,11 @@
 			},
 			{
 				"internalType": "string[]",
+				"name": "whitelistAddress",
+				"type": "string[]"
+			},
+			{
+				"internalType": "string[]",
 				"name": "assetIds",
 				"type": "string[]"
 			},
@@ -776,6 +781,11 @@
 			{
 				"internalType": "string[]",
 				"name": "avsOwnerAddress",
+				"type": "string[]"
+			},
+			{
+				"internalType": "string[]",
+				"name": "whitelistAddress",
 				"type": "string[]"
 			},
 			{

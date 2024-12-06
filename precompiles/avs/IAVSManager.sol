@@ -49,6 +49,7 @@ interface IAVSManager {
     /// @param slashAddr The slash address of AVS.
     /// @param rewardAddr The reward address of AVS.
     /// @param avsOwnerAddress The owners who have permission for AVS.
+    /// @param whitelistAddress The whitelist address of the operator.
     /// @param assetIds The basic asset information of AVS.
     /// @param avsUnbondingPeriod The unbonding duration of AVS.
     /// @param minSelfDelegation The minimum delegation amount for an operator.
@@ -65,6 +66,7 @@ interface IAVSManager {
         address slashAddr,
         address rewardAddr,
         string[] memory avsOwnerAddress,
+        string[] memory whitelistAddress,
         string[] memory assetIds,
         uint64 avsUnbondingPeriod,
         uint64 minSelfDelegation,
@@ -80,6 +82,7 @@ interface IAVSManager {
     /// @param slashAddr The slash address of AVS.
     /// @param rewardAddr The reward address of AVS.
     /// @param avsOwnerAddress The owners who have permission for AVS.
+    /// @param whitelistAddress The whitelist address of the operator.
     /// @param assetIds The basic asset information of AVS.
     /// @param avsUnbondingPeriod The unbonding duration of AVS.
     /// @param minSelfDelegation The minimum delegation amount for an operator.
@@ -96,6 +99,7 @@ interface IAVSManager {
         address slashAddr,
         address rewardAddr,
         string[] memory avsOwnerAddress,
+        string[] memory whitelistAddress,
         string[] memory assetIds,
         uint64 avsUnbondingPeriod,
         uint64 minSelfDelegation,

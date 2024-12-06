@@ -1,13 +1,13 @@
 package keeper
 
 import (
-	"fmt"
-	"math/big"
-	"strconv"
-	"strings"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"fmt"
+	"math/big"
+	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -223,4 +223,24 @@ func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error
 		})
 	}
 	return ret, nil
+}
+
+// IsWhitelisted check if operator is in the whitelist
+func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (bool, error) {
+	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
+	if err != nil {
+		return false, errorsmod.Wrap(err, fmt.Sprintf("IsWhitelisted: key is %s", avsAddr))
+	}
+	_, err = sdk.AccAddressFromBech32(operatorAddr)
+	if err != nil {
+		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parse acc address from Bech32")
+	}
+	// Currently avs has no whitelist set and any operator can optin
+	if len(avsInfo.Info.WhitelistAddress) == 0 {
+		return true, nil
+	}
+	if !slices.Contains(avsInfo.Info.WhitelistAddress, operatorAddr) {
+		return false, errorsmod.Wrap(err, "not in the whitelist address of supported operators")
+	}
+	return true, nil
 }

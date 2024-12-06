@@ -68,38 +68,51 @@ func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*
 		exoAddresses[i] = accAddr.String()
 	}
 	avsParams.AvsOwnerAddress = exoAddresses
-
+	// bech32
+	whitelistAddress, ok := args[7].([]string)
+	if !ok || whitelistAddress == nil {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", whitelistAddress)
+	}
+	exoWhiteAddresses := make([]string, len(whitelistAddress))
+	for i, addr := range whitelistAddress {
+		accAddr, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", whitelistAddress)
+		}
+		exoAddresses[i] = accAddr.String()
+	}
+	avsParams.WhitelistAddress = exoWhiteAddresses
 	// string, since it is the address_id representation
-	assetID, ok := args[7].([]string)
+	assetID, ok := args[8].([]string)
 	if !ok || len(assetID) == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", assetID)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 8, "[]string", assetID)
 	}
 	avsParams.AssetID = assetID
 
-	unbondingPeriod, ok := args[8].(uint64)
+	unbondingPeriod, ok := args[9].(uint64)
 	if !ok || unbondingPeriod == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 8, "uint64", unbondingPeriod)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 9, "uint64", unbondingPeriod)
 	}
 	avsParams.UnbondingPeriod = unbondingPeriod
 
-	minSelfDelegation, ok := args[9].(uint64)
+	minSelfDelegation, ok := args[10].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 9, "uint64", minSelfDelegation)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 10, "uint64", minSelfDelegation)
 	}
 	avsParams.MinSelfDelegation = minSelfDelegation
 
-	epochIdentifier, ok := args[10].(string)
+	epochIdentifier, ok := args[11].(string)
 	if !ok || epochIdentifier == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 10, "string", epochIdentifier)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 11, "string", epochIdentifier)
 	}
 	avsParams.EpochIdentifier = epochIdentifier
 
 	// The parameters below are used when creating tasks, to ensure that the minimum criteria are met by the set
 	// of operators.
 
-	taskParam, ok := args[11].([]uint64)
+	taskParam, ok := args[12].([]uint64)
 	if !ok || taskParam == nil || len(taskParam) != 4 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 11, "[]string", taskParam)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 12, "[]string", taskParam)
 	}
 	minOptInOperators := taskParam[0]
 	avsParams.MinOptInOperators = minOptInOperators
@@ -166,43 +179,56 @@ func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface
 	for i, addr := range avsOwnerAddress {
 		accAddr, err := sdk.AccAddressFromBech32(addr)
 		if err != nil {
-			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", avsOwnerAddress)
+			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 6, "[]string", avsOwnerAddress)
 		}
 		exoAddresses[i] = accAddr.String()
 	}
 	avsParams.AvsOwnerAddress = exoAddresses
-
+	// bech32
+	whitelistAddress, ok := args[7].([]string)
+	if !ok || whitelistAddress == nil {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", whitelistAddress)
+	}
+	exoWhiteAddresses := make([]string, len(whitelistAddress))
+	for i, addr := range whitelistAddress {
+		accAddr, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", whitelistAddress)
+		}
+		exoAddresses[i] = accAddr.String()
+	}
+	avsParams.WhitelistAddress = exoWhiteAddresses
 	// string, since it is the address_id representation
-	assetID, ok := args[7].([]string)
+	assetID, ok := args[8].([]string)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", assetID)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 8, "[]string", assetID)
 	}
 	avsParams.AssetID = assetID
 
-	unbondingPeriod, ok := args[8].(uint64)
+	unbondingPeriod, ok := args[9].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 8, "uint64", unbondingPeriod)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 9, "uint64", unbondingPeriod)
 	}
 	avsParams.UnbondingPeriod = unbondingPeriod
 
-	minSelfDelegation, ok := args[9].(uint64)
+	minSelfDelegation, ok := args[10].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 9, "uint64", minSelfDelegation)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 10, "uint64", minSelfDelegation)
 	}
 	avsParams.MinSelfDelegation = minSelfDelegation
 
-	epochIdentifier, ok := args[10].(string)
+	epochIdentifier, ok := args[11].(string)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 10, "string", epochIdentifier)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 11, "string", epochIdentifier)
 	}
 	avsParams.EpochIdentifier = epochIdentifier
 
 	// The parameters below are used when creating tasks, to ensure that the minimum criteria are met by the set
 	// of operators.
 
-	taskParam, ok := args[11].([]uint64)
+	taskParam, ok := args[12].([]uint64)
 	if !ok || taskParam == nil || len(taskParam) != 4 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 11, "[]string", taskParam)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 12, "[]string", taskParam)
 	}
 	minOptInOperators := taskParam[0]
 	avsParams.MinOptInOperators = minOptInOperators

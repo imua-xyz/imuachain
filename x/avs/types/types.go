@@ -78,6 +78,8 @@ type AVSRegisterOrDeregisterParams struct {
 	AvsReward           uint64
 	AvsSlash            uint64
 	Action              OperatorAction
+	// WhitelistAddress is the list of bech32 address of the operators.
+	WhitelistAddress []string
 }
 
 var (
