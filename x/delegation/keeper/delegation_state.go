@@ -373,6 +373,20 @@ func (k *Keeper) GetAssociatedOperator(ctx sdk.Context, stakerID string) (string
 	return "", nil
 }
 
+func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]string, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+
+	ret := make([]string, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		if string(iterator.Value()) == operator {
+			ret = append(ret, string(iterator.Key()))
+		}
+	}
+	return ret, nil
+}
+
 func (k *Keeper) GetAllAssociations(ctx sdk.Context) ([]delegationtype.StakerToOperator, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})

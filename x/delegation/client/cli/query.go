@@ -32,6 +32,7 @@ func GetQueryCmd() *cobra.Command {
 		QueryUndelegationsByHeight(),
 		QueryUndelegationHoldCount(),
 		QueryAssociatedOperatorByStaker(),
+		QueryAssociatedStakersByOperator(),
 	)
 	return cmd
 }
@@ -234,6 +235,38 @@ func QueryAssociatedOperatorByStaker() *cobra.Command {
 				StakerID: strings.ToLower(stakerID),
 			}
 			res, err := queryClient.QueryAssociatedOperatorByStaker(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func QueryAssociatedStakersByOperator() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "QueryAssociatedStakersByOperator <operatorAddr>",
+		Short: "Get the associated stakers for the specified operator",
+		Long:  "Get the associated stakers for the specified operator",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			accAddr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+			queryClient := delegationtype.NewQueryClient(clientCtx)
+			req := &delegationtype.QueryAssociatedStakersByOperatorReq{
+				Operator: accAddr.String(),
+			}
+			res, err := queryClient.QueryAssociatedStakersByOperator(context.Background(), req)
 			if err != nil {
 				return err
 			}
