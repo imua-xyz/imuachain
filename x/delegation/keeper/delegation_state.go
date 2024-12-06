@@ -374,11 +374,18 @@ func (k *Keeper) GetAssociatedOperator(ctx sdk.Context, stakerID string) (string
 }
 
 func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]string, error) {
+	if _, err := sdk.AccAddressFromBech32(operator); err != nil {
+		return nil, delegationtype.ErrOperatorAddrIsNotAccAddr
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 
-	ret := make([]string, 0)
+	// assuming that we support 5 client chains, this is a reasonable capacity.
+	// we can of course support more or less than that, but this is a good
+	// starting point.
+	// ideally, we should have a reverse lookup stored for this.
+	ret := make([]string, 0, 5)
 	for ; iterator.Valid(); iterator.Next() {
 		if string(iterator.Value()) == operator {
 			ret = append(ret, string(iterator.Key()))
