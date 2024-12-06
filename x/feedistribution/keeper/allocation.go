@@ -4,24 +4,57 @@ import (
 	"sort"
 
 	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// Based on the epoch, AllocateTokens performs reward and fee distribution to all validators.
-func (k Keeper) AllocateTokens(ctx sdk.Context, totalPreviousPower int64) error {
+// AllocateTokens performs reward and fee distribution to all validators.
+//  1. afterSlash distributed accumlated fees till now in current epoch and the portion of minted coins
+//     corresponding to the time passed in current epoch
+//  2. afterEpoch distributes all left coins including both fees and minted coins
+//
+// CONTRACT: before we adopt f1 like mechnisam to deal with precisely distribution,
+// we need to set the epochIdentify the same to both dogfood and exomint
+func (k Keeper) AllocateTokens(ctx sdk.Context, isSlash bool) error {
 	logger := k.Logger()
 	feeCollector := k.authKeeper.GetModuleAccount(ctx, k.feeCollectorName)
 	feesCollectedInt := k.bankKeeper.GetAllBalances(ctx, feeCollector.GetAddress())
 	feesCollected := sdk.NewDecCoinsFromCoins(feesCollectedInt...)
+	// if this is triggered by slash instead of epochEnd, we need to calculated the amount of minted coins
+	// corresponding to passed time of current epoch
+	if isSlash {
+		mintParams := k.mintKeeper.GetParams(ctx)
+		mintedCoin := sdk.NewCoin(
+			mintParams.MintDenom, mintParams.EpochReward,
+		)
 
-	// transfer collected fees to the distribution module account
+		mintedCoinDec := sdk.NewDecCoinFromCoin(mintedCoin)
+		// we only distribute fees (excluding minted coins) from current epoch
+		// if the minted coins of current epoch had been allocated, we calculate the corresponding portion of minted tokens
+		if feesCollectedInt.AmountOf(mintParams.MintDenom).GTE(mintParams.EpochReward) {
+			epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, mintParams.EpochIdentifier)
+			if !found {
+				// skip the calculation and distribute no minted coins out, the remaining will be handled at the end of the epoch
+				feesCollected.Sub(sdk.DecCoins{mintedCoinDec})
+				logger.Error("Failed to find epoch info")
+			} else {
+				passedDuration := sdkmath.LegacyNewDec(int64(ctx.BlockTime().Sub(epochInfo.StartTime)))
+				epochDuration := sdkmath.LegacyNewDec(int64(epochInfo.Duration))
+				mintedCoinDec.Amount.MulMut(sdkmath.LegacyOneDec().Sub(passedDuration.QuoTruncate(epochDuration)))
+				feesCollected.Sub(sdk.DecCoins{mintedCoinDec})
+			}
+		}
+	}
+
+	// transfer collected fees including minted coins to the distribution module account
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, feesCollectedInt); err != nil {
 		return err
 	}
 
+	totalPreviousPower := k.StakingKeeper.GetLastTotalPower(ctx).Int64()
 	feePool := k.GetFeePool(ctx)
 	if totalPreviousPower == 0 {
 		feePool.CommunityPool = feePool.CommunityPool.Add(feesCollected...)
@@ -114,33 +147,28 @@ func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val stakingtypes.Vali
 func (k Keeper) AllocateTokensToStakers(ctx sdk.Context, operatorAddress sdk.AccAddress, rewardToAllStakers sdk.DecCoins, feePool *types.FeePool) {
 	logger := k.Logger()
 	logger.Info("AllocateTokensToStakers", "operatorAddress", operatorAddress.String())
-	avsList, err := k.StakingKeeper.GetOptedInAVSForOperator(ctx, operatorAddress.String())
-	if err != nil {
-		logger.Debug("avs address lists not found; skipping")
-		return
-	}
 	stakersPowerMap, curTotalStakersPowers := make(map[string]math.LegacyDec), math.LegacyNewDec(0)
 	globalStakerAddressList := make([]string, 0)
-	for _, avsAddress := range avsList {
-		avsAssets, err := k.StakingKeeper.GetAVSSupportedAssets(ctx, avsAddress)
+	isAvs, avsAddress := k.avsKeeper.IsAVSByChainID(ctx, ctx.ChainID())
+	if !isAvs {
+		logger.Error("Skipping distribution for due to fail to generate avsAddr from chainID", "chainID", ctx.ChainID())
+		return
+	}
+
+	assetIDs := k.StakingKeeper.GetAssetIDs(ctx)
+	for _, assetID := range assetIDs {
+		stakerList, err := k.StakingKeeper.GetStakersByOperator(ctx, operatorAddress.String(), assetID)
 		if err != nil {
-			logger.Debug("avs address lists not found; skipping")
+			logger.Debug("staker lists not found; skipping")
 			continue
 		}
-		for assetID := range avsAssets {
-			stakerList, err := k.StakingKeeper.GetStakersByOperator(ctx, operatorAddress.String(), assetID)
-			if err != nil {
-				logger.Debug("staker lists not found; skipping")
-				continue
-			}
-			for _, staker := range stakerList.Stakers {
-				if curStakerPower, err := k.StakingKeeper.CalculateUSDValueForStaker(ctx, staker, avsAddress, operatorAddress.Bytes()); err != nil {
-					logger.Error("curStakerPower error", "error", err)
-				} else {
-					stakersPowerMap[staker] = curStakerPower
-					globalStakerAddressList = append(globalStakerAddressList, staker)
-					curTotalStakersPowers = curTotalStakersPowers.Add(curStakerPower)
-				}
+		for _, staker := range stakerList.Stakers {
+			if curStakerPower, err := k.StakingKeeper.CalculateUSDValueForStaker(ctx, staker, avsAddress, operatorAddress.Bytes()); err != nil {
+				logger.Error("curStakerPower error", "error", err)
+			} else {
+				stakersPowerMap[staker] = curStakerPower
+				globalStakerAddressList = append(globalStakerAddressList, staker)
+				curTotalStakersPowers = curTotalStakersPowers.Add(curStakerPower)
 			}
 		}
 	}

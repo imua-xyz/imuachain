@@ -777,6 +777,7 @@ func NewExocoreApp(
 
 	// set the hooks at the end, after all modules are instantiated.
 	(&app.OperatorKeeper).SetHooks(
+		app.DistrKeeper.OperatorHooks(),
 		app.StakingKeeper.OperatorHooks(),
 	)
 

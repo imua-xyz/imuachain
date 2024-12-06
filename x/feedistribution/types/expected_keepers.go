@@ -5,6 +5,7 @@ import (
 
 	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 
+	minttypes "github.com/ExocoreNetwork/exocore/x/exomint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -53,4 +54,12 @@ type PoolKeeper interface {
 	DistributeFromCommunityPool(ctx context.Context, amount sdk.Coins, receiveAddr sdk.AccAddress) error
 	GetCommunityPool(ctx context.Context) (sdk.Coins, error)
 	SetToDistribute(ctx context.Context, amount sdk.Coins, addr string) error
+}
+
+type MintKeeper interface {
+	GetParams(ctx sdk.Context) minttypes.Params
+}
+
+type AVSKeeper interface {
+	IsAVSByChainID(ctx sdk.Context, chainID string) (bool, string)
 }
