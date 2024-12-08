@@ -1,6 +1,8 @@
 package batch
 
 import (
+	"encoding/json"
+	"fmt"
 	"math/big"
 	"reflect"
 
@@ -259,4 +261,13 @@ func PaddingAddressTo32(address common.Address) []byte {
 		ret = append(ret, 0)
 	}
 	return ret
+}
+
+func PrintObject(object interface{}) error {
+	objctBytes, err := json.MarshalIndent(object, " ", " ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(objctBytes))
+	return nil
 }

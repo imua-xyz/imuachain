@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -140,19 +142,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		TxsQueue:           make(chan interface{}, config.TxsQueueBufferSize),
 		Shutdown:           make(chan bool),
 	}
-	helperRecord, err := LoadObjectByID[HelperRecord](db, SqliteDefaultStartID)
-	logger.Info("NewManager load helper record", "err", err, "helperRecord", helperRecord)
-	batchID := uint(0)
-	if err == nil {
-		// increase the batch id, because we use a new batch id to avoid check error
-		// every time the test-tool is started
-		batchID = helperRecord.CurrentBatchID + 1
-	}
-	logger.Info("NewManager the new test batch ID is:", "batchID", batchID)
-	err = SaveObject[HelperRecord](manager.GetDB(), HelperRecord{CurrentBatchID: batchID, ID: SqliteDefaultStartID})
-	if err != nil {
-		return nil, xerrors.Errorf("can't init the helper record, err:%s", err)
-	}
+
 	// creat the evm clients
 	// http clients
 	for i, url := range config.NodesEVMRPCHTTP {
@@ -230,6 +220,23 @@ func (m *Manager) GetDB() *gorm.DB {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	return m.db
+}
+
+func (m *Manager) InitHelperRecord() error {
+	helperRecord, err := LoadObjectByID[HelperRecord](m.GetDB(), SqliteDefaultStartID)
+	logger.Info("NewManager load helper record", "err", err, "helperRecord", helperRecord)
+	batchID := uint(0)
+	if err == nil {
+		// increase the batch id, because we use a new batch id to avoid check error
+		// every time the test-tool is started
+		batchID = helperRecord.CurrentBatchID + 1
+	}
+	logger.Info("NewManager the new test batch ID is:", "batchID", batchID)
+	err = SaveObject[HelperRecord](m.GetDB(), HelperRecord{CurrentBatchID: batchID, ID: SqliteDefaultStartID})
+	if err != nil {
+		return xerrors.Errorf("can't init the helper record, err:%s", err)
+	}
+	return nil
 }
 
 func (m *Manager) CreateAssets() error {
@@ -526,10 +533,47 @@ func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
 	return nil
 }
 
+func (m *Manager) WaitForShuttingDown() {
+	// Set up channel to listen for OS interrupt signals (like Ctrl+C)
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Wait for an interrupt signal
+	<-stopChan
+	// Shutdown appManager gracefully
+	fmt.Println("Shutting down...")
+	close(m.Shutdown)
+	m.Close()
+}
+
+func (m *Manager) ExecuteBatchTestForType(msgType string) error {
+	if err := m.InitHelperRecord(); err != nil {
+		return err
+	}
+	// send test transactions in batch
+	go func() {
+		// deposit
+		if err := m.EnqueueAndCheckTxsInBatch(msgType); err != nil {
+			close(m.Shutdown)
+			return
+		}
+		logger.Info("ExecuteBatchTestForType: finish enqueuing and checking all txs")
+	}()
+	if err := m.DequeueAndSignSendTxs(); err != nil {
+		logger.Error("ExecuteBatchTestForType, failed to dequeue and sign send the txs,err:%s", err)
+		return err
+	}
+	return nil
+}
+
 func (m *Manager) Start() error {
 	if err := m.Prepare(); err != nil {
 		return err
 	}
+	if err := m.InitHelperRecord(); err != nil {
+		return err
+	}
+
 	// send test transactions in batch
 	go func() {
 		// deposit
