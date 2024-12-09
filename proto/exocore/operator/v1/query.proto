@@ -2,16 +2,13 @@ syntax = "proto3";
 package exocore.operator.v1;
 
 import "amino/amino.proto";
-
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
 import "cosmos_proto/cosmos.proto";
-
 import "exocore/operator/v1/tx.proto";
 import "exocore/operator/v1/validator.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-
 import "tendermint/crypto/keys.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
@@ -19,8 +16,7 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 // QueryOperatorInfoReq is the request to obtain the operator information.
 message GetOperatorInfoReq {
   // operator_addr is the operator address,its type should be a sdk.AccAddress
-  string operator_addr = 1
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // QueryAllOperatorsRequest is the request to obtain all operators.
@@ -54,15 +50,13 @@ message QueryOperatorUSDValueRequest {
 // QueryOperatorUSDValueResponse is the response to obtain the USD value for operator.
 message QueryOperatorUSDValueResponse {
   // usd_info includes the self and total staking for the operator and AVS
-  OperatorOptedUSDValue usd_values = 1
-  [(gogoproto.customname) = "USDValues"];
+  OperatorOptedUSDValue usd_values = 1 [(gogoproto.customname) = "USDValues"];
 }
 
 // QueryAVSUSDValueRequest is the request to obtain the USD value for AVS.
 message QueryAVSUSDValueRequest {
   // avs_address is the AVS address opted-in by the operator
-  string avs_address = 1
-  [(gogoproto.customname) = "AVSAddress"];
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
 }
 
 // QueryOperatorSlashInfoRequest is the request to obtain the slash information for the specified
@@ -249,7 +243,7 @@ message VotingPowerSnapshotKeyHeight {
   // height with a snapshot key found based on the input height; this height is typically
   // the start height of the epoch in which the input height is located.
   // when it is used in QueryAllSnapshot, it's the height in the current snapshot key.
-  int64 snapshot_key_height =1;
+  int64 snapshot_key_height = 1;
   // snapshot when it is used in QuerySpecifiedSnapshot, it is the final retrieved information
   // containing the voting power set.
   // when it is used in QueryAllSnapshot, It is the snapshot stored under `snapshot_key_height`,
@@ -284,82 +278,63 @@ service Query {
 
   // QueryAllOperators queries all operators.
   rpc QueryAllOperators(QueryAllOperatorsRequest) returns (QueryAllOperatorsResponse) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/all_operators"
-    };
+    option (google.api.http) = {get: "/exocore/operator/v1/all_operators"};
   }
 
   // QueryOperatorConsKeyForChainID queries the consensus public key for the operator
   rpc QueryOperatorConsKeyForChainID(QueryOperatorConsKeyRequest) returns (QueryOperatorConsKeyResponse) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/operator_cons_key/{operator_acc_addr}/{chain}"
-    };
+    option (google.api.http) = {get: "/exocore/operator/v1/operator_cons_key/{operator_acc_addr}/{chain}"};
   }
 
   // QueryOperatorConsAddressForChainID queries the consensus address for the operator.
   rpc QueryOperatorConsAddressForChainID(QueryOperatorConsAddressRequest) returns (QueryOperatorConsAddressResponse) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/operator_cons_addr/{operator_acc_addr}/{chain}"
-    };
+    option (google.api.http) = {get: "/exocore/operator/v1/operator_cons_addr/{operator_acc_addr}/{chain}"};
   }
 
   // QueryAllOperatorConsKeysByChainID queries all operators and their consensus public keys
   // for a specific chain ID
-  rpc QueryAllOperatorConsKeysByChainID(QueryAllOperatorConsKeysByChainIDRequest)
-      returns (QueryAllOperatorConsKeysByChainIDResponse) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/all_operator_cons_keys/{chain}"
-    };
+  rpc QueryAllOperatorConsKeysByChainID(QueryAllOperatorConsKeysByChainIDRequest) returns (QueryAllOperatorConsKeysByChainIDResponse) {
+    option (google.api.http) = {get: "/exocore/operator/v1/all_operator_cons_keys/{chain}"};
   }
 
   // QueryOperatorUSDValue queries the opted-in USD value for the operator
-  rpc QueryOperatorUSDValue(QueryOperatorUSDValueRequest) returns(QueryOperatorUSDValueResponse){
+  rpc QueryOperatorUSDValue(QueryOperatorUSDValueRequest) returns (QueryOperatorUSDValueResponse) {
     option (google.api.http).get =
-    "/exocore/operator/v1/operator_usd_value/{operator_and_avs.operator_addr}/"
-        "{operator_and_avs.avs_address}";
+      "/exocore/operator/v1/operator_usd_value/{operator_and_avs.operator_addr}/"
+      "{operator_and_avs.avs_address}";
   }
 
   // QueryAVSUSDValue queries the USD value for the AVS
-  rpc QueryAVSUSDValue(QueryAVSUSDValueRequest) returns(DecValueField){
+  rpc QueryAVSUSDValue(QueryAVSUSDValueRequest) returns (DecValueField) {
     option (google.api.http).get = "/exocore/operator/v1/avs_usd_value";
   }
 
   // QueryOperatorSlashInfo queries the slash information for the specified operator and AVS
-  rpc QueryOperatorSlashInfo(QueryOperatorSlashInfoRequest) returns(QueryOperatorSlashInfoResponse){
+  rpc QueryOperatorSlashInfo(QueryOperatorSlashInfoRequest) returns (QueryOperatorSlashInfoResponse) {
     option (google.api.http).get =
-    "/exocore/operator/v1/operator_slash_info/{operator_and_avs.operator_addr}/"
-        "{operator_and_avs.avs_address}";
+      "/exocore/operator/v1/operator_slash_info/{operator_and_avs.operator_addr}/"
+      "{operator_and_avs.avs_address}";
   }
 
   // QueryAllOperatorConsAddrsByChainID queries all operators and their consensus addresses
   // for a specific chain ID
-  rpc QueryAllOperatorConsAddrsByChainID(QueryAllOperatorConsAddrsByChainIDRequest)
-      returns (QueryAllOperatorConsAddrsByChainIDResponse) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/all_operator_cons_addrs/{chain}"
-    };
+  rpc QueryAllOperatorConsAddrsByChainID(QueryAllOperatorConsAddrsByChainIDRequest) returns (QueryAllOperatorConsAddrsByChainIDResponse) {
+    option (google.api.http) = {get: "/exocore/operator/v1/all_operator_cons_addrs/{chain}"};
   }
 
   // QueryAllOperatorsWithOptInAVS queries  operator list by avs.
-  rpc QueryAllOperatorsWithOptInAVS(QueryAllOperatorsByOptInAVSRequest) returns (
-      QueryAllOperatorsByOptInAVSResponse) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/opt/operator_list/{avs}"
-    };
+  rpc QueryAllOperatorsWithOptInAVS(QueryAllOperatorsByOptInAVSRequest) returns (QueryAllOperatorsByOptInAVSResponse) {
+    option (google.api.http) = {get: "/exocore/operator/v1/opt/operator_list/{avs}"};
   }
 
   // QueryAllAVSsByOperator queries avs list.
   rpc QueryAllAVSsByOperator(QueryAllAVSsByOperatorRequest) returns (QueryAllAVSsByOperatorResponse) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/opt/avs_list/{operator}"
-    };
+    option (google.api.http) = {get: "/exocore/operator/v1/opt/avs_list/{operator}"};
   }
 
   // QueryOptInfo queries specified opted information.
   rpc QueryOptInfo(QueryOptInfoRequest) returns (OptedInfo) {
-    option (google.api.http) = {
-      get: "/exocore/operator/v1/opt_info/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}"
-    };
+    option (google.api.http) = {get: "/exocore/operator/v1/opt_info/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}"};
   }
 
   // QuerySnapshotHelper queries the snapshot helper of the AVS
@@ -391,6 +366,7 @@ service Query {
     option (google.api.http).get = "/exocore/operator/v1/validator/{validator_acc_addr}/{chain}";
   }
 }
+
 // QueryValidatorsRequest is request type for Query/Validators RPC method.
 message QueryValidatorsRequest {
   // chain is the id of the chain served by the operator. here chain_id is not used since the
@@ -400,11 +376,14 @@ message QueryValidatorsRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
+
 // QueryValidatorsResponse is response type for the Query/Validators RPC method
 message QueryValidatorsResponse {
   // validators contains all the queried validators.
-  repeated Validator validators = 1
-      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  repeated Validator validators = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -423,5 +402,8 @@ message QueryValidatorRequest {
 // QueryValidatorResponse is response type for the Query/Validator RPC method
 message QueryValidatorResponse {
   // validator defines the validator info.
-  Validator validator = 1 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  Validator validator = 1 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }

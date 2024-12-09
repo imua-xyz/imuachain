@@ -27,8 +27,7 @@ message Params {
   // lower(assetAddress) + _ + hex(clientChainLzID)
   repeated string asset_ids = 5 [(gogoproto.customname) = "AssetIDs"];
   // MinSelfDelegation is the minimum self delegation in USD required to be a validator.
-  string min_self_delegation = 6
-  [
+  string min_self_delegation = 6 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false

@@ -92,17 +92,17 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if err := stateDB.Commit(); err != nil {
 		return nil, err
 	}
-
+	cc, writeFunc := ctx.CacheContext()
 	switch method.Name {
 	// delegation transactions
 	case MethodDelegate:
-		bz, err = p.Delegate(ctx, evm.Origin, contract, stateDB, method, args)
+		bz, err = p.Delegate(cc, evm.Origin, contract, stateDB, method, args)
 	case MethodUndelegate:
-		bz, err = p.Undelegate(ctx, evm.Origin, contract, stateDB, method, args)
+		bz, err = p.Undelegate(cc, evm.Origin, contract, stateDB, method, args)
 	case MethodAssociateOperatorWithStaker:
-		bz, err = p.AssociateOperatorWithStaker(ctx, evm.Origin, contract, stateDB, method, args)
+		bz, err = p.AssociateOperatorWithStaker(cc, evm.Origin, contract, stateDB, method, args)
 	case MethodDissociateOperatorFromStaker:
-		bz, err = p.DissociateOperatorFromStaker(ctx, evm.Origin, contract, stateDB, method, args)
+		bz, err = p.DissociateOperatorFromStaker(cc, evm.Origin, contract, stateDB, method, args)
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
@@ -117,6 +117,8 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		writeFunc()
 	}
 
 	cost := ctx.GasMeter().GasConsumed() - initialGas

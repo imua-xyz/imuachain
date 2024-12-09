@@ -20,15 +20,18 @@ message Params {
   // system is largely created with epochs as a unit of time (and not
   // standard durations), this is an exception since it is used directly
   // by the IBC codebase.
-  google.protobuf.Duration ibc_timeout_period = 3
-  [ (gogoproto.nullable) = false, (gogoproto.stdduration) = true,
-  (gogoproto.customname) = "IBCTimeoutPeriod" ];
+  google.protobuf.Duration ibc_timeout_period = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.customname) = "IBCTimeoutPeriod"
+  ];
   // init_timeout_period is the period within which the subscriber chain
   // must make a connection with the coordinator, after being spawned.
-  exocore.epochs.v1.Epoch init_timeout_period = 4
-  [ (gogoproto.nullable) = false ];
-  // vsc_timeout_period is the period within which the subscriber chain 
+  exocore.epochs.v1.Epoch init_timeout_period = 4 [(gogoproto.nullable) = false];
+  // vsc_timeout_period is the period within which the subscriber chain
   // must respond to a VSC request, after it is sent.
-  exocore.epochs.v1.Epoch vsc_timeout_period = 5
-  [ (gogoproto.nullable) = false, (gogoproto.customname) = "VSCTimeoutPeriod" ];
+  exocore.epochs.v1.Epoch vsc_timeout_period = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "VSCTimeoutPeriod"
+  ];
 }

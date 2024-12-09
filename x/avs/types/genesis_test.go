@@ -24,7 +24,8 @@ func TestGenesisState_Validate(t *testing.T) {
 				AvsInfos: []types.AVSInfo{
 					{AvsAddress: "0x1234567890abcdef1234567890abcdef12345678"},
 					{AvsAddress: "0x9876543210fedcba9876543210fedcba98765432"},
-				}},
+				},
+			},
 			valid: true,
 		},
 		{
@@ -33,7 +34,8 @@ func TestGenesisState_Validate(t *testing.T) {
 				AvsInfos: []types.AVSInfo{
 					{AvsAddress: "0x9876543210fedcba9876543210fedcba98765432"},
 					{AvsAddress: "0x9876543210fedcba9876543210fedcba98765432"},
-				}},
+				},
+			},
 			valid: false,
 		},
 		{
@@ -41,7 +43,8 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				AvsInfos: []types.AVSInfo{
 					{AvsAddress: ""},
-				}},
+				},
+			},
 			valid: false,
 		},
 		{
@@ -50,7 +53,8 @@ func TestGenesisState_Validate(t *testing.T) {
 				TaskInfos: []types.TaskInfo{
 					{TaskContractAddress: "0x9876543210fedcba9876543210fedcba98765432"},
 					{TaskContractAddress: "0x9876543210fedcba9876543210fedcba98765432"},
-				}},
+				},
+			},
 			valid: false,
 		},
 		{
@@ -59,7 +63,8 @@ func TestGenesisState_Validate(t *testing.T) {
 				TaskNums: []types.TaskID{
 					{TaskAddr: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1},
 					{TaskAddr: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1},
-				}},
+				},
+			},
 			valid: false,
 		},
 		{
@@ -67,7 +72,8 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				TaskResultInfos: []types.TaskResultInfo{
 					{OperatorAddress: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1, TaskContractAddress: "0x9876543210fedcba9876543210fedcba98765432"},
-				}},
+				},
+			},
 			valid: false,
 		},
 		{
@@ -76,7 +82,8 @@ func TestGenesisState_Validate(t *testing.T) {
 				TaskResultInfos: []types.TaskResultInfo{
 					{OperatorAddress: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1, TaskContractAddress: "0x9876543210fedcba9876543210fedcba98765432"},
 					{OperatorAddress: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1, TaskContractAddress: "0x9876543210fedcba9876543210fedcba98765432"},
-				}},
+				},
+			},
 			valid: false,
 		},
 		{
@@ -85,7 +92,8 @@ func TestGenesisState_Validate(t *testing.T) {
 				TaskResultInfos: []types.TaskResultInfo{
 					{OperatorAddress: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1, TaskContractAddress: "0x9876543210fedcba9876543210fedcba98765432"},
 					{OperatorAddress: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 2, TaskContractAddress: "0x9876543210fedcba9876543210fedcba98765432"},
-				}},
+				},
+			},
 			valid: false,
 		},
 		{
@@ -93,7 +101,8 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				BlsPubKeys: []types.BlsPubKeyInfo{
 					{Operator: "0x9876543210fedcba9876543210fedcba98765432", PubKey: nil},
-				}},
+				},
+			},
 			valid: false,
 		},
 	}

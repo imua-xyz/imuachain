@@ -32,21 +32,21 @@ message GenesisState {
   // index for the cached recent messages
   IndexRecentMsg index_recent_msg = 5;
   // cached recent messages
-  repeated RecentMsg recent_msg_list = 6[(gogoproto.nullable) = false]; 
+  repeated RecentMsg recent_msg_list = 6 [(gogoproto.nullable) = false];
   // cached recent params
-  repeated RecentParams recent_params_list = 7[(gogoproto.nullable) = false];
+  repeated RecentParams recent_params_list = 7 [(gogoproto.nullable) = false];
 
   // information for NST related
   // stakerInfos for each nst token
-  repeated StakerInfosAssets staker_infos_assets = 8[(gogoproto.nullable) = false];
+  repeated StakerInfosAssets staker_infos_assets = 8 [(gogoproto.nullable) = false];
   // stakerList for each nst token
-  repeated StakerListAssets staker_list_assets = 9[(gogoproto.nullable) = false];
+  repeated StakerListAssets staker_list_assets = 9 [(gogoproto.nullable) = false];
 
   // information for slashing history
   // ValidatorReportInfo records all the validatorReportInfos
-  repeated ValidatorReportInfo validator_report_infos = 10[(gogoproto.nullable)=false];
+  repeated ValidatorReportInfo validator_report_infos = 10 [(gogoproto.nullable) = false];
   // ValidatorMissedRounds records missedRounds for all validators seen
-  repeated ValidatorMissedRounds validator_missed_rounds = 11[(gogoproto.nullable)=false];
+  repeated ValidatorMissedRounds validator_missed_rounds = 11 [(gogoproto.nullable) = false];
 }
 
 // stakerInfosAssets bond stakerinfos to their related assets id

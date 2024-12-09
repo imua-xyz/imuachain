@@ -57,3 +57,14 @@ func (k Keeper) QueryAssociatedOperatorByStaker(ctx context.Context, req *delega
 		Operator: operator,
 	}, nil
 }
+
+func (k Keeper) QueryAssociatedStakersByOperator(ctx context.Context, req *delegationtype.QueryAssociatedStakersByOperatorReq) (*delegationtype.QueryAssociatedStakersByOperatorResponse, error) {
+	c := sdk.UnwrapSDKContext(ctx)
+	stakers, err := k.GetAssociatedStakers(c, req.Operator)
+	if err != nil {
+		return nil, err
+	}
+	return &delegationtype.QueryAssociatedStakersByOperatorResponse{
+		Stakers: stakers,
+	}, nil
+}

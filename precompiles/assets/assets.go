@@ -89,12 +89,12 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if err := stateDB.Commit(); err != nil {
 		return nil, err
 	}
-
+	cc, writeFunc := ctx.CacheContext()
 	switch method.Name {
 	// transactions
 	case MethodDepositLST, MethodWithdrawLST,
 		MethodDepositNST, MethodWithdrawNST:
-		bz, err = p.DepositOrWithdraw(ctx, evm.Origin, contract, stateDB, method, args)
+		bz, err = p.DepositOrWithdraw(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
 			// for failed cases we expect it returns bool value instead of error
@@ -102,24 +102,32 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 			// see https://github.com/ExocoreNetwork/exocore/issues/70
 			// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 			bz, err = method.Outputs.Pack(false, new(big.Int))
+		} else {
+			writeFunc()
 		}
 	case MethodRegisterOrUpdateClientChain:
-		bz, err = p.RegisterOrUpdateClientChain(ctx, contract, method, args)
+		bz, err = p.RegisterOrUpdateClientChain(cc, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(false, false)
+		} else {
+			writeFunc()
 		}
 	case MethodRegisterToken:
-		bz, err = p.RegisterToken(ctx, contract, method, args)
+		bz, err = p.RegisterToken(cc, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(false)
+		} else {
+			writeFunc()
 		}
 	case MethodUpdateToken:
-		bz, err = p.UpdateToken(ctx, contract, method, args)
+		bz, err = p.UpdateToken(cc, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(false)
+		} else {
+			writeFunc()
 		}
 	// queries
 	case MethodGetClientChains:

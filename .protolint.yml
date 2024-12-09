@@ -39,7 +39,7 @@ lint:
     add:
       - FIELD_NAMES_LOWER_SNAKE_CASE
       - MESSAGE_NAMES_UPPER_CAMEL_CASE
-      - MAX_LINE_LENGTH
+      # - MAX_LINE_LENGTH
       - INDENT
       # - SERVICE_NAMES_END_WITH
       - FIELD_NAMES_EXCLUDE_PREPOSITIONS
@@ -69,11 +69,11 @@ lint:
   # Linter rules option.
   rules_option:
     # MAX_LINE_LENGTH rule option.
-    max_line_length:
+    # max_line_length:
       # Enforces a maximum line length
-      max_chars: 120
+      # max_chars: 120
       # Specifies the character count for tab characters
-      tab_chars: 2
+      # tab_chars: 2
 
     # INDENT rule option.
     indent:

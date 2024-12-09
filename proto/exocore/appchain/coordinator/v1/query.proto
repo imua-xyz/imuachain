@@ -13,15 +13,11 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/appchain/coordinator/ty
 service Query {
   // QueryParams returns the appchain coordinator module parameters.
   rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http) = {
-      get: "/appchain/coordinator/params"
-    };
+    option (google.api.http) = {get: "/appchain/coordinator/params"};
   }
   // QuerySubscriberGenesis returns the genesis state for a subscriber chain.
   rpc QuerySubscriberGenesis(QuerySubscriberGenesisRequest) returns (QuerySubscriberGenesisResponse) {
-    option (google.api.http) = {
-      get: "/exocore/appchain/coordinator/v1/subscriber_genesis/{chain}"
-    };
+    option (google.api.http) = {get: "/exocore/appchain/coordinator/v1/subscriber_genesis/{chain}"};
   }
 }
 
@@ -44,6 +40,5 @@ message QuerySubscriberGenesisRequest {
 // QuerySubscriberGenesisResponse is the response type for the Query.QuerySubscriberGenesis RPC method.
 message QuerySubscriberGenesisResponse {
   // subscriber_genesis is the genesis state for the subscriber chain.
-  exocore.appchain.common.v1.SubscriberGenesisState subscriber_genesis = 1
-    [ (gogoproto.nullable) = false ];
+  exocore.appchain.common.v1.SubscriberGenesisState subscriber_genesis = 1 [(gogoproto.nullable) = false];
 }

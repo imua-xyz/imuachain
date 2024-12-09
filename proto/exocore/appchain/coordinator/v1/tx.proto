@@ -13,11 +13,9 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/appchain/coordinator/ty
 // Msg defines the Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
-  // RegisterSubscriberChain registers a subscriber chain with the coordinator. 
+  // RegisterSubscriberChain registers a subscriber chain with the coordinator.
   // By default, it is activated at the next epoch.
-  rpc RegisterSubscriberChain(
-    RegisterSubscriberChainRequest
-  ) returns (RegisterSubscriberChainResponse) {
+  rpc RegisterSubscriberChain(RegisterSubscriberChainRequest) returns (RegisterSubscriberChainResponse) {
     option (google.api.http).post = "/exocore/appchain/coordinator/v1/tx/RegisterSubscriberChain";
   }
 }

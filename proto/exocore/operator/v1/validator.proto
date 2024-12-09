@@ -9,7 +9,6 @@ import "google/protobuf/any.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 
-
 // Validator defines a validator, together with the total amount of the
 // Validator's bond shares and their exchange rate to coins. Slashing results in
 // a decrease in the exchange rate, allowing correct calculation of future
@@ -19,9 +18,9 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 // exchange rate. Voting power can be calculated as total bonded shares
 // multiplied by exchange rate
 message Validator {
-  option (gogoproto.equal)            = false;
+  option (gogoproto.equal) = false;
   option (gogoproto.goproto_stringer) = false;
-  option (gogoproto.goproto_getters)  = false;
+  option (gogoproto.goproto_getters) = false;
 
   // earnoperator_earnings_addrings_addr is the earnings address.
   string operator_earnings_addr = 1;
@@ -40,9 +39,9 @@ message Validator {
   cosmos.staking.v1beta1.BondStatus status = 7;
   // voting_power define the validator voting power
   string voting_power = 8 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
   // delegator_shares defines total shares issued to a validator's delegators
   string delegator_shares = 9 [
@@ -51,7 +50,10 @@ message Validator {
     (gogoproto.nullable) = false
   ];
   // commission defines the commission parameters.
-  cosmos.staking.v1beta1.Commission commission = 10 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  cosmos.staking.v1beta1.Commission commission = 10 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
   // delegator_tokens is the list of asset infos
   repeated DelegatorInfo delegator_tokens = 11 [(gogoproto.nullable) = false];
 }
@@ -65,15 +67,13 @@ message DelegatorInfo {
   // name of the asset, like "Tether USD"
   string name = 3;
   // self_amount is the self amount of the asset which delegation
-  string self_amount = 4
-  [
+  string self_amount = 4 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   // total_amount is the total amount of the asset which delegation
-  string total_amount = 5
-  [
+  string total_amount = 5 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -92,6 +92,4 @@ message DelegatorInfo {
     (gogoproto.nullable) = false,
     (gogoproto.customname) = "TotalUSDValue"
   ];
-
 }
-

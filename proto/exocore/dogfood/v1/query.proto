@@ -22,9 +22,7 @@ service Query {
   }
 
   // OperatorOptOutFinishEpoch queries the epoch when the operator's opt-out will finish.
-  rpc OperatorOptOutFinishEpoch(QueryOperatorOptOutFinishEpochRequest) returns (
-    QueryOperatorOptOutFinishEpochResponse
-  ) {
+  rpc OperatorOptOutFinishEpoch(QueryOperatorOptOutFinishEpochRequest) returns (QueryOperatorOptOutFinishEpochResponse) {
     option (google.api.http).get = "/exocore/dogfood/operator_opt_out_finish_epoch/{operator_acc_addr}";
   }
 
@@ -34,9 +32,7 @@ service Query {
   }
 
   // UndelegationMaturityEpoch queries the epoch when the undelegation will mature.
-  rpc UndelegationMaturityEpoch(QueryUndelegationMaturityEpochRequest) returns (
-    QueryUndelegationMaturityEpochResponse
-  ) {
+  rpc UndelegationMaturityEpoch(QueryUndelegationMaturityEpochRequest) returns (QueryUndelegationMaturityEpochResponse) {
     option (google.api.http).get = "/exocore/dogfood/undelegation_maturity_epoch/{record_key}";
   }
 

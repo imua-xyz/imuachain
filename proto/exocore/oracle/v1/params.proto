@@ -6,6 +6,7 @@ import "exocore/oracle/v1/info.proto";
 import "exocore/oracle/v1/token_feeder.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
+
 option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
 
 // Params defines the parameters for the module.
@@ -51,30 +52,35 @@ enum ConsensusMode {
 // slashing related params
 message SlashingParams {
   // reported_rounds_window defines how many rounds included in one window for performance review of missing report
-  int64 reported_rounds_window  = 1;
+  int64 reported_rounds_window = 1;
   // min_reported_perwindow defines at least how many rounds should be reported, this is a percentage of window
   bytes min_reported_per_window = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
   // oracle_miss_jail_duration defines the duration one validator should be jailed for missing reporting price
-  google.protobuf.Duration oracle_miss_jail_duration = 3 
-      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  google.protobuf.Duration oracle_miss_jail_duration = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.stdduration) = true
+  ];
   // oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior
-  google.protobuf.Duration oracle_malicious_jail_duration =4 
-      [(gogoproto.nullable) = false, (amino.dont_omitempty) = true, (gogoproto.stdduration) = true];
+  google.protobuf.Duration oracle_malicious_jail_duration = 4 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.stdduration) = true
+  ];
   // slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price
   bytes slash_fraction_miss = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
   // slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior
   bytes slash_fraction_malicious = 6 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-
 }

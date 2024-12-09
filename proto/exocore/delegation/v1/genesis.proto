@@ -30,7 +30,7 @@ message DelegationStates {
   // which is a combination of the staker ID, asset ID, and operator address.
   string key = 1;
   // states is the value of undelegation state for the above key
-  DelegationAmounts states = 2 [(gogoproto.nullable) = false] ;
+  DelegationAmounts states = 2 [(gogoproto.nullable) = false];
 }
 
 // StakersByOperator is a helper struct for an operator's staker list
@@ -40,7 +40,7 @@ message StakersByOperator {
   // which is a combination of the operator address and the asset ID.
   string key = 1;
   // stakers is the stakers list for the above key
-  repeated string stakers  = 2 [(gogoproto.nullable) = false] ;
+  repeated string stakers = 2 [(gogoproto.nullable) = false];
 }
 
 // DelegationsByStaker is a list of delegations for a single staker.
@@ -48,7 +48,7 @@ message DelegationsByStaker {
   // staker_id is the staker's account address + _ + l0 chain id (hex).``
   string staker_id = 1 [(gogoproto.customname) = "StakerID"];
   // delegations is the list of delegations for the staker, indexed by the
-  // asset_id. 
+  // asset_id.
   repeated DelegatedSingleAssetInfo delegations = 2 [(gogoproto.nullable) = false];
 }
 

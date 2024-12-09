@@ -14,10 +14,9 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/feedistribution/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-
   // UpdateParams defines a (governance) operation for updating the module
   // parameters. The authority defaults to the x/gov module account.
-  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse){
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
     option (google.api.http).post = "/exocore/feedistribution/v1/tx/MsgUpdateParams";
   }
 }

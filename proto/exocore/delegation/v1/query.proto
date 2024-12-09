@@ -114,6 +114,18 @@ message QueryAssociatedOperatorByStakerResponse {
   string operator = 1;
 }
 
+// QueryAssociatedStakersByOperatorReq is the request to obtain the associated stakers of the specified operator
+message QueryAssociatedStakersByOperatorReq {
+  // operator is the operator address for which the query is made.
+  string operator = 1;
+}
+
+// QueryAssociatedStakersByOperatorResponse is the response to QueryAssociatedStakersByOperatorReq
+message QueryAssociatedStakersByOperatorResponse {
+  // stakers is the returned stakers associated to the specified operator
+  repeated string stakers = 1;
+}
+
 // Query is the service API for the delegation module.
 service Query {
   // DelegationInfo queries the delegation information for {stakerID, assetID}.
@@ -149,9 +161,15 @@ service Query {
   }
 
   // QueryAssociatedOperatorByStaker queries the associated operator for the specified staker
-  rpc QueryAssociatedOperatorByStaker(QueryAssociatedOperatorByStakerReq)
-      returns (QueryAssociatedOperatorByStakerResponse) {
+  rpc QueryAssociatedOperatorByStaker(QueryAssociatedOperatorByStakerReq) returns (QueryAssociatedOperatorByStakerResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/delegation/v1/QueryAssociatedOperatorByStaker";
+  }
+
+  // QueryAssociatedStakersByOperator queries the associated stakers for the specified operator
+  rpc QueryAssociatedStakersByOperator(QueryAssociatedStakersByOperatorReq)
+      returns (QueryAssociatedStakersByOperatorResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/exocore/delegation/v1/QueryAssociatedStakersByOperator/{operator}";
   }
 }

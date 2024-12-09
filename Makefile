@@ -379,8 +379,11 @@ lint-fix-contracts:
 
 .PHONY: lint lint-fix
 
-format:
-	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs gofumpt -w -l
+format-golang:
+	@echo "Formating golang files"
+	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' -not -name '*.pb.gw.go' | xargs gofumpt -w -l
+
+format: format-golang proto-format
 
 .PHONY: format
 
@@ -410,7 +413,7 @@ proto-swagger-gen:
 
 proto-format:
 	@echo "Formatting Protobuf files"
-	$(protoImage) find ./ -name *.proto -exec clang-format -i {} \;
+	$(protoImage) buf format --write
 
 proto-lint:
 	@echo "Linting Protobuf files"

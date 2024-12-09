@@ -34,7 +34,6 @@ message GenesisState {
   // chain_id_infos is the dogfood chain id  informations, indexed
   // by the avs address. The struct is the `ChainIDInfo`
   repeated ChainIDInfo chain_id_infos = 7 [(gogoproto.nullable) = false];
-
 }
 
 // TaskID is helper structure to store the task id information for the genesis state.
@@ -44,6 +43,7 @@ message TaskID {
   // id of task.
   uint64 task_id = 2;
 }
+
 // ChallengeInfo is helper structure to store the task challenge information for the genesis state.
 message ChallengeInfo {
   // key is used for storing the ChallengeInfos,
@@ -52,6 +52,7 @@ message ChallengeInfo {
   // challenge_addr is the address of the challenger
   string challenge_addr = 2;
 }
+
 // ChainIDInfo is helper structure to store the dogfood ChainID information for the genesis state.
 message ChainIDInfo {
   // avs_address is the address of avs as a hex string.

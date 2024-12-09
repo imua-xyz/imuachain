@@ -43,11 +43,15 @@ message AVSInfo {
   // chain_id is an optional parameter to specify the chain_id of the AVS, if any
   string chain_id = 15;
   // avs_reward defines the proportion of reward
-  string avs_reward = 16
-      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string avs_reward = 16 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
   // avs_slash defines the proportion of slash
-  string avs_slash = 17
-      [(gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec", (gogoproto.nullable) = false];
+  string avs_slash = 17 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 
   // asset_reward_commission_epoch_basis is the avs reward distribution based on asset per eopch end.
   map<string, int64> asset_reward_amount_epoch_basis = 18;
@@ -62,6 +66,7 @@ message OperatorStatus {
   // proof data which is supplied by the contract, usually ABI-encoded
   bytes proof_data = 3;
 }
+
 // RewardSlashProof is the task info.
 message RewardSlashProof {
   // task_id of task
@@ -119,6 +124,7 @@ message TaskInfo {
   // operator_active_power_list is a power list of operators opt-in to the current task
   OperatorActivePowerList operator_active_power = 16;
 }
+
 // OperatorActivePowerList is the power list of operators opt-in to the current task.
 // Because power is always changing, record the power of all operators
 // who have completed tasks and submitted results by the task deadline
@@ -139,6 +145,7 @@ message OperatorActivePowerInfo {
     (gogoproto.customname) = "SelfActivePower"
   ];
 }
+
 // BlsPubKeyInfo is the task info.
 message BlsPubKeyInfo {
   // operator address
@@ -148,6 +155,7 @@ message BlsPubKeyInfo {
   // the bls public keys of the operator
   bytes pub_key = 3;
 }
+
 // RegisterAVSTaskReq is the request to register a new task for avs.
 message RegisterAVSTaskReq {
   option (cosmos.msg.v1.signer) = "FromAddress";
@@ -202,6 +210,7 @@ message DeRegisterAVSResponse {
   // avs information
   AVSInfo info = 2;
 }
+
 // It is a two-phase submission with two values, 1 and 2
 enum Phase {
   option (gogoproto.goproto_enum_prefix) = false;
@@ -212,6 +221,7 @@ enum Phase {
   // Second phase where operators commit their prepared responses
   PHASE_DO_COMMIT = 2 [(gogoproto.enumvalue_customname) = "PhaseDoCommit"];
 }
+
 // TaskResultInfo is the operator sign task info result.
 message TaskResultInfo {
   // operator_address operator address
@@ -243,25 +253,27 @@ message SubmitTaskResultReq {
   // info is the taskResult.
   TaskResultInfo info = 2;
 }
+
 // SubmitTaskResultResponse is the response to submit task results.
 message SubmitTaskResultResponse {}
+
 // Msg defines the AVS related Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
   // RegisterAVS registers a new AVS with corresponding operator.
   rpc RegisterAVS(RegisterAVSReq) returns (RegisterAVSResponse) {
     option (google.api.http).post = "/exocore/avs/v1/tx/RegisterAVS";
-  };
+  }
   // DelegateAssetToOperator delegates asset to operator.
   rpc DeRegisterAVS(DeRegisterAVSReq) returns (DeRegisterAVSResponse) {
     option (google.api.http).post = "/exocore/avs/v1/tx/DeRegisterAVS";
-  };
+  }
   // RegisterAVSTask registers a new task.
   rpc RegisterAVSTask(RegisterAVSTaskReq) returns (RegisterAVSTaskResponse) {
     option (google.api.http).post = "/exocore/avs/v1/tx/RegisterAVSTask";
-  };
+  }
   // SubmitTaskResult operator submit task results .
   rpc SubmitTaskResult(SubmitTaskResultReq) returns (SubmitTaskResultResponse) {
     option (google.api.http).post = "/exocore/avs/v1/tx/SubmitTaskResult";
-  };
+  }
 }

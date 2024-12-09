@@ -120,10 +120,16 @@ func ValidateAssetIDs(i interface{}) error {
 	} else if len(val) == 0 {
 		return fmt.Errorf("invalid parameter value: %v", val)
 	}
+	// check for duplicates
+	seen := make(map[string]struct{})
 	for _, assetID := range val {
 		if _, _, err := assetstypes.ParseID(assetID); err != nil {
 			return fmt.Errorf("invalid parameter value: %v", val)
 		}
+		if _, ok := seen[assetID]; ok {
+			return fmt.Errorf("duplicate asset ID: %s", assetID)
+		}
+		seen[assetID] = struct{}{}
 	}
 	return nil
 }

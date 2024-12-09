@@ -11,8 +11,7 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/appchain/coordinator/ty
 // subscriber chain requests that are pending activation.
 message PendingSubscriberChainRequests {
   // list is the list of subscriber chain requests that are pending activation.
-  repeated .exocore.appchain.coordinator.v1.RegisterSubscriberChainRequest list = 1
-  [(gogoproto.nullable) = false];
+  repeated .exocore.appchain.coordinator.v1.RegisterSubscriberChainRequest list = 1 [(gogoproto.nullable) = false];
 }
 
 // ChainIDs is a helper structure to store a list of chain IDs.
@@ -20,4 +19,3 @@ message ChainIDs {
   // list is the list of chain IDs.
   repeated string list = 1;
 }
-

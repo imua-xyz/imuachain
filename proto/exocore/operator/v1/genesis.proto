@@ -2,9 +2,8 @@ syntax = "proto3";
 package exocore.operator.v1;
 
 import "cosmos_proto/cosmos.proto";
-import "gogoproto/gogo.proto";
-
 import "exocore/operator/v1/tx.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 
@@ -24,10 +23,15 @@ message GenesisState {
   // opt_states is a list of all opted information for the AVS and operators
   repeated OptedState opt_states = 3 [(gogoproto.nullable) = false];
   // avs_usd_values is a list of AVS USD value
-  repeated AVSUSDValue avs_usd_values = 4 [(gogoproto.nullable) = false, (gogoproto.customname) = "AVSUSDValues"];
+  repeated AVSUSDValue avs_usd_values = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "AVSUSDValues"
+  ];
   // operator_usd_values is a list of operator USD value
-  repeated OperatorUSDValue operator_usd_values = 5
-      [(gogoproto.nullable) = false, (gogoproto.customname) = "OperatorUSDValues"];
+  repeated OperatorUSDValue operator_usd_values = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "OperatorUSDValues"
+  ];
   // slash_states is a list of all slashing information
   repeated OperatorSlashState slash_states = 6 [(gogoproto.nullable) = false];
   // pre_cons_key is a list of all previous consensus public key
@@ -73,7 +77,10 @@ message OperatorUSDValue {
   // which is the combination of AVS and operator address.
   string key = 1;
   // value is the USD value states for the AVS address
-  OperatorOptedUSDValue opted_usd_value = 2 [(gogoproto.nullable) = false, (gogoproto.customname) = "OptedUSDValue"];
+  OperatorOptedUSDValue opted_usd_value = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "OptedUSDValue"
+  ];
 }
 
 // OperatorSlashState is helper structure to store the slash information for the genesis state.

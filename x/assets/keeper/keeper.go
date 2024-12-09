@@ -15,6 +15,7 @@ type Keeper struct {
 	storeKey storetypes.StoreKey
 	cdc      codec.BinaryCodec
 	assetstype.OracleKeeper
+	ak        assetstype.AccountKeeper
 	bk        assetstype.BankKeeper
 	dk        delegationKeeper
 	authority string
@@ -24,6 +25,7 @@ func NewKeeper(
 	storeKey storetypes.StoreKey,
 	cdc codec.BinaryCodec,
 	oracleKeeper assetstype.OracleKeeper,
+	ak assetstype.AccountKeeper,
 	bk assetstype.BankKeeper,
 	dk delegationKeeper,
 	authority string,
@@ -36,6 +38,7 @@ func NewKeeper(
 		storeKey:     storeKey,
 		cdc:          cdc,
 		OracleKeeper: oracleKeeper,
+		ak:           ak,
 		bk:           bk,
 		dk:           dk,
 		authority:    authority,

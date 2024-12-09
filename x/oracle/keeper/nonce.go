@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
@@ -112,7 +111,7 @@ func (k Keeper) RemoveNonceWithFeederIDForAll(ctx sdk.Context, feederID uint64) 
 // CheckAndIncreaseNonce check and increase the nonce for a specific validator and feederID
 func (k Keeper) CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederID uint64, nonce uint32) (prevNonce uint32, err error) {
 	if nonce > uint32(common.MaxNonce) {
-		return 0, errors.New("nonce is too large")
+		return 0, fmt.Errorf("nonce_check_failed: max_exceeded: limit=%d received=%d", common.MaxNonce, nonce)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.NonceKeyPrefix))
 	if n, found := k.getNonce(store, validator); found {
@@ -123,12 +122,12 @@ func (k Keeper) CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederI
 					k.setNonce(store, n)
 					return nonce - 1, nil
 				}
-				return v.Value, errors.New("nonce is not consecutive")
+				return v.Value, fmt.Errorf("nonce_check_failed: non_consecutive: expected=%d received=%d", v.Value+1, nonce)
 			}
 		}
-		return 0, errors.New("feeder not found")
+		return 0, fmt.Errorf("nonce_check_failed: feeder_not_found: validator=%s feeder_id=%d", validator, feederID)
 	}
-	return 0, fmt.Errorf("validator for the consKey which signed the create-price tx is not included in active validator set, signer consAddr:%s", validator)
+	return 0, fmt.Errorf("nonce_check_failed: validator_not_active: validator=%s tx_type=create-price", validator)
 }
 
 // internal usage for avoiding duplicated 'NewStore'

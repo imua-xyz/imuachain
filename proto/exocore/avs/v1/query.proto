@@ -71,6 +71,7 @@ message QueryChallengeInfoResponse {
   // challenge_addr is the challenge address,its type should be a common.HexAddress.
   string challenge_addr = 1;
 }
+
 // Query defines the gRPC querier service.
 service Query {
   // Parameters queries the parameters of the module.

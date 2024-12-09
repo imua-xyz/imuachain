@@ -32,7 +32,6 @@ message GenesisState {
   // staker_outstanding_rewards_list represents outstanding (un-withdrawn) rewards
   // for a staker inexpensive to track, allows simple sanity checks.
   repeated StakerOutstandingRewardsList staker_outstanding_rewards_list = 6 [(gogoproto.nullable) = false];
-
 }
 
 // ValidatorAccumulatedCommissions is helper structure to store
@@ -45,6 +44,7 @@ message ValidatorAccumulatedCommissions {
   // for a validator kept as a running counter, can be withdrawn at any time.
   ValidatorAccumulatedCommission commission = 2;
 }
+
 // ValidatorCurrentRewardsList is helper structure to store the validator current rewards  for the genesis state.
 message ValidatorCurrentRewardsList {
   // val_addr is the address of validator
@@ -55,6 +55,7 @@ message ValidatorCurrentRewardsList {
   // each block as long as the validator's tokens remain constant.
   ValidatorCurrentRewards current_rewards = 2;
 }
+
 // ValidatorOutstandingRewardsList is a helper structure to store
 // the validator outstanding rewards for the genesis state.
 message ValidatorOutstandingRewardsList {
@@ -65,6 +66,7 @@ message ValidatorOutstandingRewardsList {
   // for a validator inexpensive to track, allows simple sanity checks.
   ValidatorOutstandingRewards outstanding_rewards = 2;
 }
+
 // StakerOutstandingRewardsList is helper structure to store the staker outstanding rewards  for the genesis state.
 message StakerOutstandingRewardsList {
   // staker_addr is the address of staker

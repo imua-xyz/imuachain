@@ -50,11 +50,9 @@ message OperatorOptedUSDValue {
 // OperatorVotingPower represents the voting power for the specified operator address
 message OperatorVotingPower {
   // operator_addr is the operator address,its type should be a sdk.AccAddress
-  string operator_addr = 1
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // voting_power is the active voting power for the above operator address
-  string voting_power = 2
-  [
+  string voting_power = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -67,8 +65,7 @@ message OperatorVotingPower {
 // specific points in time.
 message VotingPowerSnapshot {
   // total_voting_power is the total voting power of specified AVS
-  string total_voting_power = 1
-  [
+  string total_voting_power = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -82,7 +79,7 @@ message VotingPowerSnapshot {
   // epoch_identifier record the epoch info
   string epoch_identifier = 4;
   // epoch_number indicates which epoch this snapshot serve for
-  int64  epoch_number = 5;
+  int64 epoch_number = 5;
 }
 
 // SnapshotHelper is used to record the helper information for voting power snapshot update
@@ -132,7 +129,10 @@ message OperatorInfo {
   ClientChainEarningAddrList client_chain_earnings_addr = 4;
   // commission defines the commission parameters. it includes the time at which the commission
   // was last updated.
-  cosmos.staking.v1beta1.Commission commission = 5 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
+  cosmos.staking.v1beta1.Commission commission = 5 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 
 // OptedInfo is the opted information about operator
@@ -188,6 +188,7 @@ message SlashFromUndelegation {
     (gogoproto.nullable) = false
   ];
 }
+
 // SlashFromAssetsPool records the slash detail from the operator assets pool
 message SlashFromAssetsPool {
   // asset_id is the asset id.
@@ -323,20 +324,20 @@ service Msg {
   // RegisterOperator registers a new operator.
   rpc RegisterOperator(RegisterOperatorReq) returns (RegisterOperatorResponse) {
     option (google.api.http).post = "/exocore/operator/v1/tx/RegisterOperatorReq";
-  };
+  }
 
   // SetConsKey sets the operator's consensus key for an AVS. To do this, the operator
   // must have previously opted into the AVS.
   rpc SetConsKey(SetConsKeyReq) returns (SetConsKeyResponse) {
     option (google.api.http).post = "/exocore/operator/v1/tx/SetConsKeyReq";
-  };
+  }
 
   // OptIntoAVS opts an operator into an AVS.
   rpc OptIntoAVS(OptIntoAVSReq) returns (OptIntoAVSResponse) {
     option (google.api.http).post = "/exocore/operator/v1/tx/OptIntoAVSReq";
-  };
+  }
   // OptOutOfAVS opts an operator out of an AVS.
   rpc OptOutOfAVS(OptOutOfAVSReq) returns (OptOutOfAVSResponse) {
     option (google.api.http).post = "/exocore/operator/v1/tx/OptOutOfAVSReq";
-  };
+  }
 }

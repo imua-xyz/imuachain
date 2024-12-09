@@ -21,7 +21,7 @@ enum Action {
 // BalanceInfo tells effective-balance for native-restaking asset
 message BalanceInfo {
   // current round of price, this is updated based on tokenFeeder
-  uint64 round_id = 1 [(gogoproto.customname)="RoundID"];
+  uint64 round_id = 1 [(gogoproto.customname) = "RoundID"];
   // on which block the balance updated, deposit/withdraw will update this and round_id might not change
   uint64 block = 2;
   // index used to distinguish multiple balanceInfo for one same roundid

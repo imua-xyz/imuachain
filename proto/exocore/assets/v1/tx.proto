@@ -13,8 +13,7 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/assets/types";
 // ValueField is a field that holds a value of sdk.Int type.
 message ValueField {
   // amount is the amount of the asset, as an sdk.Int.
-  string amount = 1
-  [
+  string amount = 1 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -63,10 +62,9 @@ message AssetInfo {
 // StakingAssetInfo defines the information for an asset to be used in staking.
 message StakingAssetInfo {
   // asset_basic_info is the basic information of the asset.
-  AssetInfo asset_basic_info = 1[(gogoproto.nullable) = false];
+  AssetInfo asset_basic_info = 1 [(gogoproto.nullable) = false];
   // staking_total_amount is the total amount of the asset staked.
-  string staking_total_amount = 2
-  [
+  string staking_total_amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -78,22 +76,19 @@ message StakingAssetInfo {
 // staker's deposited, withdrawable, and currently unbonding amount.
 message StakerAssetInfo {
   // total_deposit_amount is the total amount of the asset deposited.
-  string total_deposit_amount = 1
-  [
+  string total_deposit_amount = 1 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   // withdrawable_amount is the amount that can be withdrawn.
-  string withdrawable_amount = 2
-  [
+  string withdrawable_amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   // pending_undelegation_amount is the amount that is waiting for undelegation.
-  string pending_undelegation_amount = 3
-  [
+  string pending_undelegation_amount = 3 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -114,16 +109,14 @@ message OperatorAssetInfo {
   // pending_undelegation_amount. It represent the total delegated amount of asset pool,
   // it will be used to calculate the asset amount of a specified staker from its
   // delegated share.
-  string total_amount = 1
-  [
+  string total_amount = 1 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
 
   // pending_undelegation_amount is the amount that is waiting for unbonding.
-  string pending_undelegation_amount = 2
-  [
+  string pending_undelegation_amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -132,8 +125,7 @@ message OperatorAssetInfo {
   // total_share is the total share of an asset, in the formula to update the staker's share
   // S_j = S * T_j / T, `S` represent it.
   // So when the shares of staker and operator change, it also needs to add `S_j` to update.
-  string total_share = 3
-  [
+  string total_share = 3 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -142,8 +134,7 @@ message OperatorAssetInfo {
   // operator_share is similar to the share of the staker, the calculation and update should
   // be same, the difference is that it represents the share of the operator itself.
   // the field is used to mark operator's own asset share.
-  string operator_share = 4
-  [
+  string operator_share = 4 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -167,16 +158,16 @@ message MsgSetExoCoreAddr {
   option (gogoproto.goproto_getters) = false;
 
   // from_address is the address of the staker.
-  string   from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // set_address is the address to be set.
-  string   set_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string set_address = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // client_chain_addr is the address of the client chain.
-  string   client_chain_addr = 3;
+  string client_chain_addr = 3;
   // client_chain_index is the index of the client chain within the exosystem.
-  uint64   client_chain_index = 4;
+  uint64 client_chain_index = 4;
   // staker_client_chain_signature is the signature of the staker's address
   // on the client chain.
-  string   staker_client_chain_signature = 5;
+  string staker_client_chain_signature = 5;
 }
 
 // MsgSetExoCoreAddrResponse defines the MsgSetExoCoreAddrResponse message used to return the
@@ -191,8 +182,7 @@ message RegisterClientChainReq {
   option (gogoproto.goproto_getters) = false;
 
   // from_address is the address of the message sender.
-  string from_address = 1
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // info is the information of the client chain.
   ClientChainInfo info = 2;
 }
@@ -209,8 +199,7 @@ message RegisterAssetReq {
   option (gogoproto.goproto_getters) = false;
 
   // from_address is the address of the message sender.
-  string from_address = 1
-  [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // info is the information of the asset.
   AssetInfo info = 2;
 }

@@ -16,7 +16,7 @@ import (
 var _ = Describe("MsgUpdateParams", Ordered, func() {
 	var defaultParams types.Params
 	var patcher *Patches
-	var chainIDtest = "exocoretestnet_233-1"
+	chainIDtest := "exocoretestnet_233-1"
 	AfterAll(func() {
 		patcher.Reset()
 		ks.Reset()
