@@ -228,7 +228,7 @@ var QueryTxRecordCmd = &cobra.Command{
 		"2: OnChainButFailed" +
 		"3: OnChainAndSuccessful",
 	Example: "test-tool query-tx-record depositLST 1 1 --home .",
-	Args:    cobra.ExactArgs(2),
+	Args:    cobra.ExactArgs(3),
 	Run: func(_ *cobra.Command, args []string) {
 		batchID, err := strconv.ParseUint(args[1], 10, 32)
 		if err != nil {
