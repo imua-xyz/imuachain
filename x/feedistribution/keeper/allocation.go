@@ -5,7 +5,6 @@ import (
 	"sort"
 
 	"cosmossdk.io/math"
-	sdkmath "cosmossdk.io/math"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -45,9 +44,9 @@ func (k Keeper) AllocateTokens(ctx sdk.Context, isSlash bool) error {
 					return errors.New("failed to AllocateTokens on slash event for minted coins calculation fail")
 				}
 			} else {
-				passedDuration := sdkmath.LegacyNewDec(int64(ctx.BlockTime().Sub(epochInfo.StartTime)))
-				epochDuration := sdkmath.LegacyNewDec(int64(epochInfo.Duration))
-				mintedCoinDec.Amount.MulMut(sdkmath.LegacyOneDec().Sub(passedDuration.QuoTruncate(epochDuration)))
+				passedDuration := math.LegacyNewDec(int64(ctx.BlockTime().Sub(epochInfo.StartTime)))
+				epochDuration := math.LegacyNewDec(int64(epochInfo.Duration))
+				mintedCoinDec.Amount.MulMut(math.LegacyOneDec().Sub(passedDuration.QuoTruncate(epochDuration)))
 				feesCollected.Sub(sdk.DecCoins{mintedCoinDec})
 			}
 		}
