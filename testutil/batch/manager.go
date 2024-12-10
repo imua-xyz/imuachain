@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -96,8 +97,9 @@ type Manager struct {
 	WaitDuration       time.Duration
 	WaitExpiration     time.Duration
 
-	TxsQueue chan interface{}
-	Shutdown chan bool
+	QueueSize atomic.Int32
+	TxsQueue  chan interface{}
+	Shutdown  chan bool
 }
 
 func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*Manager, error) {
@@ -505,7 +507,7 @@ func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
 	time.Sleep(time.Duration(m.config.BatchTxsCheckInterval) * time.Second)
 	// Check if all test transactions have been dequeued; if not, wait for them to be dequeued.
 	for {
-		if len(m.TxsQueue) != 0 {
+		if m.QueueSize.Load() > 0 {
 			time.Sleep(time.Duration(m.config.BatchTxsCheckInterval) * time.Second)
 		} else {
 			break

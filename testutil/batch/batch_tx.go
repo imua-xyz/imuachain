@@ -70,6 +70,7 @@ func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
 	select {
 	case m.TxsQueue <- evmTxInQueue:
 		// Successfully sent to the channel
+		m.QueueSize.Add(1)
 	case <-m.Shutdown:
 		// Received a shutdown signal, return immediately
 		logger.Info("Received shutdown signal, stopping...")
@@ -335,6 +336,7 @@ func (m *Manager) DequeueAndSignSendTxs() error {
 	handle := func() (bool, error) {
 		select {
 		case tx := <-m.TxsQueue:
+			m.QueueSize.Add(-1)
 			err := m.SignAndSendTxs(tx)
 			if err != nil {
 				logger.Error("DequeueAndSignSendTxs: can't sign and send the tx", "err", err)
