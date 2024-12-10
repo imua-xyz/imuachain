@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"sort"
 	"strings"
 
 	// this line is used by starport scaffolding # 1
@@ -204,7 +205,13 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	}()
 	// update&check slashing info
 	validatorPowers := agc.GetValidatorPowers()
-	for validator, power := range validatorPowers {
+	validators := make([]string, 0, len(validatorPowers))
+	for validator := range validatorPowers {
+		validators = append(validators, validator)
+	}
+	sort.Strings(validators)
+	for _, validator := range validators {
+		power := validatorPowers[validator]
 		reportedInfo, found := am.keeper.GetValidatorReportInfo(ctx, validator)
 		if !found {
 			logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
