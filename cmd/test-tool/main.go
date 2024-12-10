@@ -79,6 +79,7 @@ var initCmd = &cobra.Command{
 		file, err := os.Create(configFilePath)
 		if err != nil {
 			fmt.Printf("failed to create config file: %s\r\n", err)
+			return
 		}
 		defer file.Close()
 
@@ -232,15 +233,24 @@ var QueryTxRecordCmd = &cobra.Command{
 	Run: func(_ *cobra.Command, args []string) {
 		batchID, err := strconv.ParseUint(args[1], 10, 32)
 		if err != nil {
-			fmt.Printf("invalid batch id,input:%s,err:%s", args[0], err)
+			fmt.Printf("invalid batch id,input:%s,err:%s", args[1], err)
 			return
 		}
-		status, err := strconv.ParseUint(args[2], 10, 32)
+		helperRecord, err := batch.LoadObjectByID[batch.HelperRecord](sqliteDB, batch.SqliteDefaultStartID)
 		if err != nil {
-			fmt.Printf("invalid status,input:%s,err:%s", args[1], err)
+			fmt.Printf("failed to load the helper record, err:%s\r\n", err)
 			return
 		}
-		if int(status) > batch.OnChainAndSuccessful {
+		if uint(batchID) > helperRecord.CurrentBatchID {
+			fmt.Printf("invalid batch id, inputBatchID:%d,currentBatchID:%d\r\n", batchID, helperRecord.CurrentBatchID)
+			return
+		}
+		status, err := strconv.ParseInt(args[2], 10, 32)
+		if err != nil {
+			fmt.Printf("invalid status,input:%s,err:%s", args[2], err)
+			return
+		}
+		if int(status) > batch.OnChainAndSuccessful || status < 0 {
 			fmt.Printf("invalid status,status:%d", status)
 			return
 		}

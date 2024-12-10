@@ -36,7 +36,9 @@ func WaitForEvmTxReceipt(client *ethclient.Client, txHash common.Hash, waitDurat
 		}
 
 		// Attempt to retrieve the transaction receipt
-		receipt, err := client.TransactionReceipt(context.Background(), txHash)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		receipt, err := client.TransactionReceipt(ctx, txHash)
+		cancel()
 		if err == nil {
 			// If the receipt is found, return it
 			return receipt, nil
@@ -131,8 +133,8 @@ func (m *Manager) SignSendEvmTxAndWait(txInfo *EvmTxInQueue) error {
 		return err
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
-		logger.Info(" the evm tx has been on chain but the execution is failed", "txHash", txHash)
-		return xerrors.Errorf("failed evm tx receipt, txID:%s", txHash)
+		logger.Info(" the evm tx has been on chain but the execution is Failed", "txHash", txHash)
+		return xerrors.Errorf("Failed evm tx receipt, txID:%s", txHash)
 	}
 	logger.Info("the evm tx has been on chain successfully", "txID", txHash)
 	return nil
@@ -191,11 +193,11 @@ func (m *Manager) SignAndSendMultiMsgs(
 ) ([]*sdktypes.TxResponse, error) {
 	keyRecord, err := clientCtx.Keyring.Key(fromName)
 	if err != nil {
-		return nil, xerrors.Errorf("SignAndSendMultiMsgs, can't get key record,fromName:%s,err:%s", fromName, err)
+		return nil, xerrors.Errorf("SignAndSendMultiMsgs, can't get key record,fromName:%s,err:%w", fromName, err)
 	}
 	fromAddr, err := keyRecord.GetAddress()
 	if err != nil {
-		return nil, xerrors.Errorf("SignAndSendMultiMsgs, can't get address from the key record,fromName:%s,err:%s", fromName, err)
+		return nil, xerrors.Errorf("SignAndSendMultiMsgs, can't get address from the key record,fromName:%s,err:%w", fromName, err)
 	}
 	logger.Info("from name and Addr is:", "fromName", fromName, "fromAddr", fromAddr.String())
 	clientCtx = clientCtx.
@@ -228,7 +230,7 @@ func (m *Manager) SignAndSendMultiMsgs(
 		// get gas price
 		suggestGasPrice, err := m.GasPrice()
 		if err != nil {
-			return nil, xerrors.Errorf("failed to get suggest gas price, error:%s", err.Error())
+			return nil, xerrors.Errorf("Failed to get suggest gas price, error:%s", err.Error())
 		}
 		gasPrices := sdktypes.NewDecCoins(
 			sdktypes.NewDecCoin(
@@ -241,10 +243,10 @@ func (m *Manager) SignAndSendMultiMsgs(
 			WithFeePayer(fromAddr)
 		res, err := BroadcastTxWithRes(clientCtx, txFactory, msg)
 		if err != nil {
-			return nil, xerrors.Errorf("failed to broadcast tx, error:%s", err.Error())
+			return nil, xerrors.Errorf("Failed to broadcast tx, error:%s", err.Error())
 		}
 		if res.Code != 0 {
-			return nil, xerrors.Errorf("failed to broadcast tx, response code:%v", res.Code)
+			return nil, xerrors.Errorf("Failed to broadcast tx, response code:%v", res.Code)
 		}
 		responseList = append(responseList, res)
 		// clientCtx.PrintProto(res)
@@ -286,7 +288,7 @@ func (m *Manager) WaitForCosmosTxs(responseList []*sdktypes.TxResponse, waitDura
 				// the tx has been on-chain successfully
 				logger.Info("the cosmos tx has been on chain successfully", "txHash", res.TxHash)
 			} else {
-				logger.Info("the cosmos tx has been on chain successfully, but the execution is failed", "txHash", res.TxHash, "code", queryRes.Code, "log", queryRes.RawLog)
+				logger.Info("the cosmos tx has been on chain successfully, but the execution is Failed", "txHash", res.TxHash, "code", queryRes.Code, "log", queryRes.RawLog)
 			}
 			break
 		}

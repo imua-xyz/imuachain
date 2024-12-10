@@ -26,7 +26,7 @@ func ObjectsNumber[T any](db *gorm.DB, model T) (int64, error) {
 	var count int64
 	err := db.Model(&model).Count(&count).Error
 	if err != nil {
-		return 0, xerrors.Errorf("Failed to count %T objects, err: %s", model, err)
+		return 0, xerrors.Errorf("Failed to count %T objects, err: %w", model, err)
 	}
 	return count, nil
 }
@@ -36,7 +36,7 @@ func CreateObjects[T any](db *gorm.DB, model T, targetCount int64, createNewObje
 	// Automatically migrate the schema for the model
 	err := db.AutoMigrate(&model)
 	if err != nil {
-		return xerrors.Errorf("Auto migration failed for %T table, err: %s", model, err)
+		return xerrors.Errorf("Auto migration Failed for %T table, err: %w", model, err)
 	}
 
 	// Get the current count of objects in the table
@@ -60,7 +60,7 @@ func CreateObjects[T any](db *gorm.DB, model T, targetCount int64, createNewObje
 		// Insert the new objects into the database
 		err = db.Create(&objects).Error
 		if err != nil {
-			return xerrors.Errorf("Failed to insert new %T objects, err: %s", model, err)
+			return xerrors.Errorf("Failed to insert new %T objects, err: %w", model, err)
 		}
 	}
 
@@ -71,7 +71,7 @@ func LoadObjectByID[T any](db *gorm.DB, id uint) (T, error) {
 	var obj T
 	err := db.First(&obj, id).Error
 	if err != nil {
-		return obj, xerrors.Errorf("Failed to load %T object with ID %d, err: %s", obj, id, err)
+		return obj, xerrors.Errorf("Failed to load %T object with ID %d, err: %w", obj, id, err)
 	}
 	return obj, nil
 }
@@ -79,13 +79,13 @@ func LoadObjectByID[T any](db *gorm.DB, id uint) (T, error) {
 func SaveObject[T any](db *gorm.DB, obj T) error {
 	// Automatically migrate the schema, creating the table if it doesn't exist
 	if err := db.AutoMigrate(&obj); err != nil {
-		return xerrors.Errorf("Failed to auto migrate schema for %T, err: %s", obj, err)
+		return xerrors.Errorf("Failed to auto migrate schema for %T, err: %w", obj, err)
 	}
 
 	// Now save the object
 	err := db.Save(&obj).Error
 	if err != nil {
-		return xerrors.Errorf("Failed to save %T object, err: %s", obj, err)
+		return xerrors.Errorf("Failed to save %T object, err: %w", obj, err)
 	}
 	return nil
 }
@@ -136,7 +136,7 @@ func GetTxIDsByBatchTypeAndStatus(db *gorm.DB, batchID uint, txType string, stat
 	}
 
 	if err != nil {
-		return nil, 0, xerrors.Errorf("Failed to retrieve transaction IDs with TestBatchID %d and Type %s, err: %s", batchID, txType, err)
+		return nil, 0, xerrors.Errorf("Failed to retrieve transaction IDs with TestBatchID %d and Type %s, err: %w", batchID, txType, err)
 	}
 
 	return ids, int64(len(ids)), nil
@@ -145,6 +145,9 @@ func GetTxIDsByBatchTypeAndStatus(db *gorm.DB, batchID uint, txType string, stat
 func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) error {
 	if m.config.AddrNumberInMultiSend <= 0 {
 		return xerrors.Errorf("invalid AddrNumberInMultiSend:%d", m.config.AddrNumberInMultiSend)
+	}
+	if len(m.NodeEVMHTTPClients) == 0 {
+		return xerrors.Errorf("no available EVM HTTP clients")
 	}
 
 	faucetAddr := sdktypes.AccAddress(crypto.PubkeyToAddress(m.FaucetSK.PublicKey).Bytes())
@@ -166,7 +169,7 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 		selectNode := int(id) % len(m.NodeEVMHTTPClients)
 		balance, err := m.NodeEVMHTTPClients[selectNode].BalanceAt(m.ctx, object.EvmAddress(), nil)
 		if err != nil {
-			return xerrors.Errorf("can't get balance,addr:%s, err: %s", object.EvmAddress().String(), err)
+			return xerrors.Errorf("can't get balance,addr:%s, err: %w", object.EvmAddress().String(), err)
 		}
 		exoBalance := big.NewInt(0).Quo(balance, ExoDecimalReduction).Int64()
 		logger.Info("the exo balance is:", "addr", object.EvmAddress(), "balance", balance, "exoBalance", exoBalance, "needExo", needExo)
@@ -237,7 +240,7 @@ func CheckObjectsBalance[T AddressForFunding](m *Manager, model T, needExo int64
 		}
 		balance, err := ethClient.BalanceAt(m.ctx, object.EvmAddress(), nil)
 		if err != nil {
-			return xerrors.Errorf("can't get balance,addr:%s, err: %s", object.EvmAddress().String(), err)
+			return xerrors.Errorf("can't get balance,addr:%s, err:%w", object.EvmAddress().String(), err)
 		}
 		exoBalance := big.NewInt(0).Quo(balance, ExoDecimalReduction).Int64()
 		if exoBalance < needExo {

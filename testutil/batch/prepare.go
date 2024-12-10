@@ -91,17 +91,17 @@ func (m *Manager) Funding() error {
 	logger.Info("start funding stakers")
 	err := FundingObjects(m, &Staker{}, m.config.StakerExoAmount)
 	if err != nil {
-		return xerrors.Errorf("can't fund stakers,err:%s", err)
+		return xerrors.Errorf("can't fund stakers,err:%w", err)
 	}
 	logger.Info("start funding operators")
 	err = FundingObjects(m, &Operator{}, m.config.OperatorExoAmount)
 	if err != nil {
-		return xerrors.Errorf("can't fund operators,err:%s", err)
+		return xerrors.Errorf("can't fund operators,err:%w", err)
 	}
 	logger.Info("start funding AVSs")
 	err = FundingObjects(m, &AVS{}, m.config.AVSExoAmount)
 	if err != nil {
-		return xerrors.Errorf("can't fund AVSs,err:%s", err)
+		return xerrors.Errorf("can't fund AVSs,err:%w", err)
 	}
 	return nil
 }
@@ -236,7 +236,7 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 		}
 		sk, err := crypto.ToECDSA(avs.Sk)
 		if err != nil {
-			return xerrors.Errorf("can't convert the Sk to ecdsa private key,avs:%v,err:%s", avs, err)
+			return xerrors.Errorf("can't convert the Sk to ecdsa private key,avs:%v,err:%w", avs, err)
 		}
 		logger.Info("the caller and AVS address is:", "caller", crypto.PubkeyToAddress(sk.PublicKey), "avsAddr", avs.EvmAddress())
 		err = m.SignSendEvmTxAndWait(&EvmTxInQueue{

@@ -2,6 +2,7 @@ package batch
 
 import (
 	"math/big"
+	"reflect"
 	"strings"
 	"time"
 
@@ -53,7 +54,7 @@ func (m *Manager) enqueueTxAndSaveRecord(params *EnqueueTxParams) error {
 	// send the tx info to the queue
 	sk, err := crypto.ToECDSA(params.staker.Sk)
 	if err != nil {
-		return xerrors.Errorf("can't convert the Sk to ecdsa private key,staker:%v,err:%s", params.staker.ID, err)
+		return xerrors.Errorf("can't convert the Sk to ecdsa private key,staker:%v,err:%w", params.staker.ID, err)
 	}
 
 	evmTxInQueue := &EvmTxInQueue{
@@ -85,7 +86,7 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(batchID uint, msgType string) err
 	}
 	assetsAbi, err := abi.JSON(strings.NewReader(assets.AssetsABI))
 	if err != nil {
-		return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assets abi.JSON,err:%s", err)
+		return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assets abi.JSON,err:%w", err)
 	}
 	opAmount := sdkmath.NewIntFromBigInt(DefaultDepositAmount)
 
@@ -95,13 +96,13 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(batchID uint, msgType string) err
 		nonce, err := ethHTTPClient.NonceAt(m.ctx, staker.Address, nil)
 		if err != nil {
 			return xerrors.Errorf(
-				"BatchDeposit: can't get staker's nonce, stakerId:%d, addr:%s,err:%s",
+				"BatchDeposit: can't get staker's nonce, stakerId:%d, addr:%s,err:%w",
 				stakerId, staker.Address.String(), err)
 		}
 		assetOpFunc := func(assetId uint, _ int64, asset Asset) error {
 			data, err := assetsAbi.Pack(msgType, asset.ClientChainID, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), opAmount.BigInt())
 			if err != nil {
-				return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assetsAbi.Pack,err:%s", err)
+				return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assetsAbi.Pack,err:%w", err)
 			}
 			// get the total deposit amount before deposit or withdrawal
 			stakerAssetInfo, err := m.QueryStakerAssetInfo(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String())
@@ -182,7 +183,7 @@ func (m *Manager) EnqueueDelegationTxs(batchID uint, msgType string) error {
 		nonce, err := ethHTTPClient.NonceAt(m.ctx, staker.Address, nil)
 		if err != nil {
 			return xerrors.Errorf(
-				"BatchDeposit: can't get staker's nonce, stakerId:%d, addr:%s,err:%s",
+				"BatchDeposit: can't get staker's nonce, stakerId:%d, addr:%s,err:%w",
 				stakerId, staker.Address.String(), err)
 		}
 
@@ -276,6 +277,8 @@ func (m *Manager) SignAndSendTxs(tx interface{}) error {
 			return err
 		}
 		txID = txHash.String()
+	} else {
+		return xerrors.Errorf("unsupported transaction type: %v", reflect.TypeOf(tx))
 	}
 	// todo: address the cosmos transaction for the delegation/undelegation of Exo token.
 
@@ -298,6 +301,9 @@ func (m *Manager) SignAndSendTxs(tx interface{}) error {
 func (m *Manager) TickHandle(handleRate int, handle func() (bool, error)) error {
 	if handleRate <= 0 {
 		return xerrors.New("handleRate must be greater than 0")
+	}
+	if handleRate > 1000 {
+		return xerrors.New("handleRate must be less than 1000")
 	}
 
 	// Calculate the interval time in milliseconds for each transaction based on the rate

@@ -12,14 +12,14 @@ import (
 const (
 	Queued               = iota // The tx has been stored in the local db but hasn't been sent to the node.
 	Pending                     // Pending status
-	OnChainButFailed            // On-chain but failed
+	OnChainButFailed            // On-chain but Failed
 	OnChainAndSuccessful        // On-chain and successful
 )
 
 const (
 	WaitToCheck = iota
 	Successful
-	failed
+	Failed
 )
 
 const (
@@ -32,7 +32,7 @@ type TestToolConfig struct {
 	StakerNumber   int `mapstructure:"staker-number" toml:"staker-number"`
 	OperatorNumber int `mapstructure:"operator-number" toml:"operator-number"`
 	AVSNumber      int `mapstructure:"avs-number" toml:"avs-number"`
-	AsssetNumber   int `mapstructure:"asset-number" toml:"asset-number"`
+	AssetNumber    int `mapstructure:"asset-number" toml:"asset-number"`
 
 	// the private key of faucet
 	// and the Exo amount that should be sent to the test addresses
@@ -82,7 +82,7 @@ var DefaultTestToolConfig = TestToolConfig{
 	StakerNumber:   5,
 	OperatorNumber: 3,
 	AVSNumber:      2,
-	AsssetNumber:   5,
+	AssetNumber:    5,
 	// this private key is from the local_node.sh
 	FaucetSk:              "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE",
 	StakerExoAmount:       100,

@@ -14,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/ExocoreNetwork/exocore/app"
@@ -82,7 +84,6 @@ type Manager struct {
 	ctx    context.Context
 	config *TestToolConfig
 	db     *gorm.DB
-	lock   sync.Mutex
 
 	DogfoodAddr        string
 	FaucetSK           *ecdsa.PrivateKey
@@ -104,7 +105,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 	dsn := "file:" + filepath.Join(homePath, SqliteDBFileName) + "?cache=shared&_journal_mode=WAL"
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, xerrors.Errorf("can't open sqlite db, err:%s", err)
+		return nil, xerrors.Errorf("can't open sqlite db, err:%w", err)
 	}
 	// SQLite waits for 600000 milliseconds (10 minute) when encountering a lock conflict.
 	db.Exec("PRAGMA busy_timeout = 600000;")
@@ -113,19 +114,20 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 	// most test transactions will be signed by this private key.
 	sk, err := crypto.HexToECDSA(config.FaucetSk)
 	if err != nil {
-		return nil, xerrors.Errorf("invalid faucet Sk:%s, err:%s", config.FaucetSk, err)
+		return nil, xerrors.Errorf("invalid faucet Sk:%s, err:%w", config.FaucetSk, err)
 	}
 
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	KeyRing, err := keyring.New(AppName, keyring.BackendTest, homePath, nil, encodingConfig.Codec, hd.EthSecp256k1Option())
 	if err != nil {
-		return nil, xerrors.Errorf("can't new a test key ring, err:%s", err)
+		return nil, xerrors.Errorf("can't new a test key ring, err:%w", err)
 	}
 	_, err = KeyRing.Key(FaucetSKName)
 	if err != nil {
 		err = KeyRing.ImportPrivKeyHex(FaucetSKName, config.FaucetSk, ethsecp256k1.KeyType)
 		if err != nil {
-			return nil, xerrors.Errorf("can't import the faucet private key, err:%s", err)
+			return nil, xerrors.Errorf("failed to import the faucet private key '%s' into keyring: %w",
+				FaucetSKName, err)
 		}
 	}
 
@@ -152,7 +154,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		logger.Info("http url", "url", url)
 		rc, err := rpc.DialContext(context.Background(), url)
 		if err != nil {
-			return nil, xerrors.Errorf("can't creat the evm http rpc, err:%s, url:%s", err, url)
+			return nil, xerrors.Errorf("can't creat the evm http rpc, err:%w, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
 		manager.NodeEVMHTTPClients[i] = c
@@ -165,7 +167,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		logger.Info("websocket url", "url", url)
 		rc, err := rpc.DialContext(context.Background(), url)
 		if err != nil {
-			return nil, xerrors.Errorf("can't creat the evm websocket rpc, err:%s, url:%s", err, url)
+			return nil, xerrors.Errorf("can't creat the evm websocket rpc, err:%w, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
 		manager.NodeEVMWSClients[i] = c
@@ -190,7 +192,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 
 		client, err := client.NewClientFromNode(url)
 		if err != nil {
-			return nil, xerrors.Errorf("can't new client from node,url:%s,err:%s", url, err)
+			return nil, xerrors.Errorf("can't new client from node,url:%s,err:%w", url, err)
 		}
 		clientCtx = clientCtx.WithClient(client)
 		manager.NodeClientCtx[i] = clientCtx
@@ -198,7 +200,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 
 	evmChainID, err := manager.NodeEVMHTTPClients[DefaultNodeIndex].ChainID(ctx)
 	if err != nil {
-		return nil, xerrors.Errorf("can't get the evm chainID, err:%s", err)
+		return nil, xerrors.Errorf("can't get the evm chainID, err:%w", err)
 	}
 	ethSigner := ethtypes.LatestSignerForChainID(evmChainID)
 	manager.EthSigner = ethSigner
@@ -217,8 +219,6 @@ func (m *Manager) Close() {
 }
 
 func (m *Manager) GetDB() *gorm.DB {
-	m.lock.Lock()
-	defer m.lock.Unlock()
 	return m.db
 }
 
@@ -234,7 +234,7 @@ func (m *Manager) InitHelperRecord() error {
 	logger.Info("NewManager the new test batch ID is:", "batchID", batchID)
 	err = SaveObject[HelperRecord](m.GetDB(), HelperRecord{CurrentBatchID: batchID, ID: SqliteDefaultStartID})
 	if err != nil {
-		return xerrors.Errorf("can't init the helper record, err:%s", err)
+		return xerrors.Errorf("can't init the helper record, err:%w", err)
 	}
 	return nil
 }
@@ -257,7 +257,7 @@ func (m *Manager) CreateAssets() error {
 		}, nil
 	}
 	// create a new Staker
-	return CreateObjects(m.GetDB(), Asset{}, int64(m.config.AsssetNumber), createNewAsset)
+	return CreateObjects(m.GetDB(), Asset{}, int64(m.config.AssetNumber), createNewAsset)
 }
 
 func (m *Manager) CreateStakers() error {
@@ -267,7 +267,7 @@ func (m *Manager) CreateStakers() error {
 		// add the Sk to key ring
 		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), ethsecp256k1.KeyType)
 		if err != nil {
-			return Staker{}, err
+			return Staker{}, xerrors.Errorf("failed to import private key for staker %s: %w", name, err)
 		}
 		return Staker{
 			Name:    name,
@@ -287,7 +287,7 @@ func (m *Manager) SaveDogfoodAVS() error {
 		// Check if the error is "record not found", indicating that the address does not exist in the database.
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			// For other types of errors, return a detailed error message.
-			return xerrors.Errorf("Failed to load AVS with address %s, err: %s", m.DogfoodAddr, err)
+			return xerrors.Errorf("Failed to load AVS with address %s, err: %w", m.DogfoodAddr, err)
 		} else if err == nil {
 			// the dogfood AVS has been saved.
 			logger.Info("SaveDogfoodAVS, already saved")
@@ -314,7 +314,7 @@ func (m *Manager) CreateAVS() error {
 		// add the Sk to key ring
 		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), ethsecp256k1.KeyType)
 		if err != nil {
-			return AVS{}, err
+			return AVS{}, xerrors.Errorf("failed to import private key for avs %s: %w", name, err)
 		}
 		return AVS{
 			Name:    name,
@@ -344,7 +344,7 @@ func (m *Manager) SaveDefaultOperator() error {
 			// Check if the error is "record not found", indicating that the address does not exist in the database.
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				// For other types of errors, return a detailed error message.
-				return xerrors.Errorf("Failed to load operator with address %s, err: %s", operatorAddr, err)
+				return xerrors.Errorf("Failed to load operator with address %s, err: %w", operatorAddr, err)
 			} else if err == nil {
 				logger.Info("SaveDefaultOperator, already saved", "operator", operatorAddr)
 				continue
@@ -371,13 +371,13 @@ func (m *Manager) CreateOperators() error {
 		// add the Sk to key ring
 		err := m.KeyRing.ImportPrivKeyHex(name, common.Bytes2Hex(privKey.Key), ethsecp256k1.KeyType)
 		if err != nil {
-			return Operator{}, err
+			return Operator{}, xerrors.Errorf("failed to import private key for operator %s: %w", name, err)
 		}
 
 		privVal := mock.NewPV()
 		pubKey, err := privVal.GetPubKey()
 		if err != nil {
-			return Operator{}, err
+			return Operator{}, xerrors.Errorf("failed to get public key for operator %s: %w", name, err)
 		}
 		consensusKey := keytypes.NewWrappedConsKeyFromHex(hexutil.Encode(pubKey.Bytes()))
 		return Operator{
@@ -395,83 +395,83 @@ func (m *Manager) CreateOperators() error {
 func (m *Manager) Prepare() error {
 	// save the dogfood AVS and the default operators to the local db
 	if err := m.SaveDogfoodAVS(); err != nil {
-		return xerrors.Errorf("failed to save dogfood AVS,err:%s", err)
+		return xerrors.Errorf("Failed to save dogfood AVS,err:%w", err)
 	}
 	if err := m.SaveDefaultOperator(); err != nil {
-		return xerrors.Errorf("failed to save default operators,err:%s", err)
+		return xerrors.Errorf("Failed to save default operators,err:%w", err)
 	}
 	// create the assets, stakers, operators and AVSs for batch test
 	if err := m.CreateAssets(); err != nil {
-		return xerrors.Errorf("failed to create assets,err:%s", err)
+		return xerrors.Errorf("Failed to create assets,err:%w", err)
 	}
 	if err := m.CreateAVS(); err != nil {
-		return xerrors.Errorf("failed to create AVSs,err:%s", err)
+		return xerrors.Errorf("Failed to create AVSs,err:%w", err)
 	}
 	if err := m.CreateStakers(); err != nil {
-		return xerrors.Errorf("failed to create stakers,err:%s", err)
+		return xerrors.Errorf("Failed to create stakers,err:%w", err)
 	}
 	if err := m.CreateOperators(); err != nil {
-		return xerrors.Errorf("failed to create operators,err:%s", err)
+		return xerrors.Errorf("Failed to create operators,err:%w", err)
 	}
 	logger.Info("finish creating and saving test objects, next step: funding")
 	// init the sequences
 	if err := m.InitSequences(); err != nil {
-		return xerrors.Errorf("failed to init the sequences,err:%s", err)
+		return xerrors.Errorf("Failed to init the sequences,err:%w", err)
 	}
 	// funding all test objects, EthSigner is faucet sk, tx type is cosmos
 	if err := m.Funding(); err != nil {
-		return xerrors.Errorf("failed to fund the test objects,err:%s", err)
+		return xerrors.Errorf("Failed to fund the test objects,err:%w", err)
 	}
 	if err := m.FundingCheck(); err != nil {
-		return xerrors.Errorf("failed to check funding, err:%s", err)
+		return xerrors.Errorf("Failed to check funding, err:%w", err)
 	}
 	logger.Info("finish funding test objects, next step: registration")
 	// register the test objects, EthSigner is faucet sk, tx type is evm
 	assets, err := m.RegisterAssets()
 	if err != nil {
-		return xerrors.Errorf("failed to register assets,err:%s", err)
+		return xerrors.Errorf("Failed to register assets,err:%w", err)
 	}
 	err = m.AssetsCheck(nil)
 	if err != nil {
-		return xerrors.Errorf("failed to check assets,err:%s", err)
+		return xerrors.Errorf("Failed to check assets,err:%w", err)
 	}
 	logger.Info("finish registering test assets, next step: operator registration")
 	// register the operators, EthSigner is the operator sk, tx type is cosmos
 	if err = m.RegisterOperators(); err != nil {
-		return xerrors.Errorf("failed to register operators,err:%s", err)
+		return xerrors.Errorf("Failed to register operators,err:%w", err)
 	}
 	err = m.OperatorsCheck(nil)
 	if err != nil {
-		return xerrors.Errorf("failed to check operators,err:%s", err)
+		return xerrors.Errorf("Failed to check operators,err:%w", err)
 	}
 	logger.Info("finish registering test operators, next step: AVS registration")
 	// EthSigner is the AVS sk, tx type is evm
 	if err = m.RegisterAVSs(assets); err != nil {
-		return xerrors.Errorf("failed to register AVss,err:%s", err)
+		return xerrors.Errorf("Failed to register AVss,err:%w", err)
 	}
 	err = m.AVSsCheck(nil)
 	if err != nil {
-		return xerrors.Errorf("failed to check AVSs,err:%s", err)
+		return xerrors.Errorf("Failed to check AVSs,err:%w", err)
 	}
 	logger.Info("finish registering test AVSs, next step: add assets to dogfood")
 	// add the test assets to the supported list of dogfood AVS, EthSigner is the AVS sk
 	// tx type is cosmos
 	if err = m.AddAssetsToDogfoodAVS(assets); err != nil {
-		return xerrors.Errorf("failed to add the test assets to the dofood AVS,err:%s", err)
+		return xerrors.Errorf("Failed to add the test assets to the dofood AVS,err:%w", err)
 	}
 	_, isUpdate, err := m.DogfoodAssetsCheck(assets)
 	if err != nil || isUpdate {
-		return xerrors.Errorf("failed to check the assets list of dogfood,isUpdate:%v,err:%s", isUpdate, err)
+		return xerrors.Errorf("Failed to check the assets list of dogfood,isUpdate:%v,err:%w", isUpdate, err)
 	}
 	logger.Info("finish adding assets to dogfood, next step: opts the operators to AVSs")
 	// opt all test operators to all test AVSs, EthSigner is the operator sk
 	// tx type is cosmos
 	if err = m.OptOperatorsIntoAVSs(); err != nil {
-		return xerrors.Errorf("failed to opt all operators to all AVSs,err:%s", err)
+		return xerrors.Errorf("Failed to opt all operators to all AVSs,err:%w", err)
 	}
 	err = m.OperatorsOptInCheck(nil)
 	if err != nil {
-		return xerrors.Errorf("failed to check the operator's opt-in status,err:%s", err)
+		return xerrors.Errorf("Failed to check the operator's opt-in status,err:%w", err)
 	}
 	logger.Info("finish the preparation for the batch test")
 	return nil
@@ -481,7 +481,7 @@ func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
 	helperRecord, err := LoadObjectByID[HelperRecord](m.GetDB(), SqliteDefaultStartID)
 	logger.Info("EnqueueAndCheckTxsInBatch load helper record", "err", err, "helperRecord", helperRecord)
 	if err != nil {
-		logger.Error("EnqueueAndCheckTxsInBatch: failed to load the helper record", "err", err)
+		logger.Error("EnqueueAndCheckTxsInBatch: Failed to load the helper record", "err", err)
 		return err
 	}
 	var enqueueTxsFunc func(batchID uint, msgType string) error
@@ -498,7 +498,7 @@ func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
 	}
 	logger.Info("EnqueueAndCheckTxsInBatch: call enqueueTxsFunc", "msgType", msgType, "batchID", helperRecord.CurrentBatchID)
 	if err := enqueueTxsFunc(helperRecord.CurrentBatchID, msgType); err != nil {
-		logger.Error("EnqueueAndCheckTxsInBatch: failed to test transactions in batch", "msgType", msgType, "err", err)
+		logger.Error("EnqueueAndCheckTxsInBatch: Failed to test transactions in batch", "msgType", msgType, "err", err)
 		return err
 	}
 	// When configuring this interval, the durations of sending and on-chain processing should be taken into account.
@@ -513,12 +513,12 @@ func (m *Manager) EnqueueAndCheckTxsInBatch(msgType string) error {
 	}
 	logger.Info("EnqueueAndCheckTxsInBatch: call PrecompileTxOnChainCheck", "msgType", msgType, "batchID", helperRecord.CurrentBatchID)
 	if err := m.PrecompileTxOnChainCheck(helperRecord.CurrentBatchID, msgType); err != nil {
-		logger.Error("EnqueueAndCheckTxsInBatch: failed to check whether the txs are on chain", "err", err)
+		logger.Error("EnqueueAndCheckTxsInBatch: Failed to check whether the txs are on chain", "err", err)
 		return err
 	}
 	logger.Info("EnqueueAndCheckTxsInBatch: call txsCheckFunc", "msgType", msgType)
 	if err := txsCheckFunc(helperRecord.CurrentBatchID, msgType); err != nil {
-		logger.Error("EnqueueAndCheckTxsInBatch: failed to check the txs", "msgType", msgType, "err", err)
+		logger.Error("EnqueueAndCheckTxsInBatch: Failed to check the txs", "msgType", msgType, "err", err)
 		return err
 	}
 	// increase the batch id if the msg type is withdrawal
@@ -552,7 +552,7 @@ func (m *Manager) ExecuteBatchTestForType(msgType string) error {
 	}
 	// send test transactions in batch
 	go func() {
-		// deposit
+		// enqueue the txs and check them in batch
 		if err := m.EnqueueAndCheckTxsInBatch(msgType); err != nil {
 			close(m.Shutdown)
 			return
@@ -560,52 +560,50 @@ func (m *Manager) ExecuteBatchTestForType(msgType string) error {
 		logger.Info("ExecuteBatchTestForType: finish enqueuing and checking all txs")
 	}()
 	if err := m.DequeueAndSignSendTxs(); err != nil {
-		logger.Error("ExecuteBatchTestForType, failed to dequeue and sign send the txs,err:%s", err)
+		logger.Error("ExecuteBatchTestForType, Failed to dequeue and sign send the txs,err:%w", err)
 		return err
 	}
 	return nil
 }
 
 func (m *Manager) Start() error {
-	if err := m.Prepare(); err != nil {
-		return err
-	}
-	if err := m.InitHelperRecord(); err != nil {
-		return err
-	}
-
+	eg, ctx := errgroup.WithContext(m.ctx)
+	m.ctx = ctx
 	// send test transactions in batch
-	go func() {
+	eg.Go(func() error {
 		// deposit
 		if err := m.EnqueueAndCheckTxsInBatch(assets.MethodDepositLST); err != nil {
-			close(m.Shutdown)
-			return
+			return xerrors.Errorf("deposit batch failed: %w", err)
 		}
-		logger.Info("Start: finish enqueuing and checking all deposit txs")
 		// delegation
 		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodDelegate); err != nil {
-			close(m.Shutdown)
-			return
+			return xerrors.Errorf("delegation batch failed: %w", err)
 		}
-		logger.Info("Start: finish enqueuing and checking all delegation txs")
 		// undelegation
 		if err := m.EnqueueAndCheckTxsInBatch(delegation.MethodUndelegate); err != nil {
-			close(m.Shutdown)
-			return
+			return xerrors.Errorf("undelegation batch failed: %w", err)
 		}
-		logger.Info("Start: finish enqueuing and checking all undelegation txs")
 		// withdrawal
 		if err := m.EnqueueAndCheckTxsInBatch(assets.MethodWithdrawLST); err != nil {
-			close(m.Shutdown)
-			return
+			return xerrors.Errorf("withdrawal batch failed: %w", err)
 		}
 		logger.Info("Start: finish enqueuing and checking all withdrawal txs")
 		time.Sleep(time.Duration(m.config.EachTestInterval) * time.Second)
-	}()
+		return nil
+	})
+
 	// Dequeue the transactions and send them to the node.
 	// This function will be blocked unless it receives the signal for shutting down.
-	if err := m.DequeueAndSignSendTxs(); err != nil {
-		logger.Error("DequeueAndSignSendTxs, err:%s", err)
+	eg.Go(func() error {
+		if err := m.DequeueAndSignSendTxs(); err != nil {
+			return xerrors.Errorf("failed to dequeue and send transactions: %w", err)
+		}
+		return nil
+	})
+
+	if err := eg.Wait(); err != nil {
+		close(m.Shutdown)
+		logger.Error("start: error occurs, err:%v", err)
 		return err
 	}
 	return nil

@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -28,6 +29,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func newTestAppManager(t *testing.T) *Manager {
+	homeDir, err := os.UserHomeDir()
+	assert.NoError(t, err)
+	configPath := filepath.Join(homeDir, "tests/test-tool")
+	appManager, err := NewManager(context.Background(), configPath, &DefaultTestToolConfig)
+	assert.NoError(t, err)
+	return appManager
+}
+
 func Test_RPC(t *testing.T) {
 	ctx := context.Background()
 	rc, err := rpc.DialContext(ctx, "http://127.0.0.1:8545")
@@ -46,7 +56,7 @@ func Test_RPC(t *testing.T) {
 }
 
 func Test_QueryAllBalance(t *testing.T) {
-	appManager, err := NewManager(context.Background(), "/home/timmy/tests/test-tool", &DefaultTestToolConfig)
+	appManager := newTestAppManager(t)
 	assert.NoError(t, err)
 	clientCtx := appManager.NodeClientCtx[DefaultNodeIndex]
 	keyRecord, err := clientCtx.Keyring.Key(FaucetSKName)
@@ -63,7 +73,7 @@ func Test_QueryAllBalance(t *testing.T) {
 }
 
 func Test_FaucetSk(t *testing.T) {
-	appManager, err := NewManager(context.Background(), "/home/timmy/tests/test-tool", &DefaultTestToolConfig)
+	appManager := newTestAppManager(t)
 	assert.NoError(t, err)
 
 	keyRing := appManager.KeyRing
@@ -108,7 +118,7 @@ func Test_ImportPrivKeyHex(t *testing.T) {
 }
 
 func Test_queryEvmTx(t *testing.T) {
-	appManager, err := NewManager(context.Background(), "/home/timmy/tests/test-tool", &DefaultTestToolConfig)
+	appManager := newTestAppManager(t)
 	assert.NoError(t, err)
 	txID := common.HexToHash("0x1c48a4a180d68ee52bb4e3d4fc479f5eee99d9a83b770a20850fca9f38043b8f")
 	evmHTTPClient := appManager.NodeEVMHTTPClients[DefaultNodeIndex]
@@ -202,7 +212,7 @@ func Test_LoadAllAssets(t *testing.T) {
 }
 
 func Test_Start(t *testing.T) {
-	appManager, err := NewManager(context.Background(), "/home/timmy/tests/test-tool", &DefaultTestToolConfig)
+	appManager := newTestAppManager(t)
 	assert.NoError(t, err)
 	err = appManager.Start()
 	assert.NoError(t, err)

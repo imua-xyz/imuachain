@@ -167,10 +167,10 @@ func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
 					"asset", asset.Name, "assetAddr", asset.Address)
 				transaction.CheckResult = Successful
 			} else {
-				logger.Info("DepositWithdrawLSTCheck, the check is failed", "txID", transaction.TxHash,
+				logger.Info("DepositWithdrawLSTCheck, the check is Failed", "txID", transaction.TxHash,
 					"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
 					"asset", asset.Name, "assetAddr", asset.Address)
-				transaction.CheckResult = failed
+				transaction.CheckResult = Failed
 				transaction.ActualCheckValue = res.TotalDepositAmount.String()
 			}
 			// update the transaction record.
@@ -232,11 +232,11 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 						"operatorName", operator.Name, "operatorAddr", operator.AccAddress())
 					transaction.CheckResult = Successful
 				} else {
-					logger.Info("EvmDelegationCheck, the check is failed", "txID", transaction.TxHash,
+					logger.Info("EvmDelegationCheck, the check is Failed", "txID", transaction.TxHash,
 						"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
 						"asset", asset.Name, "assetAddr", asset.Address,
 						"operatorName", operator.Name, "operatorAddr", operator.AccAddress())
-					transaction.CheckResult = failed
+					transaction.CheckResult = Failed
 					transaction.ActualCheckValue = delegatedAmount.String()
 				}
 				// update the transaction record.
