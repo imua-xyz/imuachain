@@ -136,7 +136,7 @@ func (m *Manager) SignSendEvmTxAndWait(txInfo *EvmTxInQueue) error {
 		logger.Info(" the evm tx has been on chain but the execution is Failed", "txHash", txHash)
 		return xerrors.Errorf("Failed evm tx receipt, txID:%s", txHash)
 	}
-	logger.Info("the evm tx has been on chain successfully", "txID", txHash)
+	logger.Info("the evm tx has been on chain successfully", "blockNumber", receipt.BlockNumber, "txID", txHash)
 	return nil
 }
 

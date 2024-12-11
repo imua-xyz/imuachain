@@ -226,14 +226,14 @@ func (m *Manager) GetDB() *gorm.DB {
 
 func (m *Manager) InitHelperRecord() error {
 	helperRecord, err := LoadObjectByID[HelperRecord](m.GetDB(), SqliteDefaultStartID)
-	logger.Info("NewManager load helper record", "err", err, "helperRecord", helperRecord)
+	logger.Info("InitHelperRecord load helper record", "err", err, "helperRecord", helperRecord)
 	batchID := uint(0)
 	if err == nil {
 		// increase the batch id, because we use a new batch id to avoid check error
 		// every time the test-tool is started
 		batchID = helperRecord.CurrentBatchID + 1
 	}
-	logger.Info("NewManager the new test batch ID is:", "batchID", batchID)
+	logger.Info("InitHelperRecord the new test batch ID is:", "batchID", batchID)
 	err = SaveObject[HelperRecord](m.GetDB(), HelperRecord{CurrentBatchID: batchID, ID: SqliteDefaultStartID})
 	if err != nil {
 		return xerrors.Errorf("can't init the helper record, err:%w", err)
@@ -569,6 +569,12 @@ func (m *Manager) ExecuteBatchTestForType(msgType string) error {
 }
 
 func (m *Manager) Start() error {
+	if err := m.Prepare(); err != nil {
+		return err
+	}
+	if err := m.InitHelperRecord(); err != nil {
+		return err
+	}
 	eg, ctx := errgroup.WithContext(m.ctx)
 	m.ctx = ctx
 	// send test transactions in batch

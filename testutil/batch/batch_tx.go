@@ -101,10 +101,6 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(batchID uint, msgType string) err
 				stakerId, staker.Address.String(), err)
 		}
 		assetOpFunc := func(assetId uint, _ int64, asset Asset) error {
-			data, err := assetsAbi.Pack(msgType, asset.ClientChainID, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), opAmount.BigInt())
-			if err != nil {
-				return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assetsAbi.Pack,err:%w", err)
-			}
 			// get the total deposit amount before deposit or withdrawal
 			stakerAssetInfo, err := m.QueryStakerAssetInfo(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String())
 			var expectedCheckValue sdkmath.Int
@@ -132,7 +128,10 @@ func (m *Manager) EnqueueDepositWithdrawLSTTxs(batchID uint, msgType string) err
 				opAmount = stakerAssetInfo.WithdrawableAmount
 				expectedCheckValue = stakerAssetInfo.TotalDepositAmount.Sub(opAmount)
 			}
-
+			data, err := assetsAbi.Pack(msgType, asset.ClientChainID, PaddingAddressTo32(asset.Address), PaddingAddressTo32(staker.Address), opAmount.BigInt())
+			if err != nil {
+				return xerrors.Errorf("EnqueueDepositWithdrawLSTTxs, error when call assetsAbi.Pack,err:%w", err)
+			}
 			err = m.enqueueTxAndSaveRecord(&EnqueueTxParams{
 				staker:             &staker,
 				nonce:              &nonce,

@@ -167,7 +167,10 @@ func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
 					"asset", asset.Name, "assetAddr", asset.Address)
 				transaction.CheckResult = Successful
 			} else {
-				logger.Info("DepositWithdrawLSTCheck, the check is Failed", "txID", transaction.TxHash,
+				logger.Error("DepositWithdrawLSTCheck, the check is Failed",
+					"expectedAmount", expectedCheckAmount,
+					"actualAmount", res.TotalDepositAmount,
+					"txID", transaction.TxHash,
 					"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
 					"asset", asset.Name, "assetAddr", asset.Address)
 				transaction.CheckResult = Failed
@@ -232,7 +235,10 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 						"operatorName", operator.Name, "operatorAddr", operator.AccAddress())
 					transaction.CheckResult = Successful
 				} else {
-					logger.Info("EvmDelegationCheck, the check is Failed", "txID", transaction.TxHash,
+					logger.Error("EvmDelegationCheck, the check is Failed",
+						"expectedAmount", expectedCheckAmount,
+						"actualAmount", delegatedAmount,
+						"txID", transaction.TxHash,
 						"staker", staker.Name, "stakerAddr", staker.EvmAddress(),
 						"asset", asset.Name, "assetAddr", asset.Address,
 						"operatorName", operator.Name, "operatorAddr", operator.AccAddress())
