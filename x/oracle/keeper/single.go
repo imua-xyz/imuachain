@@ -58,7 +58,8 @@ func (k *Keeper) GetAggregatorContext(ctx sdk.Context) *aggregator.AggregatorCon
 
 func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext, c *cache.Cache) bool {
 	logger := k.Logger(ctx)
-	from := ctx.BlockHeight() - int64(common.MaxNonce) + 1
+	oracleParams := k.GetParams(ctx)
+	from := ctx.BlockHeight() - int64(oracleParams.MaxNonce) + 1
 	to := ctx.BlockHeight()
 
 	h, ok := k.GetValidatorUpdateBlock(ctx)
@@ -68,9 +69,13 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 		// no cache, this is the very first running, so go to initial process instead
 		return false
 	}
+
+	forceSealed := false
 	// #nosec G115
 	if int64(h.Block) >= from {
 		from = int64(h.Block) + 1
+		forceSealed = true
+		logger.Info("recacheAggregatorContext with validatorSet updated recently", "latestValidatorUpdateBlock", h.Block, "currentHeight", ctx.BlockHeight())
 	}
 
 	logger.Info("recacheAggregatorContext", "from", from, "to", to, "height", ctx.BlockHeight())
@@ -101,19 +106,6 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 		agc.SetParams(p)
 		setCommonParams(p)
 	} else {
-		forceSealed := false
-		latestValidatorUpdateBlock, _ := k.GetValidatorUpdateBlock(ctx)
-		oracleParams := k.GetParams(ctx)
-
-		delta := uint64(0)
-		if from > int64(oracleParams.MaxNonce) {
-			delta = uint64(from) - uint64(oracleParams.MaxNonce)
-		}
-
-		if latestValidatorUpdateBlock.Block > delta {
-			forceSealed = true
-		}
-
 		prev := int64(0)
 		for ; from < to; from++ {
 			// fill params
