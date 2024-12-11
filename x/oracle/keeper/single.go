@@ -102,8 +102,8 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 		setCommonParams(p)
 	} else {
 		forceSealed := false
-		latestValidatorUpdateBlock, _ := k.GetValidatorUpdateBlock(ctx)
-		if latestValidatorUpdateBlock.Block > uint64(from)-3 {
+		latestValidatorUpdateBlock, ok := k.GetValidatorUpdateBlock(ctx)
+		if ok && (latestValidatorUpdateBlock.Block > uint64(from)-uint64(common.MaxNonce)) {
 			forceSealed = true
 		}
 		prev := int64(0)

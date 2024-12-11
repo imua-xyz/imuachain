@@ -203,8 +203,10 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 			am.keeper.RemoveNonceWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
 		}
 	}()
-	latestValidatorUpdateBlock, _ := am.keeper.GetValidatorUpdateBlock(ctx)
-	if latestValidatorUpdateBlock.Block <= uint64(ctx.BlockHeight())-3 && len(validatorUpdates) == 0 {
+	latestValidatorUpdateBlock, ok := am.keeper.GetValidatorUpdateBlock(ctx)
+	p := am.keeper.GetParams(ctx)
+
+	if (!ok || (latestValidatorUpdateBlock.Block <= uint64(ctx.BlockHeight())-uint64(p.MaxNonce))) && len(validatorUpdates) == 0 {
 		// update&check slashing info
 		validatorPowers := agc.GetValidatorPowers()
 		validators := make([]string, 0, len(validatorPowers))
