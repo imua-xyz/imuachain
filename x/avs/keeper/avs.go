@@ -1,13 +1,14 @@
 package keeper
 
 import (
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"math/big"
 	"slices"
 	"strconv"
 	"strings"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ethereum/go-ethereum/common"
