@@ -129,7 +129,7 @@ var prepareCmd = &cobra.Command{
 var batchTestCmd = &cobra.Command{
 	Use:   "batch-test <msgType>",
 	Short: "batch test",
-	Long: "batch test the multiple functions, the msgType should be: " +
+	Long: "batch test the multiple functions, the msgType should be: \r\n" +
 		"depositLST,delegate,undelegate and withdrawLST",
 	Example: "test-tool batch-test depositLST --home .",
 	Args:    cobra.ExactArgs(1),
@@ -222,11 +222,11 @@ var QueryTestObjectsCmd = &cobra.Command{
 var QueryTxRecordCmd = &cobra.Command{
 	Use:   "query-tx-record <msgType> <batch-id> <status>",
 	Short: "query the transaction record",
-	Long: "query the transaction record according to the specified batch ID and status" +
-		"the status includes: " +
-		"0: Queued" +
-		"1: pending" +
-		"2: OnChainButFailed" +
+	Long: "query the transaction record according to the specified batch ID and status\r\n" +
+		"the status includes: \r\n" +
+		"0: Queued\r\n" +
+		"1: pending\r\n" +
+		"2: OnChainButFailed\r\n" +
 		"3: OnChainAndSuccessful",
 	Example: "test-tool query-tx-record depositLST 1 1 --home .",
 	Args:    cobra.ExactArgs(3),

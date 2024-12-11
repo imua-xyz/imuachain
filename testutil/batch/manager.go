@@ -154,9 +154,9 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 			return nil, xerrors.Errorf("too many http rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
 		}
 		logger.Info("http url", "url", url)
-		rc, err := rpc.DialContext(context.Background(), url)
+		rc, err := rpc.DialContext(manager.ctx, url)
 		if err != nil {
-			return nil, xerrors.Errorf("can't creat the evm http rpc, err:%w, url:%s", err, url)
+			return nil, xerrors.Errorf("can't create the evm http rpc, err:%w, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
 		manager.NodeEVMHTTPClients[i] = c
@@ -167,9 +167,9 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 			return nil, xerrors.Errorf("too many websocket rpc,index:%d,nodeNumber:%d", i, config.ChainValidatorNumber)
 		}
 		logger.Info("websocket url", "url", url)
-		rc, err := rpc.DialContext(context.Background(), url)
+		rc, err := rpc.DialContext(manager.ctx, url)
 		if err != nil {
-			return nil, xerrors.Errorf("can't creat the evm websocket rpc, err:%w, url:%s", err, url)
+			return nil, xerrors.Errorf("can't create the evm websocket rpc, err:%w, url:%s", err, url)
 		}
 		c := ethclient.NewClient(rc)
 		manager.NodeEVMWSClients[i] = c
