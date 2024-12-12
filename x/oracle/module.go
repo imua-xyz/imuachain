@@ -198,6 +198,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	// TODO: for v1 use mode==1, just check the failed feeders
 	_, failed, _, windowClosed := agc.SealRound(ctx, forceSeal)
 	defer func() {
+		logger.Debug("remove aggregators(workers) on window closed", "feederIDs", windowClosed)
 		for _, feederID := range windowClosed {
 			agc.RemoveWorker(feederID)
 			am.keeper.RemoveNonceWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
@@ -385,7 +386,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 		am.keeper.ResetUpdatedFeederIDs()
 	}
 
-	newRoundFeederIDs := agc.PrepareRoundEndBlock(ctx.BlockHeight(), 0)
+	newRoundFeederIDs := agc.PrepareRoundEndBlock(ctx, ctx.BlockHeight(), 0)
 	for _, feederID := range newRoundFeederIDs {
 		am.keeper.AddZeroNonceItemWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
 	}

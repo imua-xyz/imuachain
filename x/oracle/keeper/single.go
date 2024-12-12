@@ -65,7 +65,7 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 	h, ok := k.GetValidatorUpdateBlock(ctx)
 	recentParamsMap := k.GetAllRecentParamsAsMap(ctx)
 	if !ok || len(recentParamsMap) == 0 {
-		logger.Info("no validatorUpdateBlock found, go to initial process", "height", ctx.BlockHeight())
+		logger.Info("recacheAggregatorContext: no validatorUpdateBlock found, go to initial process", "height", ctx.BlockHeight())
 		// no cache, this is the very first running, so go to initial process instead
 		return false
 	}
@@ -74,7 +74,7 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 	// #nosec G115
 	if int64(forceSealHeight) >= from {
 		from = int64(h.Block) + 1
-		logger.Info("recacheAggregatorContext with validatorSet updated recently", "latestValidatorUpdateBlock", h.Block, "currentHeight", ctx.BlockHeight())
+		logger.Info("recacheAggregatorContext: with validatorSet updated recently", "latestValidatorUpdateBlock", h.Block, "currentHeight", ctx.BlockHeight())
 	}
 
 	logger.Info("recacheAggregatorContext", "from", from, "to", to, "height", ctx.BlockHeight())
@@ -118,7 +118,8 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 				}
 			}
 
-			agc.PrepareRoundEndBlock(from-1, forceSealHeight)
+			logger.Info("recacheAggregatorContext: prepareRoundEndBlock", "baseBlock", from-1, "forceSealHeight", forceSealHeight)
+			agc.PrepareRoundEndBlock(ctx, from-1, forceSealHeight)
 
 			if msgs := recentMsgs[from]; msgs != nil {
 				for _, msg := range msgs {
@@ -132,6 +133,7 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 				}
 			}
 			ctxReplay := ctx.WithBlockHeight(from)
+			logger.Info("recacheAggregatorContext: sealRound", "blockEnd", from)
 			agc.SealRound(ctxReplay, false)
 		}
 
@@ -144,7 +146,8 @@ func (k Keeper) recacheAggregatorContext(ctx sdk.Context, agc *aggregator.Aggreg
 			}
 		}
 	}
-	agc.PrepareRoundEndBlock(to-1, forceSealHeight)
+	logger.Info("recacheAggregatorContext: PrepareRoundEndBlock", "baseBlock", to-1)
+	agc.PrepareRoundEndBlock(ctx, to-1, forceSealHeight)
 
 	var pRet cache.ItemP
 	if updated := c.GetCache(&pRet); !updated {
@@ -181,7 +184,7 @@ func initAggregatorContext(ctx sdk.Context, agc *aggregator.AggregatorContext, k
 	// set validatorPower cache
 	c.AddCache(cache.ItemV(validatorPowers))
 
-	agc.PrepareRoundEndBlock(ctx.BlockHeight()-1, 0)
+	agc.PrepareRoundEndBlock(ctx, ctx.BlockHeight()-1, 0)
 }
 
 func (k *Keeper) ResetAggregatorContext() {
