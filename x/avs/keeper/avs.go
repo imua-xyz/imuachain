@@ -226,7 +226,11 @@ func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error
 	return ret, nil
 }
 
-// IsWhitelisted check if operator is in the whitelist
+// IsWhitelisted checks if an operator is in the AVS whitelist.
+// If the whitelist is empty, any operator is considered whitelisted.
+// Returns true if the operator is whitelisted, false otherwise.
+// Returns an error if the AVS address is invalid, the operator address is invalid,
+// or if the operator is not in the whitelist.
 func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (bool, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
@@ -241,7 +245,7 @@ func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (b
 		return true, nil
 	}
 	if !slices.Contains(avsInfo.Info.WhitelistAddress, operatorAddr) {
-		return false, errorsmod.Wrap(err, "not in the whitelist address of supported operators")
+		return false, errorsmod.Wrap(err, fmt.Sprintf("operator %s not in whitelist", operatorAddr))
 	}
 	return true, nil
 }

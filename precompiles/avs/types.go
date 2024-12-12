@@ -79,7 +79,7 @@ func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*
 		if err != nil {
 			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 7, "[]string", whitelistAddress)
 		}
-		exoAddresses[i] = accAddr.String()
+		exoWhiteAddresses[i] = accAddr.String()
 	}
 	avsParams.WhitelistAddress = exoWhiteAddresses
 	// string, since it is the address_id representation
