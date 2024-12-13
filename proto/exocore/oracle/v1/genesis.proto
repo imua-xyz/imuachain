@@ -23,9 +23,9 @@ message GenesisState {
   // prices of all tokens including NST
   repeated Prices prices_list = 2 [(gogoproto.nullable) = false];
 
-  //TODO: userDefinedTokenFeeder
-  // information for memory-cache recovery
-  // latest block on which the validator set be updated
+  // TODO: userDefinedTokenFeeder
+  //  information for memory-cache recovery
+  //  latest block on which the validator set be updated
   ValidatorUpdateBlock validator_update_block = 3;
   // index for the cached recent params
   IndexRecentParams index_recent_params = 4;

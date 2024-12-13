@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/cmd/config"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	tmdb "github.com/cometbft/cometbft-db"
@@ -26,6 +27,11 @@ import (
 )
 
 func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+	// force to initialize config at the start of each test
+	// otherwise, it will cause test failure because of different prefix
+	cfg := sdk.GetConfig()
+	config.SetBech32Prefixes(cfg)
+	config.SetBip44CoinType(cfg)
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 

@@ -108,7 +108,7 @@ message QueryTokenIndexesRequest {}
 
 // QueryTokenIndexesResponse is response type for Query/TokenIndexes RPC method
 message QueryTokenIndexesResponse {
-  //token_indexes includes all the token-index mapping
+  // token_indexes includes all the token-index mapping
   repeated TokenIndex token_indexes = 1;
 }
 
@@ -200,7 +200,7 @@ message QueryAllPricesResponse {
 // QueryGetValidatorUpdateBlockRequest
 message QueryGetValidatorUpdateBlockRequest {}
 
-//QueryGetValidatorUpdateBlockResponse
+// QueryGetValidatorUpdateBlockResponse
 message QueryGetValidatorUpdateBlockResponse {
   // ValidatorUpdateBlock tells the latest block on which the valdiator set was updated
   ValidatorUpdateBlock validator_update_block = 1 [(gogoproto.nullable) = false];

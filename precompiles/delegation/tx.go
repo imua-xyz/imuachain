@@ -43,9 +43,9 @@ func (p Precompile) Delegate(
 	args []interface{},
 ) ([]byte, error) {
 	// check the invalidation of caller contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 
 	delegationParams, err := p.GetDelegationParamsFromInputs(ctx, args)
@@ -70,9 +70,9 @@ func (p Precompile) Undelegate(
 	args []interface{},
 ) ([]byte, error) {
 	// check the invalidation of caller contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 
 	undelegationParams, err := p.GetDelegationParamsFromInputs(ctx, args)
@@ -102,9 +102,9 @@ func (p Precompile) AssociateOperatorWithStaker(
 	args []interface{},
 ) ([]byte, error) {
 	// check the invalidation of caller contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 
 	inputsLen := len(p.ABI.Methods[MethodAssociateOperatorWithStaker].Inputs)
@@ -155,9 +155,9 @@ func (p Precompile) DissociateOperatorFromStaker(
 	args []interface{},
 ) ([]byte, error) {
 	// check the invalidation of caller contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 	inputsLen := len(p.ABI.Methods[MethodDissociateOperatorFromStaker].Inputs)
 	if len(args) != inputsLen {

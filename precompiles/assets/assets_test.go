@@ -76,7 +76,6 @@ func paddingClientChainAddress(input []byte, outputLength int) []byte {
 func (s *AssetsPrecompileSuite) TestRunDeposit() {
 	// assetsprecompile params for test
 	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
-	exocoreLzAppEventTopic := "0xc6a377bfc4eb120024a8ac08eef205be16b817020812c73223e81d1bdb9708ec"
 	usdtAddress := paddingClientChainAddress(common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7"), assetstype.GeneralClientChainAddrLength)
 	usdcAddress := paddingClientChainAddress(common.FromHex("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"), assetstype.GeneralClientChainAddrLength)
 	clientChainLzID := 101
@@ -120,14 +119,13 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 			},
 			readOnly:    false,
 			expPass:     false,
-			errContains: assetstype.ErrNotEqualToLzAppAddr.Error(),
+			errContains: assetstype.ErrNotAuthorizedGateway.Error(),
 		},
 		{
 			name: "fail - depositTo transaction will fail because the contract caller isn't the exoCoreLzAppAddr",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    exocoreLzAppAddress,
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{exocoreLzAppAddress},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -135,14 +133,13 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 			},
 			readOnly:    false,
 			expPass:     false,
-			errContains: assetstype.ErrNotEqualToLzAppAddr.Error(),
+			errContains: assetstype.ErrNotAuthorizedGateway.Error(),
 		},
 		{
 			name: "fail - depositTo transaction will fail because the staked assetsprecompile hasn't been registered",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -157,8 +154,7 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 			name: "pass - depositTo transaction",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				assetAddr = usdtAddress
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
@@ -173,8 +169,7 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 			name: "pass - depositNST",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				assetAddr = usdtAddress
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
@@ -295,7 +290,6 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 // TestRun tests the precompiled Run method withdraw.
 func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 	// deposit params for test
-	exocoreLzAppEventTopic := "0xc6a377bfc4eb120024a8ac08eef205be16b817020812c73223e81d1bdb9708ec"
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	clientChainLzID := 101
 	withdrawAmount := big.NewInt(10)
@@ -346,8 +340,7 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 			name: "pass - withdraw via pre-compiles, LST",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -362,8 +355,7 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 			name: "pass - withdraw via pre-compiles, NST",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)

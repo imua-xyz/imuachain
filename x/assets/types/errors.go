@@ -66,9 +66,9 @@ var (
 		"there is no stored key for deposit module params",
 	)
 
-	ErrNotEqualToLzAppAddr = errorsmod.Register(
+	ErrNotAuthorizedGateway = errorsmod.Register(
 		ModuleName, 14,
-		"the address isn't equal to the layerZero gateway address",
+		"the address isn't authorized to be a gateway",
 	)
 
 	ErrInvalidGenesisData = errorsmod.Register(

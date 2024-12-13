@@ -124,7 +124,7 @@ var xxx_messageInfo_QueryTokenIndexesRequest proto.InternalMessageInfo
 
 // QueryTokenIndexesResponse is response type for Query/TokenIndexes RPC method
 type QueryTokenIndexesResponse struct {
-	//token_indexes includes all the token-index mapping
+	// token_indexes includes all the token-index mapping
 	TokenIndexes []*TokenIndex `protobuf:"bytes,1,rep,name=token_indexes,json=tokenIndexes,proto3" json:"token_indexes,omitempty"`
 }
 

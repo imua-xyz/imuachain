@@ -23,12 +23,12 @@ service Msg {
 message MsgCreatePrice {
   // creator tells which is the message sender and should sign this message
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
-  //refer to id from Params.TokenFeeders, 0 is reserved, invalid to use
+  // refer to id from Params.TokenFeeders, 0 is reserved, invalid to use
   uint64 feeder_id = 2 [(gogoproto.customname) = "FeederID"];
 
   // prices price with its corresponding source
   repeated PriceSource prices = 3;
-  //on which block commit does this message be built on
+  // on which block commit does this message be built on
   uint64 based_block = 4;
   // nonce represents the unique number to disginguish duplicated messages
   int32 nonce = 5;

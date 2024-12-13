@@ -29,9 +29,9 @@ type GenesisState struct {
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 	// prices of all tokens including NST
 	PricesList []Prices `protobuf:"bytes,2,rep,name=prices_list,json=pricesList,proto3" json:"prices_list"`
-	//TODO: userDefinedTokenFeeder
-	// information for memory-cache recovery
-	// latest block on which the validator set be updated
+	// TODO: userDefinedTokenFeeder
+	//  information for memory-cache recovery
+	//  latest block on which the validator set be updated
 	ValidatorUpdateBlock *ValidatorUpdateBlock `protobuf:"bytes,3,opt,name=validator_update_block,json=validatorUpdateBlock,proto3" json:"validator_update_block,omitempty"`
 	// index for the cached recent params
 	IndexRecentParams *IndexRecentParams `protobuf:"bytes,4,opt,name=index_recent_params,json=indexRecentParams,proto3" json:"index_recent_params,omitempty"`
