@@ -25,7 +25,7 @@ func (p Precompile) GetClientChains(
 			"GetClientChains",
 			"err", errors.New("no input is required"),
 		)
-		return method.Outputs.Pack(false, nil)
+		return method.Outputs.Pack(false, []uint32{})
 	}
 	ids, err := p.assetsKeeper.GetAllClientChainID(ctx)
 	if err != nil {
@@ -33,7 +33,7 @@ func (p Precompile) GetClientChains(
 			"GetClientChains",
 			"err", err,
 		)
-		return method.Outputs.Pack(false, nil)
+		return method.Outputs.Pack(false, []uint32{})
 	}
 	return method.Outputs.Pack(true, ids)
 }

@@ -167,8 +167,7 @@ service Query {
   }
 
   // QueryAssociatedStakersByOperator queries the associated stakers for the specified operator
-  rpc QueryAssociatedStakersByOperator(QueryAssociatedStakersByOperatorReq)
-      returns (QueryAssociatedStakersByOperatorResponse) {
+  rpc QueryAssociatedStakersByOperator(QueryAssociatedStakersByOperatorReq) returns (QueryAssociatedStakersByOperatorResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/delegation/v1/QueryAssociatedStakersByOperator/{operator}";
   }

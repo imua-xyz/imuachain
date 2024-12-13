@@ -163,7 +163,7 @@ func (ta *TypedArgs) GetRequiredBytesPrefix(index int, length uint32) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
-	if uint32(len(val)) < length {
+	if len(val) < int(length) {
 		return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, len(val), length)
 	}
 	return val[:length], nil

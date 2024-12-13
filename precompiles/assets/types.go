@@ -102,7 +102,7 @@ func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []interface{})
 		return nil, err
 	}
 
-	addressLength, err := ta.GetPositiveUint8(1) // Note: Changed from uint8 to uint32 for consistency
+	addressLength, err := ta.GetPositiveUint8(1)
 	if err != nil {
 		return nil, err
 	}
