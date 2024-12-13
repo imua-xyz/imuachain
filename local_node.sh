@@ -312,6 +312,4 @@ EOF
 fi
 
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
-# exocored start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --oracle --grpc.enable true
-exocored start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true
-
+exocored start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --oracle --grpc.enable true

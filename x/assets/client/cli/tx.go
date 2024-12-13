@@ -50,10 +50,6 @@ func UpdateParams() *cobra.Command {
 				},
 			}
 
-			if err := msg.ValidateBasic(); err != nil {
-				return err
-			}
-
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), msg)
 		},
 	}
