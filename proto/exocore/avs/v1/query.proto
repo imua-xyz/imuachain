@@ -22,8 +22,8 @@ message QueryAVSInfoResponse {
 
 // QueryAVSAddrByChainID is the request to query avs address by chain id
 message QueryAVSAddrByChainIDReq {
-  // chain_id is the chain id of the chain
-  string chain_id = 1 [(gogoproto.customname) = "ChainID"];
+  // chain is the chain id of the chain, with or without the version suffix.
+  string chain = 1;
 }
 
 // QueryAVSAddrByChainIDResponse is the response of avs address by chain id
@@ -84,7 +84,7 @@ service Query {
   }
   // QueryAVSAddrByChainID queries the avs address by chain id
   rpc QueryAVSAddrByChainID(QueryAVSAddrByChainIDReq) returns (QueryAVSAddrByChainIDResponse) {
-    option (google.api.http).get = "/exocore/avs/QueryAVSAddrByChainID";
+    option (google.api.http).get = "/exocore/avs/QueryAVSAddrByChainID/{chain}";
   }
   // Parameters queries the parameters of the module.
   rpc QuerySubmitTaskResult(QuerySubmitTaskResultReq) returns (QuerySubmitTaskResultResponse) {

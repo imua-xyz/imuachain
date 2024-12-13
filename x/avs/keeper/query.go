@@ -23,7 +23,7 @@ func (k Keeper) QueryAVSTaskInfo(ctx context.Context, req *types.QueryAVSTaskInf
 // QueryAVSAddrByChainID is an implementation of the QueryAVSAddrByChainID gRPC method
 func (k Keeper) QueryAVSAddrByChainID(ctx context.Context, req *types.QueryAVSAddrByChainIDReq) (*types.QueryAVSAddrByChainIDResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	isChainAvs, avsAddr := k.IsAVSByChainID(c, types.ChainIDWithoutRevision(req.ChainID))
+	isChainAvs, avsAddr := k.IsAVSByChainID(c, types.ChainIDWithoutRevision(req.Chain))
 	if !isChainAvs {
 		return nil, types.ErrNotYetRegistered
 	}

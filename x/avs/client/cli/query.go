@@ -83,7 +83,7 @@ func QueryAVSAddrByChainID() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryAVSAddrByChainIDReq{
-				ChainID: args[0],
+				Chain: args[0],
 			}
 			res, err := queryClient.QueryAVSAddrByChainID(context.Background(), req)
 			if err != nil {
