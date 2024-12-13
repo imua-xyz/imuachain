@@ -2,6 +2,7 @@ package assets
 
 import (
 	"errors"
+	"math"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -100,6 +101,9 @@ func (p Precompile) GetTokenInfo(
 	tokenInfo, err := p.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 	if err != nil {
 		return nil, err
+	}
+	if tokenInfo.AssetBasicInfo.Decimals > math.MaxUint8 {
+		return nil, errors.New("decimals exceed max uint8")
 	}
 
 	// Pack the values into the struct
