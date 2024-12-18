@@ -1,12 +1,12 @@
 package assets
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/big"
 
 	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
 )
 
@@ -186,5 +186,5 @@ func (ta *TypedArgs) GetRequiredHexAddress(index int, addressLength uint32) (str
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(val), nil
+	return hexutil.Encode(val), nil
 }

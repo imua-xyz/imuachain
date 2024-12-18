@@ -71,6 +71,9 @@ type CreateQueryContext func(height int64, prove bool) (sdk.Context, error)
 
 // StakerBalance is a struct to describe the balance of a staker for a specific asset
 // balance = withdrawable + delegated + pendingUndelegated
+// pendingUndelegated is the amount of the asset that is during unbonding period and not yet withdrawable
+// it would finally be withdrawable after the unbonding period, but the final amount may be less than the pendingUndelegated
+// because of the penalty during the unbonding period
 type StakerBalance struct {
 	StakerID           string
 	AssetID            string

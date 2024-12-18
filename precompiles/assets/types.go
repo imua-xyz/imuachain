@@ -25,7 +25,7 @@ var (
 
 func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, args []interface{}) (*assetskeeper.DepositWithdrawParams, error) {
 	ta := NewTypedArgs(args)
-	if err := ta.RequireLen(4); err != nil {
+	if err := ta.RequireLen(len(p.ABI.Methods[method.Name].Inputs)); err != nil {
 		return nil, err
 	}
 
@@ -90,7 +90,7 @@ func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, a
 
 func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []interface{}) (*assetstypes.ClientChainInfo, error) {
 	ta := NewTypedArgs(args)
-	if err := ta.RequireLen(5); err != nil {
+	if err := ta.RequireLen(len(p.ABI.Methods[MethodRegisterOrUpdateClientChain].Inputs)); err != nil {
 		return nil, err
 	}
 
