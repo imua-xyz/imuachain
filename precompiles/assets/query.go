@@ -14,6 +14,7 @@ const (
 	MethodIsRegisteredClientChain = "isRegisteredClientChain"
 	MethodIsAuthorizedGateway     = "isAuthorizedGateway"
 	MethodGetTokenInfo            = "getTokenInfo"
+	MethodGetStakerBalanceByToken = "getStakerBalanceByToken"
 )
 
 func (p Precompile) GetClientChains(
@@ -69,7 +70,7 @@ func (p Precompile) IsAuthorizedGateway(
 	if err := ta.RequireLen(len(p.ABI.Methods[MethodIsAuthorizedGateway].Inputs)); err != nil {
 		return nil, err
 	}
-	gateway, err := ta.GetAddress(0)
+	gateway, err := ta.GetEVMAddress(0)
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +94,17 @@ func (p Precompile) GetTokenInfo(
 	if err != nil {
 		return nil, err
 	}
-	tokenID, err := ta.GetRequiredBytes(1)
+
+	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, uint64(clientChainID))
 	if err != nil {
 		return nil, err
 	}
-	_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(uint64(clientChainID), "", string(tokenID))
+
+	assetAddress, err := ta.GetRequiredBytesPrefix(1, info.AddressLength)
+	if err != nil {
+		return nil, err
+	}
+	_, assetID := assetstype.GetStakerIDAndAssetID(uint64(clientChainID), nil, assetAddress)
 	tokenInfo, err := p.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 	if err != nil {
 		return nil, err
@@ -111,9 +118,60 @@ func (p Precompile) GetTokenInfo(
 		Name:          tokenInfo.AssetBasicInfo.Name,
 		Symbol:        tokenInfo.AssetBasicInfo.Symbol,
 		ClientChainID: clientChainID,
-		TokenID:       tokenID,
+		TokenID:       assetAddress,
 		Decimals:      uint8(tokenInfo.AssetBasicInfo.Decimals),
 		TotalStaked:   tokenInfo.StakingTotalAmount.BigInt(),
+	}
+
+	return method.Outputs.Pack(true, result)
+}
+
+func (p Precompile) GetStakerBalanceByToken(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	ta := NewTypedArgs(args)
+	if err := ta.RequireLen(len(p.ABI.Methods[MethodGetStakerBalanceByToken].Inputs)); err != nil {
+		return nil, err
+	}
+
+	clientChainID, err := ta.GetUint32(0)
+	if err != nil {
+		return nil, err
+	}
+
+	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, uint64(clientChainID))
+	if err != nil {
+		return nil, err
+	}
+
+	stakerAddress, err := ta.GetRequiredBytesPrefix(1, info.AddressLength)
+	if err != nil {
+		return nil, err
+	}
+
+	assetAddress, err := ta.GetRequiredBytesPrefix(2, info.AddressLength)
+	if err != nil {
+		return nil, err
+	}
+
+	stakerID, assetID := assetstype.GetStakerIDAndAssetID(uint64(clientChainID), stakerAddress, assetAddress)
+
+	balance, err := p.assetsKeeper.GetStakerBalanceByAsset(ctx, stakerID, assetID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := StakerBalance{
+		ClientChainID:      clientChainID,
+		StakerAddress:      stakerAddress,
+		TokenID:            assetAddress,
+		Balance:            balance.Balance,
+		Withdrawable:       balance.Withdrawable,
+		Delegated:          balance.Delegated,
+		PendingUndelegated: balance.PendingUndelegated,
+		TotalDeposited:     balance.TotalDeposited,
 	}
 
 	return method.Outputs.Pack(true, result)

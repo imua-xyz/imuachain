@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/ExocoreNetwork/exocore/utils"
@@ -68,6 +69,18 @@ type DeltaOperatorSingleAsset OperatorAssetInfo
 
 type CreateQueryContext func(height int64, prove bool) (sdk.Context, error)
 
+// StakerBalance is a struct to describe the balance of a staker for a specific asset
+// balance = withdrawable + delegated + pendingUndelegated
+type StakerBalance struct {
+	StakerID           string
+	AssetID            string
+	Balance            *big.Int
+	Withdrawable       *big.Int
+	Delegated          *big.Int
+	PendingUndelegated *big.Int
+	TotalDeposited     *big.Int
+}
+
 // GetStakerIDAndAssetID stakerID = stakerAddress+'_'+clientChainLzID,assetID =
 // assetAddress+'_'+clientChainLzID
 func GetStakerIDAndAssetID(
@@ -87,7 +100,7 @@ func GetStakerIDAndAssetID(
 }
 
 // GetStakerIDAndAssetIDFromStr stakerID = stakerAddress+'_'+clientChainLzID,assetID =
-// assetAddress+'_'+clientChainLzID
+// assetAddress+'_'+clientChainLzID, NOTE: the stakerAddress and assetsAddress should be in hex format
 func GetStakerIDAndAssetIDFromStr(
 	clientChainLzID uint64,
 	stakerAddress string,

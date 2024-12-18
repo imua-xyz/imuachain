@@ -174,6 +174,9 @@ func (p Precompile) UpdateToken(
 	return method.Outputs.Pack(true)
 }
 
+// UpdateAuthorizedGateways updates the authorized gateways for the assets module.
+// For mainnet, if the authority of the assets module is the governance module, this method would not work.
+// So it is mainly used for testing purposes.
 func (p Precompile) UpdateAuthorizedGateways(
 	ctx sdk.Context,
 	contract *vm.Contract,
@@ -181,7 +184,7 @@ func (p Precompile) UpdateAuthorizedGateways(
 	args []interface{},
 ) ([]byte, error) {
 	ta := NewTypedArgs(args)
-	gateways, err := ta.GetRequiredAddressSlice(0)
+	gateways, err := ta.GetRequiredEVMAddressSlice(0)
 	if err != nil {
 		return nil, err
 	}
@@ -198,7 +201,6 @@ func (p Precompile) UpdateAuthorizedGateways(
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("precompile successfully updated gateways")
 
 	return method.Outputs.Pack(true)
 }

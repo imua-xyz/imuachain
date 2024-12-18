@@ -21,6 +21,8 @@ type AssetsPrecompileSuite struct {
 	testutil.BaseTestSuite
 
 	precompile *assets.Precompile
+	nstStaked  math.Int
+	lstStaked  math.Int
 }
 
 func TestPrecompileTestSuite(t *testing.T) {
@@ -49,4 +51,5 @@ func (s *AssetsPrecompileSuite) SetupTest() {
 		},
 		StakingTotalAmount: depositAmountNST,
 	})
+	s.nstStaked = depositAmountNST
 }

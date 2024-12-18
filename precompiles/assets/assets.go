@@ -160,6 +160,12 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(false, NewEmptyTokenInfo())
 		}
+	case MethodGetStakerBalanceByToken:
+		bz, err = p.GetStakerBalanceByToken(ctx, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(false, NewEmptyStakerBalance())
+		}
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
@@ -186,7 +192,7 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodRegisterOrUpdateClientChain,
 		MethodRegisterToken, MethodUpdateToken, MethodUpdateAuthorizedGateways:
 		return true
-	case MethodGetClientChains, MethodIsRegisteredClientChain, MethodIsAuthorizedGateway, MethodGetTokenInfo:
+	case MethodGetClientChains, MethodIsRegisteredClientChain, MethodIsAuthorizedGateway, MethodGetTokenInfo, MethodGetStakerBalanceByToken:
 		return false
 	default:
 		return false

@@ -7,9 +7,6 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	sdkmath "cosmossdk.io/math"
 	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
@@ -156,7 +153,7 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 		return nil, nil, err
 	}
 
-	assetAddr, err := ta.GetRequiredBytesPrefix(1, info.AddressLength) // Must not be empty and must match length
+	assetAddr, err := ta.GetRequiredHexAddress(1, info.AddressLength) // Must not be empty and must match length
 	if err != nil {
 		return nil, nil, err
 	}
@@ -190,7 +187,7 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 	// Assign values to asset
 	asset := &assetstypes.AssetInfo{
 		LayerZeroChainID: uint64(clientChainID),
-		Address:          hexutil.Encode(assetAddr),
+		Address:          assetAddr,
 		Decimals:         uint32(decimal),
 		Name:             name,
 		MetaInfo:         metaInfo,
@@ -235,8 +232,6 @@ func (p Precompile) UpdateTokenFromInputs(ctx sdk.Context, args []interface{}) (
 		return 0, "", "", err
 	}
 
-	var assetAddr []byte
-
 	clientChainID, err = ta.GetPositiveUint32(0)
 	if err != nil {
 		return 0, "", "", err
@@ -247,7 +242,7 @@ func (p Precompile) UpdateTokenFromInputs(ctx sdk.Context, args []interface{}) (
 		return 0, "", "", err
 	}
 
-	assetAddr, err = ta.GetRequiredBytesPrefix(1, info.AddressLength)
+	hexAssetAddr, err = ta.GetRequiredHexAddress(1, info.AddressLength)
 	if err != nil {
 		return 0, "", "", err
 	}
@@ -260,48 +255,5 @@ func (p Precompile) UpdateTokenFromInputs(ctx sdk.Context, args []interface{}) (
 		return 0, "", "", fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metadata, len(metadata), assetstypes.MaxChainTokenMetaInfoLength)
 	}
 
-	hexAssetAddr = hexutil.Encode(assetAddr)
 	return clientChainID, hexAssetAddr, metadata, nil
-}
-
-func (p Precompile) ClientChainIDFromInputs(_ sdk.Context, args []interface{}) (uint32, error) {
-	inputsLen := len(p.ABI.Methods[MethodIsRegisteredClientChain].Inputs)
-	if len(args) != inputsLen {
-		return 0, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, inputsLen, len(args))
-	}
-	clientChainID, ok := args[0].(uint32)
-	if !ok {
-		return 0, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
-	}
-	return clientChainID, nil
-}
-
-func (p Precompile) GatewaysFromInputs(_ sdk.Context, args []interface{}) ([]string, error) {
-	ta := NewTypedArgs(args)
-	if err := ta.RequireLen(1); err != nil {
-		return nil, err
-	}
-
-	gateways, ok := args[0].([]common.Address)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "[]common.Address", args[0])
-	}
-	if len(gateways) == 0 {
-		return nil, fmt.Errorf(exocmn.ErrEmptyGateways)
-	}
-
-	gatewaysStr := make([]string, len(gateways))
-	for i, gateway := range gateways {
-		gatewaysStr[i] = gateway.Hex()
-	}
-	return gatewaysStr, nil
-}
-
-func (p Precompile) GatewayFromInputs(_ sdk.Context, args []interface{}) (common.Address, error) {
-	ta := NewTypedArgs(args)
-	if err := ta.RequireLen(1); err != nil {
-		return common.Address{}, err
-	}
-
-	return ta.GetAddress(0)
 }

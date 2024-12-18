@@ -97,6 +97,82 @@
   },
   {
     "type": "function",
+    "name": "getStakerBalanceByToken",
+    "inputs": [
+      {
+        "name": "clientChainId",
+        "type": "uint32",
+        "internalType": "uint32"
+      },
+      {
+        "name": "stakerAddress",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "tokenId",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "success",
+        "type": "bool",
+        "internalType": "bool"
+      },
+      {
+        "name": "stakerBalance",
+        "type": "tuple",
+        "internalType": "struct StakerBalance",
+        "components": [
+          {
+            "name": "clientChainID",
+            "type": "uint32",
+            "internalType": "uint32"
+          },
+          {
+            "name": "stakerAddress",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "tokenID",
+            "type": "bytes",
+            "internalType": "bytes"
+          },
+          {
+            "name": "balance",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "withdrawable",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "delegated",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "pendingUndelegated",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "totalDeposited",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "getTokenInfo",
     "inputs": [
       {

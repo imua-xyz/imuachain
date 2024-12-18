@@ -1,6 +1,7 @@
 package assets
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -81,7 +82,7 @@ func (ta *TypedArgs) GetBigInt(index int) (*big.Int, error) {
 	return val, nil
 }
 
-func (ta *TypedArgs) GetAddress(index int) (common.Address, error) {
+func (ta *TypedArgs) GetEVMAddress(index int) (common.Address, error) {
 	if index >= len(ta.args) {
 		return common.Address{}, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
@@ -92,7 +93,7 @@ func (ta *TypedArgs) GetAddress(index int) (common.Address, error) {
 	return val, nil
 }
 
-func (ta *TypedArgs) GetAddressSlice(index int) ([]common.Address, error) {
+func (ta *TypedArgs) GetEVMAddressSlice(index int) ([]common.Address, error) {
 	if index >= len(ta.args) {
 		return nil, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
@@ -169,8 +170,8 @@ func (ta *TypedArgs) GetRequiredBytesPrefix(index int, length uint32) ([]byte, e
 	return val[:length], nil
 }
 
-func (ta *TypedArgs) GetRequiredAddressSlice(index int) ([]common.Address, error) {
-	val, err := ta.GetAddressSlice(index)
+func (ta *TypedArgs) GetRequiredEVMAddressSlice(index int) ([]common.Address, error) {
+	val, err := ta.GetEVMAddressSlice(index)
 	if err != nil {
 		return nil, err
 	}
@@ -178,4 +179,12 @@ func (ta *TypedArgs) GetRequiredAddressSlice(index int) ([]common.Address, error
 		return nil, fmt.Errorf(exocmn.ErrEmptyGateways)
 	}
 	return val, nil
+}
+
+func (ta *TypedArgs) GetRequiredHexAddress(index int, addressLength uint32) (string, error) {
+	val, err := ta.GetRequiredBytesPrefix(index, addressLength)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(val), nil
 }
