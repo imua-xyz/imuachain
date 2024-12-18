@@ -49,7 +49,6 @@ func (p Precompile) RegisterAVS(
 	// The AVS registration is done by the calling contract.
 	avsParams.AvsAddress = contract.CallerAddress
 	avsParams.Action = avstypes.RegisterAction
-	fmt.Println("call RegisterAVS, the avs addr is:", avsParams.AvsAddress)
 	// Finally, update the AVS information in the keeper.
 	err = p.avsKeeper.UpdateAVSInfo(ctx, avsParams)
 	if err != nil {

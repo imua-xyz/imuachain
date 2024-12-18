@@ -595,8 +595,11 @@ func (m *Manager) Start() error {
 		if err := m.EnqueueAndCheckTxsInBatch(assets.MethodWithdrawLST); err != nil {
 			return xerrors.Errorf("withdrawal batch failed: %w", err)
 		}
-		logger.Info("Start: finish enqueuing and checking all withdrawal txs")
+		logger.Info("Start: finish enqueuing and checking all withdrawal txs", "EachTestInterval", m.config.EachTestInterval)
 		time.Sleep(time.Duration(m.config.EachTestInterval) * time.Second)
+		if err := m.FundAndCheckStakers(); err != nil {
+			return xerrors.Errorf("failed to fund and check the stakers %w", err)
+		}
 		return nil
 	})
 

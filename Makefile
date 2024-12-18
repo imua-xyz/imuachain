@@ -137,9 +137,9 @@ $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
 build-test-tool:
-	go build $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/test-tool
+	go build $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/exocore-test-tool
 install-test-tool:
-	go install $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/test-tool
+	go install $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/exocore-test-tool
 
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true

@@ -1,11 +1,12 @@
-# test-tool
+# exocore-test-tool
 
 This is a custom tool designed to batch-send test transactions to the Exocore chain. It can be used for stress testing
 or routine automated testing of the Exocore chain.
 
 Currently, all test transactions are executed by directly calling precompiles and are signed using automatically
 generated private keys. Therefore, a customized Exocore node is required for use, with the node configured to disable
-the precompile's gateway contract address check.
+the precompile's gateway contract address check. The branch of customized Exocore is as below:
+https://github.com/ExocoreNetwork/exocore/tree/pressure-test
 
 When using the test tool to batch-send test transactions, you can dynamically adjust the number of test objects and the
 transaction sending rate in the configuration file to control the test volume. This allows for routine automated testing
@@ -50,6 +51,60 @@ The current implementation primarily provides the following functionalities:
 * The `prepare` and `batch-test` commands break down the functionalities provided by the start command. The `prepare`
   command handles the creation, funding, registration, and opting-in of test objects, while the `batch-test` command
   allows for manual batch testing of different transaction types.
+
+The specific processes for the two types of testing are as follows:
+A local node needs to be started through `local_node.sh` before testing.
+
+1. automated testing:
+    Step 1: Initialize the configuration file in current directory
+
+    ```shell
+    exocore-test-tool init --home
+    ```
+
+    Step 2: Start the test tool
+
+    ```shell
+    exocore-test-tool start --home .
+    ```
+
+2. manual testing:
+
+    Step 1: Initialize the configuration file in current directory
+
+    ```shell
+    exocore-test-tool init --home
+    ```
+
+    Step 2: Prepare test environment
+
+    ```shell
+     exocore-test-tool prepare --home .
+    ```
+
+    Step 3: Run batch tests
+
+    ```shell
+    exocore-test-tool batch-test depositLST --home .
+    ```
+
+We can query transactions for a specific batch and status using the following command, either during or after the test:
+
+```shell
+exocore-test-tool query-tx-record <msgType> <batch-id> <status>
+```
+
+## go binding generation
+
+In the implementation of the test tool, since it needs to directly call precompiled contracts, the Go binding file for
+the contract will be used. This binding file is automatically generated using abigen. For example, the Go binding for
+the asset precompile can be generated using the following command:
+
+```shell
+abigen --abi abi.json --pkg assets --out assets_binding.go  
+```
+
+We need to regenerate the Go bindings using the above command when the ABI has been changed.
 
 ## todo
 

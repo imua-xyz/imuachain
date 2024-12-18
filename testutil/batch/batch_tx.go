@@ -207,8 +207,11 @@ func (m *Manager) EnqueueDelegationTxs(batchID uint, msgType string) error {
 				delegatedAmount, err := m.QueryDelegatedAmount(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String(), operator.Address)
 				if msgType == delegation.MethodUndelegate {
 					if err == nil {
-						// undelegates all amount, the expected check value will be zero
-						opAmount = delegatedAmount
+						// Undelegates half of the total amount. The expected check value will also be half.
+						// The reason for keeping some amount delegated is to ensure there is always a portion
+						// delegated to the operators, which helps in testing the Exocore chain.
+						opAmount = delegatedAmount.Quo(sdkmath.NewInt(2))
+						expectedCheckValue = delegatedAmount.Sub(opAmount)
 					}
 					// opAmount will be zero if the delegation amount can't be quried, then the undelegation
 					// will be skipped when checking the opAmount.
@@ -266,7 +269,7 @@ func (m *Manager) EnqueueDelegationTxs(batchID uint, msgType string) error {
 	return nil
 }
 
-func (m *Manager) SignAndSendTxs(tx interface{}) error {
+func (m *Manager) SignAndSendTxs(tx interface{}) (string, string, error) {
 	// sign and send the transaction
 	var txID string
 	evmTx, ok := tx.(*EvmTxInQueue)
@@ -274,18 +277,18 @@ func (m *Manager) SignAndSendTxs(tx interface{}) error {
 		txHash, err := m.SignAndSendEvmTx(evmTx)
 		if err != nil {
 			logger.Error("can't sign and send the evm tx", "txHash", txHash, "err", err)
-			return err
+			return txID, evmTx.TxRecord.Type, err
 		}
 		txID = txHash.String()
 	} else {
-		return xerrors.Errorf("unsupported transaction type: %v", reflect.TypeOf(tx))
+		return txID, "", xerrors.Errorf("unsupported transaction type: %v", reflect.TypeOf(tx))
 	}
 	// todo: address the cosmos transaction for the delegation/undelegation of Exo token.
 
 	// update the tx record in the local db for future check
 	height, err := m.NodeEVMHTTPClients[DefaultNodeIndex].BlockNumber(m.ctx)
 	if err != nil {
-		return err
+		return txID, evmTx.TxRecord.Type, err
 	}
 	evmTx.TxRecord.SendTime = time.Now().String()
 	evmTx.TxRecord.Status = Pending
@@ -293,9 +296,9 @@ func (m *Manager) SignAndSendTxs(tx interface{}) error {
 	evmTx.TxRecord.TxHash = txID
 	err = SaveObject[Transaction](m.GetDB(), *evmTx.TxRecord)
 	if err != nil {
-		return err
+		return txID, evmTx.TxRecord.Type, err
 	}
-	return nil
+	return txID, evmTx.TxRecord.Type, nil
 }
 
 func (m *Manager) TickHandle(handleRate int, handle func() (bool, error)) error {
@@ -336,12 +339,12 @@ func (m *Manager) DequeueAndSignSendTxs() error {
 		select {
 		case tx := <-m.TxsQueue:
 			m.QueueSize.Add(-1)
-			err := m.SignAndSendTxs(tx)
+			txID, txType, err := m.SignAndSendTxs(tx)
 			if err != nil {
 				logger.Error("DequeueAndSignSendTxs: can't sign and send the tx", "err", err)
 				return false, err
 			}
-			logger.Info("DequeueAndSignSendTxs, sign and send tx successfully")
+			logger.Info("DequeueAndSignSendTxs, sign and send tx successfully", "txType", txType, "txID", txID)
 		default:
 			return false, nil
 		}

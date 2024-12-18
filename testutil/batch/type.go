@@ -58,11 +58,18 @@ type TestToolConfig struct {
 	// 3. undelegation -> wait for transaction check(only check whether the transaction is on chain)
 	// 4. withdraw -> wait for transaction check
 	// TxNumberPerSec indicates the number of transactions sent to Exocore chain per second.
+	// Currently, since we are using the `NoOpMempool`, it does not support sending transactions
+	// with different nonces from the same sender at a very high rate. Therefore, it is recommended
+	// to set this parameter to 1 for now. In the future,consider modifying this parameter configuration
+	// to support slower transaction sending rates.
 	TxNumberPerSec    int `mapstructure:"tx-number-per-second" toml:"tx-number-per-second"`
 	TxChecksPerSecond int `mapstructure:"tx-checks-per-second" toml:"tx-checks-per-second"`
 	// EachTestInterval indicates the interval of single test. The staker will start another test
 	// After this interval.
 	EachTestInterval int64 `mapstructure:"each-test-interval" toml:"each-test-interval"`
+	// configure this parameter to test the voting power and reward distribution, the delegations will soon be
+	// undelegated in the next batch test.
+	IntervalAfterDelegations int64 `mapstructure:"interval-after-delegations" toml:"interval-after-delegations"`
 	// SingleTxCheckInterval is an interval waiting to check the transaction.
 	SingleTxCheckInterval int64 `mapstructure:"single-tx-check-interval" toml:"single-tx-check-interval"`
 	// TxWaitExpiration defines the timeout period for checking a transaction.
@@ -84,24 +91,25 @@ var DefaultTestToolConfig = TestToolConfig{
 	AVSNumber:      2,
 	AssetNumber:    5,
 	// this private key is from the local_node.sh
-	FaucetSk:              "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE",
-	StakerExoAmount:       100,
-	OperatorExoAmount:     10,
-	AVSExoAmount:          10,
-	ChainValidatorNumber:  1,
-	ChainID:               "exocoretestnet_233-1",
-	DefaultClientChainID:  101,
-	NodesRPC:              []string{"http://127.0.0.1:26657"},
-	NodesEVMRPCHTTP:       []string{"http://127.0.0.1:8545"},
-	NodesEVMRPCWebsocket:  []string{"ws://127.0.0.1:8546"},
-	TxNumberPerSec:        10,
-	TxChecksPerSecond:     10,
-	EachTestInterval:      600, // 10 minutes
-	SingleTxCheckInterval: 6,   // 6 seconds
-	TxWaitExpiration:      60,  // 1 minutes
-	BatchTxsCheckInterval: 120, // 2 minutes
-	AddrNumberInMultiSend: 10,
-	TxsQueueBufferSize:    100,
+	FaucetSk:                 "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE",
+	StakerExoAmount:          100,
+	OperatorExoAmount:        10,
+	AVSExoAmount:             10,
+	ChainValidatorNumber:     1,
+	ChainID:                  "exocoretestnet_233-1",
+	DefaultClientChainID:     101,
+	NodesRPC:                 []string{"http://127.0.0.1:26657"},
+	NodesEVMRPCHTTP:          []string{"http://127.0.0.1:8545"},
+	NodesEVMRPCWebsocket:     []string{"ws://127.0.0.1:8546"},
+	TxNumberPerSec:           1,
+	TxChecksPerSecond:        10,
+	EachTestInterval:         10 * 60,     // 10 minutes
+	IntervalAfterDelegations: 3 * 60 * 60, // 3 hours
+	SingleTxCheckInterval:    6,           // 6 seconds
+	TxWaitExpiration:         60,          // 1 minutes
+	BatchTxsCheckInterval:    2 * 60,      // 2 minutes
+	AddrNumberInMultiSend:    10,
+	TxsQueueBufferSize:       100,
 }
 
 type HelperRecord struct {

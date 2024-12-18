@@ -45,7 +45,7 @@ func WaitForEvmTxReceipt(client *ethclient.Client, txHash common.Hash, waitDurat
 		}
 
 		// Log a message indicating the receipt is not yet available
-		logger.Info("can't get the receipt of EVM transaction, continue waiting", "err", err)
+		logger.Info("can't get the receipt of EVM transaction, continue waiting", "waitDuration", waitDuration, "err", err)
 
 		// Wait for the specified duration before retrying
 		time.Sleep(waitDuration)
@@ -103,7 +103,7 @@ func (m *Manager) SignAndSendEvmTx(txInfo *EvmTxInQueue) (common.Hash, error) {
 		GasPrice: gasPrice,
 		Data:     msg.Data,
 	})
-	logger.Info("SignAndSendEvmTx", "from", txInfo.From, "to", retTx.To(),
+	logger.Info("SignAndSendEvmTx", "from", strings.ToLower(txInfo.From.String()), "to", retTx.To(),
 		"nonce", retTx.Nonce(), "value", retTx.Value(), "gasPrice", retTx.GasPrice(),
 		"gas", retTx.Gas(), "dataLength", len(retTx.Data()), "time", time.Now().String())
 	signTx, err := types.SignTx(retTx, m.EthSigner, sk)

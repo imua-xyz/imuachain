@@ -124,12 +124,12 @@ func (m *Manager) PrecompileTxOnChainCheck(batchID uint, msgType string) error {
 
 // DepositWithdrawLSTCheck : By default, we require each batch to follow the order of
 // deposits -> delegations -> undelegations -> withdrawals for batch testing.
-// During delegation, only half of the deposit amount is used, with the other half
-// reserved for withdrawals. Therefore, when checking:
-// 1. After the deposits are completed, the totalDepositAmount should be equal to:
-// DefaultDepositAmount + batchID * (DefaultDepositAmount / 2) where batchID starts from 0.
-// 2. After the withdrawal tests are completed, the totalDepositAmount should be:
-// (DefaultDepositAmount / 2) * (batchID + 1).
+// `DefaultDepositAmount` is used as the amount for batch deposit tests.
+// Therefore, we only need to verify if `StakerAssetInfo.total_deposit_amount`
+// has increased by `DefaultDepositAmount`.
+// For batch withdrawal tests, we will withdraw the total withdrawable amount
+// and record the opAmount. Thus, when checking withdrawal test transactions,
+// we only need to verify if `StakerAssetInfo.total_deposit_amount` has decreased by opAmount.
 func (m *Manager) DepositWithdrawLSTCheck(batchID uint, msgType string) error {
 	stakerOpFunc := func(_ uint, _ int64, staker *Staker) error {
 		assetOpFunc := func(_ uint, _ int64, asset *Asset) error {
@@ -205,7 +205,10 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 			operatorOpFunc := func(_ uint, _ int64, operator *Operator) error {
 				delegatedAmount, err := m.QueryDelegatedAmount(uint64(asset.ClientChainID), staker.EvmAddress().String(), asset.Address.String(), operator.Address)
 				if err != nil {
-					return err
+					logger.Error("EvmDelegationCheck, error occurs when querying the delegated amount",
+						"staker", staker.Name, "asset", asset.Name, "operator", operator.Name, "err", err)
+					// return nil to continue the next check
+					return nil
 				}
 				var transaction Transaction
 				err = m.GetDB().

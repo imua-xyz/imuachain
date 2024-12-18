@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"time"
 
 	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -83,6 +84,20 @@ func (m *Manager) LoadSequence(addr common.Address) (uint64, error) {
 		return value.(uint64), nil
 	}
 	return 0, xerrors.Errorf("can't load the sequence from the sync map, addr:%s", addr)
+}
+
+func (m *Manager) FundAndCheckStakers() error {
+	logger.Info("start funding stakers")
+	err := FundingObjects(m, &Staker{}, m.config.StakerExoAmount)
+	if err != nil {
+		return xerrors.Errorf("can't fund stakers,err:%w", err)
+	}
+	time.Sleep(time.Duration(m.config.BatchTxsCheckInterval) * time.Second)
+	err = CheckObjectsBalance(m, &Staker{}, m.config.StakerExoAmount)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Funding : send Exo token to the test objects, which can be used for the tx fee in the next tests.
