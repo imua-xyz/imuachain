@@ -84,7 +84,7 @@ service Query {
   }
   // QueryAVSAddrByChainID queries the avs address by chain id
   rpc QueryAVSAddrByChainID(QueryAVSAddrByChainIDReq) returns (QueryAVSAddrByChainIDResponse) {
-    option (google.api.http).get = "/exocore/avs/QueryAVSAddrByChainID/{chain}";
+    option (google.api.http).get = "/exocore/avs/v1/QueryAVSAddrByChainID/{chain}";
   }
   // Parameters queries the parameters of the module.
   rpc QuerySubmitTaskResult(QuerySubmitTaskResultReq) returns (QuerySubmitTaskResultResponse) {

@@ -20907,72 +20907,6 @@
         ]
       }
     },
-    "/exocore/avs/QueryAVSAddrByChainID/{chain}": {
-      "get": {
-        "summary": "QueryAVSAddrByChainID queries the avs address by chain id",
-        "operationId": "QueryAVSAddrByChainID",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "avs_address": {
-                  "type": "string",
-                  "title": "avs_address is the hex address of avs"
-                }
-              },
-              "title": "QueryAVSAddrByChainIDResponse is the response of avs address by chain id"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "chain",
-            "description": "chain is the chain id of the chain, with or without the version suffix.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
     "/exocore/avs/v1/GetAVSTaskInfoReq": {
       "get": {
         "summary": "TaskInfo queries the task information.",
@@ -21138,6 +21072,72 @@
             "description": "task_id is the task identifier.",
             "in": "query",
             "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/avs/v1/QueryAVSAddrByChainID/{chain}": {
+      "get": {
+        "summary": "QueryAVSAddrByChainID queries the avs address by chain id",
+        "operationId": "QueryAVSAddrByChainID",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "avs_address": {
+                  "type": "string",
+                  "title": "avs_address is the hex address of avs"
+                }
+              },
+              "title": "QueryAVSAddrByChainIDResponse is the response of avs address by chain id"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chain",
+            "description": "chain is the chain id of the chain, with or without the version suffix.",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
