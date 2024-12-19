@@ -198,6 +198,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	// TODO: for v1 use mode==1, just check the failed feeders
 	_, failed, _, windowClosed := agc.SealRound(ctx, forceSeal)
 	defer func() {
+		logger.Debug("remove aggregators(workers) on window closed", "feederIDs", windowClosed)
 		for _, feederID := range windowClosed {
 			agc.RemoveWorker(feederID)
 			am.keeper.RemoveNonceWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
@@ -261,7 +262,8 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 				continue
 			}
 
-			index := uint64(reportedInfo.IndexOffset % am.keeper.GetReportedRoundsWindow(ctx))
+			reportedRoundsWindow := am.keeper.GetReportedRoundsWindow(ctx)
+			index := uint64(reportedInfo.IndexOffset % reportedRoundsWindow)
 			reportedInfo.IndexOffset++
 			// Update reported round bit array & counter
 			// This counter just tracks the sum of the bit array
@@ -302,8 +304,8 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 				)
 			}
 
-			minHeight := reportedInfo.StartHeight + am.keeper.GetReportedRoundsWindow(ctx)
-			maxMissed := am.keeper.GetReportedRoundsWindow(ctx) - minReportedPerWindow
+			minHeight := reportedInfo.StartHeight + reportedRoundsWindow
+			maxMissed := reportedRoundsWindow - minReportedPerWindow
 			// if we are past the minimum height and the validator has missed too many rounds reporting prices, punish them
 			if height > minHeight && reportedInfo.MissedRoundsCounter > maxMissed {
 				consAddr, err := sdk.ConsAddressFromBech32(validator)
@@ -384,7 +386,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 		am.keeper.ResetUpdatedFeederIDs()
 	}
 
-	newRoundFeederIDs := agc.PrepareRoundEndBlock(uint64(ctx.BlockHeight()))
+	newRoundFeederIDs := agc.PrepareRoundEndBlock(ctx, ctx.BlockHeight(), 0)
 	for _, feederID := range newRoundFeederIDs {
 		am.keeper.AddZeroNonceItemWithFeederIDForValidators(ctx, feederID, agc.GetValidators())
 	}

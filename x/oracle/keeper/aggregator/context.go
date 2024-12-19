@@ -217,6 +217,7 @@ func (agc *AggregatorContext) NewCreatePrice(ctx sdk.Context, msg *types.MsgCrea
 // when validatorSet update, set force to true, to seal all alive round
 // returns: 1st successful sealed, need to be written to KVStore, 2nd: failed sealed tokenID, use previous price to write to KVStore
 func (agc *AggregatorContext) SealRound(ctx sdk.Context, force bool) (success []*PriceItemKV, failed []uint64, sealed []uint64, windowClosed []uint64) {
+	logger := ctx.Logger()
 	feederIDs := make([]uint64, 0, len(agc.rounds))
 	for fID := range agc.rounds {
 		feederIDs = append(feederIDs, fID)
@@ -248,17 +249,18 @@ func (agc *AggregatorContext) SealRound(ctx sdk.Context, force bool) (success []
 				if expired || outOfWindow || force {
 					failed = append(failed, feeder.TokenID)
 					if !expired {
+						logger.Debug("set round status from open to closed", "feederID", feederID, "force", force, "block", height)
 						round.status = roundStatusClosed
 					}
 					// TODO: optimize operformance
 					sealed = append(sealed, feederID)
 					if !windowClosedMap[feederID] {
-						// this should be clear after performanceReview
+						logger.Debug("remove aggregators(workers) force/expired", "feederID", feederID)
 						agc.RemoveWorker(feederID)
 					}
 				}
 			default:
-				ctx.Logger().Info("mode other than 1 is not support now")
+				logger.Info("mode other than 1 is not support now")
 			}
 		}
 		// all status: 1->2, remove its aggregator
@@ -270,30 +272,34 @@ func (agc *AggregatorContext) SealRound(ctx sdk.Context, force bool) (success []
 }
 
 // PrepareEndBlock is called at EndBlock stage, to prepare the roundInfo for the next block(of input block)
-// func (agc *AggregatorContext) PrepareRoundEndBlock(ctx sdk.Context, block uint64) {
-func (agc *AggregatorContext) PrepareRoundEndBlock(block uint64) (newRoundFeederIDs []uint64) {
+func (agc *AggregatorContext) PrepareRoundEndBlock(ctx sdk.Context, block int64, forceSealHeight uint64) (newRoundFeederIDs []uint64) {
 	if block < 1 {
 		return newRoundFeederIDs
 	}
+	logger := ctx.Logger()
+	blockUint64 := uint64(block)
 
 	for feederID, feeder := range agc.params.GetTokenFeeders() {
 		if feederID == 0 {
 			continue
 		}
-		if (feeder.EndBlock > 0 && feeder.EndBlock <= block) || feeder.StartBaseBlock > block {
+		if (feeder.EndBlock > 0 && feeder.EndBlock <= blockUint64) || feeder.StartBaseBlock > blockUint64 {
 			// this feeder is inactive
 			continue
 		}
 
-		delta := block - feeder.StartBaseBlock
+		delta := blockUint64 - feeder.StartBaseBlock
 		left := delta % feeder.Interval
 		count := delta / feeder.Interval
-		latestBasedblock := block - left
+		latestBasedblock := blockUint64 - left
 		latestNextRoundID := feeder.StartRoundID + count
+
+		logger.Info("PrepareRoundEndBlock", "feederID", feederID, "block", block, "latestBasedblock", latestBasedblock, "forceSealHeight", forceSealHeight, "position_in_round", left)
 
 		feederIDUint64 := uint64(feederID)
 		round := agc.rounds[feederIDUint64]
 		if round == nil {
+			logger.Info("PrepareRoundEndBlock: initialize round info")
 			round = &roundInfo{
 				basedBlock:  latestBasedblock,
 				nextRoundID: latestNextRoundID,
@@ -301,9 +307,17 @@ func (agc *AggregatorContext) PrepareRoundEndBlock(block uint64) (newRoundFeeder
 			if left >= uint64(common.MaxNonce) {
 				// since do sealround properly before prepareRound, this only possible happens in node restart, and nonce has been taken care of in kvStore
 				round.status = roundStatusClosed
+				logger.Info("PrepareRoundEndBlock: status_closed")
 			} else {
 				round.status = roundStatusOpen
+				logger.Info("PrepareRoundEndBlock: status_open")
+				if latestBasedblock < forceSealHeight {
+					// debug
+					logger.Debug("PrepareRoundEndBlock: status_closed due to forceseal")
+					round.status = roundStatusClosed
+				}
 				if left == 0 {
+					logger.Info("PrepareRoundEndBlock: add a new round")
 					// set nonce for corresponding feederID for new roud start
 					newRoundFeederIDs = append(newRoundFeederIDs, feederIDUint64)
 				}
@@ -312,6 +326,7 @@ func (agc *AggregatorContext) PrepareRoundEndBlock(block uint64) (newRoundFeeder
 		} else {
 			// prepare a new round for exist roundInfo
 			if left == 0 {
+				logger.Info("PrepareRoundEndBlock: set existing round status to open")
 				round.basedBlock = latestBasedblock
 				round.nextRoundID = latestNextRoundID
 				round.status = roundStatusOpen
@@ -320,6 +335,7 @@ func (agc *AggregatorContext) PrepareRoundEndBlock(block uint64) (newRoundFeeder
 				// drop previous worker
 				agc.RemoveWorker(feederIDUint64)
 			} else if round.status == roundStatusOpen && left >= uint64(common.MaxNonce) {
+				logger.Info("PrepareRoundEndBlock: set existing round status to closed")
 				// this shouldn't happen, if do sealround properly before prepareRound, basically for test only
 				// TODO: print error log here
 				round.status = roundStatusClosed
