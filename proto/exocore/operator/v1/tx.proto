@@ -221,6 +221,8 @@ message SlashExecutionInfo {
   repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
   // undelegation_filter_height records the height before which undelegations are not slashed
   int64 undelegation_filter_height = 5;
+  // the historical voting power at the time of the slash event.
+  int64 historical_voting_power = 6;
 }
 
 // OperatorSlashInfo is the slash info of operator

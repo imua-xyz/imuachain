@@ -390,7 +390,9 @@ func (k *Keeper) CalculateUSDValueForOperator(
 				return err
 			}
 			decimal = assetInfo.AssetBasicInfo.Decimals
-			ret.StakingAndWaitUnbonding = ret.StakingAndWaitUnbonding.Add(CalculateUSDValue(state.TotalAmount.Add(state.PendingUndelegationAmount), price.Value, decimal, price.Decimal))
+			usdValue := CalculateUSDValue(state.TotalAmount.Add(state.PendingUndelegationAmount), price.Value, decimal, price.Decimal)
+			ctx.Logger().Info("CalculateUSDValueForOperator: get price for slash", "assetID", assetID, "assetDecimal", decimal, "price", price, "totalAmount", state.TotalAmount, "pendingUndelegationAmount", state.PendingUndelegationAmount, "StakingAndWaitUnbonding", ret.StakingAndWaitUnbonding, "addUSDValue", usdValue)
+			ret.StakingAndWaitUnbonding = ret.StakingAndWaitUnbonding.Add(usdValue)
 		} else {
 			if prices == nil {
 				return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, "CalculateUSDValueForOperator prices map is nil")

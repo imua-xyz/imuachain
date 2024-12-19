@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/ExocoreNetwork/exocore/utils"
@@ -87,6 +88,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		SlashUndelegations:       make([]types.SlashFromUndelegation, 0),
 		SlashAssetsPool:          make([]types.SlashFromAssetsPool, 0),
 		UndelegationFilterHeight: snapshotHeight,
+		HistoricalVotingPower:    parameter.Power,
 	}
 	// slash from the unbonding stakers
 	if parameter.SlashEventHeight < ctx.BlockHeight() {
@@ -155,10 +157,15 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if err != nil {
 		return err
 	}
-	snapshotKeyLastHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEventHeight)
+	slashEventEpochStartHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEventHeight)
 	if err != nil {
 		return err
 	}
+	k.Logger(ctx).Info("execute slashing", "eventHeight", parameter.SlashEventHeight, "avsAddr", parameter.AVSAddr, "operator", parameter.Operator, "slashID", parameter.SlashID, "slashType", parameter.SlashType)
+	// Marshal the snapshot to improve the user experience when printing the voting power decimal through the logger
+	// so we don't have to address the error here.
+	snapshotJSON, _ := json.Marshal(snapshot)
+	k.Logger(ctx).Info("the voting power snapshot info is:", "filter_height", slashEventEpochStartHeight, "snapshot", string(snapshotJSON))
 	// get the historical voting power from the snapshot for the other AVSs
 	if !parameter.IsDogFood {
 		votingPower := types.GetSpecifiedVotingPower(parameter.Operator.String(), snapshot.OperatorVotingPowers)
@@ -178,7 +185,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	// slash assets according to the input information
 	// using cache context to ensure the atomicity of slash execution.
 	cc, writeFunc := ctx.CacheContext()
-	executionInfo, err := k.SlashAssets(cc, snapshotKeyLastHeight, parameter)
+	executionInfo, err := k.SlashAssets(cc, slashEventEpochStartHeight, parameter)
 	if err != nil {
 		return err
 	}
