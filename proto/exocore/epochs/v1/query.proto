@@ -14,11 +14,11 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/epochs/types";
 service Query {
   // EpochInfos provide a list of currently running epochs.
   rpc EpochInfos(QueryEpochsInfoRequest) returns (QueryEpochsInfoResponse) {
-    option (google.api.http).get = "/exocore/dogfood/v1/epochs";
+    option (google.api.http).get = "/exocore/epochs/v1/epochs";
   }
   // CurrentEpoch provide the current epoch for the specified identifier.
   rpc CurrentEpoch(QueryCurrentEpochRequest) returns (QueryCurrentEpochResponse) {
-    option (google.api.http).get = "/exocore/dogfood/v1/current_epoch";
+    option (google.api.http).get = "/exocore/epochs/v1/current_epoch/{identifier}";
   }
 }
 

@@ -13,32 +13,32 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/dogfood/types";
 service Query {
   // Params queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/exocore/dogfood/params";
+    option (google.api.http).get = "/exocore/dogfood/v1/params";
   }
 
   // OptOutsToFinish queries the operators whose opt-outs will finish at the given epoch.
   rpc OptOutsToFinish(QueryOptOutsToFinishRequest) returns (AccountAddresses) {
-    option (google.api.http).get = "/exocore/dogfood/opt_outs_to_finish/{epoch}";
+    option (google.api.http).get = "/exocore/dogfood/v1/opt_outs_to_finish/{epoch}";
   }
 
   // OperatorOptOutFinishEpoch queries the epoch when the operator's opt-out will finish.
   rpc OperatorOptOutFinishEpoch(QueryOperatorOptOutFinishEpochRequest) returns (QueryOperatorOptOutFinishEpochResponse) {
-    option (google.api.http).get = "/exocore/dogfood/operator_opt_out_finish_epoch/{operator_acc_addr}";
+    option (google.api.http).get = "/exocore/dogfood/v1/operator_opt_out_finish_epoch/{operator_acc_addr}";
   }
 
   // UndelegationsToMature queries the undelegations that will mature at the given epoch.
   rpc UndelegationsToMature(QueryUndelegationsToMatureRequest) returns (UndelegationRecordKeys) {
-    option (google.api.http).get = "/exocore/dogfood/undelegations_to_mature/{epoch}";
+    option (google.api.http).get = "/exocore/dogfood/v1/undelegations_to_mature/{epoch}";
   }
 
   // UndelegationMaturityEpoch queries the epoch when the undelegation will mature.
   rpc UndelegationMaturityEpoch(QueryUndelegationMaturityEpochRequest) returns (QueryUndelegationMaturityEpochResponse) {
-    option (google.api.http).get = "/exocore/dogfood/undelegation_maturity_epoch/{record_key}";
+    option (google.api.http).get = "/exocore/dogfood/v1/undelegation_maturity_epoch/{record_key}";
   }
 
   // QueryValidator queries the validator for the given consensus address.
   rpc QueryValidator(QueryValidatorRequest) returns (ExocoreValidator) {
-    option (google.api.http).get = "/exocore/dogfood/validator/{cons_addr}";
+    option (google.api.http).get = "/exocore/dogfood/v1/validator/{cons_addr}";
   }
 }
 
