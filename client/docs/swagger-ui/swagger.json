@@ -20229,7 +20229,7 @@
         ]
       }
     },
-    "/exocore/v1/feedistribution/params": {
+    "/exocore/feedistribution/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "FeeDistributionParams",
