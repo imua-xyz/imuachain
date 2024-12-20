@@ -129,6 +129,14 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		} else {
 			writeFunc()
 		}
+	case MethodUpdateAuthorizedGateways:
+		bz, err = p.UpdateAuthorizedGateways(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(false)
+		} else {
+			writeFunc()
+		}
 	// queries
 	case MethodGetClientChains:
 		bz, err = p.GetClientChains(ctx, method, args)
@@ -141,12 +149,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		if err != nil {
 			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(false, false)
-		}
-	case MethodUpdateAuthorizedGateways:
-		bz, err = p.UpdateAuthorizedGateways(ctx, contract, method, args)
-		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
-			bz, err = method.Outputs.Pack(false)
 		}
 	case MethodIsAuthorizedGateway:
 		bz, err = p.IsAuthorizedGateway(ctx, method, args)
