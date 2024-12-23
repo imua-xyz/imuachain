@@ -149,7 +149,7 @@ func QueStakingAssetInfo() *cobra.Command {
 			_, assetID := types.GetStakerIDAndAssetIDFromStr(clientChainID, "", args[0])
 			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryStakingAssetInfo{
-				AssetID: assetID, // already lowercase
+				AssetId: assetID, // already lowercase
 			}
 			res, err := queryClient.QueStakingAssetInfo(context.Background(), req)
 			if err != nil {
@@ -210,7 +210,7 @@ func QueStakerAssetInfos() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryStakerAssetInfo{
-				StakerID: strings.ToLower(stakerID),
+				StakerId: strings.ToLower(stakerID),
 			}
 			res, err := queryClient.QueStakerAssetInfos(context.Background(), req)
 			if err != nil {
@@ -244,8 +244,8 @@ func QueStakerSpecifiedAssetAmount() *cobra.Command {
 			}
 			stakerID, assetID := types.GetStakerIDAndAssetIDFromStr(clientChainLzID, args[1], args[2])
 			req := &types.QuerySpecifiedAssetAmountReq{
-				StakerID: stakerID, // already lowercase
-				AssetID:  assetID,  // already lowercase
+				StakerId: stakerID, // already lowercase
+				AssetId:  assetID,  // already lowercase
 			}
 			res, err := queryClient.QueStakerSpecifiedAssetAmount(context.Background(), req)
 			if err != nil {
@@ -317,7 +317,7 @@ func QueOperatorSpecifiedAssetAmount() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryOperatorSpecifiedAssetAmountReq{
 				OperatorAddr: accAddr.String(), // already lowercase
-				AssetID:      assetID,          // already lowercase
+				AssetId:      assetID,          // already lowercase
 			}
 			res, err := queryClient.QueOperatorSpecifiedAssetAmount(context.Background(), req)
 			if err != nil {

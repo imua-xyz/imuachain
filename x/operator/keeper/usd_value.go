@@ -493,12 +493,12 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// Return true to stop iteration, false to continue iterating
 		if keys.OperatorAddr == operator.String() {
-			if _, ok := assets[keys.AssetID]; ok {
-				price, ok := prices[keys.AssetID]
+			if _, ok := assets[keys.AssetId]; ok {
+				price, ok := prices[keys.AssetId]
 				if !ok {
-					return true, errorsmod.Wrapf(operatortypes.ErrKeyNotExistInMap, "CalculateUSDValueForStaker Price not found for assetID: %s", keys.AssetID)
+					return true, errorsmod.Wrapf(operatortypes.ErrKeyNotExistInMap, "CalculateUSDValueForStaker Price not found for assetID: %s", keys.AssetId)
 				}
-				operatorAsset, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operator, keys.AssetID)
+				operatorAsset, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operator, keys.AssetId)
 				if err != nil {
 					return true, err
 				}
@@ -506,7 +506,7 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 				if err != nil {
 					return true, err
 				}
-				assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, keys.AssetID)
+				assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, keys.AssetId)
 				if err != nil {
 					return true, err
 				}

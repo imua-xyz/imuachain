@@ -37,8 +37,8 @@ func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slas
 	}
 
 	return &types.SlashFromUndelegation{
-		StakerID: undelegation.StakerID,
-		AssetID:  undelegation.AssetID,
+		StakerID: undelegation.StakerId,
+		AssetID:  undelegation.AssetId,
 		Amount:   slashAmount,
 	}
 }

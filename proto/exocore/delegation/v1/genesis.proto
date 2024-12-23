@@ -46,7 +46,7 @@ message StakersByOperator {
 // DelegationsByStaker is a list of delegations for a single staker.
 message DelegationsByStaker {
   // staker_id is the staker's account address + _ + l0 chain id (hex).``
-  string staker_id = 1 [(gogoproto.customname) = "StakerID"];
+  string staker_id = 1;
   // delegations is the list of delegations for the staker, indexed by the
   // asset_id.
   repeated DelegatedSingleAssetInfo delegations = 2 [(gogoproto.nullable) = false];
@@ -55,7 +55,7 @@ message DelegationsByStaker {
 // StakerToOperator is the association between a staker and an operator.
 message StakerToOperator {
   // staker_id is the staker's account address + _ + l0 chain id (hex).
-  string staker_id = 1 [(gogoproto.customname) = "StakerID"];
+  string staker_id = 1;
   // operator is the bech32 address of the operator.
   string operator = 2;
 }

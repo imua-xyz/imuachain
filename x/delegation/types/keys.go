@@ -77,7 +77,7 @@ func ParseStakerAssetIDAndOperator(key []byte) (keys *SingleDelegationInfoReq, e
 	if err != nil {
 		return nil, err
 	}
-	return &SingleDelegationInfoReq{StakerID: stringList[0], AssetID: stringList[1], OperatorAddr: stringList[2]}, nil
+	return &SingleDelegationInfoReq{StakerId: stringList[0], AssetId: stringList[1], OperatorAddr: stringList[2]}, nil
 }
 
 // GetUndelegationRecordKey returns the key for the undelegation record. The caller must ensure that the parameters

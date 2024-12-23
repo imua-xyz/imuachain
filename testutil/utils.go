@@ -326,11 +326,11 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	associations := []delegationtypes.StakerToOperator{
 		{
 			Operator: operator1.String(),
-			StakerID: stakerID1,
+			StakerId: stakerID1,
 		},
 		{
 			Operator: operator2.String(),
-			StakerID: stakerID2,
+			StakerId: stakerID2,
 		},
 	}
 	stakersByOperator := []delegationtypes.StakersByOperator{

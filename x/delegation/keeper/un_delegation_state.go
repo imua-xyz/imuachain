@@ -51,7 +51,7 @@ func (k *Keeper) SetUndelegationRecords(ctx sdk.Context, records []types.Undeleg
 		singleRecKey := types.GetUndelegationRecordKey(record.BlockNumber, record.LzTxNonce, record.TxHash, record.OperatorAddr)
 		singleRecordStore.Set(singleRecKey, bz)
 
-		stakerKey := types.GetStakerUndelegationRecordKey(record.StakerID, record.AssetID, record.LzTxNonce)
+		stakerKey := types.GetStakerUndelegationRecordKey(record.StakerId, record.AssetId, record.LzTxNonce)
 		stakerUndelegationStore.Set(stakerKey, singleRecKey)
 
 		pendingUndelegationKey := types.GetPendingUndelegationRecordKey(record.CompleteBlockNumber, record.LzTxNonce)
@@ -70,7 +70,7 @@ func (k *Keeper) DeleteUndelegationRecord(ctx sdk.Context, record *types.Undeleg
 	singleRecKey := types.GetUndelegationRecordKey(record.BlockNumber, record.LzTxNonce, record.TxHash, record.OperatorAddr)
 	singleRecordStore.Delete(singleRecKey)
 
-	stakerKey := types.GetStakerUndelegationRecordKey(record.StakerID, record.AssetID, record.LzTxNonce)
+	stakerKey := types.GetStakerUndelegationRecordKey(record.StakerId, record.AssetId, record.LzTxNonce)
 	stakerUndelegationStore.Delete(stakerKey)
 
 	pendingUndelegationKey := types.GetPendingUndelegationRecordKey(record.CompleteBlockNumber, record.LzTxNonce)

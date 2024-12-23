@@ -128,7 +128,7 @@ func (m *Manager) AssetsCheck(opFuncIfCheckFail func(assetID string, asset *Asse
 		_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(
 			uint64(asset.ClientChainID), "", asset.Address.String())
 		req := &assetstypes.QueryStakingAssetInfo{
-			AssetID: assetID, // already lowercase
+			AssetId: assetID, // already lowercase
 		}
 		_, err := queryClient.QueStakingAssetInfo(m.ctx, req)
 		if err != nil {

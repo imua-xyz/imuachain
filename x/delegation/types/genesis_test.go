@@ -171,9 +171,9 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				gs.Associations = make([]types.StakerToOperator, 2)
-				gs.Associations[0].StakerID = stakerID
+				gs.Associations[0].StakerId = stakerID
 				gs.Associations[0].Operator = operatorAddress.String()
-				gs.Associations[1].StakerID = stakerID
+				gs.Associations[1].StakerId = stakerID
 				gs.Associations[1].Operator = operatorAddress.String()
 			},
 			unmalleate: func(gs *types.GenesisState) {
@@ -186,7 +186,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			expPass:  true,
 			malleate: func(gs *types.GenesisState) {
 				gs.Associations = make([]types.StakerToOperator, 1)
-				gs.Associations[0].StakerID = stakerID
+				gs.Associations[0].StakerId = stakerID
 				gs.Associations[0].Operator = operatorAddress.String()
 			},
 			unmalleate: func(gs *types.GenesisState) {
