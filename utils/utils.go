@@ -27,7 +27,7 @@ const (
 	TestnetChainID = "exocoretestnet_233"
 	// DefaultChainID is the standard chain id used for testing purposes
 	DefaultChainID = MainnetChainID + "-1"
-	// BaseDenom defines the Evmos mainnet denomination
+	// BaseDenom defines the Exocore mainnet denomination
 	BaseDenom = "hua"
 
 	// DelimiterForCombinedKey is the delimiter used for constructing the combined key.
