@@ -3,13 +3,10 @@ package assets
 import (
 	"errors"
 	"fmt"
-	"math/big"
 	"regexp"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-
-	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	sdkmath "cosmossdk.io/math"
 	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
@@ -27,187 +24,177 @@ var (
 )
 
 func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, args []interface{}) (*assetskeeper.DepositWithdrawParams, error) {
-	inputsLen := len(p.ABI.Methods[method.Name].Inputs)
-	if len(args) != inputsLen {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, inputsLen, len(args))
+	ta := NewTypedArgs(args)
+	if err := ta.RequireLen(len(p.ABI.Methods[method.Name].Inputs)); err != nil {
+		return nil, err
 	}
-	depositWithdrawParams := &assetskeeper.DepositWithdrawParams{}
-	clientChainID, ok := args[0].(uint32)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
-	}
-	depositWithdrawParams.ClientChainLzID = uint64(clientChainID)
 
-	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, depositWithdrawParams.ClientChainLzID)
+	// Get client chain info first for address length validation
+	clientChainID, err := ta.GetPositiveUint32(0)
 	if err != nil {
 		return nil, err
 	}
-	clientChainAddrLength := info.AddressLength
+
+	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, uint64(clientChainID))
+	if err != nil {
+		return nil, err
+	}
+
+	stakerAddr, err := ta.GetRequiredBytesPrefix(2, info.AddressLength)
+	if err != nil {
+		return nil, err
+	}
+
+	opAmount, err := ta.GetPositiveBigInt(3)
+	if err != nil {
+		return nil, err
+	}
+
+	params := &assetskeeper.DepositWithdrawParams{
+		ClientChainLzID: uint64(clientChainID),
+		StakerAddress:   stakerAddr,
+		OpAmount:        sdkmath.NewIntFromBigInt(opAmount),
+	}
 
 	switch method.Name {
-	// deposit and withdraw transactions
 	case MethodDepositLST, MethodWithdrawLST:
-		// the length of client chain address inputted by caller is 32, so we need to check the length and remove the padding according to the actual length.
-		assetAddr, ok := args[1].([]byte)
-		if !ok || len(assetAddr) == 0 {
-			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
+		assetAddr, err := ta.GetRequiredBytesPrefix(1, info.AddressLength)
+		if err != nil {
+			return nil, err
 		}
-		// #nosec G115
-		if uint32(len(assetAddr)) < clientChainAddrLength {
-			return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, len(assetAddr), clientChainAddrLength)
-		}
-		depositWithdrawParams.AssetsAddress = assetAddr[:clientChainAddrLength]
+
+		params.AssetsAddress = assetAddr
 		if method.Name == MethodDepositLST {
-			depositWithdrawParams.Action = assetstypes.DepositLST
+			params.Action = assetstypes.DepositLST
 		} else {
-			depositWithdrawParams.Action = assetstypes.WithdrawLST
+			params.Action = assetstypes.WithdrawLST
 		}
 	case MethodDepositNST, MethodWithdrawNST:
-		validatorID, ok := args[1].([]byte)
-		// the length of the public key / identifier is not fixed. it depends on the source chain.
-		// for example, in Ethereum we have a uint256 == validator index but in Sui it is 96 bytes.
-		if !ok || len(validatorID) == 0 {
-			return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
+		params.ValidatorID, err = ta.GetRequiredBytes(1) // In NST case, the second parameter is validatorID
+		if err != nil {
+			return nil, err
 		}
-		// generate the virtual address for native restaking asset
-		depositWithdrawParams.AssetsAddress = assetstypes.GenerateNSTAddr(clientChainAddrLength)
-		// todo: add a check for the validator pubkey
-		depositWithdrawParams.ValidatorID = validatorID
+
+		params.AssetsAddress = assetstypes.GenerateNSTAddr(info.AddressLength)
 		if method.Name == MethodDepositNST {
-			depositWithdrawParams.Action = assetstypes.DepositNST
+			params.Action = assetstypes.DepositNST
 		} else {
-			depositWithdrawParams.Action = assetstypes.WithdrawNST
+			params.Action = assetstypes.WithdrawNST
 		}
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
-	stakerAddr, ok := args[2].([]byte)
-	if !ok || len(stakerAddr) == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "[]byte", args[2])
-	}
-	// #nosec G115
-	if uint32(len(stakerAddr)) < clientChainAddrLength {
-		return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, len(stakerAddr), clientChainAddrLength)
-	}
-	depositWithdrawParams.StakerAddress = stakerAddr[:clientChainAddrLength]
-
-	opAmount, ok := args[3].(*big.Int)
-	if !ok || opAmount == nil || !(opAmount.Cmp(big.NewInt(0)) == 1) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "*big.Int", args[3])
-	}
-	depositWithdrawParams.OpAmount = sdkmath.NewIntFromBigInt(opAmount)
-
-	return depositWithdrawParams, nil
+	return params, nil
 }
 
 func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []interface{}) (*assetstypes.ClientChainInfo, error) {
-	inputsLen := len(p.ABI.Methods[MethodRegisterOrUpdateClientChain].Inputs)
-	if len(args) != inputsLen {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, inputsLen, len(args))
+	ta := NewTypedArgs(args)
+	if err := ta.RequireLen(len(p.ABI.Methods[MethodRegisterOrUpdateClientChain].Inputs)); err != nil {
+		return nil, err
 	}
-	clientChain := assetstypes.ClientChainInfo{}
-	clientChainID, ok := args[0].(uint32)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
-	}
-	clientChain.LayerZeroChainID = uint64(clientChainID)
 
-	addressLength, ok := args[1].(uint8)
-	if !ok || addressLength == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "uint8", args[1])
+	clientChainID, err := ta.GetPositiveUint32(0)
+	if err != nil {
+		return nil, err
+	}
+
+	addressLength, err := ta.GetPositiveUint8(1)
+	if err != nil {
+		return nil, err
 	}
 	if addressLength < assetstypes.MinClientChainAddrLength {
 		return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, addressLength, assetstypes.MinClientChainAddrLength)
 	}
-	// #nosec G115
-	clientChain.AddressLength = uint32(addressLength)
 
-	name, ok := args[2].(string)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "string", args[2])
+	name, err := ta.GetRequiredString(2)
+	if err != nil {
+		return nil, err
 	}
-	if name == "" || len(name) > assetstypes.MaxChainTokenNameLength {
+	if len(name) > assetstypes.MaxChainTokenNameLength {
 		return nil, fmt.Errorf(exocmn.ErrInvalidNameLength, name, len(name), assetstypes.MaxChainTokenNameLength)
 	}
-	clientChain.Name = name
 
-	metaInfo, ok := args[3].(string)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "string", args[2])
+	metaInfo, err := ta.GetRequiredString(3)
+	if err != nil {
+		return nil, err
 	}
 	if metaInfo == "" || len(metaInfo) > assetstypes.MaxChainTokenMetaInfoLength {
 		return nil, fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metaInfo, len(metaInfo), assetstypes.MaxChainTokenMetaInfoLength)
 	}
-	clientChain.MetaInfo = metaInfo
 
-	signatureType, ok := args[4].(string)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 4, "string", args[4])
+	signatureType, err := ta.GetString(4)
+	if err != nil {
+		return nil, err
 	}
-	clientChain.SignatureType = signatureType
 
-	return &clientChain, nil
+	return &assetstypes.ClientChainInfo{
+		LayerZeroChainID: uint64(clientChainID),
+		AddressLength:    uint32(addressLength),
+		Name:             name,
+		MetaInfo:         metaInfo,
+		SignatureType:    signatureType,
+	}, nil
 }
 
-func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (assetstypes.AssetInfo, oracletypes.OracleInfo, error) {
-	inputsLen := len(p.ABI.Methods[MethodRegisterToken].Inputs)
-	if len(args) != inputsLen {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, inputsLen, len(args))
+func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*assetstypes.AssetInfo, *oracletypes.OracleInfo, error) {
+	ta := NewTypedArgs(args)
+	if err := ta.RequireLen(len(p.ABI.Methods[MethodRegisterToken].Inputs)); err != nil {
+		return nil, nil, err
 	}
-	asset := assetstypes.AssetInfo{}
-	oracleInfo := oracletypes.OracleInfo{}
 
-	clientChainID, ok := args[0].(uint32)
-	if !ok {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
-	}
-	asset.LayerZeroChainID = uint64(clientChainID)
-	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, asset.LayerZeroChainID)
+	clientChainID, err := ta.GetPositiveUint32(0) // Must not be zero
 	if err != nil {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, err
+		return nil, nil, err
 	}
-	clientChainAddrLength := info.AddressLength
 
-	assetAddr, ok := args[1].([]byte)
-	if !ok || assetAddr == nil {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
+	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, uint64(clientChainID))
+	if err != nil {
+		return nil, nil, err
 	}
-	// #nosec G115
-	if uint32(len(assetAddr)) < clientChainAddrLength {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrInvalidAddrLength, len(assetAddr), clientChainAddrLength)
-	}
-	asset.Address = hexutil.Encode(assetAddr[:clientChainAddrLength])
 
-	decimal, ok := args[2].(uint8)
-	if !ok {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "uint8", args[2])
+	assetAddr, err := ta.GetRequiredHexAddress(1, info.AddressLength) // Must not be empty and must match length
+	if err != nil {
+		return nil, nil, err
 	}
-	// #nosec G115
-	asset.Decimals = uint32(decimal)
 
-	name, ok := args[3].(string)
-	if !ok {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "string", args[3])
+	decimal, err := ta.GetUint8(2) // No specific non-zero check needed
+	if err != nil {
+		return nil, nil, err
 	}
-	if name == "" || len(name) > assetstypes.MaxChainTokenNameLength {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrInvalidNameLength, name, len(name), assetstypes.MaxChainTokenNameLength)
-	}
-	asset.Name = name
 
-	metaInfo, ok := args[4].(string)
-	if !ok {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrContractInputParaOrType, 4, "string", args[4])
+	name, err := ta.GetRequiredString(3) // Must not be empty
+	if err != nil {
+		return nil, nil, err
 	}
-	if metaInfo == "" || len(metaInfo) > assetstypes.MaxChainTokenMetaInfoLength {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metaInfo, len(metaInfo), assetstypes.MaxChainTokenMetaInfoLength)
+	if len(name) > assetstypes.MaxChainTokenNameLength {
+		return nil, nil, fmt.Errorf(exocmn.ErrInvalidNameLength, name, len(name), assetstypes.MaxChainTokenNameLength)
 	}
-	asset.MetaInfo = metaInfo
 
-	oracleInfoStr, ok := args[5].(string)
-	if !ok {
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, fmt.Errorf(exocmn.ErrContractInputParaOrType, 5, "string", args[5])
+	metaInfo, err := ta.GetRequiredString(4) // Must not be empty
+	if err != nil {
+		return nil, nil, err
 	}
+	if len(metaInfo) > assetstypes.MaxChainTokenMetaInfoLength {
+		return nil, nil, fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metaInfo, len(metaInfo), assetstypes.MaxChainTokenMetaInfoLength)
+	}
+
+	oracleInfoStr, err := ta.GetRequiredString(5) // Must not be empty
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Assign values to asset
+	asset := &assetstypes.AssetInfo{
+		LayerZeroChainID: uint64(clientChainID),
+		Address:          assetAddr,
+		Decimals:         uint32(decimal),
+		Name:             name,
+		MetaInfo:         metaInfo,
+	}
+
+	// Parse oracleInfoStr
+	oracleInfo := &oracletypes.OracleInfo{}
 	parsed := strings.Split(oracleInfoStr, ",")
 	l := len(parsed)
 	switch {
@@ -233,59 +220,40 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (assets
 		oracleInfo.Chain.Name = parsed[1]
 		oracleInfo.Token.Decimal = parsed[2]
 	default:
-		return assetstypes.AssetInfo{}, oracletypes.OracleInfo{}, errors.New(exocmn.ErrInvalidOracleInfo)
+		return nil, nil, errors.New(exocmn.ErrInvalidOracleInfo)
 	}
 
 	return asset, oracleInfo, nil
 }
 
-func (p Precompile) UpdateTokenFromInputs(
-	ctx sdk.Context, args []interface{},
-) (clientChainID uint32, hexAssetAddr string, metadata string, err error) {
-	inputsLen := len(p.ABI.Methods[MethodUpdateToken].Inputs)
-	if len(args) != inputsLen {
-		return 0, "", "", fmt.Errorf(cmn.ErrInvalidNumberOfArgs, inputsLen, len(args))
+func (p Precompile) UpdateTokenFromInputs(ctx sdk.Context, args []interface{}) (clientChainID uint32, hexAssetAddr string, metadata string, err error) {
+	ta := NewTypedArgs(args)
+	if err := ta.RequireLen(len(p.ABI.Methods[MethodUpdateToken].Inputs)); err != nil {
+		return 0, "", "", err
 	}
 
-	clientChainID, ok := args[0].(uint32)
-	if !ok {
-		return 0, "", "", fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
+	clientChainID, err = ta.GetPositiveUint32(0)
+	if err != nil {
+		return 0, "", "", err
 	}
 
 	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, uint64(clientChainID))
 	if err != nil {
 		return 0, "", "", err
 	}
-	clientChainAddrLength := info.AddressLength
-	assetAddr, ok := args[1].([]byte)
-	if !ok || assetAddr == nil {
-		return 0, "", "", fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
-	}
-	// #nosec G115
-	if uint32(len(assetAddr)) < clientChainAddrLength {
-		return 0, "", "", fmt.Errorf(exocmn.ErrInvalidAddrLength, len(assetAddr), clientChainAddrLength)
-	}
-	hexAssetAddr = hexutil.Encode(assetAddr[:clientChainAddrLength])
 
-	metadata, ok = args[2].(string)
-	if !ok {
-		return 0, "", "", fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "string", args[3])
+	hexAssetAddr, err = ta.GetRequiredHexAddress(1, info.AddressLength)
+	if err != nil {
+		return 0, "", "", err
 	}
-	if len(metadata) > assetstypes.MaxChainTokenMetaInfoLength || len(metadata) == 0 {
+
+	metadata, err = ta.GetRequiredString(2)
+	if err != nil {
+		return 0, "", "", err
+	}
+	if len(metadata) > assetstypes.MaxChainTokenMetaInfoLength {
 		return 0, "", "", fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metadata, len(metadata), assetstypes.MaxChainTokenMetaInfoLength)
 	}
 
 	return clientChainID, hexAssetAddr, metadata, nil
-}
-
-func (p Precompile) ClientChainIDFromInputs(_ sdk.Context, args []interface{}) (uint32, error) {
-	inputsLen := len(p.ABI.Methods[MethodIsRegisteredClientChain].Inputs)
-	if len(args) != inputsLen {
-		return 0, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, inputsLen, len(args))
-	}
-	clientChainID, ok := args[0].(uint32)
-	if !ok {
-		return 0, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
-	}
-	return clientChainID, nil
 }

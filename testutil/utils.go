@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/cmd/config"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 
 	"cosmossdk.io/math"
@@ -428,6 +429,10 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 }
 
 func (suite *BaseTestSuite) DoSetupTest() {
+	// Force config initialization at the start of each test
+	cfg := sdk.GetConfig()
+	config.SetBech32Prefixes(cfg)
+	config.SetBip44CoinType(cfg)
 	// create AccAddress for test
 	pubBz := make([]byte, ed25519.PubKeySize)
 	pub := &ed25519.PubKey{Key: pubBz}

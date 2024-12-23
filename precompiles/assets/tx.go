@@ -1,7 +1,6 @@
 package assets
 
 import (
-	"errors"
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
@@ -21,11 +20,10 @@ const (
 	MethodDepositNST                  = "depositNST"
 	MethodWithdrawLST                 = "withdrawLST"
 	MethodWithdrawNST                 = "withdrawNST"
-	MethodGetClientChains             = "getClientChains"
 	MethodRegisterOrUpdateClientChain = "registerOrUpdateClientChain"
 	MethodRegisterToken               = "registerToken"
 	MethodUpdateToken                 = "updateToken"
-	MethodIsRegisteredClientChain     = "isRegisteredClientChain"
+	MethodUpdateAuthorizedGateways    = "updateAuthorizedGateways"
 )
 
 // DepositOrWithdraw deposit and withdraw the client chain assets for the staker,
@@ -39,10 +37,11 @@ func (p Precompile) DepositOrWithdraw(
 	args []interface{},
 ) ([]byte, error) {
 	// check the invalidation of caller contract,the caller must be exoCore LzApp contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
+
 	// parse the depositTo input params
 	depositWithdrawParams, err := p.DepositWithdrawParams(ctx, method, args)
 	if err != nil {
@@ -82,29 +81,6 @@ func (p Precompile) DepositOrWithdraw(
 	return method.Outputs.Pack(true, info.TotalDepositAmount.BigInt())
 }
 
-func (p Precompile) GetClientChains(
-	ctx sdk.Context,
-	method *abi.Method,
-	args []interface{},
-) ([]byte, error) {
-	if len(args) > 0 {
-		ctx.Logger().Error(
-			"GetClientChains",
-			"err", errors.New("no input is required"),
-		)
-		return method.Outputs.Pack(false, nil)
-	}
-	ids, err := p.assetsKeeper.GetAllClientChainID(ctx)
-	if err != nil {
-		ctx.Logger().Error(
-			"GetClientChains",
-			"err", err,
-		)
-		return method.Outputs.Pack(false, nil)
-	}
-	return method.Outputs.Pack(true, ids)
-}
-
 func (p Precompile) RegisterOrUpdateClientChain(
 	ctx sdk.Context,
 	contract *vm.Contract,
@@ -112,9 +88,9 @@ func (p Precompile) RegisterOrUpdateClientChain(
 	args []interface{},
 ) ([]byte, error) {
 	// check the invalidation of caller contract,the caller must be exoCore LzApp contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 
 	clientChainInfo, err := p.ClientChainInfoFromInputs(ctx, args)
@@ -136,9 +112,9 @@ func (p Precompile) RegisterToken(
 	args []interface{},
 ) ([]byte, error) {
 	// the caller must be the ExocoreGateway contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 
 	// parse inputs
@@ -155,11 +131,11 @@ func (p Precompile) RegisterToken(
 	}
 
 	stakingAsset := &assetstypes.StakingAssetInfo{
-		AssetBasicInfo:     asset,
+		AssetBasicInfo:     *asset,
 		StakingTotalAmount: sdkmath.ZeroInt(),
 	}
 
-	if err := p.assetsKeeper.RegisterNewTokenAndSetTokenFeeder(ctx, &oInfo); err != nil {
+	if err := p.assetsKeeper.RegisterNewTokenAndSetTokenFeeder(ctx, oInfo); err != nil {
 		return nil, err
 	}
 
@@ -178,9 +154,9 @@ func (p Precompile) UpdateToken(
 	args []interface{},
 ) ([]byte, error) {
 	// the caller must be the ExocoreGateway contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 
 	// parse inputs
@@ -198,19 +174,33 @@ func (p Precompile) UpdateToken(
 	return method.Outputs.Pack(true)
 }
 
-func (p Precompile) IsRegisteredClientChain(
+// UpdateAuthorizedGateways updates the authorized gateways for the assets module.
+// For mainnet, if the authority of the assets module is the governance module, this method would not work.
+// So it is mainly used for testing purposes.
+func (p Precompile) UpdateAuthorizedGateways(
 	ctx sdk.Context,
+	contract *vm.Contract,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	clientChainID, err := p.ClientChainIDFromInputs(ctx, args)
+	ta := NewTypedArgs(args)
+	gateways, err := ta.GetRequiredEVMAddressSlice(0)
 	if err != nil {
 		return nil, err
 	}
-	if clientChainID == 0 {
-		// explicitly return false for client chain ID 0 to prevent `setPeer` calls
-		return method.Outputs.Pack(true, false)
+
+	gatewaysStr := make([]string, len(gateways))
+	for i, gateway := range gateways {
+		gatewaysStr[i] = gateway.Hex()
 	}
-	exists := p.assetsKeeper.ClientChainExists(ctx, uint64(clientChainID))
-	return method.Outputs.Pack(true, exists)
+
+	_, err = p.assetsKeeper.UpdateParams(ctx, &assetstypes.MsgUpdateParams{
+		Authority: contract.CallerAddress.String(),
+		Params:    assetstypes.Params{Gateways: gatewaysStr},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
 }

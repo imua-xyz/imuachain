@@ -26,9 +26,9 @@ func (p Precompile) SubmitSlash(
 	args []interface{},
 ) ([]byte, error) {
 	// check the invalidation of caller contract
-	err := p.assetsKeeper.CheckExocoreGatewayAddr(ctx, contract.CallerAddress)
-	if err != nil {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller, err.Error())
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(exocmn.ErrContractCaller)
 	}
 
 	slashParam, err := p.GetSlashParamsFromInputs(ctx, args)

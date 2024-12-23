@@ -64,7 +64,6 @@ func paddingClientChainAddress(input []byte, outputLength int) []byte {
 func (s *DelegationPrecompileSuite) TestRunDelegate() {
 	// deposit params for test
 	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
-	exocoreLzAppEventTopic := "0xc6a377bfc4eb120024a8ac08eef205be16b817020812c73223e81d1bdb9708ec"
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	opAccAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
 	clientChainLzID := 101
@@ -136,8 +135,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			name: "fail - delegateToThroughClientChain transaction will fail because the contract caller isn't the exoCoreLzAppAddr",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    exocoreLzAppAddress,
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{exocoreLzAppAddress},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -151,8 +149,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			name: "fail - delegateToThroughClientChain transaction will fail because the delegated operator hasn't been registered",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -166,8 +163,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			name: "fail - delegateToThroughClientChain transaction will fail because the delegated asset hasn't been deposited",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -182,8 +178,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			name: "fail - delegateToThroughClientChain transaction will fail because the delegation amount is bigger than the canWithdraw amount",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -199,8 +194,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			name: "pass - delegateToThroughClientChain transaction",
 			malleate: func() (common.Address, []byte) {
 				assetsModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, assetsModuleParam)
 				s.Require().NoError(err)
@@ -291,7 +285,6 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 // TestRun tests Delegate method through calling Run function.
 func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 	// deposit params for test
-	exocoreLzAppEventTopic := "0xc6a377bfc4eb120024a8ac08eef205be16b817020812c73223e81d1bdb9708ec"
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
 	clientChainLzID := 101
@@ -367,8 +360,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 			name: "pass - undelegateFromThroughClientChain transaction",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)

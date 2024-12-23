@@ -7,6 +7,42 @@ address constant ASSETS_PRECOMPILE_ADDRESS = 0x000000000000000000000000000000000
 /// @dev The Assets contract's instance.
 IAssets constant ASSETS_CONTRACT = IAssets(ASSETS_PRECOMPILE_ADDRESS);
 
+/// @dev The TokenInfo struct.
+/// @param name The name of the token
+/// @param symbol The symbol of the token
+/// @param clientChainID The client chain ID
+/// @param tokenID The token ID, typically the token address encoded in bytes
+/// @param decimals The number of decimals of the token
+/// @param totalStaked The total staked amount of the token
+struct TokenInfo {
+    string name;
+    string symbol;
+    uint32 clientChainID;
+    bytes tokenID;
+    uint8 decimals;
+    uint256 totalStaked;
+}
+
+/// @dev The StakerBalance struct.
+/// @param clientChainID The client chain ID
+/// @param stakerAddress The staker address, typically the staker's address encoded in bytes
+/// @param tokenID The token ID, typically the token address encoded in bytes
+/// @param balance The balance of the staker, balance = withdrawable + delegated + pendingUndelegated
+/// @param withdrawable The withdrawable balance
+/// @param delegated The delegated balance
+/// @param pendingUndelegated The pending undelegated balance, during the unboding period and would become withdrawable after the unboding period
+/// @param totalDeposited The total deposited balance
+struct StakerBalance {
+    uint32 clientChainID;
+    bytes stakerAddress;
+    bytes tokenID;
+    uint256 balance;
+    uint256 withdrawable;
+    uint256 delegated;
+    uint256 pendingUndelegated;
+    uint256 totalDeposited;
+}
+
 /// @author Exocore Team
 /// @title Assets Precompile Contract
 /// @dev The interface through which solidity contracts will interact with assets module
@@ -117,6 +153,12 @@ interface IAssets {
     function updateToken(uint32 clientChainId, bytes calldata token, string calldata metaData)
         external
         returns (bool success);
+    
+    /// @dev update the authorized gateways, only the authorized gateways can call precompile functions
+    /// @dev If it is the mainnet, only the authority can call this function
+    /// @param gateways the authorized gateways
+    /// @return success if the update is successful
+    function updateAuthorizedGateways(address[] calldata gateways) external returns (bool success);
 
     /// QUERIES
     /// @dev Returns the chain indices of the client chains.
@@ -128,4 +170,25 @@ interface IAssets {
     /// @return isRegistered true if the client chain is registered
     function isRegisteredClientChain(uint32 clientChainID) external view returns (bool success, bool isRegistered);
 
+    /// @dev Checks if the gateway is authorized, given the gateway address.
+    /// @param gateway is the address of the gateway
+    /// @return success true if the query is successful
+    /// @return isAuthorized true if the gateway is authorized
+    function isAuthorizedGateway(address gateway) external view returns (bool success, bool isAuthorized);
+
+    /// @dev Returns the asset info for a given asset ID.
+    /// @param clientChainId is the ID of the client chain
+    /// @param tokenId is the ID of the token, typically the token address
+    /// @return success true if the query is successful
+    /// @return assetInfo the asset info
+    function getTokenInfo(uint32 clientChainId, bytes calldata tokenId) external view returns (bool success, TokenInfo memory assetInfo);
+
+    /// @dev Returns the staker's balance for a given token.
+    /// @param clientChainId is the ID of the client chain
+    /// @param tokenId is the ID of the token, typically the token address
+    /// @return success true if the query is successful
+    /// @return stakerBalance the staker's balance
+    function getStakerBalanceByToken(uint32 clientChainId, bytes calldata stakerAddress, bytes calldata tokenId) external view returns (bool success, StakerBalance memory stakerBalance);
 }
+
+

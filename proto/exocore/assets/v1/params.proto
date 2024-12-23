@@ -7,8 +7,6 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/assets/types";
 
 // GenesisState defines the deposit module's genesis state.
 message Params {
-  // exocore_lz_app_address is the address of ExocoreGateway.sol.
-  string exocore_lz_app_address = 1 [(gogoproto.customname) = "ExocoreLzAppAddress"];
-  // exocore_lz_app_event_topic is the topic of the exocore lz app event.
-  string exocore_lz_app_event_topic = 2 [(gogoproto.customname) = "ExocoreLzAppEventTopic"];
+  // gateways is the addresses of gateways on Exocore.
+  repeated string gateways = 1 [(gogoproto.customname) = "Gateways"];
 }

@@ -23,7 +23,7 @@ func TestGenesisTestSuite(t *testing.T) {
 
 func (suite *GenesisTestSuite) TestValidateGenesis() {
 	params := types.DefaultParams()
-	params.ExocoreLzAppAddress = "0x0000000000000000000000000000000000000001"
+	params.Gateways = []string{"0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002"}
 	newGen := types.NewGenesis(
 		params, nil,
 		nil, nil, nil,

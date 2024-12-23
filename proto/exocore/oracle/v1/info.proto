@@ -7,9 +7,9 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
 
 // Chain represents for the Chain on which token contracts deployed
 message Chain {
-  //eg."bitcoin"
+  // eg."bitcoin"
   string name = 1;
-  //TODO: metadata
+  // TODO: metadata
   string desc = 2;
 }
 
@@ -31,11 +31,11 @@ message Token {
 
 // Endpoint tells where to fetch the price info
 message Endpoint {
-  //url int refer to TokenList.ID, 0 reprents default for all (as fall back)
-  //key refer to tokenID, 1->"https://chainlink.../eth"
+  // url int refer to TokenList.ID, 0 reprents default for all (as fall back)
+  // key refer to tokenID, 1->"https://chainlink.../eth"
   map<uint64, string> offchain = 1;
-  //url  int refer to TokenList.ID, 0 reprents default for all (as fall back)
-  //key refer to tokenID, 1->"eth://0xabc...def"
+  // url  int refer to TokenList.ID, 0 reprents default for all (as fall back)
+  // key refer to tokenID, 1->"eth://0xabc...def"
   map<uint64, string> onchain = 2;
 }
 
@@ -45,7 +45,7 @@ message Source {
   string name = 1;
   // endpoint of corresponding source to fetch price data from
   Endpoint entry = 2;
-  //set false when the source is out of service or reject to accept this source for official service
+  // set false when the source is out of service or reject to accept this source for official service
   bool valid = 3;
   // if this source is deteministic or not
   bool deterministic = 4;

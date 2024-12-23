@@ -161,3 +161,29 @@ func (k Keeper) UpdateStakerAssetState(ctx sdk.Context, stakerID string, assetID
 
 	return nil
 }
+
+func (k Keeper) GetStakerBalanceByAsset(ctx sdk.Context, stakerID string, assetID string) (balance assetstype.StakerBalance, err error) {
+	stakerAssetInfo, err := k.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetID)
+	if err != nil {
+		return assetstype.StakerBalance{}, err
+	}
+
+	delegatedAmount, err := k.dk.TotalDelegatedAmountForStakerAsset(ctx, stakerID, assetID)
+	if err != nil {
+		return assetstype.StakerBalance{}, err
+	}
+
+	totalBalance := stakerAssetInfo.WithdrawableAmount.Add(stakerAssetInfo.PendingUndelegationAmount).Add(delegatedAmount)
+
+	balance = assetstype.StakerBalance{
+		StakerID:           stakerID,
+		AssetID:            assetID,
+		Balance:            totalBalance.BigInt(),
+		Withdrawable:       stakerAssetInfo.WithdrawableAmount.BigInt(),
+		Delegated:          delegatedAmount.BigInt(),
+		PendingUndelegated: stakerAssetInfo.PendingUndelegationAmount.BigInt(),
+		TotalDeposited:     stakerAssetInfo.TotalDepositAmount.BigInt(),
+	}
+
+	return balance, nil
+}

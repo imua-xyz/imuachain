@@ -23,12 +23,12 @@ message PriceTimeDetID {
 message PriceSource {
   // source_id refers to id from Params.SourceList, where this price fetched from, 0 is reserved for custom usage
   uint64 source_id = 1 [(gogoproto.customname) = "SourceID"];
-  //if source is deteministic like chainlink with roundID, set this value with which returned from source
-  //up to 3 values in case of the async of network, to give more time for oracle nodes(validators) get into consensus
-  //eg.with deterministic source, this array will contian 3 continuous values up to latest
-  //for non-deterministic source, it's a choice by v2 rules.
+  // if source is deteministic like chainlink with roundID, set this value with which returned from source
+  // up to 3 values in case of the async of network, to give more time for oracle nodes(validators) get into consensus
+  // eg.with deterministic source, this array will contian 3 continuous values up to latest
+  // for non-deterministic source, it's a choice by v2 rules.
   repeated PriceTimeDetID prices = 2;
-  //used for 0-sourceID-customDefinedSource
+  // used for 0-sourceID-customDefinedSource
   string desc = 3;
 }
 

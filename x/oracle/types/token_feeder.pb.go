@@ -83,7 +83,8 @@ func (m *NOMSource) GetMinimum() uint64 {
 // rule_2: n out of total sources are required
 type RuleSource struct {
 	// refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,
-	// length==0->check next field:minimum
+	//
+	//	length==0->check next field:minimum
 	SourceIDs []uint64 `protobuf:"varint,1,rep,packed,name=source_ids,json=sourceIds,proto3" json:"source_ids,omitempty"`
 	// n out of total sources are required
 	Nom *NOMSource `protobuf:"bytes,2,opt,name=nom,proto3" json:"nom,omitempty"`
@@ -143,16 +144,18 @@ type TokenFeeder struct {
 	// refer to params.ruleList, 0 means no restriction, accept any source including customer defined
 	RuleID uint64 `protobuf:"varint,2,opt,name=rule_id,json=ruleId,proto3" json:"rule_id,omitempty"`
 	// include, from 1, when some token's feeder had been stop and then restart,
-	// the token_id will be continuous from previous one
+	//
+	//	the token_id will be continuous from previous one
 	StartRoundID uint64 `protobuf:"varint,3,opt,name=start_round_id,json=startRoundId,proto3" json:"start_round_id,omitempty"`
 	// include, first block which start_round_id can be settled is at least start_base_block+1
 	StartBaseBlock uint64 `protobuf:"varint,4,opt,name=start_base_block,json=startBaseBlock,proto3" json:"start_base_block,omitempty"`
 	// set as count of blocks, for how many blocks interval the price will be update once
 	Interval uint64 `protobuf:"varint,5,opt,name=interval,proto3" json:"interval,omitempty"`
 	// tokenfeeder is initialized with forever live, update the End parameters by voting,
-	// and will off service by the end
-	// this is set by updateParams, and the EndRoundID will be update by related. excluded,
-	// will not work if current height >=EndBlock
+	//
+	//	and will off service by the end
+	//	this is set by updateParams, and the EndRoundID will be update by related. excluded,
+	//	will not work if current height >=EndBlock
 	EndBlock uint64 `protobuf:"varint,6,opt,name=end_block,json=endBlock,proto3" json:"end_block,omitempty"`
 }
 
