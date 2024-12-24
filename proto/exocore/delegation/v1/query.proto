@@ -136,8 +136,10 @@ message QueryDelegatedStakersByOperatorReq {
 
 // QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq
 message QueryDelegatedStakersByOperatorResponse {
+  // count is the number of stakers
+  uint64 count = 1;
   // stakers is the returned stakers associated to the specified operator
-  repeated string stakers = 1;
+  repeated string stakers = 2;
 }
 
 // Query is the service API for the delegation module.
@@ -189,6 +191,6 @@ service Query {
   // QueryDelegatedStakersByOperator queries the delegated stakers for the specified operator
   rpc QueryDelegatedStakersByOperator(QueryDelegatedStakersByOperatorReq) returns (QueryDelegatedStakersByOperatorResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/exocore/delegation/v1/delegated_stakers/{operator}";
+    option (google.api.http).get = "/exocore/delegation/v1/delegated_stakers/{operator}/{asset_id}";
   }
 }

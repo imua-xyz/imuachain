@@ -76,6 +76,7 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 		return nil, err
 	}
 	return &delegationtype.QueryDelegatedStakersByOperatorResponse{
+		Count:   uint64(len(stakers.Stakers)),
 		Stakers: stakers.Stakers,
 	}, nil
 }

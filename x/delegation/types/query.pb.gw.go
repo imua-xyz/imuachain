@@ -499,10 +499,6 @@ func local_request_Query_QueryAssociatedStakersByOperator_0(ctx context.Context,
 
 }
 
-var (
-	filter_Query_QueryDelegatedStakersByOperator_0 = &utilities.DoubleArray{Encoding: map[string]int{"operator": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
-
 func request_Query_QueryDelegatedStakersByOperator_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryDelegatedStakersByOperatorReq
 	var metadata runtime.ServerMetadata
@@ -525,11 +521,15 @@ func request_Query_QueryDelegatedStakersByOperator_0(ctx context.Context, marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "operator", err)
 	}
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok = pathParams["asset_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "asset_id")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_QueryDelegatedStakersByOperator_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.AssetId, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "asset_id", err)
 	}
 
 	msg, err := client.QueryDelegatedStakersByOperator(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -559,11 +559,15 @@ func local_request_Query_QueryDelegatedStakersByOperator_0(ctx context.Context, 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "operator", err)
 	}
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok = pathParams["asset_id"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "asset_id")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_QueryDelegatedStakersByOperator_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.AssetId, err = runtime.String(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "asset_id", err)
 	}
 
 	msg, err := server.QueryDelegatedStakersByOperator(ctx, &protoReq)
@@ -980,7 +984,7 @@ var (
 
 	pattern_Query_QueryAssociatedStakersByOperator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "delegation", "v1", "associated_stakers", "operator"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryDelegatedStakersByOperator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "delegation", "v1", "delegated_stakers", "operator"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryDelegatedStakersByOperator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "delegation", "v1", "delegated_stakers", "operator", "asset_id"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

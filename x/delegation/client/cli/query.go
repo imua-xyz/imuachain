@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -308,7 +307,6 @@ func QueryDelegatedStakersByOperator() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Println("the number of stakers is:", len(res.Stakers))
 			return clientCtx.PrintProto(res)
 		},
 	}
