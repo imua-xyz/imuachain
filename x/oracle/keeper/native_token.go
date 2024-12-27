@@ -309,6 +309,7 @@ func (k Keeper) UpdateNSTByBalanceChange(ctx sdk.Context, assetID string, rawDat
 		// we set index as a global reference used through all rounds
 		newBalance.Index++
 		newBalance.Change = types.Action_ACTION_SLASH_REFUND
+		newBalance.RoundID = roundID
 		// balance update are based on initial/max effective balance: 32
 		maxBalance := maxEffectiveBalance(assetID) * (len(stakerInfo.ValidatorPubkeyList))
 		balance := maxBalance + change
