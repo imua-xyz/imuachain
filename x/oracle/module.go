@@ -314,18 +314,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 				}
 				operator := am.keeper.ValidatorByConsAddr(ctx, consAddr)
 				if operator != nil && !operator.IsJailed() {
-					// missing rounds confirmed: slash and jail the validator
-					coinsBurned := am.keeper.SlashWithInfractionReason(ctx, consAddr, height, power.Int64(), am.keeper.GetSlashFractionMiss(ctx), stakingtypes.Infraction_INFRACTION_UNSPECIFIED)
-					ctx.EventManager().EmitEvent(
-						sdk.NewEvent(
-							types.EventTypeOracleSlash,
-							sdk.NewAttribute(types.AttributeKeyValidatorKey, validator),
-							sdk.NewAttribute(types.AttributeKeyPower, fmt.Sprintf("%d", power)),
-							sdk.NewAttribute(types.AttributeKeyReason, types.AttributeValueMissingReportPrice),
-							sdk.NewAttribute(types.AttributeKeyJailed, validator),
-							sdk.NewAttribute(types.AttributeKeyBurnedCoins, coinsBurned.String()),
-						),
-					)
+					// missing rounds confirmed: just jail the validator
 					am.keeper.Jail(ctx, consAddr)
 					jailUntil := ctx.BlockHeader().Time.Add(am.keeper.GetMissJailDuration(ctx))
 					am.keeper.JailUntil(ctx, consAddr, jailUntil)
@@ -336,7 +325,7 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 					am.keeper.ClearValidatorMissedRoundBitArray(ctx, validator)
 
 					logger.Info(
-						"slashing and jailing validator due to liveness fault",
+						"jailing validator due to oracle_liveness fault",
 						"height", height,
 						"validator", consAddr.String(),
 						"min_height", minHeight,
