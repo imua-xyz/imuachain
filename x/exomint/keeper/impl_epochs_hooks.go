@@ -69,6 +69,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 				sdk.NewAttribute(sdk.AttributeKeyAmount, mintedCoin.Amount.String()),
 				sdk.NewAttribute(types.AttributeEpochIdentifier, identifier),
 				sdk.NewAttribute(types.AttributeEpochNumber, fmt.Sprintf("%d", number)),
+				sdk.NewAttribute(types.AttributeDenom, mintedCoin.Denom),
 			),
 		)
 
