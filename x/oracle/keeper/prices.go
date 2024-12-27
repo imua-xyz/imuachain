@@ -225,7 +225,7 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	}
 	assetIDs := p.GetAssetIDsFromTokenID(tokenID)
 	for _, assetID := range assetIDs {
-		if nstChain, ok := strings.CutPrefix(assetID, types.NSTIDPrefix); ok {
+		if nstChain, ok := strings.CutPrefix(strings.ToLower(assetID), types.NSTIDPrefix); ok {
 			if err := k.UpdateNSTByBalanceChange(ctx, fmt.Sprintf("%s%s", NSTETHAssetAddr, nstChain), []byte(priceTR.Price), roundID); err != nil {
 				// we just report this error in log to notify validators
 				k.Logger(ctx).Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err)

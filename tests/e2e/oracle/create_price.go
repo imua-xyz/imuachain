@@ -331,7 +331,6 @@ func (s *E2ETestSuite) testSlashing() {
 	s.moveNAndCheck(2)
 	resOperator, err = s.network.QueryOperator().QueryOptInfo(context.Background(), &operatortypes.QueryOptInfoRequest{OperatorAVSAddress: &operatortypes.OperatorAVSAddress{OperatorAddr: s.network.Validators[3].Address.String(), AvsAddress: avsAddr}})
 	s.Require().NoError(err)
-	fmt.Println("debug----->jailed:", resOperator.Jailed)
 	s.Require().False(resOperator.Jailed)
 }
 
