@@ -47,7 +47,7 @@ const (
 	DefaultPriceValue   = 1
 	DefaultPriceDecimal = 0
 
-	NSTIDPrefix = "NST"
+	NSTIDPrefix = "nst"
 )
 
 var DelimiterForCombinedKey = byte('/')
