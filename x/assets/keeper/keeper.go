@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -59,7 +60,7 @@ func (k Keeper) SetOperatorAssetOptedInMiddleWare(sdk.Address, map[string]sdk.Ad
 
 // IAssets interface will be implemented by assets keeper
 type IAssets interface {
-	SetClientChainInfo(ctx sdk.Context, info *assetstype.ClientChainInfo) (err error)
+	SetClientChainInfo(ctx sdk.Context, info *assetstype.ClientChainInfo) (bool, error)
 	GetClientChainInfoByIndex(ctx sdk.Context, index uint64) (info *assetstype.ClientChainInfo, err error)
 	GetAllClientChainInfo(ctx sdk.Context) (infos []assetstype.ClientChainInfo, err error)
 
@@ -69,10 +70,12 @@ type IAssets interface {
 
 	GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInfo []assetstype.DepositByAsset, err error)
 	GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, assetID string) (info *assetstype.StakerAssetInfo, err error)
-	UpdateStakerAssetState(ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset) (err error)
+	UpdateStakerAssetState(
+		ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset,
+	) (*assetstype.StakerAssetInfo, error)
 
 	GetOperatorAssetInfos(ctx sdk.Context, operatorAddr sdk.Address, assetsFilter map[string]interface{}) (assetsInfo []assetstype.AssetByID, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 	UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Address, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (err error)
-	PerformDepositOrWithdraw(ctx sdk.Context, params *DepositWithdrawParams) error
+	PerformDepositOrWithdraw(ctx sdk.Context, params *DepositWithdrawParams) (finalDepositAmount sdkmath.Int, err error)
 }

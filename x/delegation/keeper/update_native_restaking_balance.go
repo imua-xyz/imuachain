@@ -22,7 +22,7 @@ func (k Keeper) UpdateNSTBalance(
 		// think this approach is better. In that case, we would proportionally delegate the
 		// increased amount to all operators to whom the related staker has already delegated
 		// this native token.
-		err := k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
+		_, err := k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
 			TotalDepositAmount: amount,
 			WithdrawableAmount: amount,
 		})
@@ -48,7 +48,7 @@ func (k Keeper) UpdateNSTBalance(
 		} else {
 			pendingSlashAmount = sdkmath.ZeroInt()
 		}
-		err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
+		_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
 			TotalDepositAmount: slashFromWithdrawable.Neg(),
 			WithdrawableAmount: slashFromWithdrawable.Neg(),
 		})
@@ -67,7 +67,7 @@ func (k Keeper) UpdateNSTBalance(
 					slashAmount = undelegation.ActualCompletedAmount
 				}
 				undelegation.ActualCompletedAmount = undelegation.ActualCompletedAmount.Sub(slashAmount)
-				err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
+				_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
 					TotalDepositAmount: slashAmount.Neg(),
 				})
 				if err != nil {
@@ -110,7 +110,7 @@ func (k Keeper) UpdateNSTBalance(
 					if err != nil {
 						return true, err
 					}
-					err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
+					_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
 						TotalDepositAmount: actualSlashAmount.Neg(),
 					})
 					if err != nil {

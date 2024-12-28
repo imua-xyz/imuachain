@@ -57,6 +57,30 @@ type GeneralClientChainAddr [32]byte
 
 type CrossChainOpType uint8
 
+// String returns the string representation of the CrossChainOpType
+func (c CrossChainOpType) String() string {
+	switch c {
+	case DepositLST:
+		return "DepositLST"
+	case WithdrawLST:
+		return "WithdrawLST"
+	case DepositNST:
+		return "DepositNST"
+	case WithdrawNST:
+		return "WithdrawNST"
+	case WithdrawReward:
+		return "WithdrawReward"
+	case DelegateTo:
+		return "DelegateTo"
+	case UndelegateFrom:
+		return "UndelegateFrom"
+	case Slash:
+		return "Slash"
+	default:
+		return "Unknown"
+	}
+}
+
 type WithdrawerAddress [32]byte
 
 // DeltaStakerSingleAsset This is a struct to describe the desired change that matches with

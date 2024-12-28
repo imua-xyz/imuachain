@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
@@ -55,6 +57,19 @@ func (k Keeper) SetStakingAssetInfo(ctx sdk.Context, info *assetstype.StakingAss
 	}
 	bz := k.cdc.MustMarshal(info)
 	store.Set([]byte(assetID), bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			assetstype.EventTypeNewToken,
+			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(assetstype.AttributeKeyName, info.AssetBasicInfo.Name),
+			sdk.NewAttribute(assetstype.AttributeKeySymbol, info.AssetBasicInfo.Symbol),
+			sdk.NewAttribute(assetstype.AttributeKeyAddress, info.AssetBasicInfo.Address),
+			sdk.NewAttribute(assetstype.AttributeKeyDecimals, fmt.Sprintf("%d", info.AssetBasicInfo.Decimals)),
+			sdk.NewAttribute(assetstype.AttributeKeyLZID, fmt.Sprintf("%d", info.AssetBasicInfo.LayerZeroChainID)),
+			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, info.AssetBasicInfo.MetaInfo),
+			sdk.NewAttribute(assetstype.AttributeKeyExocoreChainIdx, fmt.Sprintf("%d", info.AssetBasicInfo.ExocoreChainIndex)),
+		),
+	)
 	return nil
 }
 
@@ -75,6 +90,13 @@ func (k Keeper) UpdateStakingAssetMetaInfo(ctx sdk.Context, assetID string, meta
 	info.AssetBasicInfo.MetaInfo = metainfo
 	bz := k.cdc.MustMarshal(info)
 	store.Set([]byte(assetID), bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			assetstype.EventTypeUpdatedToken,
+			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, metainfo),
+		),
+	)
 	return nil
 }
 

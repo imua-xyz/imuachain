@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,13 +11,34 @@ import (
 
 // SetClientChainInfo todo: Temporarily use LayerZeroChainID as key.
 // It provides a function to register the client chains supported by exoCore.It's called by genesis configuration now,however it will be called by the governance in the future
-func (k Keeper) SetClientChainInfo(ctx sdk.Context, info *assetstype.ClientChainInfo) (err error) {
+func (k Keeper) SetClientChainInfo(ctx sdk.Context, info *assetstype.ClientChainInfo) (bool, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixClientChainInfo)
+	key := []byte(hexutil.EncodeUint64(info.LayerZeroChainID))
+
+	eventType := assetstype.EventTypeNewClientChain
+	updated := store.Has(key)
+	if updated {
+		eventType = assetstype.EventTypeUpdatedClientChain
+	}
 
 	bz := k.cdc.MustMarshal(info)
+	store.Set(key, bz)
 
-	store.Set([]byte(hexutil.EncodeUint64(info.LayerZeroChainID)), bz)
-	return nil
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			eventType,
+			sdk.NewAttribute(assetstype.AttributeKeyName, info.Name),
+			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, info.MetaInfo),
+			sdk.NewAttribute(assetstype.AttributeKeyChainID, fmt.Sprintf("%d", info.ChainId)),
+			sdk.NewAttribute(assetstype.AttributeKeyExocoreChainIdx, fmt.Sprintf("%d", info.ExocoreChainIndex)),
+			sdk.NewAttribute(assetstype.AttributeKeyFinalizationBlocks, fmt.Sprintf("%d", info.FinalizationBlocks)),
+			sdk.NewAttribute(assetstype.AttributeKeyLZID, fmt.Sprintf("%d", info.LayerZeroChainID)),
+			sdk.NewAttribute(assetstype.AttributeKeySigType, info.SignatureType),
+			sdk.NewAttribute(assetstype.AttributeKeyAddrLength, fmt.Sprintf("%d", info.AddressLength)),
+		),
+	)
+
+	return updated, nil
 }
 
 func (k Keeper) ClientChainExists(ctx sdk.Context, index uint64) bool {

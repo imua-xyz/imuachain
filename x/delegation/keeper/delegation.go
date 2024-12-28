@@ -50,7 +50,7 @@ func (k *Keeper) delegateTo(
 		}
 
 		// update staker asset state
-		err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, assetstype.DeltaStakerSingleAsset{
+		_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, assetstype.DeltaStakerSingleAsset{
 			WithdrawableAmount: params.OpAmount.Neg(),
 		})
 		if err != nil {

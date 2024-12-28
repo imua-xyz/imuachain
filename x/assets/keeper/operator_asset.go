@@ -116,6 +116,19 @@ func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Addre
 	// store the updated state
 	bz := k.cdc.MustMarshal(&assetState)
 	store.Set(key, bz)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			assetstype.EventTypeUpdatedOperatorAsset,
+			sdk.NewAttribute(assetstype.AttributeKeyOperatorAddress, operatorAddr.String()),
+			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, assetState.TotalAmount.String()),
+			sdk.NewAttribute(assetstype.AttributeKeyPendingUndelegationAmount, assetState.PendingUndelegationAmount.String()),
+			sdk.NewAttribute(assetstype.AttributeKeyTotalShare, assetState.TotalShare.String()),
+			sdk.NewAttribute(assetstype.AttributeKeyOperatorShare, assetState.OperatorShare.String()),
+		),
+	)
+
 	return nil
 }
 
