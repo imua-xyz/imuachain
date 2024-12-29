@@ -170,6 +170,17 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 	bz := k.cdc.MustMarshal(&delegationState)
 	store.Set(singleStateKey, bz)
 
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			delegationtype.EventTypeDelegationStateUpdated,
+			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
+			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, opAddr),
+			sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmount, deltaAmounts.WaitUndelegationAmount.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShare, deltaAmounts.UndelegatableShare.String()),
+		),
+	)
+
 	return shareIsZero, nil
 }
 
@@ -217,6 +228,14 @@ func (k *Keeper) AppendStakerForOperator(ctx sdk.Context, operator, assetID, sta
 	stakers.Stakers = append(stakers.Stakers, stakerID)
 	bz := k.cdc.MustMarshal(&stakers)
 	store.Set(Key, bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			delegationtype.EventTypeStakerAppended,
+			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
+			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
+		),
+	)
 	return nil
 }
 
@@ -232,6 +251,15 @@ func (k *Keeper) DeleteStakerForOperator(ctx sdk.Context, operator, assetID, sta
 	for i, v := range stakers.Stakers {
 		if v == stakerID {
 			stakers.Stakers = append(stakers.Stakers[:i], stakers.Stakers[i+1:]...)
+			// emit event only if there is a removal.
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					delegationtype.EventTypeStakerRemoved,
+					sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
+					sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
+					sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
+				),
+			)
 			break
 		}
 	}
@@ -246,6 +274,14 @@ func (k *Keeper) DeleteStakersListForOperator(ctx sdk.Context, operator, assetID
 	if !store.Has(Key) {
 		return delegationtype.ErrNoKeyInTheStore
 	}
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			delegationtype.EventTypeAllStakersRemoved,
+			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
+		),
+	)
+
 	store.Delete(Key)
 	return nil
 }
@@ -307,6 +343,16 @@ func (k *Keeper) SetStakerShareToZero(ctx sdk.Context, operator, assetID string,
 			delegationState.UndelegatableShare = sdkmath.LegacyZeroDec()
 			bz := k.cdc.MustMarshal(&delegationState)
 			store.Set(singleStateKey, bz)
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					delegationtype.EventTypeDelegationStateUpdated,
+					sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
+					sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
+					sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
+					sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmount, delegationState.WaitUndelegationAmount.String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShare, delegationState.UndelegatableShare.String()),
+				),
+			)
 		}
 	}
 	return nil
@@ -355,12 +401,25 @@ func (k *Keeper) SetAssociatedOperator(ctx sdk.Context, stakerID, operatorAddr s
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
 	store.Set([]byte(stakerID), []byte(operatorAddr))
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			delegationtype.EventTypeOperatorAssociated,
+			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
+			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operatorAddr),
+		),
+	)
 	return nil
 }
 
 func (k *Keeper) DeleteAssociatedOperator(ctx sdk.Context, stakerID string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
 	store.Delete([]byte(stakerID))
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			delegationtype.EventTypeOperatorDisassociated,
+			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
+		),
+	)
 	return nil
 }
 

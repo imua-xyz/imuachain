@@ -62,6 +62,17 @@ func (k *Keeper) delegateTo(
 		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, params.StakerAddress, delegationtype.DelegatedPoolName, coins); err != nil {
 			return err
 		}
+		// this emitted event is not the total amount; it is the additional amount.
+		// indexers must add it to the last known amount to get the total amount.
+		// non-native case handled within UpdateStakerAssetState
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				delegationtype.EventTypeNativeDelegation,
+				sdk.NewAttribute(delegationtype.AttributeKeyStaker, sdk.AccAddress(params.StakerAddress).String()),
+				sdk.NewAttribute(delegationtype.AttributeKeyOperator, params.OperatorAddress.String()),
+				sdk.NewAttribute(delegationtype.AttributeKeyAmount, params.OpAmount.String()),
+			),
+		)
 	}
 	// calculate the share from the delegation amount
 	share, err := k.CalculateShare(ctx, params.OperatorAddress, assetID, params.OpAmount)
@@ -147,6 +158,22 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	err = k.SetUndelegationRecords(ctx, []delegationtype.UndelegationRecord{r})
 	if err != nil {
 		return err
+	}
+
+	if assetID == assetstype.ExocoreAssetID {
+		// this emitted event is not the total amount; it is the additional amount.
+		// (1) indexers must add it to the last known amount to get the total amount pending undelegation.
+		// (2) the undelegated amount must be subtracted from the previously delegated amount to get the
+		// currently delegated amount not pending undelegation.
+		// non-native case handled within UpdateStakerAssetState
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				delegationtype.EventTypeNativeUndelegationStarted,
+				sdk.NewAttribute(delegationtype.AttributeKeyStaker, sdk.AccAddress(params.StakerAddress).String()),
+				sdk.NewAttribute(delegationtype.AttributeKeyOperator, params.OperatorAddress.String()),
+				sdk.NewAttribute(delegationtype.AttributeKeyAmount, params.OpAmount.String()),
+			),
+		)
 	}
 
 	// call the hooks registered by the other modules
