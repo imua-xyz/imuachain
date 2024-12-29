@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -58,6 +59,16 @@ func (k *Keeper) SetOperatorInfo(
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
 	bz := k.cdc.MustMarshal(info)
 	store.Set(opAccAddr, bz)
+
+	// TODO validate name does not exist
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeRegisterOperator,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(stakingtypes.AttributeKeyCommissionRate, info.Commission.Rate.String()),
+		),
+	)
+
 	return nil
 }
 

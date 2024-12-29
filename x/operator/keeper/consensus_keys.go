@@ -139,6 +139,15 @@ func (k Keeper) setOperatorConsKeyForChainIDUnchecked(
 	// this pruning will be triggered by the app chain module and will not be
 	// recorded here.
 	store.Set(types.KeyForChainIDAndConsKeyToOperator(chainID, consAddr), opAccAddr.Bytes())
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTpesSetConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, consAddr.String()),
+		),
+	)
 }
 
 // setOperatorPrevConsKeyForChainID sets the previous (consensus) public key for the given
@@ -154,6 +163,14 @@ func (k *Keeper) setOperatorPrevConsKeyForChainID(
 	bz := k.cdc.MustMarshal(prevKey.ToTmProtoKey())
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.KeyForChainIDAndOperatorToPrevConsKey(chainID, opAccAddr), bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSetPrevConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, prevKey.ToConsAddr().String()),
+		),
+	)
 }
 
 // GetOperatorPrevConsKeyForChainID gets the previous (consensus) public key for the given
@@ -264,6 +281,15 @@ func (k *Keeper) InitiateOperatorKeyRemovalForChainID(
 	// can only be called if the operator is currently opted in.
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.KeyForOperatorKeyRemovalForChainID(opAccAddr, chainID), []byte{})
+	// TODO: emit after calling hook?
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeInitRemoveConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, key.ToConsAddr().String()),
+		),
+	)
 	k.Hooks().AfterOperatorKeyRemovalInitiated(ctx, opAccAddr, chainID, key)
 }
 
@@ -302,6 +328,14 @@ func (k Keeper) CompleteOperatorKeyRemovalForChainID(
 	store.Delete(types.KeyForChainIDAndOperatorToConsKey(chainID, opAccAddr))
 	store.Delete(types.KeyForChainIDAndConsKeyToOperator(chainID, consAddr))
 	store.Delete(types.KeyForOperatorKeyRemovalForChainID(opAccAddr, chainID))
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeEndRemoveConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, prevKey.ToConsAddr().String()),
+		),
+	)
 	return nil
 }
 

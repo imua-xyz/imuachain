@@ -74,6 +74,7 @@ func (k *Keeper) InitOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr str
 	}
 	bz := k.cdc.MustMarshal(&initValue)
 	store.Set(key, bz)
+	// no need to emit event here because DEFAULT 0 in indexer
 	return nil
 }
 
@@ -90,7 +91,13 @@ func (k *Keeper) DeleteOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr s
 	}
 	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	store.Delete(key)
-
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeDeleteOperatorUSDValue,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operatorAddr),
+			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+		),
+	)
 	return nil
 }
 
@@ -161,6 +168,13 @@ func (k *Keeper) UpdateAVSUSDValue(ctx sdk.Context, avsAddr string, opAmount sdk
 	}
 	bz := k.cdc.MustMarshal(&totalValue)
 	store.Set(key, bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeUpdateAVSUSDValue,
+			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+			sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, totalValue.Amount.String()),
+		),
+	)
 	return nil
 }
 
@@ -174,6 +188,13 @@ func (k *Keeper) SetAVSUSDValue(ctx sdk.Context, avsAddr string, amount sdkmath.
 	setValue := operatortypes.DecValueField{Amount: amount}
 	bz := k.cdc.MustMarshal(&setValue)
 	store.Set(key, bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeUpdateAVSUSDValue,
+			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+			sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, amount.String()),
+		),
+	)
 	return nil
 }
 
@@ -181,6 +202,12 @@ func (k *Keeper) DeleteAVSUSDValue(ctx sdk.Context, avsAddr string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
 	key := []byte(strings.ToLower(avsAddr))
 	store.Delete(key)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeDeleteAVSUSDValue,
+			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+		),
+	)
 	return nil
 }
 
@@ -224,6 +251,16 @@ func (k *Keeper) IterateOperatorsForAVS(ctx sdk.Context, avsAddr string, isUpdat
 		if isUpdate {
 			bz := k.cdc.MustMarshal(&optedUSDValues)
 			store.Set(iterator.Key(), bz)
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					operatortypes.EventTypeUpdateOperatorUSDValue,
+					sdk.NewAttribute(operatortypes.AttributeKeyOperator, keys[1]),
+					sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+					sdk.NewAttribute(operatortypes.AttributeSelfUSDValue, optedUSDValues.SelfUSDValue.String()),
+					sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, optedUSDValues.TotalUSDValue.String()),
+					sdk.NewAttribute(operatortypes.AttributeActiveUSDValue, optedUSDValues.ActiveUSDValue.String()),
+				),
+			)
 		}
 	}
 	return nil
@@ -317,6 +354,13 @@ func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context, isUpdate bool, opFunc func
 		if isUpdate {
 			bz := k.cdc.MustMarshal(&usdValue)
 			store.Set(iterator.Key(), bz)
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					operatortypes.EventTypeUpdateAVSUSDValue,
+					sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, string(iterator.Key())),
+					sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, usdValue.Amount.String()),
+				),
+			)
 		}
 	}
 	return nil
