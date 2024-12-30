@@ -93,7 +93,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
-	exoWhiteAddresses := []string{
+	exoWhiteListAddress := []string{
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
@@ -112,7 +112,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 			common.HexToAddress(slashAddress),
 			common.HexToAddress(rewardAddress),
 			avsOwnerAddress,
-			exoWhiteAddresses,
+			exoWhiteListAddress,
 			assetID,
 			avsUnbondingPeriod,
 			minSelfDelegation,

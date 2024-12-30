@@ -103,6 +103,7 @@ func CmdRegisterOperator() *cobra.Command {
 	// required flags
 	_ = cmd.MarkFlagRequired(FlagMetaInfo) // name of the operator
 
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -221,6 +222,7 @@ func CmdOptIntoAVS() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -242,6 +244,7 @@ func CmdOptOutOfAVS() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -264,5 +267,6 @@ func CmdSetConsKey() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

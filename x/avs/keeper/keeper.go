@@ -129,7 +129,8 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			// #nosec G115
 			AvsSlash: sdk.NewDecWithPrec(int64(params.AvsSlash), 2),
 			// #nosec G115
-			AvsReward:        sdk.NewDecWithPrec(int64(params.AvsReward), 2),
+			AvsReward: sdk.NewDecWithPrec(int64(params.AvsReward), 2),
+			// whitelist addresses are already validated
 			WhitelistAddress: params.WhitelistAddress,
 		}
 
