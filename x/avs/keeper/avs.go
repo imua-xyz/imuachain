@@ -238,7 +238,7 @@ func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (b
 	}
 	_, err = sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
-		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parse acc address from Bech32")
+		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parsing account acc address from Bech32")
 	}
 	// Currently avs has no whitelist set and any operator can optin
 	if len(avsInfo.Info.WhitelistAddress) == 0 {
