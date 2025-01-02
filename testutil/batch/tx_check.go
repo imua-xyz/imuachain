@@ -38,8 +38,8 @@ func (m *Manager) QueryStakerAssetInfo(clientChainLzID uint64, stakerAddr, asset
 	queryClient := assettypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	stakerID, assetID := assettypes.GetStakerIDAndAssetIDFromStr(clientChainLzID, stakerAddr, assetAddr)
 	req := &assettypes.QuerySpecifiedAssetAmountReq{
-		StakerID: stakerID, // already lowercase
-		AssetID:  assetID,  // already lowercase
+		StakerId: stakerID, // already lowercase
+		AssetId:  assetID,  // already lowercase
 	}
 	return queryClient.QueStakerSpecifiedAssetAmount(m.ctx, req)
 }
@@ -48,8 +48,8 @@ func (m *Manager) QueryDelegatedAmount(clientChainLzID uint64, stakerAddr, asset
 	queryDelegationClient := delegationtype.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	stakerID, assetID := assettypes.GetStakerIDAndAssetIDFromStr(clientChainLzID, stakerAddr, assetAddr)
 	req := &delegationtype.SingleDelegationInfoReq{
-		StakerID:     stakerID,     // already lowercase
-		AssetID:      assetID,      // already lowercase
+		StakerId:     stakerID,     // already lowercase
+		AssetId:      assetID,      // already lowercase
 		OperatorAddr: operatorAddr, // already lowercase
 	}
 	delegationInfo, err := queryDelegationClient.QuerySingleDelegationInfo(m.ctx, req)
@@ -58,7 +58,7 @@ func (m *Manager) QueryDelegatedAmount(clientChainLzID uint64, stakerAddr, asset
 	}
 	operatorAssetReq := &assettypes.QueryOperatorSpecifiedAssetAmountReq{
 		OperatorAddr: operatorAddr, // already lowercase
-		AssetID:      assetID,      // already lowercase
+		AssetId:      assetID,      // already lowercase
 	}
 	queryAssetsClient := assettypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
 	operatorAssetInfo, err := queryAssetsClient.QueOperatorSpecifiedAssetAmount(m.ctx, operatorAssetReq)

@@ -437,7 +437,7 @@ func getTestExocoreGenesis(
 		)
 		associations = append(associations, delegationtypes.StakerToOperator{
 			Operator: operator.String(),
-			StakerID: stakerID,
+			StakerId: stakerID,
 		})
 		stakersByOperator = append(stakersByOperator, delegationtypes.StakersByOperator{
 			Key: string(assetstypes.GetJoinedStoreKey(operator.String(), assetID)),

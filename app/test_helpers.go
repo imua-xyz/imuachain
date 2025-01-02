@@ -266,7 +266,7 @@ func GenesisStateWithValSet(app *ExocoreApp, genesisState simapp.GenesisState,
 	associations := []delegationtypes.StakerToOperator{
 		{
 			Operator: operator.String(),
-			StakerID: stakerID,
+			StakerId: stakerID,
 		},
 	}
 	stakersByOperator := []delegationtypes.StakersByOperator{

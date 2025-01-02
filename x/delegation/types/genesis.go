@@ -76,19 +76,19 @@ func (gs GenesisState) ValidateAssociations() error {
 		}
 		// check staker address
 		if _, _, err := assetstypes.ValidateID(
-			association.StakerID, true, true,
+			association.StakerId, true, true,
 		); err != nil {
 			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "invalid staker ID %s: %s", association.StakerID, err,
+				ErrInvalidGenesisData, "invalid staker ID %s: %s", association.StakerId, err,
 			)
 		}
 		// check for duplicate stakerIDs
-		if _, ok := associatedStakerIDs[association.StakerID]; ok {
+		if _, ok := associatedStakerIDs[association.StakerId]; ok {
 			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "duplicate staker ID %s", association.StakerID,
+				ErrInvalidGenesisData, "duplicate staker ID %s", association.StakerId,
 			)
 		}
-		associatedStakerIDs[association.StakerID] = struct{}{}
+		associatedStakerIDs[association.StakerId] = struct{}{}
 		// we don't check that this `association.stakerID` features in `gs.Delegations`,
 		// because we allow the possibility of a staker without any delegations to be associated
 		// with an operator.
@@ -103,7 +103,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
 		}
 
-		err = ValidateIDAndOperator(keys.StakerID, keys.AssetID, keys.OperatorAddr)
+		err = ValidateIDAndOperator(keys.StakerId, keys.AssetId, keys.OperatorAddr)
 		if err != nil {
 			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
 		}
@@ -197,7 +197,7 @@ func (gs GenesisState) ValidateStakerList() error {
 
 func (gs GenesisState) ValidateUndelegations() error {
 	validationFunc := func(_ int, undelegation UndelegationRecord) error {
-		err := ValidateIDAndOperator(undelegation.StakerID, undelegation.AssetID, undelegation.OperatorAddr)
+		err := ValidateIDAndOperator(undelegation.StakerId, undelegation.AssetId, undelegation.OperatorAddr)
 		if err != nil {
 			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
 		}

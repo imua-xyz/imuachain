@@ -225,7 +225,7 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 	associations := []delegationtypes.StakerToOperator{
 		{
 			Operator: operator.String(),
-			StakerID: stakerID,
+			StakerId: stakerID,
 		},
 	}
 	stakersByOperator := []delegationtypes.StakersByOperator{

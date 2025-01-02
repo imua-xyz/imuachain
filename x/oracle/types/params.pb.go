@@ -78,7 +78,7 @@ type Params struct {
 	ThresholdB int32 `protobuf:"varint,8,opt,name=threshold_b,json=thresholdB,proto3" json:"threshold_b,omitempty"`
 	// for v1, mode=1, get final price as soon as voting power reach threshold_a/threshold_b
 	Mode ConsensusMode `protobuf:"varint,9,opt,name=mode,proto3,enum=exocore.oracle.v1.ConsensusMode" json:"mode,omitempty"`
-	// for each round, a validator only allowed to provide at most max_det_id continuous rounds of prices for DS
+	// for each round, a validator only allowed to provide at most max_det_id consecutive rounds of prices for DS
 	MaxDetId int32 `protobuf:"varint,10,opt,name=max_det_id,json=maxDetId,proto3" json:"max_det_id,omitempty"`
 	// for each token, only keep max_size_prices round of prices
 	MaxSizePrices int32 `protobuf:"varint,11,opt,name=max_size_prices,json=maxSizePrices,proto3" json:"max_size_prices,omitempty"`
@@ -214,7 +214,7 @@ type SlashingParams struct {
 	OracleMaliciousJailDuration time.Duration `protobuf:"bytes,4,opt,name=oracle_malicious_jail_duration,json=oracleMaliciousJailDuration,proto3,stdduration" json:"oracle_malicious_jail_duration"`
 	// slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price
 	SlashFractionMiss github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,5,opt,name=slash_fraction_miss,json=slashFractionMiss,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_miss"`
-	// slash_fraction_miss defines the fraction one validator should be punished for malicious behavior
+	// slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior
 	SlashFractionMalicious github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,6,opt,name=slash_fraction_malicious,json=slashFractionMalicious,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"slash_fraction_malicious"`
 }
 
