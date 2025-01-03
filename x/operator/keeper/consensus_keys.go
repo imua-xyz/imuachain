@@ -9,11 +9,10 @@ import (
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/cometbft/cometbft/libs/log"
 	tmclient "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-
-	"github.com/cometbft/cometbft/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -613,9 +612,7 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		ctx.Logger().Error(" QueryCometbftValidators error", "err", err)
 		return types.Validator{}, false
 	}
-	if IsAddressInSlice(wrappedKey.ToConsAddr(), validators) {
-		fmt.Println(true)
-	}
+	val.Active = IsAddressInSlice(wrappedKey.ToConsAddr(), validators)
 	val.OperatorEarningsAddr = ops.EarningsAddr
 	val.OperatorApproveAddr = ops.ApproveAddr
 	val.OperatorMetaInfo = ops.OperatorMetaInfo
