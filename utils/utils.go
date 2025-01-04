@@ -21,7 +21,7 @@ import (
 const (
 	// MainnetChainID defines the Evmos EIP155 chain ID for mainnet
 	// TODO: the mainnet chainid is still under consideration and need to be finalized later
-	MainnetChainID = "exocore_233"
+	MainnetChainID = "exocore_234"
 	// TestnetChainID defines the Evmos EIP155 chain ID for testnet
 	// TODO: the testnet chainid is still under consideration and need to be finalized later
 	TestnetChainID = "exocoretestnet_233"

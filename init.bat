@@ -10,7 +10,7 @@ rem             C:\msys64\usr\bin
 
 set KEY="dev0"
 # TODO: exocore testnet chainid is still under consideration and need to be finalized later
-set CHAINID="exocoretestnet_233-1"
+set CHAINID="exocorelocalnet_232-1"
 set MONIKER="localtestnet"
 set KEYRING="test"
 set ALGO="eth_secp256k1"
