@@ -84,7 +84,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 			postCheck:   func(bz []byte) {},
 			gas:         100000,
 			expErr:      true,
-			errContains: fmt.Sprintf(exocmn.ErrContractInputParaOrType, 0, "string", "0x0000000000000000000000000000000000000000"),
+			errContains: fmt.Sprintf(exocmn.ErrContractInputParamOrType, 0, "string", "0x0000000000000000000000000000000000000000"),
 		},
 		{
 			"success - no operators",

@@ -113,7 +113,7 @@ func (p Precompile) AssociateOperatorWithStaker(
 	}
 	clientChainID, ok := args[0].(uint32)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "uint32", args[0])
 	}
 
 	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, uint64(clientChainID))
@@ -123,7 +123,7 @@ func (p Precompile) AssociateOperatorWithStaker(
 	clientChainAddrLength := info.AddressLength
 	staker, ok := args[1].([]byte)
 	if !ok || staker == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "[]byte", args[1])
 	}
 	// #nosec G115
 	if uint32(len(staker)) < clientChainAddrLength {
@@ -133,7 +133,7 @@ func (p Precompile) AssociateOperatorWithStaker(
 
 	operator, ok := args[2].([]byte)
 	if !ok || operator == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "[]byte", args[2])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", args[2])
 	}
 	operatorAccAddr, err := sdk.AccAddressFromBech32(string(operator))
 	if err != nil {
@@ -165,7 +165,7 @@ func (p Precompile) DissociateOperatorFromStaker(
 	}
 	clientChainID, ok := args[0].(uint32)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "uint32", args[0])
 	}
 	info, err := p.assetsKeeper.GetClientChainInfoByIndex(ctx, uint64(clientChainID))
 	if err != nil {
@@ -175,7 +175,7 @@ func (p Precompile) DissociateOperatorFromStaker(
 
 	staker, ok := args[1].([]byte)
 	if !ok || staker == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", args[1])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "[]byte", args[1])
 	}
 	// #nosec G115
 	if uint32(len(staker)) < clientChainAddrLength {
