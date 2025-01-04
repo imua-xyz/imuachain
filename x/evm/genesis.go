@@ -84,7 +84,9 @@ func InitGenesis(
 		// set the evm account, which only contains the code hash and not the code
 		account := statedb.NewEmptyAccount()
 		account.CodeHash = codeHash.Bytes()
-		k.SetAccount(ctx, addr, *account)
+		if err := k.SetAccount(ctx, addr, *account); err != nil {
+			panic(fmt.Errorf("error setting account at %s: %s", addr, err))
+		}
 		// set lookup from code hash to code
 		k.SetCode(ctx, codeHash.Bytes(), code)
 	}
