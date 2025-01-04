@@ -6,7 +6,7 @@ WORKDIR /go/src/github.com/ExocoreNetwork/exocore
 
 COPY go.mod go.sum ./
 
-RUN apk add --no-cache ca-certificates=20240226-r0 build-base=0.5-r3 git=2.43.5-r0 linux-headers=6.5-r0
+RUN apk add --no-cache ca-certificates=20241121-r0 build-base=0.5-r3 git=2.43.5-r0 linux-headers=6.5-r0
 
 RUN --mount=type=bind,target=. --mount=type=secret,id=GITHUB_TOKEN \
     git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/".insteadOf "https://github.com/"; \
@@ -23,7 +23,7 @@ WORKDIR /root
 COPY --from=build-env /go/src/github.com/ExocoreNetwork/exocore/build/exocored /usr/bin/exocored
 COPY --from=build-env /go/bin/toml-cli /usr/bin/toml-cli
 
-RUN apk add --no-cache ca-certificates=20240226-r0 libstdc++=13.2.1_git20231014-r0 jq=1.7.1-r0 curl=8.9.1-r1 bash=5.2.21-r0 vim=9.0.2127-r0 lz4=1.9.4-r5 rclone=1.65.0-r3 \
+RUN apk add --no-cache ca-certificates=20241121-r0 libstdc++=13.2.1_git20231014-r0 jq=1.7.1-r0 curl=8.9.1-r1 bash=5.2.21-r0 vim=9.0.2127-r0 lz4=1.9.4-r5 rclone=1.65.0-r3 \
     && addgroup -g 1000 exocore \
     && adduser -S -h /home/exocore -D exocore -u 1000 -G exocore
 
