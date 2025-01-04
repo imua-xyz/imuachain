@@ -16,6 +16,8 @@ const (
 	url = "https://rpc.ankr.com/eth_sepolia"
 )
 
+// TestValidateDefaultPredeploys checks the format of the default predeploys, and that
+// the code at the provided predeploys matches the code at the remote URL.
 func TestValidateDefaultPredeploys(t *testing.T) {
 	for _, predeploy := range types.DefaultPredeploys {
 		address := predeploy.Address
@@ -30,11 +32,15 @@ func TestValidateDefaultPredeploys(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error getting code for address %s: %v", address, err)
 		}
-		// remote code starts with 0x, so use hexutil
+		// remote code starts with 0x, so use hexutil.
+		// also contains a blank string check.
 		parsedRemoteCode, err := hexutil.Decode(remoteCode)
 		if err != nil {
 			t.Fatalf("error parsing remote code for address %s: %v", address, err)
 		}
+		// local code does not start with 0x, so use common.Hex2Bytes
+		// this is because we follow the convention in x/evm/genesis.go
+		// since remoteCode is not blank, no need to check if localCode is blank.
 		parsedLocalCode := common.Hex2Bytes(code)
 		// for different lengths, use bytes.Equal. otherwise string is faster.
 		if !bytes.Equal(parsedLocalCode, parsedRemoteCode) {
@@ -43,6 +49,8 @@ func TestValidateDefaultPredeploys(t *testing.T) {
 	}
 }
 
+// getCode calls eth_getCode at the given address for the latest block.
+// it uses the fixed global URL defined in this file.
 func getCode(address string) (string, error) {
 	client, err := rpc.Dial(url)
 	if err != nil {
