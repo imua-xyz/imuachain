@@ -11,7 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/ExocoreNetwork/exocore/x/evm/keeper"
+	exocoreevmtypes "github.com/ExocoreNetwork/exocore/x/evm/types"
 	evmostypes "github.com/evmos/evmos/v16/types"
+	"github.com/evmos/evmos/v16/x/evm/statedb"
 	"github.com/evmos/evmos/v16/x/evm/types"
 )
 
@@ -66,6 +68,25 @@ func InitGenesis(
 		for _, storage := range account.Storage {
 			k.SetState(ctx, address, common.HexToHash(storage.Key), common.HexToHash(storage.Value).Bytes())
 		}
+	}
+
+	for _, predeploy := range exocoreevmtypes.DefaultPredeploys {
+		// load data from predeploys
+		addr := common.HexToAddress(predeploy.Address)
+		code := common.Hex2Bytes(predeploy.Code)
+		codeHash := crypto.Keccak256Hash(code)
+		// delete the existing account, if one exists at that address
+		act := accountKeeper.GetAccount(ctx, addr[:])
+		if act != nil {
+			k.Logger(ctx).Error("deleting existing account", "address", addr.String())
+			accountKeeper.RemoveAccount(ctx, act)
+		}
+		// set the evm account, which only contains the code hash and not the code
+		account := statedb.NewEmptyAccount()
+		account.CodeHash = codeHash.Bytes()
+		k.SetAccount(ctx, addr, *account)
+		// set lookup from code hash to code
+		k.SetCode(ctx, codeHash.Bytes(), code)
 	}
 
 	return []abci.ValidatorUpdate{}
