@@ -96,7 +96,7 @@ var DefaultTestToolConfig = TestToolConfig{
 	OperatorExoAmount:        10,
 	AVSExoAmount:             10,
 	ChainValidatorNumber:     1,
-	ChainID:                  "exocoretestnet_233-1",
+	ChainID:                  "exocorelocalnet_232-1",
 	DefaultClientChainID:     101,
 	NodesRPC:                 []string{"http://127.0.0.1:26657"},
 	NodesEVMRPCHTTP:          []string{"http://127.0.0.1:8545"},
