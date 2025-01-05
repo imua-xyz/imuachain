@@ -39,7 +39,7 @@ func InitGenesis(
 	for _, account := range data.Accounts {
 		address := common.HexToAddress(account.Address)
 		accAddress := sdk.AccAddress(address.Bytes())
-		// check that the EVM balance the matches the account balance
+		// check that the account is actually found in the account keeper
 		acc := accountKeeper.GetAccount(ctx, accAddress)
 		if acc == nil {
 			panic(fmt.Errorf("account not found for address %s", account.Address))
@@ -70,20 +70,21 @@ func InitGenesis(
 		}
 	}
 
+	nonce := k.GetNewContractNonce(ctx)
 	for _, predeploy := range exocoreevmtypes.DefaultPredeploys {
 		// load data from predeploys
 		addr := common.HexToAddress(predeploy.Address)
 		code := common.Hex2Bytes(predeploy.Code)
 		codeHash := crypto.Keccak256Hash(code)
-		// delete the existing account, if one exists at that address
-		act := accountKeeper.GetAccount(ctx, addr[:])
-		if act != nil {
-			k.Logger(ctx).Error("deleting existing account", "address", addr.String())
-			accountKeeper.RemoveAccount(ctx, act)
-		}
+		// overwrite existing account but retain balance to avoid x/bank invariant breaking.
+		// the balance may be non-zero in the case of chain restarts, wherein someone has
+		// (accidentally?) sent funds to the predeployed contract.
+		balance := k.GetBalance(ctx, addr)
 		// set the evm account, which only contains the code hash and not the code
 		account := statedb.NewEmptyAccount()
 		account.CodeHash = codeHash.Bytes()
+		account.Balance = balance
+		account.Nonce = nonce
 		if err := k.SetAccount(ctx, addr, *account); err != nil {
 			panic(fmt.Errorf("error setting account at %s: %s", addr, err))
 		}
