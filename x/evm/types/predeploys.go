@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // This file contains hardcoded predeploys. As of now, there is no intention
@@ -20,7 +21,7 @@ import (
 type Predeploy struct {
 	// Address is the address of the predeploy contract.
 	Address string
-	// Code is the hex-encoded bytecode of the predeploy contract.
+	// Code is the hex-encoded runtime bytecode of the predeploy contract.
 	// Do not start it with 0x.
 	// Fetch it by using `cast code $ADDR --rpc-url $RPC_URL`.
 	Code string
@@ -29,6 +30,21 @@ type Predeploy struct {
 // DefaultPredeploys is a list of predeploys that are included at genesis.
 var DefaultPredeploys = []Predeploy{
 	create2, create2Deployer, createX, safeSingletonFactory, multicall3,
+}
+
+// GetByteAddress returns the address as a common.Address.
+func (p Predeploy) GetByteAddress() common.Address {
+	return common.HexToAddress(p.Address)
+}
+
+// GetByteCode returns the bytecode as a byte slice.
+func (p Predeploy) GetByteCode() []byte {
+	return common.Hex2Bytes(p.Code)
+}
+
+// GetCodeHash returns the keccak256 hash of the bytecode.
+func (p Predeploy) GetCodeHash() common.Hash {
+	return crypto.Keccak256Hash(p.GetByteCode())
 }
 
 // Validate the predeploys

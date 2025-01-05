@@ -19,6 +19,9 @@ const (
 // TestValidateDefaultPredeploys checks the format of the default predeploys, and that
 // the code at the provided predeploys matches the code at the remote URL.
 func TestValidateDefaultPredeploys(t *testing.T) {
+	// do not use the helper functions like GetByteAddress and GetByteCode intentionally.
+	// some of this code may overlap init() but duplicating it with the slight differences
+	// offers stronger guarantees of the validity (as test and during runtime).
 	for _, predeploy := range types.DefaultPredeploys {
 		address := predeploy.Address
 		if !common.IsHexAddress(address) {

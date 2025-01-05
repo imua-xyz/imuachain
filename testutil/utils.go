@@ -72,6 +72,9 @@ type BaseTestSuite struct {
 
 	InitTime          time.Time
 	OperatorMsgServer operatortypes.MsgServer
+
+	// tests may use this to allocate a genesis balance
+	Balances []banktypes.Balance
 }
 
 func (suite *BaseTestSuite) SetupTest() {
@@ -481,7 +484,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 
 	// Initialize an ExocoreApp for test
 	suite.SetupWithGenesisValSet(
-		[]authtypes.GenesisAccount{acc}, balance,
+		[]authtypes.GenesisAccount{acc}, append(suite.Balances, balance)...,
 	)
 
 	// Create StateDB

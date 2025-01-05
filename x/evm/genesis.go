@@ -73,9 +73,8 @@ func InitGenesis(
 	nonce := k.GetNewContractNonce(ctx)
 	for _, predeploy := range exocoreevmtypes.DefaultPredeploys {
 		// load data from predeploys
-		addr := common.HexToAddress(predeploy.Address)
-		code := common.Hex2Bytes(predeploy.Code)
-		codeHash := crypto.Keccak256Hash(code)
+		addr := predeploy.GetByteAddress()
+		codeHash := predeploy.GetCodeHash()
 		// overwrite existing account but retain balance to avoid x/bank invariant breaking.
 		// the balance may be non-zero in the case of chain restarts, wherein someone has
 		// (accidentally?) sent funds to the predeployed contract.
@@ -89,7 +88,7 @@ func InitGenesis(
 			panic(fmt.Errorf("error setting account at %s: %s", addr, err))
 		}
 		// set lookup from code hash to code
-		k.SetCode(ctx, codeHash.Bytes(), code)
+		k.SetCode(ctx, account.CodeHash, predeploy.GetByteCode())
 	}
 
 	return []abci.ValidatorUpdate{}
