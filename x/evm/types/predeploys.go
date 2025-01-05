@@ -26,12 +26,10 @@ type Predeploy struct {
 	Code string
 }
 
-var (
-	// DefaultPredeploys is a list of predeploys that are included at genesis.
-	DefaultPredeploys = []Predeploy{
-		create2, create2Deployer, createX, safeSingletonFactory, multicall3,
-	}
-)
+// DefaultPredeploys is a list of predeploys that are included at genesis.
+var DefaultPredeploys = []Predeploy{
+	create2, create2Deployer, createX, safeSingletonFactory, multicall3,
+}
 
 // Validate the predeploys
 func init() {
