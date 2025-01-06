@@ -6,6 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) SetValidatorUpdateForCache(ctx sdk.Context, validatorUpdateBlock types.ValidatorUpdateBlock) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ValidatorUpdateBlockKey))
+	b := k.cdc.MustMarshal(&validatorUpdateBlock)
+	store.Set(types.BlockKey, b)
+}
+
 // SetValidatorUpdateBlock set validatorUpdateBlock in the store
 func (k Keeper) SetValidatorUpdateBlock(ctx sdk.Context, validatorUpdateBlock types.ValidatorUpdateBlock) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ValidatorUpdateBlockKey))

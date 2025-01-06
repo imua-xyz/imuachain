@@ -49,6 +49,10 @@ const (
 
 	MaxPageLimit = 100
 	NSTIDPrefix  = "nst"
+
+	SourceChainlinkName = "Chainlink"
+	SourceChainlinkID   = 1
+	TimeLayout          = "2006-01-02 15:04:05"
 )
 
 var DelimiterForCombinedKey = byte('/')

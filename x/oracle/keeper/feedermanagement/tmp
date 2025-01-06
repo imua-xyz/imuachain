@@ -1,0 +1,16 @@
+1. f.cs.AddCache(*params)
+
+
+updateAndCommitRounds()
+2. f.setCommittableState
+3. f.commitRounds(N-commit)---> f.commitRoundsInRecovery()
+4. handleQuotingMisBehaviorInRecovery
+5. updateRoundParamsAndAddNewRound(ctx)
+6. removeExpiredRounds
+
+1. updateAdnCommitCaches
+2. updateBehaviorRecords
+3. updateAndCommitRounds
+4. prepareRounds
+5. setupNonces
+6. resetFlags()

@@ -14,6 +14,7 @@ import (
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/aggregator"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
+	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/feedermanagement"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 )
 
@@ -37,6 +38,7 @@ type (
 		types.SlashingKeeper
 		// wrap all four memory cache into one pointer to track them among cpoies of Keeper (msgServer, module)
 		memStore *memoryStore
+		fm       *feedermanagement.FeederManager
 	}
 )
 
@@ -62,7 +64,7 @@ func NewKeeper(
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
-	return Keeper{
+	ret := Keeper{
 		cdc:              cdc,
 		storeKey:         storeKey,
 		memKey:           memKey,
@@ -73,7 +75,10 @@ func NewKeeper(
 		authority:        authority,
 		SlashingKeeper:   slashingKeeper,
 		memStore:         new(memoryStore),
+		fm:               feedermanagement.NewFeederManager(nil),
 	}
+	ret.fm.SetKeeper(ret)
+	return ret
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

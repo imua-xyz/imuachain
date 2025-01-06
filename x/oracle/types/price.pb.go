@@ -172,7 +172,7 @@ type PriceTimeRound struct {
 	Decimal int32 `protobuf:"varint,2,opt,name=decimal,proto3" json:"decimal,omitempty"`
 	// timestamp when the price is corresponded
 	Timestamp string `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	// roundid of the price if the source is deteministic
+	// round id in Exocore of the price
 	RoundID uint64 `protobuf:"varint,4,opt,name=round_id,json=roundId,proto3" json:"round_id,omitempty"`
 }
 

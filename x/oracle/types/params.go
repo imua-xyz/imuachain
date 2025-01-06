@@ -595,3 +595,22 @@ func (p Params) CheckDecimal(feederID uint64, decimal int32) bool {
 	token := p.Tokens[feeder.TokenID]
 	return token.Decimal == decimal
 }
+
+func (p Params) IsForceSealingUpdate(params *Params) bool {
+	if p.MaxNonce != params.MaxNonce ||
+		p.MaxDetId != params.MaxDetId ||
+		p.ThresholdA != params.ThresholdA ||
+		p.ThresholdB != params.ThresholdB ||
+		p.Mode != params.Mode {
+		return true
+	}
+	return false
+}
+
+func (p Params) IsSlashingResetUpdate(params *Params) bool {
+	if p.Slashing.ReportedRoundsWindow != params.Slashing.ReportedRoundsWindow ||
+		p.Slashing.MinReportedPerWindow != params.Slashing.MinReportedPerWindow {
+		return true
+	}
+	return false
+}
