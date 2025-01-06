@@ -55,30 +55,24 @@ func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*
 	avsParams.RewardContractAddr = rewardContractAddr
 
 	// bech32
-	avsOwnerAddress, ok := args[6].([]string)
+	avsOwnerAddress, ok := args[6].([]common.Address)
 	if !ok || avsOwnerAddress == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]string", avsOwnerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]common.Address", avsOwnerAddress)
 	}
 	exoAddresses := make([]string, len(avsOwnerAddress))
 	for i, addr := range avsOwnerAddress {
-		accAddr, err := sdk.AccAddressFromBech32(addr)
-		if err != nil {
-			return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]string", avsOwnerAddress)
-		}
+		var accAddr sdk.AccAddress = addr[:]
 		exoAddresses[i] = accAddr.String()
 	}
 	avsParams.AvsOwnerAddress = exoAddresses
 	// bech32
-	whitelistAddress, ok := args[7].([]string)
+	whitelistAddress, ok := args[7].([]common.Address)
 	if !ok || whitelistAddress == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 7, "[]string", whitelistAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 7, "[]common.Address", whitelistAddress)
 	}
 	exoWhiteAddresses := make([]string, len(whitelistAddress))
 	for i, addr := range whitelistAddress {
-		accAddr, err := sdk.AccAddressFromBech32(addr)
-		if err != nil {
-			return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 7, "[]string", whitelistAddress)
-		}
+		var accAddr sdk.AccAddress = addr[:]
 		exoWhiteAddresses[i] = accAddr.String()
 	}
 	avsParams.WhitelistAddress = exoWhiteAddresses
@@ -171,31 +165,25 @@ func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface
 	avsParams.RewardContractAddr = rewardContractAddr
 
 	// bech32
-	avsOwnerAddress, ok := args[6].([]string)
+	avsOwnerAddress, ok := args[6].([]common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]string", avsOwnerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]common.Address", avsOwnerAddress)
 	}
 	exoAddresses := make([]string, len(avsOwnerAddress))
 	for i, addr := range avsOwnerAddress {
-		accAddr, err := sdk.AccAddressFromBech32(addr)
-		if err != nil {
-			return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]string", avsOwnerAddress)
-		}
+		var accAddr sdk.AccAddress = addr[:]
 		exoAddresses[i] = accAddr.String()
 	}
 	avsParams.AvsOwnerAddress = exoAddresses
 	// bech32
-	whitelistAddress, ok := args[7].([]string)
+	whitelistAddress, ok := args[7].([]common.Address)
 	if !ok || whitelistAddress == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 7, "[]string", whitelistAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 7, "[]common.Address", whitelistAddress)
 	}
 	exoWhiteAddresses := make([]string, len(whitelistAddress))
 	for i, addr := range whitelistAddress {
-		accAddr, err := sdk.AccAddressFromBech32(addr)
-		if err != nil {
-			return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 7, "[]string", whitelistAddress)
-		}
-		exoAddresses[i] = accAddr.String()
+		var accAddr sdk.AccAddress = addr[:]
+		exoWhiteAddresses[i] = accAddr.String()
 	}
 	avsParams.WhitelistAddress = exoWhiteAddresses
 	// string, since it is the address_id representation

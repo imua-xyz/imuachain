@@ -38,11 +38,12 @@ func (p Precompile) GetRegisteredPubkey(
 	if len(args) != len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs), len(args))
 	}
-	addr, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "string", addr)
+	addr, ok := args[0].(common.Address)
+	if !ok || addr == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
-	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, addr)
+	var accAddr sdk.AccAddress = addr[:]
+	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddr.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack([]byte{})
@@ -112,11 +113,12 @@ func (p Precompile) GetOperatorOptedUSDValue(
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddr)
 	}
-	operatorAddr, ok := args[1].(string)
+	addr, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", operatorAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", addr)
 	}
-	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddr.String()), operatorAddr)
+	var operatorAddr sdk.AccAddress = addr[:]
+	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddr.String()), operatorAddr.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack(common.Big0)

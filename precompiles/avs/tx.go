@@ -254,17 +254,14 @@ func (p Precompile) Challenge(
 	}
 	challengeParams.TaskResponseHash = taskResponseHash
 
-	operatorAddress, ok := args[4].(string)
-	if !ok || operatorAddress == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "string", operatorAddress)
+	operatorAddress, ok := args[4].(common.Address)
+	if !ok || operatorAddress == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", operatorAddress)
 	}
-	operator, err := sdk.AccAddressFromBech32(operatorAddress)
-	if err != nil {
-		return nil, err
-	}
+	operator := operatorAddress[:]
 
 	challengeParams.OperatorAddress = operator
-	err = p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
+	err := p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
 	if err != nil {
 		return nil, err
 	}
