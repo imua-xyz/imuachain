@@ -111,7 +111,7 @@ func DefaultParams() Params {
 				Name: "0 position is reserved",
 			},
 			{
-				Name: "Chainlink",
+				Name: SourceChainlinkName,
 				Entry: &Endpoint{
 					Offchain: map[uint64]string{0: ""},
 				},
@@ -696,4 +696,23 @@ func (p Params) CheckDecimal(feederID uint64, decimal int32) bool {
 	feeder := p.TokenFeeders[feederID]
 	token := p.Tokens[feeder.TokenID]
 	return token.Decimal == decimal
+}
+
+func (p Params) IsForceSealingUpdate(params *Params) bool {
+	if p.MaxNonce != params.MaxNonce ||
+		p.MaxDetId != params.MaxDetId ||
+		p.ThresholdA != params.ThresholdA ||
+		p.ThresholdB != params.ThresholdB ||
+		p.Mode != params.Mode {
+		return true
+	}
+	return false
+}
+
+func (p Params) IsSlashingResetUpdate(params *Params) bool {
+	if p.Slashing.ReportedRoundsWindow != params.Slashing.ReportedRoundsWindow ||
+		p.Slashing.MinReportedPerWindow != params.Slashing.MinReportedPerWindow {
+		return true
+	}
+	return false
 }

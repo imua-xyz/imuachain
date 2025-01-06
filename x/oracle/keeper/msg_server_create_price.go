@@ -27,13 +27,32 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	defer func() {
 		ctx = ctx.WithGasMeter(gasMeter)
 	}()
-	logger := ms.Keeper.Logger(ctx)
+	logger := ms.Logger(ctx)
 	if err := checkTimestamp(ctx, msg); err != nil {
 		logger.Info("price proposal timestamp check failed", "error", err, "height", ctx.BlockHeight())
 		return nil, types.ErrPriceProposalFormatInvalid.Wrap(err.Error())
 	}
 
-	agc := ms.Keeper.GetAggregatorContext(ctx)
+	//	finalPrice, err := ms.fm.ProcessQuote(msg, ctx.IsCheckTx())
+	//	if err != nil {
+	//		logger.Info("price proposal failed", "error", err, "height", ctx.BlockHeight(), "feederID", msg.FeederID)
+	//		return nil, err
+	//	}
+	//	// TODO: distinguish added and recorded only for logs
+	//	logger.Info("added price proposal for aggregation", "feederID", msg.FeederID, "basedBlock", msg.BasedBlock, "proposer", msg.Creator, "height", ctx.BlockHeight())
+	//	ctx.EventManager().EmitEvent(sdk.NewEvent(
+	//		types.EventTypeCreatePrice,
+	//		sdk.NewAttribute(types.AttributeKeyFeederID, strconv.FormatUint(msg.FeederID, 10)),
+	//		sdk.NewAttribute(types.AttributeKeyBasedBlock, strconv.FormatUint(msg.BasedBlock, 10)),
+	//		sdk.NewAttribute(types.AttributeKeyProposer, msg.Creator),
+	//	))
+	//
+	//	if finalPrice != nil {
+	//	}
+	//
+	//	return &types.MsgCreatePriceResponse{}, nil
+
+	agc := ms.GetAggregatorContext(ctx)
 	newItem, caches, err := agc.NewCreatePrice(ctx, msg)
 	if err != nil {
 		logger.Info("price proposal failed", "error", err, "height", ctx.BlockHeight(), "feederID", msg.FeederID)
@@ -80,11 +99,11 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess)),
 		)
 		if !ctx.IsCheckTx() {
-			ms.Keeper.GetCaches().RemoveCache(caches)
-			ms.Keeper.AppendUpdatedFeederIDs(msg.FeederID)
+			ms.GetCaches().RemoveCache(caches)
+			ms.AppendUpdatedFeederIDs(msg.FeederID)
 		}
 	} else if !ctx.IsCheckTx() {
-		ms.Keeper.GetCaches().AddCache(caches)
+		ms.GetCaches().AddCache(caches)
 	}
 
 	return &types.MsgCreatePriceResponse{}, nil

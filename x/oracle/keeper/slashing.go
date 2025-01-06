@@ -26,6 +26,16 @@ func (k Keeper) InitValidatorReportInfo(ctx sdk.Context, validator string, heigh
 	}
 }
 
+func (k Keeper) ClearAllValidatorReportInfo(ctx sdk.Context) {
+	// 	k.ClearAllValidatorMissedRoundBitArray(ctx)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ValidatorReportInfoPrefix)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
+	iterator.Close()
+}
+
 // SetValidatorReportInfo sets the validator reporting info for a validator
 func (k Keeper) SetValidatorReportInfo(ctx sdk.Context, validator string, info types.ValidatorReportInfo) {
 	store := ctx.KVStore(k.storeKey)
@@ -118,7 +128,7 @@ func (k Keeper) IterateValidatorReportInfos(ctx sdk.Context, handler func(addres
 
 // IterateValidatorMissedRoundBitArrray iterates all missed rounds in one performance window of rounds
 func (k Keeper) IterateValidatorMissedRoundBitArray(ctx sdk.Context, validator string, handler func(index uint64, missed bool) (stop bool)) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SlashingMissedBitArrayPrefix(validator))
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.SlashingMissedBitArrayValidatorPrefix(validator))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
@@ -145,7 +155,17 @@ func (k Keeper) GetValidatorMissedRounds(ctx sdk.Context, address string) []*typ
 // ClearValidatorMissedBlockBitArray deletes every instance of ValidatorMissedBlockBitArray in the store
 func (k Keeper) ClearValidatorMissedRoundBitArray(ctx sdk.Context, validator string) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.SlashingMissedBitArrayPrefix(validator))
+	iterator := sdk.KVStorePrefixIterator(store, types.SlashingMissedBitArrayValidatorPrefix(validator))
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
+}
+
+// ClearAllValidatorMissedRoundBitArray clear all instances of ValidatorMissedBlockBitArray in the store
+func (k Keeper) ClearAllValidatorMissedRoundBitArray(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.MissedBitArrayPrefix)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		store.Delete(iterator.Key())
