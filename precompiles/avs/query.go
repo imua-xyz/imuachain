@@ -65,7 +65,7 @@ func (p Precompile) GetOptedInOperatorAccAddrs(
 
 	addr, ok := args[0].(common.Address)
 	if !ok || addr == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "string", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
 
 	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(addr.String()))
