@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"context"
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	"errors"
 	"fmt"
+
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
@@ -716,6 +718,7 @@ func QueryCometbftValidators() ([]sdk.ConsAddress, error) {
 
 	return validatorAddrs, nil
 }
+
 func IsAddressInSlice(address sdk.ConsAddress, addresses []sdk.ConsAddress) bool {
 	for _, addr := range addresses {
 		if addr.Equals(address) {
