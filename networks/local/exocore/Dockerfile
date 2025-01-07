@@ -10,7 +10,7 @@ RUN LEDGER_ENABLED=false make build
 
 #####################################
 FROM alpine:3.19 AS run
-RUN apk add --no-cache libstdc++=13.2.1_git20231014-r0 bash=5.2.21-r0 curl=8.9.1-r1 jq=1.7.1-r0 \
+RUN apk add --no-cache libstdc++=13.2.1_git20231014-r0 bash=5.2.21-r0 curl=8.11.1-r0 jq=1.7.1-r0 \
     && addgroup -g 1000 exocore \
     && adduser -S -h /home/exocore -D exocore -u 1000 -G exocore
 EXPOSE 26656 26657 1317 9090 8545 8546
