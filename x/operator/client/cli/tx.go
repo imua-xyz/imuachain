@@ -97,12 +97,10 @@ func CmdRegisterOperator() *cobra.Command {
 	)
 	f.AddFlagSet(stakingcli.FlagSetCommissionCreate())
 
-	// transaction level flags from the SDK
-	flags.AddTxFlagsToCmd(cmd)
-
 	// required flags
 	_ = cmd.MarkFlagRequired(FlagMetaInfo) // name of the operator
 
+	// transaction level flags from the SDK
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
