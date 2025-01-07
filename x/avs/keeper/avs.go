@@ -240,6 +240,10 @@ func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (b
 	if err != nil {
 		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parsing account acc address from Bech32")
 	}
+	// whitelist is disabled for avs of the dogfood type
+	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == types.GenerateAVSAddr(avsInfo.Info.ChainId) {
+		return true, nil
+	}
 	// Currently avs has no whitelist set and any operator can optin
 	if len(avsInfo.Info.WhitelistAddress) == 0 {
 		return true, nil
