@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -12,7 +11,6 @@ import (
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cometbft/cometbft/libs/log"
-	tmclient "github.com/cometbft/cometbft/rpc/client/http"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
@@ -609,12 +607,7 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		ctx.Logger().Error(" new validator error", "err", err)
 		return types.Validator{}, false
 	}
-	validators, err := QueryCometbftValidators()
-	if err != nil {
-		ctx.Logger().Error(" QueryCometbftValidators error", "err", err)
-		return types.Validator{}, false
-	}
-	val.Active = IsAddressInSlice(wrappedKey.ToConsAddr(), validators)
+	val.Active = k.stakingKeeper.IsExocoreValidator(ctx, wrappedKey.ToConsAddr())
 	val.OperatorEarningsAddr = ops.EarningsAddr
 	val.OperatorApproveAddr = ops.ApproveAddr
 	val.OperatorMetaInfo = ops.OperatorMetaInfo
@@ -697,33 +690,4 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 	val.DelegatorTokens = delegatorTokens
 
 	return val, true
-}
-
-func QueryCometbftValidators() ([]sdk.ConsAddress, error) {
-	tmClient, err := tmclient.New("http://localhost:26657", "")
-	if err != nil {
-		return nil, err
-	}
-
-	validatorsRes, err := tmClient.Validators(context.Background(), nil, nil, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	validatorAddrs := make([]sdk.ConsAddress, len(validatorsRes.Validators))
-
-	for i := 0; i < len(validatorsRes.Validators); i++ {
-		validatorAddrs[i] = sdk.ConsAddress(validatorsRes.Validators[i].Address)
-	}
-
-	return validatorAddrs, nil
-}
-
-func IsAddressInSlice(address sdk.ConsAddress, addresses []sdk.ConsAddress) bool {
-	for _, addr := range addresses {
-		if addr.Equals(address) {
-			return true
-		}
-	}
-	return false
 }

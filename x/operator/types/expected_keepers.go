@@ -141,3 +141,6 @@ type OperatorHooks interface {
 		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []string,
 	)
 }
+type StakingKeeper interface {
+	IsExocoreValidator(ctx sdk.Context, addr sdk.ConsAddress) bool
+}
