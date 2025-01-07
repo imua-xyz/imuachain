@@ -84,7 +84,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 			postCheck:   func(bz []byte) {},
 			gas:         100000,
 			expErr:      true,
-			errContains: fmt.Sprintf(exocmn.ErrContractInputParaOrType, 0, "string", "0x0000000000000000000000000000000000000000"),
+			errContains: fmt.Sprintf(exocmn.ErrContractInputParamOrType, 0, "common.Address", "0x0000000000000000000000000000000000000000"),
 		},
 		{
 			"success - no operators",
@@ -286,7 +286,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 				setUp()
 				return []interface{}{
 					common.HexToAddress(suite.avsAddr),
-					suite.operatorAddr.String(),
+					common.BytesToAddress(suite.operatorAddr),
 				}
 			},
 			func(bz []byte) {
@@ -324,14 +324,15 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubkey]
 	privateKey, err := blst.RandKey()
 	suite.NoError(err)
-	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	addr := utiltx.GenerateAddress()
+	var operatorAddr sdk.AccAddress = addr[:]
 
 	publicKey := privateKey.PublicKey()
 	setUp := func() {
-		suite.prepareOperator()
+		suite.prepareOperator(operatorAddr.String())
 
 		blsPub := &avstype.BlsPubKeyInfo{
-			Operator: operatorAddr,
+			Operator: operatorAddr.String(),
 			PubKey:   publicKey.Marshal(),
 			Name:     "",
 		}
@@ -344,7 +345,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 			func() []interface{} {
 				setUp()
 				return []interface{}{
-					operatorAddr,
+					addr,
 				}
 			},
 			func(bz []byte) {
@@ -460,7 +461,7 @@ func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 		{
 			"success - existent operator",
 			func() []interface{} {
-				suite.prepareOperator()
+				suite.prepareOperator(opAccAddr.String())
 				return []interface{}{
 					common.BytesToAddress(opAccAddr),
 				}

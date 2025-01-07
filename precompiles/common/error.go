@@ -1,7 +1,7 @@
 package common
 
 const (
-	ErrContractInputParaOrType = "the contract input parameter type or value error,arg index:%d, expected type is:%s,value:%v"
+	ErrContractInputParamOrType = "the contract input parameter type or value error,arg index:%d, expected type is:%s,value:%v"
 
 	ErrContractCaller = "the caller doesn't have the permission to call this function"
 
