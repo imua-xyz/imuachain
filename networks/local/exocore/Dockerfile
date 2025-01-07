@@ -14,8 +14,8 @@ RUN apk add --no-cache libstdc++=13.2.1_git20231014-r0 bash=5.2.21-r0 curl=8.9.1
     && addgroup -g 1000 exocore \
     && adduser -S -h /home/exocore -D exocore -u 1000 -G exocore
 EXPOSE 26656 26657 1317 9090 8545 8546
-# TODO: exocore testnet chainid is still under consideration and need to be finalized later
-CMD ["start", "--log_format", "plain", "--chain-id", "exocoretestnet_233-1", "--metrics", "--json-rpc.api", "eth,txpool,personal,net,debug,web3", "--api.enable", "--json-rpc.enable", "true", "--minimum-gas-prices", "0.0001hua"]
+USER exocore
+CMD ["start", "--log_format", "plain", "--chain-id", "exocorelocalnet_232-1", "--metrics", "--json-rpc.api", "eth,txpool,personal,net,debug,web3", "--api.enable", "--json-rpc.enable", "true", "--minimum-gas-prices", "0.0001hua"]
 # by default, a SIGKILL is sent after 10 seconds. We need to override this to allow graceful shutdown.
 STOPSIGNAL SIGTERM
 VOLUME /exocore
@@ -23,9 +23,6 @@ WORKDIR /exocore
 
 COPY ./networks/local/exocore/wrapper.sh /usr/bin/wrapper.sh
 COPY --from=build /go/work/build/exocored /exocore
-
-# Use the created non-root user
-USER exocore
 
 HEALTHCHECK --interval=30s --timeout=30s --retries=3 CMD curl -f http://localhost:26657/health || exit 1
 

@@ -174,7 +174,7 @@ func (k Keeper) RegisterAVSWithChainID(
 		statedb.Account{
 			Balance:  big.NewInt(0),
 			CodeHash: types.ChainIDCodeHash[:],
-			Nonce:    1,
+			Nonce:    k.evmKeeper.GetNewContractNonce(ctx),
 		},
 	); err != nil {
 		return common.Address{}, err
