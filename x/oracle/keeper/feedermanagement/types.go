@@ -17,12 +17,11 @@ type Submitter interface {
 
 type CacheReader interface {
 	GetPowerForValidator(validator string) (*big.Int, bool)
-	//	GetTokenFeederForFeederID(feederID int64) (*oracletypes.TokenFeeder, bool)
 	GetTotalPower() (totalPower *big.Int)
 	GetValidators() []string
 	IsRuleV1(feederID int64) bool
+	IsDeterministic(sournceID int64) bool
 	GetThreshold() *threshold
-	// GetMaxNonce() (maxNonce int64)
 }
 
 // used to track validator change
@@ -33,7 +32,6 @@ type cacheValidator struct {
 
 // used to track params change
 type cacheParams struct {
-	// params types.Params
 	params *oracletypes.Params
 	update bool
 }
@@ -48,61 +46,39 @@ type caches struct {
 	params     *cacheParams
 }
 
-type PriceInfo struct {
-	Price     string
-	Decimal   int32
-	DetID     string
-	Timestamp string
+type MsgItem struct {
+	FeederID     int64
+	Validator    string
+	Power        *big.Int
+	PriceSources []*priceSource
 }
 
-func (p *PriceInfo) EqualDS(pi *PriceInfo) bool {
-	return p.Price == pi.Price && p.DetID == pi.DetID && p.Decimal == pi.Decimal
-}
-
-func (p *PriceInfo) PriceResult() *PriceResult {
-	return (*PriceResult)(p)
-}
+type PriceInfo oracletypes.PriceTimeDetID
 
 type PricePower struct {
 	Price      *PriceInfo
 	Power      *big.Int
-	validators map[string]struct{}
+	Validators map[string]struct{}
 }
 
 // type PriceResult oracletypes.PriceTimeRound
 type PriceResult PriceInfo
 
-func (p *PriceResult) PriceInfo() *PriceInfo {
-	return (*PriceInfo)(p)
-}
-
-func (p *PriceResult) PriceTimeRound(roundID int64, timestamp string) *oracletypes.PriceTimeRound {
-	return &oracletypes.PriceTimeRound{
-		Price:     p.Price,
-		Decimal:   p.Decimal,
-		Timestamp: timestamp,
-		RoundID:   uint64(roundID),
-	}
-}
-
-// type PriceResult struct {
-// 	Price     string
-// 	Decimal   int32
-// 	Timestamp string
-// }
-
 type priceSource struct {
-	finalPrice *PriceResult
-	sourceID   int64
+	deterministic bool
+	finalPrice    *PriceResult
+	sourceID      int64
+	detIDs        map[string]struct{}
 	// ordered by detID
 	prices []*PriceInfo
 }
+
 type priceValidator struct {
 	finalPrice *PriceResult
 	validator  string
 	power      *big.Int
 	// each source will get a single final price independetly, the order of sources does not matter, map is safe
-	pricesSource map[int64]*priceSource
+	priceSources map[int64]*priceSource
 }
 
 type recordsValidators struct {
@@ -137,6 +113,14 @@ type threshold struct {
 	totalPower *big.Int
 	thresholdA *big.Int
 	thresholdB *big.Int
+}
+
+func (t *threshold) Cpy() *threshold {
+	return &threshold{
+		totalPower: new(big.Int).Set(t.totalPower),
+		thresholdA: new(big.Int).Set(t.thresholdA),
+		thresholdB: new(big.Int).Set(t.thresholdB),
+	}
 }
 
 func (t *threshold) Exceeds(power *big.Int) bool {
@@ -176,8 +160,9 @@ type round struct {
 }
 
 type FeederManager struct {
-	logger log.Logger
-	k      common.KeeperOracle
+	logger          log.Logger
+	k               common.KeeperOracle
+	sortedFeederIDs []int64
 	// this will not be ranged, map is safe
 	rounds            map[int64]*round
 	cs                *caches

@@ -8,6 +8,7 @@ import (
 	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -23,6 +24,7 @@ type KeeperOracle interface {
 	KeeperDogfood
 	SlashingKeeper
 
+	Logger(ctx sdk.Context) log.Logger
 	AddZeroNonceItemWithFeederIDForValidators(ctx sdk.Context, feederID uint64, validators []string)
 	InitValidatorReportInfo(ctx sdk.Context, validator string, height int64)
 	ClearAllValidatorReportInfo(ctx sdk.Context)
@@ -38,7 +40,12 @@ type KeeperOracle interface {
 	GetMinReportedPerWindow(ctx sdk.Context) int64
 	GetMissJailDuration(ctx sdk.Context) (res time.Duration)
 	SetValidatorReportInfo(ctx sdk.Context, validator string, info types.ValidatorReportInfo)
-
+	GetSlashFractionMalicious(ctx sdk.Context) (res sdk.Dec)
+	SetValidatorUpdateForCache(sdk.Context, types.ValidatorUpdateBlock)
+	SetParamsForCache(sdk.Context, types.RecentParams)
+	SetMsgItemsForCache(sdk.Context, types.RecentMsg)
+	GetRecentParamsWithinMaxNonce(ctx sdk.Context) (recentParamsList []*types.RecentParams, prev, latest types.RecentParams)
+	GetAllRecentMsg(ctx sdk.Context) (list []types.RecentMsg)
 	GetParams(sdk.Context) types.Params
 	GetIndexRecentMsg(sdk.Context) (types.IndexRecentMsg, bool)
 	GetAllRecentMsgAsMap(sdk.Context) map[int64][]*types.MsgItem

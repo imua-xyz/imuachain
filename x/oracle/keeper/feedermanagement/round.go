@@ -19,11 +19,31 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 		cache:    cache,
 
 		// default value
-		status: roundStatusClosed,
-		a:      nil,
-		//committable:    false,
+		status:         roundStatusClosed,
+		a:              nil,
 		roundBaseBlock: 0,
 		roundID:        0,
+	}
+}
+
+func (r *round) CpyWithCacheReader(c CacheReader) *round {
+	ret := *r
+	ret.cache = c
+	ret.a = ret.a.Cpy()
+	return &ret
+}
+
+func (r *round) getMsgItemFromProto(msg *oracletypes.MsgItem) *MsgItem {
+	power, _ := r.cache.GetPowerForValidator(msg.Validator)
+	priceSources := make([]*priceSource, 0, len(msg.PSources))
+	for _, ps := range msg.PSources {
+		priceSources = append(priceSources, GetPriceSourceFromProto(ps, r.cache))
+	}
+	return &MsgItem{
+		FeederID:     int64(msg.FeederID),
+		Validator:    msg.Validator,
+		Power:        power,
+		PriceSources: priceSources,
 	}
 }
 
@@ -33,19 +53,26 @@ func (r *round) ValidQuotingBaseBlock(height int64) bool {
 
 // Tally process information to get the final price
 // it does not verify if the msg is for the corresponding round(roundid/roundBaseBlock)
-func (r *round) Tally(msg *oracletypes.MsgItem) (*PriceResult, error) {
+func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, error) {
 	if !r.IsQuotingWindowOpen() {
 		return nil, fmt.Errorf("quoting window is not open, feederID:%d", r.feederID)
 	}
+
+	msg := r.getMsgItemFromProto(protoMsg)
 	if !r.IsQuoting() {
 		// record msg for 'handlQuotingMisBehavior'
-		r.a.RecordMsg(msg)
-		return nil, nil
+		err := r.a.RecordMsg(msg)
+		if err == nil {
+			return nil, oracletypes.ErrQuoteRecorded
+		}
+		return nil, fmt.Errorf("failed to record quote for aggregated round, error:%w", err)
 	}
+
 	err := r.a.AddMsg(msg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to add quote for aggregation of feederID:%d, roundID:%d, error:%w", r.feederID, r.roundID, err)
 	}
+
 	finalPrice, ok := r.FinalPrice()
 	if ok {
 		r.status = roundStatusCommittable
@@ -56,6 +83,7 @@ func (r *round) Tally(msg *oracletypes.MsgItem) (*PriceResult, error) {
 		}
 		return finalPrice, nil
 	}
+
 	return nil, nil
 }
 
@@ -70,32 +98,32 @@ func (r *round) UpdateParams(tokenFeeder *oracletypes.TokenFeeder, quoteWindowSi
 func (r *round) PrepareForNextBlock(currentHeight int64) (open bool) {
 	if currentHeight < r.roundBaseBlock && r.IsQuoting() {
 		r.closeQuotingWindow()
-		return
+		return open
 	}
 	// currentHeight euqls to baseBlock
 	if currentHeight == r.roundBaseBlock && !r.IsQuoting() {
 		r.openQuotingWindow()
-		return
+		open = true
+		return open
 	}
+	baseBlock, roundID, delta, expired := r.getPosition(currentHeight)
 
-	baseBlock, roundID, delta, expired := r.getPosition(currentHeight + 1)
 	if expired && r.IsQuoting() {
 		r.closeQuotingWindow()
-		return
+		return open
 	}
-
 	// open a new round
 	if baseBlock > r.roundBaseBlock {
 		// move to next round
 		r.roundBaseBlock = baseBlock
 		r.roundID = roundID
 		// the first block in the quoting window
-		if delta == 1 && !r.IsQuoting() {
+		if delta == 0 && !r.IsQuoting() {
 			r.openQuotingWindow()
 			open = true
 		}
 	}
-	return
+	return open
 }
 
 func (r *round) openQuotingWindow() {
@@ -110,10 +138,7 @@ func (r *round) IsQuotingWindowOpen() bool {
 
 func (r *round) IsQuotingWindowEnd(currentHeight int64) bool {
 	_, _, delta, _ := r.getPosition(currentHeight)
-	if delta == r.quoteWindowSize {
-		return true
-	}
-	return false
+	return delta == r.quoteWindowSize
 }
 
 func (r *round) IsQuoting() bool {
@@ -126,10 +151,6 @@ func (r *round) FinalPrice() (*PriceResult, bool) {
 	}
 	return r.a.GetFinalPrice()
 }
-
-// func (r *round) FinalDetIDForSourceID(sourceID int) string{
-// 	r.a.ds.
-// }
 
 // Close sets round status to roundStatusClosed and remove current aggregator
 func (r *round) closeQuotingWindow() {
@@ -175,16 +196,17 @@ func (r *round) Committable() bool {
 
 func (r *round) getPosition(currentHeight int64) (baseBlock, roundID, delta int64, expired bool) {
 	// endBlock is included
-	if r.endBlock > 0 && currentHeight > int64(r.endBlock) {
+	if r.endBlock > 0 && currentHeight > r.endBlock {
 		expired = true
 		return
 	}
 	if currentHeight < r.startBaseBlock {
 		return
 	}
-	delta = currentHeight - int64(r.startBaseBlock)
-	rounds := delta / int64(r.interval)
-	roundID = int64(r.startRoundID) + rounds
-	delta -= rounds * int64(r.interval)
+	delta = currentHeight - r.startBaseBlock
+	rounds := delta / r.interval
+	roundID = r.startRoundID + rounds
+	delta -= rounds * r.interval
+	baseBlock = currentHeight - delta
 	return
 }

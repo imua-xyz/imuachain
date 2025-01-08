@@ -38,7 +38,7 @@ type (
 		types.SlashingKeeper
 		// wrap all four memory cache into one pointer to track them among cpoies of Keeper (msgServer, module)
 		memStore *memoryStore
-		fm       *feedermanagement.FeederManager
+		*feedermanagement.FeederManager
 	}
 )
 
@@ -75,9 +75,10 @@ func NewKeeper(
 		authority:        authority,
 		SlashingKeeper:   slashingKeeper,
 		memStore:         new(memoryStore),
-		fm:               feedermanagement.NewFeederManager(nil),
+		//		fm:               feedermanagement.NewFeederManager(nil),
+		FeederManager: feedermanagement.NewFeederManager(nil),
 	}
-	ret.fm.SetKeeper(ret)
+	ret.SetKeeper(ret)
 	return ret
 }
 

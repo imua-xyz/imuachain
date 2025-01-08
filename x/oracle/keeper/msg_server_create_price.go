@@ -4,11 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"strconv"
 	"strings"
 	"time"
 
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,105 +27,67 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	defer func() {
 		ctx = ctx.WithGasMeter(gasMeter)
 	}()
+
 	logger := ms.Logger(ctx)
+
+	validator, _ := types.ConsAddrStrFromCreator(msg.Creator)
+	logQuote := []interface{}{"feederID", msg.FeederID, "baseBlock", msg.BasedBlock, "proposer", validator, "msg-nonce", msg.Nonce, "height", ctx.BlockHeight()}
+
 	if err := checkTimestamp(ctx, msg); err != nil {
-		logger.Info("price proposal timestamp check failed", "error", err, "height", ctx.BlockHeight())
+		logger.Error("quote has invalid timestamp", append(logQuote, "error", err)...)
 		return nil, types.ErrPriceProposalFormatInvalid.Wrap(err.Error())
 	}
 
-	//	finalPrice, err := ms.fm.ProcessQuote(msg, ctx.IsCheckTx())
-	//	if err != nil {
-	//		logger.Info("price proposal failed", "error", err, "height", ctx.BlockHeight(), "feederID", msg.FeederID)
-	//		return nil, err
-	//	}
-	//	// TODO: distinguish added and recorded only for logs
-	//	logger.Info("added price proposal for aggregation", "feederID", msg.FeederID, "basedBlock", msg.BasedBlock, "proposer", msg.Creator, "height", ctx.BlockHeight())
-	//	ctx.EventManager().EmitEvent(sdk.NewEvent(
-	//		types.EventTypeCreatePrice,
-	//		sdk.NewAttribute(types.AttributeKeyFeederID, strconv.FormatUint(msg.FeederID, 10)),
-	//		sdk.NewAttribute(types.AttributeKeyBasedBlock, strconv.FormatUint(msg.BasedBlock, 10)),
-	//		sdk.NewAttribute(types.AttributeKeyProposer, msg.Creator),
-	//	))
-	//
-	//	if finalPrice != nil {
-	//	}
-	//
-	//	return &types.MsgCreatePriceResponse{}, nil
+	if err := ms.ValidateMsg(msg); err != nil {
+		logger.Error("failed to validate msg", append(logQuote, "error", err)...)
+		return nil, err
+	}
+	// core logic and functionality of Price Aggregation
+	finalPrice, err := ms.ProcessQuote(ctx, msg, ctx.IsCheckTx())
 
-	agc := ms.GetAggregatorContext(ctx)
-	newItem, caches, err := agc.NewCreatePrice(ctx, msg)
 	if err != nil {
-		logger.Info("price proposal failed", "error", err, "height", ctx.BlockHeight(), "feederID", msg.FeederID)
+		if sdkerrors.IsOf(err, types.ErrQuoteRecorded) {
+			// quote is recorded only, this happens when a quoting-window is not availalbe before that window end due to final price aggregated successfully in advance
+			// we will still record this msg if it's valid
+			logger.Info("recorded quote for oracle-behavior evaluation", logQuote...)
+			return &types.MsgCreatePriceResponse{}, nil
+		}
+		logger.Error("failed to process quote", append(logQuote, "error", err)...)
 		return nil, err
 	}
 
-	logger.Info("add price proposal for aggregation", "feederID", msg.FeederID, "basedBlock", msg.BasedBlock, "proposer", msg.Creator, "height", ctx.BlockHeight())
-
+	logger.Info("added quote for aggregation", logQuote...)
+	// TODO: use another type
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,
 		sdk.NewAttribute(types.AttributeKeyFeederID, strconv.FormatUint(msg.FeederID, 10)),
 		sdk.NewAttribute(types.AttributeKeyBasedBlock, strconv.FormatUint(msg.BasedBlock, 10)),
-		sdk.NewAttribute(types.AttributeKeyProposer, msg.Creator),
-	),
-	)
+		sdk.NewAttribute(types.AttributeKeyProposer, validator),
+	))
 
-	if caches == nil {
-		return &types.MsgCreatePriceResponse{}, nil
-	}
-	if newItem != nil {
-		if success := ms.AppendPriceTR(ctx, newItem.TokenID, newItem.PriceTR); !success {
-			// This case should not exist, keep this line to avoid consensus fail if this happens
-			prevPrice, nextRoundID := ms.GrowRoundID(ctx, newItem.TokenID)
-			logger.Error("append new price round fail for mismatch roundID, and will just grow roundID with previous price", "roundID from finalPrice", newItem.PriceTR.RoundID, "expect nextRoundID", nextRoundID, "prevPrice", prevPrice)
-		} else {
-			logger.Info("final price aggregation done", "feederID", msg.FeederID, "roundID", newItem.PriceTR.RoundID, "price", newItem.PriceTR.Price)
-		}
+	if finalPrice != nil {
+		logger.Info("final price successfully aggregated", "price", finalPrice, "feederID", msg.FeederID, "height", ctx.BlockHeight())
 
-		decimalStr := strconv.FormatInt(int64(newItem.PriceTR.Decimal), 10)
-		tokenIDStr := strconv.FormatUint(newItem.TokenID, 10)
-		roundIDStr := strconv.FormatUint(newItem.PriceTR.RoundID, 10)
-		priceStr := newItem.PriceTR.Price
+		decimalStr := strconv.FormatInt(int64(finalPrice.Decimal), 10)
+		tokenID, _ := ms.GetTokenIDForFeederID(int64(msg.FeederID))
+		tokenIDStr := strconv.FormatInt(tokenID, 10)
+		roundIDStr := strconv.FormatUint(finalPrice.RoundID, 10)
+		priceStr := finalPrice.Price
 
-		if len(newItem.PriceTR.Price) >= 32 {
+		if len(priceStr) >= 32 {
 			hash := sha256.New()
-			hash.Write([]byte(newItem.PriceTR.Price))
+			hash.Write([]byte(priceStr))
 			priceStr = base64.StdEncoding.EncodeToString(hash.Sum(nil))
-
 		}
+
+		// emit event to tell price is udpated for current round of corresponding feederID
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			types.EventTypeCreatePrice,
 			sdk.NewAttribute(types.AttributeKeyRoundID, roundIDStr),
 			sdk.NewAttribute(types.AttributeKeyFinalPrice, strings.Join([]string{tokenIDStr, roundIDStr, priceStr, decimalStr}, "_")),
 			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess)),
 		)
-		if !ctx.IsCheckTx() {
-			ms.GetCaches().RemoveCache(caches)
-			ms.AppendUpdatedFeederIDs(msg.FeederID)
-		}
-	} else if !ctx.IsCheckTx() {
-		ms.GetCaches().AddCache(caches)
 	}
 
 	return &types.MsgCreatePriceResponse{}, nil
-}
-
-func checkTimestamp(goCtx context.Context, msg *types.MsgCreatePrice) error {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	now := ctx.BlockTime().UTC()
-	for _, ps := range msg.Prices {
-		for _, price := range ps.Prices {
-			ts := price.Timestamp
-			if len(ts) == 0 {
-				return errors.New("timestamp should not be empty")
-			}
-			t, err := time.ParseInLocation(layout, ts, time.UTC)
-			if err != nil {
-				return errors.New("timestamp format invalid")
-			}
-			if now.Add(maxFutureOffset).Before(t) {
-				return errors.New("timestamp is in the future")
-			}
-		}
-	}
-	return nil
 }

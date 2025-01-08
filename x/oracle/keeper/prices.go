@@ -209,20 +209,12 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	store := k.getPriceTRStore(ctx, tokenID)
 	b := k.cdc.MustMarshal(&priceTR)
 	store.Set(types.PricesRoundKey(nextRoundID), b)
-	if expiredRoundID := nextRoundID - k.memStore.agc.GetParamsMaxSizePrices(); expiredRoundID > 0 {
+	p := *k.GetParamsFromCache()
+	if expiredRoundID := nextRoundID - uint64(p.MaxSizePrices); expiredRoundID > 0 {
 		store.Delete(types.PricesRoundKey(expiredRoundID))
 	}
 	roundID := k.IncreaseNextRoundID(ctx, tokenID)
 
-	// update for native tokens
-	// TODO: set hooks as a genral approach
-	var p types.Params
-	// get params from cache if exists
-	if k.memStore.agc != nil {
-		p = k.memStore.agc.GetParams()
-	} else {
-		p = k.GetParams(ctx)
-	}
 	assetIDs := p.GetAssetIDsFromTokenID(tokenID)
 	for _, assetID := range assetIDs {
 		if nstChain, ok := strings.CutPrefix(strings.ToLower(assetID), types.NSTIDPrefix); ok {

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type OracleInfo struct {
@@ -60,4 +61,12 @@ func Uint64Bytes(value uint64) []byte {
 	valueBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(valueBytes, value)
 	return valueBytes
+}
+
+func ConsAddrStrFromCreator(creator string) (string, error) {
+	accAddress, err := sdk.AccAddressFromBech32(creator)
+	if err != nil {
+		return "", err
+	}
+	return sdk.ConsAddress(accAddress).String(), nil
 }

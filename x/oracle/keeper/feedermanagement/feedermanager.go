@@ -3,6 +3,7 @@ package feedermanagement
 import (
 	"fmt"
 	"math/big"
+	"sort"
 
 	//	oraclekeeper "github.com/ExocoreNetwork/exocore/x/oracle/keeper"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
@@ -14,11 +15,21 @@ import (
 
 func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	return &FeederManager{
-		k:                k,
+		k: k,
+		// TODO: type []int64 add(), delete(). in ordered way
+		sortedFeederIDs:  make([]int64, 0),
 		rounds:           make(map[int64]*round),
 		cs:               nil,
 		successFeederIDs: make([]int64, 0),
 	}
+}
+
+func (f *FeederManager) GetParamsFromCache() *oracletypes.Params {
+	return f.cs.params.params
+}
+
+func (f *FeederManager) GetTokenIDForFeederID(feederID int64) (int64, bool) {
+	return f.cs.GetTokenIDForFeederID(feederID)
 }
 
 func (f *FeederManager) SetKeeper(k common.KeeperOracle) {
@@ -26,12 +37,12 @@ func (f *FeederManager) SetKeeper(k common.KeeperOracle) {
 }
 
 // BeginBlock initializes the caches and slashing records, and setup the rounds
-// if (isCheckTx||isSimulate||isRecover) is true, then commitState is set to be true
 func (f *FeederManager) BeginBlock(ctx sdk.Context) {
 	// if the cache is nil and we are not in recovery mode, init the caches
 	if f.cs == nil {
 		if !f.recovery(ctx) {
 			f.initCaches(ctx)
+			f.SetParamsUpdated()
 		}
 		f.initBehaviorRecords(ctx)
 	}
@@ -68,6 +79,7 @@ func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.
 }
 
 func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
+	logger := f.k.Logger(ctx)
 	// remove nonces for closed quoting windows
 	height := ctx.BlockHeight()
 	if f.forceSeal {
@@ -77,6 +89,7 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	} else {
 		for _, r := range f.rounds {
 			if r.IsQuotingWindowEnd(height) {
+				logger.Debug("clear nonces for closing quoting window", "feederID", r.feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
 				f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 			}
 		}
@@ -87,6 +100,8 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	}
 	validators := f.cs.GetValidators()
 	for _, feederID := range feederIDs {
+		r := f.rounds[feederID]
+		logger.Debug("init nonces for new quoting window", "feederID", feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
 		f.k.AddZeroNonceItemWithFeederIDForValidators(ctx, uint64(feederID), validators)
 	}
 }
@@ -117,11 +132,20 @@ func (f *FeederManager) updateBehaviorRecords(ctx sdk.Context, addedValidators [
 }
 
 func (f *FeederManager) prepareRounds(ctx sdk.Context) []int64 {
+	logger := f.k.Logger(ctx)
 	feederIDs := make([]int64, 0)
 	for _, r := range f.rounds {
 		if open := r.PrepareForNextBlock(ctx.BlockHeight()); open {
 			feederIDs = append(feederIDs, r.feederID)
 		}
+	}
+	sort.Slice(feederIDs, func(i, j int) bool {
+		return feederIDs[i] < feederIDs[j]
+	})
+	height := ctx.BlockHeight()
+	for _, feederID := range feederIDs {
+		r := f.rounds[feederID]
+		logger.Info("[mem] open quoting window for round", "feederID", feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
 	}
 	return feederIDs
 }
@@ -184,17 +208,23 @@ func (f *FeederManager) commitRoundsInRecovery() {
 }
 
 func (f *FeederManager) commitRounds(ctx sdk.Context) {
-	for _, r := range f.rounds {
+	logger := f.k.Logger(ctx)
+	height := ctx.BlockHeight()
+	for _, feederID := range f.sortedFeederIDs {
+		r := f.rounds[feederID]
+		//	for _, r := range f.rounds {
 		if r.Committable() {
 			finalPrice, ok := r.FinalPrice()
 			if !ok {
+				logger.Info("commit round with price from previous", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "heigth", height)
 				f.k.GrowRoundID(ctx, uint64(r.tokenID))
 			} else {
 				if f.cs.IsRuleV1(r.feederID) {
-					priceCommit := finalPrice.PriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
+					priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
+					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "heigth", height)
 					f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit)
 				} else {
-					f.logger.Error("We currently only support rules under oracle V1: only allow price from source Chainlink", "feederID", r.feederID)
+					logger.Error("We currently only support rules under oracle V1: only allow price from source Chainlink", "feederID", r.feederID)
 				}
 			}
 			// keep aggregator for possible 'handlQuotingMisBehavior' at quotingWindowEnd
@@ -203,21 +233,20 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 		// close all quotingWindow to skip current rounds' 'handlQuotingMisBehavior'
 		if f.forceSeal {
 			r.closeQuotingWindow()
-			//			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 		}
 	}
 }
 
 func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {
 	height := ctx.BlockHeight()
+	logger := f.k.Logger(ctx)
 	for _, r := range f.rounds {
 		if r.IsQuotingWindowEnd(height) && r.a != nil {
-			// TODO: slashing&jailing
 			validators := f.cs.GetValidators()
 			for _, validator := range validators {
 				_, found := f.k.GetValidatorReportInfo(ctx, validator)
 				if !found {
-					f.logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
+					logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
 					continue
 				}
 				_, malicious := r.PerformanceReview(validator)
@@ -233,14 +262,14 @@ func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {
 
 func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	height := ctx.BlockHeight()
+	logger := f.k.Logger(ctx)
 	for _, r := range f.rounds {
 		if r.IsQuotingWindowEnd(height) && r.a != nil {
-			// TODO: slashing&jailing
 			validators := f.cs.GetValidators()
 			for _, validator := range validators {
 				reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
 				if !found {
-					f.logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
+					logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
 					continue
 				}
 				miss, malicious := r.PerformanceReview(validator)
@@ -248,7 +277,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 					detID := r.getFinalDetIDForSourceID(oracletypes.SourceChainlinkID)
 					finalPrice, _ := r.FinalPrice()
 					// TODO: malicious price, just slash&jail immediately
-					f.logger.Info(
+					logger.Info(
 						"confirmed malicious price",
 						"validator", validator,
 						"infraction_height", height,
@@ -319,7 +348,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 						),
 					)
 
-					f.logger.Debug(
+					logger.Debug(
 						"absent validator",
 						"height", ctx.BlockHeight(),
 						"validator", validator,
@@ -348,7 +377,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 						reportedInfo.IndexOffset = 0
 						f.k.ClearValidatorMissedRoundBitArray(ctx, validator)
 
-						f.logger.Info(
+						logger.Info(
 							"jailing validator due to oracle_liveness fault",
 							"height", height,
 							"validator", consAddr.String(),
@@ -358,7 +387,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 						)
 					} else {
 						// validator was (a) not found or (b) already jailed so we do not slash
-						f.logger.Info(
+						logger.Info(
 							"validator would have been slashed for too many missed repoerting price, but was either not found in store or already jailed",
 							"validator", validator,
 						)
@@ -368,7 +397,6 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 				f.k.SetValidatorReportInfo(ctx, validator, reportedInfo)
 			}
 			r.closeQuotingWindow()
-			//	f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 		}
 	}
 }
@@ -392,22 +420,30 @@ func (f *FeederManager) setCommittableState(ctx sdk.Context) {
 
 func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 	height := ctx.BlockHeight()
+	logger := f.k.Logger(ctx)
 	if f.paramsUpdated {
 		params := &oracletypes.Params{}
 		f.cs.Read(params)
 		existsFeederIDs := make(map[int64]struct{})
-		//	expiredFeederIDs := make([]int64, 0)
 		for _, r := range f.rounds {
 			r.UpdateParams(params.TokenFeeders[r.feederID], int64(params.MaxNonce))
 			existsFeederIDs[r.feederID] = struct{}{}
 		}
 		// add new rounds
 		for feederID, tokenFeeder := range params.TokenFeeders {
+			if feederID == 0 {
+				continue
+			}
 			feederID := int64(feederID)
 			if _, ok := existsFeederIDs[feederID]; !ok && (tokenFeeder.EndBlock == 0 || tokenFeeder.EndBlock > uint64(height)) {
+				logger.Info("[mem] add new round", "feederID", feederID, "height", height)
+				f.sortedFeederIDs = append(f.sortedFeederIDs, feederID)
 				f.rounds[feederID] = newRound(feederID, tokenFeeder, int64(params.MaxNonce), f.cs)
 			}
 		}
+		sort.Slice(f.sortedFeederIDs, func(i, j int) bool {
+			return f.sortedFeederIDs[i] < f.sortedFeederIDs[j]
+		})
 	}
 }
 
@@ -415,7 +451,7 @@ func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	expiredFeederIDs := make([]int64, 0)
 	for _, r := range f.rounds {
-		if r.endBlock <= height {
+		if r.endBlock > 0 && r.endBlock <= height {
 			expiredFeederIDs = append(expiredFeederIDs, r.feederID)
 		}
 	}
@@ -425,6 +461,12 @@ func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 		}
 		delete(f.rounds, feederID)
+
+		for i, fID := range f.sortedFeederIDs {
+			if feederID == fID {
+				f.sortedFeederIDs = append(f.sortedFeederIDs[:i], f.sortedFeederIDs[i+1:]...)
+			}
+		}
 	}
 }
 
@@ -468,27 +510,49 @@ func (f *FeederManager) SetForceSeal() {
 	f.forceSeal = true
 }
 
-func (f *FeederManager) ProcessQuote(msg *oracletypes.MsgCreatePrice, isCheckTx bool) (*PriceResult, error) {
+func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
+	// TODO: implement me
+	return nil
+}
+
+// func (f *FeederManager) ProcessQuote(msg *oracletypes.MsgCreatePrice, isCheckTx bool) (*PriceResult, error) {
+func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) (*oracletypes.PriceTimeRound, error) {
 	if isCheckTx {
+		// use copy for simulation
 		f = f.coppyForSimulation()
 	}
-	msgItem := f.getMsgItemFromQuote(msg)
+	msgItem := getProtoMsgItemFromQuote(msg)
+
 	r, ok := f.rounds[int64(msgItem.FeederID)]
 	if !ok {
-		// This should not happend since we do check the nonce in anthHandle
-		f.logger.Error("round not exists", "msgItem", msgItem)
+		// This should not happened since we do check the nonce in anthHandle
 		return nil, fmt.Errorf("round not exists for feederID:%d, porposer:%s", msgItem.FeederID, msgItem.Validator)
 	}
 
 	if valid := r.ValidQuotingBaseBlock(int64(msg.BasedBlock)); !valid {
-		return nil, fmt.Errorf("failed to execute price-feed msg for feederID:%d, round is quoting:%t,quotingWindow is open:%t, expected baseBlock:%d, got baseBlock:%d", msgItem.FeederID, r.IsQuoting(), r.IsQuotingWindowOpen(), r.roundBaseBlock, msg.BasedBlock)
+		return nil, fmt.Errorf("failed to process price-feed msg for feederID:%d, round is quoting:%t,quotingWindow is open:%t, expected baseBlock:%d, got baseBlock:%d", msgItem.FeederID, r.IsQuoting(), r.IsQuotingWindowOpen(), r.roundBaseBlock, msg.BasedBlock)
 	}
 
-	return r.Tally(msgItem)
+	finalPrice, err := r.Tally(msgItem)
+	if err != nil {
+		return nil, err
+	}
+	return finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout)), nil
 }
 
 func (f *FeederManager) coppyForSimulation() *FeederManager {
-	return nil
+	ret := *f
+	cs := f.cs.CpyForSimulation()
+	rounds := make(map[int64]*round)
+	for id, r := range f.rounds {
+		rounds[id] = r.CpyWithCacheReader(cs)
+	}
+	successFeederIDs := make([]int64, 0, len(f.successFeederIDs))
+	successFeederIDs = append(successFeederIDs, f.successFeederIDs...)
+	ret.rounds = rounds
+	ret.cs = cs
+	ret.successFeederIDs = successFeederIDs
+	return &ret
 }
 
 func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) {
@@ -497,28 +561,10 @@ func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) 
 		if !ok {
 			continue
 		}
+		// error deos not need to be handled in recovery mode
 		r.Tally(msgItem)
 	}
 }
-
-func (f *FeederManager) ProcessQuoteInSimulation(ctx sdk.Context, msg *oracletypes.MsgCreatePrice) {}
-
-func (f *FeederManager) getMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgItem {
-	// address has been valid before
-	accAddress, _ := sdk.AccAddressFromBech32(msg.Creator)
-	validator := sdk.ConsAddress(accAddress).String()
-
-	return &oracletypes.MsgItem{
-		FeederID: msg.FeederID,
-		// validator's consAddr
-		Validator: validator,
-		PSources:  msg.Prices,
-	}
-}
-
-func (f *FeederManager) closeRounds(ctx sdk.Context, forceSeal bool) {}
-
-func (f *FeederManager) commitCaches(ctx sdk.Context) {}
 
 // initCaches initializes the caches of the FeederManager with keeper, params, validatorPowers
 func (f *FeederManager) initCaches(ctx sdk.Context) {
@@ -582,7 +628,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 		for idx, recentMsg := range recentMsgs {
 			i = idx
 			if int64(recentMsg.Block) == startHeight {
-				f.ProcessQuoteInRecovery(ctxReplay, recentMsg.Msgs)
+				f.ProcessQuoteInRecovery(recentMsg.Msgs)
 				break
 			}
 		}
@@ -629,4 +675,16 @@ func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.
 	}
 	height++
 	return
+}
+
+func getProtoMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgItem {
+	// address has been valid before
+	validator, _ := oracletypes.ConsAddrStrFromCreator(msg.Creator)
+
+	return &oracletypes.MsgItem{
+		FeederID: msg.FeederID,
+		// validator's consAddr
+		Validator: validator,
+		PSources:  msg.Prices,
+	}
 }

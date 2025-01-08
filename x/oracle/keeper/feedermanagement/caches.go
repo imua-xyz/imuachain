@@ -15,6 +15,26 @@ type ItemV map[string]*big.Int
 
 var zeroBig = big.NewInt(0)
 
+func (c *caches) CpyForSimulation() *caches {
+	ret := *c
+	msg := *(c.msg)
+	params := *(c.params)
+	// it's safe to do shallow copy on msg, params
+	ret.msg = &msg
+	ret.params = &params
+	validators := make(map[string]*big.Int)
+	for v, p := range c.validators.validators {
+		validators[v] = new(big.Int).Set(p)
+	}
+	ret.validators = &cacheValidator{
+		validators: validators,
+		update:     c.validators.update,
+	}
+
+	return &ret
+
+}
+
 func (c *caches) Init(ctx sdk.Context, k Submitter, params *oracletypes.Params, validators map[string]*big.Int) {
 	c.ResetCaches()
 	c.k = k
@@ -24,14 +44,41 @@ func (c *caches) Init(ctx sdk.Context, k Submitter, params *oracletypes.Params, 
 	c.validators.add(validators)
 }
 
+func (c *caches) IsDeterministic(sourceID int64) bool {
+	sources := c.params.params.Sources
+	if sourceID >= int64(len(sources)) {
+		return false
+	}
+
+	return sources[sourceID].Deterministic
+}
+
 // RuleV1, we restrict the source to be Chainlink and only that source is acceptable
 func (c *caches) IsRuleV1(feederID int64) bool {
 	ruleID := c.params.params.TokenFeeders[feederID].RuleID
 	return ruleID == 1 && len(c.params.params.Sources) == 2 && c.params.params.Sources[1].Name == oracletypes.SourceChainlinkName
 }
 
+func (c *caches) GetTokenIDForFeederID(feederID int64) (int64, bool) {
+	tf, ok := c.GetTokenFeederForFeederID(feederID)
+	if !ok {
+		return 0, false
+	}
+	return int64(tf.TokenID), true
+}
+
 func (c *caches) GetValidators() []string {
 	return c.validators.slice()
+}
+
+func (cm *cacheMsgs) Cpy() *cacheMsgs {
+	ret := make([]*oracletypes.MsgItem, 0, len(*cm))
+	for _, msg := range *cm {
+		msgCpy := *msg
+		ret = append(ret, &msgCpy)
+	}
+	cmNew := cacheMsgs(ret)
+	return &cmNew
 }
 
 func (cm *cacheMsgs) add(item *oracletypes.MsgItem) {

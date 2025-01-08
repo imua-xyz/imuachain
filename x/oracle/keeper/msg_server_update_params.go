@@ -4,7 +4,6 @@ import (
 	"context"
 
 	utils "github.com/ExocoreNetwork/exocore/utils"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -66,7 +65,8 @@ func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdatePara
 	}
 	// set updated new params
 	ms.SetParams(ctx, p)
-	_ = ms.Keeper.GetAggregatorContext(ctx)
-	ms.Keeper.GetCaches().AddCache(cache.ItemP(p))
+	if !ctx.IsCheckTx() {
+		ms.SetParamsUpdated()
+	}
 	return &types.MsgUpdateParamsResponse{}, nil
 }

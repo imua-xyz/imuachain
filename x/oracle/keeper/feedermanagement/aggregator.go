@@ -1,12 +1,16 @@
 package feedermanagement
 
 import (
+	"fmt"
 	"math/big"
 	"slices"
 
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"golang.org/x/exp/maps"
 )
+
+type sourceChecker interface {
+	IsDeterministic(sourceID int64) bool
+}
 
 func newAggregator(t *threshold) *aggregator {
 	return &aggregator{
@@ -14,6 +18,16 @@ func newAggregator(t *threshold) *aggregator {
 		finalPrice: nil,
 		v:          newRecordsValdiators(),
 		ds:         newRecordsDSs(t),
+	}
+}
+
+func (a *aggregator) Cpy() *aggregator {
+	finalPrice := *a.finalPrice
+	return &aggregator{
+		t:          a.t.Cpy(),
+		finalPrice: &finalPrice,
+		v:          a.v.Cpy(),
+		ds:         a.ds.Cpy(),
 	}
 }
 
@@ -31,63 +45,36 @@ func (a *aggregator) GetFinalPrice() (*PriceResult, bool) {
 	return finalPrice, ok
 }
 
-// AddMsg records the message in a.v and do aggregation in a.ds
-func (a *aggregator) AddMsg(msg *oracletypes.MsgItem) error {
+func (a *aggregator) RecordMsg(msg *MsgItem) error {
 	// TODO: implement me
 	return nil
 }
 
-// RecordMsg only records the message in a.v
-func (a *aggregator) RecordMsg(msg *oracletypes.MsgItem) {
-
+// AddMsg records the message in a.v and do aggregation in a.ds
+func (a *aggregator) AddMsg(msg *MsgItem) error {
+	// record into recordsValidators, validation for duplication
+	addedMsg, err := a.v.RecordMsg(msg)
+	// all prices failed to be recorded
+	if err != nil {
+		return fmt.Errorf("failed to add quote, error:%w", err)
+	}
+	// add into recordsDSs for DS aggregation
+	for _, ps := range addedMsg.PriceSources {
+		if ps.deterministic {
+			if a.ds.AddPriceSource(ps, msg.Power, msg.Validator) {
+				finalPrice, ok := a.ds.GetFinalPriceForSourceID(ps.sourceID)
+				if ok {
+					a.v.UpdateFinalPriceForDS(ps.sourceID, finalPrice)
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // TODO: V2: the accumulatedPower should corresponding to all valid validators which provides all sources required by rules(defined in oracle.Params)
 func (a *aggregator) exceedPowerLimit() bool {
 	return a.t.Exceeds(a.v.accumulatedPower)
-}
-
-func newPriceValidator(validator string, power *big.Int) *priceValidator {
-	return &priceValidator{
-		finalPrice:   nil,
-		validator:    validator,
-		power:        new(big.Int).Set(power),
-		pricesSource: make(map[int64]*priceSource, 0),
-	}
-}
-
-// TODO: V2: check valdiator has provided all sources required by rules(defined in oracle.params)
-func (pv *priceValidator) GetFinalPrice() (*PriceResult, bool) {
-	if pv.finalPrice != nil {
-		return pv.finalPrice, true
-	}
-	if len(pv.pricesSource) == 0 {
-		return nil, false
-	}
-	//	defer defaultAggMedian.Reset()
-	for _, price := range pv.pricesSource {
-		if price.finalPrice == nil {
-			defaultAggMedian.Reset()
-			return nil, false
-		}
-		if !defaultAggMedian.Add(price.finalPrice) {
-			defaultAggMedian.Reset()
-			return nil, false
-		}
-	}
-	pv.finalPrice = defaultAggMedian.GetResult()
-	return pv.finalPrice, true
-}
-
-func (pv *priceValidator) UpdateFinalPriceForDetSource(sourceID int64, finalPrice *PriceResult) bool {
-	if finalPrice == nil {
-		return false
-	}
-	if price, ok := pv.pricesSource[sourceID]; ok {
-		price.finalPrice = finalPrice
-		return true
-	}
-	return false
 }
 
 func newRecordsValdiators() *recordsValidators {
@@ -98,12 +85,52 @@ func newRecordsValdiators() *recordsValidators {
 	}
 }
 
+func (rv *recordsValidators) Cpy() *recordsValidators {
+	finalPrice := *rv.finalPrice
+	finalPrices := make(map[string]*PriceResult)
+	for v, p := range rv.finalPrices {
+		price := *p
+		finalPrices[v] = &price
+	}
+	records := make(map[string]*priceValidator)
+	for v, pv := range rv.records {
+		records[v] = pv.Cpy()
+	}
+	return &recordsValidators{
+		finalPrice:       &finalPrice,
+		finalPrices:      finalPrices,
+		accumulatedPower: new(big.Int).Set(rv.accumulatedPower),
+		records:          records,
+	}
+}
+
+func (rv *recordsValidators) RecordMsg(msg *MsgItem) (*MsgItem, error) {
+	record, ok := rv.records[msg.Validator]
+	//	retPSources := make([]*priceSource, 0)
+	rets := &MsgItem{
+		FeederID:     msg.FeederID,
+		Validator:    msg.Validator,
+		Power:        msg.Power,
+		PriceSources: make([]*priceSource, 0),
+	}
+	if !ok {
+		record = newPriceValidator(msg.Validator, msg.Power)
+	}
+	updated, added, err := record.TryAddPriceSources(msg.PriceSources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to record msg, error:%w", err)
+	}
+	record.ApplyAddedPriceSources(updated)
+	rets.PriceSources = added
+	return rets, nil
+}
+
 func (rv *recordsValidators) GetValidatorQuotePricesForSourceID(validator string, sourceID int64) ([]*PriceInfo, bool) {
 	record, ok := rv.records[validator]
 	if !ok {
 		return nil, false
 	}
-	pSource, ok := record.pricesSource[sourceID]
+	pSource, ok := record.priceSources[sourceID]
 	if !ok {
 		return nil, false
 	}
@@ -116,7 +143,7 @@ func (rv *recordsValidators) GetFinalPrice() (*PriceResult, bool) {
 	}
 	if prices, ok := rv.GetFinalPriceForValidators(); ok {
 		keySlice := make([]string, 0, len(prices))
-		for validator, _ := range prices {
+		for validator := range prices {
 			keySlice = append(keySlice, validator)
 		}
 		slices.Sort(keySlice)
@@ -138,24 +165,24 @@ func (rv *recordsValidators) GetFinalPriceForValidators() (map[string]*PriceResu
 	}
 	ret := make(map[string]*PriceResult)
 	for validator, pv := range rv.records {
-		if finalPrice, ok := pv.GetFinalPrice(); !ok {
+		finalPrice, ok := pv.GetFinalPrice()
+		if !ok {
 			return nil, false
-		} else {
-			ret[validator] = finalPrice
 		}
+		ret[validator] = finalPrice
 	}
 	rv.finalPrices = ret
 	return ret, true
 }
 
-func (rv *recordsValidators) UpdateFinalPriceForDetSource(sourceID int64, finalPrice *PriceResult) bool {
+func (rv *recordsValidators) UpdateFinalPriceForDS(sourceID int64, finalPrice *PriceResult) bool {
 	if finalPrice == nil {
 		return false
 	}
 	// it's safe to range map here, order does not matter
 	for _, record := range rv.records {
 		// ignore the fail cases for updating some pv' DS finalPrice
-		record.UpdateFinalPriceForDetSource(sourceID, finalPrice)
+		record.UpdateFinalPriceForDS(sourceID, finalPrice)
 	}
 	return true
 }
@@ -165,6 +192,45 @@ func newRecordsDSs(t *threshold) *recordsDSs {
 		t:     t,
 		dsMap: make(map[int64]*recordsDS),
 	}
+}
+
+func (rdss *recordsDSs) Cpy() *recordsDSs {
+	t := *rdss.t
+	dsMap := make(map[int64]*recordsDS)
+	for id, r := range rdss.dsMap {
+		dsMap[id] = r.Cpy()
+	}
+	return &recordsDSs{
+		t:     &t,
+		dsMap: dsMap,
+	}
+}
+
+// AddPriceSource adds prices for DS sources
+func (rdss *recordsDSs) AddPriceSource(ps *priceSource, power *big.Int, validator string) bool {
+	if !ps.deterministic {
+		return false
+	}
+	price, ok := rdss.dsMap[ps.sourceID]
+	if !ok {
+		price = newRecordsDS()
+	}
+	for _, p := range ps.prices {
+		price.AddPrice(&PricePower{
+			Price:      p,
+			Power:      power,
+			Validators: map[string]struct{}{validator: struct{}{}},
+		})
+	}
+	return true
+}
+
+func (rdss *recordsDSs) GetFinalPriceForSourceID(sourceID int64) (*PriceResult, bool) {
+	rds, ok := rdss.dsMap[sourceID]
+	if !ok {
+		return nil, false
+	}
+	return rds.GetFinalPrice(rdss.t)
 }
 
 func (rdss *recordsDSs) GetFinalPriceForSources() (map[int64]*PriceResult, bool) {
@@ -200,6 +266,25 @@ func newRecordsDS() *recordsDS {
 	}
 }
 
+func (rds *recordsDS) Cpy() *recordsDS {
+	finalPrice := *rds.finalPrice
+	validators := make(map[string]struct{})
+	for v := range rds.validators {
+		validators[v] = struct{}{}
+	}
+	records := make([]*PricePower, 0, len(rds.records))
+	for _, r := range rds.records {
+		records = append(records, r.Cpy())
+	}
+	return &recordsDS{
+		finalPrice:        &finalPrice,
+		finalDetID:        rds.finalDetID,
+		accumulatedPowers: new(big.Int).Set(rds.accumulatedPowers),
+		validators:        validators,
+		records:           records,
+	}
+}
+
 func (rds *recordsDS) GetFinalPrice(t *threshold) (*PriceResult, bool) {
 	if rds.finalPrice != nil {
 		return rds.finalPrice, true
@@ -219,13 +304,13 @@ func (rds *recordsDS) GetFinalPrice(t *threshold) (*PriceResult, bool) {
 }
 
 func (rds *recordsDS) AddPrice(p *PricePower) {
-	validator := maps.Keys(p.validators)[0]
+	validator := maps.Keys(p.Validators)[0]
 	biggestDetID := true
 	for i, record := range rds.records {
 		if record.Price.EqualDS(p.Price) {
-			if _, ok := record.validators[validator]; !ok {
+			if _, ok := record.Validators[validator]; !ok {
 				record.Power = record.Power.Add(record.Power, p.Power)
-				record.validators[validator] = struct{}{}
+				record.Validators[validator] = struct{}{}
 			}
 			biggestDetID = false
 			break
