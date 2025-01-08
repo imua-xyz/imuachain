@@ -698,6 +698,7 @@ func NewExocoreApp(
 		&app.DelegationKeeper, // intentionally a pointer, since not yet initialized.
 		&app.OracleKeeper,
 		&app.AVSManagerKeeper,
+		&app.StakingKeeper,
 		delegationTypes.VirtualSlashKeeper{},
 	)
 	// the fee distribution keeper is used to allocate reward to exocore validators on epoch-basis,

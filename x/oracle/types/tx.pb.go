@@ -35,11 +35,11 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type MsgCreatePrice struct {
 	// creator tells which is the message sender and should sign this message
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	//refer to id from Params.TokenFeeders, 0 is reserved, invalid to use
+	// refer to id from Params.TokenFeeders, 0 is reserved, invalid to use
 	FeederID uint64 `protobuf:"varint,2,opt,name=feeder_id,json=feederId,proto3" json:"feeder_id,omitempty"`
 	// prices price with its corresponding source
 	Prices []*PriceSource `protobuf:"bytes,3,rep,name=prices,proto3" json:"prices,omitempty"`
-	//on which block commit does this message be built on
+	// on which block commit does this message be built on
 	BasedBlock uint64 `protobuf:"varint,4,opt,name=based_block,json=basedBlock,proto3" json:"based_block,omitempty"`
 	// nonce represents the unique number to disginguish duplicated messages
 	Nonce int32 `protobuf:"varint,5,opt,name=nonce,proto3" json:"nonce,omitempty"`

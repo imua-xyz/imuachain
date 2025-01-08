@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/cmd/config"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 
 	"cosmossdk.io/math"
@@ -71,6 +72,9 @@ type BaseTestSuite struct {
 
 	InitTime          time.Time
 	OperatorMsgServer operatortypes.MsgServer
+
+	// tests may use this to allocate a genesis balance
+	Balances []banktypes.Balance
 }
 
 func (suite *BaseTestSuite) SetupTest() {
@@ -325,11 +329,11 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	associations := []delegationtypes.StakerToOperator{
 		{
 			Operator: operator1.String(),
-			StakerID: stakerID1,
+			StakerId: stakerID1,
 		},
 		{
 			Operator: operator2.String(),
-			StakerID: stakerID2,
+			StakerId: stakerID2,
 		},
 	}
 	stakersByOperator := []delegationtypes.StakersByOperator{
@@ -428,6 +432,10 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 }
 
 func (suite *BaseTestSuite) DoSetupTest() {
+	// Force config initialization at the start of each test
+	cfg := sdk.GetConfig()
+	config.SetBech32Prefixes(cfg)
+	config.SetBip44CoinType(cfg)
 	// create AccAddress for test
 	pubBz := make([]byte, ed25519.PubKeySize)
 	pub := &ed25519.PubKey{Key: pubBz}
@@ -476,7 +484,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 
 	// Initialize an ExocoreApp for test
 	suite.SetupWithGenesisValSet(
-		[]authtypes.GenesisAccount{acc}, balance,
+		[]authtypes.GenesisAccount{acc}, append(suite.Balances, balance)...,
 	)
 
 	// Create StateDB

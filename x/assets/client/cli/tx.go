@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"strings"
+
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -30,9 +32,9 @@ func NewTxCmd() *cobra.Command {
 // UpdateParams todo: it should be a gov proposal command in future.
 func UpdateParams() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "UpdateParams ExoCoreLZAppAddr ExoCoreLzAppEventTopic",
-		Short: "Set ExoCoreLZAppAddr and ExoCoreLzAppEventTopic params to assets module",
-		Args:  cobra.ExactArgs(2),
+		Use:   "UpdateParams Gateways",
+		Short: "Set Authorized Gateways for assets module as comma separated list of hex addresses",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -40,11 +42,11 @@ func UpdateParams() *cobra.Command {
 			}
 
 			sender := cliCtx.GetFromAddress()
+			gateways := strings.Split(args[0], ",")
 			msg := &assetstype.MsgUpdateParams{
 				Authority: sender.String(),
 				Params: assetstype.Params{
-					ExocoreLzAppAddress:    args[0],
-					ExocoreLzAppEventTopic: args[1],
+					Gateways: gateways,
 				},
 			}
 

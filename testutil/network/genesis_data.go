@@ -29,8 +29,7 @@ var (
 	// we bond both tokens to the price of ETH in oracle module
 	DefaultGenStateAssets = assetstypes.GenesisState{
 		Params: assetstypes.Params{
-			ExocoreLzAppAddress:    "0x3e108c058e8066da635321dc3018294ca82ddedf",
-			ExocoreLzAppEventTopic: assetstypes.DefaultParams().ExocoreLzAppEventTopic,
+			Gateways: []string{"0x3e108c058e8066da635321dc3018294ca82ddedf"},
 		},
 		ClientChains: []assetstypes.ClientChainInfo{
 			{

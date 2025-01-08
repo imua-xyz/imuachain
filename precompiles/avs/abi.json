@@ -295,9 +295,9 @@
 				"type": "bytes"
 			},
 			{
-				"internalType": "string",
+				"internalType": "address",
 				"name": "operatorAddress",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "challenge",
@@ -468,9 +468,9 @@
 				"type": "address"
 			},
 			{
-				"internalType": "string",
+				"internalType": "address",
 				"name": "operatorAddr",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "getOperatorOptedUSDValue",
@@ -506,9 +506,9 @@
 	{
 		"inputs": [
 			{
-				"internalType": "string",
+				"internalType": "address",
 				"name": "operator",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "getRegisteredPubkey",
@@ -642,9 +642,14 @@
 				"type": "address"
 			},
 			{
-				"internalType": "string[]",
+				"internalType": "address[]",
 				"name": "avsOwnerAddress",
-				"type": "string[]"
+				"type": "address[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "whitelistAddress",
+				"type": "address[]"
 			},
 			{
 				"internalType": "string[]",
@@ -774,9 +779,14 @@
 				"type": "address"
 			},
 			{
-				"internalType": "string[]",
+				"internalType": "address[]",
 				"name": "avsOwnerAddress",
-				"type": "string[]"
+				"type": "address[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "whitelistAddress",
+				"type": "address[]"
 			},
 			{
 				"internalType": "string[]",

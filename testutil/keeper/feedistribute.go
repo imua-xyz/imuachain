@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/cmd/config"
 	stakingkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
 	epochskeeper "github.com/ExocoreNetwork/exocore/x/epochs/keeper"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
@@ -24,6 +25,12 @@ import (
 )
 
 func FeedistributeKeeper(t testing.TB) (distrkeeper.Keeper, sdk.Context) {
+	// force set bech32 prefix, otherwise the prefix could possibly be evmos
+	// in that case, if we call String on some accAddr, its string representation
+	// will be in evmos format would be cached, thus calling potential failure in other tests
+	cfg := sdk.GetConfig()
+	config.SetBech32Prefixes(cfg)
+	config.SetBip44CoinType(cfg)
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 	epochstoreKey := storetypes.NewKVStoreKey(epochstypes.StoreKey)

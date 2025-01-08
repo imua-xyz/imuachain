@@ -38,11 +38,12 @@ func (p Precompile) GetRegisteredPubkey(
 	if len(args) != len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs), len(args))
 	}
-	addr, ok := args[0].(string)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "string", addr)
+	addr, ok := args[0].(common.Address)
+	if !ok || addr == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
-	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, addr)
+	var accAddr sdk.AccAddress = addr[:]
+	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddr.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack([]byte{})
@@ -64,7 +65,7 @@ func (p Precompile) GetOptedInOperatorAccAddrs(
 
 	addr, ok := args[0].(common.Address)
 	if !ok || addr == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "string", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
 
 	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(addr.String()))
@@ -86,7 +87,7 @@ func (p Precompile) GetAVSUSDValue(
 	}
 	addr, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
 	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, addr.String())
 	if err != nil {
@@ -110,13 +111,14 @@ func (p Precompile) GetOperatorOptedUSDValue(
 	}
 	avsAddr, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", avsAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddr)
 	}
-	operatorAddr, ok := args[1].(string)
+	addr, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", operatorAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", addr)
 	}
-	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddr.String()), operatorAddr)
+	var operatorAddr sdk.AccAddress = addr[:]
+	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddr.String()), operatorAddr.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack(common.Big0)
@@ -137,7 +139,7 @@ func (p Precompile) GetAVSEpochIdentifier(
 	}
 	addr, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
 
 	avs, err := p.avsKeeper.GetAVSInfo(ctx, addr.String())
@@ -163,7 +165,7 @@ func (p Precompile) IsOperator(
 	}
 	operatorAddr, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", operatorAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddr)
 	}
 
 	param := operatorAddr[:]
@@ -183,11 +185,11 @@ func (p Precompile) GetTaskInfo(
 	}
 	addr, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
 	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "uint64", taskID)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", taskID)
 	}
 
 	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), addr.String())
@@ -215,7 +217,7 @@ func (p Precompile) GetCurrentEpoch(
 	}
 	epochIdentifier, ok := args[0].(string)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "string", epochIdentifier)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "string", epochIdentifier)
 	}
 	epoch, flag := p.avsKeeper.GetEpochKeeper().GetEpochInfo(ctx, epochIdentifier)
 	if !flag {

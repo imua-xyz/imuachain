@@ -136,6 +136,11 @@ $(BUILD_TARGETS): go.sum $(BUILDDIR)/
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
+build-test-tool:
+	go build $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/exocore-test-tool
+install-test-tool:
+	go install $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/exocore-test-tool
+
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true
 	$(DOCKER) run --volume=$(CURDIR):/sources:ro \
@@ -485,7 +490,7 @@ localnet-build:
 # Generate multi node configuration files and initialize configurations
 # TODO: exocore testnet chainid is still under consideration and need to be finalized later
 localnet-init: localnet-stop
-	exocored testnet init-files --chain-id exocoretestnet_233-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
+	exocored testnet init-files --chain-id exocorelocalnet_232-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
 	./networks/init-node.sh
 
 # Start a 4-node testnet locally

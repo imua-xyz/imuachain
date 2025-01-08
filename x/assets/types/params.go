@@ -2,61 +2,60 @@ package types
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
-	// DefaultExocoreLzAppAddress is the default address of ExocoreGateway.sol.
-	// When it is automatically deployed within the genesis block (along with
-	// supporting contracts) by the EVM module, this address should be changed
-	// to point to that contract.
-	DefaultExocoreLzAppAddress = "0x0000000000000000000000000000000000000000"
-	// DefaultExocoreLzAppEventTopic is the default topic of the exocore lz app
-	// event. TODO: Set this to a sane default?
-	DefaultExocoreLzAppEventTopic = "0x000000000000000000000000000000000000000000000000000000000000000"
+	// DefaultGateway is the default gateway address.
+	// Similar with addresses for precompiles, we could assign a default gateway address
+	// in case we want to deploy them as system contracts
+	DefaultGateway = "0x0000000000000000000000000000000000000901"
 )
 
 // NewParams creates a new Params instance.
-func NewParams(
-	exocoreLzAppAddress string,
-	exocoreLzAppEventTopic string,
-) Params {
+func NewParams(gateways []string) Params {
 	return Params{
-		ExocoreLzAppAddress:    exocoreLzAppAddress,
-		ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+		Gateways: gateways,
 	}
 }
 
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
 	return NewParams(
-		DefaultExocoreLzAppAddress,
-		DefaultExocoreLzAppEventTopic,
+		[]string{DefaultGateway},
 	)
 }
 
-// Validate validates the set of params.
+// Validate validates the set of params: 1. Check if the gateways are valid hex addresses. 2. Check for duplicates.
 func (p Params) Validate() error {
-	if err := ValidateHexAddress(p.ExocoreLzAppAddress); err != nil {
-		return fmt.Errorf("exocore lz app address: %w", err)
+	// Use map for efficient duplicate checking
+	seen := make(map[string]bool)
+
+	for _, gateway := range p.Gateways {
+		// Convert to lowercase for consistent comparison
+		lowercased := strings.ToLower(gateway)
+
+		// Check if it's a valid hex address
+		if !common.IsHexAddress(gateway) {
+			return fmt.Errorf("invalid hex address format: %s", gateway)
+		}
+
+		// Check for duplicates
+		if seen[lowercased] {
+			return fmt.Errorf("duplicate gateway address: %s", gateway)
+		}
+		seen[lowercased] = true
 	}
-	if err := ValidateHexHash(p.ExocoreLzAppEventTopic); err != nil {
-		return fmt.Errorf("exocore lz app event topic: %w", err)
-	}
+
 	return nil
 }
 
-// ValidateHexAddress validates a hex address.
-func ValidateHexAddress(i interface{}) error {
-	addr, ok := i.(string)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
+func (p *Params) Normalize() {
+	for i, gateway := range p.Gateways {
+		p.Gateways[i] = strings.ToLower(gateway)
 	}
-	if !common.IsHexAddress(addr) {
-		return fmt.Errorf("invalid hex address: %s", addr)
-	}
-	return nil
 }
 
 // ValidateHexHash validates a hex hash.

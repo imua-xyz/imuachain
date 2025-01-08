@@ -402,7 +402,7 @@ func (k *Keeper) GetAllAssociations(ctx sdk.Context) ([]delegationtype.StakerToO
 	ret := make([]delegationtype.StakerToOperator, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		ret = append(ret, delegationtype.StakerToOperator{
-			StakerID: string(iterator.Key()),
+			StakerId: string(iterator.Key()),
 			Operator: string(iterator.Value()),
 		})
 	}

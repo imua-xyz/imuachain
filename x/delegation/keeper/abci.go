@@ -59,15 +59,15 @@ func (k *Keeper) EndBlock(
 		deltaAmount := &types.DeltaDelegationAmounts{
 			WaitUndelegationAmount: recordAmountNeg,
 		}
-		_, err = k.UpdateDelegationState(cc, record.StakerID, record.AssetID, record.OperatorAddr, deltaAmount)
+		_, err = k.UpdateDelegationState(cc, record.StakerId, record.AssetId, record.OperatorAddr, deltaAmount)
 		if err != nil {
 			logger.Error("Error in UpdateDelegationState during the delegation's EndBlock execution", "error", err)
 			continue
 		}
 
 		// update the staker state
-		if record.AssetID == assetstypes.ExocoreAssetID {
-			stakerAddrHex, _, err := assetstypes.ParseID(record.StakerID)
+		if record.AssetId == assetstypes.ExocoreAssetID {
+			stakerAddrHex, _, err := assetstypes.ParseID(record.StakerId)
 			if err != nil {
 				logger.Error(
 					"failed to parse staker ID",
@@ -97,7 +97,7 @@ func (k *Keeper) EndBlock(
 				continue
 			}
 		} else {
-			err = k.assetsKeeper.UpdateStakerAssetState(cc, record.StakerID, record.AssetID, assetstypes.DeltaStakerSingleAsset{
+			err = k.assetsKeeper.UpdateStakerAssetState(cc, record.StakerId, record.AssetId, assetstypes.DeltaStakerSingleAsset{
 				WithdrawableAmount:        record.ActualCompletedAmount,
 				PendingUndelegationAmount: recordAmountNeg,
 			})
@@ -108,7 +108,7 @@ func (k *Keeper) EndBlock(
 		}
 
 		// update the operator state
-		err = k.assetsKeeper.UpdateOperatorAssetState(cc, operatorAccAddress, record.AssetID, assetstypes.DeltaOperatorSingleAsset{
+		err = k.assetsKeeper.UpdateOperatorAssetState(cc, operatorAccAddress, record.AssetId, assetstypes.DeltaOperatorSingleAsset{
 			PendingUndelegationAmount: recordAmountNeg,
 		})
 		if err != nil {

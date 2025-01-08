@@ -1,20 +1,13 @@
 package keeper
 
 import (
-	"bytes"
-	"encoding/binary"
-	"log"
-	"math/big"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/ExocoreNetwork/exocore/x/assets/types"
 	rtypes "github.com/ExocoreNetwork/exocore/x/reward/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/evmos/evmos/v16/rpc/namespaces/ethereum/eth/filters"
 )
 
 type RewardParams struct {
@@ -25,93 +18,8 @@ type RewardParams struct {
 	OpAmount              sdkmath.Int
 }
 
-func getRewardParamsFromEventLog(log *ethtypes.Log) (*RewardParams, error) {
-	// check if action is to get reward
-	var action types.CrossChainOpType
-	var err error
-	readStart := 0
-	readEnd := types.CrossChainActionLength
-	r := bytes.NewReader(log.Data[readStart:readEnd])
-	err = binary.Read(r, binary.BigEndian, &action)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "error occurred when binary read action")
-	}
-	if action != types.WithdrawReward {
-		// not handle the actions that isn't deposit
-		return nil, nil
-	}
-
-	// decode the action parameters
-	readStart = readEnd
-	readEnd += types.GeneralAssetsAddrLength
-	r = bytes.NewReader(log.Data[readStart:readEnd])
-	var assetsAddress []byte
-	err = binary.Read(r, binary.BigEndian, assetsAddress)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "error occurred when binary read assets address")
-	}
-
-	readStart = readEnd
-	readEnd += types.GeneralClientChainAddrLength
-	r = bytes.NewReader(log.Data[readStart:readEnd])
-	var rewardAddr []byte
-	err = binary.Read(r, binary.BigEndian, rewardAddr)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "error occurred when binary read assets address")
-	}
-
-	readStart = readEnd
-	readEnd += types.CrossChainOpAmountLength
-	amount := sdkmath.NewIntFromBigInt(big.NewInt(0).SetBytes(log.Data[readStart:readEnd]))
-
-	var clientChainLzID uint64
-	r = bytes.NewReader(log.Topics[types.ClientChainLzIDIndexInTopics][:])
-	err = binary.Read(r, binary.BigEndian, &clientChainLzID)
-	if err != nil {
-		return nil, errorsmod.Wrap(err, "error occurred when binary read clientChainLzID from topic")
-	}
-
-	return &RewardParams{
-		ClientChainLzID:       clientChainLzID,
-		Action:                action,
-		AssetsAddress:         assetsAddress,
-		WithdrawRewardAddress: rewardAddr,
-		OpAmount:              amount,
-	}, nil
-}
-
-func (k Keeper) PostTxProcessing(ctx sdk.Context, _ core.Message, receipt *ethtypes.Receipt) error {
-	// TODO check if contract address is valid layerZero relayer address
-	// check if log address and topicId is valid
-	params, err := k.assetsKeeper.GetParams(ctx)
-	if err != nil {
-		return err
-	}
-	// filter needed logs
-	addresses := []common.Address{common.HexToAddress(params.ExocoreLzAppAddress)}
-	topics := [][]common.Hash{
-		{common.HexToHash(params.ExocoreLzAppEventTopic)},
-	}
-	needLogs := filters.FilterLogs(receipt.Logs, nil, nil, addresses, topics)
-	if len(needLogs) == 0 {
-		log.Println("the hook message doesn't have any event needed to handle")
-		return nil
-	}
-
-	for _, log := range needLogs {
-		rewardParams, err := getRewardParamsFromEventLog(log)
-		if err != nil {
-			return err
-		}
-		if rewardParams != nil {
-			err = k.RewardForWithdraw(ctx, rewardParams)
-			if err != nil {
-				// todo: need to test if the changed storage state will be reverted if there is an error occurred
-				return err
-			}
-		}
-	}
-	return nil
+func (k Keeper) PostTxProcessing(_ sdk.Context, _ core.Message, _ *ethtypes.Receipt) error {
+	return errorsmod.Wrap(rtypes.ErrNotSupportYet, "reward module doesn't support PostTxProcessing")
 }
 
 func (k Keeper) RewardForWithdraw(sdk.Context, *RewardParams) error {

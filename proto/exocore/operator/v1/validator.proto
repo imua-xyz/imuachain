@@ -56,6 +56,8 @@ message Validator {
   ];
   // delegator_tokens is the list of asset infos
   repeated DelegatorInfo delegator_tokens = 11 [(gogoproto.nullable) = false];
+  // active defines whether the validator exists in the Tendermint validator set
+  bool active = 12;
 }
 
 // DelegatorInfo records the total opted-in USD value for the specified operator

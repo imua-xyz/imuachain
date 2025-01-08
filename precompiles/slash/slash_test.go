@@ -52,7 +52,6 @@ func paddingClientChainAddress(input []byte, outputLength int) []byte {
 // TestRun tests the precompiles Run method submitSlash.
 func (s *SlashPrecompileTestSuite) TestRunSlash() {
 	// deposit params for test
-	exocoreLzAppEventTopic := "0xc6a377bfc4eb120024a8ac08eef205be16b817020812c73223e81d1bdb9708ec"
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	clientChainLzID := 101
 	slashAmount := big.NewInt(10)
@@ -101,8 +100,7 @@ func (s *SlashPrecompileTestSuite) TestRunSlash() {
 			name: "pass - slash via pre-compiles",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					ExocoreLzAppAddress:    s.Address.String(),
-					ExocoreLzAppEventTopic: exocoreLzAppEventTopic,
+					Gateways: []string{s.Address.String()},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)

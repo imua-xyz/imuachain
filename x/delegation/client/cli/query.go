@@ -33,6 +33,7 @@ func GetQueryCmd() *cobra.Command {
 		QueryUndelegationHoldCount(),
 		QueryAssociatedOperatorByStaker(),
 		QueryAssociatedStakersByOperator(),
+		QueryDelegatedStakersByOperator(),
 	)
 	return cmd
 }
@@ -61,8 +62,8 @@ func QuerySingleDelegationInfo() *cobra.Command {
 				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
 			}
 			req := &delegationtype.SingleDelegationInfoReq{
-				StakerID:     stakerID,         // already lowercase
-				AssetID:      assetID,          // already lowercase
+				StakerId:     stakerID,         // already lowercase
+				AssetId:      assetID,          // already lowercase
 				OperatorAddr: accAddr.String(), // already lowercase
 			}
 			res, err := queryClient.QuerySingleDelegationInfo(context.Background(), req)
@@ -99,8 +100,8 @@ func QueryDelegationInfo() *cobra.Command {
 			}
 			queryClient := delegationtype.NewQueryClient(clientCtx)
 			req := &delegationtype.DelegationInfoReq{
-				StakerID: strings.ToLower(stakerID),
-				AssetID:  strings.ToLower(assetID),
+				StakerId: strings.ToLower(stakerID),
+				AssetId:  strings.ToLower(assetID),
 			}
 			res, err := queryClient.QueryDelegationInfo(context.Background(), req)
 			if err != nil {
@@ -137,8 +138,8 @@ func QueryUndelegations() *cobra.Command {
 				return err
 			}
 			req := &delegationtype.UndelegationsReq{
-				StakerID: strings.ToLower(args[0]),
-				AssetID:  strings.ToLower(args[1]),
+				StakerId: strings.ToLower(args[0]),
+				AssetId:  strings.ToLower(args[1]),
 			}
 			res, err := queryClient.QueryUndelegations(context.Background(), req)
 			if err != nil {
@@ -232,7 +233,7 @@ func QueryAssociatedOperatorByStaker() *cobra.Command {
 			}
 			queryClient := delegationtype.NewQueryClient(clientCtx)
 			req := &delegationtype.QueryAssociatedOperatorByStakerReq{
-				StakerID: strings.ToLower(stakerID),
+				StakerId: strings.ToLower(stakerID),
 			}
 			res, err := queryClient.QueryAssociatedOperatorByStaker(context.Background(), req)
 			if err != nil {
@@ -267,6 +268,42 @@ func QueryAssociatedStakersByOperator() *cobra.Command {
 				Operator: accAddr.String(),
 			}
 			res, err := queryClient.QueryAssociatedStakersByOperator(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func QueryDelegatedStakersByOperator() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "QueryDelegatedStakersByOperator <operatorAddr> <assetID>",
+		Short: "Get the delegated stakers for the specified operator and asset",
+		Long:  "Get the delegated stakers for the specified operator and asset",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			accAddr, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+			assetID := strings.ToLower(args[1])
+			if _, _, err := types.ValidateID(assetID, false, false); err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+			queryClient := delegationtype.NewQueryClient(clientCtx)
+			req := &delegationtype.QueryDelegatedStakersByOperatorReq{
+				Operator: accAddr.String(),
+				AssetId:  assetID,
+			}
+			res, err := queryClient.QueryDelegatedStakersByOperator(context.Background(), req)
 			if err != nil {
 				return err
 			}

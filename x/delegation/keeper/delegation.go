@@ -133,8 +133,8 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 	// record Undelegation event
 	r := delegationtype.UndelegationRecord{
-		StakerID:              stakerID,
-		AssetID:               assetID,
+		StakerId:              stakerID,
+		AssetId:               assetID,
 		OperatorAddr:          params.OperatorAddress.String(),
 		TxHash:                params.TxHash.String(),
 		IsPending:             true,
@@ -192,7 +192,7 @@ func (k *Keeper) AssociateOperatorWithStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// increase the share of new marked operator
 		if keys.OperatorAddr == operatorAddress.String() {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetID, assetstype.DeltaOperatorSingleAsset{
+			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare,
 			})
 		}
@@ -239,7 +239,7 @@ func (k *Keeper) DissociateOperatorFromStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// decrease the share of old operator
 		if keys.OperatorAddr == associatedOperator {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetID, assetstype.DeltaOperatorSingleAsset{
+			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare.Neg(),
 			})
 		}

@@ -229,8 +229,8 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 	suite.NoError(err)
 	suite.Equal(1, len(records))
 	UndelegationRecord := &delegationtype.UndelegationRecord{
-		StakerID:              stakerID,
-		AssetID:               assetID,
+		StakerId:              stakerID,
+		AssetId:               assetID,
 		OperatorAddr:          delegationEvent.OperatorAddress.String(),
 		TxHash:                delegationEvent.TxHash.String(),
 		IsPending:             true,
@@ -288,8 +288,8 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 	suite.NoError(err)
 	suite.Equal(1, len(records))
 	UndelegationRecord = &delegationtype.UndelegationRecord{
-		StakerID:              stakerID,
-		AssetID:               assetID,
+		StakerId:              stakerID,
+		AssetId:               assetID,
 		OperatorAddr:          delegationEvent.OperatorAddress.String(),
 		TxHash:                delegationEvent.TxHash.String(),
 		IsPending:             true,

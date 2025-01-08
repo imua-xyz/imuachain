@@ -1,8 +1,12 @@
 package keeper
 
 import (
+	"errors"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+
+	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
@@ -29,15 +33,26 @@ func (k *Keeper) OptIn(
 	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
+	// check if operator is in the whitelist
+	if _, err := k.avsKeeper.IsWhitelisted(ctx, avsAddr, operatorAddress.String()); err != nil {
+		return err
+	}
 	// check optedIn info
 	if k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrAlreadyOptedIn
 	}
 	// Check if the USD value of the operator is greater than or equal to the self-delegation
 	// configured by the AVS. This is used to prevent a DDOS attack from zero-USD value opting in.
-	operatorUSDValues, err := k.GetOrCalculateOperatorUSDValues(ctx, operatorAddress, avsAddr)
+	var err error
+	operatorUSDValues := types.OperatorOptedUSDValue{}
+	result, err := k.GetOrCalculateOperatorUSDValues(ctx, operatorAddress, avsAddr)
 	if err != nil {
-		return errorsmod.Wrapf(err, "OptIn: error when calculating operator USD value, operator:%s avsAddr:%s", operatorAddress.String(), avsAddr)
+		if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
+			return errorsmod.Wrapf(err, "OptIn: error when calculating operator USD value, operator:%s avsAddr:%s", operatorAddress.String(), avsAddr)
+		}
+		operatorUSDValues.SelfUSDValue = sdkmath.LegacyZeroDec()
+	} else {
+		operatorUSDValues = result
 	}
 	minSelfDelegation, err := k.avsKeeper.GetAVSMinimumSelfDelegation(ctx, avsAddr)
 	if err != nil {

@@ -155,6 +155,14 @@ func (k Keeper) GetExocoreValidator(
 	return
 }
 
+// IsExocoreValidator gets a validator based on the pub key derived (consensus) address.
+func (k Keeper) IsExocoreValidator(
+	ctx sdk.Context, addr sdk.ConsAddress,
+) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(types.ExocoreValidatorKey(addr.Bytes()))
+}
+
 // DeleteExocoreValidator deletes a validator based on the pub key derived address.
 func (k Keeper) DeleteExocoreValidator(ctx sdk.Context, addr sdk.ConsAddress) {
 	store := ctx.KVStore(k.storeKey)

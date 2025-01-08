@@ -457,7 +457,7 @@ func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount 
 			stakerID, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.AssetBasicInfo.LayerZeroChainID, hexutil.Encode(operator), asset.AssetBasicInfo.Address)
 			if !stakerIDsLinked[stakerID] {
 				DefaultGenStateDelegation.Associations = append(DefaultGenStateDelegation.Associations, delegationtypes.StakerToOperator{
-					StakerID: stakerID,
+					StakerId: stakerID,
 					Operator: operator.String(),
 				})
 				stakerIDsLinked[stakerID] = true

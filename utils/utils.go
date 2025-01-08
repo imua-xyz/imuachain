@@ -21,13 +21,13 @@ import (
 const (
 	// MainnetChainID defines the Evmos EIP155 chain ID for mainnet
 	// TODO: the mainnet chainid is still under consideration and need to be finalized later
-	MainnetChainID = "exocore_233"
+	MainnetChainID = "exocore_234"
 	// TestnetChainID defines the Evmos EIP155 chain ID for testnet
 	// TODO: the testnet chainid is still under consideration and need to be finalized later
 	TestnetChainID = "exocoretestnet_233"
 	// DefaultChainID is the standard chain id used for testing purposes
 	DefaultChainID = MainnetChainID + "-1"
-	// BaseDenom defines the Evmos mainnet denomination
+	// BaseDenom defines the Exocore mainnet denomination
 	BaseDenom = "hua"
 
 	// DelimiterForCombinedKey is the delimiter used for constructing the combined key.

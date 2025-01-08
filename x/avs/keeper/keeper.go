@@ -130,6 +130,8 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			AvsSlash: sdk.NewDecWithPrec(int64(params.AvsSlash), 2),
 			// #nosec G115
 			AvsReward: sdk.NewDecWithPrec(int64(params.AvsReward), 2),
+			// whitelist addresses are already validated
+			WhitelistAddress: params.WhitelistAddress,
 		}
 
 		return k.SetAVSInfo(ctx, avs)
@@ -184,6 +186,9 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 		}
 		if params.AvsOwnerAddress != nil {
 			avs.AvsOwnerAddress = params.AvsOwnerAddress
+		}
+		if params.WhitelistAddress != nil {
+			avs.WhitelistAddress = params.WhitelistAddress
 		}
 		if params.AssetID != nil {
 			avs.AssetIDs = params.AssetID

@@ -16,7 +16,7 @@ func (k Keeper) InitGenesis(
 	gs delegationtype.GenesisState,
 ) []abci.ValidatorUpdate {
 	for _, association := range gs.Associations {
-		stakerID := association.StakerID
+		stakerID := association.StakerId
 		operatorAddress := association.Operator
 		// #nosec G703 // already validated
 		stakerAddress, clientChainID, _ := assetstype.ParseID(stakerID)
