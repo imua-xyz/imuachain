@@ -20,9 +20,9 @@ type Keeper struct {
 	delegationKeeper operatortypes.DelegationKeeper
 	oracleKeeper     operatortypes.OracleKeeper
 	avsKeeper        operatortypes.AVSKeeper
-
-	hooks       operatortypes.OperatorHooks // set separately via call to SetHooks
-	slashKeeper operatortypes.SlashKeeper   // for jailing and unjailing check TODO(mm)
+	stakingKeeper    operatortypes.StakingKeeper
+	hooks            operatortypes.OperatorHooks // set separately via call to SetHooks
+	slashKeeper      operatortypes.SlashKeeper   // for jailing and unjailing check TODO(mm)
 }
 
 func NewKeeper(
@@ -32,6 +32,7 @@ func NewKeeper(
 	delegationKeeper operatortypes.DelegationKeeper,
 	oracleKeeper operatortypes.OracleKeeper,
 	avsKeeper operatortypes.AVSKeeper,
+	stakingKeeper operatortypes.StakingKeeper,
 	slashKeeper operatortypes.SlashKeeper,
 ) Keeper {
 	return Keeper{
@@ -41,6 +42,7 @@ func NewKeeper(
 		delegationKeeper: delegationKeeper,
 		oracleKeeper:     oracleKeeper,
 		avsKeeper:        avsKeeper,
+		stakingKeeper:    stakingKeeper,
 		slashKeeper:      slashKeeper,
 	}
 }

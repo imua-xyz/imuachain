@@ -49,6 +49,7 @@ interface IAVSManager {
     /// @param slashAddr The slash address of AVS.
     /// @param rewardAddr The reward address of AVS.
     /// @param avsOwnerAddress The owners who have permission for AVS.
+    /// @param whitelistAddress The whitelist address of the operator.
     /// @param assetIds The basic asset information of AVS.
     /// @param avsUnbondingPeriod The unbonding duration of AVS.
     /// @param minSelfDelegation The minimum delegation amount for an operator.
@@ -64,7 +65,8 @@ interface IAVSManager {
         address taskAddr,
         address slashAddr,
         address rewardAddr,
-        string[] memory avsOwnerAddress,
+        address[] memory avsOwnerAddress,
+        address[] memory whitelistAddress,
         string[] memory assetIds,
         uint64 avsUnbondingPeriod,
         uint64 minSelfDelegation,
@@ -80,6 +82,7 @@ interface IAVSManager {
     /// @param slashAddr The slash address of AVS.
     /// @param rewardAddr The reward address of AVS.
     /// @param avsOwnerAddress The owners who have permission for AVS.
+    /// @param whitelistAddress The whitelist address of the operator.
     /// @param assetIds The basic asset information of AVS.
     /// @param avsUnbondingPeriod The unbonding duration of AVS.
     /// @param minSelfDelegation The minimum delegation amount for an operator.
@@ -95,7 +98,8 @@ interface IAVSManager {
         address taskAddr,
         address slashAddr,
         address rewardAddr,
-        string[] memory avsOwnerAddress,
+        address[] memory avsOwnerAddress,
+        address[] memory whitelistAddress,
         string[] memory assetIds,
         uint64 avsUnbondingPeriod,
         uint64 minSelfDelegation,
@@ -145,7 +149,7 @@ interface IAVSManager {
         bytes calldata taskHash,
         uint64 taskID,
         bytes calldata taskResponseHash,
-        string memory operatorAddress
+        address  operatorAddress
     ) external returns (bool success);
 
     /// @dev Called by the avs manager service register an operator as the owner of a BLS public key.
@@ -183,7 +187,7 @@ interface IAVSManager {
     /// QUERIES
     /// @dev Returns the pubkey and pubkey hash of an operator
     /// @param operator is the operator for whom the key is being registered
-    function getRegisteredPubkey(string memory operator) external view returns (bytes memory pubkey);
+    function getRegisteredPubkey(address operator) external view returns (bytes memory pubkey);
 
     /// @dev Returns the operators of all opt-in in the current avs
     /// @param avsAddress avs address
@@ -198,7 +202,7 @@ interface IAVSManager {
     /// @param avsAddr The address of the avs
     /// @param operatorAddr The address of the operator
     /// @return amount The total USD share of specified operator and Avs.
-    function getOperatorOptedUSDValue(address avsAddr, string memory operatorAddr)
+    function getOperatorOptedUSDValue(address avsAddr, address operatorAddr)
         external
         view
         returns (uint256 amount);

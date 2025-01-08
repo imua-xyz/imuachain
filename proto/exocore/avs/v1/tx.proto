@@ -52,9 +52,10 @@ message AVSInfo {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-
-  // asset_reward_commission_epoch_basis is the avs reward distribution based on asset per eopch end.
+  // asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end.
   map<string, int64> asset_reward_amount_epoch_basis = 18;
+  // whitelist_address are the bech32 addresses ,whitelist address of supported operators
+  repeated string whitelist_address = 19;
 }
 
 // Status and proof of each operator

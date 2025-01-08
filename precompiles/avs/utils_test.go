@@ -29,8 +29,8 @@ type StateForCheck struct {
 	StakerShare      sdkmath.LegacyDec
 }
 
-func (suite *AVSManagerPrecompileSuite) prepareOperator() {
-	opAccAddr, err := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+func (suite *AVSManagerPrecompileSuite) prepareOperator(addr string) {
+	opAccAddr, err := sdk.AccAddressFromBech32(addr)
 	suite.operatorAddr = opAccAddr
 	suite.NoError(err)
 	// register operator
@@ -89,7 +89,7 @@ func (suite *AVSManagerPrecompileSuite) prepare() {
 	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	depositAmount := sdkmath.NewInt(100)
 	delegationAmount := sdkmath.NewInt(50)
-	suite.prepareOperator()
+	suite.prepareOperator("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
 	suite.prepareDeposit(usdtAddress, depositAmount)
 	suite.prepareDelegation(true, usdtAddress, delegationAmount)
 }

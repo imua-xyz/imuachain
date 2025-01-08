@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"math/big"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -223,4 +224,32 @@ func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error
 		})
 	}
 	return ret, nil
+}
+
+// IsWhitelisted checks if an operator is in the AVS whitelist.
+// If the whitelist is empty, any operator is considered whitelisted.
+// Returns true if the operator is whitelisted, false otherwise.
+// Returns an error if the AVS address is invalid, the operator address is invalid,
+// or if the operator is not in the whitelist.
+func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (bool, error) {
+	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
+	if err != nil {
+		return false, errorsmod.Wrap(err, fmt.Sprintf("IsWhitelisted: key is %s", avsAddr))
+	}
+	_, err = sdk.AccAddressFromBech32(operatorAddr)
+	if err != nil {
+		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parsing account acc address from Bech32")
+	}
+	// whitelist is disabled for avs of the dogfood type
+	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == types.GenerateAVSAddr(avsInfo.Info.ChainId) {
+		return true, nil
+	}
+	// Currently avs has no whitelist set and any operator can optin
+	if len(avsInfo.Info.WhitelistAddress) == 0 {
+		return true, nil
+	}
+	if !slices.Contains(avsInfo.Info.WhitelistAddress, operatorAddr) {
+		return false, errorsmod.Wrap(err, fmt.Sprintf("operator %s not in whitelist", operatorAddr))
+	}
+	return true, nil
 }

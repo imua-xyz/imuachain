@@ -22,7 +22,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	delegationParams := &delegationtypes.DelegationOrUndelegationParams{}
 	clientChainID, ok := args[0].(uint32)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "uint32", args[0])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "uint32", args[0])
 	}
 	delegationParams.ClientChainID = uint64(clientChainID)
 
@@ -34,14 +34,14 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 
 	txLzNonce, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "uint64", args[1])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", args[1])
 	}
 	delegationParams.LzNonce = txLzNonce
 
 	// the length of client chain address inputted by caller is 32, so we need to check the length and remove the padding according to the actual length.
 	assetAddr, ok := args[2].([]byte)
 	if !ok || assetAddr == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "[]byte", args[2])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", args[2])
 	}
 	// #nosec G115
 	if uint32(len(assetAddr)) < clientChainAddrLength {
@@ -51,7 +51,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 
 	stakerAddr, ok := args[3].([]byte)
 	if !ok || stakerAddr == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "[]byte", args[3])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", args[3])
 	}
 	// #nosec G115
 	if uint32(len(stakerAddr)) < clientChainAddrLength {
@@ -62,7 +62,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	// the input operator address is cosmos accAddress type,so we need to check the length and decode it through Bench32
 	operatorAddr, ok := args[4].([]byte)
 	if !ok || operatorAddr == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 4, "[]byte", args[4])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "[]byte", args[4])
 	}
 	if len(operatorAddr) != types.ExoCoreOperatorAddrLength {
 		return nil, fmt.Errorf(exocmn.ErrInputOperatorAddrLength, len(operatorAddr), types.ExoCoreOperatorAddrLength)
@@ -76,7 +76,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 
 	opAmount, ok := args[5].(*big.Int)
 	if !ok || opAmount == nil || !(opAmount.Cmp(big.NewInt(0)) == 1) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 5, "*big.Int", args[5])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "*big.Int", args[5])
 	}
 	delegationParams.OpAmount = sdkmath.NewIntFromBigInt(opAmount)
 	return delegationParams, nil

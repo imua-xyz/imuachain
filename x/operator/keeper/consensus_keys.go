@@ -7,15 +7,12 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
+	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
-
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-
-	"github.com/cometbft/cometbft/libs/log"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -610,6 +607,7 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		ctx.Logger().Error(" new validator error", "err", err)
 		return types.Validator{}, false
 	}
+	val.Active = k.stakingKeeper.IsExocoreValidator(ctx, wrappedKey.ToConsAddr())
 	val.OperatorEarningsAddr = ops.EarningsAddr
 	val.OperatorApproveAddr = ops.ApproveAddr
 	val.OperatorMetaInfo = ops.OperatorMetaInfo
