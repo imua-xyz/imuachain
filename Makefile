@@ -630,3 +630,6 @@ create-contracts-json:
 check-licenses:
 	@echo "Checking licenses..."
 	@python3 scripts/check_licenses.py .
+
+swagger-ui:
+	docker run -p 8080:8080 -e SWAGGER_JSON=/app/swagger.json -v $(pwd)/client/docs/swagger-ui:/app swaggerapi/swagger-ui
