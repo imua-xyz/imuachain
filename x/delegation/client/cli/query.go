@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+
 	errorsmod "cosmossdk.io/errors"
 	"github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
@@ -166,6 +168,10 @@ func QueryUndelegationsByEpochInfo() *cobra.Command {
 				return err
 			}
 			epochNumber, err := strconv.ParseInt(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+			err = epochstypes.ValidateEpochIdentifierString(args[0])
 			if err != nil {
 				return err
 			}

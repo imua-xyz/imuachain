@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+
 	"github.com/ExocoreNetwork/exocore/cmd/config"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 
@@ -75,6 +77,13 @@ type BaseTestSuite struct {
 
 	// tests may use this to allocate a genesis balance
 	Balances []banktypes.Balance
+}
+
+var EpochsForTest = []string{
+	epochstypes.MinuteEpochID,
+	epochstypes.HourEpochID,
+	epochstypes.DayEpochID,
+	epochstypes.WeekEpochID,
 }
 
 func (suite *BaseTestSuite) SetupTest() {

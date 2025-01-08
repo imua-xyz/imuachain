@@ -224,10 +224,10 @@ func (gs GenesisState) ValidateUndelegations() error {
 				undelegationRecord,
 			)
 		}
-		if undelegation.UndelegationId >= gs.UndelegationId {
+		if undelegation.UndelegationId >= gs.LastUndelegationId {
 			return errorsmod.Wrapf(
 				ErrInvalidGenesisData, "the undelegationID should be less than the global undelegationID,undelegationID:%d,globalID:%d",
-				undelegation.UndelegationId, gs.UndelegationId,
+				undelegation.UndelegationId, gs.LastUndelegationId,
 			)
 		}
 		switch undelegation.CompletedEpochIdentifier {

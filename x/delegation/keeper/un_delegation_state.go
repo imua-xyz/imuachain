@@ -346,9 +346,6 @@ func (k Keeper) IncrementUndelegationHoldCount(ctx sdk.Context, recordKey []byte
 func (k *Keeper) GetUndelegationHoldCount(ctx sdk.Context, recordKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetUndelegationOnHoldKey(recordKey))
-	if bz == nil {
-		return 0
-	}
 	return sdk.BigEndianToUint64(bz)
 }
 
@@ -364,29 +361,29 @@ func (k Keeper) DecrementUndelegationHoldCount(ctx sdk.Context, recordKey []byte
 	return nil
 }
 
-// IncrementUndelegationID increments the global undelegation ID.
-func (k Keeper) IncrementUndelegationID(ctx sdk.Context) error {
-	prev := k.GetUndelegationID(ctx)
+// IncrementLastUndelegationID increments the global undelegation ID.
+func (k Keeper) IncrementLastUndelegationID(ctx sdk.Context) error {
+	prev := k.GetLastUndelegationID(ctx)
 	if prev == math.MaxUint64 {
 		return types.ErrCannotIncUndelegationID
 	}
 	now := prev + 1
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.KeyPrefixUndelegationID, sdk.Uint64ToBigEndian(now))
+	store.Set(types.KeyPrefixLastUndelegationID, sdk.Uint64ToBigEndian(now))
 	return nil
 }
 
-// SetUndelegationID sets the global undelegation ID.
-func (k Keeper) SetUndelegationID(ctx sdk.Context, undelegationID uint64) error {
+// SetLastUndelegationID sets the global undelegation ID.
+func (k Keeper) SetLastUndelegationID(ctx sdk.Context, lastUndelegationID uint64) error {
 	store := ctx.KVStore(k.storeKey)
-	store.Set(types.KeyPrefixUndelegationID, sdk.Uint64ToBigEndian(undelegationID))
+	store.Set(types.KeyPrefixLastUndelegationID, sdk.Uint64ToBigEndian(lastUndelegationID))
 	return nil
 }
 
-// GetUndelegationID returns the global undelegation ID.
-func (k *Keeper) GetUndelegationID(ctx sdk.Context) uint64 {
+// GetLastUndelegationID returns the global undelegation ID.
+func (k *Keeper) GetLastUndelegationID(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.KeyPrefixUndelegationID)
+	bz := store.Get(types.KeyPrefixLastUndelegationID)
 	if bz == nil {
 		// use 0 as the initial undelegation ID
 		return 0

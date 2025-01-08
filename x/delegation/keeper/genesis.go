@@ -45,7 +45,7 @@ func (k Keeper) InitGenesis(
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all undelegation records"))
 	}
-	err = k.SetUndelegationID(ctx, gs.UndelegationId)
+	err = k.SetLastUndelegationID(ctx, gs.LastUndelegationId)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set global undelegationID"))
 	}
@@ -74,6 +74,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *delegationtype.GenesisState {
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all undelegations").Error())
 	}
-	res.UndelegationId = k.GetUndelegationID(ctx)
+	res.LastUndelegationId = k.GetLastUndelegationID(ctx)
 	return &res
 }

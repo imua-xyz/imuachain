@@ -539,6 +539,7 @@ GOLANG_CROSS_VERSION  = v1.22-v2.0.0
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
 	docker run \
+		-e GOPROXY=https://goproxy.cn,direct \
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \

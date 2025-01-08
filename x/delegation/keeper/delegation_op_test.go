@@ -492,7 +492,7 @@ func (suite *DelegationTestSuite) TestMultipleUndelegations() {
 	matureEpochs := epochInfo.CurrentEpoch + int64(epochsUntilUnbonded)
 
 	// check the global undelegationID
-	undelegationID := suite.App.DelegationKeeper.GetUndelegationID(suite.Ctx)
+	undelegationID := suite.App.DelegationKeeper.GetLastUndelegationID(suite.Ctx)
 	suite.Equal(uint64(undelegationNumber), undelegationID)
 	// test the function GetStakerUndelegationRecords
 	// check state

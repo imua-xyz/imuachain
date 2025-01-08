@@ -58,7 +58,7 @@ const (
 
 	prefixAssociatedOperatorByStaker
 
-	prefixForUndelegationID
+	prefixForLastUndelegationID
 )
 
 var (
@@ -71,11 +71,11 @@ var (
 	// KeyPrefixStakersByOperator key->value: operatorAddr+'/'+assetID -> stakerList
 	KeyPrefixStakersByOperator = []byte{prefixStakersByOperator}
 
-	// KeyPrefixUndelegationID key-value:
-	// prefixForUndelegationID -> uint64
+	// KeyPrefixLastUndelegationID key-value:
+	// prefixForLastUndelegationID -> uint64
 	// We use an incrementing number to identify undelegations because we support different
 	// assets across multiple client chains and the Exocore chain.
-	KeyPrefixUndelegationID = []byte{prefixForUndelegationID}
+	KeyPrefixLastUndelegationID = []byte{prefixForLastUndelegationID}
 
 	// KeyPrefixUndelegationInfo singleRecordKey = operatorAddr+BlockHeight+UndelegationID+txHash
 	// it can be constructed by GetUndelegationRecordKey

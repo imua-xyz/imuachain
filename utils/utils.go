@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
@@ -38,13 +36,6 @@ const (
 	// DelimiterForID Delimiter used for constructing the stakerID and assetID.
 	DelimiterForID = "_"
 )
-
-var AllEpochs = []string{
-	epochstypes.MinuteEpochID,
-	epochstypes.HourEpochID,
-	epochstypes.DayEpochID,
-	epochstypes.WeekEpochID,
-}
 
 // IsMainnet returns true if the chain-id has the Evmos mainnet EIP155 chain prefix.
 func IsMainnet(chainID string) bool {
@@ -220,7 +211,9 @@ func SortByPower(
 	return sortedOperatorAddrs, sortedPubKeys, sortedPowers
 }
 
-// AppendMany appends a variable number of byte slices together
+// AppendMany concatenates multiple byte slices into a single slice.
+// It takes a variable number of byte slices and returns their concatenation
+// in the order provided. Primarily used for key construction in storage operations
 func AppendMany(byteses ...[]byte) (out []byte) {
 	for _, bytes := range byteses {
 		out = append(out, bytes...)

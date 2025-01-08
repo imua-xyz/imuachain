@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/testutil"
+
 	"cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/utils"
 	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	operatortype "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -63,7 +64,7 @@ func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {
 	testAVSNumber := 4
 	for i := 0; i < testAVSNumber; i++ {
 		avsName := fmt.Sprintf("avsTestAddr_%d", i)
-		suite.prepareAvs(avsName, []string{usdtAssetID}, utils.AllEpochs[i], defaultUnbondingPeriod)
+		suite.prepareAvs(avsName, []string{usdtAssetID}, testutil.EpochsForTest[i], defaultUnbondingPeriod)
 		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 		suite.NoError(err)
 	}

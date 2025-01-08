@@ -131,7 +131,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	if err != nil {
 		return err
 	}
-	undelegationID := k.GetUndelegationID(ctx)
+	undelegationID := k.GetLastUndelegationID(ctx)
 	// record Undelegation event
 	r := delegationtype.UndelegationRecord{
 		StakerId:              stakerID,
@@ -157,7 +157,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	if err != nil {
 		return err
 	}
-	err = k.IncrementUndelegationID(ctx)
+	err = k.IncrementLastUndelegationID(ctx)
 	if err != nil {
 		return err
 	}
