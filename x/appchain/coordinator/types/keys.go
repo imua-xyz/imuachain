@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/ExocoreNetwork/exocore/utils"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -49,14 +50,6 @@ const (
 	InitTimeoutBytePrefix
 )
 
-// AppendMany appends a variable number of byte slices together
-func AppendMany(byteses ...[]byte) (out []byte) {
-	for _, bytes := range byteses {
-		out = append(out, bytes...)
-	}
-	return out
-}
-
 func ParamsKey() []byte {
 	return []byte{ParamsBytePrefix}
 }
@@ -65,7 +58,7 @@ func ParamsKey() []byte {
 // to begin with the starting of the epoch with identifier and number. Since the data
 // is stored alphabetically, this key structure is apt.
 func PendingSubscriberChainKey(epochIdentifier string, epochNumber uint64) []byte {
-	return AppendMany(
+	return utils.AppendMany(
 		[]byte{PendingSubscriberChainBytePrefix},
 		[]byte(epochIdentifier),
 		sdk.Uint64ToBigEndian(epochNumber),
@@ -103,7 +96,7 @@ func SubscriberGenesisKey(chainID string) []byte {
 // InitTimeoutEpochKey returns the key under which the list of chains which will timeout (if not
 // initialized by then) at the beginning of the epoch is stored.
 func InitTimeoutEpochKey(epoch epochstypes.Epoch) []byte {
-	return AppendMany(
+	return utils.AppendMany(
 		[]byte{InitTimeoutBytePrefix},
 		[]byte(epoch.EpochIdentifier),
 		sdk.Uint64ToBigEndian(epoch.EpochNumber),

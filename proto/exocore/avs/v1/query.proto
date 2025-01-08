@@ -76,22 +76,22 @@ message QueryChallengeInfoResponse {
 service Query {
   // Parameters queries the parameters of the module.
   rpc QueryAVSInfo(QueryAVSInfoReq) returns (QueryAVSInfoResponse) {
-    option (google.api.http).get = "/exocore/avs/QueryAVSInfo";
+    option (google.api.http).get = "/exocore/avs/v1/QueryAVSInfo";
   }
   // TaskInfo queries the task information.
   rpc QueryAVSTaskInfo(QueryAVSTaskInfoReq) returns (TaskInfo) {
-    option (google.api.http).get = "/exocore/avstask/v1/GetAVSTaskInfoReq";
+    option (google.api.http).get = "/exocore/avs/v1/GetAVSTaskInfoReq";
   }
   // QueryAVSAddrByChainID queries the avs address by chain id
   rpc QueryAVSAddrByChainID(QueryAVSAddrByChainIDReq) returns (QueryAVSAddrByChainIDResponse) {
-    option (google.api.http).get = "/exocore/avs/QueryAVSAddrByChainID/{chain}";
+    option (google.api.http).get = "/exocore/avs/v1/QueryAVSAddrByChainID/{chain}";
   }
   // Parameters queries the parameters of the module.
   rpc QuerySubmitTaskResult(QuerySubmitTaskResultReq) returns (QuerySubmitTaskResultResponse) {
-    option (google.api.http).get = "/exocore/avs/QuerySubmitTaskResult";
+    option (google.api.http).get = "/exocore/avs/v1/QuerySubmitTaskResult";
   }
   // Parameters queries the parameters of the module.
   rpc QueryChallengeInfo(QueryChallengeInfoReq) returns (QueryChallengeInfoResponse) {
-    option (google.api.http).get = "/exocore/avs/QueryChallengeInfo";
+    option (google.api.http).get = "/exocore/avs/v1/QueryChallengeInfo";
   }
 }

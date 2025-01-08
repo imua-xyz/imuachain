@@ -20,7 +20,9 @@ message GenesisState {
   // stakers_by_operator is a staker list for the operators
   repeated StakersByOperator stakers_by_operator = 3 [(gogoproto.nullable) = false];
   // undelegations is a list of all undelegations
-  repeated UndelegationRecord undelegations = 4 [(gogoproto.nullable) = false];
+  repeated UndelegationAndHoldCount undelegations = 4 [(gogoproto.nullable) = false];
+  // last_undelegation_id is a globally incremented ID assigned to undelegations.
+  uint64 last_undelegation_id = 5;
 }
 
 // DelegationStates is a helper struct for the delegation state

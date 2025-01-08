@@ -3,24 +3,31 @@ package keeper
 import (
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ExocoreNetwork/exocore/x/delegation/types"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-// EndBlock : completed Undelegation events according to the canCompleted blockHeight
-// This function will be triggered at the end of every block, it will query the undelegation state to get the records that need to be handled and try to complete the undelegation task.
+// EndBlock : Completes expired pending undelegation events based on epoch information.
+// This function is triggered at the end of every block. It queries the completable
+// pending undelegations and completes them.
+// We use EndBlock instead of epoch hooks to trigger completion because we want
+// expired pending undelegations that are still held to be completed per block,
+// rather than per epoch.
+// Another reason is that we use a custom NullEpoch to handle pending undelegations that
+// are not restricted by any unbonding duration. These undelegations are completed immediately
+// at the end of the block after the transaction is committed on-chain. If we were to use an
+// epochHook, we might need to consider using minutes as the default unbonding duration for
+// these undelegations. However, such an implementation would mandate that the system enable
+// minute-based epochs.
 func (k *Keeper) EndBlock(
 	originalCtx sdk.Context, _ abci.RequestEndBlock,
 ) []abci.ValidatorUpdate {
 	logger := k.Logger(originalCtx)
-	records, err := k.GetPendingUndelegationRecords(
-		originalCtx, uint64(originalCtx.BlockHeight()),
-	)
+	records, err := k.GetCompletableUndelegations(originalCtx)
 	if err != nil {
 		// When encountering an error while retrieving pending undelegation, skip the undelegation at the given height without causing the node to stop running.
-		logger.Error("Error in GetPendingUndelegationRecords during the delegation's EndBlock execution", "error", err)
+		logger.Error("Error in GetCompletableUndelegations during the delegation's EndBlock execution", "error", err)
 		return []abci.ValidatorUpdate{}
 	}
 	if len(records) == 0 {
@@ -32,27 +39,6 @@ func (k *Keeper) EndBlock(
 		// we can use `Must` here because we stored this record ourselves.
 		operatorAccAddress := sdk.MustAccAddressFromBech32(record.OperatorAddr)
 		// TODO check if the operator has been slashed or frozen
-		recordID := types.GetUndelegationRecordKey(
-			record.BlockNumber, record.LzTxNonce, record.TxHash, record.OperatorAddr,
-		)
-		if k.GetUndelegationHoldCount(cc, recordID) > 0 {
-			// delete from all 3 states
-			if err := k.DeleteUndelegationRecord(cc, record); err != nil {
-				logger.Error("failed to delete undelegation record", "error", err)
-				continue
-			}
-			// add back to all 3 states, with the new block height
-			// #nosec G701
-			record.CompleteBlockNumber = uint64(cc.BlockHeight()) + 1
-			if err := k.SetUndelegationRecords(
-				cc, []types.UndelegationRecord{*record},
-			); err != nil {
-				logger.Error("failed to set undelegation records", "error", err)
-				continue
-			}
-			writeCache()
-			continue
-		}
 
 		recordAmountNeg := record.Amount.Neg()
 		// update delegation state
@@ -116,8 +102,7 @@ func (k *Keeper) EndBlock(
 			continue
 		}
 
-		// TODO: the field IsPending in types.UndelegationRecord is useless since when a record is completed it will be removed, so the record is either existing&pending or unexist&completed, and the IsPending is not used nowhere(like slashFromUndelegation doesn't check this field either), good to remove this field. And types.UndelegationRecord is actually PendingUndelegationRecord
-		// delete the Undelegation records that have been complemented
+		// delete the Undelegation records that have been completed
 		err = k.DeleteUndelegationRecord(cc, record)
 		if err != nil {
 			logger.Error("Error in DeleteUndelegationRecord during the delegation's EndBlock execution", "error", err)

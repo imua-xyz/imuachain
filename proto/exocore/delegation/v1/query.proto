@@ -70,8 +70,12 @@ message SingleDelegationInfoReq {
 
 // UndelegationHoldCountReq is the request to obtain the undelegation hold count.
 message UndelegationHoldCountReq {
-  // record_key is the record key of the undelegation record.
-  string record_key = 1;
+  // staker_id is the staker id.
+  string staker_id = 1;
+  // asset_id is the asset id.
+  string asset_id = 2;
+  // undelegation_id is the undelegation id
+  uint64 undelegation_id =3;
 }
 
 // UndelegationHoldCountResponse is the response for the undelegation hold count.
@@ -89,17 +93,28 @@ message UndelegationsReq {
   string asset_id = 2;
 }
 
-// UndelegationsByHeightReq is the request to obtain all undelegations waiting to be completed
-// by height.
-message UndelegationsByHeightReq {
-  // block_height is the block height to query.
-  uint64 block_height = 1;
+// UndelegationsByEpochInfoReq is the request to obtain all undelegations waiting to be completed
+// by epoch info.
+message UndelegationsByEpochInfoReq {
+  // epoch_identifier is the epoch identifier to query.
+  string epoch_identifier = 1;
+  // epoch_number is the epoch number to query.
+  int64 epoch_number = 2;
+}
+
+// UndelegationAndHoldCount includes the undelegation record and the
+// hold count, which is used to construct the genesis state
+message UndelegationAndHoldCount {
+  // undelegation is the single undelegation record
+  UndelegationRecord undelegation =1;
+  // hold_count represents the number of holds on this undelegation
+  uint64 hold_count =2;
 }
 
 // UndelegationRecordList is the response to query undelegations.
 message UndelegationRecordList {
-  // UndelegationRecord is the returned undelegations
-  repeated UndelegationRecord undelegations = 1;
+  // undelegations is the returned undelegations with hold count
+  repeated UndelegationAndHoldCount undelegations = 1;
 }
 
 // QueryAssociatedOperatorByStakerReq is the request to obtain the associated operator of the specified staker
@@ -159,7 +174,7 @@ service Query {
   // QueryUndelegationHoldCount queries the undelegation hold count.
   rpc QueryUndelegationHoldCount(UndelegationHoldCountReq) returns (UndelegationHoldCountResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/exocore/delegation/v1/undelegation_hold_count/{record_key}";
+    option (google.api.http).get = "/exocore/delegation/v1/undelegation_hold_count/{staker_id}/{asset_id}/{undelegation_id}";
   }
 
   // QueryUndelegations queries all undelegations for
@@ -169,11 +184,11 @@ service Query {
     option (google.api.http).get = "/exocore/delegation/v1/undelegations/{staker_id}/{asset_id}";
   }
 
-  // QueryUndelegationsByHeight queries all undelegations waiting to be completed by
-  // {height}.
-  rpc QueryUndelegationsByHeight(UndelegationsByHeightReq) returns (UndelegationRecordList) {
+  // QueryUndelegationsByEpochInfo queries all undelegations waiting to be completed by
+  // {epoch_identifier,epoch_number}.
+  rpc QueryUndelegationsByEpochInfo(UndelegationsByEpochInfoReq) returns (UndelegationRecordList) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/exocore/delegation/v1/pending_undelegations/{block_height}";
+    option (google.api.http).get = "/exocore/delegation/v1/pending_undelegations/{epoch_identifier}/{epoch_number}";
   }
 
   // QueryAssociatedOperatorByStaker queries the associated operator for the specified staker

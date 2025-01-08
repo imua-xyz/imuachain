@@ -101,7 +101,7 @@ type AVSInfo struct {
 	AvsReward github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,16,opt,name=avs_reward,json=avsReward,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"avs_reward"`
 	// avs_slash defines the proportion of slash
 	AvsSlash github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,17,opt,name=avs_slash,json=avsSlash,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"avs_slash"`
-	// asset_reward_commission_epoch_basis is the avs reward distribution based on asset per eopch end.
+	// asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end.
 	AssetRewardAmountEpochBasis map[string]int64 `protobuf:"bytes,18,rep,name=asset_reward_amount_epoch_basis,json=assetRewardAmountEpochBasis,proto3" json:"asset_reward_amount_epoch_basis,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 	// whitelist_address are the bech32 addresses ,whitelist address of supported operators
 	WhitelistAddress []string `protobuf:"bytes,19,rep,name=whitelist_address,json=whitelistAddress,proto3" json:"whitelist_address,omitempty"`

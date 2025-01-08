@@ -559,6 +559,7 @@ func NewExocoreApp(
 		&app.OperatorKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
+		app.EpochsKeeper,
 	)
 
 	// the dogfood module is the first AVS. it receives slashing calls from either x/slashing
@@ -700,6 +701,7 @@ func NewExocoreApp(
 		&app.AVSManagerKeeper,
 		&app.StakingKeeper,
 		delegationTypes.VirtualSlashKeeper{},
+		app.EpochsKeeper,
 	)
 	// the fee distribution keeper is used to allocate reward to exocore validators on epoch-basis,
 	// and it'll interact with other modules, like delegation for voting power, mint and inflation and etc.

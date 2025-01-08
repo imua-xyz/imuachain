@@ -32,11 +32,12 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	}
 	clientChainAddrLength := info.AddressLength
 
-	txLzNonce, ok := args[1].(uint64)
+	// TODO: Remove this once the layerzero nonce is removed as an input parameter. This can be addressed
+	// when we adjust the precompile interface.
+	_, ok = args[1].(uint64)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", args[1])
 	}
-	delegationParams.LzNonce = txLzNonce
 
 	// the length of client chain address inputted by caller is 32, so we need to check the length and remove the padding according to the actual length.
 	assetAddr, ok := args[2].([]byte)

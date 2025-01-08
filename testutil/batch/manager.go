@@ -33,7 +33,6 @@ import (
 	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ExocoreNetwork/exocore/types"
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -70,13 +69,7 @@ var (
 	AssetsPrecompileAddr     = common.HexToAddress("0x0000000000000000000000000000000000000804")
 	DelegationPrecompileAddr = common.HexToAddress("0x0000000000000000000000000000000000000805")
 	AVSPrecompileAddr        = common.HexToAddress("0x0000000000000000000000000000000000000901")
-	AllEpochs                = []string{
-		epochstypes.MinuteEpochID,
-		epochstypes.HourEpochID,
-		epochstypes.DayEpochID,
-		epochstypes.WeekEpochID,
-	}
-	MaxUnbondingDuration = uint64(10)
+	MaxUnbondingDuration     = uint64(10)
 
 	DefaultOperatorCommission = stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 )

@@ -497,15 +497,15 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_QueryAVSInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"exocore", "avs", "QueryAVSInfo"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryAVSInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "avs", "v1", "QueryAVSInfo"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryAVSTaskInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "avstask", "v1", "GetAVSTaskInfoReq"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryAVSTaskInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "avs", "v1", "GetAVSTaskInfoReq"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryAVSAddrByChainID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"exocore", "avs", "QueryAVSAddrByChainID", "chain"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryAVSAddrByChainID_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "avs", "v1", "QueryAVSAddrByChainID", "chain"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QuerySubmitTaskResult_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"exocore", "avs", "QuerySubmitTaskResult"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QuerySubmitTaskResult_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "avs", "v1", "QuerySubmitTaskResult"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryChallengeInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"exocore", "avs", "QueryChallengeInfo"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryChallengeInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "avs", "v1", "QueryChallengeInfo"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

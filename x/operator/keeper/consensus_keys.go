@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ExocoreNetwork/exocore/utils"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -445,7 +447,7 @@ func (k Keeper) ClearPreviousConsensusKeys(ctx sdk.Context, chainID string) {
 	store := ctx.KVStore(k.storeKey)
 	iterator := sdk.KVStorePrefixIterator(
 		store,
-		types.AppendMany(
+		utils.AppendMany(
 			[]byte{types.BytePrefixForOperatorAndChainIDToPrevConsKey},
 			partialKey,
 		),

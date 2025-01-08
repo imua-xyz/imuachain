@@ -14,6 +14,12 @@ const (
 	MinuteEpochID = "minute"
 	// WeekEpochID defines the identifier for a weekly epoch.
 	WeekEpochID = "week"
+
+	// NullEpochIdentifier and NullEpochNumber are used to construct the key for undelegations
+	// that aren't restricted by any AVS unbonding configuration.
+	// So it's a virtual epoch configuration, it shouldn't be configured in the genesis
+	NullEpochIdentifier = "NullEpoch"
+	NullEpochNumber     = int64(0)
 )
 
 // ValidateEpochIdentifierInterface accepts an interface and validates it as an epoch

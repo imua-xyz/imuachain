@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ExocoreNetwork/exocore/testutil"
+
 	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -229,7 +231,7 @@ func (m *Manager) RegisterAVSs(allAssetsID []string) error {
 	opFuncIfCheckFail := func(id uint, avs *AVS) error {
 		// register the AVS.
 		name := fmt.Sprintf("%s%d", AVSNamePrefix, id)
-		epochIdentifier := AllEpochs[int(id-1)%len(AllEpochs)]
+		epochIdentifier := testutil.EpochsForTest[int(id-1)%len(testutil.EpochsForTest)]
 		avsUnbondingPeriod := uint64(id) % MaxUnbondingDuration
 		data, err := avsAbi.Pack(
 			avsprecompile.MethodRegisterAVS,

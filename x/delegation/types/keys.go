@@ -1,13 +1,16 @@
 package types
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/ExocoreNetwork/exocore/utils"
+	"golang.org/x/xerrors"
 
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // constants
@@ -20,6 +23,13 @@ const (
 
 	// RouterKey to be used for message routing
 	RouterKey = ModuleName
+
+	// AccAddressLength is used to parse the key, because the length isn't padded in the key
+	// This might be removed if the address length is padded in the key
+	AccAddressLength = 20
+
+	// ByteLengthForUint64 the type of chainID length is uint64, uint64 has 8 bytes.
+	ByteLengthForUint64 = 8
 )
 
 // ModuleAddress is the native module address for EVM
@@ -42,6 +52,8 @@ const (
 	prefixUndelegationOnHold
 
 	prefixAssociatedOperatorByStaker
+
+	prefixForLastUndelegationID
 )
 
 var (
@@ -54,12 +66,22 @@ var (
 	// KeyPrefixStakersByOperator key->value: operatorAddr+'/'+assetID -> stakerList
 	KeyPrefixStakersByOperator = []byte{prefixStakersByOperator}
 
-	// KeyPrefixUndelegationInfo singleRecordKey = operatorAddr+'/'+BlockHeight+'/'+LzNonce+'/'+txHash
+	// KeyPrefixLastUndelegationID key-value:
+	// prefixForLastUndelegationID -> uint64
+	// We use an incrementing number to identify undelegations because we support different
+	// assets across multiple client chains and the Exocore chain.
+	KeyPrefixLastUndelegationID = []byte{prefixForLastUndelegationID}
+
+	// KeyPrefixUndelegationInfo singleRecordKey = operatorAddr+BlockHeight+UndelegationID+txHash
+	// it can be constructed by GetUndelegationRecordKey
 	// singleRecordKey -> UndelegationRecord
 	KeyPrefixUndelegationInfo = []byte{prefixUndelegationInfo}
-	// KeyPrefixStakerUndelegationInfo restakerID+'/'+assetID+'/'+LzNonce -> singleRecordKey
+	// KeyPrefixStakerUndelegationInfo restakerID+'/'+assetID+'/'+UndelegationID -> singleRecordKey
 	KeyPrefixStakerUndelegationInfo = []byte{prefixStakerUndelegationInfo}
-	// KeyPrefixPendingUndelegations completeHeight +'/'+LzNonce -> singleRecordKey
+	// KeyPrefixPendingUndelegations
+	// key=epochIdentifierLength+completedEpochIdentifier+completedEpochNumber+UndelegationID
+	// it can be constructed by GetPendingUndelegationRecordKey
+	// key -> singleRecordKey
 	KeyPrefixPendingUndelegations = []byte{prefixPendingUndelegations}
 
 	// KeyPrefixAssociatedOperatorByStaker stakerID -> operator address
@@ -82,55 +104,95 @@ func ParseStakerAssetIDAndOperator(key []byte) (keys *SingleDelegationInfoReq, e
 
 // GetUndelegationRecordKey returns the key for the undelegation record. The caller must ensure that the parameters
 // are valid; this function performs no validation whatsoever.
-func GetUndelegationRecordKey(blockHeight, lzNonce uint64, txHash string, operatorAddr string) []byte {
-	return []byte(strings.Join([]string{operatorAddr, hexutil.EncodeUint64(blockHeight), hexutil.EncodeUint64(lzNonce), txHash}, "/"))
+func GetUndelegationRecordKey(blockHeight, undelegationID uint64, txHash string, operatorAddr string) []byte {
+	// we can use `Must` here because we stored this record ourselves.
+	operatorAccAddress := sdk.MustAccAddressFromBech32(operatorAddr)
+	return utils.AppendMany(
+		// operator address,20bytes
+		operatorAccAddress,
+		// Append the height,8bytes
+		sdk.Uint64ToBigEndian(blockHeight),
+		// Append the undelegationID,8bytes
+		sdk.Uint64ToBigEndian(undelegationID),
+		// Append txHash,32bytes
+		common.HexToHash(txHash).Bytes(),
+	)
 }
 
 type UndelegationKeyFields struct {
-	BlockHeight  uint64
-	LzNonce      uint64
-	TxHash       string
-	OperatorAddr string
+	BlockHeight    uint64
+	UndelegationID uint64
+	TxHash         string
+	OperatorAddr   string
 }
 
 func ParseUndelegationRecordKey(key []byte) (field *UndelegationKeyFields, err error) {
-	stringList, err := assetstypes.ParseJoinedStoreKey(key, 4)
-	if err != nil {
-		return nil, err
+	expectLength := AccAddressLength + 2*ByteLengthForUint64 + common.HashLength
+	if len(key) != expectLength {
+		return nil, xerrors.Errorf(
+			"invalid undelegation record key, expectedLength:%d,actualLength:%d",
+			expectLength, len(key))
 	}
-	operatorAccAddr, err := sdk.AccAddressFromBech32(stringList[0])
-	if err != nil {
-		return nil, err
-	}
-	height, err := hexutil.DecodeUint64(stringList[1])
-	if err != nil {
-		return nil, err
-	}
-	lzNonce, err := hexutil.DecodeUint64(stringList[2])
-	if err != nil {
-		return nil, err
-	}
-	hash := stringList[3]
-	// when a key is originally made, it is created with hash.Hex(), which
-	// we reverse by using common.HexToHash. to that end, this validation
-	// is accurate.
-	if len(common.HexToHash(hash)) != common.HashLength {
-		return nil, ErrInvalidHash
-	}
+	// operator accAddress: 20bytes
+	startIndex := 0
+	operatorAccAddr := sdk.AccAddress(key[startIndex : startIndex+AccAddressLength])
+	// the height type is uint64: 8bytes
+	startIndex += AccAddressLength
+	height := sdk.BigEndianToUint64(key[startIndex : startIndex+ByteLengthForUint64])
+	// the undelegationID type is uint64: 8bytes
+	startIndex += ByteLengthForUint64
+	undelegationID := sdk.BigEndianToUint64(key[startIndex : startIndex+ByteLengthForUint64])
+	// txHash: 32bytes
+	startIndex += ByteLengthForUint64
+	txHash := common.BytesToHash(key[startIndex : startIndex+common.HashLength])
 	return &UndelegationKeyFields{
-		OperatorAddr: operatorAccAddr.String(),
-		BlockHeight:  height,
-		LzNonce:      lzNonce,
-		TxHash:       hash,
+		OperatorAddr:   operatorAccAddr.String(),
+		BlockHeight:    height,
+		UndelegationID: undelegationID,
+		TxHash:         txHash.String(),
 	}, nil
 }
 
-func GetStakerUndelegationRecordKey(stakerID, assetID string, lzNonce uint64) []byte {
-	return []byte(strings.Join([]string{stakerID, assetID, hexutil.EncodeUint64(lzNonce)}, "/"))
+func GetStakerUndelegationRecordKey(stakerID, assetID string, undelegationID uint64) []byte {
+	idStr := fmt.Sprintf("%021d", undelegationID)
+	return []byte(strings.Join([]string{stakerID, assetID, idStr}, "/"))
 }
 
-func GetPendingUndelegationRecordKey(height, lzNonce uint64) []byte {
-	return []byte(strings.Join([]string{hexutil.EncodeUint64(height), hexutil.EncodeUint64(lzNonce)}, "/"))
+type PendingUndelegationKeyFields struct {
+	EpochIdentifier string
+	EpochNumber     uint64
+	UndelegationID  uint64
+}
+
+func GetPendingUndelegationRecordKey(epochIdentifier string, epochNumber int64, undelegationID uint64) []byte {
+	return utils.AppendMany(
+		// length of identifier,8bytes
+		sdk.Uint64ToBigEndian(uint64(len(epochIdentifier))),
+		// epoch identifier, length = len(epochIdentifier)
+		[]byte(epochIdentifier),
+		// Append the epoch number,8bytes
+		sdk.Uint64ToBigEndian(uint64(epochNumber)),
+		// Append the undelegationID,8bytes
+		sdk.Uint64ToBigEndian(undelegationID),
+	)
+}
+
+func ParsePendingUndelegationKey(key []byte) (field *PendingUndelegationKeyFields, err error) {
+	if len(key) <= 3*ByteLengthForUint64 {
+		return nil, xerrors.New("ParsePendingUndelegationKey,key length is too short to contain epoch info and nonce")
+	}
+	identifierLen := sdk.BigEndianToUint64(key[0:ByteLengthForUint64])
+	if uint64(len(key)) != uint64(3*ByteLengthForUint64)+identifierLen {
+		return nil, xerrors.Errorf("ParsePendingUndelegationKey,key length is invalid,expect:%d,actual:%d", uint64(3*ByteLengthForUint64)+identifierLen, len(key))
+	}
+	epochIdentifier := string(key[ByteLengthForUint64 : ByteLengthForUint64+identifierLen])
+	epochNumber := sdk.BigEndianToUint64(key[ByteLengthForUint64+identifierLen : ByteLengthForUint64*2+identifierLen])
+	undelegationID := sdk.BigEndianToUint64(key[ByteLengthForUint64*2+identifierLen:])
+	return &PendingUndelegationKeyFields{
+		EpochIdentifier: epochIdentifier,
+		EpochNumber:     epochNumber,
+		UndelegationID:  undelegationID,
+	}, nil
 }
 
 // GetUndelegationOnHoldKey returns the key for the undelegation hold count

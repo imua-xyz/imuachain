@@ -41,9 +41,13 @@ func (k Keeper) InitGenesis(
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all staker list"))
 	}
-	err = k.SetUndelegationRecords(ctx, gs.Undelegations)
+	err = k.SetUndelegationRecords(ctx, true, gs.Undelegations)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all undelegation records"))
+	}
+	err = k.SetLastUndelegationID(ctx, gs.LastUndelegationId)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set global undelegationID"))
 	}
 	return []abci.ValidatorUpdate{}
 }
@@ -70,5 +74,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *delegationtype.GenesisState {
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all undelegations").Error())
 	}
+	res.LastUndelegationId = k.GetLastUndelegationID(ctx)
 	return &res
 }

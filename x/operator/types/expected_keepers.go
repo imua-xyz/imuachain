@@ -138,9 +138,14 @@ type OperatorHooks interface {
 	)
 	// AfterSlash This hook is called when an operator is slashed
 	AfterSlash(
-		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []string,
+		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
 	)
 }
 type StakingKeeper interface {
 	IsExocoreValidator(ctx sdk.Context, addr sdk.ConsAddress) bool
+}
+
+// EpochsKeeper represents the expected keeper interface for the epochs module.
+type EpochsKeeper interface {
+	GetEpochInfo(sdk.Context, string) (epochstypes.EpochInfo, bool)
 }

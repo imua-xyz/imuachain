@@ -68,19 +68,20 @@ message UndelegationRecord {
   string asset_id = 2;
   // operator_addr is the operator address.
   string operator_addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  // tx_hash is the transaction hash on the client chain.
+  // tx_hash is the transaction hash on the Exocore chain.
   string tx_hash = 4;
-  // is_pending is the flag to indicate if the undelegation is pending.
-  bool is_pending = 5;
   // block_number is the block number on Exocore.
-  uint64 block_number = 6;
-  // complete_block_number is the block number on Exocore at which the undelegation
+  uint64 block_number = 5;
+  // completed_epoch_identifier is the epoch identifier
+  string completed_epoch_identifier = 6;
+  // completed_epoch_number is the epoch number on Exocore at which the undelegation
   // should be completed.
-  uint64 complete_block_number = 7;
-  // lz_tx_nonce is the nonce of the transaction on the client chain.
-  uint64 lz_tx_nonce = 8;
+  int64 completed_epoch_number = 7;
+  // undelegation_Id is a globally incrementing number used to identify an undelegation.
+  // It will be included in the key when storing the undelegation.
+  uint64 undelegation_id = 8;
   // amount is the amount of the asset to be undelegated.
-  string amount = 9 [
+  string amount = 9[
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false

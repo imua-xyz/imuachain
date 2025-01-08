@@ -30,9 +30,9 @@ func (k *Keeper) QueryUndelegations(ctx context.Context, req *delegationtype.Und
 	}, nil
 }
 
-func (k *Keeper) QueryUndelegationsByHeight(ctx context.Context, req *delegationtype.UndelegationsByHeightReq) (*delegationtype.UndelegationRecordList, error) {
+func (k *Keeper) QueryUndelegationsByEpochInfo(ctx context.Context, req *delegationtype.UndelegationsByEpochInfoReq) (*delegationtype.UndelegationRecordList, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	undelegations, err := k.GetPendingUndelegationRecords(c, req.BlockHeight)
+	undelegations, err := k.GetUnCompletableUndelegations(c, req.EpochIdentifier, req.EpochNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,11 @@ func (k *Keeper) QueryUndelegationsByHeight(ctx context.Context, req *delegation
 
 func (k Keeper) QueryUndelegationHoldCount(ctx context.Context, req *delegationtype.UndelegationHoldCountReq) (*delegationtype.UndelegationHoldCountResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	res := k.GetUndelegationHoldCount(c, []byte(req.RecordKey))
+	recordKey, err := k.GetUndelegationRecKey(c, req.StakerId, req.AssetId, req.UndelegationId)
+	if err != nil {
+		return nil, err
+	}
+	res := k.GetUndelegationHoldCount(c, recordKey)
 	return &delegationtype.UndelegationHoldCountResponse{HoldCount: res}, nil
 }
 

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -93,14 +94,24 @@ func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, o
 	if optOutHeight < 0 {
 		return 0, types.ErrParameterInvalid.Wrapf("the opt out height is negative, optOutHeight:%v", optOutHeight)
 	}
-	findHeight, findKey, err := k.GetSnapshotHeightAndKey(ctx, avsAddr, optOutHeight)
+	_, findKey, err := k.GetSnapshotHeightAndKey(ctx, avsAddr, optOutHeight)
 	if err != nil {
 		return 0, err
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	value := store.Get(findKey)
 	if value == nil {
-		return 0, types.ErrNoKeyInTheStore.Wrapf("GetEpochNumberByOptOutHeight: findHeight:%v, optOutHeight:%v", findHeight, optOutHeight)
+		ctx.Logger().Info("GetEpochNumberByOptOutHeight: can't find the epoch number of optOutHeight", "avs", avsAddr, "optOutHeight", optOutHeight)
+		// We don't save the voting power snapshots for the AVSs that don't have any opted-in operators.
+		// Therefore, for these AVSs, the `findKey` might not exist in the store if the operator opts in and out
+		// within the same epoch. In this case, we return `NullEpochNumber` as the virtual epoch number, so that
+		// the caller `GetImpactfulAVSForOperator` can skip this AVS. This is acceptable because opt-in and opt-out
+		// actions submitted within the same epoch won't influence the AVS, and the AVS doesn't have any operators
+		// opted in.
+		// Additionally, since expired voting power snapshots are deleted, it will also be impossible to retrieve
+		// the corresponding epochNumber when the opt-out height is too old. In such cases, the same handling method
+		// is applied.
+		return epochtypes.NullEpochNumber, nil
 	}
 	var ret types.VotingPowerSnapshot
 	k.cdc.MustUnmarshal(value, &ret)

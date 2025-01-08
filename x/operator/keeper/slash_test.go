@@ -3,11 +3,12 @@ package keeper_test
 import (
 	"time"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+
 	sdkmath "cosmossdk.io/math"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ExocoreNetwork/exocore/x/operator/keeper"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
-	abci "github.com/cometbft/cometbft/abci/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -27,6 +28,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, avsAddr)
 	suite.NoError(err)
 
+	// the epoch identifier of dogfood AVS is day
 	// call the EndBlock to update the voting power
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
 
@@ -55,8 +57,12 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	undelegationAmount := sdkmath.NewIntWithDecimal(10, assetDecimal)
 	suite.prepareDelegation(false, suite.Address, suite.assetAddr, suite.operatorAddr, undelegationAmount)
 	delegationRemaining := delegationAmount.Add(newDelegateAmount).Sub(undelegationAmount)
-	startHeight := uint64(suite.Ctx.BlockHeight())
-	completedHeight := suite.App.OperatorKeeper.GetUnbondingExpirationBlockNumber(suite.Ctx, suite.operatorAddr, startHeight)
+	completedEpochId, completedEpochNumber, err := suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	suite.NoError(err)
+	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, completedEpochId)
+	suite.True(found)
+	// the reason of plussing 1 is that the undelegation will be completed at the start height of completedEpochNumber+1
+	// completedTime := epochInfo.CurrentEpochStartTime.Add(time.Duration(completedEpochNumber+1-epochInfo.CurrentEpoch) * epochInfo.Duration)
 
 	// trigger the slash with a downtime event
 	// run to next block
@@ -79,11 +85,13 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	suite.Equal(infractionHeight, slashInfo.EventHeight)
 	suite.Equal(slashFactor, slashInfo.SlashProportion)
 	suite.Equal(uint32(slashType), slashInfo.SlashType)
+	suite.NotEmpty(slashInfo.ExecutionInfo.SlashUndelegations)
 	suite.Equal(types.SlashFromUndelegation{
 		StakerID: suite.stakerID,
 		AssetID:  suite.assetID,
 		Amount:   newSlashProportion.MulInt(undelegationAmount).TruncateInt(),
 	}, slashInfo.ExecutionInfo.SlashUndelegations[0])
+	suite.NotEmpty(slashInfo.ExecutionInfo.SlashAssetsPool)
 	suite.Equal(types.SlashFromAssetsPool{
 		AssetID: suite.assetID,
 		Amount:  newSlashProportion.MulInt(delegationRemaining).TruncateInt(),
@@ -97,13 +105,18 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 
 	undelegations, err := suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, suite.stakerID, suite.assetID)
 	suite.NoError(err)
-	suite.Equal(undelegationAmount.Sub(slashInfo.ExecutionInfo.SlashUndelegations[0].Amount), undelegations[0].ActualCompletedAmount)
+	suite.Equal(undelegationAmount.Sub(slashInfo.ExecutionInfo.SlashUndelegations[0].Amount), undelegations[0].Undelegation.ActualCompletedAmount)
 
-	// run to the block at which the undelegation is completed
-	for i := startHeight; i < completedHeight; i++ {
-		suite.NextBlock()
+	// run to the epoch at which the undelegation is completed
+	epochInfo, found = suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, completedEpochId)
+	suite.True(found)
+	for i := epochInfo.CurrentEpoch; i <= completedEpochNumber; i++ {
+		suite.CommitAfter(time.Hour*24 + time.Nanosecond)
 	}
 	suite.App.DelegationKeeper.EndBlock(suite.Ctx, abci.RequestEndBlock{})
+	epochInfo, found = suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, completedEpochId)
+	suite.True(found)
+	suite.Greaterf(epochInfo.CurrentEpoch, completedEpochNumber, "invalid epoch number to complete the undelegation")
 	undelegations, err = suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, suite.stakerID, suite.assetID)
 	suite.NoError(err)
 	suite.Equal(0, len(undelegations))

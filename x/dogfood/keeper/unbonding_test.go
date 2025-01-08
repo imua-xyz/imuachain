@@ -52,7 +52,6 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	// delegate
 	delegationParams := &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -80,11 +79,10 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	suite.NoError(err)
 	suite.CheckLengthOfValidatorUpdates(1, []int64{amountUSD}, "opt in")
 	// now undelegate 1/5
-	lzNonce := uint64(5)                            // arbitrary
+	initialUndelegationID := uint64(0)
 	txHash := common.BytesToHash([]byte("txhash1")) // not validated
 	undelegationParams := &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         lzNonce, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -94,7 +92,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, undelegationParams)
 	suite.NoError(err)
 	recordKey := delegationtypes.GetUndelegationRecordKey(
-		uint64(suite.Ctx.BlockHeight()), lzNonce, txHash.String(), operatorAddressString,
+		uint64(suite.Ctx.BlockHeight()), initialUndelegationID, txHash.String(), operatorAddressString,
 	)
 	suite.CheckLengthOfValidatorUpdates(1, []int64{amountUSD * 4 / 5}, "undelegate 1/5")
 	// wait for it to be released
@@ -127,7 +125,6 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	txHash = common.BytesToHash([]byte("txhash2")) // not validated
 	undelegationParams = &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         lzNonce, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -137,7 +134,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, undelegationParams)
 	suite.NoError(err)
 	recordKey = delegationtypes.GetUndelegationRecordKey(
-		uint64(suite.Ctx.BlockHeight()), lzNonce, txHash.String(), operatorAddressString,
+		uint64(suite.Ctx.BlockHeight()), initialUndelegationID+1, txHash.String(), operatorAddressString,
 	)
 	// early release, based on the opt out epoch
 	for i := 0; i < int(epochsUntilUnbonded)-forwardEpochs; i++ {
@@ -192,7 +189,6 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	// delegate
 	delegationParams := &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -210,17 +206,17 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	txHash := common.BytesToHash([]byte("txhash1")) // not validated
 	undelegationParams := &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
 		OpAmount:        amount,
 		TxHash:          txHash,
 	}
+	initialUndelegationID := uint64(0)
 	err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, undelegationParams)
 	suite.NoError(err)
 	recordKey := delegationtypes.GetUndelegationRecordKey(
-		uint64(suite.Ctx.BlockHeight()), 5, txHash.String(), operatorAddressString,
+		uint64(suite.Ctx.BlockHeight()), initialUndelegationID, txHash.String(), operatorAddressString,
 	)
 	suite.Equal(
 		uint64(0), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
@@ -243,7 +239,6 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	txHash = common.BytesToHash([]byte("txhash2")) // not validated
 	undelegationParams = &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -253,7 +248,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, undelegationParams)
 	suite.NoError(err)
 	recordKey = delegationtypes.GetUndelegationRecordKey(
-		uint64(suite.Ctx.BlockHeight()), 5, txHash.String(), operatorAddressString,
+		uint64(suite.Ctx.BlockHeight()), initialUndelegationID+1, txHash.String(), operatorAddressString,
 	)
 	suite.Equal(
 		uint64(0), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
@@ -263,7 +258,6 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	txHash = common.BytesToHash([]byte("txhash3")) // not validated
 	undelegationParams = &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -273,7 +267,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, undelegationParams)
 	suite.NoError(err)
 	recordKey = delegationtypes.GetUndelegationRecordKey(
-		uint64(suite.Ctx.BlockHeight()), 5, txHash.String(), operatorAddressString,
+		uint64(suite.Ctx.BlockHeight()), initialUndelegationID+2, txHash.String(), operatorAddressString,
 	)
 	suite.Equal(
 		uint64(1), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
@@ -294,7 +288,6 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	txHash = common.BytesToHash([]byte("txhash4")) // not validated
 	undelegationParams = &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -304,7 +297,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, undelegationParams)
 	suite.NoError(err)
 	recordKey = delegationtypes.GetUndelegationRecordKey(
-		uint64(suite.Ctx.BlockHeight()), 5, txHash.String(), operatorAddressString,
+		uint64(suite.Ctx.BlockHeight()), initialUndelegationID+3, txHash.String(), operatorAddressString,
 	)
 	suite.Equal(
 		uint64(1), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),

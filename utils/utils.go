@@ -210,3 +210,13 @@ func SortByPower(
 	}
 	return sortedOperatorAddrs, sortedPubKeys, sortedPowers
 }
+
+// AppendMany concatenates multiple byte slices into a single slice.
+// It takes a variable number of byte slices and returns their concatenation
+// in the order provided. Primarily used for key construction in storage operations
+func AppendMany(byteses ...[]byte) (out []byte) {
+	for _, bytes := range byteses {
+		out = append(out, bytes...)
+	}
+	return out
+}

@@ -12,7 +12,7 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/feedistribution/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/feedistribution/params";
+    option (google.api.http).get = "/exocore/feedistribution/v1/params";
   }
 }
 

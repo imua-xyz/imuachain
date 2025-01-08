@@ -70,7 +70,6 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 	// then delegate it
 	delegationParams := &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -100,7 +99,6 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 	suite.CheckLengthOfValidatorUpdates(0, nil, "deposit above min but don't delegate")
 	delegationParams = &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -141,7 +139,6 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 	suite.CheckLengthOfValidatorUpdates(0, nil, "deposit (non-self) but don't delegate")
 	delegationParams = &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   lzID,
-		LzNonce:         5, // arbitrary
 		AssetsAddress:   assetAddr.Bytes(),
 		StakerAddress:   staker.Bytes(),
 		OperatorAddress: operatorAddress,
@@ -175,7 +172,6 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 		suite.NoError(err)
 		delegationParams = &delegationtypes.DelegationOrUndelegationParams{
 			ClientChainID:   lzID,
-			LzNonce:         5, // arbitrary
 			AssetsAddress:   assetAddr.Bytes(),
 			StakerAddress:   staker.Bytes(),
 			OperatorAddress: operatorAddress,
@@ -211,7 +207,6 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 		suite.NoError(err)
 		delegationParams = &delegationtypes.DelegationOrUndelegationParams{
 			ClientChainID:   lzID,
-			LzNonce:         5, // arbitrary
 			AssetsAddress:   assetAddr.Bytes(),
 			StakerAddress:   staker.Bytes(),
 			OperatorAddress: suite.Operators[i],
