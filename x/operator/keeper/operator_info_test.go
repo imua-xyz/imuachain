@@ -57,8 +57,8 @@ func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {
 	suite.prepare()
 	epochIdentifier, epochNumber, err := suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
 	suite.NoError(err)
-	suite.Equal(delegationtypes.NullEpochIdentifier, epochIdentifier)
-	suite.Equal(delegationtypes.NullEpochNumber, epochNumber)
+	suite.Equal(epochsTypes.NullEpochIdentifier, epochIdentifier)
+	suite.Equal(epochsTypes.NullEpochNumber, epochNumber)
 
 	// opts into multiple AVSs
 	testAVSNumber := 4

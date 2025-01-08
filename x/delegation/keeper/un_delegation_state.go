@@ -5,6 +5,8 @@ import (
 	"math"
 	"strings"
 
+	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+
 	"github.com/ExocoreNetwork/exocore/utils"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
@@ -50,7 +52,7 @@ func (k *Keeper) SetUndelegationRecords(ctx sdk.Context, isGenesis bool, records
 
 	for i := range records {
 		undelegation := records[i].Undelegation
-		if undelegation.CompletedEpochIdentifier != types.NullEpochIdentifier {
+		if undelegation.CompletedEpochIdentifier != epochtypes.NullEpochIdentifier {
 			epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, undelegation.CompletedEpochIdentifier)
 			if !exist {
 				return errorsmod.Wrapf(types.ErrEpochIdentifierNotExist, "identifier:%s", undelegation.CompletedEpochIdentifier)
@@ -248,7 +250,7 @@ func (k *Keeper) GetCompletableUndelegations(ctx sdk.Context) ([]*types.Undelega
 
 	// For the null epoch, we set `types.NullEpochNumber + 1` as the virtual current epoch number,
 	// allowing the related undelegations to be completed at the end of the block.
-	err := k.IteratePendingUndelegations(ctx, true, types.NullEpochIdentifier, types.NullEpochNumber+1, expiredUndelegationOpFunc)
+	err := k.IteratePendingUndelegations(ctx, true, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber+1, expiredUndelegationOpFunc)
 	if err != nil {
 		return nil, err
 	}

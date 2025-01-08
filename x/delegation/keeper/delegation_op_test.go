@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"time"
 
 	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
@@ -265,11 +266,11 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		Amount:                   delegationEvent.OpAmount,
 		ActualCompletedAmount:    delegationEvent.OpAmount,
 		UndelegationId:           initialUndelegationID,
-		CompletedEpochIdentifier: delegationtype.NullEpochIdentifier,
-		CompletedEpochNumber:     delegationtype.NullEpochNumber,
+		CompletedEpochIdentifier: epochtypes.NullEpochIdentifier,
+		CompletedEpochNumber:     epochtypes.NullEpochNumber,
 	}
 	suite.Equal(UndelegationRecord, records[0].Undelegation)
-	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, delegationtype.NullEpochIdentifier, delegationtype.NullEpochNumber)
+	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
 	suite.NoError(err)
 	suite.Equal(1, len(waitUndelegationRecords))
 	suite.Equal(UndelegationRecord, waitUndelegationRecords[0].Undelegation)
@@ -321,13 +322,13 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		BlockNumber:              uint64(suite.Ctx.BlockHeight()),
 		Amount:                   delegationEvent.OpAmount,
 		ActualCompletedAmount:    delegationEvent.OpAmount,
-		CompletedEpochIdentifier: delegationtype.NullEpochIdentifier,
-		CompletedEpochNumber:     delegationtype.NullEpochNumber,
+		CompletedEpochIdentifier: epochtypes.NullEpochIdentifier,
+		CompletedEpochNumber:     epochtypes.NullEpochNumber,
 		UndelegationId:           initialUndelegationID + 1,
 	}
 	suite.Equal(UndelegationRecord, records[0].Undelegation)
 
-	waitUndelegationRecords, err = suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, delegationtype.NullEpochIdentifier, delegationtype.NullEpochNumber)
+	waitUndelegationRecords, err = suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
 	suite.NoError(err)
 	suite.Equal(2, len(waitUndelegationRecords))
 	suite.Equal(UndelegationRecord, waitUndelegationRecords[1].Undelegation)

@@ -230,8 +230,14 @@ func (gs GenesisState) ValidateUndelegations() error {
 				undelegation.UndelegationId, gs.LastUndelegationId,
 			)
 		}
+		if undelegation.CompletedEpochNumber < 0 {
+			return errorsmod.Wrapf(
+				ErrInvalidGenesisData, "negative epoch number in the undelegation: %d",
+				undelegation.CompletedEpochNumber,
+			)
+		}
 		switch undelegation.CompletedEpochIdentifier {
-		case NullEpochIdentifier, epochsTypes.MinuteEpochID,
+		case epochsTypes.NullEpochIdentifier, epochsTypes.MinuteEpochID,
 			epochsTypes.HourEpochID, epochsTypes.DayEpochID,
 			epochsTypes.WeekEpochID:
 		default:

@@ -5,7 +5,7 @@ import (
 	"math"
 	"strings"
 
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 
 	"golang.org/x/xerrors"
 
@@ -280,8 +280,8 @@ func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress)
 	}
 	// calculate the maximum unbonding expiration
 	// Using self-definied NullEpochIdentifier and NullEpochNumber as the default unbonding expiration.
-	retEpochIdentifier := delegationtypes.NullEpochIdentifier
-	retEpochNumber := delegationtypes.NullEpochNumber
+	retEpochIdentifier := epochtypes.NullEpochIdentifier
+	retEpochNumber := epochtypes.NullEpochNumber
 	maxDurationSeconds := uint64(0)
 	for _, avs := range avsList {
 		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs.AVSAddr)

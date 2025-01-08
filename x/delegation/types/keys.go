@@ -30,11 +30,6 @@ const (
 
 	// ByteLengthForUint64 the type of chainID length is uint64, uint64 has 8 bytes.
 	ByteLengthForUint64 = 8
-
-	// NullEpochIdentifier and NullEpochNumber are used to construct the key for undelegations
-	// that aren't restricted by any AVS unbonding configuration.
-	NullEpochIdentifier = "NullEpoch"
-	NullEpochNumber     = int64(0)
 )
 
 // ModuleAddress is the native module address for EVM

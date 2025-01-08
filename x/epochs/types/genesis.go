@@ -45,6 +45,9 @@ func (epoch EpochInfo) Validate() error {
 	if epoch.Identifier == "" {
 		return errors.New("epoch identifier should NOT be empty")
 	}
+	if epoch.Identifier == NullEpochIdentifier {
+		return errors.New("epoch identifier should NOT be virtual null epoch")
+	}
 	if epoch.Duration <= 0 {
 		return errors.New("epoch duration should NOT be non-positive")
 	}

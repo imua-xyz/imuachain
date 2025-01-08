@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -111,7 +111,7 @@ func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, o
 		// Additionally, since expired voting power snapshots are deleted, it will also be impossible to retrieve
 		// the corresponding epochNumber when the opt-out height is too old. In such cases, the same handling method
 		// is applied.
-		return delegationtypes.NullEpochNumber, nil
+		return epochtypes.NullEpochNumber, nil
 	}
 	var ret types.VotingPowerSnapshot
 	k.cdc.MustUnmarshal(value, &ret)
