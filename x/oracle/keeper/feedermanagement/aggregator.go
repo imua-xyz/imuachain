@@ -16,16 +16,23 @@ func newAggregator(t *threshold) *aggregator {
 	return &aggregator{
 		t:          t,
 		finalPrice: nil,
-		v:          newRecordsValdiators(),
+		v:          newRecordsValidators(),
 		ds:         newRecordsDSs(t),
 	}
 }
 
-func (a *aggregator) Cpy() *aggregator {
-	finalPrice := *a.finalPrice
+func (a *aggregator) CopyForCheckTx() *aggregator {
+	if a == nil {
+		return nil
+	}
+	var finalPrice *PriceResult
+	if a.finalPrice != nil {
+		tmp := *a.finalPrice
+		finalPrice = &tmp
+	}
 	return &aggregator{
 		t:          a.t.Cpy(),
-		finalPrice: &finalPrice,
+		finalPrice: finalPrice,
 		v:          a.v.Cpy(),
 		ds:         a.ds.Cpy(),
 	}
@@ -77,7 +84,7 @@ func (a *aggregator) exceedPowerLimit() bool {
 	return a.t.Exceeds(a.v.accumulatedPower)
 }
 
-func newRecordsValdiators() *recordsValidators {
+func newRecordsValidators() *recordsValidators {
 	return &recordsValidators{
 		finalPrice:       nil,
 		accumulatedPower: big.NewInt(0),
@@ -86,7 +93,14 @@ func newRecordsValdiators() *recordsValidators {
 }
 
 func (rv *recordsValidators) Cpy() *recordsValidators {
-	finalPrice := *rv.finalPrice
+	if rv == nil {
+		return nil
+	}
+	var finalPrice *PriceResult
+	if rv.finalPrice != nil {
+		tmp := *rv.finalPrice
+		finalPrice = &tmp
+	}
 	finalPrices := make(map[string]*PriceResult)
 	for v, p := range rv.finalPrices {
 		price := *p
@@ -97,7 +111,7 @@ func (rv *recordsValidators) Cpy() *recordsValidators {
 		records[v] = pv.Cpy()
 	}
 	return &recordsValidators{
-		finalPrice:       &finalPrice,
+		finalPrice:       finalPrice,
 		finalPrices:      finalPrices,
 		accumulatedPower: new(big.Int).Set(rv.accumulatedPower),
 		records:          records,
@@ -195,13 +209,15 @@ func newRecordsDSs(t *threshold) *recordsDSs {
 }
 
 func (rdss *recordsDSs) Cpy() *recordsDSs {
-	t := *rdss.t
+	if rdss == nil {
+		return nil
+	}
 	dsMap := make(map[int64]*recordsDS)
 	for id, r := range rdss.dsMap {
 		dsMap[id] = r.Cpy()
 	}
 	return &recordsDSs{
-		t:     &t,
+		t:     rdss.t.Cpy(),
 		dsMap: dsMap,
 	}
 }
@@ -269,7 +285,14 @@ func newRecordsDS() *recordsDS {
 }
 
 func (rds *recordsDS) Cpy() *recordsDS {
-	finalPrice := *rds.finalPrice
+	if rds == nil {
+		return nil
+	}
+	var finalPrice *PriceResult
+	if rds.finalPrice != nil {
+		tmp := *rds.finalPrice
+		finalPrice = &tmp
+	}
 	validators := make(map[string]struct{})
 	for v := range rds.validators {
 		validators[v] = struct{}{}
@@ -279,7 +302,7 @@ func (rds *recordsDS) Cpy() *recordsDS {
 		records = append(records, r.Cpy())
 	}
 	return &recordsDS{
-		finalPrice:        &finalPrice,
+		finalPrice:        finalPrice,
 		finalDetID:        rds.finalDetID,
 		accumulatedPowers: new(big.Int).Set(rds.accumulatedPowers),
 		validators:        validators,

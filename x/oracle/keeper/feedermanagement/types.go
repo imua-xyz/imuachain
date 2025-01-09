@@ -194,11 +194,13 @@ func (osi orderedSliceInt64) Equal(o orderedSliceInt64) bool {
 }
 
 type FeederManager struct {
+	fCheckTx        *FeederManager
 	k               common.KeeperOracle
 	sortedFeederIDs orderedSliceInt64
 	// this will not be ranged, map is safe
-	rounds            map[int64]*round
-	cs                *caches
+	rounds map[int64]*round
+	cs     *caches
+	// TODO: we commit all prices in endBlock, so it's not necessary to have this filed
 	successFeederIDs  orderedSliceInt64
 	paramsUpdated     bool
 	validatorsUpdated bool

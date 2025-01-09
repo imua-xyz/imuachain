@@ -26,10 +26,12 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 	}
 }
 
-func (r *round) CpyWithCacheReader(c CacheReader) *round {
+func (r *round) CopyForCheckTx() *round {
+	// flags has been taken care of
 	ret := *r
-	ret.cache = c
-	ret.a = ret.a.Cpy()
+	// cache does not need to be copied since it's a readonly interface,
+	// and there's no race condition since abci requests are not executing concurrntly
+	ret.a = ret.a.CopyForCheckTx()
 	return &ret
 }
 
@@ -53,9 +55,9 @@ func (r *round) ValidQuotingBaseBlock(height int64) bool {
 
 // Tally process information to get the final price
 // it does not verify if the msg is for the corresponding round(roundid/roundBaseBlock)
-func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, error) {
+func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes.MsgItem, error) {
 	if !r.IsQuotingWindowOpen() {
-		return nil, fmt.Errorf("quoting window is not open, feederID:%d", r.feederID)
+		return nil, nil, fmt.Errorf("quoting window is not open, feederID:%d", r.feederID)
 	}
 
 	msg := r.getMsgItemFromProto(protoMsg)
@@ -63,14 +65,14 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, error) {
 		// record msg for 'handlQuotingMisBehavior'
 		err := r.a.RecordMsg(msg)
 		if err == nil {
-			return nil, oracletypes.ErrQuoteRecorded
+			return nil, protoMsg, oracletypes.ErrQuoteRecorded
 		}
-		return nil, fmt.Errorf("failed to record quote for aggregated round, error:%w", err)
+		return nil, nil, fmt.Errorf("failed to record quote for aggregated round, error:%w", err)
 	}
 
 	err := r.a.AddMsg(msg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to add quote for aggregation of feederID:%d, roundID:%d, error:%w", r.feederID, r.roundID, err)
+		return nil, nil, fmt.Errorf("failed to add quote for aggregation of feederID:%d, roundID:%d, error:%w", r.feederID, r.roundID, err)
 	}
 
 	finalPrice, ok := r.FinalPrice()
@@ -81,10 +83,10 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, error) {
 			detID := r.getFinalDetIDForSourceID(oracletypes.SourceChainlinkID)
 			finalPrice.DetID = detID
 		}
-		return finalPrice, nil
+		return finalPrice, protoMsg, nil
 	}
 
-	return nil, nil
+	return nil, protoMsg, nil
 }
 
 func (r *round) UpdateParams(tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64) {

@@ -60,13 +60,20 @@ func newPriceValidator(validator string, power *big.Int) *priceValidator {
 }
 
 func (pv *priceValidator) Cpy() *priceValidator {
-	finalPrice := *pv.finalPrice
+	if pv == nil {
+		return nil
+	}
+	var finalPrice *PriceResult
+	if pv.finalPrice != nil {
+		tmp := *pv.finalPrice
+		finalPrice = &tmp
+	}
 	priceSources := make(map[int64]*priceSource)
 	for id, ps := range pv.priceSources {
 		priceSources[id] = ps.Cpy()
 	}
 	return &priceValidator{
-		finalPrice:   &finalPrice,
+		finalPrice:   finalPrice,
 		validator:    pv.validator,
 		power:        new(big.Int).Set(pv.power),
 		priceSources: priceSources,
@@ -173,19 +180,31 @@ func newPriceSource(sourceID int64, deterministic bool) *priceSource {
 }
 
 func (ps *priceSource) Cpy() *priceSource {
-	ret := *ps
-	fp := *ps.finalPrice
-	ret.finalPrice = &fp
-	ret.detIDs = make(map[string]struct{})
-	for detID := range ps.detIDs {
-		ret.detIDs[detID] = struct{}{}
+	if ps == nil {
+		return nil
 	}
-	ret.prices = make([]*PriceInfo, 0, len(ps.prices))
+	var finalPrice *PriceResult
+	if ps.finalPrice != nil {
+		tmp := *ps.finalPrice
+		finalPrice = &tmp
+	}
+	// deterministic, sourceID
+	detIDs := make(map[string]struct{})
+	for detID := range ps.detIDs {
+		detIDs[detID] = struct{}{}
+	}
+	prices := make([]*PriceInfo, 0, len(ps.prices))
 	for _, p := range ps.prices {
 		pCpy := *p
-		ret.prices = append(ret.prices, &pCpy)
+		prices = append(prices, &pCpy)
 	}
-	return &ret
+	return &priceSource{
+		deterministic: ps.deterministic,
+		finalPrice:    finalPrice,
+		sourceID:      ps.sourceID,
+		detIDs:        detIDs,
+		prices:        prices,
+	}
 }
 
 // Add adds prices of a source from priceSource

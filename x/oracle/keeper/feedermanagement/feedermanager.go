@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"sort"
 
-	//	oraclekeeper "github.com/ExocoreNetwork/exocore/x/oracle/keeper"
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -48,6 +48,8 @@ func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 			f.SetValidatorsUpdated()
 		}
 		f.initBehaviorRecords(ctx, ctx.BlockHeight())
+		// in recovery mode, snapshot of feederManager is set in the beginblock instead of in the process of replaying endblockInrecovery
+		f.updateCheckTx()
 	}
 	return
 }
@@ -74,6 +76,8 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	}
 
 	f.ResetFlags()
+
+	f.updateCheckTx()
 }
 
 func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.Params) {
@@ -520,11 +524,9 @@ func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
 	return nil
 }
 
-// func (f *FeederManager) ProcessQuote(msg *oracletypes.MsgCreatePrice, isCheckTx bool) (*PriceResult, error) {
 func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) (*oracletypes.PriceTimeRound, error) {
 	if isCheckTx {
-		// use copy for simulation
-		f = f.coppyForSimulation()
+		f = f.getCheckTx()
 	}
 	msgItem := getProtoMsgItemFromQuote(msg)
 
@@ -538,26 +540,46 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 		return nil, fmt.Errorf("failed to process price-feed msg for feederID:%d, round is quoting:%t,quotingWindow is open:%t, expected baseBlock:%d, got baseBlock:%d", msgItem.FeederID, r.IsQuoting(), r.IsQuotingWindowOpen(), r.roundBaseBlock, msg.BasedBlock)
 	}
 
-	finalPrice, err := r.Tally(msgItem)
+	// tally msgItem
+	finalPrice, validMsgItem, err := r.Tally(msgItem)
+
+	// record msgItem in caches if needed
+	defer func() {
+		if !isCheckTx &&
+			validMsgItem != nil &&
+			(err == nil || sdkerrors.IsOf(err, oracletypes.ErrQuoteRecorded)) {
+			f.cs.AddCache(validMsgItem)
+		}
+	}()
+
 	if err != nil {
 		return nil, err
 	}
 	return finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout)), nil
 }
 
-func (f *FeederManager) coppyForSimulation() *FeederManager {
+func (f *FeederManager) getCheckTx() *FeederManager {
+	return f.fCheckTx
+}
+
+func (f *FeederManager) updateCheckTx() {
+	// flgas are taken care of
+	// sortedFeederIDs will not be modified except in abci.EndBlock
+	// successFeedereIDs will not be modifed except in abci.EndBlock
+	// caches will not be modifed except in abci.EndBlock, abci.DeliverTx (in abci.Query_simulate, or abci.CheckTx the update in ProcessQuote is forbided)
+	// shallow copy is good enough for these fields
+
 	ret := *f
+	ret.fCheckTx = nil
+
+	// rounds
 	rounds := make(map[int64]*round)
 	for id, r := range f.rounds {
-		rounds[id] = r.CpyWithCacheReader(ret.cs)
+		// TODO: implement the copy for rounds, we don't want to use reflect for performance
+		rounds[id] = r.CopyForCheckTx()
 	}
-	successFeederIDs := make([]int64, len(f.successFeederIDs))
-	copy(successFeederIDs, f.successFeederIDs)
-	// f.cs, f.sortedFeederIDs, f.k, f.paramsUpdated, f.validatorUpdated, f.forceSeal, f.resetSlashing will only be read in simulation,
-	// it's good enough to do shallow copy
 	ret.rounds = rounds
-	ret.successFeederIDs = successFeederIDs
-	return &ret
+	f.fCheckTx = &ret
 }
 
 func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) {
