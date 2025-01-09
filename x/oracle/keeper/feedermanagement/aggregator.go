@@ -54,7 +54,8 @@ func (a *aggregator) GetFinalPrice() (*PriceResult, bool) {
 
 func (a *aggregator) RecordMsg(msg *MsgItem) error {
 	// TODO: implement me
-	return nil
+	_, err := a.v.RecordMsg(msg)
+	return err
 }
 
 // AddMsg records the message in a.v and do aggregation in a.ds
@@ -120,7 +121,6 @@ func (rv *recordsValidators) Cpy() *recordsValidators {
 
 func (rv *recordsValidators) RecordMsg(msg *MsgItem) (*MsgItem, error) {
 	record, ok := rv.records[msg.Validator]
-	//	retPSources := make([]*priceSource, 0)
 	rets := &MsgItem{
 		FeederID:     msg.FeederID,
 		Validator:    msg.Validator,
@@ -130,11 +130,16 @@ func (rv *recordsValidators) RecordMsg(msg *MsgItem) (*MsgItem, error) {
 	if !ok {
 		record = newPriceValidator(msg.Validator, msg.Power)
 	}
+	fmt.Println("debug--RecordMsg->", msg.PriceSources[0].prices)
 	updated, added, err := record.TryAddPriceSources(msg.PriceSources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to record msg, error:%w", err)
 	}
 	record.ApplyAddedPriceSources(updated)
+	if !ok {
+		rv.records[msg.Validator] = record
+		rv.accumulatedPower = new(big.Int).Add(rv.accumulatedPower, msg.Power)
+	}
 	rets.PriceSources = added
 	return rets, nil
 }
@@ -236,7 +241,7 @@ func (rdss *recordsDSs) AddPriceSource(ps *priceSource, power *big.Int, validato
 		price.AddPrice(&PricePower{
 			Price:      p,
 			Power:      power,
-			Validators: map[string]struct{}{validator: struct{}{}},
+			Validators: map[string]struct{}{validator: {}},
 		})
 	}
 	return true
@@ -331,10 +336,11 @@ func (rds *recordsDS) GetFinalPrice(t *threshold) (*PriceResult, bool) {
 func (rds *recordsDS) AddPrice(p *PricePower) {
 	validator := maps.Keys(p.Validators)[0]
 	biggestDetID := true
+	p = p.Cpy()
 	for i, record := range rds.records {
 		if record.Price.EqualDS(p.Price) {
 			if _, ok := record.Validators[validator]; !ok {
-				record.Power = record.Power.Add(record.Power, p.Power)
+				record.Power.Add(record.Power, p.Power)
 				record.Validators[validator] = struct{}{}
 			}
 			biggestDetID = false
@@ -349,7 +355,7 @@ func (rds *recordsDS) AddPrice(p *PricePower) {
 		}
 	}
 	if _, ok := rds.validators[validator]; !ok {
-		rds.accumulatedPowers = rds.accumulatedPowers.Add(rds.accumulatedPowers, p.Power)
+		rds.accumulatedPowers.Add(rds.accumulatedPowers, p.Power)
 		rds.validators[validator] = struct{}{}
 	}
 	if biggestDetID {

@@ -39,7 +39,7 @@ func (p *PriceResult) ProtoPriceTimeRound(roundID int64, timestamp string) *orac
 }
 
 func GetPriceSourceFromProto(ps *oracletypes.PriceSource, checker sourceChecker) *priceSource {
-	prices := make([]*PriceInfo, len(ps.Prices))
+	prices := make([]*PriceInfo, 0, len(ps.Prices))
 	for _, p := range ps.Prices {
 		prices = append(prices, GetPriceInfoFromProtoPriceTimeDetID(p))
 	}
@@ -91,12 +91,16 @@ func (pv *priceValidator) TryAddPriceSources(pSs []*priceSource) (updated map[in
 	var es errorStr
 	updated = make(map[int64]*priceSource)
 	for _, psNew := range pSs {
-		ps, ok := pv.priceSources[psNew.sourceID]
+		ps, ok := updated[psNew.sourceID]
 		if !ok {
-			ps = newPriceSource(psNew.sourceID, psNew.deterministic)
-		} else {
-			ps = ps.Cpy()
+			ps, ok = pv.priceSources[psNew.sourceID]
+			if !ok {
+				ps = newPriceSource(psNew.sourceID, psNew.deterministic)
+			} else {
+				ps = ps.Cpy()
+			}
 		}
+		fmt.Println("debug--->psNew:", psNew)
 		psAdded, err := ps.Add(psNew)
 		if err != nil {
 			es.add(fmt.Sprintf("sourceID:%d, error:%s", psNew.sourceID, err.Error()))
@@ -118,23 +122,23 @@ func (pv *priceValidator) ApplyAddedPriceSources(psMap map[int64]*priceSource) {
 }
 
 // AddPriceSource adds prices of a source
-func (pv *priceValidator) AddPriceSource(psNew *priceSource, check bool) (*priceSource, error) {
-	sourceID := psNew.sourceID
-	ps, ok := pv.priceSources[sourceID]
-	if !ok {
-		ps = newPriceSource(sourceID, psNew.deterministic)
-	} else if check {
-		ps = ps.Cpy()
-	}
-	ret, err := ps.Add(psNew)
-	if err != nil {
-		return nil, fmt.Errorf("failed to add priceSource for priceValidator, sourceID:%d, error:%w", sourceID, err)
-	}
-	if !ok && !check {
-		pv.priceSources[sourceID] = ps
-	}
-	return ret, nil
-}
+// func (pv *priceValidator) AddPriceSource(psNew *priceSource, check bool) (*priceSource, error) {
+// 	sourceID := psNew.sourceID
+// 	ps, ok := pv.priceSources[sourceID]
+// 	if !ok {
+// 		ps = newPriceSource(sourceID, psNew.deterministic)
+// 	} else if check {
+// 		ps = ps.Cpy()
+// 	}
+// 	ret, err := ps.Add(psNew)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to add priceSource for priceValidator, sourceID:%d, error:%w", sourceID, err)
+// 	}
+// 	if !ok && !check {
+// 		pv.priceSources[sourceID] = ps
+// 	}
+// 	return ret, nil
+// }
 
 // TODO: V2: check valdiator has provided all sources required by rules(defined in oracle.params)
 func (pv *priceValidator) GetFinalPrice() (*PriceResult, bool) {
@@ -219,12 +223,14 @@ func (ps *priceSource) Add(psNew *priceSource) (*priceSource, error) {
 		if ps.finalPrice == nil {
 			ps.finalPrice = psNew.prices[0].PriceResult()
 			ps.prices = append(ps.prices, psNew.prices[0])
+			psNew.prices = psNew.prices[:1]
 			return psNew, nil
 		}
 		// equivalent to After, just overwrite the old value
 		if psNew.prices[0].Timestamp > ps.finalPrice.Timestamp {
 			ps.finalPrice = psNew.prices[0].PriceResult()
 			ps.prices = append(ps.prices, psNew.prices[0])
+			psNew.prices = psNew.prices[:1]
 			return ps, nil
 		}
 		return nil, errors.New("failed to add ProtoPriceSource for NS, timestamp is old")
@@ -238,6 +244,7 @@ func (ps *priceSource) Add(psNew *priceSource) (*priceSource, error) {
 		prices:        make([]*PriceInfo, 0),
 	}
 	for _, pNew := range psNew.prices {
+		fmt.Println("debug--->", ps.detIDs == nil, pNew == nil)
 		if _, ok := ps.detIDs[pNew.DetID]; ok {
 			es.add(fmt.Sprintf("duplicated DetID:%s", pNew.DetID))
 			continue
