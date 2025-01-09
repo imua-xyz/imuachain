@@ -55,11 +55,13 @@ func (r *round) ValidQuotingBaseBlock(height int64) bool {
 
 // Tally process information to get the final price
 // it does not verify if the msg is for the corresponding round(roundid/roundBaseBlock)
+// TODO: use valid value instead of the original protoMsg in return
 func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes.MsgItem, error) {
 	if !r.IsQuotingWindowOpen() {
 		return nil, nil, fmt.Errorf("quoting window is not open, feederID:%d", r.feederID)
 	}
 
+	fmt.Println("debug--Tally->protoMsg", protoMsg.PSources[0].Prices, len(protoMsg.PSources[0].Prices))
 	msg := r.getMsgItemFromProto(protoMsg)
 	if !r.IsQuoting() {
 		// record msg for 'handlQuotingMisBehavior'
