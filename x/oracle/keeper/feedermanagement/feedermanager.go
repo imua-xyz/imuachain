@@ -3,7 +3,6 @@ package feedermanagement
 import (
 	"fmt"
 	"math/big"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -256,12 +255,14 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 			r.closeQuotingWindow()
 		}
 	}
-	feederIDsStr := strings.Join(successFeederIDs, "_")
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCreatePrice,
-		sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess),
-		sdk.NewAttribute(types.AttributeKeyFeederIDs, feederIDsStr),
-	))
+	if len(successFeederIDs) > 0 {
+		feederIDsStr := strings.Join(successFeederIDs, "_")
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeCreatePrice,
+			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess),
+			sdk.NewAttribute(types.AttributeKeyFeederIDs, feederIDsStr),
+		))
+	}
 }
 
 func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {
@@ -683,7 +684,44 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 }
 
 func (f *FeederManager) Equals(fm *FeederManager) bool {
-	return reflect.DeepEqual(f, fm)
+	if f == nil && fm == nil {
+		return true
+	}
+	if f == nil || fm == nil {
+		return false
+	}
+	if f.fCheckTx == nil && fm.fCheckTx != nil {
+		return false
+	}
+	if f.fCheckTx != nil && fm.fCheckTx == nil {
+		return false
+	}
+	if !f.fCheckTx.Equals(fm.fCheckTx) {
+		return false
+	}
+	if f.paramsUpdated != fm.paramsUpdated ||
+		f.validatorsUpdated != fm.validatorsUpdated ||
+		f.resetSlashing != fm.resetSlashing ||
+		f.forceSeal != fm.forceSeal {
+		return false
+	}
+	if !f.sortedFeederIDs.Equals(fm.sortedFeederIDs) {
+		return false
+	}
+	if !f.cs.Equals(fm.cs) {
+		return false
+	}
+	if len(f.rounds) != len(fm.rounds) {
+		return false
+	}
+	for id, r := range f.rounds {
+		if r2, ok := fm.rounds[id]; !ok {
+			return false
+		} else if !r.Equals(r2) {
+			return false
+		}
+	}
+	return true
 }
 
 // recoveryStartPoint returns the height to start the recovery process

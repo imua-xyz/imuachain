@@ -115,6 +115,16 @@ type threshold struct {
 	thresholdB *big.Int
 }
 
+func (t *threshold) Equals(t2 *threshold) bool {
+	if t == nil && t2 == nil {
+		return true
+	}
+	if t == nil || t2 == nil {
+		return false
+	}
+	return t.totalPower.Cmp(t2.totalPower) == 0 && t.thresholdA.Cmp(t2.thresholdA) == 0 && t.thresholdB.Cmp(t2.thresholdB) == 0
+}
+
 func (t *threshold) Cpy() *threshold {
 	return &threshold{
 		totalPower: new(big.Int).Set(t.totalPower),
@@ -160,6 +170,21 @@ type round struct {
 }
 
 type orderedSliceInt64 []int64
+
+func (osi orderedSliceInt64) Equals(o2 orderedSliceInt64) bool {
+	if len(osi) == 0 && len(o2) == 0 {
+		return true
+	}
+	if len(osi) == 0 || len(o2) == 0 {
+		return false
+	}
+	for idx, v := range osi {
+		if v != (o2)[idx] {
+			return false
+		}
+	}
+	return true
+}
 
 func (osi *orderedSliceInt64) add(i int64) {
 	result := append(*osi, i)

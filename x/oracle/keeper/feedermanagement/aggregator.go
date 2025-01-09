@@ -3,6 +3,7 @@ package feedermanagement
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"slices"
 
 	"golang.org/x/exp/maps"
@@ -19,6 +20,31 @@ func newAggregator(t *threshold) *aggregator {
 		v:          newRecordsValidators(),
 		ds:         newRecordsDSs(t),
 	}
+}
+
+func (a *aggregator) Equals(a2 *aggregator) bool {
+	if a == nil && a2 == nil {
+		return true
+	}
+	if a == nil || a2 == nil {
+		return false
+	}
+
+	if !reflect.DeepEqual(a.finalPrice, a2.finalPrice) {
+		return false
+	}
+
+	if !a.t.Equals(a2.t) {
+		return false
+	}
+	if !a.v.Equals(a2.v) {
+		return false
+	}
+	if !a.ds.Equals(a2.ds) {
+		return false
+	}
+
+	return true
 }
 
 func (a *aggregator) CopyForCheckTx() *aggregator {
@@ -93,6 +119,35 @@ func newRecordsValidators() *recordsValidators {
 	}
 }
 
+func (rv *recordsValidators) Equals(rv2 *recordsValidators) bool {
+	if rv == nil && rv2 == nil {
+		return true
+	}
+	if rv == nil || rv2 == nil {
+		return false
+	}
+
+	if !reflect.DeepEqual(rv.finalPrice, rv2.finalPrice) {
+		return false
+	}
+	if rv.accumulatedPower.Cmp(rv2.accumulatedPower) != 0 {
+		return false
+	}
+	if !reflect.DeepEqual(rv.finalPrices, rv2.finalPrices) {
+		return false
+	}
+	if len(rv.records) != len(rv2.records) {
+		return false
+	}
+	for k, v := range rv.records {
+		if v2, ok := rv2.records[k]; !ok || !v.Equals(v2) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (rv *recordsValidators) Cpy() *recordsValidators {
 	if rv == nil {
 		return nil
@@ -130,7 +185,6 @@ func (rv *recordsValidators) RecordMsg(msg *MsgItem) (*MsgItem, error) {
 	if !ok {
 		record = newPriceValidator(msg.Validator, msg.Power)
 	}
-	fmt.Println("debug--RecordMsg->", msg.PriceSources[0].prices)
 	updated, added, err := record.TryAddPriceSources(msg.PriceSources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to record msg, error:%w", err)
@@ -213,6 +267,34 @@ func newRecordsDSs(t *threshold) *recordsDSs {
 	}
 }
 
+// type recordsDSs struct {
+// 	t     *threshold
+// 	dsMap map[int64]*recordsDS
+// }
+
+func (rdss *recordsDSs) Equals(rdss2 *recordsDSs) bool {
+	if rdss == nil && rdss2 == nil {
+		return true
+	}
+	if rdss == nil || rdss2 == nil {
+		return false
+	}
+
+	if !rdss.t.Equals(rdss2.t) {
+		return false
+	}
+	if len(rdss.dsMap) != len(rdss2.dsMap) {
+		return false
+	}
+	for k, v := range rdss.dsMap {
+		if v2, ok := rdss2.dsMap[k]; !ok || !v.Equals(v2) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func (rdss *recordsDSs) Cpy() *recordsDSs {
 	if rdss == nil {
 		return nil
@@ -287,6 +369,38 @@ func newRecordsDS() *recordsDS {
 		accumulatedPowers: big.NewInt(0),
 		records:           make([]*PricePower, 0),
 	}
+}
+
+func (rds *recordsDS) Equals(rds2 *recordsDS) bool {
+	if rds == nil && rds2 == nil {
+		return true
+	}
+	if rds == nil || rds2 == nil {
+		return false
+	}
+
+	if !reflect.DeepEqual(rds.finalPrice, rds2.finalPrice) {
+		return false
+	}
+	if rds.finalDetID != rds2.finalDetID {
+		return false
+	}
+	if rds.accumulatedPowers.Cmp(rds2.accumulatedPowers) != 0 {
+		return false
+	}
+	if !reflect.DeepEqual(rds.validators, rds2.validators) {
+		return false
+	}
+	if len(rds.records) != len(rds2.records) {
+		return false
+	}
+	for i, r := range rds.records {
+		if !r.Equals(rds2.records[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (rds *recordsDS) Cpy() *recordsDS {

@@ -2,6 +2,7 @@ package feedermanagement
 
 import (
 	"math/big"
+	"reflect"
 	"slices"
 
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
@@ -29,6 +30,19 @@ func (c *caches) CpyForSimulation() *caches {
 	}
 
 	return &ret
+}
+
+func (c *caches) Equals(c2 *caches) bool {
+	if !c.msg.Equals(c2.msg) {
+		return false
+	}
+	if !c.validators.Equals(c2.validators) {
+		return false
+	}
+	if !c.params.Equals(c2.params) {
+		return false
+	}
+	return true
 }
 
 func (c *caches) Init(ctx sdk.Context, k Submitter, params *oracletypes.Params, validators map[string]*big.Int) {
@@ -67,6 +81,22 @@ func (c *caches) GetValidators() []string {
 	return c.validators.slice()
 }
 
+func (cm *cacheMsgs) Equals(cm2 *cacheMsgs) bool {
+	if cm == nil && cm2 == nil {
+		return true
+	}
+	if cm == nil || cm2 == nil {
+		return false
+	}
+	for idx, v := range *cm {
+		v2 := (*cm2)[idx]
+		if !reflect.DeepEqual(v, v2) {
+			return false
+		}
+	}
+	return true
+}
+
 func (cm *cacheMsgs) Cpy() *cacheMsgs {
 	ret := make([]*oracletypes.MsgItem, 0, len(*cm))
 	for _, msg := range *cm {
@@ -93,6 +123,29 @@ func (cm *cacheMsgs) commit(ctx sdk.Context, k Submitter) {
 	k.SetMsgItemsForCache(ctx, recentMsgs)
 
 	*cm = make([]*oracletypes.MsgItem, 0)
+}
+
+func (cv *cacheValidator) Equals(cv2 *cacheValidator) bool {
+	if cv == nil && cv2 == nil {
+		return true
+	}
+	if cv == nil || cv2 == nil {
+		return false
+	}
+	if cv.update != cv2.update {
+		return false
+	}
+	if len(cv.validators) != len(cv2.validators) {
+		return false
+	}
+	for k, v := range cv.validators {
+		if v2, ok := cv2.validators[k]; !ok {
+			return false
+		} else if v.Cmp(v2) != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func (cv *cacheValidator) add(validators map[string]*big.Int) {
@@ -135,6 +188,21 @@ func (cv *cacheValidator) slice() []string {
 	}
 	slices.Sort(validators)
 	return validators
+}
+
+func (cp *cacheParams) Equals(cp2 *cacheParams) bool {
+	if cp == nil && cp2 == nil {
+		return true
+	}
+	if cp == nil || cp2 == nil {
+		return false
+	}
+	if cp.update != cp2.update {
+		return false
+	}
+	p1 := (*oracletypes.Params)(cp.params)
+	p2 := (*oracletypes.Params)(cp2.params)
+	return reflect.DeepEqual(p1, p2)
 }
 
 func (cp *cacheParams) add(p *oracletypes.Params) {

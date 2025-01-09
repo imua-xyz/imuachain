@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"reflect"
 	"sort"
 
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
@@ -78,6 +79,36 @@ func (pv *priceValidator) Cpy() *priceValidator {
 		power:        new(big.Int).Set(pv.power),
 		priceSources: priceSources,
 	}
+}
+
+// type priceValidator struct {
+// 	finalPrice *PriceResult
+// 	validator  string
+// 	power      *big.Int
+// 	// each source will get a single final price independetly, the order of sources does not matter, map is safe
+// 	priceSources map[int64]*priceSource
+// }
+
+func (pv *priceValidator) Equals(pv2 *priceValidator) bool {
+	if pv == nil && pv2 == nil {
+		return true
+	}
+	if pv == nil || pv2 == nil {
+		return false
+	}
+	if pv.validator != pv2.validator || pv.power.Cmp(pv2.power) != 0 {
+		return false
+	}
+	if len(pv.priceSources) != len(pv2.priceSources) {
+		return false
+	}
+	for id, ps := range pv.priceSources {
+		ps2, ok := pv2.priceSources[id]
+		if !ok || !ps.Equals(ps2) {
+			return false
+		}
+	}
+	return true
 }
 
 func (pv *priceValidator) GetPSCopy(sourceID int64, deterministic bool) *priceSource {
@@ -183,6 +214,31 @@ func newPriceSource(sourceID int64, deterministic bool) *priceSource {
 	}
 }
 
+func (ps *priceSource) Equals(ps2 *priceSource) bool {
+	if ps == nil && ps2 == nil {
+		return true
+	}
+	if ps == nil || ps2 == nil {
+		return false
+	}
+	if ps.sourceID != ps2.sourceID || ps.deterministic != ps2.deterministic {
+		return false
+	}
+	if !reflect.DeepEqual(ps.detIDs, ps2.detIDs) {
+		return false
+	}
+	if !reflect.DeepEqual(ps.finalPrice, ps2.finalPrice) {
+		return false
+	}
+	if len(ps.prices) != len(ps2.prices) {
+		return false
+	}
+	if !reflect.DeepEqual(ps.prices, ps2.prices) {
+		return false
+	}
+	return true
+}
+
 func (ps *priceSource) Cpy() *priceSource {
 	if ps == nil {
 		return nil
@@ -263,6 +319,27 @@ func (ps *priceSource) Add(psNew *priceSource) (*priceSource, error) {
 		return ps.prices[i].DetID < ps.prices[j].DetID
 	})
 	return ret, nil
+}
+
+func (p *PricePower) Equals(p2 *PricePower) bool {
+	if p == nil && p2 == nil {
+		return true
+	}
+	if p == nil || p2 == nil {
+		return false
+	}
+	if !reflect.DeepEqual(p.Price, p2.Price) || p.Power.Cmp(p2.Power) != 0 {
+		return false
+	}
+	if len(p.Validators) != len(p2.Validators) {
+		return false
+	}
+	for v := range p.Validators {
+		if _, ok := p2.Validators[v]; !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (p *PricePower) Cpy() *PricePower {

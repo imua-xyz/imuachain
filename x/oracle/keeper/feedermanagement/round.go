@@ -26,6 +26,32 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 	}
 }
 
+func (r *round) Equals(r2 *round) bool {
+	if r == nil && r2 == nil {
+		return true
+	}
+	if r == nil || r2 == nil {
+		return false
+	}
+	if r.startBaseBlock != r2.startBaseBlock ||
+		r.startRoundID != r2.startRoundID ||
+		r.endBlock != r2.endBlock ||
+		r.interval != r2.interval ||
+		r.quoteWindowSize != r2.quoteWindowSize ||
+		r.feederID != r2.feederID ||
+		r.tokenID != r2.tokenID ||
+		r.roundBaseBlock != r2.roundBaseBlock ||
+		r.roundID != r2.roundID ||
+		r.status != r2.status {
+		return false
+	}
+	if !r.a.Equals(r2.a) {
+		return false
+	}
+
+	return true
+}
+
 func (r *round) CopyForCheckTx() *round {
 	// flags has been taken care of
 	ret := *r
