@@ -5,9 +5,12 @@ import (
 	"math/big"
 	"reflect"
 	"sort"
+	"strconv"
+	"strings"
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
+	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,11 +19,10 @@ import (
 
 func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	return &FeederManager{
-		k:                k,
-		sortedFeederIDs:  make([]int64, 0),
-		rounds:           make(map[int64]*round),
-		cs:               nil,
-		successFeederIDs: make([]int64, 0),
+		k:               k,
+		sortedFeederIDs: make([]int64, 0),
+		rounds:          make(map[int64]*round),
+		cs:              nil,
 	}
 }
 
@@ -226,9 +228,9 @@ func (f *FeederManager) commitRoundsInRecovery() {
 func (f *FeederManager) commitRounds(ctx sdk.Context) {
 	logger := f.k.Logger(ctx)
 	height := ctx.BlockHeight()
+	successFeederIDs := make([]string, 0)
 	for _, feederID := range f.sortedFeederIDs {
 		r := f.rounds[feederID]
-		//	for _, r := range f.rounds {
 		if r.Committable() {
 			finalPrice, ok := r.FinalPrice()
 			if !ok {
@@ -239,6 +241,9 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 					priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
 					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "heigth", height)
 					f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit)
+
+					fstr := strconv.FormatInt(feederID, 10)
+					successFeederIDs = append(successFeederIDs, fstr) // there's no valid price for any round yet
 				} else {
 					logger.Error("We currently only support rules under oracle V1: only allow price from source Chainlink", "feederID", r.feederID)
 				}
@@ -251,6 +256,12 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 			r.closeQuotingWindow()
 		}
 	}
+	feederIDsStr := strings.Join(successFeederIDs, "_")
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeCreatePrice,
+		sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess),
+		sdk.NewAttribute(types.AttributeKeyFeederIDs, feederIDsStr),
+	))
 }
 
 func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {

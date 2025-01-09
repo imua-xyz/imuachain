@@ -198,10 +198,8 @@ type FeederManager struct {
 	k               common.KeeperOracle
 	sortedFeederIDs orderedSliceInt64
 	// this will not be ranged, map is safe
-	rounds map[int64]*round
-	cs     *caches
-	// TODO: we commit all prices in endBlock, so it's not necessary to have this filed
-	successFeederIDs  orderedSliceInt64
+	rounds            map[int64]*round
+	cs                *caches
 	paramsUpdated     bool
 	validatorsUpdated bool
 	forceSeal         bool
