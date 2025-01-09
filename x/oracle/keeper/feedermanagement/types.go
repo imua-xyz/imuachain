@@ -2,10 +2,10 @@ package feedermanagement
 
 import (
 	"math/big"
+	"sort"
 
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
-	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -159,14 +159,47 @@ type round struct {
 	cache          CacheReader
 }
 
+type orderedSliceInt64 []int64
+
+func (osi *orderedSliceInt64) add(i int64) {
+	result := append(*osi, i)
+	sort.Slice(result, func(i, j int) bool {
+		return result[i] < result[j]
+	})
+	*osi = result
+}
+func (osi *orderedSliceInt64) remove(i int64) {
+	for idx, v := range *osi {
+		if v == i {
+			*osi = append((*osi)[:idx], (*osi)[idx+1:]...)
+			return
+		}
+	}
+}
+func (osi *orderedSliceInt64) sort() {
+	sort.Slice(*osi, func(i, j int) bool {
+		return (*osi)[i] < (*osi)[j]
+	})
+}
+func (osi orderedSliceInt64) Equal(o orderedSliceInt64) bool {
+	if len(osi) != len(o) {
+		return false
+	}
+	for idx, v := range osi {
+		if v != o[idx] {
+			return false
+		}
+	}
+	return true
+}
+
 type FeederManager struct {
-	logger          log.Logger
 	k               common.KeeperOracle
-	sortedFeederIDs []int64
+	sortedFeederIDs orderedSliceInt64
 	// this will not be ranged, map is safe
 	rounds            map[int64]*round
 	cs                *caches
-	successFeederIDs  []int64
+	successFeederIDs  orderedSliceInt64
 	paramsUpdated     bool
 	validatorsUpdated bool
 	forceSeal         bool

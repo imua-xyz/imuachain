@@ -186,7 +186,7 @@ all: build
 
 build-all: tools build lint test vulncheck
 
-.PHONY: distclean clean build-all
+.PHONY: distclean clean build-all build
 
 ###############################################################################
 ###                          makTools & Dependencies                           ###

@@ -3,6 +3,7 @@ package feedermanagement
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"sort"
 
 	//	oraclekeeper "github.com/ExocoreNetwork/exocore/x/oracle/keeper"
@@ -15,8 +16,7 @@ import (
 
 func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	return &FeederManager{
-		k: k,
-		// TODO: type []int64 add(), delete(). in ordered way
+		k:                k,
 		sortedFeederIDs:  make([]int64, 0),
 		rounds:           make(map[int64]*round),
 		cs:               nil,
@@ -37,15 +37,19 @@ func (f *FeederManager) SetKeeper(k common.KeeperOracle) {
 }
 
 // BeginBlock initializes the caches and slashing records, and setup the rounds
-func (f *FeederManager) BeginBlock(ctx sdk.Context) {
+func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 	// if the cache is nil and we are not in recovery mode, init the caches
 	if f.cs == nil {
-		if !f.recovery(ctx) {
+		recovered = f.recovery(ctx)
+		// init feederManager if failed to recovery, this should only happened on block_height==1
+		if !recovered {
 			f.initCaches(ctx)
 			f.SetParamsUpdated()
+			f.SetValidatorsUpdated()
 		}
-		f.initBehaviorRecords(ctx)
+		f.initBehaviorRecords(ctx, ctx.BlockHeight())
 	}
+	return
 }
 
 func (f *FeederManager) EndBlock(ctx sdk.Context) {
@@ -64,6 +68,10 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	feederIDs := f.prepareRounds(ctx)
 	// remove nocnes for closing quoting-window and set nonces for opening quoting-window
 	f.setupNonces(ctx, feederIDs)
+
+	if f.validatorsUpdated {
+		f.initBehaviorRecords(ctx, ctx.BlockHeight()+1)
+	}
 
 	f.ResetFlags()
 }
@@ -106,10 +114,14 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	}
 }
 
-func (f *FeederManager) initBehaviorRecords(ctx sdk.Context) {
+func (f *FeederManager) initBehaviorRecords(ctx sdk.Context, height int64) {
+	if !f.validatorsUpdated {
+		return
+	}
 	validators := f.cs.GetValidators()
 	for _, validator := range validators {
-		f.k.InitValidatorReportInfo(ctx, validator, ctx.BlockHeight())
+		// f.k.InitValidatorReportInfo(ctx, validator, ctx.BlockHeight())
+		f.k.InitValidatorReportInfo(ctx, validator, height)
 	}
 }
 
@@ -441,9 +453,7 @@ func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 				f.rounds[feederID] = newRound(feederID, tokenFeeder, int64(params.MaxNonce), f.cs)
 			}
 		}
-		sort.Slice(f.sortedFeederIDs, func(i, j int) bool {
-			return f.sortedFeederIDs[i] < f.sortedFeederIDs[j]
-		})
+		f.sortedFeederIDs.sort()
 	}
 }
 
@@ -461,12 +471,7 @@ func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 		}
 		delete(f.rounds, feederID)
-
-		for i, fID := range f.sortedFeederIDs {
-			if feederID == fID {
-				f.sortedFeederIDs = append(f.sortedFeederIDs[:i], f.sortedFeederIDs[i+1:]...)
-			}
-		}
+		f.sortedFeederIDs.remove(feederID)
 	}
 }
 
@@ -542,15 +547,15 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 
 func (f *FeederManager) coppyForSimulation() *FeederManager {
 	ret := *f
-	cs := f.cs.CpyForSimulation()
 	rounds := make(map[int64]*round)
 	for id, r := range f.rounds {
-		rounds[id] = r.CpyWithCacheReader(cs)
+		rounds[id] = r.CpyWithCacheReader(ret.cs)
 	}
-	successFeederIDs := make([]int64, 0, len(f.successFeederIDs))
-	successFeederIDs = append(successFeederIDs, f.successFeederIDs...)
+	successFeederIDs := make([]int64, len(f.successFeederIDs))
+	copy(successFeederIDs, f.successFeederIDs)
+	// f.cs, f.sortedFeederIDs, f.k, f.paramsUpdated, f.validatorUpdated, f.forceSeal, f.resetSlashing will only be read in simulation,
+	// it's good enough to do shallow copy
 	ret.rounds = rounds
-	ret.cs = cs
 	ret.successFeederIDs = successFeederIDs
 	return &ret
 }
@@ -642,6 +647,10 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 	}
 
 	return true
+}
+
+func (f *FeederManager) Equals(fm *FeederManager) bool {
+	return reflect.DeepEqual(f, fm)
 }
 
 // recoveryStartPoint returns the height to start the recovery process

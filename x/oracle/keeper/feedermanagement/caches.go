@@ -10,9 +10,6 @@ import (
 
 type ItemV map[string]*big.Int
 
-// type ItemM *oracletypes.MsgItem
-// type ItemP *oracletypes.Params
-
 var zeroBig = big.NewInt(0)
 
 func (c *caches) CpyForSimulation() *caches {
@@ -32,7 +29,6 @@ func (c *caches) CpyForSimulation() *caches {
 	}
 
 	return &ret
-
 }
 
 func (c *caches) Init(ctx sdk.Context, k Submitter, params *oracletypes.Params, validators map[string]*big.Int) {
@@ -160,12 +156,8 @@ func (cp *cacheParams) commit(ctx sdk.Context, k Submitter) {
 // memory cache
 func (c *caches) AddCache(i any) {
 	switch item := i.(type) {
-	//	case ItemM:
-	//		c.msg.add(item)
 	case *oracletypes.MsgItem:
 		c.msg.add(item)
-		//	case ItemP:
-		//		c.params.add(item)
 	case *oracletypes.Params:
 		c.params.add(item)
 	case ItemV:

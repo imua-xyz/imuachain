@@ -214,6 +214,7 @@ func (rdss *recordsDSs) AddPriceSource(ps *priceSource, power *big.Int, validato
 	price, ok := rdss.dsMap[ps.sourceID]
 	if !ok {
 		price = newRecordsDS()
+		rdss.dsMap[ps.sourceID] = price
 	}
 	for _, p := range ps.prices {
 		price.AddPrice(&PricePower{
@@ -260,6 +261,7 @@ func (rdss *recordsDSs) GetFinalDetIDForSourceID(sourceID int64) string {
 func newRecordsDS() *recordsDS {
 	return &recordsDS{
 		finalPrice:        nil,
+		validators:        make(map[string]struct{}),
 		finalDetID:        "",
 		accumulatedPowers: big.NewInt(0),
 		records:           make([]*PricePower, 0),
