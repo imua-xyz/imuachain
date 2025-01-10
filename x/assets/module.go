@@ -20,6 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// consensusVersion defines the current x/assets module consensus version.
+// the initial version should be 1
+const consensusVersion = 1
+
 // type check to ensure the interface is properly implemented
 var (
 	_ module.AppModule           = AppModule{}
@@ -104,6 +108,11 @@ func (am AppModule) IsAppModule() {}
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	assetstype.RegisterMsgServer(cfg.MsgServer(), &am.keeper)
 	assetstype.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	migrator := keeper.NewMigrator(&am.keeper)
+	// register migration for test
+	if err := cfg.RegisterMigration(assetstype.ModuleName, 1, migrator.MigrateForTest); err != nil {
+		panic(fmt.Errorf("failed to migrate %s to v1_test_upgrade: %w", assetstype.ModuleName, err))
+	}
 }
 
 func (am AppModule) InitGenesis(
@@ -133,3 +142,6 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return []simtypes.WeightedOperation{}
 }
+
+// ConsensusVersion implements AppModule/ConsensusVersion.
+func (AppModule) ConsensusVersion() uint64 { return consensusVersion }

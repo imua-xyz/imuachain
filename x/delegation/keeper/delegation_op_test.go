@@ -2,8 +2,9 @@ package keeper_test
 
 import (
 	"fmt"
-	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"time"
+
+	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 
 	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"

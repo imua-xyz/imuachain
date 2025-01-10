@@ -3,11 +3,9 @@ package app
 import (
 	"fmt"
 
+	"github.com/ExocoreNetwork/exocore/app/v1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
-	v82 "github.com/evmos/evmos/v16/app/upgrades/v8_2"
-	"github.com/evmos/evmos/v16/utils"
 )
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
@@ -19,10 +17,7 @@ import (
 //  1. Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
 //  2. Release the software defined in the upgrade-info
 func (app *ExocoreApp) ScheduleForkUpgrade(ctx sdk.Context) {
-	// NOTE: there are no testnet forks for the existing versions
-	if !utils.IsMainnet(ctx.ChainID()) {
-		return
-	}
+	// todo: the chainID should be check if it isn't used for upgrade test
 
 	upgradePlan := upgradetypes.Plan{
 		Height: ctx.BlockHeight(),
@@ -30,9 +25,9 @@ func (app *ExocoreApp) ScheduleForkUpgrade(ctx sdk.Context) {
 
 	// handle mainnet forks with their corresponding upgrade name and info
 	switch ctx.BlockHeight() {
-	case v82.MainnetUpgradeHeight:
-		upgradePlan.Name = v82.UpgradeName
-		upgradePlan.Info = v82.UpgradeInfo
+	case v1.TestUpgradeHeight:
+		upgradePlan.Name = v1.UpgradeName
+		// todo: the upgrade info might be provided  if it isn't used for upgrade test
 	default:
 		// No-op
 		return
@@ -40,6 +35,7 @@ func (app *ExocoreApp) ScheduleForkUpgrade(ctx sdk.Context) {
 
 	// schedule the upgrade plan to the current block hight, effectively performing
 	// a hard fork that uses the upgrade handler to manage the migration.
+	ctx.Logger().Info("ScheduleForkUpgrade", "blockHeight", ctx.BlockHeight(), "upgradePlan", upgradePlan)
 	if err := app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradePlan); err != nil {
 		panic(
 			fmt.Errorf(

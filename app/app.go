@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	v1 "github.com/ExocoreNetwork/exocore/app/v1"
+
 	distr "github.com/ExocoreNetwork/exocore/x/feedistribution"
 	distrkeeper "github.com/ExocoreNetwork/exocore/x/feedistribution/keeper"
 	distrtypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
@@ -1079,6 +1081,7 @@ func NewExocoreApp(
 	app.setAnteHandler(encodingConfig.TxConfig, maxGasWanted)
 	app.setPostHandler()
 	app.SetEndBlocker(app.EndBlocker)
+	app.setupUpgradeHandlers()
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -1150,7 +1153,7 @@ func (app *ExocoreApp) BeginBlocker(
 	req abci.RequestBeginBlock,
 ) abci.ResponseBeginBlock {
 	// Perform any scheduled forks before executing the modules logic
-	app.ScheduleForkUpgrade(ctx)
+	// app.ScheduleForkUpgrade(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -1373,6 +1376,31 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable())
 	paramsKeeper.Subspace(oracleTypes.ModuleName).WithKeyTable(oracleTypes.ParamKeyTable())
 	return paramsKeeper
+}
+
+func (app *ExocoreApp) setupUpgradeHandlers() {
+	// v1_test_update upgrade handler
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v1.UpgradeName,
+		v1.CreateUpgradeHandler(
+			app.mm, app.configurator,
+		),
+	)
+	// When a planned update height is reached, the old binary will panic
+	// writing on disk the height and name of the update that triggered it
+	// This will read that value, and execute the preparations for the upgrade.
+	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	if err != nil {
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	}
+
+	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		return
+	}
+	// todo: We don't address the store upgrade because the `v1_test_upgrade`
+	// doesn't make any changes to the store. However, this should be addressed
+	// when the store undergoes changes in future upgrades, such as adding, deleting,
+	// or renaming a module store.
 }
 
 // BlockedAddrs returns all the app's module account addresses that are not
