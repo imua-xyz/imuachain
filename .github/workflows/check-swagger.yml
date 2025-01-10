@@ -1,0 +1,33 @@
+name: Check Proto Swagger Generation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  check-proto-swagger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Run proto-swagger generation
+      - name: Run proto-swagger-gen
+        run: make proto-swagger-gen
+
+      - name: Check if any files have changed post regeneration
+        run: |
+          if ! git diff --exit-code > /dev/null 2>&1; then
+            echo "Changes detected after running 'make proto-swagger-gen'."
+            git diff
+            exit 1
+          fi
