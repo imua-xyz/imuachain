@@ -42,15 +42,13 @@ func (gs GenesisState) Validate() error {
 // Validate validates epoch info. Since it does not particularly pertain to genesis data,
 // the error is returned as-is and not wrapped with ErrInvalidGenesisData.
 func (epoch EpochInfo) Validate() error {
-	if epoch.Identifier == "" {
-		return errors.New("epoch identifier should NOT be empty")
-	}
-	if epoch.Identifier == NullEpochIdentifier {
-		return errors.New("epoch identifier should NOT be virtual null epoch")
+	if err := ValidateEpochIdentifierString(epoch.Identifier); err != nil {
+		return err
 	}
 	if epoch.Duration <= 0 {
 		return errors.New("epoch duration should NOT be non-positive")
 	}
+	// the EpochNumber may be 0 at genesis so we don't validate that.
 	if epoch.CurrentEpoch < 0 {
 		return errors.New("epoch CurrentEpoch must be non-negative")
 	}
