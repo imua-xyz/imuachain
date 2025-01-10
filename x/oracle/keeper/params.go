@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -67,16 +66,18 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		intervalInt = defaultInterval
 	}
 
+	defer func() {
+		if !ctx.IsCheckTx() {
+			k.SetParamsUpdated()
+		}
+	}()
+
 	for _, t := range p.Tokens {
 		// token exists, bind assetID for this token
 		// it's possible for  one price bonded with multiple assetID, like ETHUSDT from sepolia/mainnet
 		if t.Name == oInfo.Token.Name && t.ChainID == chainID {
 			t.AssetID = strings.Join([]string{t.AssetID, oInfo.AssetID}, ",")
 			k.SetParams(ctx, p)
-			if !ctx.IsCheckTx() {
-				_ = k.GetAggregatorContext(ctx)
-				k.GetCaches().AddCache(cache.ItemP(p))
-			}
 			// there should have been existing tokenFeeder running(currently we register tokens from assets-module and with infinite endBlock)
 			return nil
 		}
@@ -105,11 +106,5 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	})
 
 	k.SetParams(ctx, p)
-	// skip cache update if this is not deliverTx
-	// for normal cosmostx, checkTx will skip actual message exucution and do anteHandler only, but from ethc.callContract the message will be executed without anteHandler check as checkTx mode.
-	if !ctx.IsCheckTx() {
-		_ = k.GetAggregatorContext(ctx)
-		k.GetCaches().AddCache(cache.ItemP(p))
-	}
 	return nil
 }

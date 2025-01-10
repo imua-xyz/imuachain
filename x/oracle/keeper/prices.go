@@ -63,13 +63,8 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 		}, nil
 	}
 
-	var p types.Params
 	// get params from cache if exists
-	if k.memStore.agc != nil {
-		p = k.memStore.agc.GetParams()
-	} else {
-		p = k.GetParams(ctx)
-	}
+	p := k.GetParamsFromCache()
 	tokenID := p.GetTokenIDFromAssetID(assetID)
 	if tokenID == 0 {
 		return types.Price{}, types.ErrGetPriceAssetNotFound.Wrapf("assetID does not exist in oracle %s", assetID)
@@ -97,13 +92,8 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 
 // return latest price for assets
 func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]interface{}) (prices map[string]types.Price, err error) {
-	var p types.Params
 	// get params from cache if exists
-	if k.memStore.agc != nil {
-		p = k.memStore.agc.GetParams()
-	} else {
-		p = k.GetParams(ctx)
-	}
+	p := k.GetParamsFromCache()
 	// ret := make(map[string]types.Price)
 	prices = make(map[string]types.Price)
 	info := ""
