@@ -45,6 +45,9 @@ func ValidateEpochIdentifierString(s string) error {
 	if s == "" {
 		return fmt.Errorf("empty distribution epoch identifier: %+v", s)
 	}
+	if s == NullEpochIdentifier {
+		return fmt.Errorf("epoch identifier cannot be the null epoch identifier: %+v", s)
+	}
 	return nil
 }
 
