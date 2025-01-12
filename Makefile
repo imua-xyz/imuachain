@@ -312,14 +312,14 @@ TEST_TARGETS := test-unit test-unit-cover test-race
 # Test runs-specific rules. To add a new test target, just add
 # a new rule, customise ARGS or TEST_PACKAGES ad libitum, and
 # append the new rule to the TEST_TARGETS list.
-test-unit: ARGS=-timeout=15m -gcflags=all=-l
+test-unit: ARGS=-timeout=15m -gcflags=all=-l --tags devmode
 test-unit: TEST_PACKAGES=$(PACKAGES_UNIT)
 
 test-race: ARGS=-race
 test-race: TEST_PACKAGES=$(PACKAGES_NOSIMULATION)
 $(TEST_TARGETS): run-tests
 
-test-unit-cover: ARGS=-timeout=15m -coverprofile=cover.out -covermode=atomic -gcflags=all=-l
+test-unit-cover: ARGS=-timeout=15m -coverprofile=cover.out -covermode=atomic -gcflags=all=-l --tags devmode
 test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
 
 test-e2e:

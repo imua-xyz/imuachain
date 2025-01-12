@@ -916,14 +916,15 @@ func NewExocoreApp(
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,    // to upgrade the chain
 		capabilitytypes.ModuleName, // before any module with capabilities like IBC
-		epochstypes.ModuleName,     // to update the epoch
-		feemarkettypes.ModuleName,  // set EIP-1559 gas prices
-		evmtypes.ModuleName,        // stores chain id in memory
-		slashingtypes.ModuleName,   // TODO after reward
-		evidencetypes.ModuleName,   // TODO after reward
-		stakingtypes.ModuleName,    // track historical info
-		ibcexported.ModuleName,     // handles upgrades of chain and hence client
-		authz.ModuleName,           // clear expired approvals
+		oracleTypes.ModuleName,
+		epochstypes.ModuleName,    // to update the epoch
+		feemarkettypes.ModuleName, // set EIP-1559 gas prices
+		evmtypes.ModuleName,       // stores chain id in memory
+		slashingtypes.ModuleName,  // TODO after reward
+		evidencetypes.ModuleName,  // TODO after reward
+		stakingtypes.ModuleName,   // track historical info
+		ibcexported.ModuleName,    // handles upgrades of chain and hence client
+		authz.ModuleName,          // clear expired approvals
 		// no-op modules
 		ibctransfertypes.ModuleName,
 		icatypes.ModuleName,
@@ -944,7 +945,6 @@ func NewExocoreApp(
 		rewardTypes.ModuleName,
 		exoslashTypes.ModuleName,
 		avsManagerTypes.ModuleName,
-		oracleTypes.ModuleName,
 		distrtypes.ModuleName,
 	)
 

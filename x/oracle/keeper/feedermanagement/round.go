@@ -87,7 +87,6 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes
 		return nil, nil, fmt.Errorf("quoting window is not open, feederID:%d", r.feederID)
 	}
 
-	fmt.Println("debug--Tally->protoMsg", protoMsg.PSources[0].Prices, len(protoMsg.PSources[0].Prices))
 	msg := r.getMsgItemFromProto(protoMsg)
 	if !r.IsQuoting() {
 		// record msg for 'handlQuotingMisBehavior'
@@ -161,9 +160,10 @@ func (r *round) openQuotingWindow() {
 	r.a = newAggregator(r.cache.GetThreshold())
 }
 
+// IsQuotingWindowOpen returns if the round is inside its current quoting window including status of {open, committable, close}
 func (r *round) IsQuotingWindowOpen() bool {
-	// either open or committable means the round is inside the living quoting window
-	return r.status != roundStatusClosed
+	// aggregator is set when quoting window open and removed when the window reaches the end or be force sealed
+	return r.a != nil
 }
 
 func (r *round) IsQuotingWindowEnd(currentHeight int64) bool {

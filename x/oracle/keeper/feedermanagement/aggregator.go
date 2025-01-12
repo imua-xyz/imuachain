@@ -157,10 +157,13 @@ func (rv *recordsValidators) Cpy() *recordsValidators {
 		tmp := *rv.finalPrice
 		finalPrice = &tmp
 	}
-	finalPrices := make(map[string]*PriceResult)
-	for v, p := range rv.finalPrices {
-		price := *p
-		finalPrices[v] = &price
+	var finalPrices map[string]*PriceResult
+	if len(rv.finalPrices) > 0 {
+		finalPrices = make(map[string]*PriceResult)
+		for v, p := range rv.finalPrices {
+			price := *p
+			finalPrices[v] = &price
+		}
 	}
 	records := make(map[string]*priceValidator)
 	for v, pv := range rv.records {
@@ -227,13 +230,16 @@ func (rv *recordsValidators) GetFinalPrice() (*PriceResult, bool) {
 			}
 		}
 		rv.finalPrice = defaultAggMedian.GetResult()
+		if rv.finalPrice == nil {
+			return nil, false
+		}
 		return rv.finalPrice, true
 	}
 	return nil, false
 }
 
 func (rv *recordsValidators) GetFinalPriceForValidators() (map[string]*PriceResult, bool) {
-	if rv.finalPrices != nil {
+	if rv.finalPrices != nil && len(rv.finalPrices) > 0 {
 		return rv.finalPrices, true
 	}
 	ret := make(map[string]*PriceResult)
@@ -268,8 +274,6 @@ func newRecordsDSs(t *threshold) *recordsDSs {
 }
 
 // type recordsDSs struct {
-// 	t     *threshold
-// 	dsMap map[int64]*recordsDS
 // }
 
 func (rdss *recordsDSs) Equals(rdss2 *recordsDSs) bool {

@@ -269,7 +269,7 @@ func TestTokenFeederValidate(t *testing.T) {
 		},
 		{
 			name:         "valid case with two feeders",
-			prevEndBlock: 1000015,
+			prevEndBlock: 35,
 			feeder: &types.TokenFeeder{
 				TokenID:        1,
 				RuleID:         1,

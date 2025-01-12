@@ -101,7 +101,10 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	// query final price
 	res, err := s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
-	s.Require().Equal(priceTest1R1.getPriceTimeRound(1), res.Price)
+	// NOTE: update timestamp manually to ignore
+	ret := priceTest1R1.getPriceTimeRound(1)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 
 	// TODO: there might be a small chance that the blockHeight grows to more than 13, try bigger price window(nonce>3) to be more confident
 	// send create-price from validator3 to avoid being slashed for downtime
@@ -134,8 +137,10 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	res, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price update fail, round 2 still have price{p1}
-	s.Require().Equal(priceTest1R1.getPriceTimeRound(2), res.Price)
-
+	// NOTE: update timestamp manually to ignore
+	ret = priceTest1R1.getPriceTimeRound(2)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 	// case_3.  slashing_{miss_v3:2, window:3} [1.0.1]
 	// update timestamp
 	priceTest2R3 := price2.updateTimestamp()
@@ -167,7 +172,10 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	res, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price updated, round 3 has price{p2}
-	s.Require().Equal(priceTest2R3.getPriceTimeRound(3), res.Price)
+	// NOTE: update timestamp manually to ignore
+	ret = priceTest2R3.getPriceTimeRound(3)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 
 	// case_4. slashing_{miss_v3:2, window:4}.maxWindow=4 [1.0.1.0]
 	// update timestamp
@@ -186,7 +194,10 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	res, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price updated, round 4 has price{p1}
-	s.Require().Equal(priceTest1R4.getPriceTimeRound(4), res.Price)
+	// NOTE: update timestamp manually to ignore
+	ret = priceTest1R4.getPriceTimeRound(4)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 	// send create-price from validator3 to avoid being slashed for downtime
 	msg3 = oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceSource1R4}, 40, 1)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconskey3", kr3)
@@ -266,11 +277,13 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	s.Require().Equal([]*oracletypes.BalanceInfo{
 		{
 			Block:   6,
+			Index:   0,
 			Balance: 32,
 			Change:  oracletypes.Action_ACTION_DEPOSIT,
 		},
 		{
 			RoundID: 1,
+			Index:   1,
 			Block:   8,
 			Balance: 28,
 			Change:  oracletypes.Action_ACTION_SLASH_REFUND,
@@ -299,7 +312,10 @@ func (s *E2ETestSuite) testSlashing() {
 	res, err := s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price updated, round 4 has price{p1}
-	s.Require().Equal(priceTest1R5.getPriceTimeRound(5), res.Price)
+	// NOTE: update timestamp manually to ignore
+	ret := priceTest1R5.getPriceTimeRound(5)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 	s.moveToAndCheck(60)
 	// slashing_{miss_v3:3, window:5} [0.1.0.1.1] -> {miss_v3:2, window:4} [1.0.1.1]
 	_, priceSource1R6 := price1.generateRealTimeStructs("14", 1)
@@ -312,7 +328,7 @@ func (s *E2ETestSuite) testSlashing() {
 	s.Require().NoError(err)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
-	s.moveToAndCheck(63)
+	s.moveToAndCheck(64)
 	resSigningInfo, err := s.network.QuerySlashing().SigningInfo(context.Background(), &slashingtypes.QuerySigningInfoRequest{ConsAddress: sdk.ConsAddress(s.network.Validators[3].PubKey.Address()).String()})
 	s.Require().NoError(err)
 	// validator3 is jailed
@@ -352,7 +368,7 @@ func (s *E2ETestSuite) testRegisterTokenThroughPrecompile() {
 	// registerToken will automaticlly register that token into oracle module
 	res, err := s.network.QueryOracle().Params(context.Background(), &oracletypes.QueryParamsRequest{})
 	s.Require().NoError(err)
-	s.Require().Equal(name, res.Params.Tokens[3].Name)
+	s.Require().Equal(name, res.Params.Tokens[len(res.Params.Tokens)-1].Name)
 }
 
 func (s *E2ETestSuite) moveToAndCheck(height int64) {

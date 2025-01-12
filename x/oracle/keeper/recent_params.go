@@ -103,16 +103,16 @@ func (k Keeper) GetAllRecentParamsAsMap(ctx sdk.Context) (result map[int64]*type
 // GetRecentParamsWithinMaxNonce returns all recentParams within the maxNonce and the latest recentParams separately
 func (k Keeper) GetRecentParamsWithinMaxNonce(ctx sdk.Context) (recentParamsList []*types.RecentParams, prev, latest types.RecentParams) {
 	maxNonce := k.GetParams(ctx).MaxNonce
-	startHeight := uint64(ctx.BlockHeight()) - uint64(maxNonce)
-
+	var startHeight uint64
+	if uint64(ctx.BlockHeight()) > uint64(maxNonce) {
+		startHeight = uint64(ctx.BlockHeight()) - uint64(maxNonce)
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecentParamsKeyPrefix))
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 
 	defer iterator.Close()
 
 	recentParamsList = make([]*types.RecentParams, 0, maxNonce)
-	//	latest := types.RecentParams{}
-	//	prev := types.RecentParams{}
 	notFound := true
 	for ; iterator.Valid(); iterator.Next() {
 		var val types.RecentParams
@@ -122,18 +122,18 @@ func (k Keeper) GetRecentParamsWithinMaxNonce(ctx sdk.Context) (recentParamsList
 			prev = val
 		}
 		if val.Block >= startHeight {
-			if !notFound {
-				notFound = true
+			if notFound {
+				notFound = false
 			}
 			recentParamsList = append(recentParamsList, &val)
+		}
+		if notFound {
+			prev = val
 		}
 	}
 	if len(recentParamsList) > 0 {
 		if prev.Block == recentParamsList[0].Block {
 			prev = types.RecentParams{}
-		}
-		if latest.Block == recentParamsList[len(recentParamsList)-1].Block {
-			latest = types.RecentParams{}
 		}
 	}
 	return
