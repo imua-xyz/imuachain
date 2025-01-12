@@ -33,6 +33,10 @@ func (k *Keeper) OptIn(
 	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
+	// check if operator is in the whitelist
+	if _, err := k.avsKeeper.IsWhitelisted(ctx, avsAddr, operatorAddress.String()); err != nil {
+		return err
+	}
 	// check optedIn info
 	if k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrAlreadyOptedIn

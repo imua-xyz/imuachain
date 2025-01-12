@@ -72,7 +72,6 @@ func (suite *OperatorTestSuite) prepareDelegation(isDelegation bool, staker, ass
 		OperatorAddress: operator,
 		StakerAddress:   staker[:],
 		OpAmount:        amount,
-		LzNonce:         0,
 		TxHash:          common.HexToHash("0x24c4a315d757249c12a7a1d7b6fb96261d49deee26f06a3e1787d008b445c3ac"),
 	}
 	var err error
@@ -92,14 +91,14 @@ func (suite *OperatorTestSuite) prepare() {
 	suite.prepareDelegation(true, suite.Address, usdtAddr, suite.operatorAddr, delegationAmount)
 }
 
-func (suite *OperatorTestSuite) prepareAvs(assetIDs []string, epochIdentifier string) {
-	suite.avsAddr = common.BytesToAddress([]byte("avsTestAddr")).String()
+func (suite *OperatorTestSuite) prepareAvs(avsName string, assetIDs []string, epochIdentifier string, unbondingPeriod uint64) {
+	suite.avsAddr = common.BytesToAddress([]byte(avsName)).String()
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		Action:          avstypes.RegisterAction,
 		EpochIdentifier: epochIdentifier,
 		AvsAddress:      common.HexToAddress(suite.avsAddr),
 		AssetID:         assetIDs,
-		UnbondingPeriod: 5,
+		UnbondingPeriod: unbondingPeriod,
 	})
 	suite.NoError(err)
 }
@@ -133,7 +132,7 @@ func (suite *OperatorTestSuite) CheckState(expectedState *StateForCheck) {
 
 func (suite *OperatorTestSuite) TestOptIn() {
 	suite.prepare()
-	suite.prepareAvs([]string{usdtAssetID}, types.HourEpochID)
+	suite.prepareAvs(defaultAVSName, []string{usdtAssetID}, types.HourEpochID, defaultUnbondingPeriod)
 	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
 	// check if the related state is correct
@@ -161,7 +160,7 @@ func (suite *OperatorTestSuite) TestOptIn() {
 
 func (suite *OperatorTestSuite) TestOptInList() {
 	suite.prepare()
-	suite.prepareAvs([]string{usdtAssetID}, types.HourEpochID)
+	suite.prepareAvs(defaultAVSName, []string{usdtAssetID}, types.HourEpochID, defaultUnbondingPeriod)
 	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
 	// check if the related state is correct
@@ -177,7 +176,7 @@ func (suite *OperatorTestSuite) TestOptInList() {
 
 func (suite *OperatorTestSuite) TestOptOut() {
 	suite.prepare()
-	suite.prepareAvs([]string{usdtAssetID}, types.HourEpochID)
+	suite.prepareAvs(defaultAVSName, []string{usdtAssetID}, types.HourEpochID, defaultUnbondingPeriod)
 	err := suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.EqualError(err, operatorTypes.ErrNotOptedIn.Error())
 

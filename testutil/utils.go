@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
+	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+
 	"github.com/ExocoreNetwork/exocore/cmd/config"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 
@@ -72,6 +74,16 @@ type BaseTestSuite struct {
 
 	InitTime          time.Time
 	OperatorMsgServer operatortypes.MsgServer
+
+	// tests may use this to allocate a genesis balance
+	Balances []banktypes.Balance
+}
+
+var EpochsForTest = []string{
+	epochstypes.MinuteEpochID,
+	epochstypes.HourEpochID,
+	epochstypes.DayEpochID,
+	epochstypes.WeekEpochID,
 }
 
 func (suite *BaseTestSuite) SetupTest() {
@@ -326,11 +338,11 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	associations := []delegationtypes.StakerToOperator{
 		{
 			Operator: operator1.String(),
-			StakerID: stakerID1,
+			StakerId: stakerID1,
 		},
 		{
 			Operator: operator2.String(),
-			StakerID: stakerID2,
+			StakerId: stakerID2,
 		},
 	}
 	stakersByOperator := []delegationtypes.StakersByOperator{
@@ -481,7 +493,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 
 	// Initialize an ExocoreApp for test
 	suite.SetupWithGenesisValSet(
-		[]authtypes.GenesisAccount{acc}, balance,
+		[]authtypes.GenesisAccount{acc}, append(suite.Balances, balance)...,
 	)
 
 	// Create StateDB

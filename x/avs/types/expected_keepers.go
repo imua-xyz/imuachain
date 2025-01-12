@@ -32,6 +32,7 @@ type BankKeeper interface {
 type EVMKeeper interface {
 	SetAccount(ctx sdk.Context, addr common.Address, account statedb.Account) error
 	SetCode(ctx sdk.Context, codeHash, code []byte)
+	GetNewContractNonce(sdk.Context) uint64
 }
 
 // OperatorKeeper represents the expected keeper interface for the operator module.

@@ -37,8 +37,8 @@ func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slas
 	}
 
 	return &types.SlashFromUndelegation{
-		StakerID: undelegation.StakerID,
-		AssetID:  undelegation.AssetID,
+		StakerID: undelegation.StakerId,
+		AssetID:  undelegation.AssetId,
 		Amount:   slashAmount,
 	}
 }
@@ -204,7 +204,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		return err
 	}
 	for i := range affectedAVSList {
-		avs := affectedAVSList[i]
+		avs := affectedAVSList[i].AVSAddr
 		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
 		if err != nil {
 			return err

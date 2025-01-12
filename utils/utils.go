@@ -21,7 +21,7 @@ import (
 const (
 	// MainnetChainID defines the Evmos EIP155 chain ID for mainnet
 	// TODO: the mainnet chainid is still under consideration and need to be finalized later
-	MainnetChainID = "exocore_233"
+	MainnetChainID = "exocore_234"
 	// TestnetChainID defines the Evmos EIP155 chain ID for testnet
 	// TODO: the testnet chainid is still under consideration and need to be finalized later
 	TestnetChainID = "exocoretestnet_233"
@@ -209,4 +209,14 @@ func SortByPower(
 		sortedPowers[i] = powers[idx]
 	}
 	return sortedOperatorAddrs, sortedPubKeys, sortedPowers
+}
+
+// AppendMany concatenates multiple byte slices into a single slice.
+// It takes a variable number of byte slices and returns their concatenation
+// in the order provided. Primarily used for key construction in storage operations
+func AppendMany(byteses ...[]byte) (out []byte) {
+	for _, bytes := range byteses {
+		out = append(out, bytes...)
+	}
+	return out
 }

@@ -28,3 +28,9 @@ type SlashInputInfo struct {
 	SlashEventHeight int64
 	SlashProportion  sdkmath.LegacyDec
 }
+
+type ImpactfulAVSInfo struct {
+	AVSAddr                  string
+	HasOptedOut              bool
+	OptOutUnbondingRemaining uint64
+}

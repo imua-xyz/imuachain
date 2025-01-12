@@ -210,7 +210,7 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	s.moveNAndCheck(1)
 	ctx := context.Background()
 	// check stakerAssetInfo
-	res, err := s.network.QueryAssets().QueStakerSpecifiedAssetAmount(ctx, &assetstypes.QuerySpecifiedAssetAmountReq{StakerID: stakerID, AssetID: network.NativeAssetID})
+	res, err := s.network.QueryAssets().QueStakerSpecifiedAssetAmount(ctx, &assetstypes.QuerySpecifiedAssetAmountReq{StakerId: stakerID, AssetId: network.NativeAssetID})
 	s.Require().NoError(err)
 	s.Require().Equal(assetstypes.StakerAssetInfo{
 		TotalDepositAmount:        sdkmath.NewInt(32),

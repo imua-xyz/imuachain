@@ -59,7 +59,7 @@ func (k Keeper) UpdateNSTBalance(
 
 		// slash from pending undelegations
 		if pendingSlashAmount.IsPositive() {
-			opFunc := func(undelegationKey string, undelegation *delegationtypes.UndelegationRecord) (bool, error) {
+			opFunc := func(undelegationKey []byte, undelegation *delegationtypes.UndelegationRecord) (bool, error) {
 				// slash from the single undelegation
 				slashAmount := pendingSlashAmount
 				pendingSlashAmount = slashAmount.Sub(undelegation.ActualCompletedAmount)

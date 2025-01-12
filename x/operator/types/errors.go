@@ -121,4 +121,9 @@ var (
 		ModuleName, 26,
 		"failed to clear voting power snapshot",
 	)
+
+	ErrEpochIdentifierNotExist = errorsmod.Register(
+		ModuleName, 27,
+		"the epoch identifier doesn't exist",
+	)
 )

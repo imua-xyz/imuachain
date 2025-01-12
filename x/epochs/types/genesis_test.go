@@ -63,7 +63,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				},
 			),
 			expPass:  false,
-			expError: "epoch identifier should NOT be empty",
+			expError: "empty epoch identifier",
 		},
 		{
 			name: "zero epoch duration",

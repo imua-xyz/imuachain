@@ -64,7 +64,6 @@ func (suite *AVSTestSuite) prepareDelegation(isDelegation bool, assetAddr common
 		OperatorAddress: suite.operatorAddr,
 		StakerAddress:   suite.Address[:],
 		OpAmount:        amount,
-		LzNonce:         0,
 		TxHash:          common.HexToHash("0x24c4a315d757249c12a7a1d7b6fb96261d49deee26f06a3e1787d008b445c3ac"),
 	}
 	var err error

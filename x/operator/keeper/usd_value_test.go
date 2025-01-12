@@ -17,13 +17,15 @@ const (
 )
 
 var (
-	MaxAssetTotalSupply  = sdkmath.NewIntWithDecimal(1, MaxDecForTotalSupply)
-	defaultClientChainID = uint64(101)
-	assetDecimal         = 6
-	usdcAddr             = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
-	usdcAssetID          = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65"
-	usdtAddr             = common.HexToAddress("0xdac17f958d2ee523a2206206994597c13d831ec7")
-	usdtAssetID          = "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"
+	MaxAssetTotalSupply    = sdkmath.NewIntWithDecimal(1, MaxDecForTotalSupply)
+	defaultClientChainID   = uint64(101)
+	assetDecimal           = 6
+	usdcAddr               = common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+	usdcAssetID            = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65"
+	usdtAddr               = common.HexToAddress("0xdac17f958d2ee523a2206206994597c13d831ec7")
+	usdtAssetID            = "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"
+	defaultUnbondingPeriod = uint64(5)
+	defaultAVSName         = "avsTestAddr"
 )
 
 func (suite *OperatorTestSuite) TestCalculateUSDValue() {
@@ -94,7 +96,7 @@ func (suite *OperatorTestSuite) TestAVSUSDValue() {
 	)
 	suite.NoError(err)
 	// register the new AVS
-	suite.prepareAvs([]string{usdcAssetID, usdtAssetID}, types.HourEpochID)
+	suite.prepareAvs(defaultAVSName, []string{usdcAssetID, usdtAssetID}, types.HourEpochID, defaultUnbondingPeriod)
 	// opt in
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)

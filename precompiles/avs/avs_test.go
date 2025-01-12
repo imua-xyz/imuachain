@@ -88,10 +88,14 @@ func (suite *AVSManagerPrecompileSuite) TestIsTransaction() {
 
 func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []string{
-		sdk.AccAddress(suite.Address.Bytes()).String(),
-		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
-		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+	avsOwnerAddress := []common.Address{
+		suite.Address,
+		utiltx.GenerateAddress(),
+		utiltx.GenerateAddress(),
+	}
+	exoWhiteListAddress := []common.Address{
+		utiltx.GenerateAddress(),
+		utiltx.GenerateAddress(),
 	}
 	assetID := suite.AssetIDs
 	minStakeAmount, taskAddr := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
@@ -108,6 +112,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 			common.HexToAddress(slashAddress),
 			common.HexToAddress(rewardAddress),
 			avsOwnerAddress,
+			exoWhiteListAddress,
 			assetID,
 			avsUnbondingPeriod,
 			minSelfDelegation,
@@ -344,10 +349,14 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 
 func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []string{
-		sdk.AccAddress(suite.Address.Bytes()).String(),
-		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
-		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+	avsOwnerAddress := []common.Address{
+		suite.Address,
+		utiltx.GenerateAddress(),
+		utiltx.GenerateAddress(),
+	}
+	exoWhiteAddresses := []common.Address{
+		utiltx.GenerateAddress(),
+		utiltx.GenerateAddress(),
 	}
 	assetID := suite.AssetIDs
 	minStakeAmount, taskAddr := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
@@ -364,6 +373,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 			common.HexToAddress(slashAddress),
 			common.HexToAddress(rewardAddress),
 			avsOwnerAddress,
+			exoWhiteAddresses,
 			assetID,
 			avsUnbondingPeriod,
 			minSelfDelegation,
@@ -382,7 +392,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 			AvsAddress:          suite.Address.String(),
 			SlashAddr:           slashAddress,
 			RewardAddr:          rewardAddress,
-			AvsOwnerAddress:     avsOwnerAddress,
+			AvsOwnerAddress:     []string{sdk.AccAddress(suite.Address.Bytes()).String()},
 			AssetIDs:            assetID,
 			AvsUnbondingPeriod:  avsUnbondingPeriod,
 			MinSelfDelegation:   minSelfDelegation,

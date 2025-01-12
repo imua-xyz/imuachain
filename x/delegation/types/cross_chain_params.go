@@ -14,7 +14,6 @@ type DelegationOrUndelegationParams struct {
 	OperatorAddress sdk.AccAddress
 	StakerAddress   []byte
 	OpAmount        sdkmath.Int
-	LzNonce         uint64
 	TxHash          common.Hash
 	// todo: The operator approved signature might be needed here in future
 }
@@ -26,7 +25,6 @@ func NewDelegationOrUndelegationParams(
 	operatorAddress sdk.AccAddress,
 	stakerAddress []byte,
 	opAmount sdkmath.Int,
-	lzNonce uint64,
 	txHash common.Hash,
 ) *DelegationOrUndelegationParams {
 	return &DelegationOrUndelegationParams{
@@ -36,7 +34,6 @@ func NewDelegationOrUndelegationParams(
 		OperatorAddress: operatorAddress,
 		StakerAddress:   stakerAddress,
 		OpAmount:        opAmount,
-		LzNonce:         lzNonce,
 		TxHash:          txHash,
 	}
 }

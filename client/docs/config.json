@@ -1,21 +1,13 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Evmos Chain - gRPC Gateway docs",
+    "title": "Exocore - gRPC Gateway docs",
     "description": "A REST interface for state queries and transactions",
     "version": "1.0.0"
   },
   "apis": [
     {
-      "url": "./tmp-swagger-gen/evmos/claims/v1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "ClaimsParams"
-        }
-      }
-    },
-    {
-      "url": "./tmp-swagger-gen/evmos/epochs/v1/query.swagger.json"
+      "url": "./tmp-swagger-gen/exocore/epochs/v1/query.swagger.json"
     },
     {
       "url": "./tmp-swagger-gen/evmos/erc20/v1/query.swagger.json",
@@ -24,42 +16,6 @@
           "Params": "ERC20Params"
         }
       }
-    },
-    {
-      "url": "./tmp-swagger-gen/evmos/incentives/v1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "IncentivesParams"
-        }
-      }
-    },
-    {
-      "url": "./tmp-swagger-gen/evmos/inflation/v1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "InflationParams",
-          "TotalSupply": "InflationTotalSupply"
-        }
-      }
-    },
-    {
-      "url": "./tmp-swagger-gen/evmos/vesting/v1/query.swagger.json"
-    },
-    {
-      "url": "./tmp-swagger-gen/evmos/recovery/v1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "RecoveryParams"
-        }
-      }
-    },
-    {
-      "url": "./tmp-swagger-gen/evmos/revenue/v1/query.swagger.json",
-        "operationIds": {
-            "rename": {
-            "Params": "RevenueParams"
-            }
-        }
     },
     {
       "url": "./tmp-swagger-gen/ethermint/evm/v1/query.swagger.json",
@@ -127,15 +83,6 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/cosmos/distribution/v1beta1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "DistributionParams",
-          "DelegatorValidators": "DistDelegatorValidators"
-        }
-      }
-    },
-    {
       "url": "./tmp-swagger-gen/cosmos/feegrant/v1beta1/query.swagger.json"
     },
     {
@@ -178,14 +125,6 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/cosmos/staking/v1beta1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "StakingParams"
-        }
-      }
-    },
-    {
       "url": "./tmp-swagger-gen/cosmos/tx/v1beta1/service.swagger.json",
       "dereference": {
         "circular": "ignore"
@@ -196,6 +135,95 @@
       "operationIds": {
         "rename": {
           "Params": "BaseParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/dogfood/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "DogfoodParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/assets/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "AssetsParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/slash/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "ExoSlashParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/oracle/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "OracleParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/exomint/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "ExomintParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/feedistribution/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "FeeDistributionParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/delegation/v1/query.swagger.json"
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/avs/v1/query.swagger.json"
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/operator/v1/query.swagger.json"
+    },
+    {
+      "url": "./tmp-swagger-gen/cosmos/upgrade/v1beta1/query.swagger.json",
+      "paths": {
+        "exclude": [
+          "/cosmos/upgrade/v1beta1/upgraded_consensus_state/{last_height}"
+        ]
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/ibc/applications/interchain_accounts/host/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "InterchainAccountsHostParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/cosmos/consensus/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "ConsensusParams"
+        }
+      }
+    },
+    {
+      "url": "./tmp-swagger-gen/exocore/reward/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "RewardParams"
         }
       }
     }

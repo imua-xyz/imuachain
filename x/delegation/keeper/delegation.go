@@ -142,20 +142,33 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	if err != nil {
 		return err
 	}
+	undelegationID := k.GetLastUndelegationID(ctx)
 	// record Undelegation event
 	r := delegationtype.UndelegationRecord{
-		StakerID:              stakerID,
-		AssetID:               assetID,
+		StakerId:              stakerID,
+		AssetId:               assetID,
 		OperatorAddr:          params.OperatorAddress.String(),
 		TxHash:                params.TxHash.String(),
-		IsPending:             true,
-		LzTxNonce:             params.LzNonce,
+		UndelegationId:        undelegationID,
 		BlockNumber:           uint64(ctx.BlockHeight()),
 		Amount:                removeToken,
 		ActualCompletedAmount: removeToken,
 	}
-	r.CompleteBlockNumber = k.operatorKeeper.GetUnbondingExpirationBlockNumber(ctx, params.OperatorAddress, r.BlockNumber)
-	err = k.SetUndelegationRecords(ctx, []delegationtype.UndelegationRecord{r})
+	completedEpochID, completedEpochNumber, err := k.operatorKeeper.GetUnbondingExpiration(ctx, params.OperatorAddress)
+	if err != nil {
+		return err
+	}
+	r.CompletedEpochIdentifier = completedEpochID
+	r.CompletedEpochNumber = completedEpochNumber
+	err = k.SetUndelegationRecords(ctx, false, []delegationtype.UndelegationAndHoldCount{
+		{
+			Undelegation: &r,
+		},
+	})
+	if err != nil {
+		return err
+	}
+	err = k.IncrementLastUndelegationID(ctx)
 	if err != nil {
 		return err
 	}
@@ -177,7 +190,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 
 	// call the hooks registered by the other modules
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, delegationtype.GetUndelegationRecordKey(r.BlockNumber, r.LzTxNonce, r.TxHash, r.OperatorAddr))
+	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, delegationtype.GetUndelegationRecordKey(r.BlockNumber, r.UndelegationId, r.TxHash, r.OperatorAddr))
 }
 
 // AssociateOperatorWithStaker marks that a staker is claiming to be associated with an operator.
@@ -219,7 +232,7 @@ func (k *Keeper) AssociateOperatorWithStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// increase the share of new marked operator
 		if keys.OperatorAddr == operatorAddress.String() {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetID, assetstype.DeltaOperatorSingleAsset{
+			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare,
 			})
 		}
@@ -266,7 +279,7 @@ func (k *Keeper) DissociateOperatorFromStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// decrease the share of old operator
 		if keys.OperatorAddr == associatedOperator {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetID, assetstype.DeltaOperatorSingleAsset{
+			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare.Neg(),
 			})
 		}

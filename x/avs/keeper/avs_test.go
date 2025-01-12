@@ -23,6 +23,8 @@ func (suite *AVSTestSuite) TestAVS() {
 	avsAddress := suite.avsAddress
 	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
 	assetID := suite.AssetIDs
+	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
+
 	avs := &types.AVSInfo{
 		Name:                avsName,
 		AvsAddress:          avsAddress.String(),
@@ -38,11 +40,15 @@ func (suite *AVSTestSuite) TestAVS() {
 		AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 		AvsReward:           sdk.MustNewDecFromStr("0.002"),
 		TaskAddr:            "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr",
+		WhitelistAddress:    []string{operatorAddress},
 	}
 
 	err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
 	suite.NoError(err)
 
+	whitelisted, err := suite.App.AVSManagerKeeper.IsWhitelisted(suite.Ctx, avsAddress.String(), operatorAddress)
+	suite.NoError(err)
+	suite.Equal(whitelisted, true)
 	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress.String())
 
 	suite.NoError(err)

@@ -19,7 +19,7 @@ func (m *MsgDelegation) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgDelegation) ValidateBasic() error {
-	return validateDelegationInfo(m.AssetID, m.BaseInfo)
+	return validateDelegationInfo(m.AssetId, m.BaseInfo)
 }
 
 // new message to delegate asset to operator
@@ -37,7 +37,7 @@ func NewMsgDelegation(
 		)
 	}
 	return &MsgDelegation{
-		AssetID:  assetID,
+		AssetId:  assetID,
 		BaseInfo: baseInfo,
 	}
 }
@@ -55,7 +55,7 @@ func (m *MsgUndelegation) GetSigners() []sdk.AccAddress {
 
 // ValidateBasic does a sanity check of the provided data
 func (m *MsgUndelegation) ValidateBasic() error {
-	return validateDelegationInfo(m.AssetID, m.BaseInfo)
+	return validateDelegationInfo(m.AssetId, m.BaseInfo)
 }
 
 // GetSignBytes implements the LegacyMsg interface.
@@ -76,7 +76,7 @@ func NewMsgUndelegation(assetID, fromAddress string, amountPerOperator []KeyValu
 		)
 	}
 	return &MsgUndelegation{
-		AssetID:  assetID,
+		AssetId:  assetID,
 		BaseInfo: baseInfo,
 	}
 }

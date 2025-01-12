@@ -21,6 +21,7 @@ type Keeper struct {
 	slashKeeper    delegationtype.SlashKeeper
 	operatorKeeper delegationtype.OperatorKeeper
 	bankKeeper     delegationtype.BankKeeper
+	epochsKeeper   delegationtype.EpochsKeeper
 	hooks          delegationtype.DelegationHooks
 }
 
@@ -32,6 +33,7 @@ func NewKeeper(
 	operatorKeeper delegationtype.OperatorKeeper,
 	accountKeeper delegationtype.AccountKeeper,
 	bankKeeper delegationtype.BankKeeper,
+	epochsKeeper delegationtype.EpochsKeeper,
 ) Keeper {
 	return Keeper{
 		storeKey:       storeKey,
@@ -41,6 +43,7 @@ func NewKeeper(
 		operatorKeeper: operatorKeeper,
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
+		epochsKeeper:   epochsKeeper,
 	}
 }
 

@@ -34,7 +34,7 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 	// set default client chainID and asset
 	suite.clientChainLzID = defaultClientChainID
 	// prepare AVS
-	suite.prepareAvs([]string{usdtAssetID}, epochstypes.DayEpochID)
+	suite.prepareAvs(defaultAVSName, []string{usdtAssetID}, epochstypes.DayEpochID, defaultUnbondingPeriod)
 	// prepare stakers and operators
 	operators := make([]sdk.AccAddress, operatorNumber)
 	stakers := make([]common.Address, operatorNumber)

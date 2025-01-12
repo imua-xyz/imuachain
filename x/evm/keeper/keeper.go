@@ -375,3 +375,18 @@ func (k Keeper) AddTransientGasUsed(ctx sdk.Context, gasUsed uint64) (uint64, er
 	k.SetTransientGasUsed(ctx, result)
 	return result, nil
 }
+
+// IsEIP158 returns true if the EIP158 is enabled at the current block height.
+func (k Keeper) IsEIP158(ctx sdk.Context) bool {
+	evmConfig := k.GetParams(ctx).ChainConfig.EthereumConfig(k.ChainID())
+	return evmConfig.IsEIP158(big.NewInt(ctx.BlockHeight()))
+}
+
+// GetNewContractNonce returns the nonce for a new contract account.
+func (k Keeper) GetNewContractNonce(ctx sdk.Context) uint64 {
+	// post EIP158, the nonce of contracts is 1 to prevent their deletion from the trie.
+	if k.IsEIP158(ctx) {
+		return 1
+	}
+	return 0
+}

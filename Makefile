@@ -282,12 +282,13 @@ vulncheck: $(BUILDDIR)/
 
 swagger-update-docs: statik
 	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
-	@if [ -n "$(git status --porcelain)" ]; then \
-        echo "\033[92mSwagger docs are in sync\033[0m";\
-    else \
-        echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
-        exit 1;\
-    fi
+	@if [ -z "$$(git status --porcelain -uno)" ]; then \
+		echo "\033[92mSwagger docs are in sync\033[0m";\
+	else \
+		echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
+		exit 1;\
+	fi
+
 .PHONY: swagger-update-docs
 
 godocs:
@@ -490,7 +491,7 @@ localnet-build:
 # Generate multi node configuration files and initialize configurations
 # TODO: exocore testnet chainid is still under consideration and need to be finalized later
 localnet-init: localnet-stop
-	exocored testnet init-files --chain-id exocoretestnet_233-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
+	exocored testnet init-files --chain-id exocorelocalnet_232-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
 	./networks/init-node.sh
 
 # Start a 4-node testnet locally
@@ -539,6 +540,7 @@ GOLANG_CROSS_VERSION  = v1.22-v2.0.0
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
 	docker run \
+		-e GOPROXY=https://goproxy.cn,direct \
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \
@@ -630,3 +632,6 @@ create-contracts-json:
 check-licenses:
 	@echo "Checking licenses..."
 	@python3 scripts/check_licenses.py .
+
+swagger-ui:
+	docker run -p 8080:8080 -e SWAGGER_JSON=/app/swagger.json -v $(pwd)/client/docs/swagger-ui:/app swaggerapi/swagger-ui

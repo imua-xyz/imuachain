@@ -23,22 +23,8 @@ func (k *Keeper) DelegateAssetToOperator(
 	// no need to validate whether assetID == native token, since that is done by ValidateBasic.
 	logger.Info("DelegateAssetToOperator-nativeToken", "msg", msg)
 
-	// we can use `Must` since pre-validated
-	fromAddr := sdk.MustAccAddressFromBech32(msg.BaseInfo.FromAddress)
-	// create nonce and unique hash
-	nonce, err := k.accountKeeper.GetSequence(ctx, fromAddr)
-	if err != nil {
-		logger.Error("failed to get nonce", "error", err)
-		return nil, err
-	}
-	txBytes := ctx.TxBytes()
-	txHash := sha256.Sum256(txBytes)
-	combined := fmt.Sprintf("%s-%d", txHash, nonce)
-	uniqueHash := sha256.Sum256([]byte(combined))
-
 	delegationParamsList := newDelegationParams(
-		msg.BaseInfo, assetstypes.ExocoreAssetAddr, assetstypes.ExocoreChainLzID,
-		nonce, uniqueHash,
+		msg.BaseInfo, assetstypes.ExocoreAssetAddr, assetstypes.ExocoreChainLzID, common.Hash{},
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, delegationParams := range delegationParamsList {
@@ -80,8 +66,7 @@ func (k *Keeper) UndelegateAssetFromOperator(
 	uniqueHash := sha256.Sum256([]byte(combined))
 
 	inputParamsList := newDelegationParams(
-		msg.BaseInfo, assetstypes.ExocoreAssetAddr, assetstypes.ExocoreChainLzID,
-		nonce, uniqueHash,
+		msg.BaseInfo, assetstypes.ExocoreAssetAddr, assetstypes.ExocoreChainLzID, uniqueHash,
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, inputParams := range inputParamsList {
@@ -96,7 +81,7 @@ func (k *Keeper) UndelegateAssetFromOperator(
 // newDelegationParams creates delegation params from the given base info.
 func newDelegationParams(
 	baseInfo *types.DelegationIncOrDecInfo,
-	assetAddrStr string, clientChainLzID uint64, txNonce uint64,
+	assetAddrStr string, clientChainLzID uint64,
 	txHash common.Hash,
 ) []*types.DelegationOrUndelegationParams {
 	// can use `Must` since pre-validated
@@ -112,7 +97,6 @@ func newDelegationParams(
 			operatorAddr,
 			stakerAddr,
 			kv.Value.Amount,
-			txNonce,
 			txHash,
 		)
 		res = append(res, inputParams)

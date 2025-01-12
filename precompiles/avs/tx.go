@@ -75,12 +75,12 @@ func (p Precompile) DeregisterAVS(
 	avsParams := &avstypes.AVSRegisterOrDeregisterParams{}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	avsParams.CallerAddress = callerAddress[:]
 	avsName, ok := args[1].(string)
 	if !ok || avsName == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", avsName)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", avsName)
 	}
 	avsParams.AvsName = avsName
 
@@ -146,7 +146,7 @@ func (p Precompile) BindOperatorToAVS(
 	}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 
 	operatorParams := &avstypes.OperatorOptParams{}
@@ -176,7 +176,7 @@ func (p Precompile) UnbindOperatorToAVS(
 	}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	operatorParams := &avstypes.OperatorOptParams{}
 	operatorParams.OperatorAddress = callerAddress[:]
@@ -232,39 +232,36 @@ func (p Precompile) Challenge(
 	challengeParams.TaskContractAddress = contract.CallerAddress
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	challengeParams.CallerAddress = callerAddress[:]
 
 	taskHash, ok := args[1].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "[]byte", taskHash)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "[]byte", taskHash)
 	}
 	challengeParams.TaskHash = taskHash
 
 	taskID, ok := args[2].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "uint64", taskID)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "uint64", taskID)
 	}
 	challengeParams.TaskID = taskID
 
 	taskResponseHash, ok := args[3].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "[]byte", taskResponseHash)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", taskResponseHash)
 	}
 	challengeParams.TaskResponseHash = taskResponseHash
 
-	operatorAddress, ok := args[4].(string)
-	if !ok || operatorAddress == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 4, "string", operatorAddress)
+	operatorAddress, ok := args[4].(common.Address)
+	if !ok || operatorAddress == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", operatorAddress)
 	}
-	operator, err := sdk.AccAddressFromBech32(operatorAddress)
-	if err != nil {
-		return nil, err
-	}
+	operator := operatorAddress[:]
 
 	challengeParams.OperatorAddress = operator
-	err = p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
+	err := p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
 	if err != nil {
 		return nil, err
 	}
@@ -290,30 +287,30 @@ func (p Precompile) RegisterBLSPublicKey(
 	blsParams := &avstypes.BlsParams{}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	blsParams.OperatorAddress = callerAddress[:]
 	name, ok := args[1].(string)
 	if !ok || name == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "string", name)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", name)
 	}
 	blsParams.Name = name
 
 	pubkeyBz, ok := args[2].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "[]byte", pubkeyBz)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", pubkeyBz)
 	}
 	blsParams.PubKey = pubkeyBz
 
 	pubkeyRegistrationSignature, ok := args[3].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "[]byte", pubkeyRegistrationSignature)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", pubkeyRegistrationSignature)
 	}
 	blsParams.PubkeyRegistrationSignature = pubkeyRegistrationSignature
 
 	pubkeyRegistrationMessageHash, ok := args[4].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 4, "[]byte", pubkeyRegistrationMessageHash)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "[]byte", pubkeyRegistrationMessageHash)
 	}
 	blsParams.PubkeyRegistrationMessageHash = pubkeyRegistrationMessageHash
 
@@ -344,19 +341,19 @@ func (p Precompile) OperatorSubmitTask(
 
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	resultParams.CallerAddress = callerAddress[:]
 
 	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 1, "uint64", args[1])
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", args[1])
 	}
 	resultParams.TaskID = taskID
 
 	taskResponse, ok := args[2].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 2, "[]byte", taskResponse)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", taskResponse)
 	}
 	resultParams.TaskResponse = taskResponse
 
@@ -366,13 +363,13 @@ func (p Precompile) OperatorSubmitTask(
 
 	blsSignature, ok := args[3].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 3, "[]byte", blsSignature)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", blsSignature)
 	}
 	resultParams.BlsSignature = blsSignature
 
 	taskAddr, ok := args[4].(common.Address)
 	if !ok || (taskAddr == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParaOrType, 4, "common.Address", taskAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", taskAddr)
 	}
 	resultParams.TaskContractAddress = taskAddr
 
