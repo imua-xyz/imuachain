@@ -50,7 +50,7 @@ func (suite *KeeperTestSuite) TestSameEpochOperations() {
 			AssetsAddress:   assetAddr.Bytes(),
 			OpAmount:        amount,
 		}
-		err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
+		_, err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
 		suite.NoError(err)
 		// delegate
 		delegationParams := &delegationtypes.DelegationOrUndelegationParams{
@@ -229,7 +229,7 @@ func (suite *KeeperTestSuite) TestDifferentEpochOperations() {
 			AssetsAddress:   assetAddr.Bytes(),
 			OpAmount:        amount,
 		}
-		err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
+		_, err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
 		suite.NoError(err)
 		// delegate
 		delegationParams := &delegationtypes.DelegationOrUndelegationParams{

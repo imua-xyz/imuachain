@@ -310,7 +310,7 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 			AssetsAddress: assetAddress,
 			OpAmount:      depositAmount,
 		}
-		err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
+		_, err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
 		s.Require().NoError(err)
 	}
 
@@ -909,7 +909,7 @@ func (s *AssetsPrecompileSuite) TestGetStakerBalanceByToken() {
 					WithdrawableAmount:        sdkmath.NewInt(70),
 					PendingUndelegationAmount: sdkmath.NewInt(30),
 				}
-				err = s.App.AssetsKeeper.UpdateStakerAssetState(s.Ctx, stakerID, assetID, assetDelta)
+				_, err = s.App.AssetsKeeper.UpdateStakerAssetState(s.Ctx, stakerID, assetID, assetDelta)
 				s.Require().NoError(err)
 
 				input, err := s.precompile.Pack(

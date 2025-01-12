@@ -61,7 +61,7 @@ func (suite *AVSManagerPrecompileSuite) prepareDeposit(assetAddr common.Address,
 		OpAmount:        suite.depositAmount,
 		AssetsAddress:   assetAddr[:],
 	}
-	err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
+	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
 	suite.NoError(err)
 }
 

@@ -40,7 +40,7 @@ func (suite *DelegationTestSuite) prepareDeposit(depositAmount sdkmath.Int) *ass
 		OpAmount:        depositAmount,
 	}
 	depositEvent.AssetsAddress = suite.assetAddr[:]
-	err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositEvent)
+	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositEvent)
 	suite.NoError(err)
 	return depositEvent
 }

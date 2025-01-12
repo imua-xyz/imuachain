@@ -60,7 +60,7 @@ func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Addr
 		OpAmount:        amount,
 		AssetsAddress:   assetAddr[:],
 	}
-	err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
+	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
 	suite.NoError(err)
 }
 
