@@ -25,6 +25,10 @@ func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	}
 }
 
+func (f *FeederManager) GetCaches() *caches {
+	return f.cs
+}
+
 func (f *FeederManager) GetParamsFromCache() *oracletypes.Params {
 	return f.cs.params.params
 }
@@ -37,6 +41,10 @@ func (f *FeederManager) SetKeeper(k common.KeeperOracle) {
 	f.k = k
 }
 
+func (f *FeederManager) SetNilCaches() {
+	f.cs = nil
+}
+
 // BeginBlock initializes the caches and slashing records, and setup the rounds
 func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 	// if the cache is nil and we are not in recovery mode, init the caches
@@ -45,8 +53,10 @@ func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 		// init feederManager if failed to recovery, this should only happened on block_height==1
 		if !recovered {
 			f.initCaches(ctx)
-			f.SetParamsUpdated()
-			f.SetValidatorsUpdated()
+			if ctx.BlockHeight() < 2 {
+				f.SetParamsUpdated()
+				f.SetValidatorsUpdated()
+			}
 		}
 		f.initBehaviorRecords(ctx, ctx.BlockHeight())
 		// in recovery mode, snapshot of feederManager is set in the beginblock instead of in the process of replaying endblockInrecovery
@@ -207,7 +217,10 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (addedValidators 
 	}
 
 	// commit caches: msgs is exists, params if updated, validatorPowers is updated
-	f.cs.Commit(ctx, false)
+	_, vUpdated, pUpdated := f.cs.Commit(ctx, false)
+	if vUpdated || pUpdated {
+		f.k.Logger(ctx).Info("update caches", "validatorUpdates", vUpdated, "paramsUpdated", pUpdated)
+	}
 	return addedValidators
 }
 
@@ -268,6 +281,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	logger := f.k.Logger(ctx)
+
 	for _, r := range f.rounds {
 		if r.IsQuotingWindowEnd(height) && r.a != nil {
 			validators := f.cs.GetValidators()
@@ -291,8 +305,13 @@ func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {
 func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	logger := f.k.Logger(ctx)
+
 	for _, r := range f.rounds {
-		if r.IsQuotingWindowEnd(height) && r.a != nil {
+		if r.IsQuotingWindowEnd(height) {
+			if _, found := r.FinalPrice(); !found {
+				r.closeQuotingWindow()
+				continue
+			}
 			validators := f.cs.GetValidators()
 			for _, validator := range validators {
 				reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
@@ -304,7 +323,6 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 				if malicious {
 					detID := r.getFinalDetIDForSourceID(oracletypes.SourceChainlinkID)
 					finalPrice, _ := r.FinalPrice()
-					// TODO: malicious price, just slash&jail immediately
 					logger.Info(
 						"confirmed malicious price",
 						"validator", validator,
@@ -376,8 +394,8 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 						),
 					)
 
-					logger.Debug(
-						"absent validator",
+					logger.Info(
+						"oracle_absent validator",
 						"height", ctx.BlockHeight(),
 						"validator", validator,
 						"missed", reportedInfo.MissedRoundsCounter,
@@ -449,6 +467,7 @@ func (f *FeederManager) setCommittableState(ctx sdk.Context) {
 func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	logger := f.k.Logger(ctx)
+
 	if f.paramsUpdated {
 		params := &oracletypes.Params{}
 		f.cs.Read(params)
@@ -567,11 +586,26 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 	if err != nil {
 		return nil, err
 	}
+
+	if finalPrice == nil {
+		return nil, nil
+	}
 	return finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout)), nil
 }
 
 func (f *FeederManager) getCheckTx() *FeederManager {
-	return f.fCheckTx
+	fCheckTx := f.fCheckTx
+	ret := *fCheckTx
+	ret.fCheckTx = nil
+
+	// rounds
+	rounds := make(map[int64]*round)
+	for id, r := range fCheckTx.rounds {
+		rounds[id] = r.CopyForCheckTx()
+	}
+	ret.rounds = rounds
+
+	return &ret
 }
 
 func (f *FeederManager) updateCheckTx() {
@@ -587,7 +621,6 @@ func (f *FeederManager) updateCheckTx() {
 	// rounds
 	rounds := make(map[int64]*round)
 	for id, r := range f.rounds {
-		// TODO: implement the copy for rounds, we don't want to use reflect for performance
 		rounds[id] = r.CopyForCheckTx()
 	}
 	ret.rounds = rounds
@@ -619,7 +652,7 @@ func (f *FeederManager) initCaches(ctx sdk.Context) {
 
 func (f *FeederManager) recovery(ctx sdk.Context) bool {
 	height := ctx.BlockHeight()
-	recentParamsList, latestRecentParams, prevRecentParams := f.k.GetRecentParamsWithinMaxNonce(ctx)
+	recentParamsList, prevRecentParams, latestRecentParams := f.k.GetRecentParamsWithinMaxNonce(ctx)
 	if latestRecentParams.Block == 0 {
 		return false
 	}
@@ -647,38 +680,48 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 
 	ctxReplay := ctx.WithBlockHeight(replayHeight)
 	for tfID, tf := range params.TokenFeeders {
+		if tfID == 0 {
+			continue
+		}
 		// safe conversion
 		if tf.EndBlock > 0 && int64(tf.EndBlock) <= replayHeight {
 			continue
 		}
 		tfID := int64(tfID)
 		f.rounds[tfID] = newRound(tfID, tf, int64(params.MaxNonce), f.cs)
+		f.sortedFeederIDs.add(tfID)
 	}
 	f.prepareRounds(ctxReplay)
 
+	params = nil
 	recentMsgs := f.k.GetAllRecentMsg(ctxReplay)
-
 	for ; startHeight < height; startHeight++ {
 		ctxReplay = ctxReplay.WithBlockHeight(startHeight)
 		// only execute msgItems corresponding to rounds opened on or after replayHeight, since any rounds opened before replay height must be closed on or before height-1
 		// which means no memory state need to be updated for thoes rounds
 		// and we don't need to take care of 'close quoting-window' since the size of replay window t most equals to maxNonce
-		i := 0
-		for idx, recentMsg := range recentMsgs {
-			i = idx
-			if int64(recentMsg.Block) == startHeight {
-				f.ProcessQuoteInRecovery(recentMsg.Msgs)
-				break
+		if len(recentMsgs) > 0 && int64(recentMsgs[0].Block) <= startHeight {
+			i := 0
+			for idx, recentMsg := range recentMsgs {
+				if int64(recentMsg.Block) > startHeight {
+					break
+				}
+				i = idx
+				if int64(recentMsg.Block) == startHeight {
+					f.ProcessQuoteInRecovery(recentMsg.Msgs)
+					break
+				}
 			}
+			recentMsgs = recentMsgs[i+1:]
 		}
-		recentMsgs = recentMsgs[i+1:]
-		// var params *oracletypes.Params
 		if len(replayRecentParamsList) > 0 && int64(replayRecentParamsList[0].Block) == startHeight {
 			params = replayRecentParamsList[0].Params
 			replayRecentParamsList = replayRecentParamsList[1:]
 		}
 		f.EndBlockInRecovery(ctxReplay, params)
 	}
+
+	f.cs.SkipCommit()
 
 	return true
 }
@@ -726,7 +769,9 @@ func (f *FeederManager) Equals(fm *FeederManager) bool {
 
 // recoveryStartPoint returns the height to start the recovery process
 func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.RecentParams, prevRecentParams, latestRecentParams *oracletypes.RecentParams, validatorUpdateHeight int64) (height int64, replayRecentParamsList []*oracletypes.RecentParams) {
-	height = currentHeight - int64(latestRecentParams.Params.MaxNonce)
+	if currentHeight > int64(latestRecentParams.Params.MaxNonce) {
+		height = currentHeight - int64(latestRecentParams.Params.MaxNonce)
+	}
 	// there is no params updated in the recentParamsList, we can start from the validator update block if it's not too old(out of the distance of maxNonce from current height)
 	if len(recentParamsList) == 0 {
 		if height < validatorUpdateHeight {

@@ -101,13 +101,13 @@ func (a *AggMedian) Add(price *PriceResult) bool {
 }
 
 func (a *AggMedian) GetResult() *PriceResult {
+	defer a.Reset()
 	if a.t == notSet {
 		return nil
 	}
 	if a.t == number {
 		result := BigIntList(a.list).Median().String()
 		decimal := int32(a.decimal)
-		a.Reset()
 		return &PriceResult{
 			Price:   result,
 			Decimal: decimal,
@@ -117,7 +117,6 @@ func (a *AggMedian) GetResult() *PriceResult {
 		return nil
 	}
 	result := a.finalString
-	a.Reset()
 	return &PriceResult{
 		Price: result,
 	}

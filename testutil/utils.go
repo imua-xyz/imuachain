@@ -504,6 +504,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 	queryHelperEvm := baseapp.NewQueryServerTestHelper(suite.Ctx, suite.App.InterfaceRegistry())
 	evmtypes.RegisterQueryServer(queryHelperEvm, suite.App.EvmKeeper)
 	suite.QueryClientEVM = evmtypes.NewQueryClient(queryHelperEvm)
+	suite.App.OracleKeeper.FeederManager.BeginBlock(suite.Ctx)
 }
 
 // DeployContract deploys a contract that calls the deposit precompile's methods for testing purposes.

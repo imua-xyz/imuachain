@@ -67,7 +67,6 @@ func TestKeeper(t *testing.T) {
 
 	suite.Run(t, ks)
 
-	resetSingle(ks.App.OracleKeeper)
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Keeper Suite")
 }
@@ -76,10 +75,10 @@ func (suite *KeeperSuite) Reset() {
 	p4Test := types.DefaultParams()
 	p4Test.TokenFeeders[1].StartBaseBlock = 1
 	suite.k.SetParams(suite.ctx, p4Test)
+	suite.k.FeederManager.SetNilCaches()
+	suite.k.FeederManager.BeginBlock(suite.ctx)
 	suite.ctx = suite.ctx.WithBlockHeight(12)
-
 	suite.ctrl = gomock.NewController(suite.t)
-	resetSingle(suite.App.OracleKeeper)
 }
 
 func (suite *KeeperSuite) SetupTest() {
@@ -101,7 +100,6 @@ func (suite *KeeperSuite) SetupTest() {
 	validators := suite.ValSet.Validators
 	suite.valAddr1, _ = sdk.ValAddressFromBech32(sdk.ValAddress(validators[0].Address).String())
 	suite.valAddr2, _ = sdk.ValAddressFromBech32(sdk.ValAddress(validators[1].Address).String())
-	resetSingle(suite.App.OracleKeeper)
 
 	suite.k = suite.App.OracleKeeper
 	suite.ms = keeper.NewMsgServerImpl(suite.App.OracleKeeper)
@@ -111,9 +109,5 @@ func (suite *KeeperSuite) SetupTest() {
 	p4Test.TokenFeeders[1].StartBaseBlock = 1
 	suite.k.SetParams(suite.ctx, p4Test)
 	suite.ctx = suite.ctx.WithBlockHeight(12)
-}
-
-func resetSingle(k keeper.Keeper) {
-	k.ResetAggregatorContext()
-	k.ResetCache()
+	suite.k.FeederManager.BeginBlock(suite.ctx)
 }

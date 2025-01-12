@@ -33,6 +33,12 @@ func (c *caches) CpyForSimulation() *caches {
 }
 
 func (c *caches) Equals(c2 *caches) bool {
+	if c == nil && c2 == nil {
+		return true
+	}
+	if c == nil || c2 == nil {
+		return false
+	}
 	if !c.msg.Equals(c2.msg) {
 		return false
 	}

@@ -131,7 +131,6 @@ func (pv *priceValidator) TryAddPriceSources(pSs []*priceSource) (updated map[in
 				ps = ps.Cpy()
 			}
 		}
-		fmt.Println("debug--->psNew:", psNew)
 		psAdded, err := ps.Add(psNew)
 		if err != nil {
 			es.add(fmt.Sprintf("sourceID:%d, error:%s", psNew.sourceID, err.Error()))
@@ -179,7 +178,6 @@ func (pv *priceValidator) GetFinalPrice() (*PriceResult, bool) {
 	if len(pv.priceSources) == 0 {
 		return nil, false
 	}
-	//	defer defaultAggMedian.Reset()
 	for _, price := range pv.priceSources {
 		if price.finalPrice == nil {
 			defaultAggMedian.Reset()
@@ -300,7 +298,6 @@ func (ps *priceSource) Add(psNew *priceSource) (*priceSource, error) {
 		prices:        make([]*PriceInfo, 0),
 	}
 	for _, pNew := range psNew.prices {
-		fmt.Println("debug--->", ps.detIDs == nil, pNew == nil)
 		if _, ok := ps.detIDs[pNew.DetID]; ok {
 			es.add(fmt.Sprintf("duplicated DetID:%s", pNew.DetID))
 			continue
