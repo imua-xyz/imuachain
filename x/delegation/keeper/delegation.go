@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -61,6 +62,13 @@ func (k *Keeper) delegateTo(
 		// transfer the delegation amount from the staker account to the delegated pool
 		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, params.StakerAddress, delegationtype.DelegatedPoolName, coins); err != nil {
 			return err
+		}
+		// auto associate it, if there is a match. note that both are byte versions of bech32 AccAddress.
+		if bytes.Equal(params.StakerAddress, params.OperatorAddress[:]) {
+			err := k.SetAssociatedOperator(ctx, stakerID, params.OperatorAddress.String())
+			if err != nil {
+				return err
+			}
 		}
 	}
 	// calculate the share from the delegation amount
@@ -149,6 +157,11 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 	r.CompletedEpochIdentifier = completedEpochID
 	r.CompletedEpochNumber = completedEpochNumber
+	// the hold count is relevant to async AVSs instead of sync AVSs. for example, the dogfood AVS is sync since it
+	// runs only on this chain. meanwhile, x/appchain-based AVSs are async because of the IBC's in-built communication
+	// lag. the hold count is used to ensure that the undelegation is not processed until the AVS has completed its
+	// unbonding period.
+	// TODO: remove the hold count increment for x/dogfood AVS.
 	err = k.SetUndelegationRecords(ctx, false, []delegationtype.UndelegationAndHoldCount{
 		{
 			Undelegation: &r,
