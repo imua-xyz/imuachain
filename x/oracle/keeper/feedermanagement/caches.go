@@ -1,6 +1,7 @@
 package feedermanagement
 
 import (
+	"fmt"
 	"math/big"
 	"reflect"
 	"slices"
@@ -233,7 +234,7 @@ func (cp *cacheParams) commit(ctx sdk.Context, k Submitter) {
 }
 
 // memory cache
-func (c *caches) AddCache(i any) {
+func (c *caches) AddCache(i any) error {
 	switch item := i.(type) {
 	case *oracletypes.MsgItem:
 		c.msg.add(item)
@@ -242,8 +243,9 @@ func (c *caches) AddCache(i any) {
 	case ItemV:
 		c.validators.add(item)
 	default:
-		panic("no other types are support")
+		return fmt.Errorf("unsuppported caceh type: %T", i)
 	}
+	return nil
 }
 
 // Read reads the cache

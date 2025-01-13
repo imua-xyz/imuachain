@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"slices"
 	"sort"
 
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
@@ -153,7 +154,13 @@ func (pv *priceValidator) GetFinalPrice() (*PriceResult, bool) {
 	if len(pv.priceSources) == 0 {
 		return nil, false
 	}
-	for _, price := range pv.priceSources {
+	keySlice := make([]int64, 0, len(pv.priceSources))
+	for sourceID := range pv.priceSources {
+		keySlice = append(keySlice, sourceID)
+	}
+	slices.Sort(keySlice)
+	for _, sourceID := range keySlice {
+		price := pv.priceSources[sourceID]
 		if price.finalPrice == nil {
 			defaultAggMedian.Reset()
 			return nil, false

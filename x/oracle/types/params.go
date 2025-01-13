@@ -556,7 +556,7 @@ func (p Params) IsValidSource(sourceID uint64) bool {
 func (p Params) GetTokenFeeder(feederID uint64) *TokenFeeder {
 	for k, v := range p.TokenFeeders {
 		// #nosec G115  // index of array is uint
-		if uint64(k) == feederID {
+		if k >= 0 && uint64(k) == feederID {
 			return v
 		}
 	}

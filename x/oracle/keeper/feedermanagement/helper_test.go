@@ -65,7 +65,7 @@ func (t *Test) NewRecordsDS(filled bool) *recordsDS {
 		ret.accumulatedPowers = big1
 		ret.records = append(ret.records, t.NewPricePower())
 	}
-	return nil
+	return ret
 }
 
 func (t *Test) NewRecordsDSs(filled bool) *recordsDSs {

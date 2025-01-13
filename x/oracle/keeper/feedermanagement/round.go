@@ -65,8 +65,11 @@ func (r *round) CopyForCheckTx() *round {
 	return &ret
 }
 
-func (r *round) getMsgItemFromProto(msg *oracletypes.MsgItem) *MsgItem {
-	power, _ := r.cache.GetPowerForValidator(msg.Validator)
+func (r *round) getMsgItemFromProto(msg *oracletypes.MsgItem) (*MsgItem, error) {
+	power, found := r.cache.GetPowerForValidator(msg.Validator)
+	if !found {
+		return nil, fmt.Errorf("failed to get power for validator:%s", msg.Validator)
+	}
 	priceSources := make([]*priceSource, 0, len(msg.PSources))
 	for _, ps := range msg.PSources {
 		priceSources = append(priceSources, getPriceSourceFromProto(ps, r.cache))
@@ -77,7 +80,7 @@ func (r *round) getMsgItemFromProto(msg *oracletypes.MsgItem) *MsgItem {
 		Validator:    msg.Validator,
 		Power:        power,
 		PriceSources: priceSources,
-	}
+	}, nil
 }
 
 func (r *round) ValidQuotingBaseBlock(height int64) bool {
@@ -92,7 +95,10 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes
 		return nil, nil, fmt.Errorf("quoting window is not open, feederID:%d", r.feederID)
 	}
 
-	msg := r.getMsgItemFromProto(protoMsg)
+	msg, err := r.getMsgItemFromProto(protoMsg)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get msgItem from proto, error:%w", err)
+	}
 	if !r.IsQuoting() {
 		// record msg for 'handlQuotingMisBehavior'
 		err := r.a.RecordMsg(msg)
@@ -102,7 +108,7 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes
 		return nil, nil, fmt.Errorf("failed to record quote for aggregated round, error:%w", err)
 	}
 
-	err := r.a.AddMsg(msg)
+	err = r.a.AddMsg(msg)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to add quote for aggregation of feederID:%d, roundID:%d, error:%w", r.feederID, r.roundID, err)
 	}
