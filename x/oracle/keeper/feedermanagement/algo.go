@@ -47,7 +47,7 @@ type AggMedian struct {
 	t           priceType
 	finalString string
 	list        []*big.Int
-	decimal     int
+	decimal     int32
 }
 
 func NewAggMedian() *AggMedian {
@@ -65,39 +65,38 @@ func (a *AggMedian) Add(price *PriceResult) bool {
 		if a.t == notSet {
 			a.t = number
 			a.list = append(a.list, priceInt)
-			a.decimal = int(price.Decimal)
+			a.decimal = price.Decimal
 			return true
 		}
-		if a.decimal != int(price.Decimal) {
-			if a.decimal > int(price.Decimal) {
-				price.Price = price.Price + strings.Repeat("0", a.decimal-int(price.Decimal))
+		if a.decimal != price.Decimal {
+			if a.decimal > price.Decimal {
+				price.Price += strings.Repeat("0", int(a.decimal-price.Decimal))
 				priceInt, _ = new(big.Int).SetString(price.Price, 10)
 			} else {
-				delta := big.NewInt(int64(int(price.Decimal) - a.decimal))
+				delta := big.NewInt(int64(price.Decimal - a.decimal))
 				for _, v := range a.list {
 					nv := new(big.Int).Mul(v, new(big.Int).Exp(big.NewInt(10), delta, nil))
 					*v = *nv
 				}
-				a.decimal = int(price.Decimal)
+				a.decimal = price.Decimal
 			}
 		}
 		a.list = append(a.list, priceInt)
 		return true
-	} else {
-		// input is a string, not a number
-		if a.t == number {
-			return false
-		}
-		if a.t == notSet {
-			a.t = notNumber
-			a.finalString = price.Price
-			return true
-		}
-		if a.finalString != price.Price {
-			return false
-		}
+	}
+	// input is a string, not a number
+	if a.t == number {
+		return false
+	}
+	if a.t == notSet {
+		a.t = notNumber
+		a.finalString = price.Price
 		return true
 	}
+	if a.finalString != price.Price {
+		return false
+	}
+	return true
 }
 
 func (a *AggMedian) GetResult() *PriceResult {
@@ -107,7 +106,8 @@ func (a *AggMedian) GetResult() *PriceResult {
 	}
 	if a.t == number {
 		result := BigIntList(a.list).Median().String()
-		decimal := int32(a.decimal)
+		//
+		decimal := a.decimal
 		return &PriceResult{
 			Price:   result,
 			Decimal: decimal,

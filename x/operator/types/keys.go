@@ -157,7 +157,7 @@ func KeyForVotingPowerSnapshot(avs common.Address, height int64) []byte {
 	return utils.AppendMany(
 		avs.Bytes(),
 		// Append the height
-		sdk.Uint64ToBigEndian(uint64(height)),
+		sdk.Uint64ToBigEndian(uint64(height)), // #nosec G115  // height is not negative
 	)
 }
 

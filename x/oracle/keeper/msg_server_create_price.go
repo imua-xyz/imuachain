@@ -44,7 +44,6 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	}
 	// core logic and functionality of Price Aggregation
 	finalPrice, err := ms.ProcessQuote(ctx, msg, ctx.IsCheckTx())
-
 	if err != nil {
 		if sdkerrors.IsOf(err, types.ErrQuoteRecorded) {
 			// quote is recorded only, this happens when a quoting-window is not availalbe before that window end due to final price aggregated successfully in advance
@@ -67,8 +66,8 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 
 	if finalPrice != nil {
 		logger.Info("final price successfully aggregated", "price", finalPrice, "feederID", msg.FeederID, "height", ctx.BlockHeight())
-
 		decimalStr := strconv.FormatInt(int64(finalPrice.Decimal), 10)
+		// #nosec G115
 		tokenID, _ := ms.GetTokenIDForFeederID(int64(msg.FeederID))
 		tokenIDStr := strconv.FormatInt(tokenID, 10)
 		roundIDStr := strconv.FormatUint(finalPrice.RoundID, 10)
@@ -80,7 +79,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 			priceStr = base64.StdEncoding.EncodeToString(hash.Sum(nil))
 		}
 
-		// emit event to tell price is udpated for current round of corresponding feederID
+		// emit event to tell price is updated for current round of corresponding feederID
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			types.EventTypeCreatePrice,
 			sdk.NewAttribute(types.AttributeKeyRoundID, roundIDStr),

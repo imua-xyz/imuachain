@@ -51,7 +51,7 @@ func (c *caches) Equals(c2 *caches) bool {
 	return true
 }
 
-func (c *caches) Init(ctx sdk.Context, k Submitter, params *oracletypes.Params, validators map[string]*big.Int) {
+func (c *caches) Init(k Submitter, params *oracletypes.Params, validators map[string]*big.Int) {
 	c.ResetCaches()
 	c.k = k
 
@@ -80,6 +80,7 @@ func (c *caches) GetTokenIDForFeederID(feederID int64) (int64, bool) {
 	if !ok {
 		return 0, false
 	}
+	// #nosec G115  // tokenID is index of slice
 	return int64(tf.TokenID), true
 }
 
@@ -122,6 +123,7 @@ func (cm *cacheMsgs) commit(ctx sdk.Context, k Submitter) {
 		return
 	}
 	recentMsgs := oracletypes.RecentMsg{
+		// #nosec G115  // height is not negative
 		Block: uint64(ctx.BlockHeight()),
 		Msgs:  *cm,
 	}
@@ -176,6 +178,8 @@ func (cv *cacheValidator) commit(ctx sdk.Context, k Submitter) {
 	if !cv.update {
 		return
 	}
+	// #nosec blockHeight is not negative
+	// TODO: consider change the define of all height types in proto to int64(since cosmossdk defined block height as int64) to get avoid all these conversion
 	k.SetValidatorUpdateForCache(ctx, oracletypes.ValidatorUpdateBlock{Block: uint64(ctx.BlockHeight())})
 	cv.update = false
 }
@@ -206,8 +210,8 @@ func (cp *cacheParams) Equals(cp2 *cacheParams) bool {
 	if cp.update != cp2.update {
 		return false
 	}
-	p1 := (*oracletypes.Params)(cp.params)
-	p2 := (*oracletypes.Params)(cp2.params)
+	p1 := cp.params
+	p2 := cp2.params
 	return reflect.DeepEqual(p1, p2)
 }
 
@@ -221,6 +225,7 @@ func (cp *cacheParams) commit(ctx sdk.Context, k Submitter) {
 		return
 	}
 	k.SetParamsForCache(ctx, oracletypes.RecentParams{
+		// #nosec G115 blockheight is not negative
 		Block:  uint64(ctx.BlockHeight()),
 		Params: cp.params,
 	})

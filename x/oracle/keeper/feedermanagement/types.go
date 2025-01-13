@@ -77,14 +77,14 @@ type priceValidator struct {
 	finalPrice *PriceResult
 	validator  string
 	power      *big.Int
-	// each source will get a single final price independetly, the order of sources does not matter, map is safe
+	// each source will get a single final price independently, the order of sources does not matter, map is safe
 	priceSources map[int64]*priceSource
 }
 
 type recordsValidators struct {
 	finalPrice  *PriceResult
 	finalPrices map[string]*PriceResult
-	// TODO: V2: accumulatedValidPower only includes validators who prividing all sources requred by rules(defined in oracle.Params)
+	// TODO: V2: accumulatedValidPower only includes validators who prividing all sources required by rules(defined in oracle.Params)
 	// accumulatedValidVpower: map[string]*big.Int
 	accumulatedPower *big.Int
 	// each validator will get a single final price independently, the order of validators does not matter, map is safe
@@ -193,6 +193,7 @@ func (osi *orderedSliceInt64) add(i int64) {
 	})
 	*osi = result
 }
+
 func (osi *orderedSliceInt64) remove(i int64) {
 	for idx, v := range *osi {
 		if v == i {
@@ -201,11 +202,13 @@ func (osi *orderedSliceInt64) remove(i int64) {
 		}
 	}
 }
+
 func (osi *orderedSliceInt64) sort() {
 	sort.Slice(*osi, func(i, j int) bool {
 		return (*osi)[i] < (*osi)[j]
 	})
 }
+
 func (osi orderedSliceInt64) Equal(o orderedSliceInt64) bool {
 	if len(osi) != len(o) {
 		return false

@@ -76,12 +76,14 @@ func (cgts ConsumeTxSizeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 			}
 
 			// use stdsignature to mock the size of a full signature
+			// #nosec G115
 			simSig := legacytx.StdSignature{ // nolint:staticcheck // this will be removed when proto is ready
 				Signature: simSecp256k1Sig[:],
 				PubKey:    pubkey,
 			}
 
 			sigBz := legacy.Cdc.MustMarshal(simSig)
+			// #nosec G115
 			cost := sdk.Gas(len(sigBz) + 6)
 
 			// If the pubkey is a multi-signature pubkey, then we estimate for the maximum

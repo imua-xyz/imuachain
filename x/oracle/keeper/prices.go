@@ -34,10 +34,12 @@ func (k Keeper) GetPrices(
 	val.TokenID = tokenID
 	val.NextRoundID = nextRoundID
 	var i uint64
+	// #nosec G11
 	if nextRoundID <= uint64(common.MaxSizePrices) {
 		i = 1
 		val.PriceList = make([]*types.PriceTimeRound, 0, nextRoundID)
 	} else {
+		// #nosec G11
 		i = nextRoundID - uint64(common.MaxSizePrices)
 		val.PriceList = make([]*types.PriceTimeRound, 0, common.MaxSizePrices)
 	}
@@ -69,6 +71,7 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 	if tokenID == 0 {
 		return types.Price{}, types.ErrGetPriceAssetNotFound.Wrapf("assetID does not exist in oracle %s", assetID)
 	}
+	// #nosec G115
 	price, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
 	if !found {
 		return types.Price{
@@ -112,6 +115,7 @@ func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]inter
 			prices = nil
 			break
 		}
+		// #nosec G115
 		price, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
 		if !found {
 			info = info + assetID + " "
@@ -200,6 +204,7 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	b := k.cdc.MustMarshal(&priceTR)
 	store.Set(types.PricesRoundKey(nextRoundID), b)
 	p := *k.GetParamsFromCache()
+	// #nosec G115  // maxSizePrices is not negative
 	if expiredRoundID := nextRoundID - uint64(p.MaxSizePrices); expiredRoundID > 0 {
 		store.Delete(types.PricesRoundKey(expiredRoundID))
 	}
