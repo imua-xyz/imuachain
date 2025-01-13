@@ -17165,32 +17165,69 @@
         ]
       }
     },
-    "/exocore/assets/v1/Params": {
+    "/exocore/assets/v1/all_assets": {
       "get": {
-        "summary": "Params retrieves the assets module params",
-        "operationId": "AssetsParams",
+        "summary": "AllStakingAssetsInfo queries all staking assets info.",
+        "operationId": "QueAllStakingAssetsInfo",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "type": "object",
               "properties": {
-                "params": {
-                  "description": "params defines the parameters for this module.",
-                  "type": "object",
-                  "properties": {
-                    "exocore_lz_app_address": {
-                      "type": "string",
-                      "description": "exocore_lz_app_address is the address of ExocoreGateway.sol."
+                "all_staking_assets_info": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "asset_basic_info": {
+                        "description": "asset_basic_info is the basic information of the asset.",
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "title": "name of the asset, like \"Tether USD\""
+                          },
+                          "symbol": {
+                            "type": "string",
+                            "title": "symbol of the asset, like \"USDT\""
+                          },
+                          "address": {
+                            "type": "string",
+                            "title": "address of the asset on the client chain"
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "format": "int64",
+                            "description": "decimals used in the asset, typically 6 or 18."
+                          },
+                          "layer_zero_chain_id": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                          },
+                          "exocore_chain_index": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                          },
+                          "meta_info": {
+                            "type": "string",
+                            "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                          }
+                        }
+                      },
+                      "staking_total_amount": {
+                        "type": "string",
+                        "description": "staking_total_amount is the total amount of the asset staked."
+                      }
                     },
-                    "exocore_lz_app_event_topic": {
-                      "type": "string",
-                      "description": "exocore_lz_app_event_topic is the topic of the exocore lz app event."
-                    }
-                  }
+                    "description": "StakingAssetInfo defines the information for an asset to be used in staking."
+                  },
+                  "description": "all_staking_assets_info is the response for all staking assets info."
                 }
               },
-              "description": "QueryParamsResponse is the response type for the Query/Params RPC\nmethod."
+              "description": "QueryAllStakingAssetsInfoResponse is the response for all staking assets info,\nindexed by the asset id."
             }
           },
           "default": {
@@ -17232,7 +17269,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/QueAllClientChainInfo": {
+    "/exocore/assets/v1/all_client_chains": {
       "get": {
         "summary": "AllClientChainInfo queries all client chain info.",
         "operationId": "QueAllClientChainInfo",
@@ -17388,488 +17425,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/QueAllStakingAssetsInfo": {
-      "get": {
-        "summary": "AllStakingAssetsInfo queries all staking assets info.",
-        "operationId": "QueAllStakingAssetsInfo",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "all_staking_assets_info": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "asset_basic_info": {
-                        "description": "asset_basic_info is the basic information of the asset.",
-                        "type": "object",
-                        "properties": {
-                          "name": {
-                            "type": "string",
-                            "title": "name of the asset, like \"Tether USD\""
-                          },
-                          "symbol": {
-                            "type": "string",
-                            "title": "symbol of the asset, like \"USDT\""
-                          },
-                          "address": {
-                            "type": "string",
-                            "title": "address of the asset on the client chain"
-                          },
-                          "decimals": {
-                            "type": "integer",
-                            "format": "int64",
-                            "description": "decimals used in the asset, typically 6 or 18."
-                          },
-                          "layer_zero_chain_id": {
-                            "type": "string",
-                            "format": "uint64",
-                            "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                          },
-                          "exocore_chain_index": {
-                            "type": "string",
-                            "format": "uint64",
-                            "description": "exocore_chain_index is the index of the client chain within the exosystem."
-                          },
-                          "meta_info": {
-                            "type": "string",
-                            "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
-                          }
-                        }
-                      },
-                      "staking_total_amount": {
-                        "type": "string",
-                        "description": "staking_total_amount is the total amount of the asset staked."
-                      }
-                    },
-                    "description": "StakingAssetInfo defines the information for an asset to be used in staking."
-                  },
-                  "description": "all_staking_assets_info is the response for all staking assets info."
-                }
-              },
-              "description": "QueryAllStakingAssetsInfoResponse is the response for all staking assets info,\nindexed by the asset id."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/assets/v1/QueClientChainInfoByIndex": {
-      "get": {
-        "summary": "ClientChainInfoByIndex queries the client chain info by index.",
-        "operationId": "QueClientChainInfoByIndex",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "name of the client chain, like \"Ethereum\"."
-                },
-                "meta_info": {
-                  "type": "string",
-                  "description": "meta_info about the client chain, like \"Ethereum blockchain\"."
-                },
-                "chain_id": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "chain_id of the client chain. Not necessarily the EVM chain id."
-                },
-                "exocore_chain_index": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "exocore_chain_index is the index of the client chain within the exosystem."
-                },
-                "finalization_blocks": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "finalization_blocks is the number of blocks to wait for finalization."
-                },
-                "layer_zero_chain_id": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "layer_zero_chain_id is the chain id of the client chain, according to L0.\nhttps://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids"
-                },
-                "signature_type": {
-                  "type": "string",
-                  "description": "signature_type is the type of signature used to sign the client chain address."
-                },
-                "address_length": {
-                  "type": "integer",
-                  "format": "int64",
-                  "description": "client_chain_addr is the length of addresses on the client chain."
-                }
-              },
-              "description": "ClientChainInfo defines the client chain information."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "chain_index",
-            "description": "chain_index is the index of the chain.",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/assets/v1/QueOperatorAssetInfos": {
-      "get": {
-        "summary": "OperatorAssetInfos queries the operator asset info.",
-        "operationId": "QueOperatorAssetInfos",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "asset_infos": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "asset_id": {
-                        "type": "string",
-                        "description": "asset_id is the id of the asset."
-                      },
-                      "info": {
-                        "description": "info is the asset info.",
-                        "type": "object",
-                        "properties": {
-                          "total_amount": {
-                            "type": "string",
-                            "description": "total_amount is the total amount of the asset deposited, which excludes the\npending_undelegation_amount. It represent the total delegated amount of asset pool,\nit will be used to calculate the asset amount of a specified staker from its\ndelegated share."
-                          },
-                          "pending_undelegation_amount": {
-                            "type": "string",
-                            "description": "pending_undelegation_amount is the amount that is waiting for unbonding."
-                          },
-                          "total_share": {
-                            "type": "string",
-                            "description": "total_share is the total share of an asset, in the formula to update the staker's share\nS_j = S * T_j / T, `S` represent it.\nSo when the shares of staker and operator change, it also needs to add `S_j` to update."
-                          },
-                          "operator_share": {
-                            "type": "string",
-                            "description": "operator_share is similar to the share of the staker, the calculation and update should\nbe same, the difference is that it represents the share of the operator itself.\nthe field is used to mark operator's own asset share."
-                          }
-                        }
-                      }
-                    },
-                    "title": "AssetByID is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an operator.\nIt is named AssetByID (since it is indexed by the assetID)"
-                  },
-                  "description": "asset_infos is the response for the operator asset info, indexed by the asset id."
-                }
-              },
-              "description": "QueryOperatorAssetInfosResponse is the response to the operator asset info query."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "operator_addr",
-            "description": "operator_addr is the operator address for which the query is made.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/assets/v1/QueStakerAssetInfos": {
-      "get": {
-        "summary": "StakerAssetInfos queries the staker asset info.",
-        "operationId": "QueStakerAssetInfos",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "asset_infos": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "asset_id": {
-                        "type": "string",
-                        "description": "asset_id is the id of the asset."
-                      },
-                      "info": {
-                        "description": "info is the asset info.",
-                        "type": "object",
-                        "properties": {
-                          "total_deposit_amount": {
-                            "type": "string",
-                            "description": "total_deposit_amount is the total amount of the asset deposited."
-                          },
-                          "withdrawable_amount": {
-                            "type": "string",
-                            "description": "withdrawable_amount is the amount that can be withdrawn."
-                          },
-                          "pending_undelegation_amount": {
-                            "type": "string",
-                            "description": "pending_undelegation_amount is the amount that is waiting for undelegation."
-                          }
-                        }
-                      }
-                    },
-                    "description": "DepositByAsset is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an staker.\nThe info contains the deposit amount, the withdrawable amount\nand the amount currently unbonding.\nIt is named DepositByAsset (since it is indexed by the assetID)\nand not Deposit to prevent conflict with CrossChainOpType."
-                  },
-                  "description": "asset_infos is the response for the staker asset info, indexed by the asset id."
-                }
-              },
-              "description": "QueryAssetInfoResponse is the response for the staker asset info."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "staker_id",
-            "description": "stake_id is the staker id for which the query is made.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/assets/v1/QueStakerSpecifiedAssetAmount": {
-      "get": {
-        "summary": "OperatorSpecifiedAssetAmount queries the operator specified asset amount.",
-        "operationId": "QueOperatorSpecifiedAssetAmount",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "total_amount": {
-                  "type": "string",
-                  "description": "total_amount is the total amount of the asset deposited, which excludes the\npending_undelegation_amount. It represent the total delegated amount of asset pool,\nit will be used to calculate the asset amount of a specified staker from its\ndelegated share."
-                },
-                "pending_undelegation_amount": {
-                  "type": "string",
-                  "description": "pending_undelegation_amount is the amount that is waiting for unbonding."
-                },
-                "total_share": {
-                  "type": "string",
-                  "description": "total_share is the total share of an asset, in the formula to update the staker's share\nS_j = S * T_j / T, `S` represent it.\nSo when the shares of staker and operator change, it also needs to add `S_j` to update."
-                },
-                "operator_share": {
-                  "type": "string",
-                  "description": "operator_share is similar to the share of the staker, the calculation and update should\nbe same, the difference is that it represents the share of the operator itself.\nthe field is used to mark operator's own asset share."
-                }
-              },
-              "description": "OperatorAssetInfo defines the information for a single asset,\nfor an operator."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "operator_addr",
-            "description": "operator_addr is the operator address for which the query is made.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "asset_id",
-            "description": "asset_id is the asset for which the query is made.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/assets/v1/QueStakingAssetInfo": {
+    "/exocore/assets/v1/asset/{asset_id}": {
       "get": {
         "summary": "StakingAssetInfo queries the staking asset info.",
         "operationId": "QueStakingAssetInfo",
@@ -17962,8 +17518,532 @@
           {
             "name": "asset_id",
             "description": "asset_id is the asset for which the query is made.",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/assets/v1/client_chain/{chain_index}": {
+      "get": {
+        "summary": "ClientChainInfoByIndex queries the client chain info by index.",
+        "operationId": "QueClientChainInfoByIndex",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "name of the client chain, like \"Ethereum\"."
+                },
+                "meta_info": {
+                  "type": "string",
+                  "description": "meta_info about the client chain, like \"Ethereum blockchain\"."
+                },
+                "chain_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "chain_id of the client chain. Not necessarily the EVM chain id."
+                },
+                "exocore_chain_index": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                },
+                "finalization_blocks": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "finalization_blocks is the number of blocks to wait for finalization."
+                },
+                "layer_zero_chain_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "layer_zero_chain_id is the chain id of the client chain, according to L0.\nhttps://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids"
+                },
+                "signature_type": {
+                  "type": "string",
+                  "description": "signature_type is the type of signature used to sign the client chain address."
+                },
+                "address_length": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "client_chain_addr is the length of addresses on the client chain."
+                }
+              },
+              "description": "ClientChainInfo defines the client chain information."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "chain_index",
+            "description": "chain_index is the index of the chain.",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/assets/v1/operator_asset/{operator_addr}/{asset_id}": {
+      "get": {
+        "summary": "OperatorSpecifiedAssetAmount queries the operator specified asset amount.",
+        "operationId": "QueOperatorSpecifiedAssetAmount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total_amount": {
+                  "type": "string",
+                  "description": "total_amount is the total amount of the asset deposited, which excludes the\npending_undelegation_amount. It represent the total delegated amount of asset pool,\nit will be used to calculate the asset amount of a specified staker from its\ndelegated share."
+                },
+                "pending_undelegation_amount": {
+                  "type": "string",
+                  "description": "pending_undelegation_amount is the amount that is waiting for unbonding."
+                },
+                "total_share": {
+                  "type": "string",
+                  "description": "total_share is the total share of an asset, in the formula to update the staker's share\nS_j = S * T_j / T, `S` represent it.\nSo when the shares of staker and operator change, it also needs to add `S_j` to update."
+                },
+                "operator_share": {
+                  "type": "string",
+                  "description": "operator_share is similar to the share of the staker, the calculation and update should\nbe same, the difference is that it represents the share of the operator itself.\nthe field is used to mark operator's own asset share."
+                }
+              },
+              "description": "OperatorAssetInfo defines the information for a single asset,\nfor an operator."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator_addr",
+            "description": "operator_addr is the operator address for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset_id is the asset for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/assets/v1/operator_assets/{operator_addr}": {
+      "get": {
+        "summary": "OperatorAssetInfos queries the operator asset info.",
+        "operationId": "QueOperatorAssetInfos",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "asset_infos": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "asset_id": {
+                        "type": "string",
+                        "description": "asset_id is the id of the asset."
+                      },
+                      "info": {
+                        "type": "object",
+                        "properties": {
+                          "total_amount": {
+                            "type": "string",
+                            "description": "total_amount is the total amount of the asset deposited, which excludes the\npending_undelegation_amount. It represent the total delegated amount of asset pool,\nit will be used to calculate the asset amount of a specified staker from its\ndelegated share."
+                          },
+                          "pending_undelegation_amount": {
+                            "type": "string",
+                            "description": "pending_undelegation_amount is the amount that is waiting for unbonding."
+                          },
+                          "total_share": {
+                            "type": "string",
+                            "description": "total_share is the total share of an asset, in the formula to update the staker's share\nS_j = S * T_j / T, `S` represent it.\nSo when the shares of staker and operator change, it also needs to add `S_j` to update."
+                          },
+                          "operator_share": {
+                            "type": "string",
+                            "description": "operator_share is similar to the share of the staker, the calculation and update should\nbe same, the difference is that it represents the share of the operator itself.\nthe field is used to mark operator's own asset share."
+                          }
+                        },
+                        "description": "OperatorAssetInfo defines the information for a single asset,\nfor an operator."
+                      }
+                    },
+                    "title": "AssetByID is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an operator.\nIt is named AssetByID (since it is indexed by the assetID)"
+                  },
+                  "description": "asset_infos is the response for the operator asset info, indexed by the asset id."
+                }
+              },
+              "description": "QueryOperatorAssetInfosResponse is the response to the operator asset info query."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator_addr",
+            "description": "operator_addr is the operator address for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/assets/v1/params": {
+      "get": {
+        "summary": "Params retrieves the assets module params",
+        "operationId": "AssetsParams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "params": {
+                  "description": "params defines the parameters for this module.",
+                  "type": "object",
+                  "properties": {
+                    "gateways": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "gateways is the addresses of gateways on Exocore."
+                    }
+                  }
+                }
+              },
+              "description": "QueryParamsResponse is the response type for the Query/Params RPC\nmethod."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/assets/v1/staker_asset/{staker_id}/{asset_id}": {
+      "get": {
+        "summary": "StakerSpecifiedAssetAmount queries the staker specified asset amount.",
+        "operationId": "QueStakerSpecifiedAssetAmount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "total_deposit_amount": {
+                  "type": "string",
+                  "description": "total_deposit_amount is the total amount of the asset deposited."
+                },
+                "withdrawable_amount": {
+                  "type": "string",
+                  "description": "withdrawable_amount is the amount that can be withdrawn."
+                },
+                "pending_undelegation_amount": {
+                  "type": "string",
+                  "description": "pending_undelegation_amount is the amount that is waiting for undelegation."
+                }
+              },
+              "description": "StakerAssetInfo defines the information for a single asset.\nThe type include three states:\nstaker's deposited, withdrawable, and currently unbonding amount."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker_id is the staker id for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset_id is the asset for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/assets/v1/staker_assets/{staker_id}": {
+      "get": {
+        "summary": "StakerAssetInfos queries the staker asset info.",
+        "operationId": "QueStakerAssetInfos",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "asset_infos": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "asset_id": {
+                        "type": "string",
+                        "description": "asset_id is the id of the asset."
+                      },
+                      "info": {
+                        "type": "object",
+                        "properties": {
+                          "total_deposit_amount": {
+                            "type": "string",
+                            "description": "total_deposit_amount is the total amount of the asset deposited."
+                          },
+                          "withdrawable_amount": {
+                            "type": "string",
+                            "description": "withdrawable_amount is the amount that can be withdrawn."
+                          },
+                          "pending_undelegation_amount": {
+                            "type": "string",
+                            "description": "pending_undelegation_amount is the amount that is waiting for undelegation."
+                          }
+                        },
+                        "description": "StakerAssetInfo defines the information for a single asset.\nThe type include three states:\nstaker's deposited, withdrawable, and currently unbonding amount."
+                      }
+                    },
+                    "description": "DepositByAsset is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an staker.\nThe info contains the deposit amount, the withdrawable amount\nand the amount currently unbonding.\nIt is named DepositByAsset (since it is indexed by the assetID)\nand not Deposit to prevent conflict with CrossChainOpType."
+                  },
+                  "description": "asset_infos is the response for the staker asset info, indexed by the asset id."
+                }
+              },
+              "description": "QueryAssetInfoResponse is the response for the staker asset info."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "stake_id is the staker id for which the query is made.",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -18371,7 +18451,7 @@
                               "type": "string",
                               "format": "uint64"
                             },
-                            "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                            "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
                           },
                           "nom": {
                             "title": "n out of total sources are required",
@@ -18415,7 +18495,7 @@
                           "start_round_id": {
                             "type": "string",
                             "format": "uint64",
-                            "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                            "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
                           },
                           "start_base_block": {
                             "type": "string",
@@ -18430,7 +18510,7 @@
                           "end_block": {
                             "type": "string",
                             "format": "uint64",
-                            "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                            "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
                           }
                         },
                         "title": "Tokenfeeder represents a price oracle for one token"
@@ -19118,7 +19198,7 @@
                                     "type": "string",
                                     "format": "uint64"
                                   },
-                                  "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                                  "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
                                 },
                                 "nom": {
                                   "title": "n out of total sources are required",
@@ -19162,7 +19242,7 @@
                                 "start_round_id": {
                                   "type": "string",
                                   "format": "uint64",
-                                  "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                                  "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
                                 },
                                 "start_base_block": {
                                   "type": "string",
@@ -19177,7 +19257,7 @@
                                 "end_block": {
                                   "type": "string",
                                   "format": "uint64",
-                                  "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                                  "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
                                 }
                               },
                               "title": "Tokenfeeder represents a price oracle for one token"
@@ -19490,7 +19570,7 @@
                                   "type": "string",
                                   "format": "uint64"
                                 },
-                                "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                                "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
                               },
                               "nom": {
                                 "title": "n out of total sources are required",
@@ -19534,7 +19614,7 @@
                               "start_round_id": {
                                 "type": "string",
                                 "format": "uint64",
-                                "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                                "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
                               },
                               "start_base_block": {
                                 "type": "string",
@@ -19549,7 +19629,7 @@
                               "end_block": {
                                 "type": "string",
                                 "format": "uint64",
-                                "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                                "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
                               }
                             },
                             "title": "Tokenfeeder represents a price oracle for one token"
@@ -20296,7 +20376,223 @@
         ]
       }
     },
-    "/exocore/delegation/v1/GetDelegationInfo": {
+    "/exocore/delegation/v1/associated_operator/{staker_id}": {
+      "get": {
+        "summary": "QueryAssociatedOperatorByStaker queries the associated operator for the specified staker",
+        "operationId": "QueryAssociatedOperatorByStaker",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator": {
+                  "type": "string",
+                  "title": "operator is the returned operator owner of the specified staker"
+                }
+              },
+              "title": "QueryAssociatedOperatorByStakerResponse is the response to QueryAssociatedOperatorByStakerReq"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "stake_id is the staker id for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/delegation/v1/associated_stakers/{operator}": {
+      "get": {
+        "summary": "QueryAssociatedStakersByOperator queries the associated stakers for the specified operator",
+        "operationId": "QueryAssociatedStakersByOperator",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "stakers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "stakers is the returned stakers associated to the specified operator"
+                }
+              },
+              "title": "QueryAssociatedStakersByOperatorResponse is the response to QueryAssociatedStakersByOperatorReq"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator is the operator address for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/delegation/v1/delegated_stakers/{operator}/{asset_id}": {
+      "get": {
+        "summary": "QueryDelegatedStakersByOperator queries the delegated stakers for the specified operator",
+        "operationId": "QueryDelegatedStakersByOperator",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "count is the number of stakers"
+                },
+                "stakers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "stakers is the returned stakers associated to the specified operator"
+                }
+              },
+              "title": "QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator is the operator address for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset_id is the asset id.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/delegation/v1/delegations/{staker_id}/{asset_id}": {
       "get": {
         "summary": "DelegationInfo queries the delegation information for {stakerID, assetID}.",
         "operationId": "QueryDelegationInfo",
@@ -20366,148 +20662,13 @@
           {
             "name": "staker_id",
             "description": "staker_id is the staker id.",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "asset_id",
             "description": "asset_id is the asset id.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/delegation/v1/QueryAssociatedOperatorByStaker": {
-      "get": {
-        "summary": "QueryAssociatedOperatorByStaker queries the associated operator for the specified staker",
-        "operationId": "QueryAssociatedOperatorByStaker",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "operator": {
-                  "type": "string",
-                  "title": "operator is the returned operator owner of the specified staker"
-                }
-              },
-              "title": "QueryAssociatedOperatorByStakerResponse is the response to QueryAssociatedOperatorByStakerReq"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "staker_id",
-            "description": "stake_id is the staker id for which the query is made.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/delegation/v1/QueryAssociatedStakersByOperator/{operator}": {
-      "get": {
-        "summary": "QueryAssociatedStakersByOperator queries the associated stakers for the specified operator",
-        "operationId": "QueryAssociatedStakersByOperator",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "stakers": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "stakers is the returned stakers associated to the specified operator"
-                }
-              },
-              "title": "QueryAssociatedStakersByOperatorResponse is the response to QueryAssociatedStakersByOperatorReq"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "operator",
-            "description": "operator is the operator address for which the query is made.",
             "in": "path",
             "required": true,
             "type": "string"
@@ -20518,7 +20679,142 @@
         ]
       }
     },
-    "/exocore/delegation/v1/QuerySingleDelegationInfo": {
+    "/exocore/delegation/v1/pending_undelegations/{epoch_identifier}/{epoch_number}": {
+      "get": {
+        "summary": "QueryUndelegationsByEpochInfo queries all undelegations waiting to be completed by\n{epoch_identifier,epoch_number}.",
+        "operationId": "QueryUndelegationsByEpochInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "undelegations": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "undelegation": {
+                        "title": "undelegation is the single undelegation record",
+                        "type": "object",
+                        "properties": {
+                          "staker_id": {
+                            "type": "string",
+                            "description": "staker_id is the staker id."
+                          },
+                          "asset_id": {
+                            "type": "string",
+                            "description": "asset_id is the asset id."
+                          },
+                          "operator_addr": {
+                            "type": "string",
+                            "description": "operator_addr is the operator address."
+                          },
+                          "tx_hash": {
+                            "type": "string",
+                            "description": "tx_hash is the transaction hash on the Exocore chain."
+                          },
+                          "block_number": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "block_number is the block number on Exocore."
+                          },
+                          "completed_epoch_identifier": {
+                            "type": "string",
+                            "title": "completed_epoch_identifier is the epoch identifier"
+                          },
+                          "completed_epoch_number": {
+                            "type": "string",
+                            "format": "int64",
+                            "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+                          },
+                          "undelegation_id": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                          },
+                          "amount": {
+                            "type": "string",
+                            "description": "amount is the amount of the asset to be undelegated."
+                          },
+                          "actual_completed_amount": {
+                            "type": "string",
+                            "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                          }
+                        },
+                        "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
+                      },
+                      "hold_count": {
+                        "type": "string",
+                        "format": "uint64",
+                        "title": "hold_count represents the number of holds on this undelegation"
+                      }
+                    },
+                    "title": "UndelegationAndHoldCount includes the undelegation record and the\nhold count, which is used to construct the genesis state"
+                  },
+                  "title": "undelegations is the returned undelegations with hold count"
+                }
+              },
+              "description": "UndelegationRecordList is the response to query undelegations."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_identifier",
+            "description": "epoch_identifier is the epoch identifier to query.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_number",
+            "description": "epoch_number is the epoch number to query.",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/delegation/v1/single_delegation/{staker_id}/{operator_addr}/{asset_id}": {
       "get": {
         "summary": "SingleDelegationInfo queries the single delegation information for\n{chain, staker, asset, operator}.",
         "operationId": "QuerySingleDelegationInfo",
@@ -20578,22 +20874,22 @@
           {
             "name": "staker_id",
             "description": "staker_id is the staker id.",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "operator_addr",
             "description": "operator_addr is the operator address.",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "asset_id",
             "description": "asset_id is the asset id.",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -20602,7 +20898,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/QueryUndelegationHoldCount/{record_key}": {
+    "/exocore/delegation/v1/undelegation_hold_count/{staker_id}/{asset_id}/{undelegation_id}": {
       "get": {
         "summary": "QueryUndelegationHoldCount queries the undelegation hold count.",
         "operationId": "QueryUndelegationHoldCount",
@@ -20657,11 +20953,26 @@
         },
         "parameters": [
           {
-            "name": "record_key",
-            "description": "record_key is the record key of the undelegation record.",
+            "name": "staker_id",
+            "description": "staker_id is the staker id.",
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset_id is the asset id.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "undelegation_id",
+            "description": "undelegation_id is the undelegation id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [
@@ -20669,7 +20980,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/QueryUndelegations": {
+    "/exocore/delegation/v1/undelegations/{staker_id}/{asset_id}": {
       "get": {
         "summary": "QueryUndelegations queries all undelegations for\n{staker, asset}.",
         "operationId": "QueryUndelegations",
@@ -20684,53 +20995,65 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "staker_id": {
-                        "type": "string",
-                        "description": "staker_id is the staker id."
+                      "undelegation": {
+                        "title": "undelegation is the single undelegation record",
+                        "type": "object",
+                        "properties": {
+                          "staker_id": {
+                            "type": "string",
+                            "description": "staker_id is the staker id."
+                          },
+                          "asset_id": {
+                            "type": "string",
+                            "description": "asset_id is the asset id."
+                          },
+                          "operator_addr": {
+                            "type": "string",
+                            "description": "operator_addr is the operator address."
+                          },
+                          "tx_hash": {
+                            "type": "string",
+                            "description": "tx_hash is the transaction hash on the Exocore chain."
+                          },
+                          "block_number": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "block_number is the block number on Exocore."
+                          },
+                          "completed_epoch_identifier": {
+                            "type": "string",
+                            "title": "completed_epoch_identifier is the epoch identifier"
+                          },
+                          "completed_epoch_number": {
+                            "type": "string",
+                            "format": "int64",
+                            "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+                          },
+                          "undelegation_id": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                          },
+                          "amount": {
+                            "type": "string",
+                            "description": "amount is the amount of the asset to be undelegated."
+                          },
+                          "actual_completed_amount": {
+                            "type": "string",
+                            "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                          }
+                        },
+                        "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
                       },
-                      "asset_id": {
-                        "type": "string",
-                        "description": "asset_id is the asset id."
-                      },
-                      "operator_addr": {
-                        "type": "string",
-                        "description": "operator_addr is the operator address."
-                      },
-                      "tx_hash": {
-                        "type": "string",
-                        "description": "tx_hash is the transaction hash on the client chain."
-                      },
-                      "is_pending": {
-                        "type": "boolean",
-                        "description": "is_pending is the flag to indicate if the undelegation is pending."
-                      },
-                      "block_number": {
+                      "hold_count": {
                         "type": "string",
                         "format": "uint64",
-                        "description": "block_number is the block number on Exocore."
-                      },
-                      "complete_block_number": {
-                        "type": "string",
-                        "format": "uint64",
-                        "description": "complete_block_number is the block number on Exocore at which the undelegation\nshould be completed."
-                      },
-                      "lz_tx_nonce": {
-                        "type": "string",
-                        "format": "uint64",
-                        "description": "lz_tx_nonce is the nonce of the transaction on the client chain."
-                      },
-                      "amount": {
-                        "type": "string",
-                        "description": "amount is the amount of the asset to be undelegated."
-                      },
-                      "actual_completed_amount": {
-                        "type": "string",
-                        "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                        "title": "hold_count represents the number of holds on this undelegation"
                       }
                     },
-                    "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
+                    "title": "UndelegationAndHoldCount includes the undelegation record and the\nhold count, which is used to construct the genesis state"
                   },
-                  "title": "UndelegationRecord is the returned undelegations"
+                  "title": "undelegations is the returned undelegations with hold count"
                 }
               },
               "description": "UndelegationRecordList is the response to query undelegations."
@@ -20774,132 +21097,16 @@
           {
             "name": "staker_id",
             "description": "staker_id is the staker id.",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "asset_id",
             "description": "asset_id is the asset id.",
-            "in": "query",
-            "required": false,
+            "in": "path",
+            "required": true,
             "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/delegation/v1/QueryUndelegationsByHeight": {
-      "get": {
-        "summary": "QueryUndelegationsByHeight queries all undelegations waiting to be completed by\n{height}.",
-        "operationId": "QueryUndelegationsByHeight",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "undelegations": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "staker_id": {
-                        "type": "string",
-                        "description": "staker_id is the staker id."
-                      },
-                      "asset_id": {
-                        "type": "string",
-                        "description": "asset_id is the asset id."
-                      },
-                      "operator_addr": {
-                        "type": "string",
-                        "description": "operator_addr is the operator address."
-                      },
-                      "tx_hash": {
-                        "type": "string",
-                        "description": "tx_hash is the transaction hash on the client chain."
-                      },
-                      "is_pending": {
-                        "type": "boolean",
-                        "description": "is_pending is the flag to indicate if the undelegation is pending."
-                      },
-                      "block_number": {
-                        "type": "string",
-                        "format": "uint64",
-                        "description": "block_number is the block number on Exocore."
-                      },
-                      "complete_block_number": {
-                        "type": "string",
-                        "format": "uint64",
-                        "description": "complete_block_number is the block number on Exocore at which the undelegation\nshould be completed."
-                      },
-                      "lz_tx_nonce": {
-                        "type": "string",
-                        "format": "uint64",
-                        "description": "lz_tx_nonce is the nonce of the transaction on the client chain."
-                      },
-                      "amount": {
-                        "type": "string",
-                        "description": "amount is the amount of the asset to be undelegated."
-                      },
-                      "actual_completed_amount": {
-                        "type": "string",
-                        "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
-                      }
-                    },
-                    "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
-                  },
-                  "title": "UndelegationRecord is the returned undelegations"
-                }
-              },
-              "description": "UndelegationRecordList is the response to query undelegations."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "block_height",
-            "description": "block_height is the block height to query.",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "uint64"
           }
         ],
         "tags": [
@@ -21246,7 +21453,14 @@
                         "type": "string",
                         "format": "int64"
                       },
-                      "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per eopch end."
+                      "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end."
+                    },
+                    "whitelist_address": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "whitelist_address are the bech32 addresses ,whitelist address of supported operators"
                     }
                   }
                 }
@@ -23348,6 +23562,10 @@
                         "title": "DelegatorInfo records the total opted-in USD value for the specified operator"
                       },
                       "title": "delegator_tokens is the list of asset infos"
+                    },
+                    "active": {
+                      "type": "boolean",
+                      "title": "active defines whether the validator exists in the Tendermint validator set"
                     }
                   },
                   "title": "Validator defines a validator, together with the total amount of the\nValidator's bond shares and their exchange rate to coins. Slashing results in\na decrease in the exchange rate, allowing correct calculation of future\nundelegations without iterating over delegators. When coins are delegated to\nthis validator, the validator is credited with a delegation whose number of\nbond shares is based on the amount of coins delegated divided by the current\nexchange rate. Voting power can be calculated as total bonded shares\nmultiplied by exchange rate"
@@ -23551,6 +23769,10 @@
                           "title": "DelegatorInfo records the total opted-in USD value for the specified operator"
                         },
                         "title": "delegator_tokens is the list of asset infos"
+                      },
+                      "active": {
+                        "type": "boolean",
+                        "title": "active defines whether the validator exists in the Tendermint validator set"
                       }
                     },
                     "title": "Validator defines a validator, together with the total amount of the\nValidator's bond shares and their exchange rate to coins. Slashing results in\na decrease in the exchange rate, allowing correct calculation of future\nundelegations without iterating over delegators. When coins are delegated to\nthis validator, the validator is credited with a delegation whose number of\nbond shares is based on the amount of coins delegated divided by the current\nexchange rate. Voting power can be calculated as total bonded shares\nmultiplied by exchange rate"
@@ -40052,7 +40274,6 @@
           "description": "asset_id is the id of the asset."
         },
         "info": {
-          "description": "info is the asset info.",
           "type": "object",
           "properties": {
             "total_amount": {
@@ -40071,7 +40292,8 @@
               "type": "string",
               "description": "operator_share is similar to the share of the staker, the calculation and update should\nbe same, the difference is that it represents the share of the operator itself.\nthe field is used to mark operator's own asset share."
             }
-          }
+          },
+          "description": "OperatorAssetInfo defines the information for a single asset,\nfor an operator."
         }
       },
       "title": "AssetByID is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an operator.\nIt is named AssetByID (since it is indexed by the assetID)"
@@ -40164,7 +40386,6 @@
           "description": "asset_id is the id of the asset."
         },
         "info": {
-          "description": "info is the asset info.",
           "type": "object",
           "properties": {
             "total_deposit_amount": {
@@ -40179,7 +40400,8 @@
               "type": "string",
               "description": "pending_undelegation_amount is the amount that is waiting for undelegation."
             }
-          }
+          },
+          "description": "StakerAssetInfo defines the information for a single asset.\nThe type include three states:\nstaker's deposited, withdrawable, and currently unbonding amount."
         }
       },
       "description": "DepositByAsset is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an staker.\nThe info contains the deposit amount, the withdrawable amount\nand the amount currently unbonding.\nIt is named DepositByAsset (since it is indexed by the assetID)\nand not Deposit to prevent conflict with CrossChainOpType."
@@ -40209,13 +40431,12 @@
     "exocore.assets.v1.Params": {
       "type": "object",
       "properties": {
-        "exocore_lz_app_address": {
-          "type": "string",
-          "description": "exocore_lz_app_address is the address of ExocoreGateway.sol."
-        },
-        "exocore_lz_app_event_topic": {
-          "type": "string",
-          "description": "exocore_lz_app_event_topic is the topic of the exocore lz app event."
+        "gateways": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "gateways is the addresses of gateways on Exocore."
         }
       },
       "description": "GenesisState defines the deposit module's genesis state."
@@ -40359,7 +40580,6 @@
                 "description": "asset_id is the id of the asset."
               },
               "info": {
-                "description": "info is the asset info.",
                 "type": "object",
                 "properties": {
                   "total_deposit_amount": {
@@ -40374,7 +40594,8 @@
                     "type": "string",
                     "description": "pending_undelegation_amount is the amount that is waiting for undelegation."
                   }
-                }
+                },
+                "description": "StakerAssetInfo defines the information for a single asset.\nThe type include three states:\nstaker's deposited, withdrawable, and currently unbonding amount."
               }
             },
             "description": "DepositByAsset is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an staker.\nThe info contains the deposit amount, the withdrawable amount\nand the amount currently unbonding.\nIt is named DepositByAsset (since it is indexed by the assetID)\nand not Deposit to prevent conflict with CrossChainOpType."
@@ -40397,7 +40618,6 @@
                 "description": "asset_id is the id of the asset."
               },
               "info": {
-                "description": "info is the asset info.",
                 "type": "object",
                 "properties": {
                   "total_amount": {
@@ -40416,7 +40636,8 @@
                     "type": "string",
                     "description": "operator_share is similar to the share of the staker, the calculation and update should\nbe same, the difference is that it represents the share of the operator itself.\nthe field is used to mark operator's own asset share."
                   }
-                }
+                },
+                "description": "OperatorAssetInfo defines the information for a single asset,\nfor an operator."
               }
             },
             "title": "AssetByID is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an operator.\nIt is named AssetByID (since it is indexed by the assetID)"
@@ -40433,13 +40654,12 @@
           "description": "params defines the parameters for this module.",
           "type": "object",
           "properties": {
-            "exocore_lz_app_address": {
-              "type": "string",
-              "description": "exocore_lz_app_address is the address of ExocoreGateway.sol."
-            },
-            "exocore_lz_app_event_topic": {
-              "type": "string",
-              "description": "exocore_lz_app_event_topic is the topic of the exocore lz app event."
+            "gateways": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "gateways is the addresses of gateways on Exocore."
             }
           }
         }
@@ -40836,7 +41056,7 @@
                   "type": "string",
                   "format": "uint64"
                 },
-                "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
               },
               "nom": {
                 "title": "n out of total sources are required",
@@ -40880,7 +41100,7 @@
               "start_round_id": {
                 "type": "string",
                 "format": "uint64",
-                "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
               },
               "start_base_block": {
                 "type": "string",
@@ -40895,7 +41115,7 @@
               "end_block": {
                 "type": "string",
                 "format": "uint64",
-                "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
               }
             },
             "title": "Tokenfeeder represents a price oracle for one token"
@@ -41334,7 +41554,7 @@
                             "type": "string",
                             "format": "uint64"
                           },
-                          "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                          "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
                         },
                         "nom": {
                           "title": "n out of total sources are required",
@@ -41378,7 +41598,7 @@
                         "start_round_id": {
                           "type": "string",
                           "format": "uint64",
-                          "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                          "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
                         },
                         "start_base_block": {
                           "type": "string",
@@ -41393,7 +41613,7 @@
                         "end_block": {
                           "type": "string",
                           "format": "uint64",
-                          "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                          "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
                         }
                       },
                       "title": "Tokenfeeder represents a price oracle for one token"
@@ -41821,7 +42041,7 @@
                           "type": "string",
                           "format": "uint64"
                         },
-                        "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                        "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
                       },
                       "nom": {
                         "title": "n out of total sources are required",
@@ -41865,7 +42085,7 @@
                       "start_round_id": {
                         "type": "string",
                         "format": "uint64",
-                        "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                        "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
                       },
                       "start_base_block": {
                         "type": "string",
@@ -41880,7 +42100,7 @@
                       "end_block": {
                         "type": "string",
                         "format": "uint64",
-                        "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                        "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
                       }
                     },
                     "title": "Tokenfeeder represents a price oracle for one token"
@@ -42096,7 +42316,7 @@
                       "type": "string",
                       "format": "uint64"
                     },
-                    "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                    "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
                   },
                   "nom": {
                     "title": "n out of total sources are required",
@@ -42140,7 +42360,7 @@
                   "start_round_id": {
                     "type": "string",
                     "format": "uint64",
-                    "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                    "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
                   },
                   "start_base_block": {
                     "type": "string",
@@ -42155,7 +42375,7 @@
                   "end_block": {
                     "type": "string",
                     "format": "uint64",
-                    "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                    "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
                   }
                 },
                 "title": "Tokenfeeder represents a price oracle for one token"
@@ -42619,7 +42839,7 @@
                       "type": "string",
                       "format": "uint64"
                     },
-                    "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+                    "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
                   },
                   "nom": {
                     "title": "n out of total sources are required",
@@ -42663,7 +42883,7 @@
                   "start_round_id": {
                     "type": "string",
                     "format": "uint64",
-                    "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+                    "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
                   },
                   "start_base_block": {
                     "type": "string",
@@ -42678,7 +42898,7 @@
                   "end_block": {
                     "type": "string",
                     "format": "uint64",
-                    "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+                    "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
                   }
                 },
                 "title": "Tokenfeeder represents a price oracle for one token"
@@ -42769,7 +42989,7 @@
             "type": "string",
             "format": "uint64"
           },
-          "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\nlength==0->check next field:minimum"
+          "title": "refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,\n length==0->check next field:minimum"
         },
         "nom": {
           "title": "n out of total sources are required",
@@ -42990,7 +43210,7 @@
         "start_round_id": {
           "type": "string",
           "format": "uint64",
-          "title": "include, from 1, when some token's feeder had been stop and then restart,\nthe token_id will be continuous from previous one"
+          "title": "include, from 1, when some token's feeder had been stop and then restart,\n the token_id will be continuous from previous one"
         },
         "start_base_block": {
           "type": "string",
@@ -43005,7 +43225,7 @@
         "end_block": {
           "type": "string",
           "format": "uint64",
-          "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\nand will off service by the end\nthis is set by updateParams, and the EndRoundID will be update by related. excluded,\nwill not work if current height >=EndBlock"
+          "title": "tokenfeeder is initialized with forever live, update the End parameters by voting,\n and will off service by the end\n this is set by updateParams, and the EndRoundID will be update by related. excluded,\n will not work if current height >=EndBlock"
         }
       },
       "title": "Tokenfeeder represents a price oracle for one token"
@@ -43149,6 +43369,24 @@
       },
       "title": "QueryAssociatedStakersByOperatorResponse is the response to QueryAssociatedStakersByOperatorReq"
     },
+    "exocore.delegation.v1.QueryDelegatedStakersByOperatorResponse": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "string",
+          "format": "uint64",
+          "title": "count is the number of stakers"
+        },
+        "stakers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "stakers is the returned stakers associated to the specified operator"
+        }
+      },
+      "title": "QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq"
+    },
     "exocore.delegation.v1.QueryDelegationInfoResponse": {
       "type": "object",
       "properties": {
@@ -43172,6 +43410,67 @@
         }
       },
       "description": "QueryDelegationInfoResponse is the response for delegations by staker id and\nasset id."
+    },
+    "exocore.delegation.v1.UndelegationAndHoldCount": {
+      "type": "object",
+      "properties": {
+        "undelegation": {
+          "title": "undelegation is the single undelegation record",
+          "type": "object",
+          "properties": {
+            "staker_id": {
+              "type": "string",
+              "description": "staker_id is the staker id."
+            },
+            "asset_id": {
+              "type": "string",
+              "description": "asset_id is the asset id."
+            },
+            "operator_addr": {
+              "type": "string",
+              "description": "operator_addr is the operator address."
+            },
+            "tx_hash": {
+              "type": "string",
+              "description": "tx_hash is the transaction hash on the Exocore chain."
+            },
+            "block_number": {
+              "type": "string",
+              "format": "uint64",
+              "description": "block_number is the block number on Exocore."
+            },
+            "completed_epoch_identifier": {
+              "type": "string",
+              "title": "completed_epoch_identifier is the epoch identifier"
+            },
+            "completed_epoch_number": {
+              "type": "string",
+              "format": "int64",
+              "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+            },
+            "undelegation_id": {
+              "type": "string",
+              "format": "uint64",
+              "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+            },
+            "amount": {
+              "type": "string",
+              "description": "amount is the amount of the asset to be undelegated."
+            },
+            "actual_completed_amount": {
+              "type": "string",
+              "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+            }
+          },
+          "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
+        },
+        "hold_count": {
+          "type": "string",
+          "format": "uint64",
+          "title": "hold_count represents the number of holds on this undelegation"
+        }
+      },
+      "title": "UndelegationAndHoldCount includes the undelegation record and the\nhold count, which is used to construct the genesis state"
     },
     "exocore.delegation.v1.UndelegationHoldCountResponse": {
       "type": "object",
@@ -43201,26 +43500,26 @@
         },
         "tx_hash": {
           "type": "string",
-          "description": "tx_hash is the transaction hash on the client chain."
-        },
-        "is_pending": {
-          "type": "boolean",
-          "description": "is_pending is the flag to indicate if the undelegation is pending."
+          "description": "tx_hash is the transaction hash on the Exocore chain."
         },
         "block_number": {
           "type": "string",
           "format": "uint64",
           "description": "block_number is the block number on Exocore."
         },
-        "complete_block_number": {
+        "completed_epoch_identifier": {
           "type": "string",
-          "format": "uint64",
-          "description": "complete_block_number is the block number on Exocore at which the undelegation\nshould be completed."
+          "title": "completed_epoch_identifier is the epoch identifier"
         },
-        "lz_tx_nonce": {
+        "completed_epoch_number": {
+          "type": "string",
+          "format": "int64",
+          "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+        },
+        "undelegation_id": {
           "type": "string",
           "format": "uint64",
-          "description": "lz_tx_nonce is the nonce of the transaction on the client chain."
+          "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
         },
         "amount": {
           "type": "string",
@@ -43241,53 +43540,65 @@
           "items": {
             "type": "object",
             "properties": {
-              "staker_id": {
-                "type": "string",
-                "description": "staker_id is the staker id."
+              "undelegation": {
+                "title": "undelegation is the single undelegation record",
+                "type": "object",
+                "properties": {
+                  "staker_id": {
+                    "type": "string",
+                    "description": "staker_id is the staker id."
+                  },
+                  "asset_id": {
+                    "type": "string",
+                    "description": "asset_id is the asset id."
+                  },
+                  "operator_addr": {
+                    "type": "string",
+                    "description": "operator_addr is the operator address."
+                  },
+                  "tx_hash": {
+                    "type": "string",
+                    "description": "tx_hash is the transaction hash on the Exocore chain."
+                  },
+                  "block_number": {
+                    "type": "string",
+                    "format": "uint64",
+                    "description": "block_number is the block number on Exocore."
+                  },
+                  "completed_epoch_identifier": {
+                    "type": "string",
+                    "title": "completed_epoch_identifier is the epoch identifier"
+                  },
+                  "completed_epoch_number": {
+                    "type": "string",
+                    "format": "int64",
+                    "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+                  },
+                  "undelegation_id": {
+                    "type": "string",
+                    "format": "uint64",
+                    "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                  },
+                  "amount": {
+                    "type": "string",
+                    "description": "amount is the amount of the asset to be undelegated."
+                  },
+                  "actual_completed_amount": {
+                    "type": "string",
+                    "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                  }
+                },
+                "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
               },
-              "asset_id": {
-                "type": "string",
-                "description": "asset_id is the asset id."
-              },
-              "operator_addr": {
-                "type": "string",
-                "description": "operator_addr is the operator address."
-              },
-              "tx_hash": {
-                "type": "string",
-                "description": "tx_hash is the transaction hash on the client chain."
-              },
-              "is_pending": {
-                "type": "boolean",
-                "description": "is_pending is the flag to indicate if the undelegation is pending."
-              },
-              "block_number": {
+              "hold_count": {
                 "type": "string",
                 "format": "uint64",
-                "description": "block_number is the block number on Exocore."
-              },
-              "complete_block_number": {
-                "type": "string",
-                "format": "uint64",
-                "description": "complete_block_number is the block number on Exocore at which the undelegation\nshould be completed."
-              },
-              "lz_tx_nonce": {
-                "type": "string",
-                "format": "uint64",
-                "description": "lz_tx_nonce is the nonce of the transaction on the client chain."
-              },
-              "amount": {
-                "type": "string",
-                "description": "amount is the amount of the asset to be undelegated."
-              },
-              "actual_completed_amount": {
-                "type": "string",
-                "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                "title": "hold_count represents the number of holds on this undelegation"
               }
             },
-            "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
+            "title": "UndelegationAndHoldCount includes the undelegation record and the\nhold count, which is used to construct the genesis state"
           },
-          "title": "UndelegationRecord is the returned undelegations"
+          "title": "undelegations is the returned undelegations with hold count"
         }
       },
       "description": "UndelegationRecordList is the response to query undelegations."
@@ -43381,7 +43692,14 @@
             "type": "string",
             "format": "int64"
           },
-          "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per eopch end."
+          "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end."
+        },
+        "whitelist_address": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "whitelist_address are the bech32 addresses ,whitelist address of supported operators"
         }
       },
       "title": "AVSinfo represent the information of avs"
@@ -43538,7 +43856,14 @@
                 "type": "string",
                 "format": "int64"
               },
-              "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per eopch end."
+              "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end."
+            },
+            "whitelist_address": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "title": "whitelist_address are the bech32 addresses ,whitelist address of supported operators"
             }
           }
         }
@@ -44839,6 +45164,10 @@
                 "title": "DelegatorInfo records the total opted-in USD value for the specified operator"
               },
               "title": "delegator_tokens is the list of asset infos"
+            },
+            "active": {
+              "type": "boolean",
+              "title": "active defines whether the validator exists in the Tendermint validator set"
             }
           },
           "title": "Validator defines a validator, together with the total amount of the\nValidator's bond shares and their exchange rate to coins. Slashing results in\na decrease in the exchange rate, allowing correct calculation of future\nundelegations without iterating over delegators. When coins are delegated to\nthis validator, the validator is credited with a delegation whose number of\nbond shares is based on the amount of coins delegated divided by the current\nexchange rate. Voting power can be calculated as total bonded shares\nmultiplied by exchange rate"
@@ -44976,6 +45305,10 @@
                   "title": "DelegatorInfo records the total opted-in USD value for the specified operator"
                 },
                 "title": "delegator_tokens is the list of asset infos"
+              },
+              "active": {
+                "type": "boolean",
+                "title": "active defines whether the validator exists in the Tendermint validator set"
               }
             },
             "title": "Validator defines a validator, together with the total amount of the\nValidator's bond shares and their exchange rate to coins. Slashing results in\na decrease in the exchange rate, allowing correct calculation of future\nundelegations without iterating over delegators. When coins are delegated to\nthis validator, the validator is credited with a delegation whose number of\nbond shares is based on the amount of coins delegated divided by the current\nexchange rate. Voting power can be calculated as total bonded shares\nmultiplied by exchange rate"
@@ -45232,6 +45565,10 @@
             "title": "DelegatorInfo records the total opted-in USD value for the specified operator"
           },
           "title": "delegator_tokens is the list of asset infos"
+        },
+        "active": {
+          "type": "boolean",
+          "title": "active defines whether the validator exists in the Tendermint validator set"
         }
       },
       "title": "Validator defines a validator, together with the total amount of the\nValidator's bond shares and their exchange rate to coins. Slashing results in\na decrease in the exchange rate, allowing correct calculation of future\nundelegations without iterating over delegators. When coins are delegated to\nthis validator, the validator is credited with a delegation whose number of\nbond shares is based on the amount of coins delegated divided by the current\nexchange rate. Voting power can be calculated as total bonded shares\nmultiplied by exchange rate"
