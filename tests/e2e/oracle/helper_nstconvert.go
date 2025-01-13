@@ -23,7 +23,8 @@ func convertBalanceChangeToBytes(stakerChanges [][]int) []byte {
 
 		// change amount -> bytes
 		change := stakerChange[1]
-		if change > math.MaxUint16 || change < 0 {
+		if (change > 0 && change > math.MaxUint16) ||
+			(change < 0 && (-1*change) > math.MaxUint16) {
 			return make([]byte, 32)
 		}
 		var changeBytes []byte
