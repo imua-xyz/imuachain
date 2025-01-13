@@ -53,6 +53,7 @@ func (c *cacheMsgs) remove(item *ItemM) {
 }
 
 func (c cacheMsgs) commit(ctx sdk.Context, k common.KeeperOracle) {
+	// #nosec G115  // block height is not negative
 	block := uint64(ctx.BlockHeight())
 
 	recentMsgs := types.RecentMsg{
@@ -69,6 +70,7 @@ func (c cacheMsgs) commit(ctx sdk.Context, k common.KeeperOracle) {
 	i := 0
 	for ; i < len(index.Index); i++ {
 		b := index.Index[i]
+		// #nosec G115  // maxNonce must not be negative
 		if b > block-uint64(common.MaxNonce) {
 			break
 		}
@@ -101,6 +103,7 @@ func (c *cacheValidator) add(validators map[string]*big.Int) {
 }
 
 func (c *cacheValidator) commit(ctx sdk.Context, k common.KeeperOracle) {
+	// #nosec G115  // block height is not negative
 	block := uint64(ctx.BlockHeight())
 	k.SetValidatorUpdateBlock(ctx, types.ValidatorUpdateBlock{Block: block})
 }
@@ -113,11 +116,13 @@ func (c *cacheParams) add(p ItemP) {
 }
 
 func (c *cacheParams) commit(ctx sdk.Context, k common.KeeperOracle) {
+	// #nosec G115  // block height is not negative
 	block := uint64(ctx.BlockHeight())
 	index, _ := k.GetIndexRecentParams(ctx)
 	i := 0
 	for ; i < len(index.Index); i++ {
 		b := index.Index[i]
+		// #nosec G115  // maxNonce must not be negative
 		if b >= block-uint64(common.MaxNonce) {
 			break
 		}

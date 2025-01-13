@@ -8,15 +8,19 @@ import (
 
 func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader) *round {
 	return &round{
-		startBaseBlock:  int64(tokenFeeder.StartBaseBlock),
-		startRoundID:    int64(tokenFeeder.StartRoundID),
-		endBlock:        int64(tokenFeeder.EndBlock),
+		// #nosec G115
+		startBaseBlock: int64(tokenFeeder.StartBaseBlock),
+		// #nosec G115
+		startRoundID: int64(tokenFeeder.StartRoundID),
+		// #nosec G115
+		endBlock: int64(tokenFeeder.EndBlock),
+		// #nosec G115
 		interval:        int64(tokenFeeder.Interval),
 		quoteWindowSize: quoteWindowSize,
-
-		feederID: feederID,
-		tokenID:  int64(tokenFeeder.TokenID),
-		cache:    cache,
+		feederID:        feederID,
+		// #nosec G115
+		tokenID: int64(tokenFeeder.TokenID),
+		cache:   cache,
 
 		// default value
 		status:         roundStatusClosed,
@@ -65,9 +69,10 @@ func (r *round) getMsgItemFromProto(msg *oracletypes.MsgItem) *MsgItem {
 	power, _ := r.cache.GetPowerForValidator(msg.Validator)
 	priceSources := make([]*priceSource, 0, len(msg.PSources))
 	for _, ps := range msg.PSources {
-		priceSources = append(priceSources, GetPriceSourceFromProto(ps, r.cache))
+		priceSources = append(priceSources, getPriceSourceFromProto(ps, r.cache))
 	}
 	return &MsgItem{
+		// #nosec G115
 		FeederID:     int64(msg.FeederID),
 		Validator:    msg.Validator,
 		Power:        power,
@@ -117,8 +122,11 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes
 }
 
 func (r *round) UpdateParams(tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64) {
+	// #nosec G115
 	r.startBaseBlock = int64(tokenFeeder.StartBaseBlock)
+	// #nosec G115
 	r.endBlock = int64(tokenFeeder.EndBlock)
+	// #nosec G115
 	r.interval = int64(tokenFeeder.Interval)
 	r.quoteWindowSize = quoteWindowSize
 }
@@ -216,6 +224,7 @@ func (r *round) PerformanceReview(validator string) (miss, malicious bool) {
 	return
 }
 
+//nolint:unparam
 func (r *round) getFinalDetIDForSourceID(sourceID int64) string {
 	return r.a.ds.GetFinalDetIDForSourceID(sourceID)
 }

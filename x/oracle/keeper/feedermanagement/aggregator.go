@@ -239,7 +239,7 @@ func (rv *recordsValidators) GetFinalPrice() (*PriceResult, bool) {
 }
 
 func (rv *recordsValidators) GetFinalPriceForValidators() (map[string]*PriceResult, bool) {
-	if rv.finalPrices != nil && len(rv.finalPrices) > 0 {
+	if len(rv.finalPrices) > 0 {
 		return rv.finalPrices, true
 	}
 	ret := make(map[string]*PriceResult)

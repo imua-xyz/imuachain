@@ -15,6 +15,7 @@ func (k Keeper) SetParamsForCache(ctx sdk.Context, params types.RecentParams) {
 		maxNonce := k.GetParams(ctx).MaxNonce
 		for ; i < len(index.Index); i++ {
 			b := index.Index[i]
+			// #nosec G115  // maxNonce is not negative
 			if b > block-uint64(maxNonce) {
 				break
 			}
@@ -136,5 +137,5 @@ func (k Keeper) GetRecentParamsWithinMaxNonce(ctx sdk.Context) (recentParamsList
 			prev = types.RecentParams{}
 		}
 	}
-	return
+	return recentParamsList, prev, latest
 }

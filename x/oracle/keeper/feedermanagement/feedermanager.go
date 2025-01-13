@@ -9,7 +9,6 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -25,6 +24,7 @@ func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	}
 }
 
+//nolint:revive
 func (f *FeederManager) GetCaches() *caches {
 	return f.cs
 }
@@ -107,12 +107,14 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	height := ctx.BlockHeight()
 	if f.forceSeal {
 		for _, r := range f.rounds {
+			// #nosec G115  // feederID is index of slice
 			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 		}
 	} else {
 		for _, r := range f.rounds {
 			if r.IsQuotingWindowEnd(height) {
 				logger.Debug("clear nonces for closing quoting window", "feederID", r.feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
+				// #nosec G115  // feederID is index of slice
 				f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 			}
 		}
@@ -125,6 +127,7 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	for _, feederID := range feederIDs {
 		r := f.rounds[feederID]
 		logger.Debug("init nonces for new quoting window", "feederID", feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
+		// #nosec G115  // feederID is index of slice
 		f.k.AddZeroNonceItemWithFeederIDForValidators(ctx, uint64(feederID), validators)
 	}
 }
@@ -271,9 +274,9 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 	if len(successFeederIDs) > 0 {
 		feederIDsStr := strings.Join(successFeederIDs, "_")
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
-			types.EventTypeCreatePrice,
-			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess),
-			sdk.NewAttribute(types.AttributeKeyFeederIDs, feederIDsStr),
+			oracletypes.EventTypeCreatePrice,
+			sdk.NewAttribute(oracletypes.AttributeKeyPriceUpdated, oracletypes.AttributeValuePriceUpdatedSuccess),
+			sdk.NewAttribute(oracletypes.AttributeKeyFeederIDs, feederIDsStr),
 		))
 	}
 }
@@ -550,6 +553,7 @@ func (f *FeederManager) SetForceSeal() {
 	f.forceSeal = true
 }
 
+//nolint:revive
 func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
 	// TODO: implement me
 	return nil
@@ -561,12 +565,14 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 	}
 	msgItem := getProtoMsgItemFromQuote(msg)
 
+	// #nosec G115  // feederID is index of slice
 	r, ok := f.rounds[int64(msgItem.FeederID)]
 	if !ok {
 		// This should not happened since we do check the nonce in anthHandle
 		return nil, fmt.Errorf("round not exists for feederID:%d, porposer:%s", msgItem.FeederID, msgItem.Validator)
 	}
 
+	// #nosec G115  // baseBlock is block height which is not negative
 	if valid := r.ValidQuotingBaseBlock(int64(msg.BasedBlock)); !valid {
 		return nil, fmt.Errorf("failed to process price-feed msg for feederID:%d, round is quoting:%t,quotingWindow is open:%t, expected baseBlock:%d, got baseBlock:%d", msgItem.FeederID, r.IsQuoting(), r.IsQuotingWindowOpen(), r.roundBaseBlock, msg.BasedBlock)
 	}
@@ -629,11 +635,13 @@ func (f *FeederManager) updateCheckTx() {
 
 func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) {
 	for _, msgItem := range msgItems {
+		// #nosec G115  // feederID is index of slice
 		r, ok := f.rounds[int64(msgItem.FeederID)]
 		if !ok {
 			continue
 		}
 		// error deos not need to be handled in recovery mode
+		//nolint:all
 		r.Tally(msgItem)
 	}
 }
@@ -647,7 +655,7 @@ func (f *FeederManager) initCaches(ctx sdk.Context) {
 	for _, v := range validatorSet {
 		validatorPowers[sdk.ConsAddress(v.Address).String()] = big.NewInt(v.Power)
 	}
-	f.cs.Init(ctx, f.k, &params, validatorPowers)
+	f.cs.Init(f.k, &params, validatorPowers)
 }
 
 func (f *FeederManager) recovery(ctx sdk.Context) bool {
@@ -662,6 +670,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 		// it's safe to panic since this will only happen when the node is starting with something wrong in the store
 		panic("validator update block not found in recovery mode for feeder manager")
 	}
+	// #nosec G115  // validatorUpdateBlock.Block represents blockheight
 	startHeight, replayRecentParamsList := getRecoveryStartPoint(height, recentParamsList, &prevRecentParams, &latestRecentParams, int64(validatorUpdateBlock.Block))
 
 	f.cs = newCaches()
@@ -674,7 +683,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 		validatorPowers[sdk.ConsAddress(v.Address).String()] = big.NewInt(v.Power)
 	}
 
-	f.cs.Init(ctx, f.k, params, validatorPowers)
+	f.cs.Init(f.k, params, validatorPowers)
 
 	replayHeight := startHeight - 1
 
@@ -683,7 +692,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 		if tfID == 0 {
 			continue
 		}
-		// safe conversion
+		// #nosec G115  // safe conversion
 		if tf.EndBlock > 0 && int64(tf.EndBlock) <= replayHeight {
 			continue
 		}
@@ -700,9 +709,11 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 		// only execute msgItems corresponding to rounds opened on or after replayHeight, since any rounds opened before replay height must be closed on or before height-1
 		// which means no memory state need to be updated for thoes rounds
 		// and we don't need to take care of 'close quoting-window' since the size of replay window t most equals to maxNonce
+		// #nosec G115  // block is not negative
 		if len(recentMsgs) > 0 && int64(recentMsgs[0].Block) <= startHeight {
 			i := 0
 			for idx, recentMsg := range recentMsgs {
+				// #nosec G115  // block height is defined as int64 in cosmossdk
 				if int64(recentMsg.Block) > startHeight {
 					break
 				}
@@ -714,6 +725,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 			}
 			recentMsgs = recentMsgs[i+1:]
 		}
+		// #nosec G115
 		if len(replayRecentParamsList) > 0 && int64(replayRecentParamsList[0].Block) == startHeight {
 			params = replayRecentParamsList[0].Params
 			replayRecentParamsList = replayRecentParamsList[1:]
@@ -780,15 +792,17 @@ func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.
 		// for empty recetParamsList, use latestrecentParams as the start point
 		replayRecentParamsList = append(replayRecentParamsList, latestRecentParams)
 		height++
-		return
+		return height, replayRecentParamsList
 	}
 
 	if prevRecentParams.Block > 0 && prevRecentParams.Params.IsForceSealingUpdate(recentParamsList[0].Params) {
+		// #nosec G115
 		height = int64(recentParamsList[0].Block)
 	}
 	idx := 0
 	for i := 1; i < len(recentParamsList); i++ {
 		if recentParamsList[i-1].Params.IsForceSealingUpdate(recentParamsList[i].Params) {
+			// #nosec G115
 			height = int64(recentParamsList[i].Block)
 			idx = i
 		}
@@ -799,7 +813,7 @@ func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.
 		height = validatorUpdateHeight
 	}
 	height++
-	return
+	return height, replayRecentParamsList
 }
 
 func getProtoMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgItem {

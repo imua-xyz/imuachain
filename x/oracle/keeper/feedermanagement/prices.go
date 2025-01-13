@@ -39,15 +39,17 @@ func (p *PriceResult) ProtoPriceTimeRound(roundID int64, timestamp string) *orac
 	}
 }
 
-func GetPriceSourceFromProto(ps *oracletypes.PriceSource, checker sourceChecker) *priceSource {
+func getPriceSourceFromProto(ps *oracletypes.PriceSource, checker sourceChecker) *priceSource {
 	prices := make([]*PriceInfo, 0, len(ps.Prices))
 	for _, p := range ps.Prices {
 		prices = append(prices, GetPriceInfoFromProtoPriceTimeDetID(p))
 	}
 	return &priceSource{
+		// #nosec G115
 		deterministic: checker.IsDeterministic(int64(ps.SourceID)),
-		sourceID:      int64(ps.SourceID),
-		prices:        prices,
+		// #nosec G115
+		sourceID: int64(ps.SourceID),
+		prices:   prices,
 	}
 }
 
@@ -80,14 +82,6 @@ func (pv *priceValidator) Cpy() *priceValidator {
 		priceSources: priceSources,
 	}
 }
-
-// type priceValidator struct {
-// 	finalPrice *PriceResult
-// 	validator  string
-// 	power      *big.Int
-// 	// each source will get a single final price independetly, the order of sources does not matter, map is safe
-// 	priceSources map[int64]*priceSource
-// }
 
 func (pv *priceValidator) Equals(pv2 *priceValidator) bool {
 	if pv == nil && pv2 == nil {
@@ -151,25 +145,6 @@ func (pv *priceValidator) ApplyAddedPriceSources(psMap map[int64]*priceSource) {
 	}
 }
 
-// AddPriceSource adds prices of a source
-// func (pv *priceValidator) AddPriceSource(psNew *priceSource, check bool) (*priceSource, error) {
-// 	sourceID := psNew.sourceID
-// 	ps, ok := pv.priceSources[sourceID]
-// 	if !ok {
-// 		ps = newPriceSource(sourceID, psNew.deterministic)
-// 	} else if check {
-// 		ps = ps.Cpy()
-// 	}
-// 	ret, err := ps.Add(psNew)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to add priceSource for priceValidator, sourceID:%d, error:%w", sourceID, err)
-// 	}
-// 	if !ok && !check {
-// 		pv.priceSources[sourceID] = ps
-// 	}
-// 	return ret, nil
-// }
-
 // TODO: V2: check valdiator has provided all sources required by rules(defined in oracle.params)
 func (pv *priceValidator) GetFinalPrice() (*PriceResult, bool) {
 	if pv.finalPrice != nil {
@@ -191,6 +166,7 @@ func (pv *priceValidator) GetFinalPrice() (*PriceResult, bool) {
 	pv.finalPrice = defaultAggMedian.GetResult()
 	return pv.finalPrice, true
 }
+
 func (pv *priceValidator) UpdateFinalPriceForDS(sourceID int64, finalPrice *PriceResult) bool {
 	if finalPrice == nil {
 		return false

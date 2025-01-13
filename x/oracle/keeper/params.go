@@ -39,6 +39,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	chainID := uint64(0)
 	for id, c := range p.Chains {
 		if c.Name == oInfo.Chain.Name {
+			// #nosec G115
 			chainID = uint64(id)
 			break
 		}
@@ -49,6 +50,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 			Name: oInfo.Chain.Name,
 			Desc: oInfo.Chain.Desc,
 		})
+		// #nosec G115
 		chainID = uint64(len(p.Chains) - 1)
 	}
 	decimalInt, err := strconv.ParseInt(oInfo.Token.Decimal, 10, 32)
@@ -95,10 +97,12 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 
 	// set a tokenFeeder for the new token
 	p.TokenFeeders = append(p.TokenFeeders, &types.TokenFeeder{
+		// #nosec G115 // len(p.Tokens) must be positive since we just append an element for it
 		TokenID: uint64(len(p.Tokens) - 1),
 		// we only support rule_1 for v1
-		RuleID:         1,
-		StartRoundID:   1,
+		RuleID:       1,
+		StartRoundID: 1,
+		// #nosec G115
 		StartBaseBlock: uint64(ctx.BlockHeight() + startAfterBlocks),
 		Interval:       intervalInt,
 		// we don't end feeders for v1

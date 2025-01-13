@@ -391,6 +391,8 @@ func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 			msg := msg.(*oracletypes.MsgCreatePrice)
 			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
 				return ctx, errors.New("invalid address")
+				// #nosec G115  // safe conversion
+				// TODO: define msg.Nonce as uint32 to avoid conversion
 			} else if _, err := isd.oracleKeeper.CheckAndIncreaseNonce(ctx, sdk.ConsAddress(accAddress).String(), msg.FeederID, uint32(msg.Nonce)); err != nil {
 				return ctx, err
 			}
@@ -445,6 +447,7 @@ func (vscd ValidateSigCountDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 	sigCount := 0
 	for _, pk := range pubKeys {
 		sigCount += CountSubKeys(pk)
+		// #nosec G115
 		if uint64(sigCount) > params.TxSigLimit {
 			return ctx, sdkerrors.ErrTooManySignatures.Wrapf("signatures: %d, limit: %d", sigCount, params.TxSigLimit)
 		}

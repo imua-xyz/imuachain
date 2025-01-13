@@ -322,6 +322,8 @@ func (p Params) UpdateTokens(currentHeight uint64, tokens ...*Token) (Params, er
 				if len(t.AssetID) > 0 {
 					token.AssetID = t.AssetID
 				}
+				// tokenID is actually uint since it's index of array
+				//nolint:gosec
 				if !p.TokenStarted(uint64(tokenID), currentHeight) {
 					// contractAddres is mainly used as a description information
 					if len(t.ContractAddress) > 0 {
@@ -553,6 +555,7 @@ func (p Params) IsValidSource(sourceID uint64) bool {
 
 func (p Params) GetTokenFeeder(feederID uint64) *TokenFeeder {
 	for k, v := range p.TokenFeeders {
+		// #nosec G115  // index of array is uint
 		if uint64(k) == feederID {
 			return v
 		}
@@ -562,6 +565,7 @@ func (p Params) GetTokenFeeder(feederID uint64) *TokenFeeder {
 
 func (p Params) GetTokenInfo(feederID uint64) *Token {
 	for k, v := range p.TokenFeeders {
+		// #nosec G115  // index of arry is uint
 		if uint64(k) == feederID {
 			return p.Tokens[v.TokenID]
 		}
@@ -587,6 +591,7 @@ func (p Params) CheckRules(feederID uint64, prices []*PriceSource) (bool, error)
 				if source.Valid {
 					notFound = true
 					for _, p := range prices {
+						// #nosec G115  // index of array is uint
 						if p.SourceID == uint64(sID) {
 							notFound = false
 							break

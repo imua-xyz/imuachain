@@ -19,6 +19,7 @@ import (
 // GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID, because /* the slash  */event occurs in dogfood doesn't have a TxID. It isn't submitted through an external transaction.
 func GetSlashIDForDogfood(infraction stakingtypes.Infraction, infractionHeight int64) string {
 	// #nosec G701
+	// #nosec G115
 	return strings.Join([]string{hexutil.EncodeUint64(uint64(infraction)), hexutil.EncodeUint64(uint64(infractionHeight))}, utils.DelimiterForID)
 }
 
