@@ -323,7 +323,7 @@ func (p Params) UpdateTokens(currentHeight uint64, tokens ...*Token) (Params, er
 					token.AssetID = t.AssetID
 				}
 				// tokenID is actually uint since it's index of array
-				//nolint:gosec
+				// #gosec G115
 				if !p.TokenStarted(uint64(tokenID), currentHeight) {
 					// contractAddres is mainly used as a description information
 					if len(t.ContractAddress) > 0 {
