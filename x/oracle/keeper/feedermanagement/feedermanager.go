@@ -94,7 +94,7 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.Params) {
 	if params != nil {
 		f.SetParamsUpdated()
-		f.cs.AddCache(params)
+		_ = f.cs.AddCache(params)
 	}
 	f.updateAndCommitRoundsInRecovery(ctx)
 	f.prepareRounds(ctx)
@@ -197,7 +197,7 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (addedValidators 
 		if paramsOld.IsSlashingResetUpdate(&params) {
 			f.SetResetSlasing()
 		}
-		f.cs.AddCache(&params)
+		_ = f.cs.AddCache(&params)
 	}
 
 	// update validators
@@ -216,7 +216,7 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (addedValidators 
 			}
 		}
 		// update validator set information in cache
-		f.cs.AddCache(ItemV(validatorMap))
+		_ = f.cs.AddCache(ItemV(validatorMap))
 	}
 
 	// commit caches: msgs is exists, params if updated, validatorPowers is updated
@@ -250,11 +250,14 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 			finalPrice, ok := r.FinalPrice()
 			if !ok {
 				logger.Info("commit round with price from previous", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "heigth", height)
+				// #nosec G115  // tokenID is index of slice
 				f.k.GrowRoundID(ctx, uint64(r.tokenID))
 			} else {
 				if f.cs.IsRuleV1(r.feederID) {
 					priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
 					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "heigth", height)
+
+					// #nosec G115  // tokenID is index of slice
 					f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit)
 
 					fstr := strconv.FormatInt(feederID, 10)
@@ -366,6 +369,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 					continue
 				}
 				reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
+				// #nosec G115
 				index := uint64(reportedInfo.IndexOffset % reportedRoundsWindow)
 				reportedInfo.IndexOffset++
 				// Update reported round bit array & counter
@@ -585,7 +589,7 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 		if !isCheckTx &&
 			validMsgItem != nil &&
 			(err == nil || sdkerrors.IsOf(err, oracletypes.ErrQuoteRecorded)) {
-			f.cs.AddCache(validMsgItem)
+			_ = f.cs.AddCache(validMsgItem)
 		}
 	}()
 

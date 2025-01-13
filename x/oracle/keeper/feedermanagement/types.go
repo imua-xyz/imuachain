@@ -209,18 +209,6 @@ func (osi *orderedSliceInt64) sort() {
 	})
 }
 
-func (osi orderedSliceInt64) Equal(o orderedSliceInt64) bool {
-	if len(osi) != len(o) {
-		return false
-	}
-	for idx, v := range osi {
-		if v != o[idx] {
-			return false
-		}
-	}
-	return true
-}
-
 type FeederManager struct {
 	fCheckTx        *FeederManager
 	k               common.KeeperOracle
