@@ -73,6 +73,111 @@
         ]
       }
     },
+    "/exocore/epochs/v1/epoch/{identifier}": {
+      "get": {
+        "summary": "EpochInfo provides the epoch information for the specified identifier.",
+        "operationId": "EpochInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "epoch": {
+                  "description": "epoch is the EpochInfo for the requested epoch.",
+                  "type": "object",
+                  "properties": {
+                    "identifier": {
+                      "type": "string",
+                      "description": "identifier is the unique identifier of the epoch, typically, the measure\nof time used to define the epoch."
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "start_time of the epoch. it may be in the future, in which case, the epoch\nis not yet active."
+                    },
+                    "duration": {
+                      "type": "string",
+                      "description": "duration is the time in between epoch i and epoch i+1. for an epoch to\nbe meaningful, the duration should be more than the block time of the chain."
+                    },
+                    "current_epoch": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "current_epoch is the number of the currently ongoing epoch, identified by the\nidentifier. the first epoch starts during the first block whose block time\nis greater than or equal to the start_time of the epoch."
+                    },
+                    "current_epoch_start_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "current_epoch_start_time is the start time of the current time interval, which\nis (current_epoch_start_time, current_epoch_start_time + duration]. when we say\nthat the timer has \"ticked\", it means that the interval's components are increased\nby the duration. note, however, that only one tick can occur in any given block.\n\nthe above constraint results in a deviation from the \"ideal\" tick time / the wall\nclock time. this is particularly obvious when a chain goes down.\nsay, at t = 13, the interval is (10, 10 + 5 = 15].\nat t = 14, it is unchanged even in a new block, since 10 < t <= 15\nat t = 15, it is unchanged even in a new block, since 10 < t <= 15\nat t = 16, it increases to (15, 20]. but then assume that the chain goes down\nand comes back up at t = 35, producing 1 block each second after that as well.\nat t = 35, the interval increases by 1 tick to (15, 20] (at the block end).\nat t = 36, it increases to (20, 25].\nat t = 37, it increases to (25, 30].\nat t = 38, it increases to (30, 35].\nat t = 39, it increases to (35, 40].\nat t = 40, it is unchanged even in a new block, since 35 < t <= 40.\nat t = 41, it increases to (40, 45]."
+                    },
+                    "epoch_counting_started": {
+                      "type": "boolean",
+                      "description": "epoch_counting_started is true if the epoch counting has started for this identifier.\nit is independent of the epoch number or the time; it just indicates that at least\none epoch for this identifier has started counting."
+                    },
+                    "current_epoch_start_height": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "current_epoch_start_height is the block height at which the current epoch started,\nor the height at which the timer last \"ticked\"."
+                    }
+                  }
+                },
+                "block_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "block_time is the block time of the query block ctx."
+                }
+              },
+              "description": "QueryEpochInfoResponse is the response type for the Query/EpochInfo RPC method."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "description": "identifier of the epoch for which the information is requested.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/exocore/epochs/v1/epochs": {
       "get": {
         "summary": "EpochInfos provide a list of currently running epochs.",
@@ -24539,6 +24644,55 @@
         }
       },
       "description": "QueryCurrentEpochResponse is the response type for the Query/EpochInfos RPC\nmethod."
+    },
+    "exocore.epochs.v1.QueryEpochInfoResponse": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "description": "epoch is the EpochInfo for the requested epoch.",
+          "type": "object",
+          "properties": {
+            "identifier": {
+              "type": "string",
+              "description": "identifier is the unique identifier of the epoch, typically, the measure\nof time used to define the epoch."
+            },
+            "start_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "start_time of the epoch. it may be in the future, in which case, the epoch\nis not yet active."
+            },
+            "duration": {
+              "type": "string",
+              "description": "duration is the time in between epoch i and epoch i+1. for an epoch to\nbe meaningful, the duration should be more than the block time of the chain."
+            },
+            "current_epoch": {
+              "type": "string",
+              "format": "int64",
+              "description": "current_epoch is the number of the currently ongoing epoch, identified by the\nidentifier. the first epoch starts during the first block whose block time\nis greater than or equal to the start_time of the epoch."
+            },
+            "current_epoch_start_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "current_epoch_start_time is the start time of the current time interval, which\nis (current_epoch_start_time, current_epoch_start_time + duration]. when we say\nthat the timer has \"ticked\", it means that the interval's components are increased\nby the duration. note, however, that only one tick can occur in any given block.\n\nthe above constraint results in a deviation from the \"ideal\" tick time / the wall\nclock time. this is particularly obvious when a chain goes down.\nsay, at t = 13, the interval is (10, 10 + 5 = 15].\nat t = 14, it is unchanged even in a new block, since 10 < t <= 15\nat t = 15, it is unchanged even in a new block, since 10 < t <= 15\nat t = 16, it increases to (15, 20]. but then assume that the chain goes down\nand comes back up at t = 35, producing 1 block each second after that as well.\nat t = 35, the interval increases by 1 tick to (15, 20] (at the block end).\nat t = 36, it increases to (20, 25].\nat t = 37, it increases to (25, 30].\nat t = 38, it increases to (30, 35].\nat t = 39, it increases to (35, 40].\nat t = 40, it is unchanged even in a new block, since 35 < t <= 40.\nat t = 41, it increases to (40, 45]."
+            },
+            "epoch_counting_started": {
+              "type": "boolean",
+              "description": "epoch_counting_started is true if the epoch counting has started for this identifier.\nit is independent of the epoch number or the time; it just indicates that at least\none epoch for this identifier has started counting."
+            },
+            "current_epoch_start_height": {
+              "type": "string",
+              "format": "int64",
+              "description": "current_epoch_start_height is the block height at which the current epoch started,\nor the height at which the timer last \"ticked\"."
+            }
+          }
+        },
+        "block_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "block_time is the block time of the query block ctx."
+        }
+      },
+      "description": "QueryEpochInfoResponse is the response type for the Query/EpochInfo RPC method."
     },
     "exocore.epochs.v1.QueryEpochsInfoResponse": {
       "type": "object",
