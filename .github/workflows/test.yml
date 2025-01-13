@@ -43,4 +43,5 @@ jobs:
       - name: Test and create coverage report
         run: |
           make test-unit-cover
+          make test-unit-e2e
         if: env.GIT_DIFF
