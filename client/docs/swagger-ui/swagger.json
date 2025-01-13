@@ -20816,7 +20816,7 @@
     },
     "/exocore/delegation/v1/single_delegation/{staker_id}/{operator_addr}/{asset_id}": {
       "get": {
-        "summary": "SingleDelegationInfo queries the single delegation information for\n{chain, staker, asset, operator}.",
+        "summary": "SingleDelegationInfo queries the single delegation information and the\nmaximum undelegatable amount for {staker, asset, operator}.",
         "operationId": "QuerySingleDelegationInfo",
         "responses": {
           "200": {
@@ -20824,16 +20824,27 @@
             "schema": {
               "type": "object",
               "properties": {
-                "undelegatable_share": {
-                  "type": "string",
-                  "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                "delegation_amounts": {
+                  "type": "object",
+                  "properties": {
+                    "undelegatable_share": {
+                      "type": "string",
+                      "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                    },
+                    "wait_undelegation_amount": {
+                      "type": "string",
+                      "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                    }
+                  },
+                  "description": "DelegationAmounts is the delegation amount response for a single delegation.",
+                  "title": "delegation_amounts is the delegation info recorded in the KVStore"
                 },
-                "wait_undelegation_amount": {
+                "max_undelegatable_amount": {
                   "type": "string",
-                  "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                  "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
                 }
               },
-              "description": "DelegationAmounts is the delegation amount response for a single delegation."
+              "title": "SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo"
             }
           },
           "default": {
@@ -43410,6 +43421,31 @@
         }
       },
       "description": "QueryDelegationInfoResponse is the response for delegations by staker id and\nasset id."
+    },
+    "exocore.delegation.v1.SingleDelegationInfoResponse": {
+      "type": "object",
+      "properties": {
+        "delegation_amounts": {
+          "type": "object",
+          "properties": {
+            "undelegatable_share": {
+              "type": "string",
+              "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+            },
+            "wait_undelegation_amount": {
+              "type": "string",
+              "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+            }
+          },
+          "description": "DelegationAmounts is the delegation amount response for a single delegation.",
+          "title": "delegation_amounts is the delegation info recorded in the KVStore"
+        },
+        "max_undelegatable_amount": {
+          "type": "string",
+          "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+        }
+      },
+      "title": "SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo"
     },
     "exocore.delegation.v1.UndelegationAndHoldCount": {
       "type": "object",

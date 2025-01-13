@@ -58,7 +58,8 @@ message QueryDelegationInfoResponse {
   map<string, DelegationAmounts> delegation_infos = 1;
 }
 
-// SingleDelegationInfoReq is the request to obtain the single delegation information.
+// SingleDelegationInfoReq is the request to obtain the single delegation information
+// and the maximum undelegatable amount of specific delegation.
 message SingleDelegationInfoReq {
   // staker_id is the staker id.
   string staker_id = 1;
@@ -68,6 +69,18 @@ message SingleDelegationInfoReq {
   string asset_id = 3;
 }
 
+// SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo
+message SingleDelegationInfoResponse {
+  // delegation_amounts is the delegation info recorded in the KVStore
+  DelegationAmounts delegation_amounts = 1;
+  // max_undelegatable_amount is the maximum amount that can be undelegated
+  string max_undelegatable_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 // UndelegationHoldCountReq is the request to obtain the undelegation hold count.
 message UndelegationHoldCountReq {
   // staker_id is the staker id.
@@ -75,7 +88,7 @@ message UndelegationHoldCountReq {
   // asset_id is the asset id.
   string asset_id = 2;
   // undelegation_id is the undelegation id
-  uint64 undelegation_id =3;
+  uint64 undelegation_id = 3;
 }
 
 // UndelegationHoldCountResponse is the response for the undelegation hold count.
@@ -106,9 +119,9 @@ message UndelegationsByEpochInfoReq {
 // hold count, which is used to construct the genesis state
 message UndelegationAndHoldCount {
   // undelegation is the single undelegation record
-  UndelegationRecord undelegation =1;
+  UndelegationRecord undelegation = 1;
   // hold_count represents the number of holds on this undelegation
-  uint64 hold_count =2;
+  uint64 hold_count = 2;
 }
 
 // UndelegationRecordList is the response to query undelegations.
@@ -164,9 +177,9 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/delegation/v1/delegations/{staker_id}/{asset_id}";
   }
-  // SingleDelegationInfo queries the single delegation information for
-  // {chain, staker, asset, operator}.
-  rpc QuerySingleDelegationInfo(SingleDelegationInfoReq) returns (DelegationAmounts) {
+  // SingleDelegationInfo queries the single delegation information and the
+  // maximum undelegatable amount for {staker, asset, operator}.
+  rpc QuerySingleDelegationInfo(SingleDelegationInfoReq) returns (SingleDelegationInfoResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/delegation/v1/single_delegation/{staker_id}/{operator_addr}/{asset_id}";
   }

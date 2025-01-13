@@ -9,9 +9,21 @@ import (
 
 var _ delegationtype.QueryServer = &Keeper{}
 
-func (k *Keeper) QuerySingleDelegationInfo(ctx context.Context, req *delegationtype.SingleDelegationInfoReq) (*delegationtype.DelegationAmounts, error) {
+func (k *Keeper) QuerySingleDelegationInfo(ctx context.Context, req *delegationtype.SingleDelegationInfoReq) (*delegationtype.SingleDelegationInfoResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	return k.GetSingleDelegationInfo(c, req.StakerId, req.AssetId, req.OperatorAddr)
+	delegationAmounts, err := k.GetSingleDelegationInfo(c, req.StakerId, req.AssetId, req.OperatorAddr)
+	if err != nil {
+		return nil, err
+	}
+	// calculate the maximum undelegatable amount
+	singleAmount, err := k.UndelegatableAmount(c, req.AssetId, req.OperatorAddr, delegationAmounts)
+	if err != nil {
+		return nil, err
+	}
+	return &delegationtype.SingleDelegationInfoResponse{
+		DelegationAmounts:      delegationAmounts,
+		MaxUndelegatableAmount: singleAmount,
+	}, nil
 }
 
 func (k *Keeper) QueryDelegationInfo(ctx context.Context, info *delegationtype.DelegationInfoReq) (*delegationtype.QueryDelegationInfoResponse, error) {
