@@ -42,6 +42,7 @@ func (p *PriceResult) ProtoPriceTimeRound(roundID int64, timestamp string) *orac
 
 func getPriceSourceFromProto(ps *oracletypes.PriceSource, checker sourceChecker) (*priceSource, error) {
 	prices := make([]*PriceInfo, 0, len(ps.Prices))
+	// #nosec G115
 	deterministic, err := checker.IsDeterministic(int64(ps.SourceID))
 	if err != nil {
 		return nil, err

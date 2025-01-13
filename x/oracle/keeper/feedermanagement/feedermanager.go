@@ -491,6 +491,7 @@ func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 				continue
 			}
 			feederID := int64(feederID)
+			// #nosec G115
 			if _, ok := existsFeederIDs[feederID]; !ok && (tokenFeeder.EndBlock == 0 || tokenFeeder.EndBlock > uint64(height)) {
 				logger.Info("[mem] add new round", "feederID", feederID, "height", height)
 				f.sortedFeederIDs = append(f.sortedFeederIDs, feederID)
@@ -512,6 +513,7 @@ func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 	for _, feederID := range expiredFeederIDs {
 		if r := f.rounds[feederID]; r.status != roundStatusClosed {
 			r.closeQuotingWindow()
+			// #nosec G115
 			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 		}
 		delete(f.rounds, feederID)

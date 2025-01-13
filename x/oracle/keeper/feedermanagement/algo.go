@@ -128,4 +128,5 @@ func (a *AggMedian) Reset() {
 	a.finalString = ""
 }
 
+//nolint:unused
 var defaultAggMedian = NewAggMedian()
