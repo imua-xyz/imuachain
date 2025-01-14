@@ -24,7 +24,15 @@ func GetPriceInfoFromProtoPriceTimeDetID(p *oracletypes.PriceTimeDetID) *PriceIn
 }
 
 func (p *PriceInfo) ProtoPriceTimeDetID() *oracletypes.PriceTimeDetID {
-	return (*oracletypes.PriceTimeDetID)(p)
+	if p == nil {
+		return nil
+	}
+	return &oracletypes.PriceTimeDetID{
+		Price:     p.Price,
+		Decimal:   p.Decimal,
+		Timestamp: p.Timestamp,
+		DetID:     p.DetID,
+	}
 }
 
 func (p *PriceInfo) EqualDS(pi *PriceInfo) bool {

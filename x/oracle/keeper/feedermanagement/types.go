@@ -93,8 +93,7 @@ type recordsValidators struct {
 
 // price records for deteministic source
 type recordsDS struct {
-	finalPrice *PriceResult
-	// TODO: remove this
+	finalPrice        *PriceResult
 	finalDetID        string
 	accumulatedPowers *big.Int
 	validators        map[string]struct{}
