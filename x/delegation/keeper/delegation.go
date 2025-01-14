@@ -63,8 +63,15 @@ func (k *Keeper) delegateTo(
 		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, params.StakerAddress, delegationtype.DelegatedPoolName, coins); err != nil {
 			return err
 		}
-		// auto associate it, if there is a match. note that both are byte versions of bech32 AccAddress.
+		// auto associate it, if there is a match. note that both are byte versions of bech32
+		// AccAddress. there is no need to check for an existing association because:
+		// (1) at this point, the `params.ClientChainID` is 0 and such a `stakerID` ending with
+		// this clientChainID can not be associated with an operator using the standard
+		// precompile method due to the `ClientChainExists` check.
+		// (2) an existing association will be overwritten by the exact same association due to
+		// the equality check below.
 		if bytes.Equal(params.StakerAddress, params.OperatorAddress[:]) {
+			// always returns nil.
 			err := k.SetAssociatedOperator(ctx, stakerID, params.OperatorAddress.String())
 			if err != nil {
 				return err
