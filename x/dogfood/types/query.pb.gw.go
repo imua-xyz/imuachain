@@ -630,17 +630,17 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"exocore", "dogfood", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"exocore", "dogfood", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_OptOutsToFinish_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"exocore", "dogfood", "opt_outs_to_finish", "epoch"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_OptOutsToFinish_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "dogfood", "v1", "opt_outs_to_finish", "epoch"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_OperatorOptOutFinishEpoch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"exocore", "dogfood", "operator_opt_out_finish_epoch", "operator_acc_addr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_OperatorOptOutFinishEpoch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "dogfood", "v1", "operator_opt_out_finish_epoch", "operator_acc_addr"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_UndelegationsToMature_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"exocore", "dogfood", "undelegations_to_mature", "epoch"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_UndelegationsToMature_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "dogfood", "v1", "undelegations_to_mature", "epoch"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_UndelegationMaturityEpoch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"exocore", "dogfood", "undelegation_maturity_epoch", "record_key"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_UndelegationMaturityEpoch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "dogfood", "v1", "undelegation_maturity_epoch", "record_key"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryValidator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"exocore", "dogfood", "validator", "cons_addr"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryValidator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"exocore", "dogfood", "v1", "validator", "cons_addr"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
