@@ -453,6 +453,8 @@ func (rds *recordsDS) GetFinalPrice(t *threshold) (*PriceResult, bool) {
 	return nil, false
 }
 
+// AddPrice adds a price into recordsDS
+// NOTE: the input PricePower should be filtered by recordsValidators before calling this function to make sure the price is not duplicated by detID
 func (rds *recordsDS) AddPrice(p *PricePower) {
 	validator := maps.Keys(p.Validators)[0]
 	biggestDetID := true

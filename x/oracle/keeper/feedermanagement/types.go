@@ -20,7 +20,7 @@ type CacheReader interface {
 	GetTotalPower() (totalPower *big.Int)
 	GetValidators() []string
 	IsRuleV1(feederID int64) bool
-	IsDeterministic(sournceID int64) (bool, error)
+	IsDeterministic(sourceID int64) (bool, error)
 	GetThreshold() *threshold
 }
 

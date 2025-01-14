@@ -12,7 +12,15 @@ import (
 )
 
 func GetPriceInfoFromProtoPriceTimeDetID(p *oracletypes.PriceTimeDetID) *PriceInfo {
-	return (*PriceInfo)(p)
+	if p == nil {
+		return nil
+	}
+	return &PriceInfo{
+		Price:     p.Price,
+		Decimal:   p.Decimal,
+		Timestamp: p.Timestamp,
+		DetID:     p.DetID,
+	}
 }
 
 func (p *PriceInfo) ProtoPriceTimeDetID() *oracletypes.PriceTimeDetID {
@@ -36,7 +44,8 @@ func (p *PriceResult) ProtoPriceTimeRound(roundID int64, timestamp string) *orac
 		Price:     p.Price,
 		Decimal:   p.Decimal,
 		Timestamp: timestamp,
-		RoundID:   uint64(roundID),
+		// #nosec G115
+		RoundID: uint64(roundID),
 	}
 }
 

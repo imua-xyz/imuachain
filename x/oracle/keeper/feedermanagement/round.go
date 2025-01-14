@@ -254,6 +254,9 @@ func (r *round) getPosition(currentHeight int64) (baseBlock, roundID, delta int6
 		return
 	}
 	delta = currentHeight - r.startBaseBlock
+	if r.interval == 0 {
+		return
+	}
 	rounds := delta / r.interval
 	roundID = r.startRoundID + rounds
 	delta -= rounds * r.interval
