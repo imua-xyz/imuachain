@@ -1,0 +1,33 @@
+name: Check Proto Generation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  check-proto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Run proto generation
+      - name: Run proto-gen
+        run: make proto-gen
+
+      - name: Check if any files have changed post regeneration
+        run: |
+          if ! git diff --exit-code > /dev/null 2>&1; then
+            echo "Changes detected after running 'make proto-gen'."
+            git diff
+            exit 1
+          fi
