@@ -80,7 +80,6 @@ func (a *aggregator) GetFinalPrice() (*PriceResult, bool) {
 }
 
 func (a *aggregator) RecordMsg(msg *MsgItem) error {
-	// TODO: implement me
 	_, err := a.v.RecordMsg(msg)
 	return err
 }
@@ -180,15 +179,16 @@ func (rv *recordsValidators) Cpy() *recordsValidators {
 
 func (rv *recordsValidators) RecordMsg(msg *MsgItem) (*MsgItem, error) {
 	record, ok := rv.records[msg.Validator]
+	if !ok {
+		record = newPriceValidator(msg.Validator, msg.Power)
+	}
 	rets := &MsgItem{
 		FeederID:     msg.FeederID,
 		Validator:    msg.Validator,
 		Power:        msg.Power,
 		PriceSources: make([]*priceSource, 0),
 	}
-	if !ok {
-		record = newPriceValidator(msg.Validator, msg.Power)
-	}
+
 	updated, added, err := record.TryAddPriceSources(msg.PriceSources)
 	if err != nil {
 		return nil, fmt.Errorf("failed to record msg, error:%w", err)
@@ -225,6 +225,7 @@ func (rv *recordsValidators) GetFinalPrice(algo AggAlgorithm) (*PriceResult, boo
 		}
 		slices.Sort(keySlice)
 		algo.Reset()
+		// keys are sorted to make sure algo.Add is called in the same order for deterministic result
 		for _, validator := range keySlice {
 			if !algo.Add(prices[validator]) {
 				algo.Reset()
@@ -232,10 +233,7 @@ func (rv *recordsValidators) GetFinalPrice(algo AggAlgorithm) (*PriceResult, boo
 			}
 		}
 		rv.finalPrice = algo.GetResult()
-		if rv.finalPrice == nil {
-			return nil, false
-		}
-		return rv.finalPrice, true
+		return rv.finalPrice, rv.finalPrice != nil
 	}
 	return nil, false
 }
@@ -245,6 +243,8 @@ func (rv *recordsValidators) GetFinalPriceForValidators(algo AggAlgorithm) (map[
 		return rv.finalPrices, true
 	}
 	ret := make(map[string]*PriceResult)
+	// the order here is not important, so it's safe to range map here
+	// we only return true when all validators have finalPrice
 	for validator, pv := range rv.records {
 		finalPrice, ok := pv.GetFinalPrice(algo)
 		if !ok {
@@ -459,7 +459,6 @@ func (rds *recordsDS) AddPrice(p *PricePower) {
 	validator := maps.Keys(p.Validators)[0]
 	i := 0
 	l := len(rds.records)
-	fmt.Println("debug--->before.AddPrice", rds.records)
 	for ; i < l; i++ {
 		record := rds.records[i]
 		if record.Price.EqualDS(p.Price) {
@@ -489,5 +488,4 @@ func (rds *recordsDS) AddPrice(p *PricePower) {
 		rds.accumulatedPowers.Add(rds.accumulatedPowers, p.Power)
 		rds.validators[validator] = struct{}{}
 	}
-	fmt.Println("debug--->before.AddPrice", rds.records)
 }

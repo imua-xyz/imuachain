@@ -62,7 +62,6 @@ func TestGenesisState_Validate(t *testing.T) {
 						MinReportedPerWindow:        sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2)),
 						OracleMissJailDuration:      600 * time.Second,
 						OracleMaliciousJailDuration: 30 * 24 * time.Hour,
-						SlashFractionMiss:           sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(20)),
 						SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
 					},
 				},
