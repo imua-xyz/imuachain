@@ -109,18 +109,13 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	logger := f.k.Logger(ctx)
 	// remove nonces for closed quoting windows
 	height := ctx.BlockHeight()
-	if f.forceSeal {
-		for _, r := range f.rounds {
+	// the order actually does not matter, we use sortedFeederIDs to make the log more consistent, and it's not expensive since we maintain the sortedFeederIDs on each update
+	for _, feederID := range f.sortedFeederIDs {
+		round := f.rounds[feederID]
+		if round.IsQuotingWindowEnd(height) || f.forceSeal {
+			logger.Debug("clear nonces for closing quoting window or forceSeal", "feederID", feederID, "roundID", round.roundID, "basedBlock", round.roundBaseBlock, "height", height, "forceSeal", f.forceSeal)
 			// #nosec G115  // feederID is index of slice
-			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
-		}
-	} else {
-		for _, r := range f.rounds {
-			if r.IsQuotingWindowEnd(height) {
-				logger.Debug("clear nonces for closing quoting window", "feederID", r.feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
-				// #nosec G115  // feederID is index of slice
-				f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
-			}
+			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(feederID))
 		}
 	}
 	// setup nonces for opening quoting windows
