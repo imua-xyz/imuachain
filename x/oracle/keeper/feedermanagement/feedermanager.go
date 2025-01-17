@@ -107,26 +107,29 @@ func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.
 
 func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	logger := f.k.Logger(ctx)
-	// remove nonces for closed quoting windows
 	height := ctx.BlockHeight()
-	// the order actually does not matter, we use sortedFeederIDs to make the log more consistent, and it's not expensive since we maintain the sortedFeederIDs on each update
-	for _, feederID := range f.sortedFeederIDs {
-		round := f.rounds[feederID]
-		if round.IsQuotingWindowEnd(height) || f.forceSeal {
-			logger.Debug("clear nonces for closing quoting window or forceSeal", "feederID", feederID, "roundID", round.roundID, "basedBlock", round.roundBaseBlock, "height", height, "forceSeal", f.forceSeal)
+	// the order does not matter, it's safe to update independent state in non-deterministic order
+	// no need to go through all 'hash' process to range sorted key slice
+	for _, r := range f.rounds {
+		// remove nonces for closed quoting windows or when forceSeal is marked
+		if r.IsQuotingWindowEnd(height) || f.forceSeal {
+			logger.Debug("clear nonces for closing quoting window or forceSeal", "feederID", r.feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height, "forceSeal", f.forceSeal)
 			// #nosec G115  // feederID is index of slice
-			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(feederID))
+			// items will be removed from slice and keep the order, so it's safe to delete items in different order
+			f.k.RemoveNonceWithFeederIDForAll(ctx, uint64(r.feederID))
 		}
 	}
-	// setup nonces for opening quoting windows
 	if len(feederIDs) == 0 {
 		return
 	}
+	// setup nonces for opening quoting windows
+	// items need to be insert into slice in order, so feederIDs is sorted
+	sort.Slice(feederIDs, func(i, j int) bool { return feederIDs[i] < feederIDs[j] })
 	validators := f.cs.GetValidators()
 	for _, feederID := range feederIDs {
 		r := f.rounds[feederID]
 		logger.Debug("init nonces for new quoting window", "feederID", feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
-		// #nosec G115  // feederID is index of slice
+		// #nosec G115 -- feederID is index of slice
 		f.k.AddZeroNonceItemWithFeederIDForValidators(ctx, uint64(feederID), validators)
 	}
 }
@@ -160,21 +163,18 @@ func (f *FeederManager) updateBehaviorRecords(ctx sdk.Context, addedValidators [
 	}
 }
 
+// praepareRounds prepares the rounds for the next block, and returns the feederIDs of the rounds that are open on next block
 func (f *FeederManager) prepareRounds(ctx sdk.Context) []int64 {
 	logger := f.k.Logger(ctx)
 	feederIDs := make([]int64, 0)
+	height := ctx.BlockHeight()
+	// it's safe to range map directly, this is just used to update memory state
 	for _, r := range f.rounds {
 		if open := r.PrepareForNextBlock(ctx.BlockHeight()); open {
 			feederIDs = append(feederIDs, r.feederID)
+			// logs might not be displayed in order, it's marked with [mem] to indicate that this is a memory state update
+			logger.Info("[mem] open quoting window for round", "feederID", r.feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
 		}
-	}
-	sort.Slice(feederIDs, func(i, j int) bool {
-		return feederIDs[i] < feederIDs[j]
-	})
-	height := ctx.BlockHeight()
-	for _, feederID := range feederIDs {
-		r := f.rounds[feederID]
-		logger.Info("[mem] open quoting window for round", "feederID", feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
 	}
 	return feederIDs
 }
