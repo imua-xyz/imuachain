@@ -59,10 +59,8 @@ func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 		// init feederManager if failed to recovery, this should only happened on block_height==1
 		if !recovered {
 			f.initCaches(ctx)
-			if ctx.BlockHeight() < 2 {
-				f.SetParamsUpdated()
-				f.SetValidatorsUpdated()
-			}
+			f.SetParamsUpdated()
+			f.SetValidatorsUpdated()
 		}
 		f.initBehaviorRecords(ctx, ctx.BlockHeight())
 		// in recovery mode, snapshot of feederManager is set in the beginblock instead of in the process of replaying endblockInrecovery
