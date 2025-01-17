@@ -53,17 +53,29 @@ type MsgItem struct {
 	PriceSources []*priceSource
 }
 
+// PriceInfo is the price information including price, decimal, time, and detID
+// this is defined as a internal type as alias of oracletypes.PriceTimeDetID
 type PriceInfo oracletypes.PriceTimeDetID
 
+// PricePower wraps PriceInfo with power and validators
+// Validators indicates the validators who provided the price
+// Power indicates the accumulated power of all validators who provided the price
 type PricePower struct {
 	Price      *PriceInfo
 	Power      *big.Int
 	Validators map[string]struct{}
 }
 
-// type PriceResult oracletypes.PriceTimeRound
+// PriceResult is the final price information including price, decimal, time, and detID
+// this is defined as a internal type as alias of PriceInfo
 type PriceResult PriceInfo
 
+// PriceSource describes a specific source of related prices
+// deteministic indicates whether the source is deterministic
+// finalPrice indicates the final price of the source aggregated from all prices
+// sourceID indicates the source ID
+// detIDs indicates the detIDs of all prices, detID means the unique identifier of a price defined in the deterministic itself
+// prices indicates all prices of the source, it's defined in slice instead of map to keep the order
 type priceSource struct {
 	deterministic bool
 	finalPrice    *PriceResult
@@ -73,6 +85,11 @@ type priceSource struct {
 	prices []*PriceInfo
 }
 
+// priceValiadtor describes a specific validator of related priceSources(each source could has multiple prices)
+// finalPrice indicates the final price of the validator aggregated from all prices of each source
+// validator indicates the validator address
+// power indicates the power of the validator
+// priceSources indicates all priceSources of the validator, the map key is sourceID
 type priceValidator struct {
 	finalPrice *PriceResult
 	validator  string
@@ -81,6 +98,11 @@ type priceValidator struct {
 	priceSources map[int64]*priceSource
 }
 
+// recordsValidators is the price records for all validators, the record item is priceValidator
+// finalPrice indicates the final price of all validators aggregated from all prices of each validator
+// finalPrices indicates the final price of each validator aggregated from all of its prices of each source
+// accumulatedPower indicates the accumulated power of all validators
+// records indicates all priceValidators, the map key is validator address
 type recordsValidators struct {
 	finalPrice  *PriceResult
 	finalPrices map[string]*PriceResult
@@ -91,7 +113,12 @@ type recordsValidators struct {
 	records map[string]*priceValidator
 }
 
-// price records for deteministic source
+// recordsDS is the price records of a deterministic source
+// finalPrice indicates the final price of a specific detID chosen out of all prices with different detIDs which pass the threshold
+// finalDetID indicates the final detID chosen out of all detIDs
+// accumulatedPowers indicates the accumulated power of all validators who provided the price for this source
+// valiators indicates all validators who provided the price for this source
+// records indicates all PricePower of this source provided by different validators, the slice is ordered by detID
 type recordsDS struct {
 	finalPrice        *PriceResult
 	finalDetID        string
@@ -102,12 +129,15 @@ type recordsDS struct {
 }
 
 // each source will get a final price independently, the order of sources does not matter, map is safe
-// type recordsDSMap map[int64]*recordsDS
+// recordsDSs is the price records for all deterministic sources
+// threshold indicates the threshold definition to detemin final price for each source
 type recordsDSs struct {
 	t     *threshold
 	dsMap map[int64]*recordsDS
 }
 
+// threshold is defined as (thresholdA * thresholdB) / totalPower
+// when do compare with power, it should be (thresholdB * power) > (thresholdA * totalPower) to avoid decimal calculation
 type threshold struct {
 	totalPower *big.Int
 	thresholdA *big.Int
@@ -136,6 +166,12 @@ func (t *threshold) Exceeds(power *big.Int) bool {
 	return new(big.Int).Mul(t.thresholdB, power).Cmp(new(big.Int).Mul(t.thresholdA, t.totalPower)) > 0
 }
 
+// aggregator is the price aggregator for a specific round
+// t is the threshold definition for price consensus for the round
+// finalPrice indicates the final price of the round
+// v is the price records for all validators with prices they provided
+// ds is the price records for all deterministic sources which could have prices with multiple detIDs provided by validators
+// algo is the aggregation algorithm for the round, currently we use 'Median' as default
 type aggregator struct {
 	t          *threshold
 	finalPrice *PriceResult
@@ -144,31 +180,49 @@ type aggregator struct {
 	algo       AggAlgorithm
 }
 
+// roundStatus indicates the status of a round
 type roundStatus int32
 
 const (
 	// define closed as default value 0
+	// close: the round is closed for price submission and no valid price to commit
 	roundStatusClosed roundStatus = iota
+	// open: the round is open for price submission
 	roundStatusOpen
+	// committable: the round is closed for price submission and available for price to commit
 	roundStatusCommittable
 )
 
+// round is the price round for a specific tokenFeeder corresponding to the price feed progress of a specific token
 type round struct {
-	startBaseBlock  int64
-	startRoundID    int64
-	endBlock        int64
-	interval        int64
+	// startBaseBlock is the start block height of corresponding tokenFeeder
+	startBaseBlock int64
+	// startRoundID is the round ID of corresponding tokenFeeder
+	startRoundID int64
+	// endBlock is the end block height of the corresponding tokenFeeder
+	endBlock int64
+	// interval is the interval of the corresponding tokenFeeder
+	interval int64
+	// quoteWindowSize is the quote window size of the corresponding tokenFeeder
 	quoteWindowSize int64
 
+	// feederID is the feeder ID of the corresponding tokenFeeder
 	feederID int64
-	tokenID  int64
+	// tokenID is the token ID of the corresponding tokenFeeder
+	tokenID int64
 
+	// roundBaseBlock is the round base block of current round
 	roundBaseBlock int64
-	roundID        int64
-	status         roundStatus
-	a              *aggregator
-	cache          CacheReader
-	algo           AggAlgorithm
+	// roundID is the round ID of current round
+	roundID int64
+	// status indicates the status of current round
+	status roundStatus
+	// aggregator is the price aggregator for current round
+	a *aggregator
+	// cache is the cache reader for current round to provid params, validators information
+	cache CacheReader
+	// algo is the aggregation algorithm for current round to get final price
+	algo AggAlgorithm
 }
 
 type orderedSliceInt64 []int64
@@ -211,15 +265,25 @@ func (osi *orderedSliceInt64) sort() {
 	})
 }
 
+// FeederManager is the manager for the price feed progress of all token feeders
 type FeederManager struct {
-	fCheckTx        *FeederManager
-	k               common.KeeperOracle
+	// fCheckTx is a copy of FeederManager used for mode of checkTx to simulate transactions
+	fCheckTx *FeederManager
+	// k is the oracle keeper
+	k common.KeeperOracle
+	// sortedFeederIDs is the ordered feeder IDs corresponding to all the rounds included in FeederManager
 	sortedFeederIDs orderedSliceInt64
-	// this will not be ranged, map is safe
-	rounds            map[int64]*round
-	cs                *caches
-	paramsUpdated     bool
+	// rounds is the map of all rounds included in FeederManager, the key is the feeder ID
+	rounds map[int64]*round
+	cs     *caches
+	// paramsUpdated indicates whether the params are updated in current block
+	paramsUpdated bool
+	// validatorsUpdated indicates whether the validators are updated in current block
 	validatorsUpdated bool
-	forceSeal         bool
-	resetSlashing     bool
+	// forceSeal indicates whether it's satisfied to force seal all the rounds
+	// when the validators are updated in current block or some related params are updated, this will be set to true.
+	forceSeal bool
+	// restSlashing indicates whether it's satisfied to reset slashing
+	// when the slashing params is changed in current block, this will be set to true.
+	resetSlashing bool
 }
