@@ -74,7 +74,7 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	addedValidators := f.updateAndCommitCaches(ctx)
 
 	// update Slashing related records (reportInfo, missCountBitArray), handle case for 1. reseetSlashing, 2. new validators added for validatorset change
-	f.updateBehaviorRecords(ctx, addedValidators)
+	f.updateBehaviorRecordsForNextBlock(ctx, addedValidators)
 
 	// update rounds including create new rounds based on params change, remove expired rounds
 	// handleQuoteBehavior for ending quotes of rounds
@@ -85,10 +85,6 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	feederIDs := f.prepareRounds(ctx)
 	// remove nocnes for closing quoting-window and set nonces for opening quoting-window
 	f.setupNonces(ctx, feederIDs)
-
-	if f.validatorsUpdated {
-		f.initBehaviorRecords(ctx, ctx.BlockHeight()+1)
-	}
 
 	f.ResetFlags()
 
@@ -140,22 +136,23 @@ func (f *FeederManager) initBehaviorRecords(ctx sdk.Context, height int64) {
 	}
 	validators := f.cs.GetValidators()
 	for _, validator := range validators {
-		// f.k.InitValidatorReportInfo(ctx, validator, ctx.BlockHeight())
 		f.k.InitValidatorReportInfo(ctx, validator, height)
 	}
 }
 
-func (f *FeederManager) updateBehaviorRecords(ctx sdk.Context, addedValidators []string) {
-	height := ctx.BlockHeight()
+func (f *FeederManager) updateBehaviorRecordsForNextBlock(ctx sdk.Context, addedValidators []string) {
+	height := ctx.BlockHeight() + 1
 	if f.resetSlashing {
 		// reset all validators' reportInfo
 		f.k.ClearAllValidatorReportInfo(ctx)
 		f.k.ClearAllValidatorMissedRoundBitArray(ctx)
 		validators := f.cs.GetValidators()
+		// order does not matter for independent state update
 		for _, validator := range validators {
 			f.k.InitValidatorReportInfo(ctx, validator, height)
 		}
 	} else if f.validatorsUpdated {
+		// order does not matter for independent state update
 		for _, validator := range addedValidators {
 			// add possible new added validator info for slashing tracking
 			f.k.InitValidatorReportInfo(ctx, validator, height)
