@@ -95,6 +95,7 @@ func (pv *priceValidator) Cpy() *priceValidator {
 		finalPrice = &tmp
 	}
 	priceSources := make(map[int64]*priceSource)
+	// safe to range map, map copy
 	for id, ps := range pv.priceSources {
 		priceSources[id] = ps.Cpy()
 	}
@@ -119,6 +120,7 @@ func (pv *priceValidator) Equals(pv2 *priceValidator) bool {
 	if len(pv.priceSources) != len(pv2.priceSources) {
 		return false
 	}
+	// safe to range map, map compare
 	for id, ps := range pv.priceSources {
 		ps2, ok := pv2.priceSources[id]
 		if !ok || !ps.Equals(ps2) {
@@ -163,6 +165,7 @@ func (pv *priceValidator) TryAddPriceSources(pSs []*priceSource) (updated map[in
 }
 
 func (pv *priceValidator) ApplyAddedPriceSources(psMap map[int64]*priceSource) {
+	// safe to range map, set all k-v to antoher map
 	for id, ps := range psMap {
 		pv.priceSources[id] = ps
 	}
@@ -177,6 +180,7 @@ func (pv *priceValidator) GetFinalPrice(algo AggAlgorithm) (*PriceResult, bool) 
 		return nil, false
 	}
 	keySlice := make([]int64, 0, len(pv.priceSources))
+	// safe to range map, the map is iteration to genrate sorted key slice
 	for sourceID := range pv.priceSources {
 		keySlice = append(keySlice, sourceID)
 	}
@@ -257,6 +261,7 @@ func (ps *priceSource) Cpy() *priceSource {
 	}
 	// deterministic, sourceID
 	detIDs := make(map[string]struct{})
+	// safe to range map, map copy
 	for detID := range ps.detIDs {
 		detIDs[detID] = struct{}{}
 	}
@@ -340,6 +345,7 @@ func (p *PricePower) Equals(p2 *PricePower) bool {
 	if len(p.Validators) != len(p2.Validators) {
 		return false
 	}
+	// safe to range map, map compare
 	for v := range p.Validators {
 		if _, ok := p2.Validators[v]; !ok {
 			return false
@@ -351,6 +357,7 @@ func (p *PricePower) Equals(p2 *PricePower) bool {
 func (p *PricePower) Cpy() *PricePower {
 	price := *p.Price
 	validators := make(map[string]struct{})
+	// safe to range map, map copy
 	for v := range p.Validators {
 		validators[v] = struct{}{}
 	}

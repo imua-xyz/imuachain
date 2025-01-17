@@ -23,6 +23,7 @@ func (c *caches) CpyForSimulation() *caches {
 	ret.msg = &msg
 	ret.params = &params
 	validators := make(map[string]*big.Int)
+	// safe to range map, map copy
 	for v, p := range c.validators.validators {
 		validators[v] = new(big.Int).Set(p)
 	}
@@ -160,6 +161,7 @@ func (cv *cacheValidator) Equals(cv2 *cacheValidator) bool {
 	if len(cv.validators) != len(cv2.validators) {
 		return false
 	}
+	// safe to range map, map compare
 	for k, v := range cv.validators {
 		if v2, ok := cv2.validators[k]; !ok {
 			return false
@@ -171,6 +173,7 @@ func (cv *cacheValidator) Equals(cv2 *cacheValidator) bool {
 }
 
 func (cv *cacheValidator) add(validators map[string]*big.Int) {
+	// safe to range map, check and update all KVs with another map
 	for operator, newPower := range validators {
 		if power, ok := cv.validators[operator]; ok {
 			if newPower.Cmp(zeroBig) == 0 {
@@ -207,6 +210,7 @@ func (cv *cacheValidator) slice() []string {
 		return nil
 	}
 	validators := make([]string, 0, cv.size())
+	// safe to range map, this range is used to generate a sorted slice
 	for validator := range cv.validators {
 		validators = append(validators, validator)
 	}
@@ -268,6 +272,7 @@ func (c *caches) Read(i any) bool {
 		if item == nil {
 			return false
 		}
+		// safe to range map, map copy
 		for addr, power := range c.validators.validators {
 			item[addr] = power
 		}
@@ -318,6 +323,7 @@ func (c *caches) GetTotalPower() (totalPower *big.Int) {
 	if c.validators == nil {
 		return
 	}
+	// safe to renage map, the order does not impact the result
 	for _, power := range c.validators.validators {
 		totalPower.Add(totalPower, power)
 	}

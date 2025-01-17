@@ -139,6 +139,7 @@ func (rv *recordsValidators) Equals(rv2 *recordsValidators) bool {
 	if len(rv.records) != len(rv2.records) {
 		return false
 	}
+	// safe to range map, map compare
 	for k, v := range rv.records {
 		if v2, ok := rv2.records[k]; !ok || !v.Equals(v2) {
 			return false
@@ -160,12 +161,14 @@ func (rv *recordsValidators) Cpy() *recordsValidators {
 	var finalPrices map[string]*PriceResult
 	if len(rv.finalPrices) > 0 {
 		finalPrices = make(map[string]*PriceResult)
+		// safe to range map, map copy
 		for v, p := range rv.finalPrices {
 			price := *p
 			finalPrices[v] = &price
 		}
 	}
 	records := make(map[string]*priceValidator)
+	// safe to range map, map copy
 	for v, pv := range rv.records {
 		records[v] = pv.Cpy()
 	}
@@ -220,6 +223,7 @@ func (rv *recordsValidators) GetFinalPrice(algo AggAlgorithm) (*PriceResult, boo
 	}
 	if prices, ok := rv.GetFinalPriceForValidators(algo); ok {
 		keySlice := make([]string, 0, len(prices))
+		// safe to range map, this is used to generate a sorted keySlice
 		for validator := range prices {
 			keySlice = append(keySlice, validator)
 		}
@@ -292,6 +296,7 @@ func (rdss *recordsDSs) Equals(rdss2 *recordsDSs) bool {
 	if len(rdss.dsMap) != len(rdss2.dsMap) {
 		return false
 	}
+	// safe to range map, map compare
 	for k, v := range rdss.dsMap {
 		if v2, ok := rdss2.dsMap[k]; !ok || !v.Equals(v2) {
 			return false
@@ -306,6 +311,7 @@ func (rdss *recordsDSs) Cpy() *recordsDSs {
 		return nil
 	}
 	dsMap := make(map[int64]*recordsDS)
+	// safe to range map, map copy
 	for id, r := range rdss.dsMap {
 		dsMap[id] = r.Cpy()
 	}
@@ -345,6 +351,7 @@ func (rdss *recordsDSs) GetFinalPriceForSourceID(sourceID int64) (*PriceResult, 
 
 func (rdss *recordsDSs) GetFinalPriceForSources() (map[int64]*PriceResult, bool) {
 	ret := make(map[int64]*PriceResult)
+	// safe to range map, the result is a map of 'all or none'
 	for sourceID, rds := range rdss.dsMap {
 		if finalPrice, ok := rds.GetFinalPrice(rdss.t); ok {
 			ret[sourceID] = finalPrice
@@ -419,6 +426,7 @@ func (rds *recordsDS) Cpy() *recordsDS {
 		finalPrice = &tmp
 	}
 	validators := make(map[string]struct{})
+	// safe to range map, map copy
 	for v := range rds.validators {
 		validators[v] = struct{}{}
 	}

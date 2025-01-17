@@ -181,7 +181,7 @@ func (f *FeederManager) prepareRounds(ctx sdk.Context) []int64 {
 // forceSeal: 1. params has some modifications related to quoting. 2.validatorSet changed
 // resetSlashing: params has some modifications related to oracle_slashing
 // func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (forceSeal, resetSlashing bool, prevValidators, addedValidators []string) {
-func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (addedValidators []string) {
+func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators []string) {
 	// update params in caches
 	if f.paramsUpdated {
 		paramsOld := &oracletypes.Params{}
@@ -201,14 +201,14 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (addedValidators 
 	if len(validatorUpdates) > 0 {
 		f.SetValidatorsUpdated()
 		f.SetForceSeal()
-		addedValidators = make([]string, 0)
+		activeValidators = make([]string, 0)
 		validatorMap := make(map[string]*big.Int)
 		for _, vu := range validatorUpdates {
 			pubKey, _ := cryptocodec.FromTmProtoPublicKey(vu.PubKey)
 			validatorStr := sdk.ConsAddress(pubKey.Address()).String()
 			validatorMap[validatorStr] = big.NewInt(vu.Power)
 			if vu.Power > 0 {
-				addedValidators = append(addedValidators, validatorStr)
+				activeValidators = append(activeValidators, validatorStr)
 			}
 		}
 		// update validator set information in cache
@@ -220,10 +220,11 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (addedValidators 
 	if vUpdated || pUpdated {
 		f.k.Logger(ctx).Info("update caches", "validatorUpdates", vUpdated, "paramsUpdated", pUpdated)
 	}
-	return addedValidators
+	return activeValidators
 }
 
 func (f *FeederManager) commitRoundsInRecovery() {
+	// safe to range map directly, this is just used to update memory state, we don't update state in recovery mode
 	for _, r := range f.rounds {
 		if r.Committable() {
 			r.FinalPrice()
@@ -240,6 +241,8 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 	logger := f.k.Logger(ctx)
 	height := ctx.BlockHeight()
 	successFeederIDs := make([]string, 0)
+	// it's safe to range map directly since the sate update is independent for each feederID, however we use sortedFeederIDs to keep the order of logs
+	// this can be replaced by map iteration directly when better performance is needed
 	for _, feederID := range f.sortedFeederIDs {
 		r := f.rounds[feederID]
 		if r.Committable() {
@@ -284,7 +287,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	logger := f.k.Logger(ctx)
-
+	// it's safe to range map directly, no state in kvStore will be updated in recovery mode, only memory state is updated
 	for _, r := range f.rounds {
 		if r.IsQuotingWindowEnd(height) && r.a != nil {
 			validators := f.cs.GetValidators()
@@ -309,7 +312,12 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	logger := f.k.Logger(ctx)
 
-	for _, r := range f.rounds {
+	// it's safe to range map directly, each state update is independent for each feederID
+	// state to be updated: {validatorReportInfo, validatorMissedRoundBitArray, signInfo, assets} of individual validator
+	// we use sortedFeederIDs to keep the order of logs
+	// this can be replaced by map iteration directly when better performance is needed
+	for _, feederID := range f.sortedFeederIDs {
+		r := f.rounds[feederID]
 		if r.IsQuotingWindowEnd(height) {
 			if _, found := r.FinalPrice(); !found {
 				r.closeQuotingWindow()
@@ -455,6 +463,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 
 func (f *FeederManager) setCommittableState(ctx sdk.Context) {
 	if f.forceSeal {
+		// safe to range map. update memory state only, the result would be the same in any order
 		for _, r := range f.rounds {
 			if r.status == roundStatusOpen {
 				r.status = roundStatusCommittable
@@ -462,6 +471,7 @@ func (f *FeederManager) setCommittableState(ctx sdk.Context) {
 		}
 	} else {
 		height := ctx.BlockHeight()
+		// safe to range map. update memory state only, the result would be the same in any order
 		for _, r := range f.rounds {
 			if r.IsQuotingWindowEnd(height) && r.status == roundStatusOpen {
 				r.status = roundStatusCommittable
@@ -478,6 +488,7 @@ func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 		params := &oracletypes.Params{}
 		f.cs.Read(params)
 		existsFeederIDs := make(map[int64]struct{})
+		// safe to range map. update memory state only, the result would be the same in any order
 		for _, r := range f.rounds {
 			r.UpdateParams(params.TokenFeeders[r.feederID], int64(params.MaxNonce))
 			existsFeederIDs[r.feederID] = struct{}{}
@@ -502,11 +513,13 @@ func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	expiredFeederIDs := make([]int64, 0)
+	// safe to range map, we generate the slice, the content of elements would be the same, order does not matter
 	for _, r := range f.rounds {
 		if r.endBlock > 0 && r.endBlock <= height {
 			expiredFeederIDs = append(expiredFeederIDs, r.feederID)
 		}
 	}
+	// the order does not matter when remove item from slice as RemoveNonceWithFeederIDForAll does
 	for _, feederID := range expiredFeederIDs {
 		if r := f.rounds[feederID]; r.status != roundStatusClosed {
 			r.closeQuotingWindow()
@@ -669,6 +682,7 @@ func (f *FeederManager) getCheckTx() *FeederManager {
 
 	// rounds
 	rounds := make(map[int64]*round)
+	// safe to range map, map copy
 	for id, r := range fCheckTx.rounds {
 		rounds[id] = r.CopyForCheckTx()
 	}
@@ -687,8 +701,9 @@ func (f *FeederManager) updateCheckTx() {
 	ret := *f
 	ret.fCheckTx = nil
 
-	// rounds
 	rounds := make(map[int64]*round)
+
+	// safe to range map, map copy
 	for id, r := range f.rounds {
 		rounds[id] = r.CopyForCheckTx()
 	}
@@ -832,6 +847,7 @@ func (f *FeederManager) Equals(fm *FeederManager) bool {
 	if len(f.rounds) != len(fm.rounds) {
 		return false
 	}
+	// safe to range map, compare map
 	for id, r := range f.rounds {
 		if r2, ok := fm.rounds[id]; !ok {
 			return false
