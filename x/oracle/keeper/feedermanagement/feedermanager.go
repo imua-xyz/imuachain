@@ -50,7 +50,12 @@ func (f *FeederManager) SetNilCaches() {
 func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 	// if the cache is nil and we are not in recovery mode, init the caches
 	if f.cs == nil {
-		recovered = f.recovery(ctx)
+		var err error
+		recovered, err = f.recovery(ctx)
+		// it's safe to panic since this will only happen when the node is starting with something wrong in the store
+		if err != nil {
+			panic(err)
+		}
 		// init feederManager if failed to recovery, this should only happened on block_height==1
 		if !recovered {
 			f.initCaches(ctx)
@@ -343,7 +348,8 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 					)
 					consAddr, err := sdk.ConsAddressFromBech32(validator)
 					if err != nil {
-						panic("invalid consAddr string")
+						f.k.Logger(ctx).Error("when do orale_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
+						continue
 					}
 
 					operator := f.k.ValidatorByConsAddr(ctx, consAddr)
@@ -725,17 +731,17 @@ func (f *FeederManager) initCaches(ctx sdk.Context) {
 	f.cs.Init(f.k, &params, validatorPowers)
 }
 
-func (f *FeederManager) recovery(ctx sdk.Context) bool {
+func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	height := ctx.BlockHeight()
 	recentParamsList, prevRecentParams, latestRecentParams := f.k.GetRecentParamsWithinMaxNonce(ctx)
 	if latestRecentParams.Block == 0 {
-		return false
+		return false, nil
 	}
 	validatorUpdateBlock, found := f.k.GetValidatorUpdateBlock(ctx)
 	if !found {
 		// on recovery mode, the validator update block must be found, otherwise we just panic to stop the node start
 		// it's safe to panic since this will only happen when the node is starting with something wrong in the store
-		panic("validator update block not found in recovery mode for feeder manager")
+		return false, errors.New("validator update block not found in recovery mode for feeder manager")
 	}
 	// #nosec G115  // validatorUpdateBlock.Block represents blockheight
 	startHeight, replayRecentParamsList := getRecoveryStartPoint(height, recentParamsList, &prevRecentParams, &latestRecentParams, int64(validatorUpdateBlock.Block))
@@ -802,7 +808,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) bool {
 
 	f.cs.SkipCommit()
 
-	return true
+	return true, nil
 }
 
 func (f *FeederManager) Equals(fm *FeederManager) bool {

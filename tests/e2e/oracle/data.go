@@ -1,12 +1,12 @@
 package oracle
 
 import (
-	"time"
-
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 )
 
 const layout = "2006-01-02 15:04:05"
+
+var now = "2025-01-01 00:00:00"
 
 type priceTime struct {
 	Price     string
@@ -33,8 +33,7 @@ func (p priceTime) getPriceTimeRound(roundID uint64) oracletypes.PriceTimeRound 
 }
 
 func (p priceTime) updateTimestamp() priceTime {
-	t := time.Now().UTC().Format(layout)
-	p.Timestamp = t
+	p.Timestamp = now
 	return p
 }
 
@@ -55,7 +54,7 @@ func generateNSTPriceTime(sc [][]int) priceTime {
 	return priceTime{
 		Price:     string(rawBytes),
 		Decimal:   0,
-		Timestamp: time.Now().UTC().Format(layout),
+		Timestamp: now,
 	}
 }
 
@@ -63,12 +62,12 @@ var (
 	price1 = priceTime{
 		Price:     "19",
 		Decimal:   8,
-		Timestamp: time.Now().UTC().Format(layout),
+		Timestamp: now,
 	}
 	price2 = priceTime{
 		Price:     "29",
 		Decimal:   8,
-		Timestamp: time.Now().UTC().Format(layout),
+		Timestamp: now,
 	}
 
 	stakerChanges1 = [][]int{{0, -4}}

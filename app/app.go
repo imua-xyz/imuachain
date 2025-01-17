@@ -915,6 +915,8 @@ func NewExocoreApp(
 	app.mm.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,    // to upgrade the chain
 		capabilitytypes.ModuleName, // before any module with capabilities like IBC
+		// being block of oracle will fill params cache, need to be put before epochs will use the params
+		// it need to put before other modules to fill params cahce before access
 		oracleTypes.ModuleName,
 		epochstypes.ModuleName,    // to update the epoch
 		feemarkettypes.ModuleName, // set EIP-1559 gas prices
