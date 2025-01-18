@@ -104,10 +104,14 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 			if err != nil {
 				return nil, errorsmod.Wrap(err, "failed to GetOperatorSpecifiedAssetInfo")
 			}
+			// the `undelegatableTokens` are currently delegated tokens. they are post-slashing, if any is applied.
+			// this is because slashing is applied to an operator's total amount, of which, the share of a staker is kept
+			// unchanged.
 			undelegatableTokens, err := delegationkeeper.TokensFromShares(record.UndelegatableShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
 			if err != nil {
 				return nil, errorsmod.Wrap(err, "failed to get shares from token")
 			}
+			// this amount is post-slashing, as explained above.
 			info.TotalDepositAmount = info.TotalDepositAmount.Add(undelegatableTokens).Add(record.WaitUndelegationAmount)
 			info.PendingUndelegationAmount = info.PendingUndelegationAmount.Add(record.WaitUndelegationAmount)
 		}
@@ -119,7 +123,13 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 	if value == nil {
 		return nil, errorsmod.Wrap(assetstype.ErrNoStakerAssetKey, fmt.Sprintf("the key is:%s", key))
 	}
-
+	// when there is a slashing, we do not modify `StakerAssetInfo`.
+	// hence, all the amounts below are pre-slashing. however, when
+	// an undelegation is matured, the post-slashing amount is added
+	// to the withdrawable amount and the pre-slashed amount is removed
+	// from the amount pending undelegation.
+	// if a staker were to exit the system, they would leave behind
+	// `TotalDepositAmount` == lifetime slashing amount.
 	ret := assetstype.StakerAssetInfo{}
 	k.cdc.MustUnmarshal(value, &ret)
 	return &ret, nil

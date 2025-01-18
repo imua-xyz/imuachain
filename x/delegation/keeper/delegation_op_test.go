@@ -2,8 +2,11 @@ package keeper_test
 
 import (
 	"fmt"
-	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"math"
 	"time"
+
+	"github.com/ExocoreNetwork/exocore/testutil"
+	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 
 	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -11,7 +14,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 
 	"github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
@@ -100,9 +102,9 @@ func (suite *DelegationTestSuite) prepareOptingInDogfood(assetID string) (sdkmat
 
 func (suite *DelegationTestSuite) prepareDelegationNativeToken() *delegationtype.DelegationOrUndelegationParams {
 	delegationEvent := &delegationtype.DelegationOrUndelegationParams{
-		ClientChainID:   assetstypes.ExocoreChainLzID,
+		ClientChainID:   types.ExocoreChainLzID,
 		Action:          types.DelegateTo,
-		AssetsAddress:   common.HexToAddress(assetstypes.ExocoreAssetAddr).Bytes(),
+		AssetsAddress:   common.HexToAddress(types.ExocoreAssetAddr).Bytes(),
 		OperatorAddress: suite.opAccAddr,
 		StakerAddress:   suite.accAddr[:],
 		OpAmount:        suite.delegationAmount,
@@ -174,9 +176,9 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 
 	// delegate exocore-native-token
 	delegationParams = &delegationtype.DelegationOrUndelegationParams{
-		ClientChainID:   assetstypes.ExocoreChainLzID,
+		ClientChainID:   types.ExocoreChainLzID,
 		Action:          types.DelegateTo,
-		AssetsAddress:   common.HexToAddress(assetstypes.ExocoreAssetAddr).Bytes(),
+		AssetsAddress:   common.HexToAddress(types.ExocoreAssetAddr).Bytes(),
 		OperatorAddress: opAccAddr,
 		StakerAddress:   suite.accAddr[:],
 		OpAmount:        sdkmath.NewInt(50),
@@ -188,7 +190,7 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	stakerID, assetID = types.GetStakerIDAndAssetID(delegationParams.ClientChainID, delegationParams.StakerAddress, delegationParams.AssetsAddress)
 	restakerState, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
 	suite.NoError(err)
-	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, suite.accAddr, assetstypes.ExocoreAssetDenom)
+	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, suite.accAddr, types.ExocoreAssetDenom)
 	suite.Equal(types.StakerAssetInfo{
 		TotalDepositAmount:        balance.Amount.Add(delegationParams.OpAmount),
 		WithdrawableAmount:        balance.Amount,
@@ -213,6 +215,64 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	totalDelegationAmount, err = suite.App.DelegationKeeper.TotalDelegatedAmountForStakerAsset(suite.Ctx, stakerID, assetID)
 	suite.NoError(err)
 	suite.Equal(delegationParams.OpAmount, totalDelegationAmount)
+}
+
+func (suite *DelegationTestSuite) TestAutoAssociate() {
+	genAddr := utiltx.GenerateAddress()
+	opAccAddr := sdk.AccAddress(genAddr[:])
+
+	registerReq := &operatortype.RegisterOperatorReq{
+		FromAddress: opAccAddr.String(),
+		Info: &operatortype.OperatorInfo{
+			EarningsAddr: opAccAddr.String(),
+		},
+	}
+	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
+	suite.NoError(err)
+
+	// self delegate exocore-native-token
+	err = testutil.FundAccountWithBaseDenom(
+		suite.Ctx, suite.App.BankKeeper, opAccAddr, math.MaxInt64,
+	)
+	suite.NoError(err)
+	delegationParams := &delegationtype.DelegationOrUndelegationParams{
+		ClientChainID:   types.ExocoreChainLzID,
+		Action:          types.DelegateTo,
+		AssetsAddress:   common.HexToAddress(types.ExocoreAssetAddr).Bytes(),
+		OperatorAddress: opAccAddr,
+		StakerAddress:   opAccAddr,
+		OpAmount:        sdkmath.NewInt(50),
+		TxHash:          common.HexToHash("0x24c4a315d757249c12a7a1d7b6fb96261d49deee26f06a3e1787d008b445c3ac"),
+	}
+	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+	suite.NoError(err)
+	stakerID, assetID := types.GetStakerIDAndAssetID(delegationParams.ClientChainID, delegationParams.StakerAddress, delegationParams.AssetsAddress)
+	operator, err := suite.App.DelegationKeeper.GetAssociatedOperator(suite.Ctx, stakerID)
+	suite.NoError(err)
+	suite.Equal(opAccAddr.String(), operator)
+
+	// check state
+	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, opAccAddr, types.ExocoreAssetDenom)
+	restakerState, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
+	suite.NoError(err)
+	suite.Equal(
+		types.StakerAssetInfo{
+			TotalDepositAmount:        balance.Amount.Add(delegationParams.OpAmount),
+			WithdrawableAmount:        balance.Amount,
+			PendingUndelegationAmount: sdkmath.ZeroInt(),
+		}, *restakerState,
+	)
+
+	// ensure operator share is credited
+	operatorState, err := suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, opAccAddr, assetID)
+	suite.NoError(err)
+	suite.Equal(types.OperatorAssetInfo{
+		TotalAmount:               delegationParams.OpAmount,
+		PendingUndelegationAmount: sdkmath.ZeroInt(),
+		TotalShare:                sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
+		OperatorShare:             sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
+	}, *operatorState)
+
 }
 
 func (suite *DelegationTestSuite) TestUndelegateFrom() {
@@ -284,7 +344,7 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 	stakerID, assetID = types.GetStakerIDAndAssetID(delegationEvent.ClientChainID, delegationEvent.StakerAddress, delegationEvent.AssetsAddress)
 	restakerState, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
 	suite.NoError(err)
-	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, suite.accAddr, assetstypes.ExocoreAssetDenom)
+	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, suite.accAddr, types.ExocoreAssetDenom)
 	suite.Equal(types.StakerAssetInfo{
 		TotalDepositAmount:        balance.Amount.Add(delegationEvent.OpAmount),
 		WithdrawableAmount:        balance.Amount,
@@ -436,7 +496,7 @@ func (suite *DelegationTestSuite) TestCompleteUndelegation() {
 	restakerState, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
 	suite.NoError(err)
 
-	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, suite.accAddr, assetstypes.ExocoreAssetDenom)
+	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, suite.accAddr, types.ExocoreAssetDenom)
 	suite.Equal(types.StakerAssetInfo{
 		TotalDepositAmount:        balance.Amount,
 		WithdrawableAmount:        balance.Amount,
