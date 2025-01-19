@@ -52,7 +52,6 @@ func (p Precompile) Delegate(
 	if err != nil {
 		return nil, err
 	}
-
 	err = p.delegationKeeper.DelegateTo(ctx, delegationParams)
 	if err != nil {
 		return nil, err

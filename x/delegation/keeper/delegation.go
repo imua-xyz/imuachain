@@ -37,7 +37,6 @@ func (k *Keeper) delegateTo(
 	if notGenesis && k.slashKeeper.IsOperatorFrozen(ctx, params.OperatorAddress) {
 		return delegationtype.ErrOperatorIsFrozen
 	}
-
 	stakerID, assetID := assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
 	if assetID != assetstype.ExocoreAssetID {
 		// check if the staker asset has been deposited and the canWithdraw amount is bigger than the delegation amount

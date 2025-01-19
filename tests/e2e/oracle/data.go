@@ -58,12 +58,12 @@ func generateNSTPriceTime(sc [][]int) priceTime {
 
 var (
 	price1 = priceTime{
-		Price:     "19",
+		Price:     "1900000000",
 		Decimal:   8,
 		Timestamp: now,
 	}
 	price2 = priceTime{
-		Price:     "29",
+		Price:     "290000000",
 		Decimal:   8,
 		Timestamp: now,
 	}

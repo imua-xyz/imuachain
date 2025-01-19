@@ -36,7 +36,6 @@ import (
 	cmttime "github.com/cometbft/cometbft/types/time"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/evmos/evmos/v16/server"
-	evmostypes "github.com/evmos/evmos/v16/types"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
 )
@@ -258,7 +257,9 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	}
 
 	// generate empty genesis files for each validator and save
+	// debug-lz
 	gTime := cmttime.Now()
+	// we use a time 100 minutes before now, to trigger epoch change for each block in the early blocks(more than 100 blocks)
 	for i := 0; i < cfg.NumValidators; i++ {
 		if genDoc.InitialHeight == 0 {
 			genDoc.InitialHeight = 1
@@ -397,7 +398,7 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 			})
 			// OperatorUSDValues
 			// the price unit of assets is 1 not decimal 18
-			stakingValue := sdk.TokensToConsensusPower(stakingAmount, evmostypes.PowerReduction)
+			stakingValue := stakingAmount.Int64()
 			DefaultGenStateOperator.OperatorUSDValues = append(DefaultGenStateOperator.OperatorUSDValues, operatortypes.OperatorUSDValue{
 				Key: AVSAddress + "/" + operatorAccAddress.String(),
 				OptedUSDValue: operatortypes.OperatorOptedUSDValue{
@@ -414,7 +415,7 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 			AVSAddr: AVSAddress,
 			Value: operatortypes.DecValueField{
 				// the price unit of assets is 1 not decimal 18
-				Amount: sdkmath.LegacyNewDec(sdk.TokensToConsensusPower(totalStakingAmount, evmostypes.PowerReduction)),
+				Amount: sdkmath.LegacyNewDec(totalStakingAmount.Int64()),
 			},
 		})
 	}
@@ -425,7 +426,7 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 // stakingAmount is the amount each operator have for every single asset defined in assets module, so for a single operator the total stakingAmount they have is stakingAmount*count(assets)
 // assets genesis state is required as input argument to provide assets information. It should be called with NewGenStateAssets to update default assets genesis state for test
 func NewGenStateDogfood(consPubKeys []string, stakingAmount sdkmath.Int, genStateAssets assetstypes.GenesisState) (dogfoodtypes.GenesisState, error) {
-	power := sdk.TokensToConsensusPower(stakingAmount.Mul(sdkmath.NewInt(int64(len(genStateAssets.Tokens)))), evmostypes.PowerReduction)
+	power := stakingAmount.Mul(sdkmath.NewInt(int64(len(genStateAssets.Tokens)))).Int64()
 	DefaultGenStateDogfood.Params.EpochIdentifier = "minute"
 	DefaultGenStateDogfood.Params.EpochsUntilUnbonded = 5
 	DefaultGenStateDogfood.Params.MinSelfDelegation = sdkmath.NewInt(100)

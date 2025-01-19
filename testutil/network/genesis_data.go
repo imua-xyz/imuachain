@@ -40,8 +40,8 @@ var (
 			},
 		},
 		Tokens: []assetstypes.StakingAssetInfo{
-			NewTestToken("ETH", "Ethereum native token", ETHAssetAddress, TestEVMChainID, 5000),
-			NewTestToken("NST ETH", "native restaking ETH", NativeAssetAddress, TestEVMChainID, 5000),
+			NewTestToken("ETH", "Ethereum native token", ETHAssetAddress, TestEVMChainID, 0, 5000),
+			NewTestToken("NST ETH", "native restaking ETH", NativeAssetAddress, TestEVMChainID, 0, 5000),
 		},
 	}
 
@@ -106,10 +106,10 @@ func init() {
 	// set slashing_miss window to 4
 	DefaultGenStateOracle.Params.Slashing.ReportedRoundsWindow = 4
 	// set jailduration of oracle report downtime to 30 seconds for test
-	DefaultGenStateOracle.Params.Slashing.OracleMissJailDuration = 30 * time.Second
+	DefaultGenStateOracle.Params.Slashing.OracleMissJailDuration = 15 * time.Second
 }
 
-func NewTestToken(name, metaInfo, address string, chainID uint64, amount int64) assetstypes.StakingAssetInfo {
+func NewTestToken(name, metaInfo, address string, chainID uint64, decimal uint32, amount int64) assetstypes.StakingAssetInfo {
 	if name == "" {
 		panic("token name cannot be empty")
 	}
@@ -120,6 +120,7 @@ func NewTestToken(name, metaInfo, address string, chainID uint64, amount int64) 
 		AssetBasicInfo: assetstypes.AssetInfo{
 			Name:             name,
 			MetaInfo:         metaInfo,
+			Decimals:         decimal,
 			Address:          address,
 			LayerZeroChainID: chainID,
 		},

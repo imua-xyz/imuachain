@@ -89,6 +89,7 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	f.ResetFlags()
 
 	f.updateCheckTx()
+
 }
 
 func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.Params) {
@@ -218,7 +219,7 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators
 	// commit caches: msgs is exists, params if updated, validatorPowers is updated
 	_, vUpdated, pUpdated := f.cs.Commit(ctx, false)
 	if vUpdated || pUpdated {
-		f.k.Logger(ctx).Info("update caches", "validatorUpdates", vUpdated, "paramsUpdated", pUpdated)
+		f.k.Logger(ctx).Info("update caches", "validatorUpdated", vUpdated, "paramsUpdated", pUpdated)
 	}
 	return activeValidators
 }
