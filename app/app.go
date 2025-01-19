@@ -1150,6 +1150,9 @@ func (app *ExocoreApp) BeginBlocker(
 	req abci.RequestBeginBlock,
 ) abci.ResponseBeginBlock {
 	// Perform any scheduled forks before executing the modules logic
+	// todo: This needs to be enabled only when we hard-code the upgrade plan to
+	// address the mainnet upgrade. This approach will be used when governance
+	// is not enabled.
 	app.ScheduleForkUpgrade(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
