@@ -22,7 +22,7 @@ import (
 
 // consensusVersion defines the current x/assets module consensus version.
 // the initial version should be 1
-const consensusVersion = 1
+const consensusVersion = 2
 
 // type check to ensure the interface is properly implemented
 var (

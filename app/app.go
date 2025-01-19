@@ -1153,7 +1153,7 @@ func (app *ExocoreApp) BeginBlocker(
 	req abci.RequestBeginBlock,
 ) abci.ResponseBeginBlock {
 	// Perform any scheduled forks before executing the modules logic
-	// app.ScheduleForkUpgrade(ctx)
+	app.ScheduleForkUpgrade(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
 
