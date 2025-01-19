@@ -6,10 +6,6 @@ var (
 	MissedBitArrayPrefix      = append(SlashingPrefix, []byte("missed/value/")...)
 )
 
-// func SlashingValidatorReportInfoPrefix() []byte {
-// 	return ValidatorReportInfoPrefix
-// }
-
 func SlashingValidatorReportInfoKey(validator string) []byte {
 	return append(ValidatorReportInfoPrefix, []byte(validator)...)
 }

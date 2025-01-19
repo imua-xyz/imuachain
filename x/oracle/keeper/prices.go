@@ -5,7 +5,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,14 +31,15 @@ func (k Keeper) GetPrices(
 	val.TokenID = tokenID
 	val.NextRoundID = nextRoundID
 	var i uint64
-	// #nosec G11
-	if nextRoundID <= uint64(common.MaxSizePrices) {
+	maxSizePrices := k.FeederManager.GetMaxSizePricesFromCache()
+	// #nosec G115
+	if nextRoundID <= uint64(maxSizePrices) {
 		i = 1
 		val.PriceList = make([]*types.PriceTimeRound, 0, nextRoundID)
 	} else {
 		// #nosec G11
-		i = nextRoundID - uint64(common.MaxSizePrices)
-		val.PriceList = make([]*types.PriceTimeRound, 0, common.MaxSizePrices)
+		i = nextRoundID - uint64(maxSizePrices)
+		val.PriceList = make([]*types.PriceTimeRound, 0, maxSizePrices)
 	}
 	for ; i < nextRoundID; i++ {
 		b := store.Get(types.PricesRoundKey(i))

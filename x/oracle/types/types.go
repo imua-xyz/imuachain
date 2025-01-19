@@ -63,11 +63,11 @@ const (
 	SourceChainlinkName = "Chainlink"
 	SourceChainlinkID   = 1
 	TimeLayout          = "2006-01-02 15:04:05"
+
+	DelimiterForCombinedKey = byte('/')
 )
 
 var (
-	DelimiterForCombinedKey = byte('/')
-
 	NSTChains = map[NSTType][]string{
 		ETHChain: {ETHMainnetChainID, ETHLocalnetChainID, ETHHoleskyChainID, ETHSepoliaChainID},
 	}

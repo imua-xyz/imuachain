@@ -30,8 +30,21 @@ func (f *FeederManager) GetCaches() *caches {
 	return f.cs
 }
 
+func (f *FeederManager) InitCachesForTest(k Submitter, params *oracletypes.Params, validators map[string]*big.Int) {
+	f.cs = newCaches()
+	f.cs.Init(k, params, validators)
+}
+
 func (f *FeederManager) GetParamsFromCache() *oracletypes.Params {
 	return f.cs.params.params
+}
+
+func (f *FeederManager) GetMaxNonceFromCache() int32 {
+	return f.cs.GetMaxNonce()
+}
+
+func (f *FeederManager) GetMaxSizePricesFromCache() int32 {
+	return f.cs.GetMaxSizePrices()
 }
 
 func (f *FeederManager) GetTokenIDForFeederID(feederID int64) (int64, bool) {
@@ -573,7 +586,6 @@ func (f *FeederManager) SetForceSeal() {
 }
 
 func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
-	// TODO: implement me
 	// nonce, feederID, creator has been verified by anteHandler
 	// baseBlock is going to be verified by its corresponding round
 	decimal, err := f.cs.GetDecimalFromFeederID(msg.FeederID)

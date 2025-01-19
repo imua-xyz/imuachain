@@ -70,6 +70,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	p4Test := types.DefaultParams()
 	p4Test.TokenFeeders[1].StartBaseBlock = 1
 	k.SetParams(ctx, p4Test)
+	k.FeederManager.InitCachesForTest(k, &p4Test, nil)
 
 	return &k, ctx
 }

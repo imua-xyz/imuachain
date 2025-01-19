@@ -16,7 +16,7 @@ func (k Keeper) SetMsgItemsForCache(ctx sdk.Context, recentMsg types.RecentMsg) 
 		for ; i < len(index.Index); i++ {
 			b := index.Index[i]
 			// #nosec G115  // maxNonce is not negative
-			if b > block-uint64(maxNonce) {
+			if block < uint64(maxNonce) || b > block-uint64(maxNonce) {
 				break
 			}
 			// remove old recentMsg

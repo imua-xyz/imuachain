@@ -106,7 +106,7 @@ type priceValidator struct {
 type recordsValidators struct {
 	finalPrice  *PriceResult
 	finalPrices map[string]*PriceResult
-	// TODO: V2: accumulatedValidPower only includes validators who prividing all sources required by rules(defined in oracle.Params)
+	// TODO: V2: accumulatedValidPower only includes validators who providing all sources required by rules(defined in oracle.Params)
 	// accumulatedValidVpower: map[string]*big.Int
 	accumulatedPower *big.Int
 	// each validator will get a single final price independently, the order of validators does not matter, map is safe

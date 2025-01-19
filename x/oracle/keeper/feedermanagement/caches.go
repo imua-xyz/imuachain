@@ -76,6 +76,10 @@ func (c *caches) GetMaxNonce() int32 {
 	return c.params.params.GetMaxNonce()
 }
 
+func (c *caches) GetMaxSizePrices() int32 {
+	return c.params.params.GetMaxSizePrices()
+}
+
 func (c *caches) IsDeterministic(sourceID int64) (bool, error) {
 	sources := c.params.params.Sources
 	if sourceID >= int64(len(sources)) || sourceID <= 0 {

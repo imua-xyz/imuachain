@@ -326,7 +326,7 @@ func (ps *priceSource) Add(psNew *priceSource) (*priceSource, error) {
 		return nil, fmt.Errorf("failed to add ProtoPriceSource, sourceID:%d, errors:%s", ps.sourceID, es)
 	}
 
-	sort.Slice(ps.prices, func(i, j int) bool {
+	sort.SliceStable(ps.prices, func(i, j int) bool {
 		return ps.prices[i].DetID < ps.prices[j].DetID
 	})
 	return ret, nil

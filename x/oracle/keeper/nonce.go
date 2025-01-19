@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -111,8 +110,9 @@ func (k Keeper) RemoveNonceWithFeederIDForAll(ctx sdk.Context, feederID uint64) 
 // CheckAndIncreaseNonce check and increase the nonce for a specific validator and feederID
 func (k Keeper) CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederID uint64, nonce uint32) (prevNonce uint32, err error) {
 	// #nosec G115  // safe conversion
-	if nonce > uint32(common.MaxNonce) {
-		return 0, fmt.Errorf("nonce_check_failed: max_exceeded: limit=%d received=%d", common.MaxNonce, nonce)
+	maxNonce := k.GetMaxNonceFromCache()
+	if nonce > uint32(maxNonce) {
+		return 0, fmt.Errorf("nonce_check_failed: max_exceeded: limit=%d received=%d", maxNonce, nonce)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.NonceKeyPrefix))
 	if n, found := k.getNonce(store, validator); found {
