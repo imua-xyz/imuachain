@@ -14,7 +14,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 	// Set if defined
 	if genState.ValidatorUpdateBlock != nil {
-		k.SetValidatorUpdateBlock(ctx, *genState.ValidatorUpdateBlock)
+		k.SetValidatorUpdateForCache(ctx, *genState.ValidatorUpdateBlock)
 	}
 	// Set if defined
 	if genState.IndexRecentParams != nil {

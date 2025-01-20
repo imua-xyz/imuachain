@@ -14,7 +14,7 @@ import (
 
 func createTestValidatorUpdateBlock(keeper *keeper.Keeper, ctx sdk.Context) types.ValidatorUpdateBlock {
 	item := types.ValidatorUpdateBlock{}
-	keeper.SetValidatorUpdateBlock(ctx, item)
+	keeper.SetValidatorUpdateForCache(ctx, item)
 	return item
 }
 

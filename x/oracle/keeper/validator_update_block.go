@@ -12,13 +12,6 @@ func (k Keeper) SetValidatorUpdateForCache(ctx sdk.Context, validatorUpdateBlock
 	store.Set(types.BlockKey, b)
 }
 
-// SetValidatorUpdateBlock set validatorUpdateBlock in the store
-func (k Keeper) SetValidatorUpdateBlock(ctx sdk.Context, validatorUpdateBlock types.ValidatorUpdateBlock) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ValidatorUpdateBlockKey))
-	b := k.cdc.MustMarshal(&validatorUpdateBlock)
-	store.Set(types.BlockKey, b)
-}
-
 // GetValidatorUpdateBlock returns validatorUpdateBlock
 func (k Keeper) GetValidatorUpdateBlock(ctx sdk.Context) (val types.ValidatorUpdateBlock, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.ValidatorUpdateBlockKey))

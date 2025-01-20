@@ -102,7 +102,6 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	f.ResetFlags()
 
 	f.updateCheckTx()
-
 }
 
 func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.Params) {

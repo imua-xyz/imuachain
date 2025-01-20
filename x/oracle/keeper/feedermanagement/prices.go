@@ -40,11 +40,27 @@ func (p *PriceInfo) EqualDS(pi *PriceInfo) bool {
 }
 
 func (p *PriceInfo) PriceResult() *PriceResult {
-	return (*PriceResult)(p)
+	if p == nil {
+		return nil
+	}
+	return &PriceResult{
+		Price:     p.Price,
+		Decimal:   p.Decimal,
+		DetID:     p.DetID,
+		Timestamp: p.Timestamp,
+	}
 }
 
 func (p *PriceResult) PriceInfo() *PriceInfo {
-	return (*PriceInfo)(p)
+	if p == nil {
+		return nil
+	}
+	return &PriceInfo{
+		Price:     p.Price,
+		Decimal:   p.Decimal,
+		DetID:     p.DetID,
+		Timestamp: p.Timestamp,
+	}
 }
 
 func (p *PriceResult) ProtoPriceTimeRound(roundID int64, timestamp string) *oracletypes.PriceTimeRound {

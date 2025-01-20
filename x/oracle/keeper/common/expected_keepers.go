@@ -62,8 +62,6 @@ type KeeperOracle interface {
 	SetIndexRecentParams(sdk.Context, types.IndexRecentParams)
 	SetRecentParams(sdk.Context, types.RecentParams)
 
-	SetValidatorUpdateBlock(sdk.Context, types.ValidatorUpdateBlock)
-
 	RemoveRecentParams(sdk.Context, uint64)
 	RemoveRecentMsg(sdk.Context, uint64)
 
