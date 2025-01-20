@@ -36,6 +36,9 @@ func (p *PriceInfo) ProtoPriceTimeDetID() *oracletypes.PriceTimeDetID {
 }
 
 func (p *PriceInfo) EqualDS(pi *PriceInfo) bool {
+	if p == nil || pi == nil {
+		return p == nil
+	}
 	return p.Price == pi.Price && p.DetID == pi.DetID && p.Decimal == pi.Decimal
 }
 
@@ -124,11 +127,8 @@ func (pv *priceValidator) Cpy() *priceValidator {
 }
 
 func (pv *priceValidator) Equals(pv2 *priceValidator) bool {
-	if pv == nil && pv2 == nil {
-		return true
-	}
 	if pv == nil || pv2 == nil {
-		return false
+		return pv == pv2
 	}
 	if pv.validator != pv2.validator || pv.power.Cmp(pv2.power) != 0 {
 		return false
@@ -242,11 +242,8 @@ func newPriceSource(sourceID int64, deterministic bool) *priceSource {
 }
 
 func (ps *priceSource) Equals(ps2 *priceSource) bool {
-	if ps == nil && ps2 == nil {
-		return true
-	}
 	if ps == nil || ps2 == nil {
-		return false
+		return ps == ps2
 	}
 	if ps.sourceID != ps2.sourceID || ps.deterministic != ps2.deterministic {
 		return false
@@ -349,11 +346,8 @@ func (ps *priceSource) Add(psNew *priceSource) (*priceSource, error) {
 }
 
 func (p *PricePower) Equals(p2 *PricePower) bool {
-	if p == nil && p2 == nil {
-		return true
-	}
 	if p == nil || p2 == nil {
-		return false
+		return p == p2
 	}
 	if !reflect.DeepEqual(p.Price, p2.Price) || p.Power.Cmp(p2.Power) != 0 {
 		return false

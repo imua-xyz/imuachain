@@ -829,11 +829,8 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 }
 
 func (f *FeederManager) Equals(fm *FeederManager) bool {
-	if f == nil && fm == nil {
-		return true
-	}
 	if f == nil || fm == nil {
-		return false
+		return f == fm
 	}
 	if f.fCheckTx == nil && fm.fCheckTx != nil {
 		return false

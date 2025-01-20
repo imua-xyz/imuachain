@@ -32,12 +32,10 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 }
 
 func (r *round) Equals(r2 *round) bool {
-	if r == nil && r2 == nil {
-		return true
-	}
 	if r == nil || r2 == nil {
-		return false
+		return r == r2
 	}
+
 	if r.startBaseBlock != r2.startBaseBlock ||
 		r.startRoundID != r2.startRoundID ||
 		r.endBlock != r2.endBlock ||

@@ -36,11 +36,8 @@ func (c *caches) CpyForSimulation() *caches {
 }
 
 func (c *caches) Equals(c2 *caches) bool {
-	if c == nil && c2 == nil {
-		return true
-	}
 	if c == nil || c2 == nil {
-		return false
+		return c == c2
 	}
 	if !c.msg.Equals(c2.msg) {
 		return false
@@ -108,11 +105,8 @@ func (c *caches) GetValidators() []string {
 }
 
 func (cm *cacheMsgs) Equals(cm2 *cacheMsgs) bool {
-	if cm == nil && cm2 == nil {
-		return true
-	}
 	if cm == nil || cm2 == nil {
-		return false
+		return cm == cm2
 	}
 	for idx, v := range *cm {
 		v2 := (*cm2)[idx]
@@ -153,11 +147,8 @@ func (cm *cacheMsgs) commit(ctx sdk.Context, k Submitter) {
 }
 
 func (cv *cacheValidator) Equals(cv2 *cacheValidator) bool {
-	if cv == nil && cv2 == nil {
-		return true
-	}
 	if cv == nil || cv2 == nil {
-		return false
+		return cv == cv2
 	}
 	if cv.update != cv2.update {
 		return false
@@ -223,11 +214,8 @@ func (cv *cacheValidator) slice() []string {
 }
 
 func (cp *cacheParams) Equals(cp2 *cacheParams) bool {
-	if cp == nil && cp2 == nil {
-		return true
-	}
 	if cp == nil || cp2 == nil {
-		return false
+		return cp == cp2
 	}
 	if cp.update != cp2.update {
 		return false

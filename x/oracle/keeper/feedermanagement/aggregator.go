@@ -24,11 +24,8 @@ func newAggregator(t *threshold, algo AggAlgorithm) *aggregator {
 }
 
 func (a *aggregator) Equals(a2 *aggregator) bool {
-	if a == nil && a2 == nil {
-		return true
-	}
 	if a == nil || a2 == nil {
-		return false
+		return a == a2
 	}
 
 	if !reflect.DeepEqual(a.finalPrice, a2.finalPrice) {
@@ -120,11 +117,8 @@ func newRecordsValidators() *recordsValidators {
 }
 
 func (rv *recordsValidators) Equals(rv2 *recordsValidators) bool {
-	if rv == nil && rv2 == nil {
-		return true
-	}
 	if rv == nil || rv2 == nil {
-		return false
+		return rv == rv2
 	}
 
 	if !reflect.DeepEqual(rv.finalPrice, rv2.finalPrice) {
@@ -283,11 +277,8 @@ func newRecordsDSs(t *threshold) *recordsDSs {
 // }
 
 func (rdss *recordsDSs) Equals(rdss2 *recordsDSs) bool {
-	if rdss == nil && rdss2 == nil {
-		return true
-	}
 	if rdss == nil || rdss2 == nil {
-		return false
+		return rdss == rdss2
 	}
 
 	if !rdss.t.Equals(rdss2.t) {
@@ -385,11 +376,8 @@ func newRecordsDS() *recordsDS {
 }
 
 func (rds *recordsDS) Equals(rds2 *recordsDS) bool {
-	if rds == nil && rds2 == nil {
-		return true
-	}
 	if rds == nil || rds2 == nil {
-		return false
+		return rds == rds2
 	}
 
 	if !reflect.DeepEqual(rds.finalPrice, rds2.finalPrice) {
