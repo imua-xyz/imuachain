@@ -42,7 +42,7 @@ message StakersByOperator {
   // which is a combination of the operator address and the asset ID.
   string key = 1;
   // stakers is the stakers list for the above key
-  repeated string stakers = 2 [(gogoproto.nullable) = false];
+  repeated string stakers = 2;
 }
 
 // DelegationsByStaker is a list of delegations for a single staker.
