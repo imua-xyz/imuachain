@@ -10,19 +10,28 @@ func (k Keeper) SetParamsForCache(ctx sdk.Context, params types.RecentParams) {
 	block := uint64(ctx.BlockHeight())
 	index, found := k.GetIndexRecentParams(ctx)
 	if found {
-		i := 0
 		// if the maxNonce is changed in this block, all rounds would be force sealed, so it's ok to use either the old or new maxNonce
 		maxNonce := k.GetParams(ctx).MaxNonce
-		for ; i < len(index.Index); i++ {
-			b := index.Index[i]
-			// #nosec G115  // maxNonce is not negative
-			if b > block-uint64(maxNonce) {
-				break
+		l := len(index.Index)
+		if l > 0 {
+			// keep at least one history params before appending current new params
+			prev := index.Index[0]
+			idx := 0
+			// #nosec G115
+			if prev <= block-uint64(maxNonce) && l > 1 {
+				for i := 1; i < l; i++ {
+					k.RemoveRecentParams(ctx, prev)
+					b := index.Index[i]
+					// #nosec G115
+					if b > block-uint64(maxNonce) {
+						break
+					}
+					prev = b
+					idx = i
+				}
 			}
-			// remove old recentParams
-			k.RemoveRecentParams(ctx, b)
+			index.Index = index.Index[idx:]
 		}
-		index.Index = index.Index[i:]
 	}
 	index.Index = append(index.Index, block)
 	k.SetIndexRecentParams(ctx, index)
@@ -119,9 +128,6 @@ func (k Keeper) GetRecentParamsWithinMaxNonce(ctx sdk.Context) (recentParamsList
 		var val types.RecentParams
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
 		latest = val
-		if notFound {
-			prev = val
-		}
 		if val.Block >= startHeight {
 			if notFound {
 				notFound = false
@@ -131,6 +137,7 @@ func (k Keeper) GetRecentParamsWithinMaxNonce(ctx sdk.Context) (recentParamsList
 		if notFound {
 			prev = val
 		}
+
 	}
 	if len(recentParamsList) > 0 {
 		if prev.Block == recentParamsList[0].Block {

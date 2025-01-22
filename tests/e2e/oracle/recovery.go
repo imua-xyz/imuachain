@@ -1,8 +1,12 @@
 package oracle
 
 import (
+	"math/big"
+
+	"github.com/ExocoreNetwork/exocore/testutil/network"
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // the test cases run with 'devmode' flag, we try to elaborate all cases to check the recovery logic works fine in each scenario
@@ -452,7 +456,75 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	s.Require().Equal(res.Price.Price, priceRecovery3.Prices[0].Price)
 
 	//    2.3 failed for forceSeal by paramsUpdate
-	// TODO: implement me
+	// TODO: for now all paramsUpdate related forceSeal are not supported (the related fields are not allowed to be updated by msgUpdateParms)
+	// we comment out this case for now
+	//	start += 10
+	//	startUint = uint64(start)
+	//	msg0.BasedBlock = startUint
+	//	msg1.BasedBlock = startUint
+	//	msg2.BasedBlock = startUint
+	//	msgUpdateParams := oracletypes.NewMsgUpdateParams("creator", `{"max_nonce":5}`)
+	//	s.moveNAndCheck(start)
+	//
+	//	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	//	s.Require().NoError(err)
+	//
+	//	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	//	s.Require().NoError(err)
+	//
+	//	// send updateParams msg to forceSeal current round
+	//	err = s.network.SendTx([]sdk.Msg{msgUpdateParams}, s.network.Validators[0].ClientCtx.FromName, kr0)
+	//	s.Require().NoError(err)
+	//	s.moveToAndCheck(start + 1)
+	//
+	//	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	//	s.Require().NoError(err)
+	//
+	//	s.moveToAndCheck(start + 3)
+	//
+	//	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(start+2), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	//	s.Require().NoError(err)
+	//	// price failed to update
+	//	s.Require().Equal(res.Price.Price, priceRecovery3.Prices[0].Price)
+
 	//    2.4 failed for forceSeal by validatorSetUpdate: we use an old timestamp in genesisfile to setup the network so that the epoch end will be triggered on each block
-	// TODO: implement me
+	start += 10
+	startUint = uint64(start)
+
+	msg0.BasedBlock = startUint
+	msg1.BasedBlock = startUint
+	msg2.BasedBlock = startUint
+	//		msgUpdateParams := oracletypes.NewMsgUpdateParams(s.network.Validators[0].Address.String(), `{"max_nonce":5}`)
+	s.moveToAndCheck(start)
+
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	s.Require().NoError(err)
+
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	s.Require().NoError(err)
+
+	// delegate to change validator set, we set genesis time to a history time so that the validator set update will be triggered every block
+	clientChainID := uint32(101)
+	lzNonce := uint64(0)
+	assetAddr, _ := hexutil.Decode(network.ETHAssetAddress)
+	stakerAddr := []byte(s.network.Validators[0].Address)
+	operatorAddr := []byte(s.network.Validators[0].Address.String())
+	opAmount := big.NewInt(90000000)
+	// deposit 32 NSTETH to staker from beaconchain_validatro_1
+	err = s.network.SendPrecompileTx(network.DELEGATION, "delegate", clientChainID, lzNonce, assetAddr, stakerAddr, operatorAddr, opAmount)
+	s.Require().NoError(err)
+
+	// power will be updated at endBlock of start+2, it would force seal this round
+	s.moveToAndCheck(start + 2)
+
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	s.Require().NotNil(err)
+
+	s.moveToAndCheck(start + 3)
+
+	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(start+2), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.NoError(err)
+	s.Require().Equal(res.Price.Price, priceRecovery3.Prices[0].Price)
+
+	s.moveToAndCheck(start + 20)
 }

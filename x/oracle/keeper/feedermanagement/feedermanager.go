@@ -261,13 +261,13 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 		if r.Committable() {
 			finalPrice, ok := r.FinalPrice()
 			if !ok {
-				logger.Info("commit round with price from previous", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "heigth", height)
+				logger.Info("commit round with price from previous", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
 				// #nosec G115  // tokenID is index of slice
 				f.k.GrowRoundID(ctx, uint64(r.tokenID))
 			} else {
 				if f.cs.IsRuleV1(r.feederID) {
 					priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
-					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "heigth", height)
+					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
 
 					// #nosec G115  // tokenID is index of slice
 					f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit, finalPrice.DetID)

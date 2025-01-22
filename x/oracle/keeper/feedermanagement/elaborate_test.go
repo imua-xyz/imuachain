@@ -35,46 +35,46 @@ func TestRoundTallyElaborate(t *testing.T) {
 	total := len(tests)
 	for idx, tt := range tests {
 		fmt.Printf("total:%d, running:%d\r\n", total, idx)
-		//		t.Run(fmt.Sprintf("case_%d", idx), func(t *testing.T) {
-		r := tData.NewRoundWithFeederID(c, 1)
-		r.cache = c
-		r.PrepareForNextBlock(int64(params.TokenFeeders[1].StartBaseBlock))
-		p, rslt := tt.Next()
-		for p != nil {
-			var pRslt *PriceResult
-			for _, pItem := range p {
-				if pItem == nil {
-					continue
-				}
-				if idx == 372751 {
-					fmt.Printf("tally:%v, result:%v\r\n", pItem.msgItem(), rslt)
-				}
-				if pRsltTmp, _, _ := r.Tally(pItem.msgItem()); pRsltTmp != nil {
-					pRslt = pRsltTmp
-				}
-			}
-			if rslt != nil && (pRslt == nil || rslt.Price != pRslt.Price) {
-				tt.Reset()
-				fmt.Println("fail case:", idx, "Tally.result:", pRslt)
-				p, rslt := tt.Next()
-				idx2 := 1
-				for p != nil {
-					fmt.Printf("block_%d ", idx2)
-					idx2++
-					for idx3, pi := range p {
-						fmt.Printf("msgItem_%d: %v ", idx3, pi)
+		t.Run(fmt.Sprintf("case_%d", idx), func(t *testing.T) {
+			r := tData.NewRoundWithFeederID(c, 1)
+			r.cache = c
+			r.PrepareForNextBlock(int64(params.TokenFeeders[1].StartBaseBlock))
+			p, rslt := tt.Next()
+			for p != nil {
+				var pRslt *PriceResult
+				for _, pItem := range p {
+					if pItem == nil {
+						continue
 					}
-					fmt.Println()
-					fmt.Println(rslt)
-					p, rslt = tt.Next()
+					if idx == 372751 {
+						fmt.Printf("tally:%v, result:%v\r\n", pItem.msgItem(), rslt)
+					}
+					if pRsltTmp, _, _ := r.Tally(pItem.msgItem()); pRsltTmp != nil {
+						pRslt = pRsltTmp
+					}
 				}
-				t.Fatal("failed")
+				if rslt != nil && (pRslt == nil || rslt.Price != pRslt.Price) {
+					tt.Reset()
+					fmt.Println("fail case:", idx, "Tally.result:", pRslt)
+					p, rslt := tt.Next()
+					idx2 := 1
+					for p != nil {
+						fmt.Printf("block_%d ", idx2)
+						idx2++
+						for idx3, pi := range p {
+							fmt.Printf("msgItem_%d: %v ", idx3, pi)
+						}
+						fmt.Println()
+						fmt.Println(rslt)
+						p, rslt = tt.Next()
+					}
+					t.Fatal("failed")
+				}
+				if rslt != nil {
+					break
+				}
+				p, rslt = tt.Next()
 			}
-			if rslt != nil {
-				break
-			}
-			p, rslt = tt.Next()
-		}
-		// })
+		})
 	}
 }

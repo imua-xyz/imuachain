@@ -48,15 +48,22 @@ func (s *E2ETestSuite) TestCreatePrice() {
 	creator3 = sdk.AccAddress(s.network.Validators[3].PubKey.Address())
 
 	// we combine all test cases into one big case to avoid reset the network multiple times, the order can't be changed
-	s.testRegisterTokenThroughPrecompile()
-	s.testCreatePriceNST()
-	s.testCreatePriceLST()
-	s.testSlashing()
-	s.testCreatePriceLSTAfterDelegationChangePower()
+
 	option := os.Getenv("TEST_OPTION")
 	if option == "local" {
-		s.testRecoveryCases(130)
+		s.testRecoveryCases(10)
+	} else {
+		s.testRegisterTokenThroughPrecompile()
+		s.testCreatePriceNST()
+		s.testCreatePriceLST()
+		s.testSlashing()
+		s.testCreatePriceLSTAfterDelegationChangePower()
 	}
+	// option := os.Getenv("TEST_OPTION")
+	//
+	//	if option == "local" {
+	//		s.testRecoveryCases(130)
+	//	}
 }
 
 func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
@@ -258,7 +265,15 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	s.Require().NoError(err)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
+
+	s.moveToAndCheck(41)
+	// send create-price from validator3 to avoid being slashed for downtime
+	msg3 = oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceSource1R4}, 40, 1)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconskey3", kr3)
+	s.Require().NoError(err)
+
 	s.moveToAndCheck(42)
+
 	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(41), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price updated, round 4 has price{p1}
@@ -266,10 +281,6 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	ret = priceTest1R4.getPriceTimeRound(4)
 	ret.Timestamp = res.Price.Timestamp
 	s.Require().Equal(ret, res.Price)
-	// send create-price from validator3 to avoid being slashed for downtime
-	msg3 = oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceSource1R4}, 40, 1)
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconskey3", kr3)
-	s.Require().NoError(err)
 }
 
 func (s *E2ETestSuite) testCreatePriceNST() {
