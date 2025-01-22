@@ -70,4 +70,82 @@ var (
 
 	stakerChanges1 = [][]int{{0, -4}}
 	priceNST1      = generateNSTPriceTime(stakerChanges1)
+
+	// 1. detID:1, price: 123
+	// 2. detID:1, price: 129
+	// 3. detID:2, price: 127
+	priceRecovery1 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12300000000",
+				Decimal:   8,
+				DetID:     "1",
+				Timestamp: now,
+			},
+		},
+	}
+	priceRecovery1_2 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12300000000",
+				Decimal:   8,
+				DetID:     "1",
+				Timestamp: now,
+			},
+			{
+				Price:     "12700000000",
+				Decimal:   8,
+				DetID:     "2",
+				Timestamp: now,
+			},
+		},
+	}
+
+	priceRecovery1_3 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12300000000",
+				Decimal:   8,
+				DetID:     "1",
+				Timestamp: now,
+			},
+			{
+				Price:     "12700000000",
+				Decimal:   8,
+				DetID:     "2",
+				Timestamp: now,
+			},
+			{
+				Price:     "12900000000",
+				Decimal:   8,
+				DetID:     "3",
+				Timestamp: now,
+			},
+		},
+	}
+	priceRecovery2 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12700000000",
+				Decimal:   8,
+				DetID:     "2",
+				Timestamp: now,
+			},
+		},
+	}
+	priceRecovery3 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12900000000",
+				Decimal:   8,
+				DetID:     "3",
+				Timestamp: now,
+			},
+		},
+	}
 )
