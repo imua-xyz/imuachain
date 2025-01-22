@@ -105,7 +105,7 @@ func init() {
 	})
 	// set slashing_miss window to 4
 	DefaultGenStateOracle.Params.Slashing.ReportedRoundsWindow = 4
-	// set jailduration of oracle report downtime to 30 seconds for test
+	// set jailduration of oracle report downtime to 15 seconds for test
 	DefaultGenStateOracle.Params.Slashing.OracleMissJailDuration = 15 * time.Second
 }
 

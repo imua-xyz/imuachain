@@ -15,6 +15,8 @@ type ItemV map[string]*big.Int
 
 var zeroBig = big.NewInt(0)
 
+const v1RuleID = 1
+
 func (c *caches) CpyForSimulation() *caches {
 	ret := *c
 	msg := *(c.msg)
@@ -88,7 +90,7 @@ func (c *caches) IsDeterministic(sourceID int64) (bool, error) {
 // RuleV1, we restrict the source to be Chainlink and only that source is acceptable
 func (c *caches) IsRuleV1(feederID int64) bool {
 	ruleID := c.params.params.TokenFeeders[feederID].RuleID
-	return ruleID == 1 && len(c.params.params.Sources) == 2 && c.params.params.Sources[1].Name == oracletypes.SourceChainlinkName
+	return ruleID == v1RuleID && len(c.params.params.Sources) == 2 && c.params.params.Sources[1].Name == oracletypes.SourceChainlinkName
 }
 
 func (c *caches) GetTokenIDForFeederID(feederID int64) (int64, bool) {
@@ -339,7 +341,7 @@ func (c *caches) SkipCommit() {
 	c.params.update = false
 }
 
-// CommitCache commits the cache to the KVStore
+// Commit commits the cache to the KVStore
 func (c *caches) Commit(ctx sdk.Context, reset bool) (msgUpdated, validatorsUpdated, paramsUpdated bool) {
 	if len(*(c.msg)) > 0 {
 		c.msg.commit(ctx, c.k)

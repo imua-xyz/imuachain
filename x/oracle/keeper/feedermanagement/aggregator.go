@@ -274,9 +274,6 @@ func newRecordsDSs(t *threshold) *recordsDSs {
 	}
 }
 
-// type recordsDSs struct {
-// }
-
 func (rdss *recordsDSs) Equals(rdss2 *recordsDSs) bool {
 	if rdss == nil || rdss2 == nil {
 		return rdss == rdss2
