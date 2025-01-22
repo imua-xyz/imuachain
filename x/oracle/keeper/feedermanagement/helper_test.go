@@ -101,6 +101,11 @@ func (t *Test) NewRound(cs CacheReader) *round {
 	return round
 }
 
+func (t *Test) NewRoundWithFeederID(cs CacheReader, feederID int64) *round {
+	round := newRound(feederID, params.TokenFeeders[feederID], int64(params.MaxNonce), cs, defaultAggMedian)
+	return round
+}
+
 func (f *Test) NewPriceInfo(price string, detID string) *PriceInfo {
 	return &PriceInfo{
 		Price:     price,

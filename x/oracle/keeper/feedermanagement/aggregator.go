@@ -59,6 +59,7 @@ func (a *aggregator) CopyForCheckTx() *aggregator {
 		finalPrice: finalPrice,
 		v:          a.v.Cpy(),
 		ds:         a.ds.Cpy(),
+		algo:       a.algo,
 	}
 }
 
@@ -466,6 +467,7 @@ func (rds *recordsDS) AddPrice(p *PricePower) {
 		}
 	}
 	if i >= l {
+		p = p.Cpy()
 		for i = 0; i < l; i++ {
 			record := rds.records[i]
 			if p.Price.DetID <= record.Price.DetID {
@@ -476,7 +478,6 @@ func (rds *recordsDS) AddPrice(p *PricePower) {
 			}
 		}
 		if i >= l {
-			p = p.Cpy()
 			rds.records = append(rds.records, p)
 		}
 	}

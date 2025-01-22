@@ -308,7 +308,7 @@ test-all: test-unit test-race
 PACKAGES_UNIT=$(shell go list ./... | grep -v '/tests/e2e' | grep -v 'testutil')
 PACKAGES_UNIT_E2E=$(shell go list ./... | grep '/tests/e2e')
 TEST_PACKAGES=./...
-TEST_TARGETS := test-unit test-unit-cover test-race test-unit-e2e
+TEST_TARGETS := test-unit test-unit-cover test-race test-unit-e2e test-unit-cover-local test-unit-e2e-local
 
 # Test runs-specific rules. To add a new test target, just add
 # a new rule, customise ARGS or TEST_PACKAGES ad libitum, and
@@ -326,6 +326,14 @@ test-unit-cover: TEST_PACKAGES=$(PACKAGES_UNIT)
 test-unit-e2e: ARGS=-timeout=15m --tags devmode
 test-unit-e2e: TEST_PACKAGES=$(PACKAGES_UNIT_E2E)
 
+test-unit-cover-local: ARGS=-timeout=30m -coverprofile=cover.out -covermode=atomic -gcflags=all=-l --tags 'devmode local'
+test-unit-cover-local: TEST_PACKAGES=$(PACKAGES_UNIT)
+
+test-unit-e2e-local: TEST_OPTION=local
+test-unit-e2e-local: ARGS=-timeout=30m --tags devmode
+test-unit-e2e-local: TEST_PACKAGES=$(PACKAGES_UNIT_E2E)
+
+
 test-e2e:
 	@if [ -z "$(TARGET_VERSION)" ]; then \
 		echo "Building docker image from local codebase"; \
@@ -339,9 +347,9 @@ test-e2e:
 
 run-tests:
 ifneq (,$(shell which tparse 2>/dev/null))
-	go test -mod=readonly -json $(ARGS) $(EXTRA_ARGS) $(TEST_PACKAGES) | tparse
+	TEST_OPTION=$(TEST_OPTION) go test -mod=readonly -json $(ARGS) $(EXTRA_ARGS) $(TEST_PACKAGES) | tparse
 else
-	go test -mod=readonly $(ARGS)  $(EXTRA_ARGS) $(TEST_PACKAGES)
+	TEST_OPTION=$(TEST_OPTION) go test -mod=readonly $(ARGS)  $(EXTRA_ARGS) $(TEST_PACKAGES)
 endif
 
 test-import:

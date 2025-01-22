@@ -257,8 +257,9 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	}
 
 	// generate empty genesis files for each validator and save
-	// debug-lz
 	gTime := cmttime.Now()
+	// debug-lz, set time to a history time so that we can trigger epoch end on every block
+	// gTime = gTime.Add(-300 * time.Minute)
 	// we use a time 100 minutes before now, to trigger epoch change for each block in the early blocks(more than 100 blocks)
 	for i := 0; i < cfg.NumValidators; i++ {
 		if genDoc.InitialHeight == 0 {

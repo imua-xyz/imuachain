@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -46,12 +47,16 @@ func (s *E2ETestSuite) TestCreatePrice() {
 	kr3 = s.network.Validators[3].ClientCtx.Keyring
 	creator3 = sdk.AccAddress(s.network.Validators[3].PubKey.Address())
 
-	// we combine all test cases into one big case to avoid reset the network multiple times
+	// we combine all test cases into one big case to avoid reset the network multiple times, the order can't be changed
 	s.testRegisterTokenThroughPrecompile()
 	s.testCreatePriceNST()
 	s.testCreatePriceLST()
 	s.testSlashing()
 	s.testCreatePriceLSTAfterDelegationChangePower()
+	option := os.Getenv("TEST_OPTION")
+	if option == "local" {
+		s.testRecoveryCases(130)
+	}
 }
 
 func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
@@ -117,13 +122,13 @@ func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
 /*
 cases:
 
-	  we need more than 2/3 power, so that at least 3 out of 4 validators power should be enough
-		1. block_1_1: v1 sendPrice{p1}, [no round_1 price after block_1_1 committed], block_1_2:v2&v3 sendPrice{p1}, [got round_1 price{p1} after block_1_2 committed]
-		2. block_2_1: v3 sendPrice{p2}, block_2_2: v1 sendPrice{p2}, [no round_2 price after block_2_2 committed], block_2_3:nothing, [got round_2 price{p1} equals to round_1 after block_2_3 committed]
-		3. block_3_1: v1 sendPrice{p1}, block_3_2: v2&v3 sendPrice{p2}, block_3_3: v3 sendPrice{p2}, [got final price{p2} after block_3_3 committed]
-		4. block_4_1: v1&v2&v3 sendPrice{p1}, [got round_4 price{p1} after block_4_1 committed]]
+we need more than 2/3 power, so that at least 3 out of 4 validators power should be enough
+1. block_1_1: v1 sendPrice{p1}, [no round_1 price after block_1_1 committed], block_1_2:v2&v3 sendPrice{p1}, [got round_1 price{p1} after block_1_2 committed]
+2. block_2_1: v3 sendPrice{p2}, block_2_2: v1 sendPrice{p2}, [no round_2 price after block_2_2 committed], block_2_3:nothing, [got round_2 price{p1} equals to round_1 after block_2_3 committed]
+3. block_3_1: v1 sendPrice{p1}, block_3_2: v2&v3 sendPrice{p2}, block_3_3: v3 sendPrice{p2}, [got final price{p2} after block_3_3 committed]
+4. block_4_1: v1&v2&v3 sendPrice{p1}, [got round_4 price{p1} after block_4_1 committed]]
 
-		--- nonce:
+--- nonce:
 */
 func (s *E2ETestSuite) testCreatePriceLST() {
 	priceTest1R1 := price1.updateTimestamp()
