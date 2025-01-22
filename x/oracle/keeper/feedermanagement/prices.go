@@ -35,11 +35,11 @@ func (p *PriceInfo) ProtoPriceTimeDetID() *oracletypes.PriceTimeDetID {
 	}
 }
 
-func (p *PriceInfo) EqualDS(pi *PriceInfo) bool {
-	if p == nil || pi == nil {
-		return p == nil
+func (p *PriceInfo) EqualDS(p2 *PriceInfo) bool {
+	if p == nil || p2 == nil {
+		return p == p2
 	}
-	return p.Price == pi.Price && p.DetID == pi.DetID && p.Decimal == pi.Decimal
+	return p.Price == p2.Price && p.DetID == p2.DetID && p.Decimal == p2.Decimal
 }
 
 func (p *PriceInfo) PriceResult() *PriceResult {
