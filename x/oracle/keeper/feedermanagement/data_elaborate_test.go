@@ -1,6 +1,8 @@
 package feedermanagement
 
 import (
+	"math"
+
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 )
 
@@ -221,8 +223,7 @@ func generateAllBlocks(validatorSets []validatorSet, quotingWindow int, sizeVali
 		panic("only support for 4 validators for test case")
 	}
 	// count of possible combinations for one validatorSet
-	count := (2 ^ sizeValidators) ^ quotingWindow
-	// ret := make([]*blocks, 0, len(validatorSets)*count)
+	count := int(math.Pow(math.Pow(2, float64(sizeValidators)), float64(quotingWindow)))
 	ret := make([]*Blocks, 0, len(validatorSets)*count)
 	for _, vs := range validatorSets {
 		// TODO: this should be generated from seizeValidtors instead of hard code
