@@ -86,109 +86,12 @@ var (
 		Power:        big1,
 		PriceSources: []*priceSource{ps2},
 	}
-	protoMsgItem1 = &oracletypes.MsgItem{
-		FeederID: 1,
-		PSources: []*oracletypes.PriceSource{
-			{
-				SourceID: 1,
-				Prices: []*oracletypes.PriceTimeDetID{
-					{
-						Price:     "999",
-						Decimal:   8,
-						DetID:     "1",
-						Timestamp: timestamp,
-					},
-				},
-			},
-		},
-		Validator: "validator1",
-	}
-	protoMsgItem2 = &oracletypes.MsgItem{
-		FeederID: 1,
-		PSources: []*oracletypes.PriceSource{
-			{
-				SourceID: 1,
-				Prices: []*oracletypes.PriceTimeDetID{
-					{
-						Price:     "999",
-						Decimal:   8,
-						DetID:     "2",
-						Timestamp: timestamp,
-					},
-				},
-			},
-		},
-		Validator: "validator1",
-	}
-	protoMsgItem3 = &oracletypes.MsgItem{
-		FeederID: 1,
-		PSources: []*oracletypes.PriceSource{
-			{
-				SourceID: 1,
-				Prices: []*oracletypes.PriceTimeDetID{
-					{
-						Price:     "999",
-						Decimal:   8,
-						DetID:     "2",
-						Timestamp: timestamp,
-					},
-				},
-			},
-		},
-		Validator: "validator2",
-	}
-	protoMsgItem4 = &oracletypes.MsgItem{
-		FeederID: 1,
-		PSources: []*oracletypes.PriceSource{
-			{
-				SourceID: 1,
-				Prices: []*oracletypes.PriceTimeDetID{
-					{
-						Price:     "999",
-						Decimal:   8,
-						DetID:     "2",
-						Timestamp: timestamp,
-					},
-				},
-			},
-		},
-		Validator: "validator3",
-	}
-	protoMsgItem4_2 = &oracletypes.MsgItem{
-		FeederID: 1,
-		PSources: []*oracletypes.PriceSource{
-			{
-				SourceID: 1,
-				Prices: []*oracletypes.PriceTimeDetID{
-					{
-						Price:     "777",
-						Decimal:   8,
-						DetID:     "2",
-						Timestamp: timestamp,
-					},
-				},
-			},
-		},
-		Validator: "validator3",
-	}
-
-	protoMsgItem5 = &oracletypes.MsgItem{
-		FeederID: 1,
-		PSources: []*oracletypes.PriceSource{
-			{
-				SourceID: 1,
-				Prices: []*oracletypes.PriceTimeDetID{
-					{
-						Price:     "999",
-						Decimal:   8,
-						DetID:     "2",
-						Timestamp: timestamp,
-					},
-				},
-			},
-		},
-		Validator: "validator4",
-	}
+	protoMsgItem1   = newTestProtoMsgItem(1, "validator1", "999", "1")
+	protoMsgItem2   = newTestProtoMsgItem(1, "validator1", "999", "2")
+	protoMsgItem3   = newTestProtoMsgItem(1, "validator2", "999", "2")
+	protoMsgItem4   = newTestProtoMsgItem(1, "validator3", "999", "2")
+	protoMsgItem4_2 = newTestProtoMsgItem(1, "validatorr3", "777", "2")
+	protoMsgItem5   = newTestProtoMsgItem(1, "validator4", "999", "2")
 
 	pr1 = &PriceResult{
 		Price:     "999",
@@ -273,3 +176,19 @@ var (
 		Validators: map[string]struct{}{"validator4": {}},
 	}
 )
+
+func newTestProtoMsgItem(feederID uint64, validator string, price string, detID string) *oracletypes.MsgItem {
+	return &oracletypes.MsgItem{
+		FeederID: feederID,
+		PSources: []*oracletypes.PriceSource{{
+			SourceID: 1,
+			Prices: []*oracletypes.PriceTimeDetID{{
+				Price:     price,
+				Decimal:   8,
+				DetID:     detID,
+				Timestamp: timestamp,
+			}},
+		}},
+		Validator: validator,
+	}
+}

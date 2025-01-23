@@ -59,11 +59,6 @@ func (s *E2ETestSuite) TestCreatePrice() {
 		s.testSlashing()
 		s.testCreatePriceLSTAfterDelegationChangePower()
 	}
-	// option := os.Getenv("TEST_OPTION")
-	//
-	//	if option == "local" {
-	//		s.testRecoveryCases(130)
-	//	}
 }
 
 func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
