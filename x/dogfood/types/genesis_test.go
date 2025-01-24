@@ -55,8 +55,12 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			expError: "nil last total power",
 		},
 		{
-			name:     "default",
-			genState: types.DefaultGenesis(),
+			name: "default",
+			genState: func() *types.GenesisState {
+				defaultGen := types.DefaultGenesis()
+				defaultGen.Params = params
+				return defaultGen
+			}(),
 			expPass:  false, // 0 voting power isn't permitted
 			expError: "non-positive last total power",
 		},
