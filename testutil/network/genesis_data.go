@@ -57,10 +57,36 @@ var (
 )
 
 func init() {
-	// bond assetsIDs of ETH, NSTETH to ETH price
-	DefaultGenStateOracle.Params.Tokens[1].AssetID = fmt.Sprintf("%s,%s", ETHAssetID, NativeAssetID)
-	// set ETH tokenfeeder's 'StartBaseBlock' to 10
-	DefaultGenStateOracle.Params.TokenFeeders[1].StartBaseBlock = 10
+	DefaultGenStateOracle.Params.Chains = append(DefaultGenStateOracle.Params.Chains, &oracletypes.Chain{Name: "Ethereum", Desc: "-"})
+	DefaultGenStateOracle.Params.Tokens = append(DefaultGenStateOracle.Params.Tokens, &oracletypes.Token{
+		Name:            "ETH",
+		ChainID:         1,
+		ContractAddress: "0x",
+		Decimal:         18,
+		Active:          true,
+		// bond assetsIDs of ETH, NSTETH to ETH price
+		AssetID: fmt.Sprintf("%s,%s", ETHAssetID, NativeAssetID),
+	})
+	DefaultGenStateOracle.Params.Sources = append(DefaultGenStateOracle.Params.Sources, &oracletypes.Source{
+		Name: "Chainlink",
+		Entry: &oracletypes.Endpoint{
+			Offchain: map[uint64]string{0: ""},
+		},
+		Valid:         true,
+		Deterministic: true,
+	})
+	DefaultGenStateOracle.Params.Rules = append(DefaultGenStateOracle.Params.Rules, &oracletypes.RuleSource{
+		// all sources math
+		SourceIDs: []uint64{0},
+	})
+	DefaultGenStateOracle.Params.TokenFeeders = append(DefaultGenStateOracle.Params.TokenFeeders, &oracletypes.TokenFeeder{
+		TokenID:      1,
+		RuleID:       1,
+		StartRoundID: 1,
+		// set ETH tokenfeeder's 'StartBaseBlock' to 10
+		StartBaseBlock: 10,
+		Interval:       10,
+	})
 	// set NSTETH token and tokenFeeder
 	DefaultGenStateOracle.Params.Tokens = append(DefaultGenStateOracle.Params.Tokens, &oracletypes.Token{
 		Name:            "NSTETH",
