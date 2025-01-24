@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -28,14 +27,15 @@ const (
 	// It is defined as a copy here so that we can use a value other than that in x/staking, if
 	// necessary.
 	DefaultHistoricalEntries = stakingtypes.DefaultHistoricalEntries
-	// DefaultAssetIDs is the default asset IDs accepted by the dogfood module. If multiple
-	// asset IDs are to be supported by default, separate them with a pipe character.
-	DefaultAssetIDs = "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"
 )
 
-// DefaultMinSelfDelegation is the default minimum self-delegation amount for a validator.
-// It is denominated in USD. We do not support cents, since it is an integer.
-var DefaultMinSelfDelegation = sdkmath.ZeroInt() // not a constant, hence var
+var (
+	// DefaultAssetIDs is the default asset IDs accepted by the dogfood module.
+	DefaultAssetIDs = []string{}
+	// DefaultMinSelfDelegation is the default minimum self-delegation amount for a validator.
+	// It is denominated in USD. We do not support cents, since it is an integer.
+	DefaultMinSelfDelegation = sdkmath.ZeroInt()
+)
 
 // NewParams creates a new Params instance.
 func NewParams(
@@ -63,7 +63,7 @@ func DefaultParams() Params {
 		DefaultEpochIdentifier,
 		DefaultMaxValidators,
 		DefaultHistoricalEntries,
-		strings.Split(DefaultAssetIDs, "|"),
+		DefaultAssetIDs,
 		DefaultMinSelfDelegation,
 	)
 }
