@@ -185,7 +185,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	amountInt64 := amount.Quo(decimalInt).Int64()
 	// emit an event to tell that a staker's validator list has changed
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCreatePrice,
+		types.EventTypePriceFeed,
 		sdk.NewAttribute(types.AttributeKeyNativeTokenUpdate, types.AttributeValueNativeTokenUpdate),
 	))
 	store := ctx.KVStore(k.storeKey)
@@ -279,7 +279,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	// emit an event to tell the details that a new valdiator added/or a validator is removed for the staker
 	// deposit_stakerID_validatorKey
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCreatePrice,
+		types.EventTypePriceFeed,
 		sdk.NewAttribute(types.AttributeKeyNativeTokenChange, eventValue),
 	))
 

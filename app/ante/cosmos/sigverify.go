@@ -58,8 +58,8 @@ func NewSetPubKeyDecorator(ak authante.AccountKeeper) SetPubKeyDecorator {
 }
 
 func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// skip publickkey set for oracle create-price message
-	if utils.IsOracleCreatePriceTx(tx) {
+	// skip publickkey set for oracle price-feed message
+	if utils.IsOraclePriceFeedTx(tx) {
 		sigTx, ok := tx.(authsigning.SigVerifiableTx)
 		if !ok {
 			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -173,7 +173,7 @@ func (sgcd SigGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 		return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
 	}
 
-	if utils.IsOracleCreatePriceTx(tx) {
+	if utils.IsOraclePriceFeedTx(tx) {
 		return next(ctx, tx, simulate)
 	}
 
@@ -258,7 +258,7 @@ func OnlyLegacyAminoSigners(sigData signing.SignatureData) bool {
 }
 
 func (svd SigVerificationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if utils.IsOracleCreatePriceTx(tx) {
+	if utils.IsOraclePriceFeedTx(tx) {
 		sigTx, ok := tx.(authsigning.SigVerifiableTx)
 		if !ok {
 			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -385,10 +385,10 @@ func NewIncrementSequenceDecorator(ak authante.AccountKeeper, oracleKeeper utils
 }
 
 func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// oracle create-price message dont need to increment sequence, check its nonce instead
-	if utils.IsOracleCreatePriceTx(tx) {
+	// oracle price-feed message dont need to increment sequence, check its nonce instead
+	if utils.IsOraclePriceFeedTx(tx) {
 		for _, msg := range tx.GetMsgs() {
-			msg := msg.(*oracletypes.MsgCreatePrice)
+			msg := msg.(*oracletypes.MsgPriceFeed)
 			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
 				return ctx, errors.New("invalid address")
 				// #nosec G115  // safe conversion

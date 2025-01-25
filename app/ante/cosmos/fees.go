@@ -59,7 +59,7 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 		return ctx, errorsmod.Wrap(errortypes.ErrTxDecode, "Tx must be a FeeTx")
 	}
 
-	if anteutils.IsOracleCreatePriceTx(tx) {
+	if anteutils.IsOraclePriceFeedTx(tx) {
 		newCtx := ctx.WithPriority(math.MaxInt64)
 		return next(newCtx, tx, simulate)
 	}

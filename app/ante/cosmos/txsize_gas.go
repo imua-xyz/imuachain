@@ -37,10 +37,10 @@ func (cgts ConsumeTxSizeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 		return ctx, sdkerrors.ErrTxDecode.Wrap("invalid tx type")
 	}
 
-	// Skip gas consumption if tx is an OracleCreatePriceTx
-	if anteutils.IsOracleCreatePriceTx(tx) {
+	// Skip gas consumption if tx is an OraclePriceFeedTx
+	if anteutils.IsOraclePriceFeedTx(tx) {
 		if len(ctx.TxBytes()) > anteutils.TxSizeLimit {
-			return ctx, sdkerrors.ErrTxTooLarge.Wrapf("oracle create-price tx has exceeds size limit, limit:%d, got:%d", anteutils.TxSizeLimit, len(ctx.TxBytes()))
+			return ctx, sdkerrors.ErrTxTooLarge.Wrapf("oracle price-feed tx has exceeds size limit, limit:%d, got:%d", anteutils.TxSizeLimit, len(ctx.TxBytes()))
 		}
 		return next(ctx, tx, simulate)
 	}

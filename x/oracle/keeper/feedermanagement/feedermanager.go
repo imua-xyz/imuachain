@@ -304,7 +304,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 	if len(successFeederIDs) > 0 {
 		feederIDsStr := strings.Join(successFeederIDs, "_")
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
-			oracletypes.EventTypeCreatePrice,
+			oracletypes.EventTypePriceFeed,
 			sdk.NewAttribute(oracletypes.AttributeKeyPriceUpdated, oracletypes.AttributeValuePriceUpdatedSuccess),
 			sdk.NewAttribute(oracletypes.AttributeKeyFeederIDs, feederIDsStr),
 		))
@@ -602,7 +602,7 @@ func (f *FeederManager) SetForceSeal() {
 	f.forceSeal = true
 }
 
-func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
+func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgPriceFeed) error {
 	// nonce, feederID, creator has been verified by anteHandler
 	// baseBlock is going to be verified by its corresponding round
 	decimal, err := f.cs.GetDecimalFromFeederID(msg.FeederID)
@@ -662,7 +662,7 @@ func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
 	return nil
 }
 
-func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) (*oracletypes.PriceTimeRound, error) {
+func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgPriceFeed, isCheckTx bool) (*oracletypes.PriceTimeRound, error) {
 	if isCheckTx {
 		f = f.getCheckTx()
 	}
@@ -921,7 +921,7 @@ func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.
 	return height, replayRecentParamsList
 }
 
-func getProtoMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgItem {
+func getProtoMsgItemFromQuote(msg *oracletypes.MsgPriceFeed) *oracletypes.MsgItem {
 	// address has been valid before
 	validator, _ := oracletypes.ConsAddrStrFromCreator(msg.Creator)
 

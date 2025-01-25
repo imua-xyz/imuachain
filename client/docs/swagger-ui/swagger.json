@@ -19069,10 +19069,10 @@
                             },
                             "validator": {
                               "type": "string",
-                              "title": "validator tells which validator create this price"
+                              "title": "validator tells which validator provide this price"
                             }
                           },
-                          "title": "MsgItem represents the message info of createPrice"
+                          "title": "MsgItem represents the message info of priceFeed"
                         },
                         "title": "cached messages"
                       }
@@ -19257,10 +19257,10 @@
                           },
                           "validator": {
                             "type": "string",
-                            "title": "validator tells which validator create this price"
+                            "title": "validator tells which validator provide this price"
                           }
                         },
-                        "title": "MsgItem represents the message info of createPrice"
+                        "title": "MsgItem represents the message info of priceFeed"
                       },
                       "title": "cached messages"
                     }
@@ -41427,10 +41427,10 @@
         },
         "validator": {
           "type": "string",
-          "title": "validator tells which validator create this price"
+          "title": "validator tells which validator provide this price"
         }
       },
-      "title": "MsgItem represents the message info of createPrice"
+      "title": "MsgItem represents the message info of priceFeed"
     },
     "imuachain.oracle.v1.NOMSource": {
       "type": "object",
@@ -41898,10 +41898,10 @@
                     },
                     "validator": {
                       "type": "string",
-                      "title": "validator tells which validator create this price"
+                      "title": "validator tells which validator provide this price"
                     }
                   },
-                  "title": "MsgItem represents the message info of createPrice"
+                  "title": "MsgItem represents the message info of priceFeed"
                 },
                 "title": "cached messages"
               }
@@ -42401,10 +42401,10 @@
                   },
                   "validator": {
                     "type": "string",
-                    "title": "validator tells which validator create this price"
+                    "title": "validator tells which validator provide this price"
                   }
                 },
-                "title": "MsgItem represents the message info of createPrice"
+                "title": "MsgItem represents the message info of priceFeed"
               },
               "title": "cached messages"
             }
@@ -43226,10 +43226,10 @@
               },
               "validator": {
                 "type": "string",
-                "title": "validator tells which validator create this price"
+                "title": "validator tells which validator provide this price"
               }
             },
-            "title": "MsgItem represents the message info of createPrice"
+            "title": "MsgItem represents the message info of priceFeed"
           },
           "title": "cached messages"
         }

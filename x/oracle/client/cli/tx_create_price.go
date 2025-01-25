@@ -13,11 +13,11 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdCreatePrice() *cobra.Command {
+func CmdPriceFeed() *cobra.Command {
 	cmd := &cobra.Command{
 		// TODO: support v1 single sourceID for temporary
-		Use:   "create-price feederid basedblock nonce sourceid decimal price timestamp detid optinoal(price timestamp detid) optional(desc)",
-		Short: "Broadcast message create-price",
+		Use:   "price-feed feederid basedblock nonce sourceid decimal price timestamp detid optinoal(price timestamp detid) optional(desc)",
+		Short: "Broadcast message price-feed",
 		Args:  cobra.MinimumNArgs(8),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -71,7 +71,7 @@ func CmdCreatePrice() *cobra.Command {
 				prices[0].Desc = args[i+1]
 			}
 
-			msg := types.NewMsgCreatePrice(
+			msg := types.NewMsgPriceFeed(
 				clientCtx.GetFromAddress().String(),
 				feederID,
 				prices,

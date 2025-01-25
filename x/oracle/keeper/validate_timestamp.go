@@ -9,7 +9,7 @@ import (
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-func checkTimestamp(goCtx context.Context, msg *types.MsgCreatePrice) error {
+func checkTimestamp(goCtx context.Context, msg *types.MsgPriceFeed) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	now := ctx.BlockTime().UTC()
 	for _, ps := range msg.Prices {

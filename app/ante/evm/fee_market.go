@@ -30,7 +30,7 @@ func NewGasWantedDecorator(
 }
 
 func (gwd GasWantedDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if anteutils.IsOracleCreatePriceTx(tx) {
+	if anteutils.IsOraclePriceFeedTx(tx) {
 		return next(ctx, tx, simulate)
 	}
 	evmParams := gwd.evmKeeper.GetParams(ctx)

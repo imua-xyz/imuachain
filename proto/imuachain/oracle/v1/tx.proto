@@ -13,14 +13,14 @@ option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // CreatePrice creates price for a new oracle round
-  rpc CreatePrice(MsgCreatePrice) returns (MsgCreatePriceResponse);
+  // PriceFeed creates price for a new oracle round
+  rpc PriceFeed(MsgPriceFeed) returns (MsgPriceFeedResponse);
   // UpdateParams update params value
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
-// MsgCreatePrice provide the price updating message
-message MsgCreatePrice {
+// MsgPriceFeed provide the price updating message
+message MsgPriceFeed {
   // creator tells which is the message sender and should sign this message
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
   // refer to id from Params.TokenFeeders, 0 is reserved, invalid to use
@@ -34,8 +34,8 @@ message MsgCreatePrice {
   int32 nonce = 5;
 }
 
-// MsgCreatePriceResponse
-message MsgCreatePriceResponse {}
+// MsgPriceFeedResponse
+message MsgPriceFeedResponse {}
 
 // MsgUpdateParms
 message MsgUpdateParams {

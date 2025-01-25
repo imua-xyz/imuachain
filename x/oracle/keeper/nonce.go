@@ -46,7 +46,7 @@ func (k Keeper) CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederI
 		}
 		return 0, fmt.Errorf("nonce_check_failed: feeder_not_found: validator=%s feeder_id=%d", validator, feederID)
 	}
-	return 0, fmt.Errorf("nonce_check_failed: validator_not_active: validator=%s tx_type=create-price", validator)
+	return 0, fmt.Errorf("nonce_check_failed: validator_not_active: validator=%s tx_type=price-feed", validator)
 }
 
 // internal usage for avoiding duplicated 'NewStore'

@@ -22,7 +22,7 @@ const (
 
 // x/oracle module sentinel errors
 var (
-	ErrInvalidMsg                        = sdkerrors.Register(ModuleName, invalidMsg, "invalid input create price")
+	ErrInvalidMsg                        = sdkerrors.Register(ModuleName, invalidMsg, "invalid input price-feed")
 	ErrPriceProposalIgnored              = sdkerrors.Register(ModuleName, priceProposalIgnored, "quote is ignored")
 	ErrPriceProposalFormatInvalid        = sdkerrors.Register(ModuleName, priceProposalFormatInvalid, "price proposal message format invalid")
 	ErrInvalidParams                     = sdkerrors.Register(ModuleName, invalidParams, "invalid params")

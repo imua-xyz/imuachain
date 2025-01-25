@@ -26,18 +26,18 @@ func TestMsgServer(t *testing.T) {
 }
 
 // TODO: re-enable these tests once fixed
-// func (suite *KeeperSuite) TestCreatePriceSingleBlock() {
+// func (suite *KeeperSuite) TestPriceFeedSingleBlock() {
 // 	router := suite.App.MsgServiceRouter()
-// 	oServer := router.Handler(&types.MsgCreatePrice{})
+// 	oServer := router.Handler(&types.MsgPriceFeed{})
 // 	require.EqualValues(suite.T(), 2, suite.Ctx.BlockHeight())
-// 	oServer(suite.Ctx, &types.MsgCreatePrice{
+// 	oServer(suite.Ctx, &types.MsgPriceFeed{
 // 		Creator:    suite.valAddr1.String(),
 // 		Nonce:      1,
 // 		FeederID:   1,
 // 		Prices:     testdata.PS1,
 // 		BasedBlock: 1,
 // 	})
-// 	oServer(suite.Ctx, &types.MsgCreatePrice{
+// 	oServer(suite.Ctx, &types.MsgPriceFeed{
 // 		Creator:    suite.valAddr2.String(),
 // 		Nonce:      1,
 // 		FeederID:   1,
@@ -67,7 +67,7 @@ func TestMsgServer(t *testing.T) {
 // 	// run the endblock to seal and prepare for next block
 // 	suite.NextBlock()
 // 	require.EqualValues(suite.T(), 3, suite.Ctx.BlockHeight())
-// 	_, err := oServer(suite.Ctx, &types.MsgCreatePrice{
+// 	_, err := oServer(suite.Ctx, &types.MsgPriceFeed{
 // 		Creator:    suite.valAddr1.String(),
 // 		Nonce:      1,
 // 		FeederID:   1,
@@ -80,10 +80,10 @@ func TestMsgServer(t *testing.T) {
 // 	suite.Equal(log, err.Error())
 // }
 
-// func (suite *KeeperSuite) TestCreatePriceTwoBlock() {
+// func (suite *KeeperSuite) TestPriceFeedTwoBlock() {
 // 	router := suite.App.MsgServiceRouter()
-// 	oServer := router.Handler(&types.MsgCreatePrice{})
-// 	res, _ := oServer(suite.Ctx, &types.MsgCreatePrice{
+// 	oServer := router.Handler(&types.MsgPriceFeed{})
+// 	res, _ := oServer(suite.Ctx, &types.MsgPriceFeed{
 // 		Creator:    suite.valAddr1.String(),
 // 		Nonce:      1,
 // 		FeederID:   1,
@@ -98,7 +98,7 @@ func TestMsgServer(t *testing.T) {
 // 	if suite.Equal(false, found) {
 // 		// run the endblock to seal and prepare for next block
 // 		suite.NextBlock()
-// 		oServer(suite.Ctx, &types.MsgCreatePrice{
+// 		oServer(suite.Ctx, &types.MsgPriceFeed{
 // 			Creator:    suite.valAddr2.String(),
 // 			Nonce:      1,
 // 			FeederID:   1,

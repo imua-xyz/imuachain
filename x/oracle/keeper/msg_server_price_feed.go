@@ -19,8 +19,8 @@ const (
 	maxPriceLength  = 32
 )
 
-// CreatePrice proposes price for new round of specific tokenFeeder
-func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice) (*types.MsgCreatePriceResponse, error) {
+// PriceFeed proposes price for new round of specific tokenFeeder
+func (ms msgServer) PriceFeed(goCtx context.Context, msg *types.MsgPriceFeed) (*types.MsgPriceFeedResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	gasMeter := ctx.GasMeter()
@@ -46,7 +46,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 			// quote is recorded only, this happens when a quoting-window is not availalbe before that window end due to final price aggregated successfully in advance
 			// we will still record this msg if it's valid
 			logger.Info("recorded quote for oracle-behavior evaluation", append(logQuote, "msg", msg)...)
-			return &types.MsgCreatePriceResponse{}, nil
+			return &types.MsgPriceFeedResponse{}, nil
 		}
 		logger.Error("failed to process quote", append(logQuote, "error", err)...)
 		return nil, err
@@ -55,7 +55,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	logger.Info("added quote for aggregation", append(logQuote, "msg", msg)...)
 	// TODO: use another type
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCreatePrice,
+		types.EventTypePriceFeed,
 		sdk.NewAttribute(types.AttributeKeyFeederID, strconv.FormatUint(msg.FeederID, 10)),
 		sdk.NewAttribute(types.AttributeKeyBasedBlock, strconv.FormatUint(msg.BasedBlock, 10)),
 		sdk.NewAttribute(types.AttributeKeyProposer, validator),
@@ -81,12 +81,12 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 
 		// emit event to tell price is updated for current round of corresponding feederID
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
-			types.EventTypeCreatePrice,
+			types.EventTypePriceFeed,
 			sdk.NewAttribute(types.AttributeKeyRoundID, roundIDStr),
 			sdk.NewAttribute(types.AttributeKeyFinalPrice, strings.Join([]string{tokenIDStr, roundIDStr, priceStr, decimalStr}, "_")),
 			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess)),
 		)
 	}
 
-	return &types.MsgCreatePriceResponse{}, nil
+	return &types.MsgPriceFeedResponse{}, nil
 }

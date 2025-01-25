@@ -78,13 +78,13 @@ func (m *RecentMsg) GetMsgs() []*MsgItem {
 	return nil
 }
 
-// MsgItem represents the message info of createPrice
+// MsgItem represents the message info of priceFeed
 type MsgItem struct {
 	// feeder_id tells of wich feeder this price if corresponding to
 	FeederID uint64 `protobuf:"varint,2,opt,name=feeder_id,json=feederId,proto3" json:"feeder_id,omitempty"`
 	// p_source price with its source info
 	PSources []*PriceSource `protobuf:"bytes,3,rep,name=p_sources,json=pSources,proto3" json:"p_sources,omitempty"`
-	// validator tells which validator create this price
+	// validator tells which validator provide this price
 	Validator string `protobuf:"bytes,4,opt,name=validator,proto3" json:"validator,omitempty"`
 }
 

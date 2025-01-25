@@ -23,22 +23,22 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	s.moveToAndCheck(start)
 	// #nosec G115 -- block height is positive
 	startUint := uint64(start)
-	msg0 := oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
-	msg1 := oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
-	msg2 := oracletypes.NewMsgCreatePrice(creator2.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
-	msg3 := oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
+	msg0 := oracletypes.NewMsgPriceFeed(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
+	msg1 := oracletypes.NewMsgPriceFeed(creator1.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
+	msg2 := oracletypes.NewMsgPriceFeed(creator2.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
+	msg3 := oracletypes.NewMsgPriceFeed(creator3.String(), 1, []*oracletypes.PriceSource{&priceRecovery1}, startUint, 1)
 
-	err := s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	err := s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 2)
@@ -50,25 +50,25 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	// init_start + 10
 	start += 10
 	startUint = uint64(start)
-	msg0_1 := oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
-	msg1_1 := oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
-	msg2_1 := oracletypes.NewMsgCreatePrice(creator2.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
-	msg3_1 := oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
+	msg0_1 := oracletypes.NewMsgPriceFeed(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
+	msg1_1 := oracletypes.NewMsgPriceFeed(creator1.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
+	msg2_1 := oracletypes.NewMsgPriceFeed(creator2.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
+	msg3_1 := oracletypes.NewMsgPriceFeed(creator3.String(), 1, []*oracletypes.PriceSource{&priceRecovery2}, startUint, 1)
 
 	s.moveToAndCheck(start)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1_1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1_1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3_1}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3_1}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 3)
@@ -94,18 +94,18 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg2.BasedBlock = startUint
 	msg3.BasedBlock = startUint
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 2)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 4)
@@ -129,17 +129,17 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg2_1.BasedBlock = startUint
 	msg3_1.BasedBlock = startUint
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1_1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1_1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 2)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3_1}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3_1}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 4)
@@ -164,20 +164,20 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg3.BasedBlock = startUint
 	msg0.BasedBlock = startUint
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 2)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 4)
@@ -202,20 +202,20 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg3_1.BasedBlock = startUint
 	msg0_1.BasedBlock = startUint
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1_1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1_1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 2)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3_1}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3_1}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 4)
@@ -240,20 +240,20 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg0.BasedBlock = startUint
 	msg3.BasedBlock = startUint
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 2)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 3)
@@ -273,28 +273,28 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	start += 10
 	startUint = uint64(start)
 	s.moveToAndCheck(start)
-	msg1_2 := oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceRecovery1_3}, startUint, 1)
-	msg2_2 := oracletypes.NewMsgCreatePrice(creator2.String(), 1, []*oracletypes.PriceSource{&priceRecovery1_2}, startUint, 1)
-	msg3_2 := oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceRecovery3}, startUint, 1)
-	//	msg0_2 := oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery3}, startUint, 1)
+	msg1_2 := oracletypes.NewMsgPriceFeed(creator1.String(), 1, []*oracletypes.PriceSource{&priceRecovery1_3}, startUint, 1)
+	msg2_2 := oracletypes.NewMsgPriceFeed(creator2.String(), 1, []*oracletypes.PriceSource{&priceRecovery1_2}, startUint, 1)
+	msg3_2 := oracletypes.NewMsgPriceFeed(creator3.String(), 1, []*oracletypes.PriceSource{&priceRecovery3}, startUint, 1)
+	//	msg0_2 := oracletypes.NewMsgPriceFeed(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery3}, startUint, 1)
 	msg0_1.BasedBlock = startUint
 
 	// id:1,2,3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	// id:3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
 	// id:1,2
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	// id:2
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 3)
@@ -319,21 +319,21 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg2_2.BasedBlock = startUint
 	msg0.BasedBlock = startUint
 	// id:3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	// id:1,2,3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 2)
 
 	// id:1,2
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	// id:1
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 4)
@@ -356,24 +356,24 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg3_2.BasedBlock = startUint
 	msg1_2.BasedBlock = startUint
 	msg2_2.BasedBlock = startUint
-	msg0_2 := oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery3}, startUint, 1)
+	msg0_2 := oracletypes.NewMsgPriceFeed(creator0.String(), 1, []*oracletypes.PriceSource{&priceRecovery3}, startUint, 1)
 	// msg0_2.BasedBlock = startUint
 	// id:3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	// id:1,2,3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
 	// id:1,2
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	// id:3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0_2}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0_2}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 3)
@@ -399,18 +399,18 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg2_1.BasedBlock = startUint
 	msg0_1.BasedBlock = startUint
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_1}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0_1}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 4)
@@ -431,21 +431,21 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	msg0_2.BasedBlock = startUint
 	// msg0_2.BasedBlock = startUint
 	// id:3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg3_2}, "valconsKey3", kr3)
 	s.Require().NoError(err)
 
 	// id:1,2,3
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1_2}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 1)
 
 	// id:1,2
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2_2}, "valconsKey2", kr2)
 	s.Require().NoError(err)
 
 	// id:3
-	//	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0_2}, "valconsKey0", kr0)
+	//	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0_2}, "valconsKey0", kr0)
 	//	s.Require().NoError(err)
 
 	s.moveToAndCheck(start + 3)
@@ -466,10 +466,10 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	//	msgUpdateParams := oracletypes.NewMsgUpdateParams("creator", `{"max_nonce":5}`)
 	//	s.moveNAndCheck(start)
 	//
-	//	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	//	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0}, "valconsKey0", kr0)
 	//	s.Require().NoError(err)
 	//
-	//	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	//	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1}, "valconsKey1", kr1)
 	//	s.Require().NoError(err)
 	//
 	//	// send updateParams msg to forceSeal current round
@@ -477,7 +477,7 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	//	s.Require().NoError(err)
 	//	s.moveToAndCheck(start + 1)
 	//
-	//	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	//	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2}, "valconsKey2", kr2)
 	//	s.Require().NoError(err)
 	//
 	//	s.moveToAndCheck(start + 3)
@@ -497,10 +497,10 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	//		msgUpdateParams := oracletypes.NewMsgUpdateParams(s.network.Validators[0].Address.String(), `{"max_nonce":5}`)
 	s.moveToAndCheck(start)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconsKey0", kr0)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg0}, "valconsKey0", kr0)
 	s.Require().NoError(err)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconsKey1", kr1)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg1}, "valconsKey1", kr1)
 	s.Require().NoError(err)
 
 	// delegate to change validator set, we set genesis time to a history time so that the validator set update will be triggered every block
@@ -517,7 +517,7 @@ func (s *E2ETestSuite) testRecoveryCases(start int64) {
 	// power will be updated at endBlock of start+2, it would force seal this round
 	s.moveToAndCheck(start + 2)
 
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconsKey2", kr2)
+	err = s.network.SendTxOraclePriceFeed([]sdk.Msg{msg2}, "valconsKey2", kr2)
 	s.Require().NotNil(err)
 
 	s.moveToAndCheck(start + 3)

@@ -6,12 +6,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const TypeMsgCreatePrice = "create_price"
+const TypeMsgPriceFeed = "create_price"
 
-var _ sdk.Msg = &MsgCreatePrice{}
+var _ sdk.Msg = &MsgPriceFeed{}
 
-func NewMsgCreatePrice(creator string, feederID uint64, prices []*PriceSource, basedBlock uint64, nonce int32) *MsgCreatePrice {
-	return &MsgCreatePrice{
+func NewMsgPriceFeed(creator string, feederID uint64, prices []*PriceSource, basedBlock uint64, nonce int32) *MsgPriceFeed {
+	return &MsgPriceFeed{
 		Creator:    creator,
 		FeederID:   feederID,
 		Prices:     prices,
@@ -20,15 +20,15 @@ func NewMsgCreatePrice(creator string, feederID uint64, prices []*PriceSource, b
 	}
 }
 
-func (msg *MsgCreatePrice) Route() string {
+func (msg *MsgPriceFeed) Route() string {
 	return RouterKey
 }
 
-func (msg *MsgCreatePrice) Type() string {
-	return TypeMsgCreatePrice
+func (msg *MsgPriceFeed) Type() string {
+	return TypeMsgPriceFeed
 }
 
-func (msg *MsgCreatePrice) GetSigners() []sdk.AccAddress {
+func (msg *MsgPriceFeed) GetSigners() []sdk.AccAddress {
 	creator, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		panic(err)
@@ -36,12 +36,12 @@ func (msg *MsgCreatePrice) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{creator}
 }
 
-func (msg *MsgCreatePrice) GetSignBytes() []byte {
+func (msg *MsgPriceFeed) GetSignBytes() []byte {
 	bz := ModuleCdc.MustMarshalJSON(msg)
 	return sdk.MustSortJSON(bz)
 }
 
-func (msg *MsgCreatePrice) ValidateBasic() error {
+func (msg *MsgPriceFeed) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid creator address (%s)", err)

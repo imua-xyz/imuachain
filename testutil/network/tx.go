@@ -22,9 +22,9 @@ func (n *Network) SendTx(msgs []sdk.Msg, keyName string, keyring keyring.Keyring
 	return tx.BroadcastTx(ctx, txf, msgs...)
 }
 
-// SendTxOracleCreatePrice consturct and sign that tx with input msgs, it's different from SendTx, since when we use ed25519 for oracle senario, we allowed that signer is an unexists account, this implementation skip the 'accoutn exists' related checks
-// Also, if you want to sign some normal message (not oracle-create-price) with ed25519, just use SendTx is fine, we support ed25519 signing in keyring
-func (n *Network) SendTxOracleCreateprice(msgs []sdk.Msg, keyName string, keyring keyring.Keyring) error {
+// SendTxOraclePriceFeed consturct and sign that tx with input msgs, it's different from SendTx, since when we use ed25519 for oracle senario, we allowed that signer is an unexists account, this implementation skip the 'accoutn exists' related checks
+// Also, if you want to sign some normal message (not oracle-price-feed) with ed25519, just use SendTx is fine, we support ed25519 signing in keyring
+func (n *Network) SendTxOraclePriceFeed(msgs []sdk.Msg, keyName string, keyring keyring.Keyring) error {
 	txf, ctx, err := generateTxf(n.Validators[0].ClientCtx, keyName, keyring, 1.5, n.Config.MinGasPrices)
 	if err != nil {
 		return err
