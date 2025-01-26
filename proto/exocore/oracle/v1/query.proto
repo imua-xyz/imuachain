@@ -152,7 +152,7 @@ message QueryStakerInfosRequest {
 
 // QueryStakerInfosResponse is response type for Query/StakerInfo RCP method
 message QueryStakerInfosResponse {
-  // asset id for the staker infos request for
+  // version of the staker validator list changes
   int64 version = 1;
   // all staker infos under the specified asset
   repeated StakerInfo staker_infos = 2;
