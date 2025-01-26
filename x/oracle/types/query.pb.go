@@ -427,7 +427,7 @@ func (m *QueryStakerInfosRequest) GetAssetId() string {
 
 // QueryStakerInfosResponse is response type for Query/StakerInfo RCP method
 type QueryStakerInfosResponse struct {
-	// asset id for the staker infos request for
+	// version of the staker validator list changes
 	Version int64 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
 	// all staker infos under the specified asset
 	StakerInfos []*StakerInfo `protobuf:"bytes,2,rep,name=staker_infos,json=stakerInfos,proto3" json:"staker_infos,omitempty"`
