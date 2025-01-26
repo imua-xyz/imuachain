@@ -19900,7 +19900,7 @@
                 "version": {
                   "type": "string",
                   "format": "int64",
-                  "title": "asset id for the staker infos request for"
+                  "title": "version of the staker validator list changes"
                 },
                 "staker_infos": {
                   "type": "array",
@@ -42587,7 +42587,7 @@
         "version": {
           "type": "string",
           "format": "int64",
-          "title": "asset id for the staker infos request for"
+          "title": "version of the staker validator list changes"
         },
         "staker_infos": {
           "type": "array",
