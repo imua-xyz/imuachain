@@ -210,10 +210,16 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 		store.Delete(types.PricesRoundKey(expiredRoundID))
 	}
 	k.IncreaseNextRoundID(ctx, tokenID)
+	// skip post processing for nil deterministic ID
+	if detID == types.NilDetID {
+		return true
+	}
 
+	// skip post processing for empty price
 	if len(priceTR.Price) == 0 {
 		return true
 	}
+
 	if nstAssetID := p.GetAssetIDForNSTFromTokenID(tokenID); len(nstAssetID) > 0 {
 		nstVersion, err := getNSTVersionFromDetID(detID)
 		if err != nil || nstVersion == 0 {
@@ -232,21 +238,36 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 }
 
 // GrowRoundID Increases roundID with the previous price
-// func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID uint64) (price *types.PriceTimeRound, roundID uint64) {
-func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID uint64) (price string, roundID uint64) {
-	if pTR, ok := k.GetPriceTRLatest(ctx, tokenID); ok {
-		pTR.RoundID++
-		k.AppendPriceTR(ctx, tokenID, pTR, "")
+func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price string, roundID uint64) {
+	storedNextRoundID := k.GetNextRoundID(ctx, tokenID)
+	pTR, ok := k.GetPriceTRLatest(ctx, tokenID)
+
+	if ok {
 		price = pTR.Price
-		roundID = pTR.RoundID
 	} else {
-		nextRoundID := k.GetNextRoundID(ctx, tokenID)
-		k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
-			RoundID: nextRoundID,
-		}, "")
-		roundID = nextRoundID
-		price = ""
+		pTR = types.PriceTimeRound{}
 	}
+
+	if nextRoundID < storedNextRoundID {
+		roundID = storedNextRoundID - 1
+		// we don't append new price if storedNextRoundID is larger than expected
+		return
+	}
+
+	if nextRoundID > storedNextRoundID {
+		// if storedNextRoundID is too old, we just set it with input params
+		store := k.getPriceTRStore(ctx, tokenID)
+		b := make([]byte, 8)
+		binary.BigEndian.PutUint64(b, nextRoundID)
+		store.Set(types.PricesNextRoundIDKey, b)
+	}
+
+	roundID = nextRoundID
+
+	pTR.RoundID = nextRoundID
+
+	k.AppendPriceTR(ctx, tokenID, pTR, types.NilDetID)
+
 	return
 }
 

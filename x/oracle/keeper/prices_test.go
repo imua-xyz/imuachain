@@ -48,8 +48,6 @@ func TestPricesGet(t *testing.T) {
 
 func TestPricesGetMultiAssets(t *testing.T) {
 	keeper, ctx := keepertest.OracleKeeper(t)
-	keeper.FeederManager.SetNilCaches()
-	keeper.FeederManager.BeginBlock(ctx)
 	keeper.SetPrices(ctx, testdata.P1)
 	assets := make(map[string]interface{})
 	assets["0x0b34c4d876cd569129cf56bafabb3f9e97a4ff42_0x9ce1"] = new(interface{})
@@ -90,4 +88,37 @@ func TestPricesGetAll(t *testing.T) {
 		nullify.Fill(items),
 		nullify.Fill(keeper.GetAllPrices(ctx)),
 	)
+}
+
+func TestPriceGrowID(t *testing.T) {
+	id1Uint := uint64(1)
+	id2Uint := uint64(2)
+	id3Uint := uint64(3)
+	id4Uint := uint64(4)
+	id7Uint := uint64(7)
+	keeper, ctx := keepertest.OracleKeeper(t)
+	keeper.SetPrices(ctx, types.Prices{
+		TokenID:     1,
+		NextRoundID: id3Uint,
+		PriceList: []*types.PriceTimeRound{
+			{Price: "123", RoundID: id1Uint},
+			{Price: "799", RoundID: id2Uint},
+		},
+	})
+	price, latestRoundID := keeper.GrowRoundID(ctx, 1, id2Uint)
+	require.Equal(t, "799", price)
+	require.Equal(t, id2Uint, latestRoundID)
+
+	price, latestRoundID = keeper.GrowRoundID(ctx, 1, id3Uint)
+	require.Equal(t, "799", price)
+	require.Equal(t, id3Uint, latestRoundID)
+
+	price, latestRoundID = keeper.GrowRoundID(ctx, 1, id4Uint)
+	require.Equal(t, "799", price)
+	require.Equal(t, id4Uint, latestRoundID)
+
+	price, latestRoundID = keeper.GrowRoundID(ctx, 1, id7Uint)
+	require.Equal(t, "799", price)
+	require.Equal(t, id7Uint, latestRoundID)
+
 }
