@@ -22,4 +22,7 @@ const (
 	ErrEmptyGateways = "the gateways is empty"
 
 	ErrIndexOutOfRange = "index out of range, index:%d, length:%d"
+
+	// ErrDifferentOriginFromSender is raised when the origin address is not the same as the sender address.
+	ErrDifferentOriginFromSender = "origin address %s is not the same as sender address %s"
 )

@@ -31,17 +31,18 @@ const (
 // RegisterAVS AVSInfoRegister register the avs related information and change the state in avs keeper module.
 func (p Precompile) RegisterAVS(
 	ctx sdk.Context,
-	_ common.Address,
+	origin common.Address,
 	contract *vm.Contract,
 	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
 	// parse the avs input params first.
-	avsParams, err := p.GetAVSParamsFromInputs(ctx, args)
+	avsParams, err := p.GetAVSParamsFromInputs(contract, origin, method, args)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "parse args error")
 	}
+
 	// verification of the calling address to ensure it is avs contract owner
 	if !slices.Contains(avsParams.AvsOwnerAddress, avsParams.CallerAddress.String()) {
 		return nil, errorsmod.Wrap(err, "not qualified to registerOrDeregister")

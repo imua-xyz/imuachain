@@ -617,69 +617,91 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "sender",
-				"type": "address"
-			},
-			{
-				"internalType": "string",
-				"name": "avsName",
-				"type": "string"
-			},
-			{
-				"internalType": "uint64",
-				"name": "minStakeAmount",
-				"type": "uint64"
-			},
-			{
-				"internalType": "address",
-				"name": "taskAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "slashAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "rewardAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address[]",
-				"name": "avsOwnerAddress",
-				"type": "address[]"
-			},
-			{
-				"internalType": "address[]",
-				"name": "whitelistAddress",
-				"type": "address[]"
-			},
-			{
-				"internalType": "string[]",
-				"name": "assetIds",
-				"type": "string[]"
-			},
-			{
-				"internalType": "uint64",
-				"name": "avsUnbondingPeriod",
-				"type": "uint64"
-			},
-			{
-				"internalType": "uint64",
-				"name": "minSelfDelegation",
-				"type": "uint64"
-			},
-			{
-				"internalType": "string",
-				"name": "epochIdentifier",
-				"type": "string"
-			},
-			{
-				"internalType": "uint64[]",
+				"components": [
+					{
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "avsName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minStakeAmount",
+						"type": "uint64"
+					},
+					{
+						"internalType": "address",
+						"name": "taskAddr",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "slashAddr",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "rewardAddr",
+						"type": "address"
+					},
+					{
+						"internalType": "address[]",
+						"name": "avsOwnerAddress",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "whitelistAddress",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "assetIds",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsUnbondingPeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minSelfDelegation",
+						"type": "uint64"
+					},
+					{
+						"internalType": "string",
+						"name": "epochIdentifier",
+						"type": "string"
+					},
+					{
+						"internalType": "uint64",
+						"name": "miniOptInOperators",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minTotalStakeAmount",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsRewardProportion",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsSlashProportion",
+						"type": "uint64"
+					}
+				],
+				"internalType": "struct AVSParams",
 				"name": "params",
-				"type": "uint64[]"
+				"type": "tuple"
 			}
 		],
 		"name": "registerAVS",

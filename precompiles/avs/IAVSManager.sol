@@ -9,7 +9,24 @@ IAVSManager constant AVSMANAGER_CONTRACT = IAVSManager(AVSMANAGER_PRECOMPILE_ADD
 /// @title AVS-Manager Precompile Contract
 /// @dev The interface through which solidity contracts will interact with AVS-Manager
 /// @custom:address 0x0000000000000000000000000000000000000901
-
+    struct AVSParams {
+        address sender;
+        string avsName;
+        uint64 minStakeAmount;
+        address taskAddr;
+        address slashAddr;
+        address rewardAddr;
+        address[] avsOwnerAddress;
+        address[] whitelistAddress;
+        string[] assetIds;
+        uint64 avsUnbondingPeriod;
+        uint64 minSelfDelegation;
+        string epochIdentifier;
+        uint64 miniOptInOperators;
+        uint64 minTotalStakeAmount;
+        uint64 avsRewardProportion;
+        uint64 avsSlashProportion;
+    }
 interface IAVSManager {
     // note:string and bytes will be hashed. address / uintX will not be hashed when using indexed.
     event AVSRegistered(address indexed avsAddr, string sender, string avsName);
@@ -42,36 +59,9 @@ interface IAVSManager {
     );
 
     /// @dev Register AVS contract to EXO.
-    /// @param sender The external address for calling this method.
-    /// @param avsName The name of AVS.
-    /// @param minStakeAmount The minimum amount of funds staked by each operator.
-    /// @param taskAddr The task address of AVS.
-    /// @param slashAddr The slash address of AVS.
-    /// @param rewardAddr The reward address of AVS.
-    /// @param avsOwnerAddress The owners who have permission for AVS.
-    /// @param whitelistAddress The whitelist address of the operator.
-    /// @param assetIds The basic asset information of AVS.
-    /// @param avsUnbondingPeriod The unbonding duration of AVS.
-    /// @param minSelfDelegation The minimum delegation amount for an operator.
-    /// @param epochIdentifier The AVS epoch identifier.
-    /// @param params 1.miniOptInOperators The minimum number of opt-in operators.
-    ///2.minTotalStakeAmount The minimum total amount of stake by all operators.
-    ///3.avsReward The proportion of reward for AVS.
-    ///4.avsSlash The proportion of slash for AVS.
+    /// @param params The params of AVS.
     function registerAVS(
-        address sender,
-        string memory avsName,
-        uint64 minStakeAmount,
-        address taskAddr,
-        address slashAddr,
-        address rewardAddr,
-        address[] memory avsOwnerAddress,
-        address[] memory whitelistAddress,
-        string[] memory assetIds,
-        uint64 avsUnbondingPeriod,
-        uint64 minSelfDelegation,
-        string memory epochIdentifier,
-        uint64[] memory params
+        AVSParams calldata params
     ) external returns (bool success);
 
     /// @dev Update AVS info to EXO.

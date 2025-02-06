@@ -2,6 +2,8 @@ package avs
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -11,114 +13,97 @@ import (
 	"golang.org/x/xerrors"
 )
 
-func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
+func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.Address, method *abi.Method, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
 	if len(args) != len(p.ABI.Methods[MethodRegisterAVS].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodRegisterAVS].Inputs), len(args))
+	}
+	var avsPayload AVSPayload
+	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to AVSPayload struct: %s", err)
 	}
 	avsParams := &avstypes.AVSRegisterOrDeregisterParams{}
 	//	we'd better not use evm.Origin but let the precompile caller pass in the sender address,
 	//	since tx.origin has some security issue and might not be supported
 	//	in a long term: https://docs.soliditylang.org/en/latest/security-considerations.html#tx-origin
-	callerAddress, ok := args[0].(common.Address)
-	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+	if !common.IsHexAddress(avsPayload.AVSParams.Sender.String()) {
+		return nil, fmt.Errorf("the contract input parameter sender error,value:%v", avsPayload.AVSParams.Sender)
 	}
-	avsParams.CallerAddress = callerAddress[:]
-	avsName, ok := args[1].(string)
-	if !ok || avsName == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", avsName)
+	// The provided sender address should always be equal to the origin address.
+	// In case the contract caller address is the same as the sender address provided,
+	// update the sender address to be equal to the origin address.
+	// Otherwise, if the provided sender address is different from the origin address,
+	// return an error because is a forbidden operation
+	_, err := CheckOriginAndSender(contract, origin, avsPayload.AVSParams.Sender)
+	if err != nil {
+		return nil, err
 	}
-	avsParams.AvsName = avsName
+
+	avsParams.CallerAddress = avsPayload.AVSParams.Sender[:]
+	avsParams.AvsName = avsPayload.AVSParams.AvsName
 	// When creating tasks in AVS, check the minimum requirements,minStakeAmount at least greater than 0
-	minStakeAmount, ok := args[2].(uint64)
-	if !ok || minStakeAmount == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "uint64", minStakeAmount)
+	if avsPayload.AVSParams.MinStakeAmount == 0 {
+		return nil, fmt.Errorf("the contract input parameter MinStakeAmount error,value:%v", avsPayload.AVSParams.MinStakeAmount)
 	}
-	avsParams.MinStakeAmount = minStakeAmount
+	avsParams.MinStakeAmount = avsPayload.AVSParams.MinStakeAmount
 
-	taskAddr, ok := args[3].(common.Address)
-	if !ok || taskAddr == (common.Address{}) {
-		return nil, xerrors.Errorf(exocmn.ErrContractInputParamOrType, 3, "common.Address", taskAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.TaskAddr.String()) {
+		return nil, fmt.Errorf("the contract input parameter TaskAddr error,value:%v", avsPayload.AVSParams.TaskAddr)
 	}
-	avsParams.TaskAddr = taskAddr
+	avsParams.TaskAddr = avsPayload.AVSParams.TaskAddr
 
-	slashContractAddr, ok := args[4].(common.Address)
-	if !ok || (slashContractAddr == common.Address{}) {
-		return nil, xerrors.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", slashContractAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.SlashAddr.String()) {
+		return nil, fmt.Errorf("the contract input parameter SlashAddr error,value:%v", avsPayload.AVSParams.SlashAddr)
 	}
-	avsParams.SlashContractAddr = slashContractAddr
+	avsParams.SlashContractAddr = avsPayload.AVSParams.SlashAddr
 
-	rewardContractAddr, ok := args[5].(common.Address)
-	if !ok || (rewardContractAddr == common.Address{}) {
-		return nil, xerrors.Errorf(exocmn.ErrContractInputParamOrType, 5, "common.Address", rewardContractAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.RewardAddr.String()) {
+		return nil, fmt.Errorf("the contract input parameter RewardAddr error,value:%v", avsPayload.AVSParams.RewardAddr)
 	}
-	avsParams.RewardContractAddr = rewardContractAddr
+	avsParams.RewardContractAddr = avsPayload.AVSParams.RewardAddr
 
 	// bech32
-	avsOwnerAddress, ok := args[6].([]common.Address)
-	if !ok || avsOwnerAddress == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]common.Address", avsOwnerAddress)
+	if avsPayload.AVSParams.AvsOwnerAddresses == nil {
+		return nil, fmt.Errorf("the contract input parameter AvsOwnerAddresses error,value:%v", avsPayload.AVSParams.AvsOwnerAddresses)
 	}
-	exoAddresses := make([]string, len(avsOwnerAddress))
-	for i, addr := range avsOwnerAddress {
+	exoAddresses := make([]string, len(avsPayload.AVSParams.AvsOwnerAddresses))
+	for i, addr := range avsPayload.AVSParams.AvsOwnerAddresses {
 		var accAddr sdk.AccAddress = addr[:]
 		exoAddresses[i] = accAddr.String()
 	}
 	avsParams.AvsOwnerAddress = exoAddresses
 	// bech32
-	whitelistAddress, ok := args[7].([]common.Address)
-	if !ok || whitelistAddress == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 7, "[]common.Address", whitelistAddress)
+
+	if avsPayload.AVSParams.WhitelistAddresses == nil {
+		return nil, fmt.Errorf("the contract input parameter WhitelistAddresses error,value:%v", avsPayload.AVSParams.WhitelistAddresses)
 	}
-	exoWhiteAddresses := make([]string, len(whitelistAddress))
-	for i, addr := range whitelistAddress {
+	exoWhiteAddresses := make([]string, len(avsPayload.AVSParams.WhitelistAddresses))
+	for i, addr := range avsPayload.AVSParams.WhitelistAddresses {
 		var accAddr sdk.AccAddress = addr[:]
 		exoWhiteAddresses[i] = accAddr.String()
 	}
 	avsParams.WhitelistAddress = exoWhiteAddresses
 	// string, since it is the address_id representation
-	assetID, ok := args[8].([]string)
-	if !ok || len(assetID) == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 8, "[]string", assetID)
+	if avsPayload.AVSParams.AssetIds == nil {
+		return nil, fmt.Errorf("the contract input parameter AssetIds error,value:%v", avsPayload.AVSParams.AssetIds)
 	}
-	avsParams.AssetID = assetID
+	avsParams.AssetID = avsPayload.AVSParams.AssetIds
 
-	unbondingPeriod, ok := args[9].(uint64)
-	if !ok || unbondingPeriod == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 9, "uint64", unbondingPeriod)
+	avsParams.UnbondingPeriod = avsPayload.AVSParams.AvsUnbondingPeriod
+
+	avsParams.MinSelfDelegation = avsPayload.AVSParams.MinSelfDelegation
+
+	if avsPayload.AVSParams.EpochIdentifier == "" {
+		return nil, fmt.Errorf("the contract input parameter EpochIdentifier error,value:%v", avsPayload.AVSParams.EpochIdentifier)
 	}
-	avsParams.UnbondingPeriod = unbondingPeriod
+	avsParams.EpochIdentifier = avsPayload.AVSParams.EpochIdentifier
 
-	minSelfDelegation, ok := args[10].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 10, "uint64", minSelfDelegation)
-	}
-	avsParams.MinSelfDelegation = minSelfDelegation
+	avsParams.MinOptInOperators = avsPayload.AVSParams.MiniOptInOperators
 
-	epochIdentifier, ok := args[11].(string)
-	if !ok || epochIdentifier == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 11, "string", epochIdentifier)
-	}
-	avsParams.EpochIdentifier = epochIdentifier
+	avsParams.MinTotalStakeAmount = avsPayload.AVSParams.MinTotalStakeAmount
 
-	// The parameters below are used when creating tasks, to ensure that the minimum criteria are met by the set
-	// of operators.
+	avsParams.AvsReward = avsPayload.AVSParams.AvsRewardProportion
 
-	taskParam, ok := args[12].([]uint64)
-	if !ok || taskParam == nil || len(taskParam) != 4 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 12, "[]string", taskParam)
-	}
-	minOptInOperators := taskParam[0]
-	avsParams.MinOptInOperators = minOptInOperators
-
-	minTotalStakeAmount := taskParam[1]
-	avsParams.MinTotalStakeAmount = minTotalStakeAmount
-
-	avsReward := taskParam[2]
-	avsParams.AvsReward = avsReward
-
-	avsSlash := taskParam[3]
-	avsParams.AvsSlash = avsSlash
+	avsParams.AvsSlash = avsPayload.AVSParams.AvsSlashProportion
 
 	return avsParams, nil
 }
@@ -279,4 +264,53 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	}
 	taskParams.TaskStatisticalPeriod = taskStatisticalPeriod
 	return taskParams, nil
+}
+
+// AVSParams is a utility structure used to wrap args received by the
+// Solidity interface of the avs function.
+type AVSParams struct {
+	Sender              common.Address   `abi:"sender"`              // the sender of the  transaction
+	AvsName             string           `abi:"avsName"`             // the name of AVS
+	MinStakeAmount      uint64           `abi:"minStakeAmount"`      // the minimum amount of funds staked by each operator
+	TaskAddr            common.Address   `abi:"taskAddr"`            // the task address of AVS
+	SlashAddr           common.Address   `abi:"slashAddr"`           // the slash address of AVS
+	RewardAddr          common.Address   `abi:"rewardAddr"`          // the reward address of AVS
+	AvsOwnerAddresses   []common.Address `abi:"avsOwnerAddresses"`   // the owners who have permission for AVS
+	WhitelistAddresses  []common.Address `abi:"whitelistAddresses"`  // the whitelist address of the operator
+	AssetIds            []string         `abi:"assetIds"`            // the basic asset information of AVS
+	AvsUnbondingPeriod  uint64           `abi:"avsUnbondingPeriod"`  // the unbonding duration of AVS
+	MinSelfDelegation   uint64           `abi:"minSelfDelegation"`   // the minimum delegation amount for an operator
+	EpochIdentifier     string           `abi:"epochIdentifier"`     // the AVS epoch identifier
+	MiniOptInOperators  uint64           `abi:"miniOptInOperators"`  // the minimum number of opt-in operators
+	MinTotalStakeAmount uint64           `abi:"minTotalStakeAmount"` // the minimum total amount of stake by all operators
+	AvsRewardProportion uint64           `abi:"avsRewardProportion"` // the proportion of reward for AVS
+	AvsSlashProportion  uint64           `abi:"avsSlashProportion"`  // the proportion of slash for AVS
+}
+
+// AVSPayload is the same as the expected input of the avs function in the Solidity interface.
+type AVSPayload struct {
+	AVSParams AVSParams
+}
+
+// ParseAVStData parses the packet data from the outpost precompiled contract.
+func ParseAVStData(method *abi.Method, args []interface{}) (AVSParams, error) {
+	if len(args) != 1 {
+		return AVSParams{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
+	}
+
+	var avsPayload AVSPayload
+	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
+		return AVSParams{}, fmt.Errorf("error while unpacking args to AVSPayload struct: %s", err)
+	}
+	return avsPayload.AVSParams, nil
+}
+
+// CheckOriginAndSender ensures the correct sender is being used.
+func CheckOriginAndSender(contract *vm.Contract, origin common.Address, sender common.Address) (common.Address, error) {
+	if contract.CallerAddress == sender {
+		return origin, nil
+	} else if origin != sender {
+		return common.Address{}, fmt.Errorf(exocmn.ErrDifferentOriginFromSender, origin.String(), sender.String())
+	}
+	return sender, nil
 }
