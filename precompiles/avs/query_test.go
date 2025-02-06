@@ -332,9 +332,9 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 		suite.prepareOperator(operatorAddr.String())
 
 		blsPub := &avstype.BlsPubKeyInfo{
-			Operator: operatorAddr.String(),
-			PubKey:   publicKey.Marshal(),
-			Name:     "",
+			Operator:   operatorAddr.String(),
+			PubKey:     publicKey.Marshal(),
+			AvsAddress: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 		}
 		err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 		suite.NoError(err)
@@ -346,6 +346,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 				setUp()
 				return []interface{}{
 					addr,
+					common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
 				}
 			},
 			func(bz []byte) {

@@ -42,8 +42,12 @@ func (p Precompile) GetRegisteredPubkey(
 	if !ok || addr == (common.Address{}) {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
 	}
+	avsAddr, ok := args[1].(common.Address)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddr)
+	}
 	var accAddr sdk.AccAddress = addr[:]
-	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddr.String())
+	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddr.String(), avsAddr.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack([]byte{})

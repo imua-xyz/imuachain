@@ -31,7 +31,7 @@ interface IAVSManager {
     event ChallengeInitiated(
         string sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress
     );
-    event PublicKeyRegistered(string sender, string name);
+    event PublicKeyRegistered(string sender, string avsAddr);
     event TaskSubmittedByOperator(
         address indexed taskContractAddress,
         uint64 indexed taskId,
@@ -154,13 +154,13 @@ interface IAVSManager {
 
     /// @dev Called by the avs manager service register an operator as the owner of a BLS public key.
     /// @param sender The external address for calling this method.
-    /// @param name the name of public keys
+    /// @param avsAddr The address of AVS.
     /// @param pubKey the public keys of the operator
     /// @param pubkeyRegistrationSignature the public keys of the operator
     /// @param pubkeyRegistrationMessageHash the public keys of the operator
     function registerBLSPublicKey(
         address sender,
-        string calldata name,
+        address avsAddr,
         bytes calldata pubKey,
         bytes calldata pubkeyRegistrationSignature,
         bytes calldata pubkeyRegistrationMessageHash
@@ -187,7 +187,7 @@ interface IAVSManager {
     /// QUERIES
     /// @dev Returns the pubkey and pubkey hash of an operator
     /// @param operator is the operator for whom the key is being registered
-    function getRegisteredPubkey(address operator) external view returns (bytes memory pubkey);
+    function getRegisteredPubkey(address operator,address avsAddr) external view returns (bytes memory pubkey);
 
     /// @dev Returns the operators of all opt-in in the current avs
     /// @param avsAddress avs address

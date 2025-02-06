@@ -286,13 +286,13 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 		return errorsmod.Wrap(types.ErrSigNotMatchPubKey, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}
 
-	if k.IsExistPubKey(ctx, params.OperatorAddress.String()) {
+	if k.IsExistPubKey(ctx, params.OperatorAddress.String(), params.AvsAddr.String()) {
 		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}
 	bls := &types.BlsPubKeyInfo{
-		Name:     params.Name,
-		Operator: strings.ToLower(params.OperatorAddress.String()),
-		PubKey:   params.PubKey,
+		AvsAddress: params.AvsAddr.String(),
+		Operator:   strings.ToLower(params.OperatorAddress.String()),
+		PubKey:     params.PubKey,
 	}
 	return k.SetOperatorPubKey(ctx, bls)
 }
@@ -489,7 +489,11 @@ func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskR
 		)
 	}
 	// check operator bls pubkey
-	keyInfo, err := k.GetOperatorPubKey(ctx, info.OperatorAddress)
+	avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
+	if avsInfo.AvsAddress == "" {
+		return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the taskaddr is :%s", info.TaskContractAddress))
+	}
+	keyInfo, err := k.GetOperatorPubKey(ctx, info.OperatorAddress, avsInfo.AvsAddress)
 	if err != nil || keyInfo.PubKey == nil {
 		return errorsmod.Wrap(
 			types.ErrPubKeyIsNotExists,
@@ -517,10 +521,6 @@ func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskR
 	//  If submitted in the first phase, in order  to avoid plagiarism by other operators,
 	//	TaskResponse and TaskResponseHash must be null values
 	//	At the same time, it must be submitted within the response deadline in the first phase
-	avsInfo := k.GetAVSInfoByTaskAddress(ctx, info.TaskContractAddress)
-	if avsInfo.AvsAddress == "" {
-		return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the taskaddr is :%s", info.TaskContractAddress))
-	}
 	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, avsInfo.EpochIdentifier)
 	if !found {
 		return errorsmod.Wrap(types.ErrEpochNotFound, fmt.Sprintf("epoch info not found %s",

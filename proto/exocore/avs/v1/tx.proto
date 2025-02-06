@@ -151,8 +151,8 @@ message OperatorActivePowerInfo {
 message BlsPubKeyInfo {
   // operator address
   string operator = 1;
-  // the name of public keys
-  string name = 2;
+  // avs_address is the address of avs as a hex string
+  string avs_address = 2;
   // the bls public keys of the operator
   bytes pub_key = 3;
 }

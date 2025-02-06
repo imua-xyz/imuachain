@@ -128,9 +128,9 @@ func (suite *AVSTestSuite) prepareMulOperatorubkey() {
 		suite.Require().NoError(err)
 		publicKey := privateKey.PublicKey()
 		blsPub := &avstypes.BlsPubKeyInfo{
-			Operator: operatorAddress,
-			PubKey:   publicKey.Marshal(),
-			Name:     "",
+			Operator:   operatorAddress,
+			PubKey:     publicKey.Marshal(),
+			AvsAddress: "",
 		}
 		err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 		suite.Require().NoError(err)

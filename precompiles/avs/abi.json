@@ -161,7 +161,7 @@
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "name",
+				"name": "avsAddr",
 				"type": "string"
 			}
 		],
@@ -509,6 +509,11 @@
 				"internalType": "address",
 				"name": "operator",
 				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "avsAddr",
+				"type": "address"
 			}
 		],
 		"name": "getRegisteredPubkey",
@@ -696,9 +701,9 @@
 				"type": "address"
 			},
 			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
+				"internalType": "address",
+				"name": "avsAddr",
+				"type": "address"
 			},
 			{
 				"internalType": "bytes",

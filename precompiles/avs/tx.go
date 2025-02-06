@@ -290,11 +290,11 @@ func (p Precompile) RegisterBLSPublicKey(
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	blsParams.OperatorAddress = callerAddress[:]
-	name, ok := args[1].(string)
-	if !ok || name == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", name)
+	avsAddr, ok := args[1].(common.Address)
+	if !ok || (avsAddr == common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddr)
 	}
-	blsParams.Name = name
+	blsParams.AvsAddr = avsAddr
 
 	pubkeyBz, ok := args[2].([]byte)
 	if !ok {

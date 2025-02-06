@@ -40,7 +40,7 @@ type TaskInfoParams struct {
 }
 type BlsParams struct {
 	OperatorAddress               sdk.AccAddress
-	Name                          string
+	AvsAddr                       common.Address
 	PubKey                        []byte
 	PubkeyRegistrationSignature   []byte
 	PubkeyRegistrationMessageHash []byte
