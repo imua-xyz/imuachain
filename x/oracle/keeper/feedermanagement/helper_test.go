@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"math/rand"
 
+	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/testdata"
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 )
 
@@ -12,7 +13,7 @@ type Test struct {
 
 var (
 	tData     *Test
-	params    = oracletypes.DefaultParams()
+	params    = testdata.DefaultParamsForTest()
 	r         = rand.New(rand.NewSource(1))
 	timestamp = "2025-01-01 00:01:02"
 	decimal   = int32(8)

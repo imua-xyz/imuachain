@@ -62,7 +62,7 @@ func init() {
 		Name:            "ETH",
 		ChainID:         1,
 		ContractAddress: "0x",
-		Decimal:         18,
+		Decimal:         8,
 		Active:          true,
 		// bond assetsIDs of ETH, NSTETH to ETH price
 		AssetID: fmt.Sprintf("%s,%s", ETHAssetID, NativeAssetID),

@@ -2,11 +2,10 @@ package keeper_test
 
 import (
 	reflect "reflect"
-	"time"
 
-	sdkmath "cosmossdk.io/math"
 	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
 	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	testdata "github.com/ExocoreNetwork/exocore/x/oracle/keeper/testdata"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
@@ -14,75 +13,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-
-func DefaultParamsForTest() types.Params {
-	return types.Params{
-		Chains: []*types.Chain{
-			{Name: "-", Desc: "-"},
-			{Name: "Ethereum", Desc: "-"},
-		},
-		Tokens: []*types.Token{
-			{},
-			{
-				Name:            "ETH",
-				ChainID:         1,
-				ContractAddress: "0x",
-				Decimal:         18,
-				Active:          true,
-				AssetID:         "0x0b34c4d876cd569129cf56bafabb3f9e97a4ff42_0x9ce1",
-			},
-		},
-		// source defines where to fetch the prices
-		Sources: []*types.Source{
-			{
-				Name: "0 position is reserved",
-			},
-			{
-				Name: "Chainlink",
-				Entry: &types.Endpoint{
-					Offchain: map[uint64]string{0: ""},
-				},
-				Valid:         true,
-				Deterministic: true,
-			},
-		},
-		// rules defines price from which sources are accepted, could be used to proof malicious
-		Rules: []*types.RuleSource{
-			// 0 is reserved
-			{},
-			{
-				// all sources math
-				SourceIDs: []uint64{0},
-			},
-		},
-		// TokenFeeder describes when a token start to be updated with its price, and the frequency, endTime.
-		TokenFeeders: []*types.TokenFeeder{
-			{},
-			{
-				TokenID:        1,
-				RuleID:         1,
-				StartRoundID:   1,
-				StartBaseBlock: 1000000,
-				Interval:       10,
-			},
-		},
-		MaxNonce:   3,
-		ThresholdA: 2,
-		ThresholdB: 3,
-		// V1 set mode to 1
-		Mode:          types.ConsensusModeASAP,
-		MaxDetId:      5,
-		MaxSizePrices: 100,
-		Slashing: &types.SlashingParams{
-			ReportedRoundsWindow:        100,
-			MinReportedPerWindow:        sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2)),
-			OracleMissJailDuration:      600 * time.Second,
-			OracleMaliciousJailDuration: 30 * 24 * time.Hour,
-			SlashFractionMiss:           sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(20)),
-			SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
-		},
-	}
-}
 
 var _ = Describe("MsgUpdateParams", Ordered, func() {
 	var defaultParams types.Params
@@ -95,7 +25,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 	BeforeEach(func() {
 		ks.Reset()
 		Expect(ks.ms).ToNot(BeNil())
-		defaultParams = DefaultParamsForTest()
+		defaultParams = testdata.DefaultParamsForTest()
 		ks.k.SetParams(ks.ctx, defaultParams)
 
 		privVal1 := mock.NewPV()
@@ -183,7 +113,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			types.ErrInvalidParams.Wrap("invalid token to add, chain not found"),
 			types.ErrInvalidParams.Wrap("invalid token to add, chain not found"),
 		}
-		token := DefaultParamsForTest().Tokens[1]
+		token := testdata.DefaultParamsForTest().Tokens[1]
 		token1 := *token
 		token1.Decimal = 8
 

@@ -46,9 +46,6 @@ func TestRoundTallyElaborate(t *testing.T) {
 					if pItem == nil {
 						continue
 					}
-					if idx == 372751 {
-						fmt.Printf("tally:%v, result:%v\r\n", pItem.msgItem(), rslt)
-					}
 					if pRsltTmp, _, _ := r.Tally(pItem.msgItem()); pRsltTmp != nil {
 						pRslt = pRsltTmp
 					}
