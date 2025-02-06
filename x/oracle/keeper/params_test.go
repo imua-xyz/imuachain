@@ -176,7 +176,7 @@ func TestUpdateTokenFeederUpdate(t *testing.T) {
 			err:    nil,
 		},
 	}
-	p := types.DefaultParams()
+	p := DefaultParamsForTest()
 	p.Tokens = append(p.Tokens, &types.Token{
 		Name:            "TEST",
 		ChainID:         1,
@@ -282,7 +282,7 @@ func TestTokenFeederValidate(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			p = types.DefaultParams()
+			p = DefaultParamsForTest()
 			p.TokenFeeders[1].EndBlock = testCase.prevEndBlock
 			p.TokenFeeders = append(p.TokenFeeders, testCase.feeder)
 			err := p.Validate()

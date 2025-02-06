@@ -73,7 +73,7 @@ func TestKeeper(t *testing.T) {
 }
 
 func (suite *KeeperSuite) Reset() {
-	p4Test := types.DefaultParams()
+	p4Test := DefaultParamsForTest()
 	p4Test.TokenFeeders[1].StartBaseBlock = 1
 	suite.k.SetParams(suite.ctx, p4Test)
 	suite.ctx = suite.ctx.WithBlockHeight(12)
@@ -107,7 +107,7 @@ func (suite *KeeperSuite) SetupTest() {
 	suite.ms = keeper.NewMsgServerImpl(suite.App.OracleKeeper)
 	suite.ctx = suite.Ctx
 	// Initialize params
-	p4Test := types.DefaultParams()
+	p4Test := DefaultParamsForTest()
 	p4Test.TokenFeeders[1].StartBaseBlock = 1
 	suite.k.SetParams(suite.ctx, p4Test)
 	suite.ctx = suite.ctx.WithBlockHeight(12)

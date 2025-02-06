@@ -203,8 +203,34 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 
 	// x/oracle initialization
 	oracleDefaultParams := oracletypes.DefaultParams()
-	oracleDefaultParams.Tokens[1].AssetID = "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"
-	oracleDefaultParams.TokenFeeders[1].StartBaseBlock = 1
+	oracleDefaultParams.Chains = append(oracleDefaultParams.Chains, &oracletypes.Chain{Name: "Ethereum", Desc: "-"})
+	oracleDefaultParams.Tokens = append(oracleDefaultParams.Tokens, &oracletypes.Token{
+		Name:            "ETH",
+		ChainID:         1,
+		ContractAddress: "0x",
+		Decimal:         18,
+		Active:          true,
+		AssetID:         "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65",
+	})
+	oracleDefaultParams.Sources = append(oracleDefaultParams.Sources, &oracletypes.Source{
+		Name: "Chainlink",
+		Entry: &oracletypes.Endpoint{
+			Offchain: map[uint64]string{0: ""},
+		},
+		Valid:         true,
+		Deterministic: true,
+	})
+	oracleDefaultParams.Rules = append(oracleDefaultParams.Rules, &oracletypes.RuleSource{
+		// all sources math
+		SourceIDs: []uint64{0},
+	})
+	oracleDefaultParams.TokenFeeders = append(oracleDefaultParams.TokenFeeders, &oracletypes.TokenFeeder{
+		TokenID:        1,
+		RuleID:         1,
+		StartRoundID:   1,
+		StartBaseBlock: 1,
+		Interval:       10,
+	})
 	oracleDefaultParams.Tokens = append(oracleDefaultParams.Tokens, &oracletypes.Token{
 		Name:            "USDT",
 		ChainID:         1,
@@ -380,6 +406,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		[]dogfoodtypes.EpochToUndelegationRecordKeys{},
 		math.NewInt(power+power2), // must match total vote power
 	)
+	dogfoodGenesis.Params.AssetIDs = []string{assetID}
 	dogfoodGenesis.Params.MinSelfDelegation = math.NewInt(100)
 	genesisState[dogfoodtypes.ModuleName] = app.AppCodec().MustMarshalJSON(dogfoodGenesis)
 	distributionGenesis := distributiontypes.NewGenesisState(

@@ -38,6 +38,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		),
 	)
 	params := types.DefaultParams()
+	params.AssetIDs = []string{"0x0b34c4d876cd569129cf56bafabb3f9e97a4ff42_0x9ce1"}
 	testCases := []struct {
 		name     string
 		genState *types.GenesisState
@@ -54,8 +55,12 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			expError: "nil last total power",
 		},
 		{
-			name:     "default",
-			genState: types.DefaultGenesis(),
+			name: "default",
+			genState: func() *types.GenesisState {
+				defaultGen := types.DefaultGenesis()
+				defaultGen.Params = params
+				return defaultGen
+			}(),
 			expPass:  false, // 0 voting power isn't permitted
 			expError: "non-positive last total power",
 		},
