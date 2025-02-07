@@ -101,14 +101,14 @@ func (p Precompile) DeregisterAVS(
 
 func (p Precompile) UpdateAVS(
 	ctx sdk.Context,
-	_ common.Address,
+	origin common.Address,
 	contract *vm.Contract,
 	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
 	// parse the avs input params first.
-	avsParams, err := p.GetAVSParamsFromUpdateInputs(ctx, args)
+	avsParams, err := p.GetAVSParamsFromUpdateInputs(contract, origin, method, args)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "parse args error")
 	}

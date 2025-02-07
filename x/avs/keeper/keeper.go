@@ -290,7 +290,7 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}
 	bls := &types.BlsPubKeyInfo{
-		AvsAddress: params.AvsAddr.String(),
+		AvsAddress: strings.ToLower(params.AvsAddr.String()),
 		Operator:   strings.ToLower(params.OperatorAddress.String()),
 		PubKey:     params.PubKey,
 	}

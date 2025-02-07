@@ -10,22 +10,22 @@ IAVSManager constant AVSMANAGER_CONTRACT = IAVSManager(AVSMANAGER_PRECOMPILE_ADD
 /// @dev The interface through which solidity contracts will interact with AVS-Manager
 /// @custom:address 0x0000000000000000000000000000000000000901
     struct AVSParams {
-        address sender;
-        string avsName;
-        uint64 minStakeAmount;
-        address taskAddr;
-        address slashAddr;
-        address rewardAddr;
-        address[] avsOwnerAddress;
-        address[] whitelistAddress;
-        string[] assetIds;
-        uint64 avsUnbondingPeriod;
-        uint64 minSelfDelegation;
-        string epochIdentifier;
-        uint64 miniOptInOperators;
-        uint64 minTotalStakeAmount;
-        uint64 avsRewardProportion;
-        uint64 avsSlashProportion;
+        address sender;              // sender The external address for calling this method.
+        string avsName;              // avsName The name of AVS.
+        uint64 minStakeAmount;       // minStakeAmount The minimum amount of funds staked by each operator.
+        address taskAddr;            // taskAddr The task address of AVS.
+        address slashAddr;           // slashAddr The slash address of AVS.
+        address rewardAddr;          // rewardAddr The reward address of AVS.
+        address[] avsOwnerAddress;   // avsOwnerAddress The owners who have permission for AVS.
+        address[] whitelistAddress;  // The whitelist address of the operator.
+        string[] assetIds;           // assetIds The basic asset information of AVS.
+        uint64 avsUnbondingPeriod;   // avsUnbondingPeriod The unbonding duration of AVS.
+        uint64 minSelfDelegation;    // minSelfDelegation The minimum delegation amount for an operator.
+        string epochIdentifier;      // epochIdentifier The AVS epoch identifier.
+        uint64 miniOptInOperators;   // miniOptInOperators The minimum number of opt-in operators.
+        uint64 minTotalStakeAmount;  // minTotalStakeAmount The minimum total amount of stake by all operators.
+        uint64 avsRewardProportion;  // avsReward The proportion of reward for AVS.
+        uint64 avsSlashProportion;   // avsSlash The proportion of slash for AVS.
     }
 interface IAVSManager {
     // note:string and bytes will be hashed. address / uintX will not be hashed when using indexed.
@@ -65,36 +65,9 @@ interface IAVSManager {
     ) external returns (bool success);
 
     /// @dev Update AVS info to EXO.
-    /// @param sender The external address for calling this method.
-    /// @param avsName The name of AVS.
-    /// @param minStakeAmount The minimum amount of funds staked by each operator.
-    /// @param taskAddr The task address of AVS.
-    /// @param slashAddr The slash address of AVS.
-    /// @param rewardAddr The reward address of AVS.
-    /// @param avsOwnerAddress The owners who have permission for AVS.
-    /// @param whitelistAddress The whitelist address of the operator.
-    /// @param assetIds The basic asset information of AVS.
-    /// @param avsUnbondingPeriod The unbonding duration of AVS.
-    /// @param minSelfDelegation The minimum delegation amount for an operator.
-    /// @param epochIdentifier The AVS epoch identifier.
-    /// @param params 1.miniOptInOperators The minimum number of opt-in operators.
-    ///2.minTotalStakeAmount The minimum total amount of stake by all operators.
-    ///3.avsReward The proportion of reward for AVS.
-    ///4.avsSlash The proportion of slash for AVS.
+    /// @param params The params of AVS.
     function updateAVS(
-        address sender,
-        string memory avsName,
-        uint64 minStakeAmount,
-        address taskAddr,
-        address slashAddr,
-        address rewardAddr,
-        address[] memory avsOwnerAddress,
-        address[] memory whitelistAddress,
-        string[] memory assetIds,
-        uint64 avsUnbondingPeriod,
-        uint64 minSelfDelegation,
-        string memory epochIdentifier,
-        uint64[] memory params
+        AVSParams calldata params
     ) external returns (bool success);
 
     /// @dev Deregister avs from exo
