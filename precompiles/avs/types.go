@@ -2,6 +2,7 @@ package avs
 
 import (
 	"fmt"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
 
@@ -15,101 +16,6 @@ import (
 func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.Address, method *abi.Method, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
 	if len(args) != len(p.ABI.Methods[MethodRegisterAVS].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodRegisterAVS].Inputs), len(args))
-	}
-	var avsPayload AVSPayload
-	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to AVSPayload struct: %s", err)
-	}
-	avsParams := &avstypes.AVSRegisterOrDeregisterParams{}
-	//	we'd better not use evm.Origin but let the precompile caller pass in the sender address,
-	//	since tx.origin has some security issue and might not be supported
-	//	in a long term: https://docs.soliditylang.org/en/latest/security-considerations.html#tx-origin
-	if !common.IsHexAddress(avsPayload.AVSParams.Sender.String()) {
-		return nil, fmt.Errorf("the contract input parameter sender error,value:%v", avsPayload.AVSParams.Sender)
-	}
-	// The provided sender address should always be equal to the origin address.
-	// In case the contract caller address is the same as the sender address provided,
-	// update the sender address to be equal to the origin address.
-	// Otherwise, if the provided sender address is different from the origin address,
-	// return an error because is a forbidden operation
-	_, err := CheckOriginAndSender(contract, origin, avsPayload.AVSParams.Sender)
-	if err != nil {
-		return nil, err
-	}
-
-	avsParams.CallerAddress = avsPayload.AVSParams.Sender[:]
-	avsParams.AvsName = avsPayload.AVSParams.AvsName
-	// When creating tasks in AVS, check the minimum requirements,minStakeAmount at least greater than 0
-	if avsPayload.AVSParams.MinStakeAmount == 0 {
-		return nil, fmt.Errorf("the contract input parameter MinStakeAmount error,value:%v", avsPayload.AVSParams.MinStakeAmount)
-	}
-	avsParams.MinStakeAmount = avsPayload.AVSParams.MinStakeAmount
-
-	if !common.IsHexAddress(avsPayload.AVSParams.TaskAddr.String()) {
-		return nil, fmt.Errorf("the contract input parameter TaskAddr error,value:%v", avsPayload.AVSParams.TaskAddr)
-	}
-	avsParams.TaskAddr = avsPayload.AVSParams.TaskAddr
-
-	if !common.IsHexAddress(avsPayload.AVSParams.SlashAddr.String()) {
-		return nil, fmt.Errorf("the contract input parameter SlashAddr error,value:%v", avsPayload.AVSParams.SlashAddr)
-	}
-	avsParams.SlashContractAddr = avsPayload.AVSParams.SlashAddr
-
-	if !common.IsHexAddress(avsPayload.AVSParams.RewardAddr.String()) {
-		return nil, fmt.Errorf("the contract input parameter RewardAddr error,value:%v", avsPayload.AVSParams.RewardAddr)
-	}
-	avsParams.RewardContractAddr = avsPayload.AVSParams.RewardAddr
-
-	// bech32
-	if avsPayload.AVSParams.AvsOwnerAddresses == nil {
-		return nil, fmt.Errorf("the contract input parameter AvsOwnerAddresses error,value:%v", avsPayload.AVSParams.AvsOwnerAddresses)
-	}
-	exoAddresses := make([]string, len(avsPayload.AVSParams.AvsOwnerAddresses))
-	for i, addr := range avsPayload.AVSParams.AvsOwnerAddresses {
-		var accAddr sdk.AccAddress = addr[:]
-		exoAddresses[i] = accAddr.String()
-	}
-	avsParams.AvsOwnerAddress = exoAddresses
-	// bech32
-
-	if avsPayload.AVSParams.WhitelistAddresses == nil {
-		return nil, fmt.Errorf("the contract input parameter WhitelistAddresses error,value:%v", avsPayload.AVSParams.WhitelistAddresses)
-	}
-	exoWhiteAddresses := make([]string, len(avsPayload.AVSParams.WhitelistAddresses))
-	for i, addr := range avsPayload.AVSParams.WhitelistAddresses {
-		var accAddr sdk.AccAddress = addr[:]
-		exoWhiteAddresses[i] = accAddr.String()
-	}
-	avsParams.WhitelistAddress = exoWhiteAddresses
-	// string, since it is the address_id representation
-	if avsPayload.AVSParams.AssetIds == nil {
-		return nil, fmt.Errorf("the contract input parameter AssetIds error,value:%v", avsPayload.AVSParams.AssetIds)
-	}
-	avsParams.AssetID = avsPayload.AVSParams.AssetIds
-
-	avsParams.UnbondingPeriod = avsPayload.AVSParams.AvsUnbondingPeriod
-
-	avsParams.MinSelfDelegation = avsPayload.AVSParams.MinSelfDelegation
-
-	if avsPayload.AVSParams.EpochIdentifier == "" {
-		return nil, fmt.Errorf("the contract input parameter EpochIdentifier error,value:%v", avsPayload.AVSParams.EpochIdentifier)
-	}
-	avsParams.EpochIdentifier = avsPayload.AVSParams.EpochIdentifier
-
-	avsParams.MinOptInOperators = avsPayload.AVSParams.MiniOptInOperators
-
-	avsParams.MinTotalStakeAmount = avsPayload.AVSParams.MinTotalStakeAmount
-
-	avsParams.AvsReward = avsPayload.AVSParams.AvsRewardProportion
-
-	avsParams.AvsSlash = avsPayload.AVSParams.AvsSlashProportion
-
-	return avsParams, nil
-}
-
-func (p Precompile) GetAVSParamsFromUpdateInputs(contract *vm.Contract, origin common.Address, method *abi.Method, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
-	if len(args) != len(p.ABI.Methods[MethodUpdateAVS].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodUpdateAVS].Inputs), len(args))
 	}
 	var avsPayload AVSPayload
 	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
