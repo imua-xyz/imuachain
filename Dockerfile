@@ -27,7 +27,7 @@ RUN apk add --no-cache \
 	ca-certificates=20241121-r1 \
 	libstdc++~=13.2 \
 	jq~=1.7 \
-	curl~=8.11 \
+	curl~=8.12 \
 	bash~=5.2 \
     && addgroup -g 1000 exocore \
     && adduser -S -h /home/exocore -D exocore -u 1000 -G exocore
