@@ -12,7 +12,7 @@ RUN LEDGER_ENABLED=false make build
 FROM alpine:3.19 AS run
 RUN apk add --no-cache libstdc++~=13.2 \
 	bash~=5.2 \
-	curl~=8.11 \
+	curl~=8.12 \
 	jq~=1.7 \
     && addgroup -g 1000 exocore \
     && adduser -S -h /home/exocore -D exocore -u 1000 -G exocore
