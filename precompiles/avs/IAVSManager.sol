@@ -18,7 +18,7 @@ IAVSManager constant AVSMANAGER_CONTRACT = IAVSManager(AVSMANAGER_PRECOMPILE_ADD
         address rewardAddr;          // rewardAddr The reward address of AVS.
         address[] avsOwnerAddress;   // avsOwnerAddress The owners who have permission for AVS.
         address[] whitelistAddress;  // The whitelist address of the operator.
-        string[] assetIds;           // assetIds The basic asset information of AVS.
+        string[] assetIDs;           // assetIDs The basic asset information of AVS.
         uint64 avsUnbondingPeriod;   // avsUnbondingPeriod The unbonding duration of AVS.
         uint64 minSelfDelegation;    // minSelfDelegation The minimum delegation amount for an operator.
         string epochIdentifier;      // epochIdentifier The AVS epoch identifier.

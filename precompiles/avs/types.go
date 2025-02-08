@@ -17,9 +17,9 @@ func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.
 	if len(args) != len(p.ABI.Methods[MethodRegisterAVS].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodRegisterAVS].Inputs), len(args))
 	}
-	var avsPayload AVSPayload
+	var avsPayload Payload
 	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to AVSPayload struct: %s", err)
+		return nil, fmt.Errorf("error while unpacking args to Payload struct: %s", err)
 	}
 	avsParams := &avstypes.AVSRegisterOrDeregisterParams{}
 	//	we'd better not use evm.Origin but let the precompile caller pass in the sender address,
@@ -83,10 +83,10 @@ func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.
 	}
 	avsParams.WhitelistAddress = exoWhiteAddresses
 	// string, since it is the address_id representation
-	if avsPayload.AVSParams.AssetIds == nil {
-		return nil, fmt.Errorf("the contract input parameter AssetIds error,value:%v", avsPayload.AVSParams.AssetIds)
+	if avsPayload.AVSParams.AssetIDs == nil {
+		return nil, fmt.Errorf("the contract input parameter AssetIds error,value:%v", avsPayload.AVSParams.AssetIDs)
 	}
-	avsParams.AssetID = avsPayload.AVSParams.AssetIds
+	avsParams.AssetID = avsPayload.AVSParams.AssetIDs
 
 	avsParams.UnbondingPeriod = avsPayload.AVSParams.AvsUnbondingPeriod
 
@@ -156,9 +156,9 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	return taskParams, nil
 }
 
-// AVSParams is a utility structure used to wrap args received by the
+// Params is a utility structure used to wrap args received by the
 // Solidity interface of the avs function.
-type AVSParams struct {
+type Params struct {
 	Sender              common.Address   `abi:"sender"`              // the sender of the  transaction
 	AvsName             string           `abi:"avsName"`             // the name of AVS
 	MinStakeAmount      uint64           `abi:"minStakeAmount"`      // the minimum amount of funds staked by each operator
@@ -167,7 +167,7 @@ type AVSParams struct {
 	RewardAddr          common.Address   `abi:"rewardAddr"`          // the reward address of AVS
 	AvsOwnerAddresses   []common.Address `abi:"avsOwnerAddresses"`   // the owners who have permission for AVS
 	WhitelistAddresses  []common.Address `abi:"whitelistAddresses"`  // the whitelist address of the operator
-	AssetIds            []string         `abi:"assetIds"`            // the basic asset information of AVS
+	AssetIDs            []string         `abi:"assetIDs"`            // the basic asset information of AVS
 	AvsUnbondingPeriod  uint64           `abi:"avsUnbondingPeriod"`  // the unbonding duration of AVS
 	MinSelfDelegation   uint64           `abi:"minSelfDelegation"`   // the minimum delegation amount for an operator
 	EpochIdentifier     string           `abi:"epochIdentifier"`     // the AVS epoch identifier
@@ -177,20 +177,20 @@ type AVSParams struct {
 	AvsSlashProportion  uint64           `abi:"avsSlashProportion"`  // the proportion of slash for AVS
 }
 
-// AVSPayload is the same as the expected input of the avs function in the Solidity interface.
-type AVSPayload struct {
-	AVSParams AVSParams
+// Payload is the same as the expected input of the avs function in the Solidity interface.
+type Payload struct {
+	AVSParams Params
 }
 
 // ParseAVStData parses the packet data from the outpost precompiled contract.
-func ParseAVStData(method *abi.Method, args []interface{}) (AVSParams, error) {
+func ParseAVStData(method *abi.Method, args []interface{}) (Params, error) {
 	if len(args) != 1 {
-		return AVSParams{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
+		return Params{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
 	}
 
-	var avsPayload AVSPayload
+	var avsPayload Payload
 	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
-		return AVSParams{}, fmt.Errorf("error while unpacking args to AVSPayload struct: %s", err)
+		return Params{}, fmt.Errorf("error while unpacking args to Payload struct: %s", err)
 	}
 	return avsPayload.AVSParams, nil
 }

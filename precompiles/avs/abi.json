@@ -660,7 +660,7 @@
 					},
 					{
 						"internalType": "string[]",
-						"name": "assetIds",
+						"name": "assetIDs",
 						"type": "string[]"
 					},
 					{
@@ -819,7 +819,7 @@
 					},
 					{
 						"internalType": "string[]",
-						"name": "assetIds",
+						"name": "assetIDs",
 						"type": "string[]"
 					},
 					{

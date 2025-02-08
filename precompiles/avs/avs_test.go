@@ -119,7 +119,7 @@ func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
 			origin: senderAddress,
 			malleate: func() []interface{} {
 				return []interface{}{
-					avs.AVSParams{
+					avs.Params{
 						Sender:              senderAddress,
 						AvsName:             avsName,
 						MinStakeAmount:      minStakeAmount,
@@ -128,7 +128,7 @@ func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
 						RewardAddr:          common.HexToAddress(rewardAddress),
 						AvsOwnerAddresses:   avsOwnerAddress,
 						WhitelistAddresses:  exoWhiteListAddress,
-						AssetIds:            assetID,
+						AssetIDs:            assetID,
 						AvsUnbondingPeriod:  avsUnbondingPeriod,
 						MinSelfDelegation:   minSelfDelegation,
 						EpochIdentifier:     epochIdentifier,
@@ -335,7 +335,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 			origin: senderAddress,
 			malleate: func() []interface{} {
 				return []interface{}{
-					avs.AVSParams{
+					avs.Params{
 						Sender:              senderAddress,
 						AvsName:             avsName,
 						MinStakeAmount:      minStakeAmount,
@@ -344,7 +344,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 						RewardAddr:          common.HexToAddress(rewardAddress),
 						AvsOwnerAddresses:   avsOwnerAddress,
 						WhitelistAddresses:  exoWhiteListAddress,
-						AssetIds:            assetID,
+						AssetIDs:            assetID,
 						AvsUnbondingPeriod:  avsUnbondingPeriod,
 						MinSelfDelegation:   minSelfDelegation,
 						EpochIdentifier:     epochIdentifier,
