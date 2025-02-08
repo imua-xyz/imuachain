@@ -35,10 +35,16 @@ func (a *aggregator) Equals(a2 *aggregator) bool {
 	if !a.t.Equals(a2.t) {
 		return false
 	}
+
 	if !a.v.Equals(a2.v) {
 		return false
 	}
+
 	if !a.ds.Equals(a2.ds) {
+		return false
+	}
+
+	if !a.algo.Equals(a2.algo) {
 		return false
 	}
 
