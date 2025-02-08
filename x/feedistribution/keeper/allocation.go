@@ -158,7 +158,6 @@ func (k Keeper) AllocateTokensToStakers(ctx sdk.Context, operatorAddress sdk.Acc
 			remaining = remaining.Sub(rewardToSingleStaker)
 		}
 	}
-	feePool.CommunityPool = feePool.CommunityPool.Add(rewardToAllStakers...)
 	logger.Info("allocate tokens to stakers successfully", "allocated amount is", rewardToAllStakers.String())
 }
 
