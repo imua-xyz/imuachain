@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 	"strconv"
@@ -68,6 +69,7 @@ func (k *Keeper) SetOperatorPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) (e
 	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress.String()), strings.ToLower(pub.AvsAddress))
 	bz := k.cdc.MustMarshal(pub)
 	store.Set(infoKey, bz)
+	store.Set(pub.PubKey, pub.PubKey)
 	return nil
 }
 
@@ -107,17 +109,24 @@ func (k *Keeper) GetAllBlsPubKeys(ctx sdk.Context) ([]types.BlsPubKeyInfo, error
 	pubKeys := make([]types.BlsPubKeyInfo, 0, count)
 	for ; iterator.Valid(); iterator.Next() {
 		var pubKey types.BlsPubKeyInfo
-		err := k.cdc.Unmarshal(iterator.Value(), &pubKey)
-		if err != nil {
-			return nil, errorsmod.Wrap(err, "GetAllBlsPubKeys: failed to unmarshal pubkey")
+		if !bytes.Equal(iterator.Key(), iterator.Value()) {
+			err := k.cdc.Unmarshal(iterator.Value(), &pubKey)
+			if err != nil {
+				return nil, errorsmod.Wrap(err, "GetAllBlsPubKeys: failed to unmarshal pubkey")
+			}
+			pubKeys = append(pubKeys, pubKey)
 		}
-		pubKeys = append(pubKeys, pubKey)
+
 	}
 
 	return pubKeys, nil
 }
 
-func (k *Keeper) IsExistPubKey(ctx sdk.Context, operator, avs string) bool {
+func (k *Keeper) IsExistPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
+	return store.Has(pub.PubKey)
+}
+func (k *Keeper) IsExistPubKeyForAVS(ctx sdk.Context, operator, avs string) bool {
 	opAccAddr, err := sdk.AccAddressFromBech32(operator)
 	if err != nil {
 		return false

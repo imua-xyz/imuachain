@@ -249,7 +249,7 @@ func (p Precompile) EmitPublicKeyRegistered(ctx sdk.Context, stateDB vm.StateDB,
 	arguments := p.ABI.Events[EventTypePublicKeyRegistered].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypePublicKeyRegistered, arguments,
 		params.OperatorAddress.String(),
-		params.AvsAddr.String())
+		params.AvsAddr)
 }
 
 func (p Precompile) EmitTaskSubmittedByOperator(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.TaskResultParams) error {

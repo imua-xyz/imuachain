@@ -48,7 +48,7 @@ interface IAVSManager {
     event ChallengeInitiated(
         string sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress
     );
-    event PublicKeyRegistered(string sender, string avsAddr);
+    event PublicKeyRegistered(string sender, address avsAddr);
     event TaskSubmittedByOperator(
         address indexed taskContractAddress,
         uint64 indexed taskId,

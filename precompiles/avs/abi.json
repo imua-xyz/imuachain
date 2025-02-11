@@ -160,9 +160,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "avsAddr",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "PublicKeyRegistered",
