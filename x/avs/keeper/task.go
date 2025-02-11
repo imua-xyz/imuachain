@@ -126,6 +126,7 @@ func (k *Keeper) IsExistPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
 	return store.Has(pub.PubKey)
 }
+
 func (k *Keeper) IsExistPubKeyForAVS(ctx sdk.Context, operator, avs string) bool {
 	opAccAddr, err := sdk.AccAddressFromBech32(operator)
 	if err != nil {
