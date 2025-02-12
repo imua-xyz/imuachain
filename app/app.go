@@ -1392,6 +1392,8 @@ func (app *ExocoreApp) BlockedAddrs() map[string]bool {
 	}
 
 	// prevent all precompile addresses from receiving or sending tokens
+	// we don't add the Ethereum-inherited Berlin precompiles, since they are
+	// allowed to receive tokens on Eth mainnet.
 	for _, hexAddr := range exocoreevmtypes.ExocoreAvailableEVMExtensions {
 		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr).Bytes()).String()
 		blockedAddrs[bech32Addr] = true
