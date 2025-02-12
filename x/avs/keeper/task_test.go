@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
+	"math/big"
 	"strconv"
 
 	types "github.com/ExocoreNetwork/exocore/x/avs/types"
@@ -50,4 +52,15 @@ func (suite *AVSTestSuite) TestGetTaskId() {
 func (suite *AVSTestSuite) TestTaskChallengedInfo() {
 	suite.TestEpochEnd_TaskCalculation()
 	suite.CommitAfter(suite.EpochDuration)
+}
+
+func (suite *AVSTestSuite) TestTaskActualThreshold() {
+	operatorPowerTotal := sdkmath.LegacyNewDec(7000.000000000000000000)
+	taskPowerTotal := sdkmath.LegacyNewDec(7300.000000000000000000)
+	actualThreshold := operatorPowerTotal.Quo(taskPowerTotal).Mul(sdkmath.LegacyNewDec(100))
+	dec := sdkmath.LegacyMustNewDecFromStr(actualThreshold.String())
+	suite.True(dec.Equal(actualThreshold))
+	expectThreshold := sdkmath.LegacyNewDecFromBigInt(new(big.Int).SetUint64(uint64(90)))
+	suite.True(actualThreshold.GTE(expectThreshold))
+
 }

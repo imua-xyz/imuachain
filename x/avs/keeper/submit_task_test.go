@@ -135,7 +135,7 @@ func (suite *AVSTestSuite) prepareTaskInfo() {
 		TaskChallengePeriod:   2,
 		ThresholdPercentage:   60,
 		StartingEpoch:         uint64(epoch.CurrentEpoch + 1),
-		ActualThreshold:       0,
+		ActualThreshold:       "0",
 		OptInOperators:        operatorList,
 		TaskTotalPower:        sdk.Dec(sdkmath.ZeroInt()),
 	}

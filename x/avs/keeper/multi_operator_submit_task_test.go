@@ -152,7 +152,7 @@ func (suite *AVSTestSuite) prepareMulTaskInfo() {
 		TaskChallengePeriod:   2,
 		ThresholdPercentage:   60,
 		StartingEpoch:         uint64(epoch.CurrentEpoch + 1),
-		ActualThreshold:       0,
+		ActualThreshold:       "33",
 		OptInOperators:        operatorList,
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)

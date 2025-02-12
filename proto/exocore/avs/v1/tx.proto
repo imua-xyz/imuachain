@@ -106,7 +106,7 @@ message TaskInfo {
   uint64 starting_epoch = 9;
 
   // actual_threshold is the Actual threshold
-  uint64 actual_threshold = 10;
+  string actual_threshold = 10;
   // opt_in_count when creating a task, the actual opt-in operator counts at this moment
   repeated string opt_in_operators = 11;
   // signed_count is Actual number of signatures already signed
