@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -83,9 +84,14 @@ func (p Precompile) Bech32ToHex(
 		return nil, err
 	}
 
-	// validate the address bytes
+	// validate the address bytes: call the verifier if set and check length is range-bound
 	if err := sdk.VerifyAddressFormat(addressBz); err != nil {
 		return nil, err
+	}
+
+	// check the bytes length, since BytesToAddress silently crops
+	if len(addressBz) != common.AddressLength {
+		return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, len(addressBz), common.AddressLength)
 	}
 
 	// pack the address bytes
