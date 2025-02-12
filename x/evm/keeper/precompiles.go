@@ -70,14 +70,16 @@ func AvailablePrecompiles(
 	}
 
 	// The slash precompile is deprecated, but I have only commented out this code to facilitate future refactoring.
-	/*	slashPrecompile, err := slashPrecompile.NewPrecompile(
-		assetskeeper,
-		slashKeeper,
-		authzKeeper,
-	)*/
-	if err != nil {
+	/*
+		slashPrecompile, err := slashPrecompile.NewPrecompile(
+			assetskeeper,
+			slashKeeper,
+			authzKeeper,
+		)
+		if err != nil {
 		panic(fmt.Errorf("failed to load slash precompile: %w", err))
-	}
+		}
+	*/
 	rewardPrecompile, err := rewardprecompile.NewPrecompile(
 		assetskeeper,
 		rewardKeeper,

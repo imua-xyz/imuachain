@@ -76,7 +76,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		return nil, err
 	}
 
-	// TODO: check if stateless precompiles can return an error?
 	switch method.Name {
 	case MethodHexToBech32:
 		return p.HexToBech32(method, args)
