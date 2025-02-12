@@ -21213,9 +21213,9 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "operator_addr": {
+                          "operator_address": {
                             "type": "string",
-                            "description": "operator_addr is the operator  address."
+                            "description": "operator_address is the operator  address."
                           },
                           "active_power": {
                             "type": "string",
@@ -21268,8 +21268,8 @@
         },
         "parameters": [
           {
-            "name": "task_addr",
-            "description": "task_addr is the task contract address,its type should be a sdk.AccAddress.",
+            "name": "task_address",
+            "description": "task_address is the task contract address,its type should be a sdk.AccAddress.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -21287,10 +21287,10 @@
         ]
       }
     },
-    "/exocore/avs/v1/QueryAVSAddrByChainID/{chain}": {
+    "/exocore/avs/v1/QueryAVSAddressByChainID/{chain}": {
       "get": {
-        "summary": "QueryAVSAddrByChainID queries the avs address by chain id",
-        "operationId": "QueryAVSAddrByChainID",
+        "summary": "QueryAVSAddressByChainID queries the avs address by chain id",
+        "operationId": "QueryAVSAddressByChainID",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -21302,7 +21302,7 @@
                   "title": "avs_address is the hex address of avs"
                 }
               },
-              "title": "QueryAVSAddrByChainIDResponse is the response of avs address by chain id"
+              "title": "QueryAVSAddressByChainIDResponse is the response of avs address by chain id"
             }
           },
           "default": {
@@ -21380,24 +21380,24 @@
                       "format": "uint64",
                       "title": "min_stake_amount is the minimum stake amount required for a task to start"
                     },
-                    "task_addr": {
+                    "task_address": {
                       "type": "string",
-                      "title": "task_addr is the address of task as a hex string"
+                      "title": "task_address is the address of task as a hex string"
                     },
-                    "slash_addr": {
+                    "slash_address": {
                       "type": "string",
-                      "title": "slash_addr is the hex address of the slashing contract for the AVS"
+                      "title": "slash_address is the hex address of the slashing contract for the AVS"
                     },
-                    "reward_addr": {
+                    "reward_address": {
                       "type": "string",
-                      "title": "reward_addr is the hex address of the reward contract for the AVS"
+                      "title": "reward_address is the hex address of the reward contract for the AVS"
                     },
-                    "avs_owner_address": {
+                    "avs_owner_addresses": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       },
-                      "title": "avs_owner_address are the bech32 addresses of the owners of the avs"
+                      "title": "avs_owner_addresses are the bech32 addresses of the owners of the avs"
                     },
                     "asset_ids": {
                       "type": "array",
@@ -21455,12 +21455,12 @@
                       },
                       "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end."
                     },
-                    "whitelist_address": {
+                    "whitelist_addresses": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       },
-                      "title": "whitelist_address are the bech32 addresses ,whitelist address of supported operators"
+                      "title": "whitelist_addresses are the bech32 addresses ,whitelist address of supported operators"
                     }
                   }
                 }
@@ -21526,9 +21526,9 @@
             "schema": {
               "type": "object",
               "properties": {
-                "challenge_addr": {
+                "challenge_address": {
                   "type": "string",
-                  "description": "challenge_addr is the challenge address,its type should be a common.HexAddress."
+                  "description": "challenge_address is the challenge address,its type should be a common.HexAddress."
                 }
               },
               "title": "QueryChallengeInfoResponse is the response of avs related information"
@@ -21570,8 +21570,8 @@
         },
         "parameters": [
           {
-            "name": "task_addr",
-            "description": "task_addr is the task contract address,its type should be a sdk.AccAddress.",
+            "name": "task_address",
+            "description": "task_address is the task contract address,its type should be a sdk.AccAddress.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -21584,8 +21584,8 @@
             "type": "string"
           },
           {
-            "name": "operator_addr",
-            "description": "operator_addr is the operator address,its type should be a sdk.AccAddress.",
+            "name": "operator_address",
+            "description": "operator_address is the operator address,its type should be a sdk.AccAddress.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -21690,8 +21690,8 @@
         },
         "parameters": [
           {
-            "name": "task_addr",
-            "description": "task_addr is the task contract address,its type should be a sdk.AccAddress.",
+            "name": "task_address",
+            "description": "task_address is the task contract address,its type should be a sdk.AccAddress.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -21704,8 +21704,8 @@
             "type": "string"
           },
           {
-            "name": "operator_addr",
-            "description": "operator_addr is the operator address,its type should be a sdk.AccAddress.",
+            "name": "operator_address",
+            "description": "operator_address is the operator address,its type should be a sdk.AccAddress.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -43619,24 +43619,24 @@
           "format": "uint64",
           "title": "min_stake_amount is the minimum stake amount required for a task to start"
         },
-        "task_addr": {
+        "task_address": {
           "type": "string",
-          "title": "task_addr is the address of task as a hex string"
+          "title": "task_address is the address of task as a hex string"
         },
-        "slash_addr": {
+        "slash_address": {
           "type": "string",
-          "title": "slash_addr is the hex address of the slashing contract for the AVS"
+          "title": "slash_address is the hex address of the slashing contract for the AVS"
         },
-        "reward_addr": {
+        "reward_address": {
           "type": "string",
-          "title": "reward_addr is the hex address of the reward contract for the AVS"
+          "title": "reward_address is the hex address of the reward contract for the AVS"
         },
-        "avs_owner_address": {
+        "avs_owner_addresses": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "title": "avs_owner_address are the bech32 addresses of the owners of the avs"
+          "title": "avs_owner_addresses are the bech32 addresses of the owners of the avs"
         },
         "asset_ids": {
           "type": "array",
@@ -43694,12 +43694,12 @@
           },
           "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end."
         },
-        "whitelist_address": {
+        "whitelist_addresses": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "title": "whitelist_address are the bech32 addresses ,whitelist address of supported operators"
+          "title": "whitelist_addresses are the bech32 addresses ,whitelist address of supported operators"
         }
       },
       "title": "AVSinfo represent the information of avs"
@@ -43707,9 +43707,9 @@
     "exocore.avs.v1.OperatorActivePowerInfo": {
       "type": "object",
       "properties": {
-        "operator_addr": {
+        "operator_address": {
           "type": "string",
-          "description": "operator_addr is the operator  address."
+          "description": "operator_address is the operator  address."
         },
         "active_power": {
           "type": "string",
@@ -43726,9 +43726,9 @@
           "items": {
             "type": "object",
             "properties": {
-              "operator_addr": {
+              "operator_address": {
                 "type": "string",
-                "description": "operator_addr is the operator  address."
+                "description": "operator_address is the operator  address."
               },
               "active_power": {
                 "type": "string",
@@ -43753,7 +43753,7 @@
       "description": "- PHASE_UNSPECIFIED: Default value when phase is not specified\n - PHASE_PREPARE: First phase where operators prepare and submit their initial responses\n - PHASE_DO_COMMIT: Second phase where operators commit their prepared responses",
       "title": "It is a two-phase submission with two values, 1 and 2"
     },
-    "exocore.avs.v1.QueryAVSAddrByChainIDResponse": {
+    "exocore.avs.v1.QueryAVSAddressByChainIDResponse": {
       "type": "object",
       "properties": {
         "avs_address": {
@@ -43761,7 +43761,7 @@
           "title": "avs_address is the hex address of avs"
         }
       },
-      "title": "QueryAVSAddrByChainIDResponse is the response of avs address by chain id"
+      "title": "QueryAVSAddressByChainIDResponse is the response of avs address by chain id"
     },
     "exocore.avs.v1.QueryAVSInfoResponse": {
       "type": "object",
@@ -43783,24 +43783,24 @@
               "format": "uint64",
               "title": "min_stake_amount is the minimum stake amount required for a task to start"
             },
-            "task_addr": {
+            "task_address": {
               "type": "string",
-              "title": "task_addr is the address of task as a hex string"
+              "title": "task_address is the address of task as a hex string"
             },
-            "slash_addr": {
+            "slash_address": {
               "type": "string",
-              "title": "slash_addr is the hex address of the slashing contract for the AVS"
+              "title": "slash_address is the hex address of the slashing contract for the AVS"
             },
-            "reward_addr": {
+            "reward_address": {
               "type": "string",
-              "title": "reward_addr is the hex address of the reward contract for the AVS"
+              "title": "reward_address is the hex address of the reward contract for the AVS"
             },
-            "avs_owner_address": {
+            "avs_owner_addresses": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "title": "avs_owner_address are the bech32 addresses of the owners of the avs"
+              "title": "avs_owner_addresses are the bech32 addresses of the owners of the avs"
             },
             "asset_ids": {
               "type": "array",
@@ -43858,12 +43858,12 @@
               },
               "description": "asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end."
             },
-            "whitelist_address": {
+            "whitelist_addresses": {
               "type": "array",
               "items": {
                 "type": "string"
               },
-              "title": "whitelist_address are the bech32 addresses ,whitelist address of supported operators"
+              "title": "whitelist_addresses are the bech32 addresses ,whitelist address of supported operators"
             }
           }
         }
@@ -43873,9 +43873,9 @@
     "exocore.avs.v1.QueryChallengeInfoResponse": {
       "type": "object",
       "properties": {
-        "challenge_addr": {
+        "challenge_address": {
           "type": "string",
-          "description": "challenge_addr is the challenge address,its type should be a common.HexAddress."
+          "description": "challenge_address is the challenge address,its type should be a common.HexAddress."
         }
       },
       "title": "QueryChallengeInfoResponse is the response of avs related information"
@@ -44022,9 +44022,9 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "operator_addr": {
+                  "operator_address": {
                     "type": "string",
-                    "description": "operator_addr is the operator  address."
+                    "description": "operator_address is the operator  address."
                   },
                   "active_power": {
                     "type": "string",
