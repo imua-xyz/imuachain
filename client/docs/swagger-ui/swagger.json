@@ -21169,7 +21169,6 @@
                 },
                 "actual_threshold": {
                   "type": "string",
-                  "format": "uint64",
                   "title": "actual_threshold is the Actual threshold"
                 },
                 "opt_in_operators": {
@@ -43978,7 +43977,6 @@
         },
         "actual_threshold": {
           "type": "string",
-          "format": "uint64",
           "title": "actual_threshold is the Actual threshold"
         },
         "opt_in_operators": {
