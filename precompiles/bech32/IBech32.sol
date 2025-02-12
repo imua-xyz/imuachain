@@ -9,8 +9,7 @@ IBech32 constant BECH32_CONTRACT = IBech32(BECH32_PRECOMPILE_ADDRESS);
 /// @author ExocoreNetwork
 /// @title Bech32 Precompiled Contract
 /// @dev This contract can be used by Solidity devs to convert from `string bech32Addr` to
-///      `address 0xAddr` and vice versa. The bech32-prefix used is the chain's prefix, via
-///      `sdk.Config#SetBech32PrefixForAccount`.
+///      `address 0xAddr` and vice versa.
 /// @custom:address 0x0000000000000000000000000000000000000400
 interface IBech32 {
 
