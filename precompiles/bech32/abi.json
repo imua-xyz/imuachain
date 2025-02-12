@@ -16,7 +16,7 @@
         "internalType": "address"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -40,6 +40,6 @@
         "internalType": "string"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "view"
   }
 ]
