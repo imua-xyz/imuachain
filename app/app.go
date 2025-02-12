@@ -69,8 +69,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 
-	"github.com/evmos/evmos/v16/precompiles/common"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
@@ -185,6 +183,7 @@ import (
 
 	"github.com/ExocoreNetwork/exocore/x/evm"
 	evmkeeper "github.com/ExocoreNetwork/exocore/x/evm/keeper"
+	exocoreevmtypes "github.com/ExocoreNetwork/exocore/x/evm/types"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 
 	"github.com/evmos/evmos/v16/encoding"
@@ -202,6 +201,7 @@ import (
 	_ "github.com/evmos/evmos/v16/client/docs/statik"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
+	"github.com/ethereum/go-ethereum/common"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
@@ -1390,8 +1390,16 @@ func (app *ExocoreApp) BlockedAddrs() map[string]bool {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
 	}
 
-	for _, precompile := range common.DefaultPrecompilesBech32 {
-		blockedAddrs[precompile] = true
+	// prevent all precompile addresses from receiving or sending tokens
+	for _, hexAddr := range exocoreevmtypes.ExocoreAvailableEVMExtensions {
+		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr).Bytes()).String()
+		blockedAddrs[bech32Addr] = true
+	}
+
+	// now do the predeploys
+	for _, hexAddr := range exocoreevmtypes.DefaultPredeploys {
+		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr.Address).Bytes()).String()
+		blockedAddrs[bech32Addr] = true
 	}
 
 	return blockedAddrs
