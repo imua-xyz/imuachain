@@ -18,9 +18,9 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
 	// Set all the avs infos
 	for _, avs := range state.AvsInfos {
 		avs.AvsAddress = strings.ToLower(avs.AvsAddress)
-		avs.TaskAddr = strings.ToLower(avs.TaskAddr)
-		avs.RewardAddr = strings.ToLower(avs.RewardAddr)
-		avs.SlashAddr = strings.ToLower(avs.SlashAddr)
+		avs.TaskAddress = strings.ToLower(avs.TaskAddress)
+		avs.RewardAddress = strings.ToLower(avs.RewardAddress)
+		avs.SlashAddress = strings.ToLower(avs.SlashAddress)
 		err := k.SetAVSInfo(ctx, &avs) //nolint:gosec
 		if err != nil {
 			panic(errorsmod.Wrap(err, "failed to set all avs info"))
@@ -43,8 +43,8 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
 	}
 	// Set all the taskNum infos
 	for _, elem := range state.TaskNums {
-		elem.TaskAddr = strings.ToLower(elem.TaskAddr)
-		k.SetTaskID(ctx, common.HexToAddress(elem.TaskAddr), elem.TaskId)
+		elem.TaskAddress = strings.ToLower(elem.TaskAddress)
+		k.SetTaskID(ctx, common.HexToAddress(elem.TaskAddress), elem.TaskId)
 	}
 	// Set all the task result infos
 	for _, elem := range state.TaskResultInfos {

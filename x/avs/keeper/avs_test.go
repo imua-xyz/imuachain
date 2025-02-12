@@ -22,15 +22,15 @@ func (suite *AVSTestSuite) TestAVS() {
 	avsName := "avsTest"
 	avsAddress := suite.avsAddress
 	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
-	assetID := suite.AssetIDs
+	assetIDs := suite.AssetIDs
 	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 
 	avs := &types.AVSInfo{
 		Name:                avsName,
 		AvsAddress:          avsAddress.String(),
-		SlashAddr:           utiltx.GenerateAddress().String(),
-		AvsOwnerAddress:     avsOwnerAddress,
-		AssetIDs:            assetID,
+		SlashAddress:        utiltx.GenerateAddress().String(),
+		AvsOwnerAddresses:   avsOwnerAddress,
+		AssetIDs:            assetIDs,
 		AvsUnbondingPeriod:  2,
 		MinSelfDelegation:   10,
 		EpochIdentifier:     epochstypes.DayEpochID,
@@ -39,8 +39,8 @@ func (suite *AVSTestSuite) TestAVS() {
 		MinTotalStakeAmount: 1000,
 		AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 		AvsReward:           sdk.MustNewDecFromStr("0.002"),
-		TaskAddr:            "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr",
-		WhitelistAddress:    []string{operatorAddress},
+		TaskAddress:         "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr",
+		WhitelistAddresses:  []string{operatorAddress},
 	}
 
 	err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
@@ -73,19 +73,19 @@ func (suite *AVSTestSuite) TestAVS() {
 func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 	avsName, avsAddres, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
-	assetID := suite.AssetIDs
+	assetIDs := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
-		AvsName:            avsName,
-		AvsAddress:         common.HexToAddress(avsAddres),
-		Action:             avstypes.RegisterAction,
-		RewardContractAddr: common.HexToAddress(rewardAddress),
-		AvsOwnerAddress:    avsOwnerAddress,
-		AssetID:            assetID,
-		MinSelfDelegation:  uint64(10),
-		UnbondingPeriod:    uint64(2),
-		SlashContractAddr:  common.HexToAddress(slashAddress),
-		EpochIdentifier:    epochstypes.DayEpochID,
+		AvsName:               avsName,
+		AvsAddress:            common.HexToAddress(avsAddres),
+		Action:                avstypes.RegisterAction,
+		RewardContractAddress: common.HexToAddress(rewardAddress),
+		AvsOwnerAddresses:     avsOwnerAddress,
+		AssetIDs:              assetIDs,
+		MinSelfDelegation:     uint64(10),
+		UnbondingPeriod:       uint64(2),
+		SlashContractAddress:  common.HexToAddress(slashAddress),
+		EpochIdentifier:       epochstypes.DayEpochID,
 	}
 
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
@@ -105,18 +105,18 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	// Test case setup
 	avsName, avsAddress, slashAddress := "avsTest", suite.avsAddress.String(), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
-	assetID := suite.AssetIDs
+	assetIDs := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
-		AvsName:           avsName,
-		AvsAddress:        common.HexToAddress(avsAddress),
-		Action:            avstypes.DeRegisterAction,
-		AvsOwnerAddress:   avsOwnerAddress,
-		AssetID:           assetID,
-		MinSelfDelegation: uint64(10),
-		UnbondingPeriod:   uint64(2),
-		SlashContractAddr: common.HexToAddress(slashAddress),
-		EpochIdentifier:   epochstypes.DayEpochID,
+		AvsName:              avsName,
+		AvsAddress:           common.HexToAddress(avsAddress),
+		Action:               avstypes.DeRegisterAction,
+		AvsOwnerAddresses:    avsOwnerAddress,
+		AssetIDs:             assetIDs,
+		MinSelfDelegation:    uint64(10),
+		UnbondingPeriod:      uint64(2),
+		SlashContractAddress: common.HexToAddress(slashAddress),
+		EpochIdentifier:      epochstypes.DayEpochID,
 	}
 
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)

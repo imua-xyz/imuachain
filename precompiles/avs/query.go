@@ -38,16 +38,16 @@ func (p Precompile) GetRegisteredPubkey(
 	if len(args) != len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs), len(args))
 	}
-	addr, ok := args[0].(common.Address)
-	if !ok || addr == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
+	opratorAddress, ok := args[0].(common.Address)
+	if !ok || opratorAddress == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", opratorAddress)
 	}
-	avsAddr, ok := args[1].(common.Address)
+	avsAddress, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
 	}
-	var accAddr sdk.AccAddress = addr[:]
-	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddr.String(), avsAddr.String())
+	var accAddress sdk.AccAddress = opratorAddress[:]
+	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddress.String(), avsAddress.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack([]byte{})
@@ -57,7 +57,7 @@ func (p Precompile) GetRegisteredPubkey(
 	return method.Outputs.Pack(blsPubKeyInfo.PubKey)
 }
 
-func (p Precompile) GetOptedInOperatorAccAddrs(
+func (p Precompile) GetOptedInOperatorAccAddress(
 	ctx sdk.Context,
 	_ *vm.Contract,
 	method *abi.Method,
@@ -67,12 +67,12 @@ func (p Precompile) GetOptedInOperatorAccAddrs(
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetOptinOperators].Inputs), len(args))
 	}
 
-	addr, ok := args[0].(common.Address)
-	if !ok || addr == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
+	avsaddress, ok := args[0].(common.Address)
+	if !ok || avsaddress == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsaddress)
 	}
 
-	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(addr.String()))
+	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(avsaddress.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -89,11 +89,11 @@ func (p Precompile) GetAVSUSDValue(
 	if len(args) != len(p.ABI.Methods[MethodGetAVSUSDValue].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetAVSUSDValue].Inputs), len(args))
 	}
-	addr, ok := args[0].(common.Address)
+	avsaddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsaddress)
 	}
-	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, addr.String())
+	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, avsaddress.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack(common.Big0)
@@ -113,16 +113,16 @@ func (p Precompile) GetOperatorOptedUSDValue(
 	if len(args) != len(p.ABI.Methods[MethodGetOperatorOptedUSDValue].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetOperatorOptedUSDValue].Inputs), len(args))
 	}
-	avsAddr, ok := args[0].(common.Address)
+	avsAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
-	addr, ok := args[1].(common.Address)
+	operatorAddress, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", operatorAddress)
 	}
-	var operatorAddr sdk.AccAddress = addr[:]
-	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddr.String()), operatorAddr.String())
+	var accAddress sdk.AccAddress = operatorAddress[:]
+	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddress.String()), accAddress.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack(common.Big0)
@@ -141,12 +141,12 @@ func (p Precompile) GetAVSEpochIdentifier(
 	if len(args) != len(p.ABI.Methods[MethodGetAVSEpochIdentifier].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetAVSEpochIdentifier].Inputs), len(args))
 	}
-	addr, ok := args[0].(common.Address)
+	avsAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
 
-	avs, err := p.avsKeeper.GetAVSInfo(ctx, addr.String())
+	avs, err := p.avsKeeper.GetAVSInfo(ctx, avsAddress.String())
 	if err != nil {
 		// if the avs does not exist, return empty array
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
@@ -167,12 +167,12 @@ func (p Precompile) IsOperator(
 	if len(args) != len(p.ABI.Methods[MethodIsOperator].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodIsOperator].Inputs), len(args))
 	}
-	operatorAddr, ok := args[0].(common.Address)
+	operatorAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddress)
 	}
 
-	param := operatorAddr[:]
+	param := operatorAddress[:]
 	flag := p.avsKeeper.GetOperatorKeeper().IsOperator(ctx, param)
 
 	return method.Outputs.Pack(flag)
@@ -187,16 +187,16 @@ func (p Precompile) GetTaskInfo(
 	if len(args) != len(p.ABI.Methods[MethodGetTaskInfo].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetTaskInfo].Inputs), len(args))
 	}
-	addr, ok := args[0].(common.Address)
+	taskAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", addr)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
 	}
 	taskID, ok := args[1].(uint64)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", taskID)
 	}
 
-	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), addr.String())
+	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddress.String())
 	if err != nil {
 		// if the avs does not exist, return empty array
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {

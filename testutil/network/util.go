@@ -220,7 +220,7 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	}
 	cfg.GenesisState[assetstypes.ModuleName] = cfg.Codec.MustMarshalJSON(&assetsGenState)
 
-	avsAddrStr := avstypes.GenerateAVSAddr(avstypes.ChainIDWithoutRevision(cfg.ChainID))
+	avsAddrStr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(cfg.ChainID))
 	operatorGenState, err := NewGenStateOperator(operatorAccAddresses, consPubKeys, commissionRate, cfg.ChainID, []string{avsAddrStr}, cfg.StakingTokens, assetsGenState)
 	if err != nil {
 		return err

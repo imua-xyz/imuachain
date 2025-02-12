@@ -5,7 +5,7 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
@@ -30,7 +30,7 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
@@ -55,7 +55,7 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
@@ -117,7 +117,7 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
@@ -136,7 +136,7 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
@@ -161,7 +161,7 @@
 			{
 				"indexed": false,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			}
 		],
@@ -407,7 +407,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			}
 		],
@@ -426,7 +426,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			}
 		],
@@ -464,12 +464,12 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
 				"internalType": "address",
-				"name": "operatorAddr",
+				"name": "operatorAddress",
 				"type": "address"
 			}
 		],
@@ -507,12 +507,12 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "operator",
+				"name": "operatorAddress",
 				"type": "address"
 			},
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			}
 		],
@@ -531,7 +531,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "taskAddr",
+				"name": "taskAddress",
 				"type": "address"
 			},
 			{
@@ -555,7 +555,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "operatorAddr",
+				"name": "operatorAddress",
 				"type": "address"
 			}
 		],
@@ -635,27 +635,27 @@
 					},
 					{
 						"internalType": "address",
-						"name": "taskAddr",
+						"name": "taskAddress",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "slashAddr",
+						"name": "slashAddress",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "rewardAddr",
+						"name": "rewardAddress",
 						"type": "address"
 					},
 					{
 						"internalType": "address[]",
-						"name": "avsOwnerAddress",
+						"name": "avsOwnerAddresses",
 						"type": "address[]"
 					},
 					{
 						"internalType": "address[]",
-						"name": "whitelistAddress",
+						"name": "whitelistAddresses",
 						"type": "address[]"
 					},
 					{
@@ -724,7 +724,7 @@
 			},
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
@@ -794,27 +794,27 @@
 					},
 					{
 						"internalType": "address",
-						"name": "taskAddr",
+						"name": "taskAddress",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "slashAddr",
+						"name": "slashAddress",
 						"type": "address"
 					},
 					{
 						"internalType": "address",
-						"name": "rewardAddr",
+						"name": "rewardAddress",
 						"type": "address"
 					},
 					{
 						"internalType": "address[]",
-						"name": "avsOwnerAddress",
+						"name": "avsOwnerAddresses",
 						"type": "address[]"
 					},
 					{
 						"internalType": "address[]",
-						"name": "whitelistAddress",
+						"name": "whitelistAddresses",
 						"type": "address[]"
 					},
 					{

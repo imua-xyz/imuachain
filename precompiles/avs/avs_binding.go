@@ -4,6 +4,7 @@
 package avs
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -24,10 +26,37 @@ var (
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
 
+// AVSParams is an auto generated low-level Go binding around an user-defined struct.
+type AVSParams struct {
+	Sender              common.Address
+	AvsName             string
+	MinStakeAmount      uint64
+	TaskAddress         common.Address
+	SlashAddress        common.Address
+	RewardAddress       common.Address
+	AvsOwnerAddresses   []common.Address
+	WhitelistAddresses  []common.Address
+	AssetIDs            []string
+	AvsUnbondingPeriod  uint64
+	MinSelfDelegation   uint64
+	EpochIdentifier     string
+	MiniOptInOperators  uint64
+	MinTotalStakeAmount uint64
+	AvsRewardProportion uint64
+	AvsSlashProportion  uint64
+}
+
+// AvsMetaData contains all meta data concerning the Avs contract.
+var AvsMetaData = &bind.MetaData{
+	ABI: "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"AVSDeregistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"AVSRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"AVSUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"taskHash\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"taskResponseHash\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"operatorAddress\",\"type\":\"string\"}],\"name\":\"ChallengeInitiated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"}],\"name\":\"OperatorJoined\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"}],\"name\":\"OperatorLeft\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"}],\"name\":\"PublicKeyRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"taskContractAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"taskId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"hash\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskResponsePeriod\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskChallengePeriod\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"thresholdPercentage\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskStatisticalPeriod\",\"type\":\"uint64\"}],\"name\":\"TaskCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"taskContractAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"taskId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"taskResponse\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"blsSignature\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"phase\",\"type\":\"uint8\"}],\"name\":\"TaskSubmittedByOperator\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"taskHash\",\"type\":\"bytes\"},{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"taskResponseHash\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"operatorAddress\",\"type\":\"address\"}],\"name\":\"challenge\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"hash\",\"type\":\"bytes\"},{\"internalType\":\"uint64\",\"name\":\"taskResponsePeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"taskChallengePeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"thresholdPercentage\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"taskStatisticalPeriod\",\"type\":\"uint64\"}],\"name\":\"createTask\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"deregisterAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"deregisterOperatorFromAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"}],\"name\":\"getAVSEpochIdentifier\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"}],\"name\":\"getAVSUSDValue\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"}],\"name\":\"getCurrentEpoch\",\"outputs\":[{\"internalType\":\"int64\",\"name\":\"currentEpoch\",\"type\":\"int64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operatorAddress\",\"type\":\"address\"}],\"name\":\"getOperatorOptedUSDValue\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"}],\"name\":\"getOptInOperators\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"operators\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"}],\"name\":\"getRegisteredPubkey\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"taskAddress\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"}],\"name\":\"getTaskInfo\",\"outputs\":[{\"internalType\":\"uint64[]\",\"name\":\"info\",\"type\":\"uint64[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorAddress\",\"type\":\"address\"}],\"name\":\"isOperator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"taskResponse\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"blsSignature\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"taskContractAddress\",\"type\":\"address\"},{\"internalType\":\"uint8\",\"name\":\"phase\",\"type\":\"uint8\"}],\"name\":\"operatorSubmitTask\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"},{\"internalType\":\"uint64\",\"name\":\"minStakeAmount\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"taskAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"slashAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rewardAddress\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"avsOwnerAddresses\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"whitelistAddresses\",\"type\":\"address[]\"},{\"internalType\":\"string[]\",\"name\":\"assetIDs\",\"type\":\"string[]\"},{\"internalType\":\"uint64\",\"name\":\"avsUnbondingPeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"minSelfDelegation\",\"type\":\"uint64\"},{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"},{\"internalType\":\"uint64\",\"name\":\"miniOptInOperators\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"minTotalStakeAmount\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"avsRewardProportion\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"avsSlashProportion\",\"type\":\"uint64\"}],\"internalType\":\"structAVSParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"registerAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"pubKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"pubkeyRegistrationSignature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"pubkeyRegistrationMessageHash\",\"type\":\"bytes\"}],\"name\":\"registerBLSPublicKey\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"registerOperatorToAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"},{\"internalType\":\"uint64\",\"name\":\"minStakeAmount\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"taskAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"slashAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rewardAddress\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"avsOwnerAddresses\",\"type\":\"address[]\"},{\"internalType\":\"address[]\",\"name\":\"whitelistAddresses\",\"type\":\"address[]\"},{\"internalType\":\"string[]\",\"name\":\"assetIDs\",\"type\":\"string[]\"},{\"internalType\":\"uint64\",\"name\":\"avsUnbondingPeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"minSelfDelegation\",\"type\":\"uint64\"},{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"},{\"internalType\":\"uint64\",\"name\":\"miniOptInOperators\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"minTotalStakeAmount\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"avsRewardProportion\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"avsSlashProportion\",\"type\":\"uint64\"}],\"internalType\":\"structAVSParams\",\"name\":\"params\",\"type\":\"tuple\"}],\"name\":\"updateAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+}
+
 // AvsABI is the input ABI used to generate the binding from.
-const AvsABI = "[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"AVSDeregistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"AVSRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"AVSUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"taskHash\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"taskResponseHash\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"operatorAddress\",\"type\":\"string\"}],\"name\":\"ChallengeInitiated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"}],\"name\":\"OperatorJoined\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"}],\"name\":\"OperatorLeft\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"}],\"name\":\"PublicKeyRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"taskContractAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"taskId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"hash\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskResponsePeriod\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskChallengePeriod\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"thresholdPercentage\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"uint64\",\"name\":\"taskStatisticalPeriod\",\"type\":\"uint64\"}],\"name\":\"TaskCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"taskContractAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint64\",\"name\":\"taskId\",\"type\":\"uint64\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"sender\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"taskResponse\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"blsSignature\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"uint8\",\"name\":\"phase\",\"type\":\"uint8\"}],\"name\":\"TaskSubmittedByOperator\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"taskHash\",\"type\":\"bytes\"},{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"taskResponseHash\",\"type\":\"bytes\"},{\"internalType\":\"string\",\"name\":\"operatorAddress\",\"type\":\"string\"}],\"name\":\"challenge\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"hash\",\"type\":\"bytes\"},{\"internalType\":\"uint64\",\"name\":\"taskResponsePeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"taskChallengePeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"thresholdPercentage\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"taskStatisticalPeriod\",\"type\":\"uint64\"}],\"name\":\"createTask\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"}],\"name\":\"deregisterAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"deregisterOperatorFromAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"}],\"name\":\"getAVSEpochIdentifier\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"}],\"name\":\"getAVSUSDValue\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"}],\"name\":\"getCurrentEpoch\",\"outputs\":[{\"internalType\":\"int64\",\"name\":\"currentEpoch\",\"type\":\"int64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddr\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"operatorAddr\",\"type\":\"string\"}],\"name\":\"getOperatorOptedUSDValue\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"avsAddress\",\"type\":\"address\"}],\"name\":\"getOptInOperators\",\"outputs\":[{\"internalType\":\"string[]\",\"name\":\"operators\",\"type\":\"string[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"operator\",\"type\":\"string\"}],\"name\":\"getRegisteredPubkey\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"pubkey\",\"type\":\"bytes\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"taskAddr\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"}],\"name\":\"getTaskInfo\",\"outputs\":[{\"internalType\":\"uint64[]\",\"name\":\"info\",\"type\":\"uint64[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorAddr\",\"type\":\"address\"}],\"name\":\"isOperator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"uint64\",\"name\":\"taskID\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"taskResponse\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"blsSignature\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"taskContractAddress\",\"type\":\"address\"},{\"internalType\":\"uint8\",\"name\":\"phase\",\"type\":\"uint8\"}],\"name\":\"operatorSubmitTask\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"},{\"internalType\":\"uint64\",\"name\":\"minStakeAmount\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"taskAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"slashAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rewardAddr\",\"type\":\"address\"},{\"internalType\":\"string[]\",\"name\":\"avsOwnerAddress\",\"type\":\"string[]\"},{\"internalType\":\"string[]\",\"name\":\"assetIds\",\"type\":\"string[]\"},{\"internalType\":\"uint64\",\"name\":\"avsUnbondingPeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"minSelfDelegation\",\"type\":\"uint64\"},{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"},{\"internalType\":\"uint64[]\",\"name\":\"params\",\"type\":\"uint64[]\"}],\"name\":\"registerAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"bytes\",\"name\":\"pubKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"pubkeyRegistrationSignature\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"pubkeyRegistrationMessageHash\",\"type\":\"bytes\"}],\"name\":\"registerBLSPublicKey\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"registerOperatorToAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"avsName\",\"type\":\"string\"},{\"internalType\":\"uint64\",\"name\":\"minStakeAmount\",\"type\":\"uint64\"},{\"internalType\":\"address\",\"name\":\"taskAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"slashAddr\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"rewardAddr\",\"type\":\"address\"},{\"internalType\":\"string[]\",\"name\":\"avsOwnerAddress\",\"type\":\"string[]\"},{\"internalType\":\"string[]\",\"name\":\"assetIds\",\"type\":\"string[]\"},{\"internalType\":\"uint64\",\"name\":\"avsUnbondingPeriod\",\"type\":\"uint64\"},{\"internalType\":\"uint64\",\"name\":\"minSelfDelegation\",\"type\":\"uint64\"},{\"internalType\":\"string\",\"name\":\"epochIdentifier\",\"type\":\"string\"},{\"internalType\":\"uint64[]\",\"name\":\"params\",\"type\":\"uint64[]\"}],\"name\":\"updateAVS\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+// Deprecated: Use AvsMetaData.ABI instead.
+var AvsABI = AvsMetaData.ABI
 
 // Avs is an auto generated Go binding around an Ethereum contract.
 type Avs struct {
@@ -126,11 +155,11 @@ func NewAvsFilterer(address common.Address, filterer bind.ContractFilterer) (*Av
 
 // bindAvs binds a generic wrapper to an already deployed contract.
 func bindAvs(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(AvsABI))
+	parsed, err := AvsMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+	return bind.NewBoundContract(address, *parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -173,10 +202,10 @@ func (_Avs *AvsTransactorRaw) Transact(opts *bind.TransactOpts, method string, p
 
 // GetAVSEpochIdentifier is a free data retrieval call binding the contract method 0xe0938414.
 //
-// Solidity: function getAVSEpochIdentifier(address avsAddr) view returns(string epochIdentifier)
-func (_Avs *AvsCaller) GetAVSEpochIdentifier(opts *bind.CallOpts, avsAddr common.Address) (string, error) {
+// Solidity: function getAVSEpochIdentifier(address avsAddress) view returns(string epochIdentifier)
+func (_Avs *AvsCaller) GetAVSEpochIdentifier(opts *bind.CallOpts, avsAddress common.Address) (string, error) {
 	var out []interface{}
-	err := _Avs.contract.Call(opts, &out, "getAVSEpochIdentifier", avsAddr)
+	err := _Avs.contract.Call(opts, &out, "getAVSEpochIdentifier", avsAddress)
 
 	if err != nil {
 		return *new(string), err
@@ -190,24 +219,24 @@ func (_Avs *AvsCaller) GetAVSEpochIdentifier(opts *bind.CallOpts, avsAddr common
 
 // GetAVSEpochIdentifier is a free data retrieval call binding the contract method 0xe0938414.
 //
-// Solidity: function getAVSEpochIdentifier(address avsAddr) view returns(string epochIdentifier)
-func (_Avs *AvsSession) GetAVSEpochIdentifier(avsAddr common.Address) (string, error) {
-	return _Avs.Contract.GetAVSEpochIdentifier(&_Avs.CallOpts, avsAddr)
+// Solidity: function getAVSEpochIdentifier(address avsAddress) view returns(string epochIdentifier)
+func (_Avs *AvsSession) GetAVSEpochIdentifier(avsAddress common.Address) (string, error) {
+	return _Avs.Contract.GetAVSEpochIdentifier(&_Avs.CallOpts, avsAddress)
 }
 
 // GetAVSEpochIdentifier is a free data retrieval call binding the contract method 0xe0938414.
 //
-// Solidity: function getAVSEpochIdentifier(address avsAddr) view returns(string epochIdentifier)
-func (_Avs *AvsCallerSession) GetAVSEpochIdentifier(avsAddr common.Address) (string, error) {
-	return _Avs.Contract.GetAVSEpochIdentifier(&_Avs.CallOpts, avsAddr)
+// Solidity: function getAVSEpochIdentifier(address avsAddress) view returns(string epochIdentifier)
+func (_Avs *AvsCallerSession) GetAVSEpochIdentifier(avsAddress common.Address) (string, error) {
+	return _Avs.Contract.GetAVSEpochIdentifier(&_Avs.CallOpts, avsAddress)
 }
 
 // GetAVSUSDValue is a free data retrieval call binding the contract method 0xdcf61b2c.
 //
-// Solidity: function getAVSUSDValue(address avsAddr) view returns(uint256 amount)
-func (_Avs *AvsCaller) GetAVSUSDValue(opts *bind.CallOpts, avsAddr common.Address) (*big.Int, error) {
+// Solidity: function getAVSUSDValue(address avsAddress) view returns(uint256 amount)
+func (_Avs *AvsCaller) GetAVSUSDValue(opts *bind.CallOpts, avsAddress common.Address) (*big.Int, error) {
 	var out []interface{}
-	err := _Avs.contract.Call(opts, &out, "getAVSUSDValue", avsAddr)
+	err := _Avs.contract.Call(opts, &out, "getAVSUSDValue", avsAddress)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -221,16 +250,16 @@ func (_Avs *AvsCaller) GetAVSUSDValue(opts *bind.CallOpts, avsAddr common.Addres
 
 // GetAVSUSDValue is a free data retrieval call binding the contract method 0xdcf61b2c.
 //
-// Solidity: function getAVSUSDValue(address avsAddr) view returns(uint256 amount)
-func (_Avs *AvsSession) GetAVSUSDValue(avsAddr common.Address) (*big.Int, error) {
-	return _Avs.Contract.GetAVSUSDValue(&_Avs.CallOpts, avsAddr)
+// Solidity: function getAVSUSDValue(address avsAddress) view returns(uint256 amount)
+func (_Avs *AvsSession) GetAVSUSDValue(avsAddress common.Address) (*big.Int, error) {
+	return _Avs.Contract.GetAVSUSDValue(&_Avs.CallOpts, avsAddress)
 }
 
 // GetAVSUSDValue is a free data retrieval call binding the contract method 0xdcf61b2c.
 //
-// Solidity: function getAVSUSDValue(address avsAddr) view returns(uint256 amount)
-func (_Avs *AvsCallerSession) GetAVSUSDValue(avsAddr common.Address) (*big.Int, error) {
-	return _Avs.Contract.GetAVSUSDValue(&_Avs.CallOpts, avsAddr)
+// Solidity: function getAVSUSDValue(address avsAddress) view returns(uint256 amount)
+func (_Avs *AvsCallerSession) GetAVSUSDValue(avsAddress common.Address) (*big.Int, error) {
+	return _Avs.Contract.GetAVSUSDValue(&_Avs.CallOpts, avsAddress)
 }
 
 // GetCurrentEpoch is a free data retrieval call binding the contract method 0x992907fb.
@@ -264,12 +293,12 @@ func (_Avs *AvsCallerSession) GetCurrentEpoch(epochIdentifier string) (int64, er
 	return _Avs.Contract.GetCurrentEpoch(&_Avs.CallOpts, epochIdentifier)
 }
 
-// GetOperatorOptedUSDValue is a free data retrieval call binding the contract method 0x2d9d6a20.
+// GetOperatorOptedUSDValue is a free data retrieval call binding the contract method 0x4d568f24.
 //
-// Solidity: function getOperatorOptedUSDValue(address avsAddr, string operatorAddr) view returns(uint256 amount)
-func (_Avs *AvsCaller) GetOperatorOptedUSDValue(opts *bind.CallOpts, avsAddr common.Address, operatorAddr string) (*big.Int, error) {
+// Solidity: function getOperatorOptedUSDValue(address avsAddress, address operatorAddress) view returns(uint256 amount)
+func (_Avs *AvsCaller) GetOperatorOptedUSDValue(opts *bind.CallOpts, avsAddress common.Address, operatorAddress common.Address) (*big.Int, error) {
 	var out []interface{}
-	err := _Avs.contract.Call(opts, &out, "getOperatorOptedUSDValue", avsAddr, operatorAddr)
+	err := _Avs.contract.Call(opts, &out, "getOperatorOptedUSDValue", avsAddress, operatorAddress)
 
 	if err != nil {
 		return *new(*big.Int), err
@@ -281,18 +310,18 @@ func (_Avs *AvsCaller) GetOperatorOptedUSDValue(opts *bind.CallOpts, avsAddr com
 
 }
 
-// GetOperatorOptedUSDValue is a free data retrieval call binding the contract method 0x2d9d6a20.
+// GetOperatorOptedUSDValue is a free data retrieval call binding the contract method 0x4d568f24.
 //
-// Solidity: function getOperatorOptedUSDValue(address avsAddr, string operatorAddr) view returns(uint256 amount)
-func (_Avs *AvsSession) GetOperatorOptedUSDValue(avsAddr common.Address, operatorAddr string) (*big.Int, error) {
-	return _Avs.Contract.GetOperatorOptedUSDValue(&_Avs.CallOpts, avsAddr, operatorAddr)
+// Solidity: function getOperatorOptedUSDValue(address avsAddress, address operatorAddress) view returns(uint256 amount)
+func (_Avs *AvsSession) GetOperatorOptedUSDValue(avsAddress common.Address, operatorAddress common.Address) (*big.Int, error) {
+	return _Avs.Contract.GetOperatorOptedUSDValue(&_Avs.CallOpts, avsAddress, operatorAddress)
 }
 
-// GetOperatorOptedUSDValue is a free data retrieval call binding the contract method 0x2d9d6a20.
+// GetOperatorOptedUSDValue is a free data retrieval call binding the contract method 0x4d568f24.
 //
-// Solidity: function getOperatorOptedUSDValue(address avsAddr, string operatorAddr) view returns(uint256 amount)
-func (_Avs *AvsCallerSession) GetOperatorOptedUSDValue(avsAddr common.Address, operatorAddr string) (*big.Int, error) {
-	return _Avs.Contract.GetOperatorOptedUSDValue(&_Avs.CallOpts, avsAddr, operatorAddr)
+// Solidity: function getOperatorOptedUSDValue(address avsAddress, address operatorAddress) view returns(uint256 amount)
+func (_Avs *AvsCallerSession) GetOperatorOptedUSDValue(avsAddress common.Address, operatorAddress common.Address) (*big.Int, error) {
+	return _Avs.Contract.GetOperatorOptedUSDValue(&_Avs.CallOpts, avsAddress, operatorAddress)
 }
 
 // GetOptInOperators is a free data retrieval call binding the contract method 0x1d4c8007.
@@ -326,12 +355,12 @@ func (_Avs *AvsCallerSession) GetOptInOperators(avsAddress common.Address) ([]st
 	return _Avs.Contract.GetOptInOperators(&_Avs.CallOpts, avsAddress)
 }
 
-// GetRegisteredPubkey is a free data retrieval call binding the contract method 0x55b42cbe.
+// GetRegisteredPubkey is a free data retrieval call binding the contract method 0x9943aa27.
 //
-// Solidity: function getRegisteredPubkey(string operator) view returns(bytes pubkey)
-func (_Avs *AvsCaller) GetRegisteredPubkey(opts *bind.CallOpts, operator string) ([]byte, error) {
+// Solidity: function getRegisteredPubkey(address operatorAddress, address avsAddress) view returns(bytes pubkey)
+func (_Avs *AvsCaller) GetRegisteredPubkey(opts *bind.CallOpts, operatorAddress common.Address, avsAddress common.Address) ([]byte, error) {
 	var out []interface{}
-	err := _Avs.contract.Call(opts, &out, "getRegisteredPubkey", operator)
+	err := _Avs.contract.Call(opts, &out, "getRegisteredPubkey", operatorAddress, avsAddress)
 
 	if err != nil {
 		return *new([]byte), err
@@ -343,26 +372,26 @@ func (_Avs *AvsCaller) GetRegisteredPubkey(opts *bind.CallOpts, operator string)
 
 }
 
-// GetRegisteredPubkey is a free data retrieval call binding the contract method 0x55b42cbe.
+// GetRegisteredPubkey is a free data retrieval call binding the contract method 0x9943aa27.
 //
-// Solidity: function getRegisteredPubkey(string operator) view returns(bytes pubkey)
-func (_Avs *AvsSession) GetRegisteredPubkey(operator string) ([]byte, error) {
-	return _Avs.Contract.GetRegisteredPubkey(&_Avs.CallOpts, operator)
+// Solidity: function getRegisteredPubkey(address operatorAddress, address avsAddress) view returns(bytes pubkey)
+func (_Avs *AvsSession) GetRegisteredPubkey(operatorAddress common.Address, avsAddress common.Address) ([]byte, error) {
+	return _Avs.Contract.GetRegisteredPubkey(&_Avs.CallOpts, operatorAddress, avsAddress)
 }
 
-// GetRegisteredPubkey is a free data retrieval call binding the contract method 0x55b42cbe.
+// GetRegisteredPubkey is a free data retrieval call binding the contract method 0x9943aa27.
 //
-// Solidity: function getRegisteredPubkey(string operator) view returns(bytes pubkey)
-func (_Avs *AvsCallerSession) GetRegisteredPubkey(operator string) ([]byte, error) {
-	return _Avs.Contract.GetRegisteredPubkey(&_Avs.CallOpts, operator)
+// Solidity: function getRegisteredPubkey(address operatorAddress, address avsAddress) view returns(bytes pubkey)
+func (_Avs *AvsCallerSession) GetRegisteredPubkey(operatorAddress common.Address, avsAddress common.Address) ([]byte, error) {
+	return _Avs.Contract.GetRegisteredPubkey(&_Avs.CallOpts, operatorAddress, avsAddress)
 }
 
 // GetTaskInfo is a free data retrieval call binding the contract method 0xe2906f3d.
 //
-// Solidity: function getTaskInfo(address taskAddr, uint64 taskID) view returns(uint64[] info)
-func (_Avs *AvsCaller) GetTaskInfo(opts *bind.CallOpts, taskAddr common.Address, taskID uint64) ([]uint64, error) {
+// Solidity: function getTaskInfo(address taskAddress, uint64 taskID) view returns(uint64[] info)
+func (_Avs *AvsCaller) GetTaskInfo(opts *bind.CallOpts, taskAddress common.Address, taskID uint64) ([]uint64, error) {
 	var out []interface{}
-	err := _Avs.contract.Call(opts, &out, "getTaskInfo", taskAddr, taskID)
+	err := _Avs.contract.Call(opts, &out, "getTaskInfo", taskAddress, taskID)
 
 	if err != nil {
 		return *new([]uint64), err
@@ -376,24 +405,24 @@ func (_Avs *AvsCaller) GetTaskInfo(opts *bind.CallOpts, taskAddr common.Address,
 
 // GetTaskInfo is a free data retrieval call binding the contract method 0xe2906f3d.
 //
-// Solidity: function getTaskInfo(address taskAddr, uint64 taskID) view returns(uint64[] info)
-func (_Avs *AvsSession) GetTaskInfo(taskAddr common.Address, taskID uint64) ([]uint64, error) {
-	return _Avs.Contract.GetTaskInfo(&_Avs.CallOpts, taskAddr, taskID)
+// Solidity: function getTaskInfo(address taskAddress, uint64 taskID) view returns(uint64[] info)
+func (_Avs *AvsSession) GetTaskInfo(taskAddress common.Address, taskID uint64) ([]uint64, error) {
+	return _Avs.Contract.GetTaskInfo(&_Avs.CallOpts, taskAddress, taskID)
 }
 
 // GetTaskInfo is a free data retrieval call binding the contract method 0xe2906f3d.
 //
-// Solidity: function getTaskInfo(address taskAddr, uint64 taskID) view returns(uint64[] info)
-func (_Avs *AvsCallerSession) GetTaskInfo(taskAddr common.Address, taskID uint64) ([]uint64, error) {
-	return _Avs.Contract.GetTaskInfo(&_Avs.CallOpts, taskAddr, taskID)
+// Solidity: function getTaskInfo(address taskAddress, uint64 taskID) view returns(uint64[] info)
+func (_Avs *AvsCallerSession) GetTaskInfo(taskAddress common.Address, taskID uint64) ([]uint64, error) {
+	return _Avs.Contract.GetTaskInfo(&_Avs.CallOpts, taskAddress, taskID)
 }
 
 // IsOperator is a free data retrieval call binding the contract method 0x6d70f7ae.
 //
-// Solidity: function isOperator(address operatorAddr) view returns(bool)
-func (_Avs *AvsCaller) IsOperator(opts *bind.CallOpts, operatorAddr common.Address) (bool, error) {
+// Solidity: function isOperator(address operatorAddress) view returns(bool)
+func (_Avs *AvsCaller) IsOperator(opts *bind.CallOpts, operatorAddress common.Address) (bool, error) {
 	var out []interface{}
-	err := _Avs.contract.Call(opts, &out, "isOperator", operatorAddr)
+	err := _Avs.contract.Call(opts, &out, "isOperator", operatorAddress)
 
 	if err != nil {
 		return *new(bool), err
@@ -407,36 +436,36 @@ func (_Avs *AvsCaller) IsOperator(opts *bind.CallOpts, operatorAddr common.Addre
 
 // IsOperator is a free data retrieval call binding the contract method 0x6d70f7ae.
 //
-// Solidity: function isOperator(address operatorAddr) view returns(bool)
-func (_Avs *AvsSession) IsOperator(operatorAddr common.Address) (bool, error) {
-	return _Avs.Contract.IsOperator(&_Avs.CallOpts, operatorAddr)
+// Solidity: function isOperator(address operatorAddress) view returns(bool)
+func (_Avs *AvsSession) IsOperator(operatorAddress common.Address) (bool, error) {
+	return _Avs.Contract.IsOperator(&_Avs.CallOpts, operatorAddress)
 }
 
 // IsOperator is a free data retrieval call binding the contract method 0x6d70f7ae.
 //
-// Solidity: function isOperator(address operatorAddr) view returns(bool)
-func (_Avs *AvsCallerSession) IsOperator(operatorAddr common.Address) (bool, error) {
-	return _Avs.Contract.IsOperator(&_Avs.CallOpts, operatorAddr)
+// Solidity: function isOperator(address operatorAddress) view returns(bool)
+func (_Avs *AvsCallerSession) IsOperator(operatorAddress common.Address) (bool, error) {
+	return _Avs.Contract.IsOperator(&_Avs.CallOpts, operatorAddress)
 }
 
-// Challenge is a paid mutator transaction binding the contract method 0xe4465980.
+// Challenge is a paid mutator transaction binding the contract method 0xa63185eb.
 //
-// Solidity: function challenge(address sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress) returns(bool success)
-func (_Avs *AvsTransactor) Challenge(opts *bind.TransactOpts, sender common.Address, taskHash []byte, taskID uint64, taskResponseHash []byte, operatorAddress string) (*types.Transaction, error) {
+// Solidity: function challenge(address sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, address operatorAddress) returns(bool success)
+func (_Avs *AvsTransactor) Challenge(opts *bind.TransactOpts, sender common.Address, taskHash []byte, taskID uint64, taskResponseHash []byte, operatorAddress common.Address) (*types.Transaction, error) {
 	return _Avs.contract.Transact(opts, "challenge", sender, taskHash, taskID, taskResponseHash, operatorAddress)
 }
 
-// Challenge is a paid mutator transaction binding the contract method 0xe4465980.
+// Challenge is a paid mutator transaction binding the contract method 0xa63185eb.
 //
-// Solidity: function challenge(address sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress) returns(bool success)
-func (_Avs *AvsSession) Challenge(sender common.Address, taskHash []byte, taskID uint64, taskResponseHash []byte, operatorAddress string) (*types.Transaction, error) {
+// Solidity: function challenge(address sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, address operatorAddress) returns(bool success)
+func (_Avs *AvsSession) Challenge(sender common.Address, taskHash []byte, taskID uint64, taskResponseHash []byte, operatorAddress common.Address) (*types.Transaction, error) {
 	return _Avs.Contract.Challenge(&_Avs.TransactOpts, sender, taskHash, taskID, taskResponseHash, operatorAddress)
 }
 
-// Challenge is a paid mutator transaction binding the contract method 0xe4465980.
+// Challenge is a paid mutator transaction binding the contract method 0xa63185eb.
 //
-// Solidity: function challenge(address sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress) returns(bool success)
-func (_Avs *AvsTransactorSession) Challenge(sender common.Address, taskHash []byte, taskID uint64, taskResponseHash []byte, operatorAddress string) (*types.Transaction, error) {
+// Solidity: function challenge(address sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, address operatorAddress) returns(bool success)
+func (_Avs *AvsTransactorSession) Challenge(sender common.Address, taskHash []byte, taskID uint64, taskResponseHash []byte, operatorAddress common.Address) (*types.Transaction, error) {
 	return _Avs.Contract.Challenge(&_Avs.TransactOpts, sender, taskHash, taskID, taskResponseHash, operatorAddress)
 }
 
@@ -524,46 +553,46 @@ func (_Avs *AvsTransactorSession) OperatorSubmitTask(sender common.Address, task
 	return _Avs.Contract.OperatorSubmitTask(&_Avs.TransactOpts, sender, taskID, taskResponse, blsSignature, taskContractAddress, phase)
 }
 
-// RegisterAVS is a paid mutator transaction binding the contract method 0xcde09950.
+// RegisterAVS is a paid mutator transaction binding the contract method 0x0b70f322.
 //
-// Solidity: function registerAVS(address sender, string avsName, uint64 minStakeAmount, address taskAddr, address slashAddr, address rewardAddr, string[] avsOwnerAddress, string[] assetIds, uint64 avsUnbondingPeriod, uint64 minSelfDelegation, string epochIdentifier, uint64[] params) returns(bool success)
-func (_Avs *AvsTransactor) RegisterAVS(opts *bind.TransactOpts, sender common.Address, avsName string, minStakeAmount uint64, taskAddr common.Address, slashAddr common.Address, rewardAddr common.Address, avsOwnerAddress []string, assetIds []string, avsUnbondingPeriod uint64, minSelfDelegation uint64, epochIdentifier string, params []uint64) (*types.Transaction, error) {
-	return _Avs.contract.Transact(opts, "registerAVS", sender, avsName, minStakeAmount, taskAddr, slashAddr, rewardAddr, avsOwnerAddress, assetIds, avsUnbondingPeriod, minSelfDelegation, epochIdentifier, params)
+// Solidity: function registerAVS((address,string,uint64,address,address,address,address[],address[],string[],uint64,uint64,string,uint64,uint64,uint64,uint64) params) returns(bool success)
+func (_Avs *AvsTransactor) RegisterAVS(opts *bind.TransactOpts, params AVSParams) (*types.Transaction, error) {
+	return _Avs.contract.Transact(opts, "registerAVS", params)
 }
 
-// RegisterAVS is a paid mutator transaction binding the contract method 0xcde09950.
+// RegisterAVS is a paid mutator transaction binding the contract method 0x0b70f322.
 //
-// Solidity: function registerAVS(address sender, string avsName, uint64 minStakeAmount, address taskAddr, address slashAddr, address rewardAddr, string[] avsOwnerAddress, string[] assetIds, uint64 avsUnbondingPeriod, uint64 minSelfDelegation, string epochIdentifier, uint64[] params) returns(bool success)
-func (_Avs *AvsSession) RegisterAVS(sender common.Address, avsName string, minStakeAmount uint64, taskAddr common.Address, slashAddr common.Address, rewardAddr common.Address, avsOwnerAddress []string, assetIds []string, avsUnbondingPeriod uint64, minSelfDelegation uint64, epochIdentifier string, params []uint64) (*types.Transaction, error) {
-	return _Avs.Contract.RegisterAVS(&_Avs.TransactOpts, sender, avsName, minStakeAmount, taskAddr, slashAddr, rewardAddr, avsOwnerAddress, assetIds, avsUnbondingPeriod, minSelfDelegation, epochIdentifier, params)
+// Solidity: function registerAVS((address,string,uint64,address,address,address,address[],address[],string[],uint64,uint64,string,uint64,uint64,uint64,uint64) params) returns(bool success)
+func (_Avs *AvsSession) RegisterAVS(params AVSParams) (*types.Transaction, error) {
+	return _Avs.Contract.RegisterAVS(&_Avs.TransactOpts, params)
 }
 
-// RegisterAVS is a paid mutator transaction binding the contract method 0xcde09950.
+// RegisterAVS is a paid mutator transaction binding the contract method 0x0b70f322.
 //
-// Solidity: function registerAVS(address sender, string avsName, uint64 minStakeAmount, address taskAddr, address slashAddr, address rewardAddr, string[] avsOwnerAddress, string[] assetIds, uint64 avsUnbondingPeriod, uint64 minSelfDelegation, string epochIdentifier, uint64[] params) returns(bool success)
-func (_Avs *AvsTransactorSession) RegisterAVS(sender common.Address, avsName string, minStakeAmount uint64, taskAddr common.Address, slashAddr common.Address, rewardAddr common.Address, avsOwnerAddress []string, assetIds []string, avsUnbondingPeriod uint64, minSelfDelegation uint64, epochIdentifier string, params []uint64) (*types.Transaction, error) {
-	return _Avs.Contract.RegisterAVS(&_Avs.TransactOpts, sender, avsName, minStakeAmount, taskAddr, slashAddr, rewardAddr, avsOwnerAddress, assetIds, avsUnbondingPeriod, minSelfDelegation, epochIdentifier, params)
+// Solidity: function registerAVS((address,string,uint64,address,address,address,address[],address[],string[],uint64,uint64,string,uint64,uint64,uint64,uint64) params) returns(bool success)
+func (_Avs *AvsTransactorSession) RegisterAVS(params AVSParams) (*types.Transaction, error) {
+	return _Avs.Contract.RegisterAVS(&_Avs.TransactOpts, params)
 }
 
-// RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0xaa57f77c.
+// RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0x95af9dc7.
 //
-// Solidity: function registerBLSPublicKey(address sender, string name, bytes pubKey, bytes pubkeyRegistrationSignature, bytes pubkeyRegistrationMessageHash) returns(bool success)
-func (_Avs *AvsTransactor) RegisterBLSPublicKey(opts *bind.TransactOpts, sender common.Address, name string, pubKey []byte, pubkeyRegistrationSignature []byte, pubkeyRegistrationMessageHash []byte) (*types.Transaction, error) {
-	return _Avs.contract.Transact(opts, "registerBLSPublicKey", sender, name, pubKey, pubkeyRegistrationSignature, pubkeyRegistrationMessageHash)
+// Solidity: function registerBLSPublicKey(address sender, address avsAddress, bytes pubKey, bytes pubkeyRegistrationSignature, bytes pubkeyRegistrationMessageHash) returns(bool success)
+func (_Avs *AvsTransactor) RegisterBLSPublicKey(opts *bind.TransactOpts, sender common.Address, avsAddress common.Address, pubKey []byte, pubkeyRegistrationSignature []byte, pubkeyRegistrationMessageHash []byte) (*types.Transaction, error) {
+	return _Avs.contract.Transact(opts, "registerBLSPublicKey", sender, avsAddress, pubKey, pubkeyRegistrationSignature, pubkeyRegistrationMessageHash)
 }
 
-// RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0xaa57f77c.
+// RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0x95af9dc7.
 //
-// Solidity: function registerBLSPublicKey(address sender, string name, bytes pubKey, bytes pubkeyRegistrationSignature, bytes pubkeyRegistrationMessageHash) returns(bool success)
-func (_Avs *AvsSession) RegisterBLSPublicKey(sender common.Address, name string, pubKey []byte, pubkeyRegistrationSignature []byte, pubkeyRegistrationMessageHash []byte) (*types.Transaction, error) {
-	return _Avs.Contract.RegisterBLSPublicKey(&_Avs.TransactOpts, sender, name, pubKey, pubkeyRegistrationSignature, pubkeyRegistrationMessageHash)
+// Solidity: function registerBLSPublicKey(address sender, address avsAddress, bytes pubKey, bytes pubkeyRegistrationSignature, bytes pubkeyRegistrationMessageHash) returns(bool success)
+func (_Avs *AvsSession) RegisterBLSPublicKey(sender common.Address, avsAddress common.Address, pubKey []byte, pubkeyRegistrationSignature []byte, pubkeyRegistrationMessageHash []byte) (*types.Transaction, error) {
+	return _Avs.Contract.RegisterBLSPublicKey(&_Avs.TransactOpts, sender, avsAddress, pubKey, pubkeyRegistrationSignature, pubkeyRegistrationMessageHash)
 }
 
-// RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0xaa57f77c.
+// RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0x95af9dc7.
 //
-// Solidity: function registerBLSPublicKey(address sender, string name, bytes pubKey, bytes pubkeyRegistrationSignature, bytes pubkeyRegistrationMessageHash) returns(bool success)
-func (_Avs *AvsTransactorSession) RegisterBLSPublicKey(sender common.Address, name string, pubKey []byte, pubkeyRegistrationSignature []byte, pubkeyRegistrationMessageHash []byte) (*types.Transaction, error) {
-	return _Avs.Contract.RegisterBLSPublicKey(&_Avs.TransactOpts, sender, name, pubKey, pubkeyRegistrationSignature, pubkeyRegistrationMessageHash)
+// Solidity: function registerBLSPublicKey(address sender, address avsAddress, bytes pubKey, bytes pubkeyRegistrationSignature, bytes pubkeyRegistrationMessageHash) returns(bool success)
+func (_Avs *AvsTransactorSession) RegisterBLSPublicKey(sender common.Address, avsAddress common.Address, pubKey []byte, pubkeyRegistrationSignature []byte, pubkeyRegistrationMessageHash []byte) (*types.Transaction, error) {
+	return _Avs.Contract.RegisterBLSPublicKey(&_Avs.TransactOpts, sender, avsAddress, pubKey, pubkeyRegistrationSignature, pubkeyRegistrationMessageHash)
 }
 
 // RegisterOperatorToAVS is a paid mutator transaction binding the contract method 0xd7a2398b.
@@ -587,25 +616,25 @@ func (_Avs *AvsTransactorSession) RegisterOperatorToAVS(sender common.Address) (
 	return _Avs.Contract.RegisterOperatorToAVS(&_Avs.TransactOpts, sender)
 }
 
-// UpdateAVS is a paid mutator transaction binding the contract method 0xd9e5daa0.
+// UpdateAVS is a paid mutator transaction binding the contract method 0x3a72b900.
 //
-// Solidity: function updateAVS(address sender, string avsName, uint64 minStakeAmount, address taskAddr, address slashAddr, address rewardAddr, string[] avsOwnerAddress, string[] assetIds, uint64 avsUnbondingPeriod, uint64 minSelfDelegation, string epochIdentifier, uint64[] params) returns(bool success)
-func (_Avs *AvsTransactor) UpdateAVS(opts *bind.TransactOpts, sender common.Address, avsName string, minStakeAmount uint64, taskAddr common.Address, slashAddr common.Address, rewardAddr common.Address, avsOwnerAddress []string, assetIds []string, avsUnbondingPeriod uint64, minSelfDelegation uint64, epochIdentifier string, params []uint64) (*types.Transaction, error) {
-	return _Avs.contract.Transact(opts, "updateAVS", sender, avsName, minStakeAmount, taskAddr, slashAddr, rewardAddr, avsOwnerAddress, assetIds, avsUnbondingPeriod, minSelfDelegation, epochIdentifier, params)
+// Solidity: function updateAVS((address,string,uint64,address,address,address,address[],address[],string[],uint64,uint64,string,uint64,uint64,uint64,uint64) params) returns(bool success)
+func (_Avs *AvsTransactor) UpdateAVS(opts *bind.TransactOpts, params AVSParams) (*types.Transaction, error) {
+	return _Avs.contract.Transact(opts, "updateAVS", params)
 }
 
-// UpdateAVS is a paid mutator transaction binding the contract method 0xd9e5daa0.
+// UpdateAVS is a paid mutator transaction binding the contract method 0x3a72b900.
 //
-// Solidity: function updateAVS(address sender, string avsName, uint64 minStakeAmount, address taskAddr, address slashAddr, address rewardAddr, string[] avsOwnerAddress, string[] assetIds, uint64 avsUnbondingPeriod, uint64 minSelfDelegation, string epochIdentifier, uint64[] params) returns(bool success)
-func (_Avs *AvsSession) UpdateAVS(sender common.Address, avsName string, minStakeAmount uint64, taskAddr common.Address, slashAddr common.Address, rewardAddr common.Address, avsOwnerAddress []string, assetIds []string, avsUnbondingPeriod uint64, minSelfDelegation uint64, epochIdentifier string, params []uint64) (*types.Transaction, error) {
-	return _Avs.Contract.UpdateAVS(&_Avs.TransactOpts, sender, avsName, minStakeAmount, taskAddr, slashAddr, rewardAddr, avsOwnerAddress, assetIds, avsUnbondingPeriod, minSelfDelegation, epochIdentifier, params)
+// Solidity: function updateAVS((address,string,uint64,address,address,address,address[],address[],string[],uint64,uint64,string,uint64,uint64,uint64,uint64) params) returns(bool success)
+func (_Avs *AvsSession) UpdateAVS(params AVSParams) (*types.Transaction, error) {
+	return _Avs.Contract.UpdateAVS(&_Avs.TransactOpts, params)
 }
 
-// UpdateAVS is a paid mutator transaction binding the contract method 0xd9e5daa0.
+// UpdateAVS is a paid mutator transaction binding the contract method 0x3a72b900.
 //
-// Solidity: function updateAVS(address sender, string avsName, uint64 minStakeAmount, address taskAddr, address slashAddr, address rewardAddr, string[] avsOwnerAddress, string[] assetIds, uint64 avsUnbondingPeriod, uint64 minSelfDelegation, string epochIdentifier, uint64[] params) returns(bool success)
-func (_Avs *AvsTransactorSession) UpdateAVS(sender common.Address, avsName string, minStakeAmount uint64, taskAddr common.Address, slashAddr common.Address, rewardAddr common.Address, avsOwnerAddress []string, assetIds []string, avsUnbondingPeriod uint64, minSelfDelegation uint64, epochIdentifier string, params []uint64) (*types.Transaction, error) {
-	return _Avs.Contract.UpdateAVS(&_Avs.TransactOpts, sender, avsName, minStakeAmount, taskAddr, slashAddr, rewardAddr, avsOwnerAddress, assetIds, avsUnbondingPeriod, minSelfDelegation, epochIdentifier, params)
+// Solidity: function updateAVS((address,string,uint64,address,address,address,address[],address[],string[],uint64,uint64,string,uint64,uint64,uint64,uint64) params) returns(bool success)
+func (_Avs *AvsTransactorSession) UpdateAVS(params AVSParams) (*types.Transaction, error) {
+	return _Avs.Contract.UpdateAVS(&_Avs.TransactOpts, params)
 }
 
 // AvsAVSDeregisteredIterator is returned from FilterAVSDeregistered and is used to iterate over the raw logs and unpacked data for AVSDeregistered events raised by the Avs contract.
@@ -677,23 +706,23 @@ func (it *AvsAVSDeregisteredIterator) Close() error {
 
 // AvsAVSDeregistered represents a AVSDeregistered event raised by the Avs contract.
 type AvsAVSDeregistered struct {
-	AvsAddr common.Address
-	Sender  string
-	AvsName string
-	Raw     types.Log // Blockchain specific contextual infos
+	AvsAddress common.Address
+	Sender     string
+	AvsName    string
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
 // FilterAVSDeregistered is a free log retrieval operation binding the contract event 0x67bc7cc9901ce497339884997842255d82165981b1600f96dfa7db090e177a22.
 //
-// Solidity: event AVSDeregistered(address indexed avsAddr, string sender, string avsName)
-func (_Avs *AvsFilterer) FilterAVSDeregistered(opts *bind.FilterOpts, avsAddr []common.Address) (*AvsAVSDeregisteredIterator, error) {
+// Solidity: event AVSDeregistered(address indexed avsAddress, string sender, string avsName)
+func (_Avs *AvsFilterer) FilterAVSDeregistered(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsAVSDeregisteredIterator, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.FilterLogs(opts, "AVSDeregistered", avsAddrRule)
+	logs, sub, err := _Avs.contract.FilterLogs(opts, "AVSDeregistered", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -702,15 +731,15 @@ func (_Avs *AvsFilterer) FilterAVSDeregistered(opts *bind.FilterOpts, avsAddr []
 
 // WatchAVSDeregistered is a free log subscription operation binding the contract event 0x67bc7cc9901ce497339884997842255d82165981b1600f96dfa7db090e177a22.
 //
-// Solidity: event AVSDeregistered(address indexed avsAddr, string sender, string avsName)
-func (_Avs *AvsFilterer) WatchAVSDeregistered(opts *bind.WatchOpts, sink chan<- *AvsAVSDeregistered, avsAddr []common.Address) (event.Subscription, error) {
+// Solidity: event AVSDeregistered(address indexed avsAddress, string sender, string avsName)
+func (_Avs *AvsFilterer) WatchAVSDeregistered(opts *bind.WatchOpts, sink chan<- *AvsAVSDeregistered, avsAddress []common.Address) (event.Subscription, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.WatchLogs(opts, "AVSDeregistered", avsAddrRule)
+	logs, sub, err := _Avs.contract.WatchLogs(opts, "AVSDeregistered", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -744,7 +773,7 @@ func (_Avs *AvsFilterer) WatchAVSDeregistered(opts *bind.WatchOpts, sink chan<- 
 
 // ParseAVSDeregistered is a log parse operation binding the contract event 0x67bc7cc9901ce497339884997842255d82165981b1600f96dfa7db090e177a22.
 //
-// Solidity: event AVSDeregistered(address indexed avsAddr, string sender, string avsName)
+// Solidity: event AVSDeregistered(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) ParseAVSDeregistered(log types.Log) (*AvsAVSDeregistered, error) {
 	event := new(AvsAVSDeregistered)
 	if err := _Avs.contract.UnpackLog(event, "AVSDeregistered", log); err != nil {
@@ -823,23 +852,23 @@ func (it *AvsAVSRegisteredIterator) Close() error {
 
 // AvsAVSRegistered represents a AVSRegistered event raised by the Avs contract.
 type AvsAVSRegistered struct {
-	AvsAddr common.Address
-	Sender  string
-	AvsName string
-	Raw     types.Log // Blockchain specific contextual infos
+	AvsAddress common.Address
+	Sender     string
+	AvsName    string
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
 // FilterAVSRegistered is a free log retrieval operation binding the contract event 0x1b6757d434d8bec2e67cb54f5f69444370fbe7278eac51697934bc56f1eab4de.
 //
-// Solidity: event AVSRegistered(address indexed avsAddr, string sender, string avsName)
-func (_Avs *AvsFilterer) FilterAVSRegistered(opts *bind.FilterOpts, avsAddr []common.Address) (*AvsAVSRegisteredIterator, error) {
+// Solidity: event AVSRegistered(address indexed avsAddress, string sender, string avsName)
+func (_Avs *AvsFilterer) FilterAVSRegistered(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsAVSRegisteredIterator, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.FilterLogs(opts, "AVSRegistered", avsAddrRule)
+	logs, sub, err := _Avs.contract.FilterLogs(opts, "AVSRegistered", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -848,15 +877,15 @@ func (_Avs *AvsFilterer) FilterAVSRegistered(opts *bind.FilterOpts, avsAddr []co
 
 // WatchAVSRegistered is a free log subscription operation binding the contract event 0x1b6757d434d8bec2e67cb54f5f69444370fbe7278eac51697934bc56f1eab4de.
 //
-// Solidity: event AVSRegistered(address indexed avsAddr, string sender, string avsName)
-func (_Avs *AvsFilterer) WatchAVSRegistered(opts *bind.WatchOpts, sink chan<- *AvsAVSRegistered, avsAddr []common.Address) (event.Subscription, error) {
+// Solidity: event AVSRegistered(address indexed avsAddress, string sender, string avsName)
+func (_Avs *AvsFilterer) WatchAVSRegistered(opts *bind.WatchOpts, sink chan<- *AvsAVSRegistered, avsAddress []common.Address) (event.Subscription, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.WatchLogs(opts, "AVSRegistered", avsAddrRule)
+	logs, sub, err := _Avs.contract.WatchLogs(opts, "AVSRegistered", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -890,7 +919,7 @@ func (_Avs *AvsFilterer) WatchAVSRegistered(opts *bind.WatchOpts, sink chan<- *A
 
 // ParseAVSRegistered is a log parse operation binding the contract event 0x1b6757d434d8bec2e67cb54f5f69444370fbe7278eac51697934bc56f1eab4de.
 //
-// Solidity: event AVSRegistered(address indexed avsAddr, string sender, string avsName)
+// Solidity: event AVSRegistered(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) ParseAVSRegistered(log types.Log) (*AvsAVSRegistered, error) {
 	event := new(AvsAVSRegistered)
 	if err := _Avs.contract.UnpackLog(event, "AVSRegistered", log); err != nil {
@@ -969,23 +998,23 @@ func (it *AvsAVSUpdatedIterator) Close() error {
 
 // AvsAVSUpdated represents a AVSUpdated event raised by the Avs contract.
 type AvsAVSUpdated struct {
-	AvsAddr common.Address
-	Sender  string
-	AvsName string
-	Raw     types.Log // Blockchain specific contextual infos
+	AvsAddress common.Address
+	Sender     string
+	AvsName    string
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
 // FilterAVSUpdated is a free log retrieval operation binding the contract event 0xa2b66ea3e16df099ef9e6e0631e070f6da12910dd63de9f37904dfaea6356210.
 //
-// Solidity: event AVSUpdated(address indexed avsAddr, string sender, string avsName)
-func (_Avs *AvsFilterer) FilterAVSUpdated(opts *bind.FilterOpts, avsAddr []common.Address) (*AvsAVSUpdatedIterator, error) {
+// Solidity: event AVSUpdated(address indexed avsAddress, string sender, string avsName)
+func (_Avs *AvsFilterer) FilterAVSUpdated(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsAVSUpdatedIterator, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.FilterLogs(opts, "AVSUpdated", avsAddrRule)
+	logs, sub, err := _Avs.contract.FilterLogs(opts, "AVSUpdated", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -994,15 +1023,15 @@ func (_Avs *AvsFilterer) FilterAVSUpdated(opts *bind.FilterOpts, avsAddr []commo
 
 // WatchAVSUpdated is a free log subscription operation binding the contract event 0xa2b66ea3e16df099ef9e6e0631e070f6da12910dd63de9f37904dfaea6356210.
 //
-// Solidity: event AVSUpdated(address indexed avsAddr, string sender, string avsName)
-func (_Avs *AvsFilterer) WatchAVSUpdated(opts *bind.WatchOpts, sink chan<- *AvsAVSUpdated, avsAddr []common.Address) (event.Subscription, error) {
+// Solidity: event AVSUpdated(address indexed avsAddress, string sender, string avsName)
+func (_Avs *AvsFilterer) WatchAVSUpdated(opts *bind.WatchOpts, sink chan<- *AvsAVSUpdated, avsAddress []common.Address) (event.Subscription, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.WatchLogs(opts, "AVSUpdated", avsAddrRule)
+	logs, sub, err := _Avs.contract.WatchLogs(opts, "AVSUpdated", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1036,7 +1065,7 @@ func (_Avs *AvsFilterer) WatchAVSUpdated(opts *bind.WatchOpts, sink chan<- *AvsA
 
 // ParseAVSUpdated is a log parse operation binding the contract event 0xa2b66ea3e16df099ef9e6e0631e070f6da12910dd63de9f37904dfaea6356210.
 //
-// Solidity: event AVSUpdated(address indexed avsAddr, string sender, string avsName)
+// Solidity: event AVSUpdated(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) ParseAVSUpdated(log types.Log) (*AvsAVSUpdated, error) {
 	event := new(AvsAVSUpdated)
 	if err := _Avs.contract.UnpackLog(event, "AVSUpdated", log); err != nil {
@@ -1253,22 +1282,22 @@ func (it *AvsOperatorJoinedIterator) Close() error {
 
 // AvsOperatorJoined represents a OperatorJoined event raised by the Avs contract.
 type AvsOperatorJoined struct {
-	AvsAddr common.Address
-	Sender  string
-	Raw     types.Log // Blockchain specific contextual infos
+	AvsAddress common.Address
+	Sender     string
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
 // FilterOperatorJoined is a free log retrieval operation binding the contract event 0x5a81c8825b5902c1768a558eeb0bf35840fc04eed5399066ca4f6ecd74bc5d6d.
 //
-// Solidity: event OperatorJoined(address indexed avsAddr, string sender)
-func (_Avs *AvsFilterer) FilterOperatorJoined(opts *bind.FilterOpts, avsAddr []common.Address) (*AvsOperatorJoinedIterator, error) {
+// Solidity: event OperatorJoined(address indexed avsAddress, string sender)
+func (_Avs *AvsFilterer) FilterOperatorJoined(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsOperatorJoinedIterator, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.FilterLogs(opts, "OperatorJoined", avsAddrRule)
+	logs, sub, err := _Avs.contract.FilterLogs(opts, "OperatorJoined", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1277,15 +1306,15 @@ func (_Avs *AvsFilterer) FilterOperatorJoined(opts *bind.FilterOpts, avsAddr []c
 
 // WatchOperatorJoined is a free log subscription operation binding the contract event 0x5a81c8825b5902c1768a558eeb0bf35840fc04eed5399066ca4f6ecd74bc5d6d.
 //
-// Solidity: event OperatorJoined(address indexed avsAddr, string sender)
-func (_Avs *AvsFilterer) WatchOperatorJoined(opts *bind.WatchOpts, sink chan<- *AvsOperatorJoined, avsAddr []common.Address) (event.Subscription, error) {
+// Solidity: event OperatorJoined(address indexed avsAddress, string sender)
+func (_Avs *AvsFilterer) WatchOperatorJoined(opts *bind.WatchOpts, sink chan<- *AvsOperatorJoined, avsAddress []common.Address) (event.Subscription, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.WatchLogs(opts, "OperatorJoined", avsAddrRule)
+	logs, sub, err := _Avs.contract.WatchLogs(opts, "OperatorJoined", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1319,7 +1348,7 @@ func (_Avs *AvsFilterer) WatchOperatorJoined(opts *bind.WatchOpts, sink chan<- *
 
 // ParseOperatorJoined is a log parse operation binding the contract event 0x5a81c8825b5902c1768a558eeb0bf35840fc04eed5399066ca4f6ecd74bc5d6d.
 //
-// Solidity: event OperatorJoined(address indexed avsAddr, string sender)
+// Solidity: event OperatorJoined(address indexed avsAddress, string sender)
 func (_Avs *AvsFilterer) ParseOperatorJoined(log types.Log) (*AvsOperatorJoined, error) {
 	event := new(AvsOperatorJoined)
 	if err := _Avs.contract.UnpackLog(event, "OperatorJoined", log); err != nil {
@@ -1398,22 +1427,22 @@ func (it *AvsOperatorLeftIterator) Close() error {
 
 // AvsOperatorLeft represents a OperatorLeft event raised by the Avs contract.
 type AvsOperatorLeft struct {
-	AvsAddr common.Address
-	Sender  string
-	Raw     types.Log // Blockchain specific contextual infos
+	AvsAddress common.Address
+	Sender     string
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
 // FilterOperatorLeft is a free log retrieval operation binding the contract event 0x277a77a79a4bd668d43eb072d5b492880a7712d8ef4152c224e3f3846c26ab72.
 //
-// Solidity: event OperatorLeft(address indexed avsAddr, string sender)
-func (_Avs *AvsFilterer) FilterOperatorLeft(opts *bind.FilterOpts, avsAddr []common.Address) (*AvsOperatorLeftIterator, error) {
+// Solidity: event OperatorLeft(address indexed avsAddress, string sender)
+func (_Avs *AvsFilterer) FilterOperatorLeft(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsOperatorLeftIterator, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.FilterLogs(opts, "OperatorLeft", avsAddrRule)
+	logs, sub, err := _Avs.contract.FilterLogs(opts, "OperatorLeft", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1422,15 +1451,15 @@ func (_Avs *AvsFilterer) FilterOperatorLeft(opts *bind.FilterOpts, avsAddr []com
 
 // WatchOperatorLeft is a free log subscription operation binding the contract event 0x277a77a79a4bd668d43eb072d5b492880a7712d8ef4152c224e3f3846c26ab72.
 //
-// Solidity: event OperatorLeft(address indexed avsAddr, string sender)
-func (_Avs *AvsFilterer) WatchOperatorLeft(opts *bind.WatchOpts, sink chan<- *AvsOperatorLeft, avsAddr []common.Address) (event.Subscription, error) {
+// Solidity: event OperatorLeft(address indexed avsAddress, string sender)
+func (_Avs *AvsFilterer) WatchOperatorLeft(opts *bind.WatchOpts, sink chan<- *AvsOperatorLeft, avsAddress []common.Address) (event.Subscription, error) {
 
-	var avsAddrRule []interface{}
-	for _, avsAddrItem := range avsAddr {
-		avsAddrRule = append(avsAddrRule, avsAddrItem)
+	var avsAddressRule []interface{}
+	for _, avsAddressItem := range avsAddress {
+		avsAddressRule = append(avsAddressRule, avsAddressItem)
 	}
 
-	logs, sub, err := _Avs.contract.WatchLogs(opts, "OperatorLeft", avsAddrRule)
+	logs, sub, err := _Avs.contract.WatchLogs(opts, "OperatorLeft", avsAddressRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1464,7 +1493,7 @@ func (_Avs *AvsFilterer) WatchOperatorLeft(opts *bind.WatchOpts, sink chan<- *Av
 
 // ParseOperatorLeft is a log parse operation binding the contract event 0x277a77a79a4bd668d43eb072d5b492880a7712d8ef4152c224e3f3846c26ab72.
 //
-// Solidity: event OperatorLeft(address indexed avsAddr, string sender)
+// Solidity: event OperatorLeft(address indexed avsAddress, string sender)
 func (_Avs *AvsFilterer) ParseOperatorLeft(log types.Log) (*AvsOperatorLeft, error) {
 	event := new(AvsOperatorLeft)
 	if err := _Avs.contract.UnpackLog(event, "OperatorLeft", log); err != nil {
@@ -1543,14 +1572,14 @@ func (it *AvsPublicKeyRegisteredIterator) Close() error {
 
 // AvsPublicKeyRegistered represents a PublicKeyRegistered event raised by the Avs contract.
 type AvsPublicKeyRegistered struct {
-	Sender string
-	Name   string
-	Raw    types.Log // Blockchain specific contextual infos
+	Sender     string
+	AvsAddress common.Address
+	Raw        types.Log // Blockchain specific contextual infos
 }
 
-// FilterPublicKeyRegistered is a free log retrieval operation binding the contract event 0xe6654ec72a4f93a677214779c6cc7752f1a68242588010c0ef0a810800e7ab55.
+// FilterPublicKeyRegistered is a free log retrieval operation binding the contract event 0xe0d1823a34deb19702daa4e8861687f48347b4fe2509ab9307d3a3bd268d812f.
 //
-// Solidity: event PublicKeyRegistered(string sender, string name)
+// Solidity: event PublicKeyRegistered(string sender, address avsAddress)
 func (_Avs *AvsFilterer) FilterPublicKeyRegistered(opts *bind.FilterOpts) (*AvsPublicKeyRegisteredIterator, error) {
 
 	logs, sub, err := _Avs.contract.FilterLogs(opts, "PublicKeyRegistered")
@@ -1560,9 +1589,9 @@ func (_Avs *AvsFilterer) FilterPublicKeyRegistered(opts *bind.FilterOpts) (*AvsP
 	return &AvsPublicKeyRegisteredIterator{contract: _Avs.contract, event: "PublicKeyRegistered", logs: logs, sub: sub}, nil
 }
 
-// WatchPublicKeyRegistered is a free log subscription operation binding the contract event 0xe6654ec72a4f93a677214779c6cc7752f1a68242588010c0ef0a810800e7ab55.
+// WatchPublicKeyRegistered is a free log subscription operation binding the contract event 0xe0d1823a34deb19702daa4e8861687f48347b4fe2509ab9307d3a3bd268d812f.
 //
-// Solidity: event PublicKeyRegistered(string sender, string name)
+// Solidity: event PublicKeyRegistered(string sender, address avsAddress)
 func (_Avs *AvsFilterer) WatchPublicKeyRegistered(opts *bind.WatchOpts, sink chan<- *AvsPublicKeyRegistered) (event.Subscription, error) {
 
 	logs, sub, err := _Avs.contract.WatchLogs(opts, "PublicKeyRegistered")
@@ -1597,9 +1626,9 @@ func (_Avs *AvsFilterer) WatchPublicKeyRegistered(opts *bind.WatchOpts, sink cha
 	}), nil
 }
 
-// ParsePublicKeyRegistered is a log parse operation binding the contract event 0xe6654ec72a4f93a677214779c6cc7752f1a68242588010c0ef0a810800e7ab55.
+// ParsePublicKeyRegistered is a log parse operation binding the contract event 0xe0d1823a34deb19702daa4e8861687f48347b4fe2509ab9307d3a3bd268d812f.
 //
-// Solidity: event PublicKeyRegistered(string sender, string name)
+// Solidity: event PublicKeyRegistered(string sender, address avsAddress)
 func (_Avs *AvsFilterer) ParsePublicKeyRegistered(log types.Log) (*AvsPublicKeyRegistered, error) {
 	event := new(AvsPublicKeyRegistered)
 	if err := _Avs.contract.UnpackLog(event, "PublicKeyRegistered", log); err != nil {

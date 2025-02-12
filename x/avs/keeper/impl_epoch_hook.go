@@ -64,7 +64,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 					}
 
 					operatorSelfPower := &types.OperatorActivePowerInfo{
-						OperatorAddr:    res.OperatorAddress,
+						OperatorAddress: res.OperatorAddress,
 						SelfActivePower: power.ActiveUSDValue,
 					}
 					operatorPowers = append(operatorPowers, operatorSelfPower)

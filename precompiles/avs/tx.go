@@ -44,7 +44,7 @@ func (p Precompile) RegisterAVS(
 	}
 
 	// verification of the calling address to ensure it is avs contract owner
-	if !slices.Contains(avsParams.AvsOwnerAddress, avsParams.CallerAddress.String()) {
+	if !slices.Contains(avsParams.AvsOwnerAddresses, avsParams.CallerAddress.String()) {
 		return nil, errorsmod.Wrap(err, "not qualified to registerOrDeregister")
 	}
 	// The AVS registration is done by the calling contract.
@@ -120,7 +120,7 @@ func (p Precompile) UpdateAVS(
 		return nil, err
 	}
 	// If avs UpdateAction check CallerAddress
-	if !slices.Contains(previousAVSInfo.Info.AvsOwnerAddress, avsParams.CallerAddress.String()) {
+	if !slices.Contains(previousAVSInfo.Info.AvsOwnerAddresses, avsParams.CallerAddress.String()) {
 		return nil, fmt.Errorf("this caller not qualified to update %s", avsParams.CallerAddress)
 	}
 	err = p.avsKeeper.UpdateAVSInfo(ctx, avsParams)
@@ -291,11 +291,11 @@ func (p Precompile) RegisterBLSPublicKey(
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	blsParams.OperatorAddress = callerAddress[:]
-	avsAddr, ok := args[1].(common.Address)
-	if !ok || (avsAddr == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddr)
+	avsAddress, ok := args[1].(common.Address)
+	if !ok || (avsAddress == common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
 	}
-	blsParams.AvsAddr = avsAddr
+	blsParams.AvsAddress = avsAddress
 
 	pubkeyBz, ok := args[2].([]byte)
 	if !ok {
@@ -368,11 +368,11 @@ func (p Precompile) OperatorSubmitTask(
 	}
 	resultParams.BlsSignature = blsSignature
 
-	taskAddr, ok := args[4].(common.Address)
-	if !ok || (taskAddr == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", taskAddr)
+	taskAddress, ok := args[4].(common.Address)
+	if !ok || (taskAddress == common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", taskAddress)
 	}
-	resultParams.TaskContractAddress = taskAddr
+	resultParams.TaskContractAddress = taskAddress
 
 	phase, ok := args[5].(uint8)
 	if !ok {

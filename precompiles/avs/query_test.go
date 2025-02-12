@@ -59,9 +59,9 @@ var baseTestCases = []avsTestCases{
 	},
 }
 
-func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
+func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddress() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptinOperators]
-	operatorAddress, avsAddr, slashContract := "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph", suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	operatorAddress, avsAddress, slashContract := "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph", suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 
 	operatorOptIn := func() {
 		optedInfo := &types.OptedInfo{
@@ -70,7 +70,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),
 			OptedOutHeight: types.DefaultOptedOutHeight,
 		}
-		err := suite.App.OperatorKeeper.SetOptedInfo(suite.Ctx, operatorAddress, avsAddr.String(), optedInfo)
+		err := suite.App.OperatorKeeper.SetOptedInfo(suite.Ctx, operatorAddress, avsAddress.String(), optedInfo)
 		suite.NoError(err)
 	}
 	testCases := []avsTestCases{
@@ -129,7 +129,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 		suite.Run(tc.name, func() {
 			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
 
-			bz, err := suite.precompile.GetOptedInOperatorAccAddrs(suite.Ctx, contract, &method, tc.malleate())
+			bz, err := suite.precompile.GetOptedInOperatorAccAddress(suite.Ctx, contract, &method, tc.malleate())
 
 			if tc.expErr {
 				suite.Require().Error(err)
@@ -150,11 +150,11 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 	setUp := func() {
 		suite.prepare()
 		// register the new token
-		usdcAddr := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+		usdcAddress := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 		usdcClientChainAsset := assetstype.AssetInfo{
 			Name:             "USD coin",
 			Symbol:           "USDC",
-			Address:          usdcAddr.String(),
+			Address:          usdcAddress.String(),
 			Decimals:         6,
 			LayerZeroChainID: 101,
 			MetaInfo:         "USDC",
@@ -170,18 +170,18 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 		// register the new AVS
 		suite.prepareAvs([]string{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65", "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, utiltx.GenerateAddress().String())
 		// opt in
-		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
-		suite.prepareDeposit(usdcAddr, sdkmath.NewInt(1e8))
+		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
 		usdcPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		delegatedAmount := sdkmath.NewIntWithDecimal(8, 7)
-		suite.prepareDelegation(true, usdcAddr, delegatedAmount)
+		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
 		usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
@@ -197,7 +197,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 			func() []interface{} {
 				setUp()
 				return []interface{}{
-					common.HexToAddress(suite.avsAddr),
+					common.HexToAddress(suite.avsAddress),
 				}
 			},
 			func(bz []byte) {
@@ -238,11 +238,11 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 	setUp := func() {
 		suite.prepare()
 		// register the new token
-		usdcAddr := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+		usdcAddress := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 		usdcClientChainAsset := assetstype.AssetInfo{
 			Name:             "USD coin",
 			Symbol:           "USDC",
-			Address:          usdcAddr.String(),
+			Address:          usdcAddress.String(),
 			Decimals:         6,
 			LayerZeroChainID: 101,
 			MetaInfo:         "USDC",
@@ -258,18 +258,18 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 		// register the new AVS
 		suite.prepareAvs([]string{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65", "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, utiltx.GenerateAddress().String())
 		// opt in
-		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
-		suite.prepareDeposit(usdcAddr, sdkmath.NewInt(1e8))
+		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
 		usdcPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		delegatedAmount := sdkmath.NewIntWithDecimal(8, 7)
-		suite.prepareDelegation(true, usdcAddr, delegatedAmount)
+		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
 		usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
@@ -285,8 +285,8 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 			func() []interface{} {
 				setUp()
 				return []interface{}{
-					common.HexToAddress(suite.avsAddr),
-					common.BytesToAddress(suite.operatorAddr),
+					common.HexToAddress(suite.avsAddress),
+					common.BytesToAddress(suite.operatorAddress),
 				}
 			},
 			func(bz []byte) {
@@ -324,17 +324,17 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubkey]
 	privateKey, err := blst.RandKey()
 	suite.NoError(err)
-	addr := utiltx.GenerateAddress()
-	var operatorAddr sdk.AccAddress = addr[:]
+	address := utiltx.GenerateAddress()
+	var operatorAddress sdk.AccAddress = address[:]
 
 	publicKey := privateKey.PublicKey()
 	setUp := func() {
-		suite.prepareOperator(operatorAddr.String())
+		suite.prepareOperator(operatorAddress.String())
 
 		blsPub := &avstype.BlsPubKeyInfo{
-			Operator:   operatorAddr.String(),
-			PubKey:     publicKey.Marshal(),
-			AvsAddress: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+			OperatorAddress: operatorAddress.String(),
+			PubKey:          publicKey.Marshal(),
+			AvsAddress:      "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 		}
 		err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 		suite.NoError(err)
@@ -345,7 +345,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 			func() []interface{} {
 				setUp()
 				return []interface{}{
-					addr,
+					address,
 					common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
 				}
 			},
@@ -391,13 +391,13 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 	testStartingEpoch := 1
 	setUp := func() {
 		avsName := "avsTest"
-		avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
+		avsOwnerAddresses := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
 		assetID := suite.AssetIDs
 		avs := &avstype.AVSInfo{
 			Name:                avsName,
 			AvsAddress:          avsAddress,
-			SlashAddr:           utiltx.GenerateAddress().String(),
-			AvsOwnerAddress:     avsOwnerAddress,
+			SlashAddress:        utiltx.GenerateAddress().String(),
+			AvsOwnerAddresses:   avsOwnerAddresses,
 			AssetIDs:            assetID,
 			AvsUnbondingPeriod:  uint64(testAVSUnbondingPeriod),
 			MinSelfDelegation:   uint64(testMinSelfDelegation),
@@ -407,7 +407,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 			MinTotalStakeAmount: uint64(testMinTotalStakeAmount),
 			AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 			AvsReward:           sdk.MustNewDecFromStr("0.002"),
-			TaskAddr:            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+			TaskAddress:         "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 		}
 
 		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
@@ -456,15 +456,15 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 
 func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodIsOperator]
-	opAccAddr, _ := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	opAccAddress, _ := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
 
 	testCases := []avsTestCases{
 		{
 			"success - existent operator",
 			func() []interface{} {
-				suite.prepareOperator(opAccAddr.String())
+				suite.prepareOperator(opAccAddress.String())
 				return []interface{}{
-					common.BytesToAddress(opAccAddr),
+					common.BytesToAddress(opAccAddress),
 				}
 			},
 			func(bz []byte) {

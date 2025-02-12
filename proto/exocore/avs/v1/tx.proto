@@ -18,14 +18,14 @@ message AVSInfo {
   string avs_address = 2;
   // min_stake_amount is the minimum stake amount required for a task to start
   uint64 min_stake_amount = 3;
-  // task_addr is the address of task as a hex string
-  string task_addr = 4;
-  // slash_addr is the hex address of the slashing contract for the AVS
-  string slash_addr = 5;
-  // reward_addr is the hex address of the reward contract for the AVS
-  string reward_addr = 6;
-  // avs_owner_address are the bech32 addresses of the owners of the avs
-  repeated string avs_owner_address = 7;
+  // task_address is the address of task as a hex string
+  string task_address = 4;
+  // slash_address is the hex address of the slashing contract for the AVS
+  string slash_address = 5;
+  // reward_address is the hex address of the reward contract for the AVS
+  string reward_address = 6;
+  // avs_owner_addresses are the bech32 addresses of the owners of the avs
+  repeated string avs_owner_addresses = 7;
   // asset_ids is a list of asset_ids that the AVS accepts
   repeated string asset_ids = 8 [(gogoproto.customname) = "AssetIDs"];
   // avs_unbonding_period is the number of epochs that an operator must wait to unbond
@@ -54,8 +54,8 @@ message AVSInfo {
   ];
   // asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end.
   map<string, int64> asset_reward_amount_epoch_basis = 18;
-  // whitelist_address are the bech32 addresses ,whitelist address of supported operators
-  repeated string whitelist_address = 19;
+  // whitelist_addresses are the bech32 addresses ,whitelist address of supported operators
+  repeated string whitelist_addresses = 19;
 }
 
 // Status and proof of each operator
@@ -136,8 +136,8 @@ message OperatorActivePowerList {
 
 // OperatorActivePowerInfo is the operator power info.
 message OperatorActivePowerInfo {
-  // operator_addr is the operator  address.
-  string operator_addr = 1;
+  // operator_address is the operator  address.
+  string operator_address = 1;
   // active_power is the USD value owned by the operator itself.
   string active_power = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
@@ -149,8 +149,8 @@ message OperatorActivePowerInfo {
 
 // BlsPubKeyInfo is the task info.
 message BlsPubKeyInfo {
-  // operator address
-  string operator = 1;
+  // operator_address is the acc address of operator 
+  string operator_address = 1;
   // avs_address is the address of avs as a hex string
   string avs_address = 2;
   // the bls public keys of the operator

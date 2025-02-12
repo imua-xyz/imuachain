@@ -96,7 +96,7 @@ func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo,
 ) {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	for i := range affectedAVSList {
 		if affectedAVSList[i].AVSAddr == dogfoodAVSAddr {
 			// check if the operator is in the current validator set.

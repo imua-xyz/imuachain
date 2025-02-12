@@ -131,7 +131,7 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	addUSDValue := sdkmath.LegacyNewDec(1)
 
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
-	avsAddress := avstypes.GenerateAVSAddr(avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()))
+	avsAddress := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()))
 	// CommitAfter causes the epoch hook to be triggered, and results in writing
 	// of the AVS usd value to the store.
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)

@@ -46,47 +46,47 @@ func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.
 	}
 	avsParams.MinStakeAmount = avsPayload.AVSParams.MinStakeAmount
 
-	if !common.IsHexAddress(avsPayload.AVSParams.TaskAddr.String()) {
-		return nil, fmt.Errorf("the contract input parameter TaskAddr error,value:%v", avsPayload.AVSParams.TaskAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.TaskAddress.String()) {
+		return nil, fmt.Errorf("the contract input parameter TaskAddr error,value:%v", avsPayload.AVSParams.TaskAddress)
 	}
-	avsParams.TaskAddr = avsPayload.AVSParams.TaskAddr
+	avsParams.TaskAddress = avsPayload.AVSParams.TaskAddress
 
-	if !common.IsHexAddress(avsPayload.AVSParams.SlashAddr.String()) {
-		return nil, fmt.Errorf("the contract input parameter SlashAddr error,value:%v", avsPayload.AVSParams.SlashAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.SlashAddress.String()) {
+		return nil, fmt.Errorf("the contract input parameter SlashAddress error,value:%v", avsPayload.AVSParams.SlashAddress)
 	}
-	avsParams.SlashContractAddr = avsPayload.AVSParams.SlashAddr
+	avsParams.SlashContractAddress = avsPayload.AVSParams.SlashAddress
 
-	if !common.IsHexAddress(avsPayload.AVSParams.RewardAddr.String()) {
-		return nil, fmt.Errorf("the contract input parameter RewardAddr error,value:%v", avsPayload.AVSParams.RewardAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.RewardAddress.String()) {
+		return nil, fmt.Errorf("the contract input parameter RewardAddress error,value:%v", avsPayload.AVSParams.RewardAddress)
 	}
-	avsParams.RewardContractAddr = avsPayload.AVSParams.RewardAddr
+	avsParams.RewardContractAddress = avsPayload.AVSParams.RewardAddress
 
 	// bech32
 	if avsPayload.AVSParams.AvsOwnerAddresses == nil {
 		return nil, fmt.Errorf("the contract input parameter AvsOwnerAddresses error,value:%v", avsPayload.AVSParams.AvsOwnerAddresses)
 	}
 	exoAddresses := make([]string, len(avsPayload.AVSParams.AvsOwnerAddresses))
-	for i, addr := range avsPayload.AVSParams.AvsOwnerAddresses {
-		var accAddr sdk.AccAddress = addr[:]
-		exoAddresses[i] = accAddr.String()
+	for i, address := range avsPayload.AVSParams.AvsOwnerAddresses {
+		var accAddress sdk.AccAddress = address[:]
+		exoAddresses[i] = accAddress.String()
 	}
-	avsParams.AvsOwnerAddress = exoAddresses
+	avsParams.AvsOwnerAddresses = exoAddresses
 	// bech32
 
 	if avsPayload.AVSParams.WhitelistAddresses == nil {
 		return nil, fmt.Errorf("the contract input parameter WhitelistAddresses error,value:%v", avsPayload.AVSParams.WhitelistAddresses)
 	}
 	exoWhiteAddresses := make([]string, len(avsPayload.AVSParams.WhitelistAddresses))
-	for i, addr := range avsPayload.AVSParams.WhitelistAddresses {
-		var accAddr sdk.AccAddress = addr[:]
-		exoWhiteAddresses[i] = accAddr.String()
+	for i, address := range avsPayload.AVSParams.WhitelistAddresses {
+		var accAddress sdk.AccAddress = address[:]
+		exoWhiteAddresses[i] = accAddress.String()
 	}
-	avsParams.WhitelistAddress = exoWhiteAddresses
+	avsParams.WhitelistAddresses = exoWhiteAddresses
 	// string, since it is the address_id representation
 	if avsPayload.AVSParams.AssetIDs == nil {
 		return nil, fmt.Errorf("the contract input parameter AssetIds error,value:%v", avsPayload.AVSParams.AssetIDs)
 	}
-	avsParams.AssetID = avsPayload.AVSParams.AssetIDs
+	avsParams.AssetIDs = avsPayload.AVSParams.AssetIDs
 
 	avsParams.UnbondingPeriod = avsPayload.AVSParams.AvsUnbondingPeriod
 
@@ -162,9 +162,9 @@ type Params struct {
 	Sender              common.Address   `abi:"sender"`              // the sender of the  transaction
 	AvsName             string           `abi:"avsName"`             // the name of AVS
 	MinStakeAmount      uint64           `abi:"minStakeAmount"`      // the minimum amount of funds staked by each operator
-	TaskAddr            common.Address   `abi:"taskAddr"`            // the task address of AVS
-	SlashAddr           common.Address   `abi:"slashAddr"`           // the slash address of AVS
-	RewardAddr          common.Address   `abi:"rewardAddr"`          // the reward address of AVS
+	TaskAddress         common.Address   `abi:"taskAddress"`         // the task address of AVS
+	SlashAddress        common.Address   `abi:"slashAddress"`        // the slash address of AVS
+	RewardAddress       common.Address   `abi:"rewardAddress"`       // the reward address of AVS
 	AvsOwnerAddresses   []common.Address `abi:"avsOwnerAddresses"`   // the owners who have permission for AVS
 	WhitelistAddresses  []common.Address `abi:"whitelistAddresses"`  // the whitelist address of the operator
 	AssetIDs            []string         `abi:"assetIDs"`            // the basic asset information of AVS

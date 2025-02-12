@@ -24,7 +24,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	suite.NoError(err)
 
 	// opt into the AVS
-	avsAddr := avstypes.GenerateAVSAddr(avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()))
+	avsAddr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()))
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, avsAddr)
 	suite.NoError(err)
 

@@ -61,7 +61,7 @@ func (k *Keeper) IsExistTask(ctx sdk.Context, taskID, taskContractAddress string
 }
 
 func (k *Keeper) SetOperatorPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) (err error) {
-	operatorAddress, err := sdk.AccAddressFromBech32(pub.Operator)
+	operatorAddress, err := sdk.AccAddressFromBech32(pub.OperatorAddress)
 	if err != nil {
 		return types.ErrInvalidAddr
 	}
@@ -73,13 +73,13 @@ func (k *Keeper) SetOperatorPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) (e
 	return nil
 }
 
-func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, addr, avsAddr string) (pub *types.BlsPubKeyInfo, err error) {
-	opAccAddr, err := sdk.AccAddressFromBech32(addr)
+func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, opratorAddress, avsAddress string) (pub *types.BlsPubKeyInfo, err error) {
+	opAccAddr, err := sdk.AccAddressFromBech32(opratorAddress)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "GetOperatorPubKey: error occurred when parsing account address from Bech32: "+addr)
+		return nil, errorsmod.Wrap(err, "GetOperatorPubKey: error occurred when parsing account address from Bech32: "+opratorAddress)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avsAddr))
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avsAddress))
 	isExist := store.Has(infoKey)
 	if !isExist {
 		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
@@ -193,8 +193,8 @@ func (k *Keeper) GetAllTaskNums(ctx sdk.Context) ([]types.TaskID, error) {
 		taskAddr := strings.ToLower(common.BytesToAddress(iterator.Key()).Hex())
 		id := sdk.BigEndianToUint64(iterator.Value())
 		ret = append(ret, types.TaskID{
-			TaskAddr: taskAddr,
-			TaskId:   id,
+			TaskAddress: taskAddr,
+			TaskId:      id,
 		})
 	}
 	return ret, nil
@@ -346,7 +346,7 @@ func (k *Keeper) SetAllTaskChallengedInfo(ctx sdk.Context, states []types.Challe
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
 	for i := range states {
 		state := states[i]
-		bz, err := sdk.AccAddressFromBech32(state.ChallengeAddr)
+		bz, err := sdk.AccAddressFromBech32(state.ChallengeAddress)
 		if err != nil {
 			return err
 		}
@@ -380,8 +380,8 @@ func (k *Keeper) GetAllChallengeInfos(ctx sdk.Context) ([]types.ChallengeInfo, e
 		}
 
 		ret = append(ret, types.ChallengeInfo{
-			Key:           key,
-			ChallengeAddr: challengeAddr.String(),
+			Key:              key,
+			ChallengeAddress: challengeAddr.String(),
 		})
 	}
 	return ret, nil

@@ -82,10 +82,10 @@ func QueryAVSAddrByChainID() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-			req := &types.QueryAVSAddrByChainIDReq{
+			req := &types.QueryAVSAddressByChainIDReq{
 				Chain: args[0],
 			}
-			res, err := queryClient.QueryAVSAddrByChainID(context.Background(), req)
+			res, err := queryClient.QueryAVSAddressByChainID(context.Background(), req)
 			if err != nil {
 				return err
 			}
@@ -114,8 +114,8 @@ func QueryTaskInfo() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryAVSTaskInfoReq{
-				TaskAddr: args[0],
-				TaskId:   args[1],
+				TaskAddress: args[0],
+				TaskId:      args[1],
 			}
 			res, err := queryClient.QueryAVSTaskInfo(context.Background(), &req)
 			if err != nil {
@@ -146,9 +146,9 @@ func QuerySubmitTaskResult() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QuerySubmitTaskResultReq{
-				TaskAddress:  args[0],
-				TaskId:       args[1],
-				OperatorAddr: args[2],
+				TaskAddress:     args[0],
+				TaskId:          args[1],
+				OperatorAddress: args[2],
 			}
 			res, err := queryClient.QuerySubmitTaskResult(context.Background(), &req)
 			if err != nil {
@@ -179,9 +179,9 @@ func QueryChallengeInfo() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryChallengeInfoReq{
-				TaskAddress:  args[0],
-				TaskId:       args[1],
-				OperatorAddr: args[2],
+				TaskAddress:     args[0],
+				TaskId:          args[1],
+				OperatorAddress: args[2],
 			}
 			res, err := queryClient.QueryChallengeInfo(context.Background(), &req)
 			if err != nil {
