@@ -201,9 +201,10 @@ import (
 	_ "github.com/evmos/evmos/v16/client/docs/statik"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	"github.com/ethereum/go-ethereum/common"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Name defines the application binary name
