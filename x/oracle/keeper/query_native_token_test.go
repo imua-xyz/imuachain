@@ -43,6 +43,10 @@ func TestQueryStakerInfosPaginated(t *testing.T) {
 				resp.StakerInfos,
 			)
 		}
+		resp, err := keeper.StakerInfos(wctx, request(assetID, nil, uint64(len(msgs)), 0, false))
+		require.Empty(t, resp.StakerInfos)
+		require.Equal(t, uint64(len(msgs)), resp.Pagination.Total)
+		require.NoError(t, err)
 	})
 	t.Run("ByKey", func(t *testing.T) {
 		step := 2
