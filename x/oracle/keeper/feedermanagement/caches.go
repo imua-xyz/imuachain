@@ -9,11 +9,10 @@ import (
 
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type ItemV map[string]*big.Int
-
-var zeroBig = big.NewInt(0)
 
 const v1RuleID = 1
 
@@ -32,6 +31,7 @@ func (c *caches) CpyForSimulation() *caches {
 	ret.validators = &cacheValidator{
 		validators: validators,
 		update:     c.validators.update,
+		totalPower: new(big.Int).Set(c.validators.totalPower),
 	}
 
 	return &ret
@@ -159,6 +159,9 @@ func (cv *cacheValidator) Equals(cv2 *cacheValidator) bool {
 	if len(cv.validators) != len(cv2.validators) {
 		return false
 	}
+	if cv.totalPower.Cmp(cv2.totalPower) != 0 {
+		return false
+	}
 	// safe to range map, map compare
 	for k, v := range cv.validators {
 		if v2, ok := cv2.validators[k]; !ok {
@@ -173,18 +176,26 @@ func (cv *cacheValidator) Equals(cv2 *cacheValidator) bool {
 func (cv *cacheValidator) add(validators map[string]*big.Int) {
 	// safe to range map, check and update all KVs with another map
 	for operator, newPower := range validators {
-		if power, ok := cv.validators[operator]; ok {
-			if newPower.Cmp(zeroBig) == 0 {
-				delete(cv.validators, operator)
-				cv.update = true
-			} else if power.Cmp(newPower) != 0 {
-				cv.validators[operator].Set(newPower)
-				cv.update = true
-			}
-		} else {
+		power, ok := cv.validators[operator]
+		if !ok {
+			power = common.Big0
+		}
+		if power.Cmp(newPower) != 0 {
 			cv.update = true
-			np := *newPower
-			cv.validators[operator] = &np
+			// only do sub when power>0
+			if ok {
+				cv.totalPower.Sub(cv.totalPower, power)
+			}
+			// use < 1 to keep it the same as 'applyValidatorChange' in dogfood
+			if newPower.Cmp(common.Big1) < 0 {
+				delete(cv.validators, operator)
+				continue
+			}
+			cv.totalPower.Add(cv.totalPower, newPower)
+			if !ok {
+				cv.validators[operator] = new(big.Int)
+			}
+			cv.validators[operator].Set(newPower)
 		}
 	}
 }
@@ -314,16 +325,8 @@ func (c *caches) GetPowerForValidator(validator string) (power *big.Int, found b
 }
 
 // GetTotalPower returns the total power of all validators
-func (c *caches) GetTotalPower() (totalPower *big.Int) {
-	totalPower = big.NewInt(0)
-	if c.validators == nil {
-		return
-	}
-	// safe to renage map, the order does not impact the result
-	for _, power := range c.validators.validators {
-		totalPower.Add(totalPower, power)
-	}
-	return
+func (c *caches) GetTotalPower() *big.Int {
+	return new(big.Int).Set(c.validators.totalPower)
 }
 
 // GetTokenFeederForFeederID returns the token feeder for a feederID
@@ -374,6 +377,7 @@ func newCaches() *caches {
 		msg: new(cacheMsgs),
 		validators: &cacheValidator{
 			validators: make(map[string]*big.Int),
+			totalPower: big.NewInt(0),
 		},
 		params: &cacheParams{},
 	}

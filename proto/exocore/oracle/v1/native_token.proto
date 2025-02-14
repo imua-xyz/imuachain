@@ -50,12 +50,3 @@ message StakerList {
   // staker's address
   repeated string staker_addrs = 1;
 }
-
-// NSTVersion used to track the validator list changes for each NST
-message NSTVersion {
-  // asset_id of the NST
-  string asset_id = 1;
-  // version of the validator list
-  int64 version = 2;
-}
-

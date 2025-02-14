@@ -772,8 +772,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	}
 	validatorUpdateBlock, found := f.k.GetValidatorUpdateBlock(ctx)
 	if !found {
-		// on recovery mode, the validator update block must be found, otherwise we just panic to stop the node start
-		// it's safe to panic since this will only happen when the node is starting with something wrong in the store
+		// on recovery mode, the validator update block must be found
 		return false, errors.New("validator update block not found in recovery mode for feeder manager")
 	}
 	// #nosec G115  // validatorUpdateBlock.Block represents blockheight

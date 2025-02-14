@@ -365,26 +365,23 @@ func (k Keeper) IncreaseNSTVersion(ctx sdk.Context, assetID string) int64 {
 	value := store.Get(key)
 	if value == nil {
 		// set the first index of version to 1
-		store.Set(key, k.cdc.MustMarshal(&types.NSTVersion{AssetId: assetID, Version: 1}))
+		store.Set(key, sdk.Uint64ToBigEndian(1))
 		return 1
 	}
-	var nstVersion types.NSTVersion
-	k.cdc.MustUnmarshal(value, &nstVersion)
-	nstVersion.Version++
-	store.Set(key, k.cdc.MustMarshal(&nstVersion))
-	return nstVersion.Version
+	version := sdk.BigEndianToUint64(value) + 1
+	store.Set(key, sdk.Uint64ToBigEndian(version))
+	// #nosec G115
+	// TODO: use uint64 for version, the price-feeder may need corresponding change
+	return int64(version)
 }
 
 // IncreaseNSTVersion increases the version of native token for assetID
 func (k Keeper) SetNSTVersion(ctx sdk.Context, assetID string, version int64) int64 {
 	store := ctx.KVStore(k.storeKey)
 	key := types.NativeTokenVersionKey(assetID)
-	nstVersion := &types.NSTVersion{
-		AssetId: assetID,
-		Version: version,
-	}
-	store.Set(key, k.cdc.MustMarshal(nstVersion))
-	return nstVersion.Version
+	// #nosec version is not negative
+	store.Set(key, sdk.Uint64ToBigEndian(uint64(version)))
+	return version
 }
 
 func (k Keeper) GetNSTVersion(ctx sdk.Context, assetID string) int64 {
@@ -394,9 +391,8 @@ func (k Keeper) GetNSTVersion(ctx sdk.Context, assetID string) int64 {
 	if value == nil {
 		return 0
 	}
-	var nstVersion types.NSTVersion
-	k.cdc.MustUnmarshal(value, &nstVersion)
-	return nstVersion.Version
+	// #nosec G115
+	return int64(sdk.BigEndianToUint64(value))
 }
 
 func (k Keeper) getDecimal(ctx sdk.Context, assetID string) (int, sdkmath.Int, error) {

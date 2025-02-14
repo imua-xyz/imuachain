@@ -54,6 +54,8 @@ const (
 	notNumber
 )
 
+var _ AggAlgorithm = &AggMedian{}
+
 type AggMedian struct {
 	t           priceType
 	finalString string

@@ -73,7 +73,7 @@ func (a *aggregator) GetFinalPrice() (*PriceResult, bool) {
 	if a.finalPrice != nil {
 		return a.finalPrice, true
 	}
-	if !a.exceedPowerLimit() {
+	if !a.exceedsThreshold() {
 		return nil, false
 	}
 	finalPrice, ok := a.v.GetFinalPrice(a.algo)
@@ -111,7 +111,7 @@ func (a *aggregator) AddMsg(msg *MsgItem) error {
 }
 
 // TODO: V2: the accumulatedPower should corresponding to all valid validators which provides all sources required by rules(defined in oracle.Params)
-func (a *aggregator) exceedPowerLimit() bool {
+func (a *aggregator) exceedsThreshold() bool {
 	return a.t.Exceeds(a.v.accumulatedPower)
 }
 

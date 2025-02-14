@@ -28,6 +28,7 @@ type CacheReader interface {
 type cacheValidator struct {
 	validators map[string]*big.Int
 	update     bool
+	totalPower *big.Int
 }
 
 // used to track params change

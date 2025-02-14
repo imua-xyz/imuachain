@@ -214,22 +214,25 @@ func (r *round) PerformanceReview(validator string) (miss, malicious bool) {
 		// only rulev1 is supported for now
 		return
 	}
-	miss = true
 	detID := r.getFinalDetIDForSourceID(oracletypes.SourceChainlinkID)
 	price := finalPrice.PriceInfo()
 	price.DetID = detID
 	prices, ok := r.a.v.GetValidatorQuotePricesForSourceID(validator, oracletypes.SourceChainlinkID)
 	if !ok {
+		miss = true
 		return
 	}
 	for _, p := range prices {
 		if p.EqualDS(price) {
-			miss = false
-		} else if p.DetID == price.DetID {
-			miss = false
+			// duplicated detID had been filtered out, so if an 'euqal' price is found, there will be no 'malicous' price for that detID
+			return
+		}
+		if p.DetID == price.DetID {
 			malicious = true
+			return
 		}
 	}
+	miss = true
 	return
 }
 
