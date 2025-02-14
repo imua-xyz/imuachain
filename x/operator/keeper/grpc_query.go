@@ -349,7 +349,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 
 func (k *Keeper) QuerySnapshotHelper(goCtx context.Context, req *types.QuerySnapshotHelperRequest) (*types.SnapshotHelper, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	snapshotHelper, err := k.GetSnapshotHelper(ctx, strings.ToLower(req.Avs))
+	snapshotHelper, err := k.GetSnapshotHelper(ctx, req.Avs)
 	if err != nil {
 		return nil, err
 	}
@@ -358,7 +358,7 @@ func (k *Keeper) QuerySnapshotHelper(goCtx context.Context, req *types.QuerySnap
 
 func (k *Keeper) QuerySpecifiedSnapshot(goCtx context.Context, req *types.QuerySpecifiedSnapshotRequest) (*types.VotingPowerSnapshotKeyHeight, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	findHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, strings.ToLower(req.Avs), req.Height)
+	findHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, req.Avs, req.Height)
 	if err != nil {
 		return nil, err
 	}

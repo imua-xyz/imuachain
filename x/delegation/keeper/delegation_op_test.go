@@ -273,7 +273,6 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 		TotalShare:                sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
 		OperatorShare:             sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
 	}, *operatorState)
-
 }
 
 func (suite *DelegationTestSuite) TestUndelegateFrom() {

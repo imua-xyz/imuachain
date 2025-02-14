@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strings"
+
 	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -230,7 +232,7 @@ func (k *Keeper) GetSnapshotHelper(ctx sdk.Context, avsAddr string) (types.Snaps
 		return ret, types.ErrParameterInvalid.Wrapf("invalid AVS address format: %s", avsAddr)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixSnapshotHelper)
-	value := store.Get([]byte(avsAddr))
+	value := store.Get([]byte(strings.ToLower(avsAddr)))
 	if value == nil {
 		return ret, types.ErrNoKeyInTheStore.Wrapf("GetSnapshotHelper: the key is %s", avsAddr)
 	}
