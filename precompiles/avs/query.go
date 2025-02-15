@@ -93,7 +93,7 @@ func (p Precompile) GetAVSUSDValue(
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsaddress)
 	}
-	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, avsaddress.String())
+	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, avsAddress.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack(common.Big0)
