@@ -89,7 +89,7 @@ func (p Precompile) GetAVSUSDValue(
 	if len(args) != len(p.ABI.Methods[MethodGetAVSUSDValue].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetAVSUSDValue].Inputs), len(args))
 	}
-	avsaddress, ok := args[0].(common.Address)
+	avsAddress, ok := args[0].(common.Address)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsaddress)
 	}
