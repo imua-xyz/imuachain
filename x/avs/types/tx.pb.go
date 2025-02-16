@@ -441,13 +441,13 @@ type TaskInfo struct {
 	StartingEpoch uint64 `protobuf:"varint,9,opt,name=starting_epoch,json=startingEpoch,proto3" json:"starting_epoch,omitempty"`
 	// actual_threshold is the Actual threshold
 	ActualThreshold string `protobuf:"bytes,10,opt,name=actual_threshold,json=actualThreshold,proto3" json:"actual_threshold,omitempty"`
-	// opt_in_count when creating a task, the actual opt-in operator counts at this moment
+	// opt_in_operators when creating a task, the actual opt-in operators at this moment
 	OptInOperators []string `protobuf:"bytes,11,rep,name=opt_in_operators,json=optInOperators,proto3" json:"opt_in_operators,omitempty"`
-	// signed_count is Actual number of signatures already signed
+	// signed_operators is Actual operators of signatures already signed
 	SignedOperators []string `protobuf:"bytes,12,rep,name=signed_operators,json=signedOperators,proto3" json:"signed_operators,omitempty"`
-	// no_signed_count is the final number of unsigned operators
+	// no_signed_operators is the final  unsigned operators
 	NoSignedOperators []string `protobuf:"bytes,13,rep,name=no_signed_operators,json=noSignedOperators,proto3" json:"no_signed_operators,omitempty"`
-	// err_signed_count is the number of operators with final incorrect signatures
+	// err_signed_operators is the operators which final incorrect signatures
 	ErrSignedOperators []string `protobuf:"bytes,14,rep,name=err_signed_operators,json=errSignedOperators,proto3" json:"err_signed_operators,omitempty"`
 	// task_total_power is the USD value owned by the avs task itself.
 	TaskTotalPower github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,15,opt,name=task_total_power,json=taskTotalPower,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"task_total_power"`

@@ -186,3 +186,11 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	err = suite.App.AVSManagerKeeper.OperatorOptAction(suite.Ctx, operatorParams)
 	suite.NoError(err)
 }
+
+func (suite *AVSTestSuite) TestAddressSwitch() {
+	addr := common.HexToAddress("0x8dF46478a83Ab2a429979391E9546A12AfF9E33f")
+	var accAddress sdk.AccAddress = addr[:]
+	suite.Equal("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", accAddress.String())
+	commonAddress := common.Address(accAddress)
+	suite.Equal(common.HexToAddress("0x8dF46478a83Ab2a429979391E9546A12AfF9E33f"), commonAddress)
+}

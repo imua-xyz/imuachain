@@ -67,7 +67,7 @@ func (p Precompile) EmitAVSRegistered(ctx sdk.Context, stateDB vm.StateDB, avs *
 
 	// Prepare the event data: sender, avsName
 	arguments := abi.Arguments{event.Inputs[1], event.Inputs[2]}
-	packed, err := arguments.Pack(avs.CallerAddress.String(), avs.AvsName)
+	packed, err := arguments.Pack(avs.CallerAddress, avs.AvsName)
 	if err != nil {
 		return err
 	}

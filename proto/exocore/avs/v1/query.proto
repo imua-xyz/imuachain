@@ -76,7 +76,7 @@ message QueryChallengeInfoResponse {
 service Query {
   // Parameters queries the parameters of the module.
   rpc QueryAVSInfo(QueryAVSInfoReq) returns (QueryAVSInfoResponse) {
-    option (google.api.http).get = "/exocore/avs/v1/avs_info/{avs_address}";
+    option (google.api.http).get = "/exocore/avs/v1/avs_info";
   }
   // TaskInfo queries the task information.
   rpc QueryAVSTaskInfo(QueryAVSTaskInfoReq) returns (TaskInfo) {
