@@ -270,7 +270,6 @@ func (k Keeper) CreateAVSTask(ctx sdk.Context, params *types.TaskInfoParams) (ui
 		TaskResponsePeriod:    params.TaskResponsePeriod,
 		TaskStatisticalPeriod: params.TaskStatisticalPeriod,
 		StartingEpoch:         uint64(epoch.CurrentEpoch + 1),
-		ActualThreshold:       "0",
 		OptInOperators:        operatorList,
 	}
 	return task.TaskId, k.SetTaskInfo(ctx, task)

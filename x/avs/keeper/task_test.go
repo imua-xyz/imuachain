@@ -60,7 +60,9 @@ func (suite *AVSTestSuite) TestTaskActualThreshold() {
 	actualThreshold := operatorPowerTotal.Quo(taskPowerTotal).Mul(sdkmath.LegacyNewDec(100))
 	dec := sdkmath.LegacyMustNewDecFromStr(actualThreshold.String())
 	suite.True(dec.Equal(actualThreshold))
-	expectThreshold := sdkmath.LegacyNewDecFromBigInt(new(big.Int).SetUint64(uint64(90)))
+	param := uint64(90)
+	suite.True(param <= 100)
+	expectThreshold := sdkmath.LegacyNewDecFromBigInt(new(big.Int).SetUint64(param))
 	suite.True(actualThreshold.GTE(expectThreshold))
 
 }

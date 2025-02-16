@@ -11,7 +11,7 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/exomint/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/exocore/exomint/v1/Params";
+    option (google.api.http).get = "/exocore/exomint/v1/params";
   }
 }
 

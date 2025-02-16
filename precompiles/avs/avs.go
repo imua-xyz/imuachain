@@ -165,7 +165,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		}
 	// queries
 	case MethodGetOptinOperators:
-		bz, err = p.GetOptedInOperatorAccAddress(ctx, contract, method, args)
+		bz, err = p.GetOptedInOperatorAccAddresses(ctx, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack([]string{})

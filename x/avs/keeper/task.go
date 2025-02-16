@@ -73,10 +73,10 @@ func (k *Keeper) SetOperatorPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) (e
 	return nil
 }
 
-func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, opratorAddress, avsAddress string) (pub *types.BlsPubKeyInfo, err error) {
-	opAccAddr, err := sdk.AccAddressFromBech32(opratorAddress)
+func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, operatorAddress, avsAddress string) (pub *types.BlsPubKeyInfo, err error) {
+	opAccAddr, err := sdk.AccAddressFromBech32(operatorAddress)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "GetOperatorPubKey: error occurred when parsing account address from Bech32: "+opratorAddress)
+		return nil, errorsmod.Wrap(err, "GetOperatorPubKey: error occurred when parsing account address from Bech32: "+operatorAddress)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
 	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avsAddress))

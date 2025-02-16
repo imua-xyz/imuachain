@@ -143,7 +143,7 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	taskParams.TaskChallengePeriod = taskChallengePeriod
 
 	thresholdPercentage, ok := args[5].(uint64)
-	if !ok {
+	if !ok || thresholdPercentage > 100 {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "uint64", thresholdPercentage)
 	}
 	taskParams.ThresholdPercentage = thresholdPercentage

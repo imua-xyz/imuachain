@@ -91,10 +91,10 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			}
 			taskInfo.TaskTotalPower = taskPowerTotal
 
-			if !taskPowerTotal.IsZero() && !operatorPowerTotal.IsZero() {
+			/*if !taskPowerTotal.IsZero() && !operatorPowerTotal.IsZero() {
 				actualThreshold := operatorPowerTotal.Quo(taskPowerTotal).Mul(sdkmath.LegacyNewDec(100))
 				taskInfo.ActualThreshold = actualThreshold.String()
-			}
+			}*/
 
 			// Update the taskInfo in the state
 			err = wrapper.keeper.SetTaskInfo(ctx, taskInfo)

@@ -57,7 +57,7 @@ func (p Precompile) GetRegisteredPubkey(
 	return method.Outputs.Pack(blsPubKeyInfo.PubKey)
 }
 
-func (p Precompile) GetOptedInOperatorAccAddress(
+func (p Precompile) GetOptedInOperatorAccAddresses(
 	ctx sdk.Context,
 	_ *vm.Contract,
 	method *abi.Method,
@@ -91,7 +91,7 @@ func (p Precompile) GetAVSUSDValue(
 	}
 	avsAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsaddress)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
 	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, avsAddress.String())
 	if err != nil {

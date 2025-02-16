@@ -129,7 +129,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddress() {
 		suite.Run(tc.name, func() {
 			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
 
-			bz, err := suite.precompile.GetOptedInOperatorAccAddress(suite.Ctx, contract, &method, tc.malleate())
+			bz, err := suite.precompile.GetOptedInOperatorAccAddresses(suite.Ctx, contract, &method, tc.malleate())
 
 			if tc.expErr {
 				suite.Require().Error(err)
