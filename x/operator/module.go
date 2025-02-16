@@ -19,6 +19,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// consensusVersion defines the current x/operator module consensus version.
+const consensusVersion = 1
+
 // type check to ensure the interface is properly implemented
 var (
 	_ module.AppModule           = AppModule{}
@@ -138,3 +141,6 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 	genState := am.keeper.ExportGenesis(ctx)
 	return cdc.MustMarshalJSON(genState)
 }
+
+// ConsensusVersion implements AppModule/ConsensusVersion.
+func (AppModule) ConsensusVersion() uint64 { return consensusVersion }

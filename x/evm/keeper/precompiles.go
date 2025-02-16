@@ -6,15 +6,16 @@ import (
 	"sort"
 
 	assetsprecompile "github.com/ExocoreNetwork/exocore/precompiles/assets"
-	avsManagerPrecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
-	blsPrecompile "github.com/ExocoreNetwork/exocore/precompiles/bls"
+	avsprecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
+	bechprecompile "github.com/ExocoreNetwork/exocore/precompiles/bech32"
+	blsprecompile "github.com/ExocoreNetwork/exocore/precompiles/bls"
 	delegationprecompile "github.com/ExocoreNetwork/exocore/precompiles/delegation"
-	rewardPrecompile "github.com/ExocoreNetwork/exocore/precompiles/reward"
-	stakingStateKeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	avsManagerKeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	delegationKeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	rewardKeeper "github.com/ExocoreNetwork/exocore/x/reward/keeper"
-	exoslashKeeper "github.com/ExocoreNetwork/exocore/x/slash/keeper"
+	rewardprecompile "github.com/ExocoreNetwork/exocore/precompiles/reward"
+	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
+	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
+	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
+	rewardkeeper "github.com/ExocoreNetwork/exocore/x/reward/keeper"
+	exoslashkeeper "github.com/ExocoreNetwork/exocore/x/slash/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
@@ -34,11 +35,11 @@ func AvailablePrecompiles(
 	authzKeeper authzkeeper.Keeper,
 	_ transferkeeper.Keeper,
 	_ channelkeeper.Keeper,
-	delegationKeeper delegationKeeper.Keeper,
-	assetskeeper stakingStateKeeper.Keeper,
-	_ exoslashKeeper.Keeper,
-	rewardKeeper rewardKeeper.Keeper,
-	avsManagerKeeper avsManagerKeeper.Keeper,
+	delegationKeeper delegationkeeper.Keeper,
+	assetskeeper assetskeeper.Keeper,
+	_ exoslashkeeper.Keeper,
+	rewardKeeper rewardkeeper.Keeper,
+	avsManagerKeeper avskeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {
 	// Clone the mapping from the latest EVM fork.
 	precompiles := maps.Clone(vm.PrecompiledContractsBerlin)
@@ -69,15 +70,17 @@ func AvailablePrecompiles(
 	}
 
 	// The slash precompile is deprecated, but I have only commented out this code to facilitate future refactoring.
-	/*	slashPrecompile, err := slashPrecompile.NewPrecompile(
-		assetskeeper,
-		slashKeeper,
-		authzKeeper,
-	)*/
-	if err != nil {
+	/*
+		slashPrecompile, err := slashPrecompile.NewPrecompile(
+			assetskeeper,
+			slashKeeper,
+			authzKeeper,
+		)
+		if err != nil {
 		panic(fmt.Errorf("failed to load slash precompile: %w", err))
-	}
-	rewardPrecompile, err := rewardPrecompile.NewPrecompile(
+		}
+	*/
+	rewardPrecompile, err := rewardprecompile.NewPrecompile(
 		assetskeeper,
 		rewardKeeper,
 		authzKeeper,
@@ -85,14 +88,19 @@ func AvailablePrecompiles(
 	if err != nil {
 		panic(fmt.Errorf("failed to load reward precompile: %w", err))
 	}
-	avsManagerPrecompile, err := avsManagerPrecompile.NewPrecompile(avsManagerKeeper, authzKeeper)
+	avsManagerPrecompile, err := avsprecompile.NewPrecompile(avsManagerKeeper, authzKeeper)
 	if err != nil {
 		panic(fmt.Errorf("failed to load avsManager precompile: %w", err))
 	}
-	blsPrecompile, err := blsPrecompile.NewPrecompile(BaseGas)
+	blsPrecompile, err := blsprecompile.NewPrecompile(BaseGas)
 	if err != nil {
 		panic(fmt.Errorf("failed to load bls precompile: %v", err))
 	}
+	bech32Precompile, err := bechprecompile.NewPrecompile(authzKeeper)
+	if err != nil {
+		panic(fmt.Errorf("failed to load bech32 precompile: %w", err))
+	}
+
 	// precompiles[slashPrecompile.Address()] = slashPrecompile
 	precompiles[rewardPrecompile.Address()] = rewardPrecompile
 	precompiles[assetsPrecompile.Address()] = assetsPrecompile
@@ -100,6 +108,7 @@ func AvailablePrecompiles(
 	precompiles[avsManagerPrecompile.Address()] = avsManagerPrecompile
 	// precompiles[ibcTransferPrecompile.Address()] = ibcTransferPrecompile
 	precompiles[blsPrecompile.Address()] = blsPrecompile
+	precompiles[bech32Precompile.Address()] = bech32Precompile
 	return precompiles
 }
 

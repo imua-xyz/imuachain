@@ -32,7 +32,7 @@ func NewTxCmd() *cobra.Command {
 // UpdateParams todo: it should be a gov proposal command in future.
 func UpdateParams() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "UpdateParams Gateways",
+		Use:   "update-params Gateways",
 		Short: "Set Authorized Gateways for assets module as comma separated list of hex addresses",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

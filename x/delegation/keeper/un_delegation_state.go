@@ -257,7 +257,6 @@ func (k *Keeper) GetCompletableUndelegations(ctx sdk.Context) ([]*types.Undelega
 	// iterate all pending undelegations across multiple epochs.
 	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
 	for _, epochInfo := range allEpochs {
-		ctx.Logger().Info("GetCompletableUndelegations", "epochInfo", epochInfo.Identifier, "epochNumber", epochInfo.CurrentEpoch)
 		err := k.IteratePendingUndelegations(ctx, true, epochInfo.Identifier, epochInfo.CurrentEpoch, expiredUndelegationOpFunc)
 		if err != nil {
 			return nil, err

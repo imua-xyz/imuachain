@@ -69,8 +69,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 
-	"github.com/evmos/evmos/v16/precompiles/common"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
@@ -185,6 +183,7 @@ import (
 
 	"github.com/ExocoreNetwork/exocore/x/evm"
 	evmkeeper "github.com/ExocoreNetwork/exocore/x/evm/keeper"
+	exocoreevmtypes "github.com/ExocoreNetwork/exocore/x/evm/types"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 
 	"github.com/evmos/evmos/v16/encoding"
@@ -204,6 +203,8 @@ import (
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Name defines the application binary name
@@ -1150,6 +1151,9 @@ func (app *ExocoreApp) BeginBlocker(
 	req abci.RequestBeginBlock,
 ) abci.ResponseBeginBlock {
 	// Perform any scheduled forks before executing the modules logic
+	// todo: This needs to be enabled only when we hard-code the upgrade plan to
+	// address the mainnet upgrade. This approach will be used when governance
+	// is not enabled.
 	app.ScheduleForkUpgrade(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
@@ -1390,8 +1394,18 @@ func (app *ExocoreApp) BlockedAddrs() map[string]bool {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
 	}
 
-	for _, precompile := range common.DefaultPrecompilesBech32 {
-		blockedAddrs[precompile] = true
+	// prevent all precompile addresses from receiving or sending tokens
+	// we don't add the Ethereum-inherited Berlin precompiles, since they are
+	// allowed to receive tokens on Eth mainnet.
+	for _, hexAddr := range exocoreevmtypes.ExocoreAvailableEVMExtensions {
+		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr).Bytes()).String()
+		blockedAddrs[bech32Addr] = true
+	}
+
+	// now do the predeploys
+	for _, hexAddr := range exocoreevmtypes.DefaultPredeploys {
+		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr.Address).Bytes()).String()
+		blockedAddrs[bech32Addr] = true
 	}
 
 	return blockedAddrs

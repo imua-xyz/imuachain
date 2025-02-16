@@ -20,6 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// consensusVersion defines the current x/assets module consensus version.
+// the initial version should be 1
+const consensusVersion = 1
+
 // type check to ensure the interface is properly implemented
 var (
 	_ module.AppModule           = AppModule{}
@@ -133,3 +137,6 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {
 	return []simtypes.WeightedOperation{}
 }
+
+// ConsensusVersion implements AppModule/ConsensusVersion.
+func (AppModule) ConsensusVersion() uint64 { return consensusVersion }
