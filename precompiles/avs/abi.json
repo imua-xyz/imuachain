@@ -10,9 +10,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -35,9 +35,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -60,9 +60,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -79,9 +79,9 @@
 		"inputs": [
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -103,9 +103,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "operatorAddress",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "ChallengeInitiated",
@@ -122,9 +122,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "OperatorJoined",
@@ -141,9 +141,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "OperatorLeft",
@@ -154,9 +154,9 @@
 		"inputs": [
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -185,9 +185,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -246,9 +246,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -339,9 +339,9 @@
 				"type": "uint64"
 			},
 			{
-				"internalType": "uint64",
+				"internalType": "uint8",
 				"name": "thresholdPercentage",
-				"type": "uint64"
+				"type": "uint8"
 			},
 			{
 				"internalType": "uint64",
@@ -488,6 +488,35 @@
 		"inputs": [
 			{
 				"internalType": "address",
+				"name": "taskAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint64",
+				"name": "taskID",
+				"type": "uint64"
+			}
+		],
+		"name": "getOperatorTaskResponse",
+		"outputs": [
+			{
+				"internalType": "bytes",
+				"name": "taskResponse",
+				"type": "bytes"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
 				"name": "avsAddress",
 				"type": "address"
 			}
@@ -495,9 +524,9 @@
 		"name": "getOptInOperators",
 		"outputs": [
 			{
-				"internalType": "string[]",
+				"internalType": "address[]",
 				"name": "operators",
-				"type": "string[]"
+				"type": "address[]"
 			}
 		],
 		"stateMutability": "view",
@@ -543,9 +572,118 @@
 		"name": "getTaskInfo",
 		"outputs": [
 			{
-				"internalType": "uint64[]",
-				"name": "info",
-				"type": "uint64[]"
+				"components": [
+					{
+						"internalType": "address",
+						"name": "taskContractAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes",
+						"name": "hash",
+						"type": "bytes"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskId",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskResponsePeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskStatisticalPeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskChallengePeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint8",
+						"name": "thresholdPercentage",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint64",
+						"name": "startingEpoch",
+						"type": "uint64"
+					},
+					{
+						"internalType": "string",
+						"name": "actualThreshold",
+						"type": "string"
+					},
+					{
+						"internalType": "address[]",
+						"name": "optInOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "signedOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "noSignedOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "errSignedOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string",
+						"name": "taskTotalPower",
+						"type": "string"
+					},
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "operator",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "power",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct OperatorActivePower[]",
+						"name": "operatorActivePower",
+						"type": "tuple[]"
+					},
+					{
+						"internalType": "bool",
+						"name": "isExpected",
+						"type": "bool"
+					},
+					{
+						"internalType": "address[]",
+						"name": "eligibleRewardOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "eligibleSlashOperators",
+						"type": "address[]"
+					}
+				],
+				"internalType": "struct TaskInfo",
+				"name": "taskInfo",
+				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",

@@ -2,6 +2,7 @@ package avs
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -142,11 +143,11 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	}
 	taskParams.TaskChallengePeriod = taskChallengePeriod
 
-	thresholdPercentage, ok := args[5].(uint64)
+	thresholdPercentage, ok := args[5].(uint8)
 	if !ok || thresholdPercentage > 100 {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "uint64", thresholdPercentage)
 	}
-	taskParams.ThresholdPercentage = thresholdPercentage
+	taskParams.ThresholdPercentage = uint64(thresholdPercentage)
 
 	taskStatisticalPeriod, ok := args[6].(uint64)
 	if !ok {
@@ -203,4 +204,12 @@ func CheckOriginAndSender(contract *vm.Contract, origin common.Address, sender c
 		return common.Address{}, fmt.Errorf(exocmn.ErrDifferentOriginFromSender, origin.String(), sender.String())
 	}
 	return sender, nil
+}
+
+type TaskInfo struct {
+	TaskName string
+}
+type OperatorActivePower struct {
+	Operator common.Address `json:"operator"`
+	Power    *big.Int       `json:"power"`
 }

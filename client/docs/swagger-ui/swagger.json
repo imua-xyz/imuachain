@@ -20238,7 +20238,7 @@
         ]
       }
     },
-    "/exocore/exomint/v1/Params": {
+    "/exocore/exomint/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "ExomintParams",
@@ -21114,179 +21114,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/GetAVSTaskInfoReq": {
-      "get": {
-        "summary": "TaskInfo queries the task information.",
-        "operationId": "QueryAVSTaskInfo",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "task_contract_address": {
-                  "type": "string",
-                  "title": "contract address of avstask"
-                },
-                "name": {
-                  "type": "string",
-                  "title": "name of task"
-                },
-                "hash": {
-                  "type": "string",
-                  "format": "byte",
-                  "title": "data which is supplied by the contract, usually ABI-encoded"
-                },
-                "task_id": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "task_id of task"
-                },
-                "task_response_period": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "Deadline for task response"
-                },
-                "task_statistical_period": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "Statistical period: threshold calculation, signature verification,\nnosig quantity statistics, operator submits messages corresponding to signatures"
-                },
-                "task_challenge_period": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "challenge period for  task"
-                },
-                "threshold_percentage": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "Signature threshold percentage"
-                },
-                "starting_epoch": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "Effective current epoch, accounting for current_epoch + 1\nand current_epoch is the integer identifier of the epoch module"
-                },
-                "actual_threshold": {
-                  "type": "string",
-                  "title": "actual_threshold is the Actual threshold"
-                },
-                "opt_in_operators": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "opt_in_count when creating a task, the actual opt-in operator counts at this moment"
-                },
-                "signed_operators": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "signed_count is Actual number of signatures already signed"
-                },
-                "no_signed_operators": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "no_signed_count is the final number of unsigned operators"
-                },
-                "err_signed_operators": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "err_signed_count is the number of operators with final incorrect signatures"
-                },
-                "task_total_power": {
-                  "type": "string",
-                  "description": "task_total_power is the USD value owned by the avs task itself."
-                },
-                "operator_active_power": {
-                  "title": "operator_active_power_list is a power list of operators opt-in to the current task",
-                  "type": "object",
-                  "properties": {
-                    "operator_power_list": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "operator_address": {
-                            "type": "string",
-                            "description": "operator_address is the operator  address."
-                          },
-                          "active_power": {
-                            "type": "string",
-                            "description": "active_power is the USD value owned by the operator itself."
-                          }
-                        },
-                        "description": "OperatorActivePowerInfo is the operator power info."
-                      },
-                      "description": "operator_power_list is a power list of operators."
-                    }
-                  }
-                }
-              },
-              "description": "TaskContractInfo is the task info."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "task_id",
-            "description": "task_id is the task identifier.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/exocore/avs/v1/QueryAVSAddressByChainID/{chain}": {
+    "/exocore/avs/v1/avs_address/{chain}": {
       "get": {
         "summary": "QueryAVSAddressByChainID queries the avs address by chain id",
         "operationId": "QueryAVSAddressByChainID",
@@ -21352,7 +21180,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/QueryAVSInfo": {
+    "/exocore/avs/v1/avs_info": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "QueryAVSInfo",
@@ -21460,6 +21288,30 @@
                         "type": "string"
                       },
                       "title": "whitelist_addresses are the bech32 addresses ,whitelist address of supported operators"
+                    },
+                    "reward_asset_list": {
+                      "title": "reward_asset_list is a collection of asset bundles rewarded of the task\nif the task is successful, the operator will receive the bonus amount\nif the task is unsuccessful, the operator will not receive any bonus amount\nthe bonus amount is calculated by the proportion of the total active power",
+                      "type": "object",
+                      "properties": {
+                        "reward_asset_list": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "asset_id": {
+                                "type": "string",
+                                "title": "asset_id is a asset that the AVS support"
+                              },
+                              "total_amount": {
+                                "type": "string",
+                                "description": "total_amount is the total amount of the asset."
+                              }
+                            },
+                            "title": "RewardAssetInfo is an asset bundle for task rewards"
+                          },
+                          "description": "reward_asset_list is a collection of asset bundles rewarded of the task."
+                        }
+                      }
                     }
                   }
                 }
@@ -21515,7 +21367,197 @@
         ]
       }
     },
-    "/exocore/avs/v1/QueryChallengeInfo": {
+    "/exocore/avs/v1/avs_task_info/{task_address}/{task_id}": {
+      "get": {
+        "summary": "TaskInfo queries the task information.",
+        "operationId": "QueryAVSTaskInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "task_contract_address": {
+                  "type": "string",
+                  "title": "contract address of avstask"
+                },
+                "name": {
+                  "type": "string",
+                  "title": "name of task"
+                },
+                "hash": {
+                  "type": "string",
+                  "format": "byte",
+                  "title": "data which is supplied by the contract, usually ABI-encoded"
+                },
+                "task_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "task_id of task"
+                },
+                "task_response_period": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Deadline for task response"
+                },
+                "task_statistical_period": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Statistical period: threshold calculation, signature verification,\nnosig quantity statistics, operator submits messages corresponding to signatures"
+                },
+                "task_challenge_period": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "challenge period for  task"
+                },
+                "threshold_percentage": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Signature threshold percentage，less than or equal to 100"
+                },
+                "starting_epoch": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "Effective current epoch, accounting for current_epoch + 1\nand current_epoch is the integer identifier of the epoch module"
+                },
+                "actual_threshold": {
+                  "type": "string",
+                  "title": "actual_threshold is the Actual threshold"
+                },
+                "opt_in_operators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "opt_in_operators when creating a task, the actual opt-in operators at this moment"
+                },
+                "signed_operators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "signed_operators is Actual operators of signatures already signed"
+                },
+                "no_signed_operators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "no_signed_operators is the final  unsigned operators"
+                },
+                "err_signed_operators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "err_signed_operators is the operators which final incorrect signatures"
+                },
+                "task_total_power": {
+                  "type": "string",
+                  "description": "task_total_power is the USD value owned by the avs task itself."
+                },
+                "operator_active_power": {
+                  "title": "operator_active_power_list is a power list of operators opt-in to the current task",
+                  "type": "object",
+                  "properties": {
+                    "operator_power_list": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "operator_address": {
+                            "type": "string",
+                            "description": "operator_address is the operator  address."
+                          },
+                          "active_power": {
+                            "type": "string",
+                            "description": "active_power is the USD value owned by the operator itself."
+                          }
+                        },
+                        "description": "OperatorActivePowerInfo is the operator power info."
+                      },
+                      "description": "operator_power_list is a power list of operators."
+                    }
+                  }
+                },
+                "is_expected": {
+                  "type": "boolean",
+                  "title": "is_expected indicates whether the task meets expectations\nif is_expected is false, the task is considered unsuccessful\nand the operators will not receive any rewards\nif is_expected is true, the task is considered successful\nand operators who complete the task honestly will be rewarded"
+                },
+                "eligible_reward_operators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "eligible_reward_operators list of operator that are eligible for rewards,the contract deployed by avs provides validation rules\nif the operator is eligible for rewards, it will receive rewards based on the proportion of the total staking amount\ncalculated by the operator's active power and the total power of the task"
+                },
+                "eligible_slash_operators": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "title": "eligible_slash_operators list of operator that are eligible for slash,the contract deployed by avs provides validation rules"
+                }
+              },
+              "description": "TaskContractInfo is the task info."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "task_address",
+            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "task_id",
+            "description": "task_id is the task identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/avs/v1/challenge_info/{task_address}/{task_id}/{operator_address}": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "QueryChallengeInfo",
@@ -21570,23 +21612,23 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress.",
-            "in": "query",
-            "required": false,
+            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "task_id",
-            "description": "task_id is the task identifier.",
-            "in": "query",
-            "required": false,
+            "description": "task_id is the task identifier",
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "operator_address",
-            "description": "operator_address is the operator address,its type should be a sdk.AccAddress.",
-            "in": "query",
-            "required": false,
+            "description": "operator_address is the operator address,its type should be a sdk.AccAddress",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -21595,7 +21637,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/QuerySubmitTaskResult": {
+    "/exocore/avs/v1/submit_task_result/{task_address}/{task_id}/{operator_address}": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "QuerySubmitTaskResult",
@@ -21690,23 +21732,23 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress.",
-            "in": "query",
-            "required": false,
+            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "task_id",
-            "description": "task_id is the task identifier.",
-            "in": "query",
-            "required": false,
+            "description": "task_id is the task identifier",
+            "in": "path",
+            "required": true,
             "type": "string"
           },
           {
             "name": "operator_address",
-            "description": "operator_address is the operator address,its type should be a sdk.AccAddress.",
-            "in": "query",
-            "required": false,
+            "description": "operator_address is the operator address,its type should be a sdk.AccAddress",
+            "in": "path",
+            "required": true,
             "type": "string"
           }
         ],
@@ -43699,6 +43741,30 @@
             "type": "string"
           },
           "title": "whitelist_addresses are the bech32 addresses ,whitelist address of supported operators"
+        },
+        "reward_asset_list": {
+          "title": "reward_asset_list is a collection of asset bundles rewarded of the task\nif the task is successful, the operator will receive the bonus amount\nif the task is unsuccessful, the operator will not receive any bonus amount\nthe bonus amount is calculated by the proportion of the total active power",
+          "type": "object",
+          "properties": {
+            "reward_asset_list": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_id": {
+                    "type": "string",
+                    "title": "asset_id is a asset that the AVS support"
+                  },
+                  "total_amount": {
+                    "type": "string",
+                    "description": "total_amount is the total amount of the asset."
+                  }
+                },
+                "title": "RewardAssetInfo is an asset bundle for task rewards"
+              },
+              "description": "reward_asset_list is a collection of asset bundles rewarded of the task."
+            }
+          }
         }
       },
       "title": "AVSinfo represent the information of avs"
@@ -43863,6 +43929,30 @@
                 "type": "string"
               },
               "title": "whitelist_addresses are the bech32 addresses ,whitelist address of supported operators"
+            },
+            "reward_asset_list": {
+              "title": "reward_asset_list is a collection of asset bundles rewarded of the task\nif the task is successful, the operator will receive the bonus amount\nif the task is unsuccessful, the operator will not receive any bonus amount\nthe bonus amount is calculated by the proportion of the total active power",
+              "type": "object",
+              "properties": {
+                "reward_asset_list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "asset_id": {
+                        "type": "string",
+                        "title": "asset_id is a asset that the AVS support"
+                      },
+                      "total_amount": {
+                        "type": "string",
+                        "description": "total_amount is the total amount of the asset."
+                      }
+                    },
+                    "title": "RewardAssetInfo is an asset bundle for task rewards"
+                  },
+                  "description": "reward_asset_list is a collection of asset bundles rewarded of the task."
+                }
+              }
             }
           }
         }
@@ -43929,6 +44019,44 @@
       },
       "title": "QuerySubmitTaskResultResponse is the response of avs related information"
     },
+    "exocore.avs.v1.RewardAssetInfo": {
+      "type": "object",
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "title": "asset_id is a asset that the AVS support"
+        },
+        "total_amount": {
+          "type": "string",
+          "description": "total_amount is the total amount of the asset."
+        }
+      },
+      "title": "RewardAssetInfo is an asset bundle for task rewards"
+    },
+    "exocore.avs.v1.RewardAssetList": {
+      "type": "object",
+      "properties": {
+        "reward_asset_list": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "title": "asset_id is a asset that the AVS support"
+              },
+              "total_amount": {
+                "type": "string",
+                "description": "total_amount is the total amount of the asset."
+              }
+            },
+            "title": "RewardAssetInfo is an asset bundle for task rewards"
+          },
+          "description": "reward_asset_list is a collection of asset bundles rewarded of the task."
+        }
+      },
+      "title": "RewardAssetList is a collection of asset bundles rewarded of the task"
+    },
     "exocore.avs.v1.TaskInfo": {
       "type": "object",
       "properties": {
@@ -43968,7 +44096,7 @@
         "threshold_percentage": {
           "type": "string",
           "format": "uint64",
-          "title": "Signature threshold percentage"
+          "title": "Signature threshold percentage，less than or equal to 100"
         },
         "starting_epoch": {
           "type": "string",
@@ -43984,28 +44112,28 @@
           "items": {
             "type": "string"
           },
-          "title": "opt_in_count when creating a task, the actual opt-in operator counts at this moment"
+          "title": "opt_in_operators when creating a task, the actual opt-in operators at this moment"
         },
         "signed_operators": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "title": "signed_count is Actual number of signatures already signed"
+          "title": "signed_operators is Actual operators of signatures already signed"
         },
         "no_signed_operators": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "title": "no_signed_count is the final number of unsigned operators"
+          "title": "no_signed_operators is the final  unsigned operators"
         },
         "err_signed_operators": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "title": "err_signed_count is the number of operators with final incorrect signatures"
+          "title": "err_signed_operators is the operators which final incorrect signatures"
         },
         "task_total_power": {
           "type": "string",
@@ -44034,6 +44162,24 @@
               "description": "operator_power_list is a power list of operators."
             }
           }
+        },
+        "is_expected": {
+          "type": "boolean",
+          "title": "is_expected indicates whether the task meets expectations\nif is_expected is false, the task is considered unsuccessful\nand the operators will not receive any rewards\nif is_expected is true, the task is considered successful\nand operators who complete the task honestly will be rewarded"
+        },
+        "eligible_reward_operators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "eligible_reward_operators list of operator that are eligible for rewards,the contract deployed by avs provides validation rules\nif the operator is eligible for rewards, it will receive rewards based on the proportion of the total staking amount\ncalculated by the operator's active power and the total power of the task"
+        },
+        "eligible_slash_operators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "eligible_slash_operators list of operator that are eligible for slash,the contract deployed by avs provides validation rules"
         }
       },
       "description": "TaskContractInfo is the task info."

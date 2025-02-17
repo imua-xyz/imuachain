@@ -763,7 +763,7 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 			rand.Bytes(3),
 			uint64(3),
 			uint64(3),
-			uint64(3),
+			uint8(3),
 			uint64(3),
 		)
 		suite.Require().NoError(err, "failed to pack input")

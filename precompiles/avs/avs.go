@@ -180,7 +180,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.GetTaskInfo(ctx, contract, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
-			bz, err = method.Outputs.Pack([]uint64{})
+			bz, err = method.Outputs.Pack(nil)
 		}
 	case MethodIsOperator:
 		bz, err = p.IsOperator(ctx, contract, method, args)

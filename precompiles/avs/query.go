@@ -73,10 +73,21 @@ func (p Precompile) GetOptedInOperatorAccAddresses(
 	}
 
 	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(avsaddress.String()))
+
+	var commonAddressList []common.Address
+	for _, operatorAddressStr := range list {
+		acc, err := sdk.AccAddressFromBech32(operatorAddressStr)
+		if err != nil {
+			return nil, err
+		}
+		operatorAddress := common.BytesToAddress(acc)
+		commonAddressList = append(commonAddressList, operatorAddress)
+	}
+
 	if err != nil {
 		return nil, err
 	}
-	return method.Outputs.Pack(list)
+	return method.Outputs.Pack(commonAddressList)
 }
 
 // GetAVSUSDValue is a function to retrieve the USD share of specified Avs,
@@ -204,9 +215,12 @@ func (p Precompile) GetTaskInfo(
 		}
 		return nil, err
 	}
-	info := []uint64{task.StartingEpoch, task.TaskResponsePeriod, task.TaskStatisticalPeriod}
+	// Pack the values into the struct
+	result := TaskInfo{
+		TaskName: task.Name,
+	}
+	return method.Outputs.Pack(result)
 
-	return method.Outputs.Pack(info)
 }
 
 // GetCurrentEpoch obtain the specified current epoch based on epochIdentifier.
