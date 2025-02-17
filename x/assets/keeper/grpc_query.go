@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -57,7 +58,7 @@ func (k Keeper) QueAllClientChainInfo(goCtx context.Context, req *assetstype.Que
 // QueStakingAssetInfo query the specified client chain asset info by inputting assetID
 func (k Keeper) QueStakingAssetInfo(ctx context.Context, info *assetstype.QueryStakingAssetInfo) (*assetstype.StakingAssetInfo, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	return k.GetStakingAssetInfo(c, info.AssetId)
+	return k.GetStakingAssetInfo(c, strings.ToLower(info.AssetId))
 }
 
 // QueAllStakingAssetsInfo query the info about all client chain assets that have been registered
@@ -73,7 +74,7 @@ func (k Keeper) QueAllStakingAssetsInfo(ctx context.Context, _ *assetstype.Query
 // QueStakerAssetInfos query th state of all assets for a staker specified by stakerID
 func (k Keeper) QueStakerAssetInfos(ctx context.Context, info *assetstype.QueryStakerAssetInfo) (*assetstype.QueryAssetInfoResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	assetInfos, err := k.GetStakerAssetInfos(c, info.StakerId)
+	assetInfos, err := k.GetStakerAssetInfos(c, strings.ToLower(info.StakerId))
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (k Keeper) QueStakerAssetInfos(ctx context.Context, info *assetstype.QueryS
 // QueStakerSpecifiedAssetAmount query the specified asset state of a staker, using stakerID and assetID as query parameters
 func (k Keeper) QueStakerSpecifiedAssetAmount(ctx context.Context, req *assetstype.QuerySpecifiedAssetAmountReq) (*assetstype.StakerAssetInfo, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	return k.GetStakerSpecifiedAssetInfo(c, req.StakerId, req.AssetId)
+	return k.GetStakerSpecifiedAssetInfo(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
 }
 
 // QueOperatorAssetInfos query th state of all assets for an operator specified by operator address
@@ -107,5 +108,5 @@ func (k Keeper) QueOperatorSpecifiedAssetAmount(ctx context.Context, req *assets
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	return k.GetOperatorSpecifiedAssetInfo(c, addr, req.AssetId)
+	return k.GetOperatorSpecifiedAssetInfo(c, addr, strings.ToLower(req.AssetId))
 }

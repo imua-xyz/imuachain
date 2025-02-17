@@ -3,7 +3,6 @@ package batch
 import (
 	"math/big"
 
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -56,16 +55,7 @@ func (m *Manager) QueryDelegatedAmount(clientChainLzID uint64, stakerAddr, asset
 	if err != nil {
 		return sdkmath.ZeroInt(), err
 	}
-	operatorAssetReq := &assettypes.QueryOperatorSpecifiedAssetAmountReq{
-		OperatorAddr: operatorAddr, // already lowercase
-		AssetId:      assetID,      // already lowercase
-	}
-	queryAssetsClient := assettypes.NewQueryClient(m.NodeClientCtx[DefaultNodeIndex])
-	operatorAssetInfo, err := queryAssetsClient.QueOperatorSpecifiedAssetAmount(m.ctx, operatorAssetReq)
-	if err != nil {
-		return sdkmath.ZeroInt(), err
-	}
-	return delegationkeeper.TokensFromShares(delegationInfo.UndelegatableShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
+	return delegationInfo.MaxUndelegatableAmount, nil
 }
 
 func (m *Manager) PrecompileTxOnChainCheck(batchID uint, msgType string) error {
