@@ -53,7 +53,7 @@ struct TaskInfo {
     address taskContractAddress;
     string name;
     bytes hash;
-    uint64 taskId;
+    uint64 taskID;
     uint64 taskResponsePeriod;
     uint64 taskStatisticalPeriod;
     uint64 taskChallengePeriod;
@@ -85,13 +85,13 @@ interface IAVSManager {
     event OperatorLeft(address indexed avsAddress, address sender);
     event TaskCreated(
         address indexed taskContractAddress,
-        uint64 indexed taskId,
+        uint64 indexed taskID,
         address sender,
         string name,
         bytes hash,
         uint64 taskResponsePeriod,
         uint64 taskChallengePeriod,
-        uint64 thresholdPercentage,
+        uint8 thresholdPercentage,
         uint64 taskStatisticalPeriod
     );
     event ChallengeInitiated(
@@ -100,7 +100,7 @@ interface IAVSManager {
     event PublicKeyRegistered(address sender, address avsAddress);
     event TaskSubmittedByOperator(
         address indexed taskContractAddress,
-        uint64 indexed taskId,
+        uint64 indexed taskID,
         address sender,
         bytes taskResponse,
         bytes blsSignature,

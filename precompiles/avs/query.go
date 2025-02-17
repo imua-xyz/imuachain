@@ -73,8 +73,10 @@ func (p Precompile) GetOptedInOperatorAccAddresses(
 	}
 
 	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(avsaddress.String()))
-
-	var commonAddressList []common.Address
+	if err != nil {
+		return nil, err
+	}
+	commonAddressList := make([]common.Address, 0)
 	for _, operatorAddressStr := range list {
 		acc, err := sdk.AccAddressFromBech32(operatorAddressStr)
 		if err != nil {
@@ -82,10 +84,6 @@ func (p Precompile) GetOptedInOperatorAccAddresses(
 		}
 		operatorAddress := common.BytesToAddress(acc)
 		commonAddressList = append(commonAddressList, operatorAddress)
-	}
-
-	if err != nil {
-		return nil, err
 	}
 	return method.Outputs.Pack(commonAddressList)
 }
@@ -224,7 +222,7 @@ func (p Precompile) GetTaskInfo(
 		TaskContractAddress:     common.HexToAddress(task.TaskContractAddress),
 		Name:                    task.Name,
 		Hash:                    task.Hash,
-		TaskId:                  task.TaskId,
+		TaskID:                  task.TaskId,
 		TaskResponsePeriod:      task.TaskResponsePeriod,
 		TaskStatisticalPeriod:   task.TaskStatisticalPeriod,
 		TaskChallengePeriod:     task.TaskChallengePeriod,
@@ -242,7 +240,6 @@ func (p Precompile) GetTaskInfo(
 		EligibleSlashOperators:  p.stringToAddress(task.EligibleSlashOperators),
 	}
 	return method.Outputs.Pack(result)
-
 }
 
 func ParseActivePower(list []*avstype.OperatorActivePowerInfo) []OperatorActivePower {

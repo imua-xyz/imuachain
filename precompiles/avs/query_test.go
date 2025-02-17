@@ -535,7 +535,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 					TaskContractAddress   common.Address   `json:"taskContractAddress"`
 					Name                  string           `json:"name"`
 					Hash                  []byte           `json:"hash"`
-					TaskId                uint64           `json:"taskId"`
+					TaskID                uint64           `json:"taskID"`
 					TaskResponsePeriod    uint64           `json:"taskResponsePeriod"`
 					TaskStatisticalPeriod uint64           `json:"taskStatisticalPeriod"`
 					TaskChallengePeriod   uint64           `json:"taskChallengePeriod"`

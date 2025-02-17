@@ -266,7 +266,7 @@ func (k Keeper) CreateAVSTask(ctx sdk.Context, params *types.TaskInfoParams) (ui
 		TaskContractAddress:   strings.ToLower(params.TaskContractAddress.String()),
 		TaskId:                params.TaskID,
 		TaskChallengePeriod:   params.TaskChallengePeriod,
-		ThresholdPercentage:   params.ThresholdPercentage,
+		ThresholdPercentage:   uint64(params.ThresholdPercentage),
 		TaskResponsePeriod:    params.TaskResponsePeriod,
 		TaskStatisticalPeriod: params.TaskStatisticalPeriod,
 		StartingEpoch:         uint64(epoch.CurrentEpoch + 1),
@@ -430,7 +430,7 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 		return errorsmod.Wrap(
 			types.ErrInconsistentParams,
 			fmt.Sprintf("Task response does not match the one recorded,task addr: %s ,(TaskContractAddress: %s)"+
-				",(TaskId: %d),(TaskResponseHash: %s)",
+				",(TaskID: %d),(TaskResponseHash: %s)",
 				params.OperatorAddress, params.TaskContractAddress, params.TaskID, params.TaskResponseHash),
 		)
 	}
@@ -581,7 +581,7 @@ func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskR
 			return errorsmod.Wrap(
 				types.ErrInconsistentParams,
 				fmt.Sprintf("SetTaskResultInfo: invalid param OperatorAddress: %s ,(TaskContractAddress: %s)"+
-					",(TaskId: %d),(BlsSignature: %s)",
+					",(TaskID: %d),(BlsSignature: %s)",
 					info.OperatorAddress, info.TaskContractAddress, info.TaskId, info.BlsSignature),
 			)
 		}
@@ -608,7 +608,7 @@ func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskR
 		if err != nil || info.TaskId != resp.TaskID {
 			return errorsmod.Wrap(
 				types.ErrInconsistentParams,
-				fmt.Sprintf("SetTaskResultInfo: invalid TaskId param value:%s", info.TaskResponse),
+				fmt.Sprintf("SetTaskResultInfo: invalid TaskID param value:%s", info.TaskResponse),
 			)
 		}
 		// check bls sig

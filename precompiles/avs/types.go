@@ -147,7 +147,7 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	if !ok || thresholdPercentage > 100 {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "uint64", thresholdPercentage)
 	}
-	taskParams.ThresholdPercentage = uint64(thresholdPercentage)
+	taskParams.ThresholdPercentage = thresholdPercentage
 
 	taskStatisticalPeriod, ok := args[6].(uint64)
 	if !ok {
@@ -210,7 +210,7 @@ type TaskInfo struct {
 	TaskContractAddress     common.Address
 	Name                    string
 	Hash                    []byte
-	TaskId                  uint64
+	TaskID                  uint64
 	TaskResponsePeriod      uint64
 	TaskStatisticalPeriod   uint64
 	TaskChallengePeriod     uint64

@@ -180,7 +180,7 @@
 			{
 				"indexed": true,
 				"internalType": "uint64",
-				"name": "taskId",
+				"name": "taskID",
 				"type": "uint64"
 			},
 			{
@@ -215,9 +215,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "uint64",
+				"internalType": "uint8",
 				"name": "thresholdPercentage",
-				"type": "uint64"
+				"type": "uint8"
 			},
 			{
 				"indexed": false,
@@ -241,7 +241,7 @@
 			{
 				"indexed": true,
 				"internalType": "uint64",
-				"name": "taskId",
+				"name": "taskID",
 				"type": "uint64"
 			},
 			{
@@ -590,7 +590,7 @@
 					},
 					{
 						"internalType": "uint64",
-						"name": "taskId",
+						"name": "taskID",
 						"type": "uint64"
 					},
 					{

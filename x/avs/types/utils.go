@@ -25,7 +25,7 @@ type TaskInfoParams struct {
 	TaskResponsePeriod    uint64         `json:"task_response_period"`
 	TaskStatisticalPeriod uint64         `json:"task_statistical_period"`
 	TaskChallengePeriod   uint64         `json:"task_challenge_period"`
-	ThresholdPercentage   uint64         `json:"threshold_percentage"`
+	ThresholdPercentage   uint8          `json:"threshold_percentage"`
 	StartingEpoch         uint64         `json:"starting_epoch"`
 	OperatorAddress       sdk.AccAddress `json:"operator_address"`
 	TaskResponseHash      string         `json:"task_response_hash"`
