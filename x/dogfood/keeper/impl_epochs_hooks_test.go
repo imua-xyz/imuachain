@@ -24,6 +24,7 @@ func (suite *KeeperTestSuite) TestSameEpochOperations() {
 			FromAddress: operatorAddressString,
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: operatorAddressString,
+				ApproveAddr:  operatorAddressString,
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(
@@ -203,6 +204,7 @@ func (suite *KeeperTestSuite) TestDifferentEpochOperations() {
 			FromAddress: operatorAddressString,
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: operatorAddressString,
+				ApproveAddr:  operatorAddressString,
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(

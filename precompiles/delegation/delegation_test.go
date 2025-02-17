@@ -89,6 +89,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			FromAddress: opAccAddr,
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: opAccAddr,
+				ApproveAddr:  opAccAddr,
 			},
 		}
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -325,6 +326,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 			FromAddress: operatorAddr,
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: operatorAddr,
+				ApproveAddr:  operatorAddr,
 			},
 		}
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

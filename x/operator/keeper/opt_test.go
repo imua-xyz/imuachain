@@ -32,6 +32,7 @@ func (suite *OperatorTestSuite) registerOperator(operator string) {
 		FromAddress: operator,
 		Info: &operatorTypes.OperatorInfo{
 			EarningsAddr: operator,
+			ApproveAddr:  operator,
 		},
 	}
 	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

@@ -260,6 +260,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			OperatorInfo: operatortypes.OperatorInfo{
 				EarningsAddr:     operator1.String(),
 				OperatorMetaInfo: "operator1",
+				ApproveAddr:      operator1.String(),
 				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			},
 		},
@@ -268,6 +269,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			OperatorInfo: operatortypes.OperatorInfo{
 				EarningsAddr:     operator2.String(),
 				OperatorMetaInfo: "operator2",
+				ApproveAddr:      operator2.String(),
 				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			},
 		},

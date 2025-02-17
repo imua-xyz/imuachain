@@ -21,6 +21,7 @@ func NewValidator(operator sdk.AccAddress, pubKey cryptotypes.PubKey) (Validator
 
 	return Validator{
 		OperatorEarningsAddr: operator.String(),
+		OperatorApproveAddr:  operator.String(),
 		ConsensusPubkey:      pkAny,
 		Jailed:               false,
 		Status:               stakingtypes.Bonded,

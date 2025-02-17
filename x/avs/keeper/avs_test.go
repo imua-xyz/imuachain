@@ -167,6 +167,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 		FromAddress: operatorAddress.String(),
 		Info: &operatorTypes.OperatorInfo{
 			EarningsAddr: operatorAddress.String(),
+			ApproveAddr:  operatorAddress.String(),
 		},
 	}
 	_, err = suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)

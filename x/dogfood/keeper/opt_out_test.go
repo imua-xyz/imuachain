@@ -23,6 +23,7 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
 			EarningsAddr: operatorAddressString,
+			ApproveAddr:  operatorAddressString,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)

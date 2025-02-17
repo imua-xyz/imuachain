@@ -21,6 +21,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
 			EarningsAddr: operatorAddressString,
+			ApproveAddr:  operatorAddressString,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(
@@ -157,6 +158,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
 			EarningsAddr: operatorAddressString,
+			ApproveAddr:  operatorAddressString,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(

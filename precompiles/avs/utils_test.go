@@ -38,6 +38,7 @@ func (suite *AVSManagerPrecompileSuite) prepareOperator(addr string) {
 		FromAddress: suite.operatorAddr.String(),
 		Info: &operatorTypes.OperatorInfo{
 			EarningsAddr: suite.operatorAddr.String(),
+			ApproveAddr:  suite.operatorAddr.String(),
 		},
 	}
 	_, err = s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

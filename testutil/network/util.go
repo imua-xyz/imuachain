@@ -365,6 +365,7 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 			OperatorAddress: operatorAccAddress.String(),
 			OperatorInfo: operatortypes.OperatorInfo{
 				EarningsAddr:     operatorAccAddress.String(),
+				ApproveAddr:      operatorAccAddress.String(),
 				OperatorMetaInfo: fmt.Sprintf("operator_%d", i),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{

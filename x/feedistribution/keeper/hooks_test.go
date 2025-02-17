@@ -56,6 +56,7 @@ func (suite *KeeperTestSuite) prepare() {
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
 			EarningsAddr: operatorAddressString,
+			ApproveAddr:  operatorAddressString,
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.NewDec(1),

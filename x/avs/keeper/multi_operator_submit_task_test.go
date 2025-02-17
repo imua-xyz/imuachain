@@ -28,6 +28,7 @@ func (suite *AVSTestSuite) prepareOperators() {
 			FromAddress: opAccAddr.String(),
 			Info: &operatorTypes.OperatorInfo{
 				EarningsAddr: opAccAddr.String(),
+				ApproveAddr:  opAccAddr.String(),
 			},
 		}
 		_, err = suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
