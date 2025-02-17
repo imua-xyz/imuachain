@@ -68,7 +68,7 @@ var _ = Describe("MsgCreatePrice", func() {
 			// c = ks.ms.Keeper.GetCaches()
 			var pRes cache.ItemP
 			c.GetCache(&pRes)
-			p4Test := types.DefaultParams()
+			p4Test := DefaultParamsForTest()
 			p4Test.TokenFeeders[1].StartBaseBlock = 1
 			Expect(pRes).Should(BeEquivalentTo(p4Test))
 		})

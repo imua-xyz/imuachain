@@ -142,12 +142,16 @@ message QueryStakerInfoResponse {
 message QueryStakerInfosRequest {
   // asset id for the staker info request for
   string asset_id = 1;
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
 // QueryStakerInfosResponse is response type for Query/StakerInfo RCP method
 message QueryStakerInfosResponse {
   // all staker infos under the specified asset
   repeated StakerInfo staker_infos = 1;
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.

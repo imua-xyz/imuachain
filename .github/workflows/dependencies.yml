@@ -9,10 +9,6 @@ jobs:
   dependency-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.21.12'
-          check-latest: true
       - name: "Checkout Repository"
         uses: actions/checkout@v4
       - uses: technote-space/get-diff-action@v6.1.2

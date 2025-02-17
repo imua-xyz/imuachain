@@ -281,7 +281,7 @@ func GetAllOperatorConsAddrs() *cobra.Command {
 // QueryOperatorUSDValue queries the opted-in USD value for the operator
 func QueryOperatorUSDValue() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "QueryOperatorUSDValue <operatorAddr> <avsAddr>",
+		Use:     "operator-usd-value <operatorAddr> <avsAddr>",
 		Short:   "Get the opted-in USD value",
 		Long:    "Get the opted-in USD value for the operator",
 		Example: "exocored query operator QueryOperatorUSDValue exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
@@ -308,7 +308,7 @@ func QueryOperatorUSDValue() *cobra.Command {
 // QueryAVSUSDValue queries the USD value for the avs
 func QueryAVSUSDValue() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "QueryAVSUSDValue <avsAddr>",
+		Use:   "avs-usd-value <avsAddr>",
 		Short: "Get the USD value for the avs",
 		Long:  "Get the USD value for the avs",
 		Args:  cobra.ExactArgs(1),
@@ -339,7 +339,7 @@ func QueryAVSUSDValue() *cobra.Command {
 // QueryOperatorSlashInfo queries the slash information for the specified operator and AVS
 func QueryOperatorSlashInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "QueryOperatorSlashInfo <operatorAddr> <avsAddr>",
+		Use:     "operator-slash-info <operatorAddr> <avsAddr>",
 		Short:   "Get the the slash information for the operator",
 		Long:    "Get the the slash information for the operator",
 		Example: "exocored query operator QueryOperatorSlashInfo exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
@@ -437,7 +437,7 @@ func QueryAllAVSsByOperator() *cobra.Command {
 // GetOptInfo queries opt info
 func GetOptInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "GetOptInfo <operatorAddr> <avsAddr>",
+		Use:     "opt-info <operatorAddr> <avsAddr>",
 		Short:   "Get opt info",
 		Long:    "Get opt info of specified operator and AVS",
 		Example: "exocored query operator GetOptInfo exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
