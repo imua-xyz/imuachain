@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package exocore.dogfood.v1;
 
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
 import "exocore/dogfood/v1/dogfood.proto";
 import "exocore/dogfood/v1/params.proto";
 import "gogoproto/gogo.proto";
@@ -13,32 +15,46 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/dogfood/types";
 service Query {
   // Params queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/dogfood/v1/params";
   }
 
   // OptOutsToFinish queries the operators whose opt-outs will finish at the given epoch.
   rpc OptOutsToFinish(QueryOptOutsToFinishRequest) returns (AccountAddresses) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/dogfood/v1/opt_outs_to_finish/{epoch}";
   }
 
   // OperatorOptOutFinishEpoch queries the epoch when the operator's opt-out will finish.
   rpc OperatorOptOutFinishEpoch(QueryOperatorOptOutFinishEpochRequest) returns (QueryOperatorOptOutFinishEpochResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/dogfood/v1/operator_opt_out_finish_epoch/{operator_acc_addr}";
   }
 
   // UndelegationsToMature queries the undelegations that will mature at the given epoch.
   rpc UndelegationsToMature(QueryUndelegationsToMatureRequest) returns (UndelegationRecordKeys) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/dogfood/v1/undelegations_to_mature/{epoch}";
   }
 
   // UndelegationMaturityEpoch queries the epoch when the undelegation will mature.
   rpc UndelegationMaturityEpoch(QueryUndelegationMaturityEpochRequest) returns (QueryUndelegationMaturityEpochResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/dogfood/v1/undelegation_maturity_epoch/{record_key}";
   }
 
-  // QueryValidator queries the validator for the given consensus address.
-  rpc QueryValidator(QueryValidatorRequest) returns (ExocoreValidator) {
+  // Validator queries the validator for the given consensus address. This is the bare-minimum validator:
+  // public key, consensus address, power. No other params such as commission, jailed, etc. are included.
+  rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/dogfood/v1/validator/{cons_addr}";
+  }
+
+  // Validators queries all validators. This is the bare-minimum validator: public key, consensus address, power.
+  // No other params such as commission, jailed, etc. are included.
+  rpc Validators(QueryAllValidatorsRequest) returns (QueryAllValidatorsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/exocore/dogfood/v1/validators";
   }
 }
 
@@ -92,9 +108,29 @@ message QueryUndelegationMaturityEpochResponse {
   int64 epoch = 1;
 }
 
-// QueryValidatorRequest is request type for the Query/QueryValidator RPC method.
+// QueryValidatorRequest is request type for the Query/Validator RPC method.
 message QueryValidatorRequest {
   // cons_addr is the consensus address of the validator being queried. From the perspective of
   // this module, the acc_addr is not relevant and is thus not stored.
   string cons_addr = 1;
+}
+
+// QueryValidatorResponse is response type for the Query/Validator RPC method.
+message QueryValidatorResponse {
+  // validator is the validator being queried.
+  ExocoreValidator validator = 1;
+}
+
+// QueryAllValidatorsRequest is request type for the Query/AllValidators RPC method.
+message QueryAllValidatorsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryAllValidatorsResponse is response type for the Query/AllValidators RPC method.
+message QueryAllValidatorsResponse {
+  // validators is the list of all validators.
+  repeated ExocoreValidator validators = 1 [(gogoproto.nullable) = false];
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

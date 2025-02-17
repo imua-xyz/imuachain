@@ -37,4 +37,8 @@ const (
 	AttributeKeyTotalAmount       = "total_amount"
 	AttributeKeyTotalShare        = "total_share"
 	AttributeKeyOperatorShare     = "operator_share"
+
+	// token deposit amount updated; useful for tracking total deposited of an asset.
+	// note that this amount includes lifetime slashed quantity of that token.
+	EventTypeUpdatedStakingTotalAmount = "staking_total_amount_updated"
 )

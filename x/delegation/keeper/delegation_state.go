@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"slices"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -35,6 +36,7 @@ func (k Keeper) SetAllDelegationStates(ctx sdk.Context, delegationStates []deleg
 		singleElement := delegationStates[i]
 		bz := k.cdc.MustMarshal(&singleElement.States)
 		store.Set([]byte(singleElement.Key), bz)
+		// only used at genesis, so no events
 	}
 	return nil
 }
@@ -52,6 +54,7 @@ func (k Keeper) IterateDelegations(ctx sdk.Context, iteratorPrefix []byte, opFun
 			return err
 		}
 		isBreak, err := opFunc(keys, &amounts)
+		// read-only, so no events
 		if err != nil {
 			return err
 		}
@@ -93,8 +96,37 @@ func (k Keeper) TotalDelegatedAmountForStakerAsset(ctx sdk.Context, stakerID str
 		amount = amount.Add(singleAmount)
 		return false, nil
 	}
+	// read-only, so no event
 	err = k.IterateDelegationsForStakerAndAsset(ctx, stakerID, assetID, opFunc)
 	return amount, err
+}
+
+// GetDelegatedAmountByStakerAssetOperator returns the delegated amount for the specified staker, asset and operator.
+func (k Keeper) GetDelegatedAmountByStakerAssetOperator(
+	ctx sdk.Context, stakerID string, assetID string, operator string,
+) (amount sdkmath.Int, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
+	singleStateKey := assetstype.GetJoinedStoreKey(stakerID, assetID, operator)
+	value := store.Get(singleStateKey)
+	if value == nil {
+		return sdkmath.ZeroInt(), delegationtype.ErrNoKeyInTheStore
+	}
+	var amounts delegationtype.DelegationAmounts
+	k.cdc.MustUnmarshal(value, &amounts)
+	operatorAccAddr, err := sdk.AccAddressFromBech32(operator)
+	if err != nil {
+		return sdkmath.ZeroInt(), err
+	}
+	operatorAsset, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operatorAccAddr, assetID)
+	if err != nil {
+		return sdkmath.ZeroInt(), err
+	}
+	amount, err = TokensFromShares(amounts.UndelegatableShare, operatorAsset.TotalShare, operatorAsset.TotalAmount)
+	if err != nil {
+		return sdkmath.ZeroInt(), err
+	}
+	// read-only, so no events
+	return amount, nil
 }
 
 // AllDelegatedInfoForStakerAsset returns all delegated information of the specified staker and asset
@@ -119,6 +151,7 @@ func (k *Keeper) AllDelegatedInfoForStakerAsset(ctx sdk.Context, stakerID string
 	if err != nil {
 		return nil, err
 	}
+	// not used so no event
 	return ret, nil
 }
 
@@ -220,10 +253,9 @@ func (k *Keeper) AppendStakerForOperator(ctx sdk.Context, operator, assetID, sta
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &stakers)
 	}
-	for _, v := range stakers.Stakers {
-		if v == stakerID {
-			return nil
-		}
+	// prefer slices over sdk.SliceContains because we also need to use slices.Index
+	if slices.Contains(stakers.Stakers, stakerID) {
+		return nil
 	}
 	stakers.Stakers = append(stakers.Stakers, stakerID)
 	bz := k.cdc.MustMarshal(&stakers)
@@ -248,21 +280,20 @@ func (k *Keeper) DeleteStakerForOperator(ctx sdk.Context, operator, assetID, sta
 	}
 	value := store.Get(Key)
 	k.cdc.MustUnmarshal(value, &stakers)
-	for i, v := range stakers.Stakers {
-		if v == stakerID {
-			stakers.Stakers = append(stakers.Stakers[:i], stakers.Stakers[i+1:]...)
-			// emit event only if there is a removal.
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					delegationtype.EventTypeStakerRemoved,
-					sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
-					sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
-					sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
-				),
-			)
-			break
-		}
+	index := slices.Index(stakers.Stakers, stakerID)
+	if index == -1 {
+		// make no change if the staker is not found
+		return nil
 	}
+	stakers.Stakers = append(stakers.Stakers[:index], stakers.Stakers[index+1:]...)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			delegationtype.EventTypeStakerRemoved,
+			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
+			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
+		),
+	)
 	bz := k.cdc.MustMarshal(&stakers)
 	store.Set(Key, bz)
 	return nil
@@ -328,6 +359,7 @@ func (k Keeper) SetAllStakerList(ctx sdk.Context, stakersByOperator []delegation
 		bz := k.cdc.MustMarshal(&delegationtype.StakerList{Stakers: singleElement.Stakers})
 		store.Set([]byte(singleElement.Key), bz)
 	}
+	// only used at genesis, so no events
 	return nil
 }
 

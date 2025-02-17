@@ -8,6 +8,7 @@ import (
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // DelegateTo : It doesn't need to check the active status of the operator in middlewares when
@@ -82,8 +83,8 @@ func (k *Keeper) delegateTo(
 		// non-native case handled within UpdateStakerAssetState
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				delegationtype.EventTypeNativeDelegation,
-				sdk.NewAttribute(delegationtype.AttributeKeyStaker, sdk.AccAddress(params.StakerAddress).String()),
+				delegationtype.EventTypeExoAssetDelegation,
+				sdk.NewAttribute(delegationtype.AttributeKeyStakerID, sdk.AccAddress(params.StakerAddress).String()),
 				sdk.NewAttribute(delegationtype.AttributeKeyOperator, params.OperatorAddress.String()),
 				sdk.NewAttribute(delegationtype.AttributeKeyAmount, params.OpAmount.String()),
 			),
@@ -193,24 +194,29 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		return err
 	}
 
-	if assetID == assetstype.ExocoreAssetID {
-		// this emitted event is not the total amount; it is the additional amount.
-		// (1) indexers must add it to the last known amount to get the total amount pending undelegation.
-		// (2) the undelegated amount must be subtracted from the previously delegated amount to get the
-		// currently delegated amount not pending undelegation.
-		// non-native case handled within UpdateStakerAssetState
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				delegationtype.EventTypeNativeUndelegationStarted,
-				sdk.NewAttribute(delegationtype.AttributeKeyStaker, sdk.AccAddress(params.StakerAddress).String()),
-				sdk.NewAttribute(delegationtype.AttributeKeyOperator, params.OperatorAddress.String()),
-				sdk.NewAttribute(delegationtype.AttributeKeyAmount, params.OpAmount.String()),
-			),
-		)
-	}
+	recordKey := r.GetKey()
+	// emit an event to track the undelegation record identifiers.
+	// for the ExocoreAssetID undelegation, this event is used to track asset state as well.
+	// for other undelegations, it is instead tracked from the staker asset state.
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			delegationtype.EventTypeUndelegationStarted,
+			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, r.StakerId),
+			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, r.AssetId),
+			sdk.NewAttribute(delegationtype.AttributeKeyOperator, r.OperatorAddr),
+			sdk.NewAttribute(delegationtype.AttributeKeyRecordID, hexutil.Encode(recordKey)),
+			// the amount and ActualCompletedAmount are the same unless slashed, which does not happen within this function.
+			sdk.NewAttribute(delegationtype.AttributeKeyAmount, r.Amount.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyCompletedEpochID, r.CompletedEpochIdentifier),
+			sdk.NewAttribute(delegationtype.AttributeKeyCompletedEpochNumber, fmt.Sprintf("%d", r.CompletedEpochNumber)),
+			sdk.NewAttribute(delegationtype.AttributeKeyUndelegationID, fmt.Sprintf("%d", r.UndelegationId)),
+			sdk.NewAttribute(delegationtype.AttributeKeyTxHash, params.TxHash.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyBlockNumber, fmt.Sprintf("%d", r.BlockNumber)),
+		),
+	)
 
 	// call the hooks registered by the other modules
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, delegationtype.GetUndelegationRecordKey(r.BlockNumber, r.UndelegationId, r.TxHash, r.OperatorAddr))
+	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, recordKey)
 }
 
 // AssociateOperatorWithStaker marks that a staker is claiming to be associated with an operator.

@@ -22,6 +22,7 @@ import (
 // The key and value that will be changed is:
 // AVSAddr + '/' + operatorAddr -> types.OperatorOptedUSDValue (the total USD share of specified operator and Avs)
 // This function will be called when some assets supported by Avs are delegated/undelegated or slashed.
+// Currently this function is only called during tests.
 func (k *Keeper) UpdateOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr string, delta operatortypes.DeltaOperatorUSDInfo) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForOperator)
 	var key []byte
@@ -54,6 +55,17 @@ func (k *Keeper) UpdateOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr s
 	}
 	bz := k.cdc.MustMarshal(&usdInfo)
 	store.Set(key, bz)
+	// emit an event even though this is only used for testing right now
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeUpdateOperatorUSDValue,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operatorAddr),
+			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+			sdk.NewAttribute(operatortypes.AttributeKeySelfUSDValue, usdInfo.SelfUSDValue.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, usdInfo.TotalUSDValue.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyActiveUSDValue, usdInfo.ActiveUSDValue.String()),
+		),
+	)
 	return nil
 }
 
@@ -107,7 +119,18 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
+		parsed, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		if err != nil {
+			return err
+		}
 		store.Delete(iterator.Key())
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				operatortypes.EventTypeDeleteOperatorUSDValue,
+				sdk.NewAttribute(operatortypes.AttributeKeyOperator, parsed[1]),
+				sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+			),
+		)
 	}
 	return nil
 }
@@ -150,6 +173,7 @@ func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr
 // This function will be called when some assets of operator supported by the specified Avs
 // are delegated/undelegated or slashed. Additionally, when an operator opts out of
 // the Avs, this function also will be called.
+// Currently not used.
 func (k *Keeper) UpdateAVSUSDValue(ctx sdk.Context, avsAddr string, opAmount sdkmath.LegacyDec) error {
 	if opAmount.IsNil() || opAmount.IsZero() {
 		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("UpdateAVSUSDValue the opAmount is:%v", opAmount))
@@ -172,7 +196,7 @@ func (k *Keeper) UpdateAVSUSDValue(ctx sdk.Context, avsAddr string, opAmount sdk
 		sdk.NewEvent(
 			operatortypes.EventTypeUpdateAVSUSDValue,
 			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
-			sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, totalValue.Amount.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, totalValue.Amount.String()),
 		),
 	)
 	return nil
@@ -192,7 +216,7 @@ func (k *Keeper) SetAVSUSDValue(ctx sdk.Context, avsAddr string, amount sdkmath.
 		sdk.NewEvent(
 			operatortypes.EventTypeUpdateAVSUSDValue,
 			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
-			sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, amount.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, amount.String()),
 		),
 	)
 	return nil
@@ -256,9 +280,9 @@ func (k *Keeper) IterateOperatorsForAVS(ctx sdk.Context, avsAddr string, isUpdat
 					operatortypes.EventTypeUpdateOperatorUSDValue,
 					sdk.NewAttribute(operatortypes.AttributeKeyOperator, keys[1]),
 					sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
-					sdk.NewAttribute(operatortypes.AttributeSelfUSDValue, optedUSDValues.SelfUSDValue.String()),
-					sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, optedUSDValues.TotalUSDValue.String()),
-					sdk.NewAttribute(operatortypes.AttributeActiveUSDValue, optedUSDValues.ActiveUSDValue.String()),
+					sdk.NewAttribute(operatortypes.AttributeKeySelfUSDValue, optedUSDValues.SelfUSDValue.String()),
+					sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, optedUSDValues.TotalUSDValue.String()),
+					sdk.NewAttribute(operatortypes.AttributeKeyActiveUSDValue, optedUSDValues.ActiveUSDValue.String()),
 				),
 			)
 		}
@@ -358,7 +382,7 @@ func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context, isUpdate bool, opFunc func
 				sdk.NewEvent(
 					operatortypes.EventTypeUpdateAVSUSDValue,
 					sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, string(iterator.Key())),
-					sdk.NewAttribute(operatortypes.AttributeTotalUSDValue, usdValue.Amount.String()),
+					sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, usdValue.Amount.String()),
 				),
 			)
 		}

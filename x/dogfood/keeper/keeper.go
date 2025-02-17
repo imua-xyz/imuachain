@@ -110,6 +110,27 @@ func (k Keeper) ClearValidatorSetUpdateFlag(ctx sdk.Context) {
 	store.Delete(key)
 }
 
+// MarkEmitAvsEventFlag marks that an AVS event should be emitted in the BeginBlocker.
+func (k Keeper) MarkEmitAvsEventFlag(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.EmitAvsEventKey()
+	store.Set(key, []byte{1})
+}
+
+// ShouldEmitAvsEvent returns true if an AVS event should be emitted in the BeginBlocker.
+func (k Keeper) ShouldEmitAvsEvent(ctx sdk.Context) bool {
+	store := ctx.KVStore(k.storeKey)
+	key := types.EmitAvsEventKey()
+	return store.Has(key)
+}
+
+// ClearEmitAvsEventFlag clears the AVS event marker. It is called after the AVS event is emitted.
+func (k Keeper) ClearEmitAvsEventFlag(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.EmitAvsEventKey()
+	store.Delete(key)
+}
+
 func (k Keeper) mustValidateFields() {
 	types.PanicIfNil(k.storeKey, "storeKey")
 	types.PanicIfNil(k.cdc, "cdc")

@@ -75,6 +75,9 @@ const (
 
 	// ParamsByte is the single-byte key for the params store.
 	ParamsByte
+
+	// EmitAvsEventByte is the single-byte key for the emit AVS event store.
+	EmitAvsEventByte
 )
 
 // ExocoreValidatorKey returns the key for the validator store.
@@ -197,4 +200,9 @@ func ValidatorUpdatesKey() []byte {
 // ParamsKey returns the key for the params store.
 func ParamsKey() []byte {
 	return []byte{ParamsByte}
+}
+
+// EmitAvsEventKey returns the key for the emit AVS event store.
+func EmitAvsEventKey() []byte {
+	return []byte{EmitAvsEventByte}
 }

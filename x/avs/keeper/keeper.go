@@ -134,7 +134,19 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			WhitelistAddress: params.WhitelistAddress,
 		}
 
-		return k.SetAVSInfo(ctx, avs)
+		if err := k.SetAVSInfo(ctx, avs); err != nil {
+			return err
+		}
+		// emit the event
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeAvsCreated,
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avs.AvsAddress),
+			),
+		)
+
+		return nil
+
 	case types.DeRegisterAction:
 		if avsInfo == nil {
 			return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the avsaddress is :%s", params.AvsAddress))

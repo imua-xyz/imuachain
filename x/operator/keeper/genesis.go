@@ -24,8 +24,9 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) []abci.Va
 		operatorAddr, _ := sdk.AccAddressFromBech32(addr)
 		for _, detail := range record.Chains {
 			wrappedKey := keytypes.NewWrappedConsKeyFromHex(detail.ConsensusKey)
-			bz := k.cdc.MustMarshal(wrappedKey.ToTmProtoKey())
-			k.setOperatorConsKeyForChainIDUnchecked(ctx, operatorAddr, wrappedKey.ToConsAddr(), detail.ChainID, bz)
+			k.setOperatorConsKeyForChainIDUnchecked(
+				ctx, operatorAddr, detail.ChainID, wrappedKey,
+			)
 		}
 	}
 	// init the state from the general exporting genesis file

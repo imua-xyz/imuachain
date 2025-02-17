@@ -65,6 +65,8 @@ func (k *Keeper) GetAVSMinimumSelfDelegation(ctx sdk.Context, avsAddr string) (s
 	return sdkmath.LegacyNewDec(int64(avsInfo.Info.MinSelfDelegation)), nil
 }
 
+// GetAVSUnbondingDuration returns the unbonding number of epochs for an AVS. The name is a misnomer,
+// since it is not the duration but the number of epochs.
 func (k *Keeper) GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
@@ -143,28 +145,28 @@ func (k *Keeper) GetTaskStatisticalEpochEndAVSs(ctx sdk.Context, epochIdentifier
 // GetEpochEndAVSs, GetAVSSupportedAssets, and GetAVSMinimumSelfDelegation.
 func (k Keeper) RegisterAVSWithChainID(
 	oCtx sdk.Context, params *types.AVSRegisterOrDeregisterParams,
-) (avsAddr common.Address, err error) {
+) (exists bool, avsAddr common.Address, err error) {
 	// guard against errors
 	ctx, writeFunc := oCtx.CacheContext()
 	// remove the version number and validate
 	params.ChainID = types.ChainIDWithoutRevision(params.ChainID)
 	if len(params.ChainID) == 0 {
-		return common.Address{}, errorsmod.Wrap(types.ErrNotNull, "RegisterAVSWithChainID: chainID is null")
+		return false, common.Address{}, errorsmod.Wrap(types.ErrNotNull, "RegisterAVSWithChainID: chainID is null")
 	}
 	avsAddrStr := types.GenerateAVSAddr(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
 	// check that the AVS is registered
 	if isAvs, _ := k.IsAVS(ctx, avsAddrStr); isAvs {
-		return avsAddr, nil
+		// negligible probability that an independent AVS without this chainID exists
+		return true, avsAddr, nil
 	}
 	defer func() {
-		if err == nil {
+		if err == nil && !exists {
 			// store the reverse lookup from AVSAddress to ChainID
 			// (the forward can be generated on the fly by hashing).
 			k.SetAVSAddrToChainID(ctx, avsAddr, params.ChainID)
 			// write the cache
 			writeFunc()
-			// TODO: do events need to be handled separately? currently no events emitted so not urgent.
 		}
 	}()
 	// Mark the account as occupied by a contract, so that any transactions that originate
@@ -178,22 +180,30 @@ func (k Keeper) RegisterAVSWithChainID(
 			Nonce:    k.evmKeeper.GetNewContractNonce(ctx),
 		},
 	); err != nil {
-		return common.Address{}, err
+		return false, common.Address{}, err
 	}
 	// SetAVSInfo expects HexAddress for the AvsAddress
 	params.AvsAddress = avsAddr
 	params.Action = types.RegisterAction
 
 	if err := k.UpdateAVSInfo(ctx, params); err != nil {
-		return common.Address{}, err
+		return false, common.Address{}, err
 	}
-	return avsAddr, nil
+	return false, avsAddr, nil
 }
 
 // SetAVSAddressToChainID stores a lookup from the generated AVS address to the chainID.
 func (k Keeper) SetAVSAddrToChainID(ctx sdk.Context, avsAddr common.Address, chainID string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSAddressToChainID)
 	store.Set(avsAddr[:], []byte(chainID))
+	// emit an event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeChainAvsCreated,
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr.String()),
+		),
+	)
 }
 
 // GetChainIDByAVSAddr returns the chainID for a given AVS address. It is a stateful

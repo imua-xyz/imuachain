@@ -19,8 +19,6 @@ import (
 )
 
 const (
-	FlagEarningAddr     = "earning-addr"
-	FlagApproveAddr     = "approve-addr"
 	FlagMetaInfo        = "meta-info"
 	FlagClientChainData = "client-chain-data"
 )
@@ -75,16 +73,6 @@ func CmdRegisterOperator() *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	// EarningAddr may be different from the sender's address.
-	f.String(
-		FlagEarningAddr, "", "The address which is used to receive the earning reward in the Exocore chain. "+
-			"If not provided, it will default to the sender's address.",
-	)
-	// ApproveAddr may be different from the sender's address.
-	f.String(
-		FlagApproveAddr, "", "The address which is used to approve the delegations made to "+
-			"the operator. If not provided, it will default to the sender's address.",
-	)
 	// OperatorMetaInfo is the name of the operator.
 	f.String(
 		FlagMetaInfo, "", "The operator's meta info (like name)",
@@ -109,22 +97,15 @@ func newBuildRegisterOperatorMsg(
 	clientCtx client.Context, fs *flag.FlagSet,
 ) (*types.RegisterOperatorReq, error) {
 	sender := clientCtx.GetFromAddress()
-	// #nosec G703 // this only errors if the flag isn't defined.
-	approveAddr, _ := fs.GetString(FlagApproveAddr)
-	if approveAddr == "" {
-		approveAddr = sender.String()
-	}
-	// #nosec G703 // this only errors if the flag isn't defined.
-	earningAddr, _ := fs.GetString(FlagEarningAddr)
-	if earningAddr == "" {
-		earningAddr = sender.String()
-	}
 	metaInfo, _ := fs.GetString(FlagMetaInfo)
+	if strings.TrimSpace(metaInfo) == "" {
+		return nil, errorsmod.Wrap(types.ErrCliCmdInputArg, "meta info must be provided")
+	}
 	msg := &types.RegisterOperatorReq{
 		FromAddress: sender.String(),
 		Info: &types.OperatorInfo{
-			EarningsAddr:     earningAddr,
-			ApproveAddr:      approveAddr,
+			EarningsAddr:     sender.String(),
+			ApproveAddr:      sender.String(),
 			OperatorMetaInfo: metaInfo,
 		},
 	}

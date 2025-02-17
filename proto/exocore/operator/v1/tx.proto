@@ -12,6 +12,9 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 
 // DecValueField is a field that holds a value of sdk.LegacyDec type.
 message DecValueField {
+  // remove the default stringer for DecValueField and instead implement
+  // amount.String() to get the string value.
+  option (gogoproto.goproto_stringer) = false;
   // amount is the USD value of the asset, as an sdk.LegacyDec.
   string amount = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",

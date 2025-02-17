@@ -36,6 +36,7 @@ func GetQueryCmd() *cobra.Command {
 		QueryAssociatedOperatorByStaker(),
 		QueryAssociatedStakersByOperator(),
 		QueryDelegatedStakersByOperator(),
+		QueryDelegatedAmount(),
 	)
 	return cmd
 }
@@ -324,6 +325,47 @@ func QueryDelegatedStakersByOperator() *cobra.Command {
 				AssetId:  assetID,
 			}
 			res, err := queryClient.QueryDelegatedStakersByOperator(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func QueryDelegatedAmount() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "QueryDelegatedAmount <stakerID> <assetID> <operatorAddr>",
+		Short: "Get the delegated amount for the specified staker, asset and operator",
+		Long:  "Get the delegated amount for the specified staker, asset and operator",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			stakerID := strings.ToLower(args[0])
+			if _, _, err := types.ValidateID(stakerID, false, false); err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+			assetID := strings.ToLower(args[1])
+			if _, _, err := types.ValidateID(assetID, false, false); err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+			accAddr, err := sdk.AccAddressFromBech32(args[2])
+			if err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+			queryClient := delegationtype.NewQueryClient(clientCtx)
+			req := &delegationtype.QueryDelegatedAmountRequest{
+				StakerId: stakerID,
+				AssetId:  assetID,
+				Operator: accAddr.String(),
+			}
+			res, err := queryClient.QueryDelegatedAmount(context.Background(), req)
 			if err != nil {
 				return err
 			}

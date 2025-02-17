@@ -33,6 +33,16 @@ func (k Keeper) UpdateStakingAssetTotalAmount(ctx sdk.Context, assetID string, c
 	}
 	bz := k.cdc.MustMarshal(&ret)
 	store.Set(key, bz)
+
+	// emit event for indexers
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			assetstype.EventTypeUpdatedStakingTotalAmount,
+			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, ret.StakingTotalAmount.String()),
+		),
+	)
+
 	return nil
 }
 
@@ -68,6 +78,7 @@ func (k Keeper) SetStakingAssetInfo(ctx sdk.Context, info *assetstype.StakingAss
 			sdk.NewAttribute(assetstype.AttributeKeyLZID, fmt.Sprintf("%d", info.AssetBasicInfo.LayerZeroChainID)),
 			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, info.AssetBasicInfo.MetaInfo),
 			sdk.NewAttribute(assetstype.AttributeKeyExocoreChainIdx, fmt.Sprintf("%d", info.AssetBasicInfo.ExocoreChainIndex)),
+			sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, info.StakingTotalAmount.String()),
 		),
 	)
 	return nil

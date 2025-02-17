@@ -10,7 +10,6 @@ import (
 	"github.com/ExocoreNetwork/exocore/utils"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
@@ -52,6 +51,7 @@ func (k Keeper) UpdateParams(
 			"UpdateParams",
 			"overriding EpochsUntilUnbonded with value", prevParams.EpochsUntilUnbonded,
 		)
+		// any changes to this param will not affect existing undelegations
 		nextParams.EpochsUntilUnbonded = prevParams.EpochsUntilUnbonded
 	}
 	if nextParams.MaxValidators == 0 {
@@ -61,9 +61,8 @@ func (k Keeper) UpdateParams(
 		)
 		nextParams.MaxValidators = prevParams.MaxValidators
 	}
-	if err := epochstypes.ValidateEpochIdentifierInterface(
-		nextParams.EpochIdentifier,
-	); err != nil {
+	// forbid editing the epoch
+	if nextParams.EpochIdentifier != prevParams.EpochIdentifier {
 		logger.Info(
 			"UpdateParams",
 			"overriding EpochIdentifier with value", prevParams.EpochIdentifier,
@@ -92,13 +91,7 @@ func (k Keeper) UpdateParams(
 		nextParams.MinSelfDelegation = prevParams.MinSelfDelegation
 	}
 	// now do stateful validations
-	if _, found := k.epochsKeeper.GetEpochInfo(c, nextParams.EpochIdentifier); !found {
-		logger.Info(
-			"UpdateParams",
-			"overriding EpochIdentifier with value", prevParams.EpochIdentifier,
-		)
-		nextParams.EpochIdentifier = prevParams.EpochIdentifier
-	}
+	// no need to validate the epoch identifier, since it is prohibited to change that.
 	override := false
 	for _, assetID := range nextParams.AssetIDs {
 		if !k.restakingKeeper.IsStakingAsset(c, strings.ToLower(assetID)) {

@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strconv"
+
 	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -18,12 +20,21 @@ func (k Keeper) SetOptOutInformation(
 
 // AppendOptOutToFinish appends an operator address to the list of operator addresses that have
 // opted out and will be finished at the end of the provided epoch.
+// The caller must ensure that the operator address is not already in the list.
 func (k Keeper) AppendOptOutToFinish(
 	ctx sdk.Context, epoch int64, operatorAddr sdk.AccAddress,
 ) {
 	prev := k.GetOptOutsToFinish(ctx, epoch)
 	next := types.AccountAddresses{List: append(prev, operatorAddr)}
 	k.setOptOutsToFinish(ctx, epoch, next)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOptOutBegan,
+			sdk.NewAttribute(types.AttributeKeyEpoch, strconv.FormatInt(epoch, 10)),
+			sdk.NewAttribute(types.AttributeKeyOperator, operatorAddr.String()),
+		),
+	)
 }
 
 // GetOptOutsToFinish returns the list of operator addresses that have opted out and will be
@@ -65,6 +76,12 @@ func (k Keeper) ClearOptOutsToFinish(ctx sdk.Context, epoch int64) {
 	store := ctx.KVStore(k.storeKey)
 	key, _ := types.OptOutsToFinishKey(epoch)
 	store.Delete(key)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeOptOutsFinished,
+			sdk.NewAttribute(types.AttributeKeyEpoch, strconv.FormatInt(epoch, 10)),
+		),
+	)
 }
 
 // GetAllOptOutsToFinish gets a list of epochs and the corresponding operator addresses
@@ -139,6 +156,13 @@ func (k Keeper) AppendConsensusAddrToPrune(
 	prev := k.GetConsensusAddrsToPrune(ctx, epoch)
 	next := types.ConsensusAddresses{List: append(prev, operatorAddr)}
 	k.setConsensusAddrsToPrune(ctx, epoch, next)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeConsAddrPruningScheduled,
+			sdk.NewAttribute(types.AttributeKeyEpoch, strconv.FormatInt(epoch, 10)),
+			sdk.NewAttribute(types.AttributeKeyConsAddr, operatorAddr.String()),
+		),
+	)
 }
 
 // GetConsensusAddrsToPrune returns the list of consensus addresses to prune at the end of the
@@ -165,6 +189,12 @@ func (k Keeper) ClearConsensusAddrsToPrune(ctx sdk.Context, epoch int64) {
 	store := ctx.KVStore(k.storeKey)
 	key, _ := types.ConsensusAddrsToPruneKey(epoch)
 	store.Delete(key)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeConsAddrsPruned,
+			sdk.NewAttribute(types.AttributeKeyEpoch, strconv.FormatInt(epoch, 10)),
+		),
+	)
 }
 
 // setConsensusAddrsToPrune sets the list of consensus addresses to prune at the end of the

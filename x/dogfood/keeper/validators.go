@@ -322,6 +322,12 @@ func (k Keeper) SetLastTotalPower(ctx sdk.Context, power math.Int) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&sdk.IntProto{Int: power})
 	store.Set(types.LastTotalPowerKey(), bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeLastTotalPowerUpdated,
+			sdk.NewAttribute(types.AttributeKeyLastTotalPower, power.String()),
+		),
+	)
 }
 
 // SetValidatorUpdates sets the ABCI validator power updates for the current block.

@@ -32,12 +32,13 @@ func (k Keeper) InitGenesis(
 	// the staking assets are validated during AVS registration so we skip it here
 	k.SetParams(ctx, genState.Params)
 	// create the AVS
+	var exists bool
 	var avsAddr common.Address
 	var err error
 	// the avs module will remove the revision by itself, but we do it here anyway because we need it
 	// to look up operator registration status after this - which is keyed by chainID without revision.
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	if avsAddr, err = k.avsKeeper.RegisterAVSWithChainID(ctx, &avstypes.AVSRegisterOrDeregisterParams{
+	if exists, avsAddr, err = k.avsKeeper.RegisterAVSWithChainID(ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:           chainIDWithoutRevision,
 		AssetID:           genState.Params.AssetIDs,
 		UnbondingPeriod:   uint64(genState.Params.EpochsUntilUnbonded),
@@ -47,12 +48,18 @@ func (k Keeper) InitGenesis(
 	}); err != nil {
 		panic(fmt.Errorf("could not create the dogfood AVS: %s", err))
 	}
-	avsAddrString := avsAddr.String()
 	k.Logger(ctx).Info(
 		"created dogfood avs",
-		"avsAddrString", avsAddrString,
+		"avsAddrString", avsAddr.String(),
 		"chainIDWithoutRevision", chainIDWithoutRevision,
 	)
+	if !exists {
+		// defer an event for BeginBlock, since InitGenesis events are discarded.
+		// this is unique to x/dogfood, since other modules do not initialize AVSs in InitGenesis,
+		// unless that AVS already exists in genesis.json, in which case it is picked up by the
+		// indexer directly anyway.
+		k.MarkEmitAvsEventFlag(ctx)
+	}
 	// create the validators
 	out := make([]keytypes.WrappedConsKeyWithPower, 0, len(genState.ValSet))
 	for _, val := range genState.ValSet {

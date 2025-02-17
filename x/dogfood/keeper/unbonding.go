@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strconv"
+
 	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -32,6 +34,14 @@ func (k Keeper) AppendUndelegationToMature(
 		List: append(prev, recordKey),
 	}
 	k.setUndelegationsToMature(ctx, epoch, next)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUndelegationMaturityScheduled,
+			sdk.NewAttribute(types.AttributeKeyEpoch, strconv.FormatInt(epoch, 10)),
+			sdk.NewAttribute(types.AttributeKeyRecordID, hexutil.Encode(recordKey)),
+		),
+	)
 }
 
 // GetUndelegationsToMature returns all undelegation entries that should be released
@@ -61,6 +71,12 @@ func (k Keeper) ClearUndelegationsToMature(
 	store := ctx.KVStore(k.storeKey)
 	key, _ := types.UnbondingReleaseMaturityKey(epoch)
 	store.Delete(key)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUndelegationsMatured,
+			sdk.NewAttribute(types.AttributeKeyEpoch, strconv.FormatInt(epoch, 10)),
+		),
+	)
 }
 
 // setUndelegationsToMature sets all undelegation entries that should be released

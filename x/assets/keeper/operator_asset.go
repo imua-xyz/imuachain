@@ -146,12 +146,13 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 		if err != nil {
 			return err
 		}
+		assetID := keys[1]
 		if assetsFilter != nil {
-			if _, ok := assetsFilter[keys[1]]; !ok {
+			if _, ok := assetsFilter[assetID]; !ok {
 				continue
 			}
 		}
-		err = opFunc(keys[1], &amounts)
+		err = opFunc(assetID, &amounts)
 		if err != nil {
 			return err
 		}
@@ -159,6 +160,17 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 			// store the updated state
 			bz := k.cdc.MustMarshal(&amounts)
 			store.Set(iterator.Key(), bz)
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					assetstype.EventTypeUpdatedOperatorAsset,
+					sdk.NewAttribute(assetstype.AttributeKeyOperatorAddress, operator),
+					sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+					sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, amounts.TotalAmount.String()),
+					sdk.NewAttribute(assetstype.AttributeKeyPendingUndelegationAmount, amounts.PendingUndelegationAmount.String()),
+					sdk.NewAttribute(assetstype.AttributeKeyTotalShare, amounts.TotalShare.String()),
+					sdk.NewAttribute(assetstype.AttributeKeyOperatorShare, amounts.OperatorShare.String()),
+				),
+			)
 		}
 	}
 	return nil

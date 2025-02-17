@@ -1,15 +1,10 @@
 package types
 
 const (
-	// delegation of exo native asset, since UpdateStakerAssetState us not called for this case
-	EventTypeNativeDelegation = "native_delegation"
-	AttributeKeyStaker        = "staker"
-	AttributeKeyOperator      = "operator"
-	AttributeKeyAmount        = "amount"
-	// undelegation started for exo native asset
-	EventTypeNativeUndelegationStarted = "native_undelegation_started"
-	// undelegation completed for exo native asset
-	EventTypeNativeUndelegationCompleted = "native_undelegation_completed"
+	// delegation of exo native asset, since UpdateStakerAssetState is not called for this case
+	EventTypeExoAssetDelegation = "exo_asset_delegation"
+	AttributeKeyOperator        = "operator"
+	AttributeKeyAmount          = "amount"
 
 	// delegation state
 	EventTypeDelegationStateUpdated    = "delegation_state_updated"
@@ -27,4 +22,22 @@ const (
 	// staker operator association
 	EventTypeOperatorAssociated    = "operator_associated"
 	EventTypeOperatorDisassociated = "operator_disassociated"
+
+	// undelegation
+	EventTypeUndelegationStarted     = "undelegation_started"
+	AttributeKeyRecordID             = "record_id"
+	AttributeKeyCompletedEpochID     = "completed_epoch_id"
+	AttributeKeyCompletedEpochNumber = "completed_epoch_number"
+	AttributeKeyUndelegationID       = "undelegation_id"
+	AttributeKeyTxHash               = "tx_hash"
+	AttributeKeyBlockNumber          = "block_number"
+
+	// undelegation matured
+	EventTypeUndelegationMatured          = "undelegation_matured"
+	AttributeKeyWithdrawableAmount        = "withdrawable_amount"
+	AttributeKeyPendingUndelegationAmount = "pending_undelegation_amount"
+
+	// undelegation held back or released
+	EventTypeUndelegationHoldCountChanged = "undelegation_hold_count_changed"
+	AttributeKeyHoldCount                 = "hold_count"
 )
