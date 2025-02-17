@@ -20823,86 +20823,6 @@
         ]
       }
     },
-    "/exocore/delegation/v1/delegated_amount/{staker_id}/{asset_id}/{operator}": {
-      "get": {
-        "summary": "QueryDelegatedAmount queries the delegated amount for the specified staker, asset and operator.",
-        "operationId": "QueryDelegatedAmount",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "amount": {
-                  "type": "string",
-                  "title": "amount is the returned delegated amount"
-                }
-              },
-              "title": "QueryDelegatedAmountResponse is the response to QueryDelegatedAmountRequest"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "staker_id",
-            "description": "staker_id is the staker id.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "asset_id",
-            "description": "asset_id is the asset id.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "operator",
-            "description": "operator is the operator address.",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
     "/exocore/delegation/v1/delegated_stakers/{operator}/{asset_id}": {
       "get": {
         "summary": "QueryDelegatedStakersByOperator queries the delegated stakers for the specified operator",
@@ -43930,16 +43850,6 @@
         }
       },
       "title": "QueryAssociatedStakersByOperatorResponse is the response to QueryAssociatedStakersByOperatorReq"
-    },
-    "exocore.delegation.v1.QueryDelegatedAmountResponse": {
-      "type": "object",
-      "properties": {
-        "amount": {
-          "type": "string",
-          "title": "amount is the returned delegated amount"
-        }
-      },
-      "title": "QueryDelegatedAmountResponse is the response to QueryDelegatedAmountRequest"
     },
     "exocore.delegation.v1.QueryDelegatedStakersByOperatorResponse": {
       "type": "object",
