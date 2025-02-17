@@ -338,9 +338,9 @@ func QueryDelegatedStakersByOperator() *cobra.Command {
 
 func QueryDelegatedAmount() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "QueryDelegatedAmount <stakerID> <assetID> <operatorAddr>",
-		Short: "Get the delegated amount for the specified staker, asset and operator",
-		Long:  "Get the delegated amount for the specified staker, asset and operator",
+		Use:   "delegated-amount <stakerID> <assetID> <operatorAddr>",
+		Short: "Get the delegated amount for the specified stakerID, assetID and operatorAddr",
+		Long:  "Get the delegated amount for the specified stakerID, assetID and operatorAddr",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
