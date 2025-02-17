@@ -170,27 +170,6 @@ message QueryDelegatedStakersByOperatorResponse {
   repeated string stakers = 2;
 }
 
-// QueryDelegatedAmountRequest is the request to obtain the delegated amount for the specified staker, asset
-// and operator.
-message QueryDelegatedAmountRequest {
-  // staker_id is the staker id.
-  string staker_id = 1;
-  // asset_id is the asset id.
-  string asset_id = 2;
-  // operator is the operator address.
-  string operator = 3;
-}
-
-// QueryDelegatedAmountResponse is the response to QueryDelegatedAmountRequest
-message QueryDelegatedAmountResponse {
-  // amount is the returned delegated amount
-  string amount = 1 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-}
-
 // Query is the service API for the delegation module.
 service Query {
   // DelegationInfo queries the delegation information for {stakerID, assetID}.
@@ -243,9 +222,4 @@ service Query {
     option (google.api.http).get = "/exocore/delegation/v1/delegated_stakers/{operator}/{asset_id}";
   }
 
-  // QueryDelegatedAmount queries the delegated amount for the specified staker, asset and operator.
-  rpc QueryDelegatedAmount(QueryDelegatedAmountRequest) returns (QueryDelegatedAmountResponse) {
-    option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/exocore/delegation/v1/delegated_amount/{staker_id}/{asset_id}/{operator}";
-  }
 }

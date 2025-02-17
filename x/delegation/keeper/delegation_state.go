@@ -109,34 +109,6 @@ func (k Keeper) TotalDelegatedAmountForStakerAsset(ctx sdk.Context, stakerID str
 	return amount, err
 }
 
-// GetDelegatedAmountByStakerAssetOperator returns the delegated amount for the specified staker, asset and operator.
-func (k Keeper) GetDelegatedAmountByStakerAssetOperator(
-	ctx sdk.Context, stakerID string, assetID string, operator string,
-) (amount sdkmath.Int, err error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
-	singleStateKey := assetstype.GetJoinedStoreKey(stakerID, assetID, operator)
-	value := store.Get(singleStateKey)
-	if value == nil {
-		return sdkmath.ZeroInt(), delegationtype.ErrNoKeyInTheStore
-	}
-	var amounts delegationtype.DelegationAmounts
-	k.cdc.MustUnmarshal(value, &amounts)
-	operatorAccAddr, err := sdk.AccAddressFromBech32(operator)
-	if err != nil {
-		return sdkmath.ZeroInt(), err
-	}
-	operatorAsset, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operatorAccAddr, assetID)
-	if err != nil {
-		return sdkmath.ZeroInt(), err
-	}
-	amount, err = TokensFromShares(amounts.UndelegatableShare, operatorAsset.TotalShare, operatorAsset.TotalAmount)
-	if err != nil {
-		return sdkmath.ZeroInt(), err
-	}
-	// read-only, so no events
-	return amount, nil
-}
-
 // AllDelegatedInfoForStakerAsset returns all delegated information of the specified staker and asset
 // the key of return value is the operator address, and the value is the asset amount.
 func (k *Keeper) AllDelegatedInfoForStakerAsset(ctx sdk.Context, stakerID string, assetID string) (map[string]sdkmath.Int, error) {

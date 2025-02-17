@@ -120,6 +120,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 
 	// slash from the assets pool of the operator, emits operator asset info status event.
 	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
+		// iterate over each operator + asset and reduce the total amount by the slash amount
 		slashAmount := newSlashProportion.MulInt(state.TotalAmount).TruncateInt()
 		remainingAmount := state.TotalAmount.Sub(slashAmount)
 		// todo: consider slash all assets if the remaining amount is too small,
@@ -152,6 +153,14 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 			AssetID: assetID,
 			Amount:  slashAmount,
 		})
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeOperatorAssetSlashed,
+				sdk.NewAttribute(types.AttributeKeyOperator, parameter.Operator.String()),
+				sdk.NewAttribute(types.AttributeKeyAssetID, assetID),
+				sdk.NewAttribute(types.AttributeKeyAmount, slashAmount.String()),
+			),
+		)
 		return nil
 	}
 	err = k.assetsKeeper.IterateAssetsForOperator(ctx, true, parameter.Operator.String(), nil, opFuncToIterateAssets)

@@ -48,8 +48,6 @@ const (
 	AttributeKeyAmount           = "amount"
 	AttributeKeySlashAmount      = "slash_amount"
 
-	// not tracked in the indexer yet, since overall (combined) slashing effect
-	// is not tracked.
-	EventTypeOperatorSlashed = "operator_slashed"
-	AttributeKeySlashID      = "slash_id"
+	EventTypeOperatorAssetSlashed = "operator_asset_slashed"
+	AttributeKeyAssetID           = "asset_id"
 )

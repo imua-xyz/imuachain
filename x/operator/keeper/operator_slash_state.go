@@ -48,15 +48,7 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 	// save single operator delegation state
 	bz := k.cdc.MustMarshal(&slashInfo)
 	store.Set(slashInfoKey, bz)
-	// TODO: add more attributes to this event and consider them for indexing
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			operatortypes.EventTypeOperatorSlashed,
-			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operatorAddr),
-			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
-			sdk.NewAttribute(operatortypes.AttributeKeySlashID, slashID),
-		),
-	)
+	// TODO: add an event for the slash info
 	return nil
 }
 

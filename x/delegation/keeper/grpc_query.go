@@ -97,14 +97,3 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 		Stakers: stakers.Stakers,
 	}, nil
 }
-
-func (k Keeper) QueryDelegatedAmount(ctx context.Context, req *delegationtype.QueryDelegatedAmountRequest) (*delegationtype.QueryDelegatedAmountResponse, error) {
-	c := sdk.UnwrapSDKContext(ctx)
-	amount, err := k.GetDelegatedAmountByStakerAssetOperator(c, req.StakerId, req.AssetId, req.Operator)
-	if err != nil {
-		return nil, err
-	}
-	return &delegationtype.QueryDelegatedAmountResponse{
-		Amount: amount,
-	}, nil
-}
