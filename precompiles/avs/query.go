@@ -67,12 +67,12 @@ func (p Precompile) GetOptedInOperatorAccAddresses(
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetOptinOperators].Inputs), len(args))
 	}
 
-	avsaddress, ok := args[0].(common.Address)
-	if !ok || avsaddress == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsaddress)
+	avsAddress, ok := args[0].(common.Address)
+	if !ok || avsAddress == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
 
-	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(avsaddress.String()))
+	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(avsAddress.String()))
 	if err != nil {
 		return nil, err
 	}
