@@ -528,19 +528,35 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 				}
 			},
 			func(bz []byte) {
-				fmt.Println("post........")
-				//result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetTaskInfo, bz)
-				/*taskInfo := result[0].(struct {
-					Name          string   `json:"name"`
-					Symbol        string   `json:"symbol"`
-					ClientChainID uint32   `json:"clientChainID"`
-					TokenID       []byte   `json:"tokenID"`
-					Decimals      uint8    `json:"decimals"`
-					TotalStaked   *big.Int `json:"totalStaked"`
+
+				result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetTaskInfo, bz)
+				s.Require().NoError(err)
+				taskInfo := result[0].(struct {
+					TaskContractAddress   common.Address   `json:"taskContractAddress"`
+					Name                  string           `json:"name"`
+					Hash                  []byte           `json:"hash"`
+					TaskId                uint64           `json:"taskId"`
+					TaskResponsePeriod    uint64           `json:"taskResponsePeriod"`
+					TaskStatisticalPeriod uint64           `json:"taskStatisticalPeriod"`
+					TaskChallengePeriod   uint64           `json:"taskChallengePeriod"`
+					ThresholdPercentage   uint8            `json:"thresholdPercentage"`
+					StartingEpoch         uint64           `json:"startingEpoch"`
+					ActualThreshold       string           `json:"actualThreshold"`
+					OptInOperators        []common.Address `json:"optInOperators"`
+					SignedOperators       []common.Address `json:"signedOperators"`
+					NoSignedOperators     []common.Address `json:"noSignedOperators"`
+					ErrSignedOperators    []common.Address `json:"errSignedOperators"`
+					TaskTotalPower        string           `json:"taskTotalPower"`
+					OperatorActivePower   []struct {
+						Operator common.Address `json:"operator"`
+						Power    *big.Int       `json:"power"`
+					} `json:"operatorActivePower"`
+					IsExpected              bool             `json:"isExpected"`
+					EligibleRewardOperators []common.Address `json:"eligibleRewardOperators"`
+					EligibleSlashOperators  []common.Address `json:"eligibleSlashOperators"`
 				})
-				fmt.Println(taskInfo)*/
-				//fmt.Println(result)
-				//suite.Require().NoError(err, "failed to unpack output", err)
+				suite.Require().Equal(taskInfo.TaskContractAddress, common.HexToAddress(taskAddress))
+				suite.Require().NoError(err, "failed to unpack output", err)
 			},
 			100000,
 			false,

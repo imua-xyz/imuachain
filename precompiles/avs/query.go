@@ -215,12 +215,60 @@ func (p Precompile) GetTaskInfo(
 		}
 		return nil, err
 	}
+	var param []*avstype.OperatorActivePowerInfo
+	if task.OperatorActivePower != nil {
+		param = task.OperatorActivePower.OperatorPowerList
+	}
 	// Pack the values into the struct
 	result := TaskInfo{
-		TaskName: task.Name,
+		TaskContractAddress:     common.HexToAddress(task.TaskContractAddress),
+		Name:                    task.Name,
+		Hash:                    task.Hash,
+		TaskId:                  task.TaskId,
+		TaskResponsePeriod:      task.TaskResponsePeriod,
+		TaskStatisticalPeriod:   task.TaskStatisticalPeriod,
+		TaskChallengePeriod:     task.TaskChallengePeriod,
+		ThresholdPercentage:     uint8(task.ThresholdPercentage),
+		StartingEpoch:           task.StartingEpoch,
+		ActualThreshold:         task.ActualThreshold,
+		OptInOperators:          p.stringToAddress(task.OptInOperators),
+		SignedOperators:         p.stringToAddress(task.SignedOperators),
+		NoSignedOperators:       p.stringToAddress(task.NoSignedOperators),
+		ErrSignedOperators:      p.stringToAddress(task.ErrSignedOperators),
+		TaskTotalPower:          task.TaskTotalPower.String(),
+		OperatorActivePower:     ParseActivePower(param),
+		IsExpected:              task.IsExpected,
+		EligibleRewardOperators: p.stringToAddress(task.EligibleRewardOperators),
+		EligibleSlashOperators:  p.stringToAddress(task.EligibleSlashOperators),
 	}
 	return method.Outputs.Pack(result)
 
+}
+
+func ParseActivePower(list []*avstype.OperatorActivePowerInfo) []OperatorActivePower {
+	if len(list) == 0 {
+		return nil
+	}
+	result := make([]OperatorActivePower, len(list))
+	for i, info := range list {
+		result[i] = OperatorActivePower{
+			Operator: common.HexToAddress(info.OperatorAddress),
+			Power:    info.SelfActivePower.BigInt(),
+		}
+	}
+	return result
+}
+
+// stringToAddress is a helper function to convert a slice of strings to a slice of common.Address.
+func (p Precompile) stringToAddress(addresses []string) []common.Address {
+	if len(addresses) == 0 {
+		return nil
+	}
+	result := make([]common.Address, len(addresses))
+	for i, address := range addresses {
+		result[i] = common.HexToAddress(address)
+	}
+	return result
 }
 
 // GetCurrentEpoch obtain the specified current epoch based on epochIdentifier.

@@ -207,9 +207,27 @@ func CheckOriginAndSender(contract *vm.Contract, origin common.Address, sender c
 }
 
 type TaskInfo struct {
-	TaskName string
+	TaskContractAddress     common.Address
+	Name                    string
+	Hash                    []byte
+	TaskId                  uint64
+	TaskResponsePeriod      uint64
+	TaskStatisticalPeriod   uint64
+	TaskChallengePeriod     uint64
+	ThresholdPercentage     uint8
+	StartingEpoch           uint64
+	ActualThreshold         string
+	OptInOperators          []common.Address
+	SignedOperators         []common.Address
+	NoSignedOperators       []common.Address
+	ErrSignedOperators      []common.Address
+	TaskTotalPower          string
+	OperatorActivePower     []OperatorActivePower
+	IsExpected              bool
+	EligibleRewardOperators []common.Address
+	EligibleSlashOperators  []common.Address
 }
 type OperatorActivePower struct {
-	Operator common.Address `json:"operator"`
-	Power    *big.Int       `json:"power"`
+	Operator common.Address
+	Power    *big.Int
 }
