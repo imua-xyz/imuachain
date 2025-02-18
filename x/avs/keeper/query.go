@@ -50,7 +50,7 @@ func (k Keeper) QueryChallengeInfo(ctx context.Context, req *types.QueryChalleng
 		return &types.QueryChallengeInfoResponse{}, err
 	}
 
-	addr, err := k.GetTaskChallengedInfo(c, req.OperatorAddress, req.TaskAddress, id)
+	addr, err := k.GetTaskChallengedInfo(c, req.TaskAddress, id)
 	return &types.QueryChallengeInfoResponse{
 		ChallengeAddress: addr,
 	}, err

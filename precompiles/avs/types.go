@@ -231,3 +231,24 @@ type OperatorActivePower struct {
 	Operator common.Address
 	Power    *big.Int
 }
+
+type TaskResultInfo struct {
+	OperatorAddress     common.Address
+	TaskResponseHash    string
+	TaskResponse        []byte
+	BlsSignature        []byte
+	TaskContractAddress common.Address
+	TaskID              uint64
+	Phase               uint8
+}
+
+type OperatorResInfo struct {
+	TaskContractAddress common.Address
+	TaskID              uint64
+	OperatorAddress     common.Address
+	TaskResponseHash    string
+	TaskResponse        []byte
+	BlsSignature        []byte
+	Power               *big.Int
+	Phase               uint8
+}

@@ -76,6 +76,27 @@ struct OperatorActivePower {
     uint256 power;
 }
 
+struct TaskResultInfo {
+    address operatorAddress;
+    string taskResponseHash;
+    bytes taskResponse;
+    bytes blsSignature;
+    address taskContractAddress;
+    uint64 taskID;
+    uint8 phase;
+}
+
+struct OperatorResInfo {
+    address taskContractAddress;
+    uint64 taskID;
+    address operatorAddress;
+    string taskResponseHash;
+    bytes taskResponse;
+    bytes blsSignature;
+    uint256 power;
+    uint8 phase;
+}
+
 interface IAVSManager {
     // note:string and bytes will be hashed. address / uintX will not be hashed when using indexed.
     event AVSRegistered(address indexed avsAddress, address sender, string avsName);
@@ -95,7 +116,13 @@ interface IAVSManager {
         uint64 taskStatisticalPeriod
     );
     event ChallengeInitiated(
-        address sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, address operatorAddress
+        uint64 indexed taskID,
+        address indexed taskContractAddress,
+        address sender,
+        uint8 actualThreshold,
+        bool isExpected,
+        address[] eligibleRewardOperators,
+        address[] eligibleSlashOperators
     );
     event PublicKeyRegistered(address sender, address avsAddress);
     event TaskSubmittedByOperator(
@@ -118,7 +145,7 @@ interface IAVSManager {
     /// @dev Deregister avs from exo
     /// @param sender The external address for calling this method.
     /// @param avsName The name of AVS.
-    function deregisterAVS(address sender, string memory avsName) external returns (bool success);
+    function deregisterAVS(address sender, string calldata avsName) external returns (bool success);
 
     /// @dev RegisterOperatorToAVS operator opt in current avs
     /// @param sender The external address for calling this method.
@@ -138,7 +165,7 @@ interface IAVSManager {
     /// @param taskStatisticalPeriod The statistical period for the task.
     function createTask(
         address sender,
-        string memory name,
+        string calldata name,
         bytes calldata hash,
         uint64 taskResponsePeriod,
         uint64 taskChallengePeriod,
@@ -148,16 +175,20 @@ interface IAVSManager {
 
     /// @dev challenge ,  this function enables a challenger to raise and resolve a challenge.
     /// @param sender The external address for calling this method.
-    /// @param taskHash The data supplied by the contract, usually ABI-encoded.
     /// @param taskID The id of task.
-    /// @param taskResponseHash The hash of task response.
-    /// @param operatorAddress operator address.
+    /// @param taskContractAddress is contract address of task.
+    /// @param actualThreshold is the Actual threshold
+    /// @param isExpected indicates whether the task meets expectations
+    /// @param eligibleRewardOperators list of operator that are eligible for rewards,the contract deployed by avs provides validation rules
+    /// @param eligibleSlashOperators  list of operator that are eligible for slash,the contract deployed by avs provides validation rules
     function challenge(
         address sender,
-        bytes calldata taskHash,
         uint64 taskID,
-        bytes calldata taskResponseHash,
-        address operatorAddress
+        address taskContractAddress,
+        uint8 actualThreshold,
+        bool isExpected,
+        address[] calldata eligibleRewardOperators,
+        address[] calldata eligibleSlashOperators
     ) external returns (bool success);
 
     /// @dev Called by the avs manager service register an operator as the owner of a BLS public key.
@@ -234,7 +265,15 @@ interface IAVSManager {
 
     /// @dev getCurrentEpoch obtain the specified current epoch based on epochIdentifier.
     /// @param epochIdentifier  is a descriptive or unique identifier for the epoch
-    function getCurrentEpoch(string memory epochIdentifier) external view returns (int64 currentEpoch);
+    function getCurrentEpoch(string calldata epochIdentifier) external view returns (int64 currentEpoch);
+
+    /// @dev getOperatorTaskResponseList  is a function to query task result which operator submit.
+    /// @param taskAddress The address of the avs task
+    /// @param taskID The id of task.
+    function getOperatorTaskResponseList(address taskAddress, uint64 taskID)
+        external
+        view
+        returns (OperatorResInfo[] memory operatorResInfo);
 
     /// @dev getOperatorTaskResponse  is a function to query task result which operator submit.
     /// @param taskAddress The address of the avs task
@@ -243,5 +282,10 @@ interface IAVSManager {
     function getOperatorTaskResponse(address taskAddress, address operator, uint64 taskID)
         external
         view
-        returns (bytes memory taskResponse);
+        returns (TaskResultInfo memory taskResultInfo);
+
+    /// @dev getChallengeInfo  is a function to query task result which operator submit.
+    /// @param taskAddress The address of the avs task
+    /// @param taskID The id of task.
+    function getChallengeInfo(address taskAddress, uint64 taskID) external view returns (address challenger);
 }

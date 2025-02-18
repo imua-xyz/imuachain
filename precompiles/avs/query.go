@@ -23,10 +23,13 @@ const (
 	MethodGetAVSUSDValue           = "getAVSUSDValue"
 	MethodGetOperatorOptedUSDValue = "getOperatorOptedUSDValue"
 
-	MethodGetAVSEpochIdentifier = "getAVSEpochIdentifier"
-	MethodGetTaskInfo           = "getTaskInfo"
-	MethodIsOperator            = "isOperator"
-	MethodGetCurrentEpoch       = "getCurrentEpoch"
+	MethodGetAVSEpochIdentifier       = "getAVSEpochIdentifier"
+	MethodGetTaskInfo                 = "getTaskInfo"
+	MethodIsOperator                  = "isOperator"
+	MethodGetCurrentEpoch             = "getCurrentEpoch"
+	MethodGetOperatorTaskResponseList = "getOperatorTaskResponseList"
+	MethodGetOperatorTaskResponse     = "getOperatorTaskResponse"
+	MethodGetChallengeInfo            = "getChallengeInfo"
 )
 
 func (p Precompile) GetRegisteredPubkey(
@@ -207,10 +210,6 @@ func (p Precompile) GetTaskInfo(
 
 	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddress.String())
 	if err != nil {
-		// if the avs does not exist, return empty array
-		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
-			return method.Outputs.Pack("")
-		}
 		return nil, err
 	}
 	var param []*avstype.OperatorActivePowerInfo
@@ -263,7 +262,8 @@ func (p Precompile) stringToAddress(addresses []string) []common.Address {
 	}
 	result := make([]common.Address, len(addresses))
 	for i, address := range addresses {
-		result[i] = common.HexToAddress(address)
+		accAddress, _ := sdk.AccAddressFromBech32(address)
+		result[i] = common.BytesToAddress(accAddress)
 	}
 	return result
 }
@@ -287,4 +287,128 @@ func (p Precompile) GetCurrentEpoch(
 		return nil, errorsmod.Wrap(avstype.ErrNoKeyInTheStore, fmt.Sprintf("GetCurrentEpoch: epochIdentifier is %s", epochIdentifier))
 	}
 	return method.Outputs.Pack(epoch.CurrentEpoch)
+}
+
+func (p Precompile) GetOperatorTaskResponseList(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != len(p.ABI.Methods[MethodGetOperatorTaskResponseList].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetOperatorTaskResponseList].Inputs), len(args))
+	}
+	taskAddress, ok := args[0].(common.Address)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
+	}
+	taskID, ok := args[1].(uint64)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", taskID)
+	}
+
+	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddress.String())
+	if err != nil {
+		return nil, err
+	}
+
+	resList := make([]OperatorResInfo, 0)
+
+	for _, accAddress := range task.SignedOperators {
+		bech32, err := sdk.AccAddressFromBech32(accAddress)
+		if err != nil {
+			return nil, err
+		}
+		res, err := p.avsKeeper.GetTaskResultInfo(ctx, accAddress, taskAddress.String(), taskID)
+		if err != nil {
+			return nil, err
+		}
+		power := common.Big0
+		for _, a := range task.OperatorActivePower.OperatorPowerList {
+			if a.OperatorAddress == accAddress {
+				power = a.SelfActivePower.BigInt()
+				break
+			}
+		}
+		// Pack the values into the struct
+		result := OperatorResInfo{
+			TaskContractAddress: taskAddress,
+			TaskID:              taskID,
+			OperatorAddress:     common.BytesToAddress(bech32),
+			TaskResponseHash:    res.TaskResponseHash,
+			TaskResponse:        res.TaskResponse,
+			BlsSignature:        res.BlsSignature,
+			Power:               power,
+			Phase:               uint8(res.Phase),
+		}
+
+		resList = append(resList, result)
+	}
+	return method.Outputs.Pack(resList)
+}
+
+func (p Precompile) GetOperatorTaskResponse(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != len(p.ABI.Methods[MethodGetOperatorTaskResponse].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetOperatorTaskResponse].Inputs), len(args))
+	}
+	taskAddress, ok := args[0].(common.Address)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
+	}
+	operatorAddress, ok := args[1].(common.Address)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", operatorAddress)
+	}
+	taskID, ok := args[2].(uint64)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "uint64", taskID)
+	}
+	var accAddress sdk.AccAddress = operatorAddress[:]
+
+	res, err := p.avsKeeper.GetTaskResultInfo(ctx, accAddress.String(), taskAddress.String(), taskID)
+	if err != nil {
+		return nil, err
+	}
+	// Pack the values into the struct
+	result := TaskResultInfo{
+		OperatorAddress:     operatorAddress,
+		TaskResponseHash:    res.TaskResponseHash,
+		TaskResponse:        res.TaskResponse,
+		BlsSignature:        res.BlsSignature,
+		TaskContractAddress: taskAddress,
+		TaskID:              taskID,
+		Phase:               uint8(res.Phase),
+	}
+	return method.Outputs.Pack(result)
+}
+
+func (p Precompile) GetChallengeInfo(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	if len(args) != len(p.ABI.Methods[MethodGetChallengeInfo].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetChallengeInfo].Inputs), len(args))
+	}
+	taskAddress, ok := args[0].(common.Address)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
+	}
+	taskID, ok := args[1].(uint64)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", taskID)
+	}
+
+	addr, err := p.avsKeeper.GetTaskChallengedInfo(ctx, taskAddress.String(), taskID)
+	if err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(common.HexToAddress(addr))
 }

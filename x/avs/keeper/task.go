@@ -285,10 +285,10 @@ func (k Keeper) GroupTasksByIDAndAddress(tasks []types.TaskResultInfo) map[strin
 
 // SetTaskChallengedInfo is used to store the challenger's challenge information.
 func (k *Keeper) SetTaskChallengedInfo(
-	ctx sdk.Context, taskID uint64, operatorAddress, challengeAddr string,
+	ctx sdk.Context, taskID uint64, challengeAddr string,
 	taskAddr common.Address,
 ) (err error) {
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskAddr.String()),
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskAddr.String()),
 		strconv.FormatUint(taskID, 10))
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
@@ -301,19 +301,19 @@ func (k *Keeper) SetTaskChallengedInfo(
 	return nil
 }
 
-func (k *Keeper) IsExistTaskChallengedInfo(ctx sdk.Context, operatorAddress, taskContractAddress string, taskID uint64) bool {
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskContractAddress),
+func (k *Keeper) IsExistTaskChallengedInfo(ctx sdk.Context, taskContractAddress string, taskID uint64) bool {
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
 	return store.Has(infoKey)
 }
 
-func (k *Keeper) GetTaskChallengedInfo(ctx sdk.Context, operatorAddress, taskContractAddress string, taskID uint64) (addr string, err error) {
+func (k *Keeper) GetTaskChallengedInfo(ctx sdk.Context, taskContractAddress string, taskID uint64) (addr string, err error) {
 	if !common.IsHexAddress(taskContractAddress) {
 		return "", types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskContractAddress),
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	value := store.Get(infoKey)
 	if value == nil {

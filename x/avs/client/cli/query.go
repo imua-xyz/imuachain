@@ -1,4 +1,3 @@
-//nolint:dupl
 package cli
 
 import (
@@ -163,11 +162,11 @@ func QuerySubmitTaskResult() *cobra.Command {
 
 func QueryChallengeInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "ChallengeInfo <task-address-in-hex> <task-id> <operator-addreess>",
-		Short:   "Query the ChallengeInfo by taskAddr  taskID operatorAddr",
+		Use:     "ChallengeInfo <task-address-in-hex> <task-id>",
+		Short:   "Query the ChallengeInfo by taskAddr and taskID",
 		Long:    "Query the currently Challenge Info  ",
-		Example: "exocored query avs ChallengeInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 exo1mq6pj6f5tafmgkk6lehew5radfq3w20gpegzs5",
-		Args:    cobra.ExactArgs(3),
+		Example: "exocored query avs ChallengeInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2",
+		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
 				return xerrors.Errorf("invalid address,err:%s", types.ErrInvalidAddr)
@@ -179,9 +178,8 @@ func QueryChallengeInfo() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryChallengeInfoReq{
-				TaskAddress:     args[0],
-				TaskId:          args[1],
-				OperatorAddress: args[2],
+				TaskAddress: args[0],
+				TaskId:      args[1],
 			}
 			res, err := queryClient.QueryChallengeInfo(context.Background(), &req)
 			if err != nil {

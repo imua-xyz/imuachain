@@ -238,11 +238,13 @@ func (p Precompile) EmitTaskCreated(ctx sdk.Context, stateDB vm.StateDB, task *a
 func (p Precompile) EmitChallengeInitiated(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.ChallengeParams) error {
 	arguments := p.ABI.Events[EventTypeChallengeInitiated].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeChallengeInitiated, arguments,
-		common.Address(params.CallerAddress),
-		params.TaskHash,
 		params.TaskID,
-		params.TaskResponseHash,
-		params.OperatorAddress.String())
+		params.TaskContractAddress,
+		common.Address(params.CallerAddress),
+		params.ActualThreshold,
+		params.IsExpected,
+		params.EligibleRewardOperators,
+		params.EligibleSlashOperators)
 }
 
 func (p Precompile) EmitPublicKeyRegistered(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.BlsParams) error {

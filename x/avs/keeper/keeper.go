@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"slices"
 	"strconv"
@@ -407,39 +406,21 @@ func (k Keeper) GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.Epoc
 
 func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.ChallengeParams) error {
 	taskInfo, err := k.GetTaskInfo(ctx, strconv.FormatUint(params.TaskID, 10), params.TaskContractAddress.String())
-	if err != nil {
+	if err != nil || taskInfo == nil {
 		return fmt.Errorf("task does not exist,this task address: %s", params.TaskContractAddress)
 	}
-	// check Task
-	if hex.EncodeToString(taskInfo.Hash) != hex.EncodeToString(params.TaskHash) {
-		return errorsmod.Wrap(err, fmt.Sprintf("error Task hasn't been responded to yet: %s", params.TaskContractAddress))
+	// check task isExpected
+	if taskInfo.IsExpected {
+		return fmt.Errorf("the task has been finished: %s", params.TaskContractAddress)
 	}
-	// check Task result
-	res, err := k.GetTaskResultInfo(ctx, params.OperatorAddress.String(), params.TaskContractAddress.String(),
-		params.TaskID)
-	if err != nil {
-		return fmt.Errorf("task result does not exist, this task address: %s", params.TaskContractAddress)
-	}
-	taskRes, err := types.UnmarshalTaskResponse(res.TaskResponse)
-	if err != nil {
-		return errorsmod.Wrap(err, fmt.Sprintf("error occurred when unmarshal task response, this task address: %s", params.TaskContractAddress))
-	}
-	hash, err := types.GetTaskResponseDigestEncodeByAbi(taskRes)
-
-	if err != nil || res.TaskId != params.TaskID || hex.EncodeToString(hash[:]) != hex.EncodeToString(params.TaskResponseHash) {
-		return errorsmod.Wrap(
-			types.ErrInconsistentParams,
-			fmt.Sprintf("Task response does not match the one recorded,task addr: %s ,(TaskContractAddress: %s)"+
-				",(TaskID: %d),(TaskResponseHash: %s)",
-				params.OperatorAddress, params.TaskContractAddress, params.TaskID, params.TaskResponseHash),
-		)
+	// check task OptInOperators count
+	if len(taskInfo.OptInOperators) < 1 {
+		return fmt.Errorf("this task has no opted-in operators: %s", params.TaskContractAddress)
 	}
 	// check challenge record
-	if k.IsExistTaskChallengedInfo(ctx, params.OperatorAddress.String(),
-		params.TaskContractAddress.String(), params.TaskID) {
+	if k.IsExistTaskChallengedInfo(ctx, params.TaskContractAddress.String(), params.TaskID) {
 		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the challenge has been raised: %s", params.TaskContractAddress))
 	}
-
 	// check challenge period
 	//  check epoch，The challenge must be within the challenge window period
 	avsInfo := k.GetAVSInfoByTaskAddress(ctx, taskInfo.TaskContractAddress)
@@ -457,14 +438,17 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 			fmt.Sprintf("SetTaskResultInfo:the challenge period has not started , CurrentEpoch:%d", epoch.CurrentEpoch),
 		)
 	}
-	if epoch.CurrentEpoch > int64(taskInfo.StartingEpoch)+int64(taskInfo.TaskResponsePeriod)+int64(taskInfo.TaskStatisticalPeriod)+int64(taskInfo.TaskChallengePeriod) {
-		return errorsmod.Wrap(
-			types.ErrSubmitTooLateError,
-			fmt.Sprintf("SetTaskResultInfo:submit  too late, CurrentEpoch:%d", epoch.CurrentEpoch),
-		)
+
+	err = k.SetTaskChallengedInfo(ctx, params.TaskID, params.CallerAddress.String(), params.TaskContractAddress)
+	if err != nil {
+		return err
 	}
-	return k.SetTaskChallengedInfo(ctx, params.TaskID, params.OperatorAddress.String(), params.CallerAddress.String(),
-		params.TaskContractAddress)
+
+	taskInfo.ActualThreshold = strconv.Itoa(int(params.ActualThreshold))
+	taskInfo.IsExpected = uint64(params.ActualThreshold) >= taskInfo.ThresholdPercentage
+	taskInfo.EligibleRewardOperators = types.AddressToString(params.EligibleRewardOperators)
+	taskInfo.EligibleSlashOperators = types.AddressToString(params.EligibleSlashOperators)
+	return k.SetTaskInfo(ctx, taskInfo)
 }
 
 func (k *Keeper) GetAllAVSInfos(ctx sdk.Context) ([]types.AVSInfo, error) {
@@ -603,14 +587,6 @@ func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskR
 		// calculate hash by original task
 		taskResponseDigest := crypto.Keccak256Hash(info.TaskResponse)
 		info.TaskResponseHash = taskResponseDigest.String()
-		// check taskID
-		resp, err := types.UnmarshalTaskResponse(info.TaskResponse)
-		if err != nil || info.TaskId != resp.TaskID {
-			return errorsmod.Wrap(
-				types.ErrInconsistentParams,
-				fmt.Sprintf("SetTaskResultInfo: invalid TaskID param value:%s", info.TaskResponse),
-			)
-		}
 		// check bls sig
 		flag, err := blst.VerifySignature(info.BlsSignature, taskResponseDigest, pubKey)
 		if !flag || err != nil {

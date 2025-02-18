@@ -214,6 +214,24 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
 			bz, err = method.Outputs.Pack(int64(0))
 		}
+	case MethodGetOperatorTaskResponse:
+		bz, err = p.GetOperatorTaskResponse(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(nil)
+		}
+	case MethodGetOperatorTaskResponseList:
+		bz, err = p.GetOperatorTaskResponseList(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(nil)
+		}
+	case MethodGetChallengeInfo:
+		bz, err = p.GetChallengeInfo(ctx, contract, method, args)
+		if err != nil {
+			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			bz, err = method.Outputs.Pack(common.Address{})
+		}
 	}
 
 	if err != nil {

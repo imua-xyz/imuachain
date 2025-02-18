@@ -237,31 +237,42 @@ func (p Precompile) Challenge(
 	}
 	challengeParams.CallerAddress = callerAddress[:]
 
-	taskHash, ok := args[1].([]byte)
+	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "[]byte", taskHash)
-	}
-	challengeParams.TaskHash = taskHash
-
-	taskID, ok := args[2].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "uint64", taskID)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", args[1])
 	}
 	challengeParams.TaskID = taskID
 
-	taskResponseHash, ok := args[3].([]byte)
+	taskAddress, ok := args[2].(common.Address)
+	if !ok || (taskAddress == common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "common.Address", taskAddress)
+	}
+	challengeParams.TaskContractAddress = taskAddress
+
+	actualThreshold, ok := args[3].(uint8)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", taskResponseHash)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "uint8", actualThreshold)
 	}
-	challengeParams.TaskResponseHash = taskResponseHash
+	challengeParams.ActualThreshold = actualThreshold
 
-	operatorAddress, ok := args[4].(common.Address)
-	if !ok || operatorAddress == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", operatorAddress)
+	isExpected, ok := args[4].(bool)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "bool", isExpected)
 	}
-	operator := operatorAddress[:]
+	challengeParams.IsExpected = isExpected
 
-	challengeParams.OperatorAddress = operator
+	eligibleRewardOperators, ok := args[5].([]common.Address)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "[]common.Address", eligibleRewardOperators)
+	}
+	challengeParams.EligibleRewardOperators = eligibleRewardOperators
+
+	eligibleSlashOperators, ok := args[6].([]common.Address)
+	if !ok {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]common.Address", eligibleSlashOperators)
+	}
+
+	challengeParams.EligibleSlashOperators = eligibleSlashOperators
 	err := p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
 	if err != nil {
 		return nil, err
