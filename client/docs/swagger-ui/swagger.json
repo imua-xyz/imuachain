@@ -22846,6 +22846,11 @@
                                 "type": "string",
                                 "format": "int64",
                                 "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                              },
+                              "historical_voting_power": {
+                                "type": "string",
+                                "format": "int64",
+                                "description": "the historical voting power at the time of the slash event."
                               }
                             }
                           }
@@ -44569,6 +44574,11 @@
               "type": "string",
               "format": "int64",
               "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+            },
+            "historical_voting_power": {
+              "type": "string",
+              "format": "int64",
+              "description": "the historical voting power at the time of the slash event."
             }
           }
         }
@@ -44669,6 +44679,11 @@
                   "type": "string",
                   "format": "int64",
                   "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                },
+                "historical_voting_power": {
+                  "type": "string",
+                  "format": "int64",
+                  "description": "the historical voting power at the time of the slash event."
                 }
               }
             }
@@ -45087,6 +45102,11 @@
                         "type": "string",
                         "format": "int64",
                         "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                      },
+                      "historical_voting_power": {
+                        "type": "string",
+                        "format": "int64",
+                        "description": "the historical voting power at the time of the slash event."
                       }
                     }
                   }
@@ -45495,6 +45515,11 @@
           "type": "string",
           "format": "int64",
           "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+        },
+        "historical_voting_power": {
+          "type": "string",
+          "format": "int64",
+          "description": "the historical voting power at the time of the slash event."
         }
       },
       "title": "SlashExecutionInfo is the actual execution state for a slash event"
