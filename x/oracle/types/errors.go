@@ -15,6 +15,7 @@ const (
 	getPriceFailedRoundNotFound
 	updateNativeTokenVirtualPriceFail
 	nstAssetNotSurpported
+	invalidPageLimit
 )
 
 // x/oracle module sentinel errors
@@ -27,4 +28,5 @@ var (
 	ErrGetPriceRoundNotFound             = sdkerrors.Register(ModuleName, getPriceFailedRoundNotFound, "get price failed for round not found")
 	ErrUpdateNativeTokenVirtualPriceFail = sdkerrors.Register(ModuleName, updateNativeTokenVirtualPriceFail, "update native token balance change failed")
 	ErrNSTAssetNotSupported              = sdkerrors.Register(ModuleName, nstAssetNotSurpported, "nstAsset not supported")
+	ErrInvalidPagination                 = sdkerrors.Register(ModuleName, invalidPageLimit, "params for pagination is invalid")
 )

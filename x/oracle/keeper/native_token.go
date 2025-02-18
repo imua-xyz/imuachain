@@ -11,7 +11,10 @@ import (
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // deposit: update staker's totalDeposit
@@ -70,24 +73,30 @@ func (k Keeper) GetStakerInfo(ctx sdk.Context, assetID, stakerAddr string) types
 	return stakerInfo
 }
 
-// TODO: pagination
 // GetStakerInfos returns all stakers information
-func (k Keeper) GetStakerInfos(ctx sdk.Context, assetID string) (ret []*types.StakerInfo) {
-	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, types.NativeTokenStakerKeyPrefix(assetID))
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
+func (k Keeper) GetStakerInfos(ctx sdk.Context, req *types.QueryStakerInfosRequest) (*types.QueryStakerInfosResponse, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.NativeTokenStakerKeyPrefix(req.AssetId))
+	retStakerInfos := make([]*types.StakerInfo, 0)
+	if req.Pagination != nil && req.Pagination.Limit > types.MaxPageLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "pagination limit %d exceeds maximum allowed %d", req.Pagination.Limit, types.MaxPageLimit)
+	}
+	resPage, err := query.Paginate(store, req.Pagination, func(_ []byte, value []byte) error {
 		sInfo := types.StakerInfo{}
-		k.cdc.MustUnmarshal(iterator.Value(), &sInfo)
+		k.cdc.MustUnmarshal(value, &sInfo)
 		// keep only the latest effective-balance
 		if len(sInfo.BalanceList) > 0 {
 			sInfo.BalanceList = sInfo.BalanceList[len(sInfo.BalanceList)-1:]
 		}
-		// this is mainly used by price feeder, so we remove the stakerAddr to reduce the size of return value
-		sInfo.StakerAddr = ""
-		ret = append(ret, &sInfo)
+		retStakerInfos = append(retStakerInfos, &sInfo)
+		return nil
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "paginate: %v", err)
 	}
-	return ret
+	return &types.QueryStakerInfosResponse{
+		StakerInfos: retStakerInfos,
+		Pagination:  resPage,
+	}, nil
 }
 
 // GetAllStakerInfosAssets returns all stakerInfos combined with assetIDs they belong to, used for genesisstate exporting
@@ -242,7 +251,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	if newBalance.Balance <= 0 {
 		store.Delete(key)
 	} else {
-		stakerInfo.BalanceList = append(stakerInfo.BalanceList, &newBalance)
+		stakerInfo.Append(&newBalance)
 		bz := k.cdc.MustMarshal(stakerInfo)
 		store.Set(key, bz)
 	}

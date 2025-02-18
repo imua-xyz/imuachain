@@ -26,9 +26,17 @@ func CmdQueryStakerInfos() *cobra.Command {
 			if _, _, err := assetstypes.ValidateID(assetID, true, false); err != nil {
 				return err
 			}
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+			if pageReq.Limit > types.MaxPageLimit {
+				return types.ErrInvalidPagination.Wrapf("QueryStgakerInfos max page limitation is %d, got %d", types.MaxPageLimit, pageReq.Limit)
+			}
 
 			request := &types.QueryStakerInfosRequest{
-				AssetId: assetID,
+				AssetId:    assetID,
+				Pagination: pageReq,
 			}
 
 			res, err := queryClient.StakerInfos(cmd.Context(), request)

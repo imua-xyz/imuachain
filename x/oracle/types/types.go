@@ -48,6 +48,8 @@ const (
 	DefaultPriceDecimal = 0
 
 	NSTIDPrefix = "NST"
+
+	MaxPageLimit = 100
 )
 
 var DelimiterForCombinedKey = byte('/')

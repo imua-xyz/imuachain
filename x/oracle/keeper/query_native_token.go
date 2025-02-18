@@ -24,8 +24,7 @@ func (k Keeper) StakerInfos(goCtx context.Context, req *types.QueryStakerInfosRe
 		return nil, ErrUnsupportedAsset
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	stakerInfos := k.GetStakerInfos(ctx, req.AssetId)
-	return &types.QueryStakerInfosResponse{StakerInfos: stakerInfos}, nil
+	return k.GetStakerInfos(ctx, req)
 }
 
 func (k Keeper) StakerInfo(goCtx context.Context, req *types.QueryStakerInfoRequest) (*types.QueryStakerInfoResponse, error) {
