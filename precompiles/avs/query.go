@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	MethodGetRegisteredPubkey      = "getRegisteredPubkey"
-	MethodGetOptinOperators        = "getOptInOperators"
+	MethodGetRegisteredPubKey      = "getRegisteredPubkey"
+	MethodGetOptInOperators        = "getOptInOperators"
 	MethodGetAVSUSDValue           = "getAVSUSDValue"
 	MethodGetOperatorOptedUSDValue = "getOperatorOptedUSDValue"
 
@@ -32,24 +32,24 @@ const (
 	MethodGetChallengeInfo            = "getChallengeInfo"
 )
 
-func (p Precompile) GetRegisteredPubkey(
+func (p Precompile) GetRegisteredPubKey(
 	ctx sdk.Context,
 	_ *vm.Contract,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	if len(args) != len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetRegisteredPubkey].Inputs), len(args))
+	if len(args) != len(p.ABI.Methods[MethodGetRegisteredPubKey].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetRegisteredPubKey].Inputs), len(args))
 	}
-	opratorAddress, ok := args[0].(common.Address)
-	if !ok || opratorAddress == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", opratorAddress)
+	operatorAddress, ok := args[0].(common.Address)
+	if !ok || operatorAddress == (common.Address{}) {
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddress)
 	}
 	avsAddress, ok := args[1].(common.Address)
 	if !ok {
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
 	}
-	var accAddress sdk.AccAddress = opratorAddress[:]
+	var accAddress sdk.AccAddress = operatorAddress[:]
 	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddress.String(), avsAddress.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
@@ -66,8 +66,8 @@ func (p Precompile) GetOptedInOperatorAccAddresses(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	if len(args) != len(p.ABI.Methods[MethodGetOptinOperators].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetOptinOperators].Inputs), len(args))
+	if len(args) != len(p.ABI.Methods[MethodGetOptInOperators].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodGetOptInOperators].Inputs), len(args))
 	}
 
 	avsAddress, ok := args[0].(common.Address)
@@ -315,7 +315,7 @@ func (p Precompile) GetOperatorTaskResponseList(
 	resList := make([]OperatorResInfo, 0)
 
 	for _, accAddress := range task.SignedOperators {
-		bech32, err := sdk.AccAddressFromBech32(accAddress)
+		tempAddress, err := sdk.AccAddressFromBech32(accAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -334,7 +334,7 @@ func (p Precompile) GetOperatorTaskResponseList(
 		result := OperatorResInfo{
 			TaskContractAddress: taskAddress,
 			TaskID:              taskID,
-			OperatorAddress:     common.BytesToAddress(bech32),
+			OperatorAddress:     common.BytesToAddress(tempAddress),
 			TaskResponseHash:    res.TaskResponseHash,
 			TaskResponse:        res.TaskResponse,
 			BlsSignature:        res.BlsSignature,

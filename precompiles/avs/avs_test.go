@@ -582,7 +582,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 	}
 
 	setUp := func() {
-		avs := &types.AVSInfo{
+		avsInfo := &types.AVSInfo{
 			Name:                avsName,
 			AvsAddress:          suite.Address.String(),
 			SlashAddress:        slashAddress,
@@ -601,10 +601,10 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 			AvsSlash:            sdk.MustNewDecFromStr(strconv.Itoa(int(params[2]))),
 		}
 
-		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
+		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avsInfo)
 		suite.NoError(err)
 	}
-	optin := func() {
+	optIn := func() {
 		operatorParams := &types.OperatorOptParams{}
 		operatorParams.OperatorAddress = operatorAddress
 		operatorParams.AvsAddress = suite.Address
@@ -637,7 +637,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 			malleate: func() (common.Address, []byte) {
 				registerOperator()
 				setUp()
-				optin()
+				optIn()
 				return commonMalleate()
 			},
 			readOnly:    false,

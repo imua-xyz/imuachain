@@ -60,7 +60,7 @@ var baseTestCases = []avsTestCases{
 }
 
 func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddress() {
-	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptinOperators]
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptInOperators]
 	operatorAddress, avsAddress, slashContract := "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph", suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 
 	operatorOptIn := func() {
@@ -95,7 +95,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddress() {
 			},
 			func(bz []byte) {
 				var out []string
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptinOperators, bz)
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptInOperators, bz)
 				suite.Require().NoError(err, "failed to unpack output", err)
 				suite.Require().Equal(0, len(out))
 			},
@@ -113,7 +113,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddress() {
 			},
 			func(bz []byte) {
 				var out []common.Address
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptinOperators, bz)
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptInOperators, bz)
 				suite.Require().NoError(err, "failed to unpack output", err)
 				suite.Require().Equal(1, len(out))
 				acc, err := sdk.AccAddressFromBech32(operatorAddress)
@@ -322,7 +322,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 }
 
 func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
-	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubkey]
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubKey]
 	privateKey, err := blst.RandKey()
 	suite.NoError(err)
 	address := utiltx.GenerateAddress()
@@ -352,7 +352,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 			},
 			func(bz []byte) {
 				var out []byte
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetRegisteredPubkey, bz)
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetRegisteredPubKey, bz)
 				suite.Require().NoError(err, "failed to unpack output", err)
 				suite.Require().Equal(48, len(out))
 				suite.Require().Equal(publicKey.Marshal(), out)
@@ -368,7 +368,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 		suite.Run(tc.name, func() {
 			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
 
-			bz, err := suite.precompile.GetRegisteredPubkey(suite.Ctx, contract, &method, tc.malleate())
+			bz, err := suite.precompile.GetRegisteredPubKey(suite.Ctx, contract, &method, tc.malleate())
 
 			if tc.expErr {
 				suite.Require().Error(err)

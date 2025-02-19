@@ -62,7 +62,6 @@ func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.
 	}
 	avsParams.RewardContractAddress = avsPayload.AVSParams.RewardAddress
 
-	// bech32
 	if avsPayload.AVSParams.AvsOwnerAddresses == nil {
 		return nil, fmt.Errorf("the contract input parameter AvsOwnerAddresses error,value:%v", avsPayload.AVSParams.AvsOwnerAddresses)
 	}
@@ -72,7 +71,6 @@ func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.
 		exoAddresses[i] = accAddress.String()
 	}
 	avsParams.AvsOwnerAddresses = exoAddresses
-	// bech32
 
 	if avsPayload.AVSParams.WhitelistAddresses == nil {
 		return nil, fmt.Errorf("the contract input parameter WhitelistAddresses error,value:%v", avsPayload.AVSParams.WhitelistAddresses)

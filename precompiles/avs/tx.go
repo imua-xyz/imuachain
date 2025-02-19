@@ -84,11 +84,8 @@ func (p Precompile) DeregisterAVS(
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", avsName)
 	}
 	avsParams.AvsName = avsName
-
 	avsParams.AvsAddress = contract.CallerAddress
 	avsParams.Action = avstypes.DeRegisterAction
-	// validates that this is owner
-
 	err := p.avsKeeper.UpdateAVSInfo(ctx, avsParams)
 	if err != nil {
 		return nil, err
@@ -193,7 +190,7 @@ func (p Precompile) UnbindOperatorToAVS(
 	return method.Outputs.Pack(true)
 }
 
-// CreateAVSTask Middleware uses exocore's default avstask template to create tasks in avstask module.
+// CreateAVSTask Middleware uses exocore's default avs task template to create tasks in avs task module.
 func (p Precompile) CreateAVSTask(
 	ctx sdk.Context,
 	_ common.Address,
@@ -217,7 +214,7 @@ func (p Precompile) CreateAVSTask(
 	return method.Outputs.Pack(taskID)
 }
 
-// Challenge Middleware uses exocore's default avstask template to create tasks in avstask module.
+// Challenge Middleware uses exocore's default avs task template to create tasks in avs task module.
 func (p Precompile) Challenge(
 	ctx sdk.Context,
 	_ common.Address,
@@ -284,7 +281,6 @@ func (p Precompile) Challenge(
 	return method.Outputs.Pack(true)
 }
 
-// RegisterBLSPublicKey
 func (p Precompile) RegisterBLSPublicKey(
 	ctx sdk.Context,
 	_ common.Address,
@@ -308,23 +304,23 @@ func (p Precompile) RegisterBLSPublicKey(
 	}
 	blsParams.AvsAddress = avsAddress
 
-	pubkeyBz, ok := args[2].([]byte)
+	pubKeyBz, ok := args[2].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", pubkeyBz)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", pubKeyBz)
 	}
-	blsParams.PubKey = pubkeyBz
+	blsParams.PubKey = pubKeyBz
 
-	pubkeyRegistrationSignature, ok := args[3].([]byte)
+	pubKeyRegistrationSignature, ok := args[3].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", pubkeyRegistrationSignature)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", pubKeyRegistrationSignature)
 	}
-	blsParams.PubkeyRegistrationSignature = pubkeyRegistrationSignature
+	blsParams.PubkeyRegistrationSignature = pubKeyRegistrationSignature
 
-	pubkeyRegistrationMessageHash, ok := args[4].([]byte)
+	pubKeyRegistrationMessageHash, ok := args[4].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "[]byte", pubkeyRegistrationMessageHash)
+		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "[]byte", pubKeyRegistrationMessageHash)
 	}
-	blsParams.PubkeyRegistrationMessageHash = pubkeyRegistrationMessageHash
+	blsParams.PubkeyRegistrationMessageHash = pubKeyRegistrationMessageHash
 
 	err := p.avsKeeper.RegisterBLSPublicKey(ctx, blsParams)
 	if err != nil {
