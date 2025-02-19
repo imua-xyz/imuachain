@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -40,6 +39,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	chainID := uint64(0)
 	for id, c := range p.Chains {
 		if c.Name == oInfo.Chain.Name {
+			// #nosec G115
 			chainID = uint64(id)
 			break
 		}
@@ -50,6 +50,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 			Name: oInfo.Chain.Name,
 			Desc: oInfo.Chain.Desc,
 		})
+		// #nosec G115
 		chainID = uint64(len(p.Chains) - 1)
 	}
 	decimalInt, err := strconv.ParseInt(oInfo.Token.Decimal, 10, 32)
@@ -67,16 +68,18 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		intervalInt = defaultInterval
 	}
 
+	defer func() {
+		if !ctx.IsCheckTx() {
+			k.SetParamsUpdated()
+		}
+	}()
+
 	for _, t := range p.Tokens {
 		// token exists, bind assetID for this token
 		// it's possible for  one price bonded with multiple assetID, like ETHUSDT from sepolia/mainnet
 		if t.Name == oInfo.Token.Name && t.ChainID == chainID {
 			t.AssetID = strings.Join([]string{t.AssetID, oInfo.AssetID}, ",")
 			k.SetParams(ctx, p)
-			if !ctx.IsCheckTx() {
-				_ = k.GetAggregatorContext(ctx)
-				k.GetCaches().AddCache(cache.ItemP(p))
-			}
 			// there should have been existing tokenFeeder running(currently we register tokens from assets-module and with infinite endBlock)
 			return nil
 		}
@@ -94,10 +97,12 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 
 	// set a tokenFeeder for the new token
 	p.TokenFeeders = append(p.TokenFeeders, &types.TokenFeeder{
+		// #nosec G115 // len(p.Tokens) must be positive since we just append an element for it
 		TokenID: uint64(len(p.Tokens) - 1),
 		// we only support rule_1 for v1
-		RuleID:         1,
-		StartRoundID:   1,
+		RuleID:       1,
+		StartRoundID: 1,
+		// #nosec G115
 		StartBaseBlock: uint64(ctx.BlockHeight() + startAfterBlocks),
 		Interval:       intervalInt,
 		// we don't end feeders for v1
@@ -105,11 +110,5 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	})
 
 	k.SetParams(ctx, p)
-	// skip cache update if this is not deliverTx
-	// for normal cosmostx, checkTx will skip actual message exucution and do anteHandler only, but from ethc.callContract the message will be executed without anteHandler check as checkTx mode.
-	if !ctx.IsCheckTx() {
-		_ = k.GetAggregatorContext(ctx)
-		k.GetCaches().AddCache(cache.ItemP(p))
-	}
 	return nil
 }

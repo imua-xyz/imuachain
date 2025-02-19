@@ -78,11 +78,13 @@ func (ks *KeeperSuite) TestNSTLifeCycleOneStaker() {
 		{0, -10},
 	}
 	rawData := convertBalanceChangeToBytes(stakerChanges)
-	ks.App.OracleKeeper.UpdateNSTByBalanceChange(ks.Ctx, assetID, rawData, 9)
+	// ks.App.OracleKeeper.UpdateNSTByBalanceChange(ks.Ctx, assetID, rawData, 9)
+	ks.App.OracleKeeper.UpdateNSTByBalanceChange(ks.Ctx, assetID, types.PriceTimeRound{Price: string(rawData), RoundID: 9}, 1)
 	// - 2.1 check stakerInfo
 	stakerInfo = ks.App.OracleKeeper.GetStakerInfo(ks.Ctx, assetID, stakerStr)
 	ks.Equal(types.BalanceInfo{
 		Block:   1,
+		Index:   1,
 		RoundID: 9,
 		Change:  types.Action_ACTION_SLASH_REFUND,
 		// this is expected to be 32-10=22, not 100-10
@@ -121,7 +123,7 @@ func (ks *KeeperSuite) TestNSTLifeCycleOneStaker() {
 	ks.Equal(types.BalanceInfo{
 		Block:   1,
 		RoundID: 9,
-		Index:   1,
+		Index:   2,
 		Change:  types.Action_ACTION_DEPOSIT,
 		Balance: 54,
 	}, *stakerInfo.BalanceList[2])
@@ -134,14 +136,14 @@ func (ks *KeeperSuite) TestNSTLifeCycleOneStaker() {
 		{0, -5},
 	}
 	rawData = convertBalanceChangeToBytes(stakerChanges)
-	ks.App.OracleKeeper.UpdateNSTByBalanceChange(ks.Ctx, assetID, rawData, 11)
+	ks.App.OracleKeeper.UpdateNSTByBalanceChange(ks.Ctx, assetID, types.PriceTimeRound{Price: string(rawData), RoundID: 11}, 2)
 	// - 4.1 check stakerInfo
 	stakerInfo = ks.App.OracleKeeper.GetStakerInfo(ks.Ctx, assetID, stakerStr)
 	ks.Equal(types.BalanceInfo{
 		Balance: 59,
 		Block:   1,
 		RoundID: 11,
-		Index:   0,
+		Index:   3,
 		Change:  types.Action_ACTION_SLASH_REFUND,
 	}, *stakerInfo.BalanceList[3])
 	// check stakerAssetInfo is updated correctly in assets module, this should be triggered in assets module by oracle module's UpdateNSTByBalanceChange
@@ -162,7 +164,7 @@ func (ks *KeeperSuite) TestNSTLifeCycleOneStaker() {
 		Balance: 29,
 		Block:   1,
 		RoundID: 11,
-		Index:   1,
+		Index:   4,
 		Change:  types.Action_ACTION_WITHDRAW,
 	}, *stakerInfo.BalanceList[4])
 	// withdraw will remove this validator

@@ -71,14 +71,8 @@ message SlashingParams {
     (amino.dont_omitempty) = true,
     (gogoproto.stdduration) = true
   ];
-  // slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price
-  bytes slash_fraction_miss = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
   // slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior
-  bytes slash_fraction_malicious = 6 [
+  bytes slash_fraction_malicious = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true

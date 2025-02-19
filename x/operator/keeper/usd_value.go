@@ -458,7 +458,9 @@ func (k *Keeper) CalculateUSDValueForOperator(
 				return err
 			}
 			decimal = assetInfo.AssetBasicInfo.Decimals
-			ret.StakingAndWaitUnbonding = ret.StakingAndWaitUnbonding.Add(CalculateUSDValue(state.TotalAmount.Add(state.PendingUndelegationAmount), price.Value, decimal, price.Decimal))
+			usdValue := CalculateUSDValue(state.TotalAmount.Add(state.PendingUndelegationAmount), price.Value, decimal, price.Decimal)
+			ctx.Logger().Info("CalculateUSDValueForOperator: get price for slash", "assetID", assetID, "assetDecimal", decimal, "price", price, "totalAmount", state.TotalAmount, "pendingUndelegationAmount", state.PendingUndelegationAmount, "StakingAndWaitUnbonding", ret.StakingAndWaitUnbonding, "addUSDValue", usdValue)
+			ret.StakingAndWaitUnbonding.AddMut(usdValue)
 		} else {
 			if prices == nil {
 				return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, "CalculateUSDValueForOperator prices map is nil")
@@ -471,13 +473,13 @@ func (k *Keeper) CalculateUSDValueForOperator(
 			if !ok {
 				return errorsmod.Wrap(operatortypes.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: decimals, key: assetID")
 			}
-			ret.Staking = ret.Staking.Add(CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
+			ret.Staking.AddMut(CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
 			// calculate the token amount from the share for the operator
 			selfAmount, err := delegationkeeper.TokensFromShares(state.OperatorShare, state.TotalShare, state.TotalAmount)
 			if err != nil {
 				return err
 			}
-			ret.SelfStaking = ret.SelfStaking.Add(CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal))
+			ret.SelfStaking.AddMut(CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal))
 		}
 		return nil
 	}

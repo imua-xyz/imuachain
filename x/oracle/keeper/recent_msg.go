@@ -6,6 +6,29 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// SetMsgItemsForCache set a specific recentMsg with its height as index in the store
+func (k Keeper) SetMsgItemsForCache(ctx sdk.Context, recentMsg types.RecentMsg) {
+	index, found := k.GetIndexRecentMsg(ctx)
+	block := uint64(ctx.BlockHeight())
+	if found {
+		i := 0
+		maxNonce := k.GetParams(ctx).MaxNonce
+		for ; i < len(index.Index); i++ {
+			b := index.Index[i]
+			// #nosec G115  // maxNonce is not negative
+			if block < uint64(maxNonce) || b > block-uint64(maxNonce) {
+				break
+			}
+			// remove old recentMsg
+			k.RemoveRecentMsg(ctx, b)
+		}
+		index.Index = index.Index[i:]
+	}
+	index.Index = append(index.Index, block)
+	k.SetIndexRecentMsg(ctx, index)
+	k.SetRecentMsg(ctx, recentMsg)
+}
+
 // SetRecentMsg set a specific recentMsg in the store from its index
 func (k Keeper) SetRecentMsg(ctx sdk.Context, recentMsg types.RecentMsg) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecentMsgKeyPrefix))

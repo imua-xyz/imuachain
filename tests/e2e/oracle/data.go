@@ -1,12 +1,10 @@
 package oracle
 
 import (
-	"time"
-
 	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 )
 
-const layout = "2006-01-02 15:04:05"
+var now = "2025-01-01 00:00:00"
 
 type priceTime struct {
 	Price     string
@@ -33,8 +31,7 @@ func (p priceTime) getPriceTimeRound(roundID uint64) oracletypes.PriceTimeRound 
 }
 
 func (p priceTime) updateTimestamp() priceTime {
-	t := time.Now().UTC().Format(layout)
-	p.Timestamp = t
+	p.Timestamp = now
 	return p
 }
 
@@ -55,22 +52,100 @@ func generateNSTPriceTime(sc [][]int) priceTime {
 	return priceTime{
 		Price:     string(rawBytes),
 		Decimal:   0,
-		Timestamp: time.Now().UTC().Format(layout),
+		Timestamp: now,
 	}
 }
 
 var (
 	price1 = priceTime{
-		Price:     "199999",
-		Decimal:   18,
-		Timestamp: time.Now().UTC().Format(layout),
+		Price:     "1900000000",
+		Decimal:   8,
+		Timestamp: now,
 	}
 	price2 = priceTime{
-		Price:     "299999",
-		Decimal:   18,
-		Timestamp: time.Now().UTC().Format(layout),
+		Price:     "290000000",
+		Decimal:   8,
+		Timestamp: now,
 	}
 
 	stakerChanges1 = [][]int{{0, -4}}
 	priceNST1      = generateNSTPriceTime(stakerChanges1)
+
+	// 1. detID:1, price: 123
+	// 2. detID:1, price: 129
+	// 3. detID:2, price: 127
+	priceRecovery1 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12300000000",
+				Decimal:   8,
+				DetID:     "1",
+				Timestamp: now,
+			},
+		},
+	}
+	priceRecovery1_2 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12300000000",
+				Decimal:   8,
+				DetID:     "1",
+				Timestamp: now,
+			},
+			{
+				Price:     "12700000000",
+				Decimal:   8,
+				DetID:     "2",
+				Timestamp: now,
+			},
+		},
+	}
+
+	priceRecovery1_3 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12300000000",
+				Decimal:   8,
+				DetID:     "1",
+				Timestamp: now,
+			},
+			{
+				Price:     "12700000000",
+				Decimal:   8,
+				DetID:     "2",
+				Timestamp: now,
+			},
+			{
+				Price:     "12900000000",
+				Decimal:   8,
+				DetID:     "3",
+				Timestamp: now,
+			},
+		},
+	}
+	priceRecovery2 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12700000000",
+				Decimal:   8,
+				DetID:     "2",
+				Timestamp: now,
+			},
+		},
+	}
+	priceRecovery3 = oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			{
+				Price:     "12900000000",
+				Decimal:   8,
+				DetID:     "3",
+				Timestamp: now,
+			},
+		},
+	}
 )

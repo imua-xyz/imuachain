@@ -116,7 +116,7 @@ func newBuildMsg(
 	taskContractAddress, _ := fs.GetString(FlagTaskContractAddress)
 
 	taskID, _ := fs.GetUint64(FlagTaskID)
-	phase, _ := fs.GetUint32(FlagPhase)
+	phase, _ := fs.GetInt32(FlagPhase)
 	if err := types.ValidatePhase(types.Phase(phase)); err != nil {
 		return nil, err
 	}

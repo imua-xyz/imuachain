@@ -2,12 +2,9 @@ package keeper
 
 import (
 	"encoding/binary"
-	"fmt"
-	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,12 +31,15 @@ func (k Keeper) GetPrices(
 	val.TokenID = tokenID
 	val.NextRoundID = nextRoundID
 	var i uint64
-	if nextRoundID <= uint64(common.MaxSizePrices) {
+	maxSizePrices := k.FeederManager.GetMaxSizePricesFromCache()
+	// #nosec G115
+	if nextRoundID <= uint64(maxSizePrices) {
 		i = 1
 		val.PriceList = make([]*types.PriceTimeRound, 0, nextRoundID)
 	} else {
-		i = nextRoundID - uint64(common.MaxSizePrices)
-		val.PriceList = make([]*types.PriceTimeRound, 0, common.MaxSizePrices)
+		// #nosec G11
+		i = nextRoundID - uint64(maxSizePrices)
+		val.PriceList = make([]*types.PriceTimeRound, 0, maxSizePrices)
 	}
 	for ; i < nextRoundID; i++ {
 		b := store.Get(types.PricesRoundKey(i))
@@ -63,17 +63,13 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 		}, nil
 	}
 
-	var p types.Params
 	// get params from cache if exists
-	if k.memStore.agc != nil {
-		p = k.memStore.agc.GetParams()
-	} else {
-		p = k.GetParams(ctx)
-	}
+	p := k.GetParamsFromCache()
 	tokenID := p.GetTokenIDFromAssetID(assetID)
 	if tokenID == 0 {
 		return types.Price{}, types.ErrGetPriceAssetNotFound.Wrapf("assetID does not exist in oracle %s", assetID)
 	}
+	// #nosec G115
 	price, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
 	if !found {
 		return types.Price{
@@ -97,13 +93,8 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 
 // return latest price for assets
 func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]interface{}) (prices map[string]types.Price, err error) {
-	var p types.Params
 	// get params from cache if exists
-	if k.memStore.agc != nil {
-		p = k.memStore.agc.GetParams()
-	} else {
-		p = k.GetParams(ctx)
-	}
+	p := k.GetParamsFromCache()
 	// ret := make(map[string]types.Price)
 	prices = make(map[string]types.Price)
 	info := ""
@@ -122,6 +113,7 @@ func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]inter
 			prices = nil
 			break
 		}
+		// #nosec G115
 		price, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
 		if !found {
 			info = info + assetID + " "
@@ -200,56 +192,60 @@ func (k Keeper) GetAllPrices(ctx sdk.Context) (list []types.Prices) {
 }
 
 // AppenPriceTR append a new round of price for specific token, return false if the roundID not match
-func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound) bool {
+func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound, detID string) bool {
 	nextRoundID := k.GetNextRoundID(ctx, tokenID)
+	logger := k.Logger(ctx)
 	// This should not happen
 	if nextRoundID != priceTR.RoundID {
+		logger.Error("roundID not match", "nextRoundID", nextRoundID, "priceTR.RoundID", priceTR.RoundID)
 		return false
 	}
 	store := k.getPriceTRStore(ctx, tokenID)
 	b := k.cdc.MustMarshal(&priceTR)
 	store.Set(types.PricesRoundKey(nextRoundID), b)
-	if expiredRoundID := nextRoundID - k.memStore.agc.GetParamsMaxSizePrices(); expiredRoundID > 0 {
+
+	p := *k.GetParamsFromCache()
+	// #nosec G115  // maxSizePrices is not negative
+	if expiredRoundID := nextRoundID - uint64(p.MaxSizePrices); expiredRoundID > 0 {
 		store.Delete(types.PricesRoundKey(expiredRoundID))
 	}
-	roundID := k.IncreaseNextRoundID(ctx, tokenID)
+	k.IncreaseNextRoundID(ctx, tokenID)
 
-	// update for native tokens
-	// TODO: set hooks as a genral approach
-	var p types.Params
-	// get params from cache if exists
-	if k.memStore.agc != nil {
-		p = k.memStore.agc.GetParams()
-	} else {
-		p = k.GetParams(ctx)
+	if len(priceTR.Price) == 0 {
+		return true
 	}
-	assetIDs := p.GetAssetIDsFromTokenID(tokenID)
-	for _, assetID := range assetIDs {
-		if nstChain, ok := strings.CutPrefix(assetID, types.NSTIDPrefix); ok {
-			if err := k.UpdateNSTByBalanceChange(ctx, fmt.Sprintf("%s%s", NSTETHAssetAddr, nstChain), []byte(priceTR.Price), roundID); err != nil {
-				// we just report this error in log to notify validators
-				k.Logger(ctx).Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err)
-			}
+	if nstAssetID := p.GetAssetIDForNSTFromTokenID(tokenID); len(nstAssetID) > 0 {
+		nstVersion, err := getNSTVersionFromDetID(detID)
+		if err != nil || nstVersion == 0 {
+			logger.Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err, "nstVersion", nstVersion, "tokenID", tokenID, "roundID", nextRoundID)
+			return true
+		}
+		err = k.UpdateNSTByBalanceChange(ctx, nstAssetID, priceTR, nstVersion)
+		if err != nil {
+			// we just report this error in log to notify validators
+			logger.Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err)
+		} else {
+			logger.Info("updated balance change for NST")
 		}
 	}
-
 	return true
 }
 
 // GrowRoundID Increases roundID with the previous price
+// func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID uint64) (price *types.PriceTimeRound, roundID uint64) {
 func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID uint64) (price string, roundID uint64) {
 	if pTR, ok := k.GetPriceTRLatest(ctx, tokenID); ok {
 		pTR.RoundID++
-		k.AppendPriceTR(ctx, tokenID, pTR)
+		k.AppendPriceTR(ctx, tokenID, pTR, "")
 		price = pTR.Price
 		roundID = pTR.RoundID
 	} else {
 		nextRoundID := k.GetNextRoundID(ctx, tokenID)
 		k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
 			RoundID: nextRoundID,
-		})
-		price = ""
+		}, "")
 		roundID = nextRoundID
+		price = ""
 	}
 	return
 }

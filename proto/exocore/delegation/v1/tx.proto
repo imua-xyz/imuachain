@@ -81,7 +81,7 @@ message UndelegationRecord {
   // It will be included in the key when storing the undelegation.
   uint64 undelegation_id = 8;
   // amount is the amount of the asset to be undelegated.
-  string amount = 9[
+  string amount = 9 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false

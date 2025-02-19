@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"os"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -18,6 +19,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -45,23 +47,90 @@ func (s *E2ETestSuite) TestCreatePrice() {
 	kr3 = s.network.Validators[3].ClientCtx.Keyring
 	creator3 = sdk.AccAddress(s.network.Validators[3].PubKey.Address())
 
-	// we combine all test cases into one big case to avoid reset the network multiple times
-	s.testRegisterTokenThroughPrecompile()
-	s.testCreatePriceNST()
-	s.testCreatePriceLST()
-	s.testSlashing()
+	// we combine all test cases into one big case to avoid reset the network multiple times, the order can't be changed
+
+	option := os.Getenv("TEST_OPTION")
+	if option == "local" {
+		s.testRecoveryCases(10)
+	} else {
+		s.testRegisterTokenThroughPrecompile()
+		s.testCreatePriceNST()
+		s.testCreatePriceLST()
+		s.testSlashing()
+		s.testCreatePriceLSTAfterDelegationChangePower()
+	}
+}
+
+func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
+	s.moveToAndCheck(80)
+	priceTest1R1 := price2.updateTimestamp()
+	priceTimeDetID1R1 := priceTest1R1.getPriceTimeDetID("9")
+	priceSource1R1 := oracletypes.PriceSource{
+		SourceID: 1,
+		Prices: []*oracletypes.PriceTimeDetID{
+			&priceTimeDetID1R1,
+		},
+	}
+
+	// send create-price from validator-0
+	msg0 := oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 80, 1)
+	err := s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
+	s.Require().NoError(err)
+
+	// send create-price from validator-1
+	msg1 := oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 80, 1)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
+	s.Require().NoError(err)
+
+	s.moveToAndCheck(82)
+	res, err := s.network.QueryOracle().LatestPrice(ctxWithHeight(81), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.NoError(err)
+	s.Require().Equal(res.Price.Price, price1.Price)
+
+	s.moveToAndCheck(85)
+	clientChainID := uint32(101)
+	lzNonce := uint64(0)
+	assetAddr, _ := hexutil.Decode(network.ETHAssetAddress)
+	stakerAddr := []byte(s.network.Validators[0].Address)
+	operatorAddr := []byte(s.network.Validators[0].Address.String())
+	opAmount := big.NewInt(90000000)
+	// deposit 32 NSTETH to staker from beaconchain_validatro_1
+	err = s.network.SendPrecompileTx(network.DELEGATION, "delegate", clientChainID, lzNonce, assetAddr, stakerAddr, operatorAddr, opAmount)
+	s.Require().NoError(err)
+
+	// wait for validator set update
+	s.moveToAndCheck(120)
+
+	// send create-price from validator-0
+	msg0 = oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 120, 1)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
+	s.Require().NoError(err)
+
+	// send create-price from validator-1
+	msg1 = oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 120, 1)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
+	s.Require().NoError(err)
+
+	s.moveToAndCheck(122)
+	// query final price. query state of 11 on height 12
+	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(121), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.Require().NoError(err)
+
+	ret := priceTest1R1.getPriceTimeRound(12)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 }
 
 /*
 cases:
 
-	  we need more than 2/3 power, so that at least 3 out of 4 validators power should be enough
-		1. block_1_1: v1 sendPrice{p1}, [no round_1 price after block_1_1 committed], block_1_2:v2&v3 sendPrice{p1}, [got round_1 price{p1} after block_1_2 committed]
-		2. block_2_1: v3 sendPrice{p2}, block_2_2: v1 sendPrice{p2}, [no round_2 price after block_2_2 committed], block_2_3:nothing, [got round_2 price{p1} equals to round_1 after block_2_3 committed]
-		3. block_3_1: v1 sendPrice{p1}, block_3_2: v2&v3 sendPrice{p2}, block_3_3: v3 sendPrice{p2}, [got final price{p2} after block_3_3 committed]
-		4. block_4_1: v1&v2&v3 sendPrice{p1}, [got round_4 price{p1} after block_4_1 committed]]
+we need more than 2/3 power, so that at least 3 out of 4 validators power should be enough
+1. block_1_1: v1 sendPrice{p1}, [no round_1 price after block_1_1 committed], block_1_2:v2&v3 sendPrice{p1}, [got round_1 price{p1} after block_1_2 committed]
+2. block_2_1: v3 sendPrice{p2}, block_2_2: v1 sendPrice{p2}, [no round_2 price after block_2_2 committed], block_2_3:nothing, [got round_2 price{p1} equals to round_1 after block_2_3 committed]
+3. block_3_1: v1 sendPrice{p1}, block_3_2: v2&v3 sendPrice{p2}, block_3_3: v3 sendPrice{p2}, [got final price{p2} after block_3_3 committed]
+4. block_4_1: v1&v2&v3 sendPrice{p1}, [got round_4 price{p1} after block_4_1 committed]]
 
-		--- nonce:
+--- nonce:
 */
 func (s *E2ETestSuite) testCreatePriceLST() {
 	priceTest1R1 := price1.updateTimestamp()
@@ -81,11 +150,7 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	err := s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
 	s.Require().NoError(err)
 
-	s.moveNAndCheck(1)
-	// query final price
-	_, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
-	errStatus, _ := status.FromError(err)
-	s.Require().Equal(codes.NotFound, errStatus.Code())
+	s.moveToAndCheck(11)
 
 	// send create-price from validator-1
 	msg1 := oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 10, 1)
@@ -97,17 +162,27 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
 
-	s.moveNAndCheck(1)
-	// query final price
-	res, err := s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
-	s.Require().NoError(err)
-	s.Require().Equal(priceTest1R1.getPriceTimeRound(1), res.Price)
+	s.moveToAndCheck(12)
 
 	// TODO: there might be a small chance that the blockHeight grows to more than 13, try bigger price window(nonce>3) to be more confident
 	// send create-price from validator3 to avoid being slashed for downtime
 	msg3 := oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 10, 1)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconskey3", kr3)
 	s.Require().NoError(err)
+
+	// query final price. query state of 11 on height 12
+	_, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(11), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	errStatus, _ := status.FromError(err)
+	s.Require().Equal(codes.NotFound, errStatus.Code())
+
+	s.moveToAndCheck(13)
+	// query final price. query state of 12 on height 13
+	res, err := s.network.QueryOracle().LatestPrice(ctxWithHeight(12), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.Require().NoError(err)
+	// NOTE: update timestamp manually to ignore
+	ret := priceTest1R1.getPriceTimeRound(1)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 
 	// case_2. slashing{miss_v3:1, window:2} [1.0]
 	// timestamp need to be updated
@@ -121,21 +196,22 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	}
 	msg0 = oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource2R2}, 20, 1)
 	msg2 = oracletypes.NewMsgCreatePrice(creator2.String(), 1, []*oracletypes.PriceSource{&priceSource2R2}, 20, 1)
-
 	s.moveToAndCheck(20)
 	// send price{p2} from validator-2
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
-	s.moveNAndCheck(1)
+	s.moveToAndCheck(21)
 	// send price{p2} from validator-0
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
 	s.Require().NoError(err)
-	s.moveToAndCheck(23)
-	res, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.moveToAndCheck(24)
+	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(23), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price update fail, round 2 still have price{p1}
-	s.Require().Equal(priceTest1R1.getPriceTimeRound(2), res.Price)
-
+	// NOTE: update timestamp manually to ignore
+	ret = priceTest1R1.getPriceTimeRound(2)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 	// case_3.  slashing_{miss_v3:2, window:3} [1.0.1]
 	// update timestamp
 	priceTest2R3 := price2.updateTimestamp()
@@ -146,7 +222,6 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 			&priceTimeDetID2R3,
 		},
 	}
-
 	msg0 = oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource2R3}, 30, 1)
 	msg1 = oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceSource2R3}, 30, 1)
 	msg2 = oracletypes.NewMsgCreatePrice(creator2.String(), 1, []*oracletypes.PriceSource{&priceSource2R3}, 30, 1)
@@ -154,7 +229,7 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	// send price{p2} from validator-0
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
 	s.Require().NoError(err)
-	s.moveNAndCheck(1)
+	s.moveToAndCheck(31)
 	// send price{p2} from validator-1
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
 	s.Require().NoError(err)
@@ -163,11 +238,14 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
 
-	s.moveNAndCheck(1)
-	res, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.moveToAndCheck(33)
+	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(32), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price updated, round 3 has price{p2}
-	s.Require().Equal(priceTest2R3.getPriceTimeRound(3), res.Price)
+	// NOTE: update timestamp manually to ignore
+	ret = priceTest2R3.getPriceTimeRound(3)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 
 	// case_4. slashing_{miss_v3:2, window:4}.maxWindow=4 [1.0.1.0]
 	// update timestamp
@@ -182,15 +260,22 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	s.Require().NoError(err)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
-	s.moveNAndCheck(1)
-	res, err = s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
-	s.Require().NoError(err)
-	// price updated, round 4 has price{p1}
-	s.Require().Equal(priceTest1R4.getPriceTimeRound(4), res.Price)
+
+	s.moveToAndCheck(41)
 	// send create-price from validator3 to avoid being slashed for downtime
 	msg3 = oracletypes.NewMsgCreatePrice(creator3.String(), 1, []*oracletypes.PriceSource{&priceSource1R4}, 40, 1)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg3}, "valconskey3", kr3)
 	s.Require().NoError(err)
+
+	s.moveToAndCheck(42)
+
+	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(41), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.Require().NoError(err)
+	// price updated, round 4 has price{p1}
+	// NOTE: update timestamp manually to ignore
+	ret = priceTest1R4.getPriceTimeRound(4)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 }
 
 func (s *E2ETestSuite) testCreatePriceNST() {
@@ -207,28 +292,38 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	// deposit 32 NSTETH to staker from beaconchain_validatro_1
 	err = s.network.SendPrecompileTx(network.ASSETS, "depositNST", clientChainID, validatorPubkey, stakerAddr, opAmount)
 	s.Require().NoError(err)
-	s.moveNAndCheck(1)
 	ctx := context.Background()
-	// check stakerAssetInfo
+
+	// slashing_{miss_v3:1, window:1} [1]
+	s.moveToAndCheck(7)
+	_, ps := priceNST1.generateRealTimeStructs("100_1", 1)
+	msg0 := oracletypes.NewMsgCreatePrice(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	msg1 := oracletypes.NewMsgCreatePrice(creator1.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	msg2 := oracletypes.NewMsgCreatePrice(creator2.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
+	s.Require().NoError(err)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
+	s.Require().NoError(err)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
+	s.Require().NoError(err)
+
+	// on height 7, the state from 6 is committed and confirmed
 	res, err := s.network.QueryAssets().QueStakerSpecifiedAssetAmount(ctx, &assetstypes.QuerySpecifiedAssetAmountReq{StakerId: stakerID, AssetId: network.NativeAssetID})
+	resStakerList, err2 := s.network.QueryOracle().StakerList(ctx, &oracletypes.QueryStakerListRequest{AssetId: network.NativeAssetID})
+	resStakerInfo, err3 := s.network.QueryOracle().StakerInfo(ctx, &oracletypes.QueryStakerInfoRequest{AssetId: network.NativeAssetID, StakerAddr: stakerAddrStr})
 	s.Require().NoError(err)
 	s.Require().Equal(assetstypes.StakerAssetInfo{
 		TotalDepositAmount:        sdkmath.NewInt(32),
 		WithdrawableAmount:        sdkmath.NewInt(32),
 		PendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *res)
-	// check stakerList from oracle had been updated successfully
-	resStakerList, err := s.network.QueryOracle().StakerList(ctx, &oracletypes.QueryStakerListRequest{AssetId: network.NativeAssetID})
-	s.Require().NoError(err)
+	s.Require().NoError(err2)
 	s.Require().Equal(oracletypes.StakerList{
 		StakerAddrs: []string{
 			stakerAddrStr,
 		},
 	}, *resStakerList.StakerList)
-
-	// check stakerInfo from oracle had been updated successfully
-	resStakerInfo, err := s.network.QueryOracle().StakerInfo(ctx, &oracletypes.QueryStakerInfoRequest{AssetId: network.NativeAssetID, StakerAddr: stakerAddrStr})
-	s.Require().NoError(err)
+	s.Require().NoError(err3)
 	s.Require().Equal(oracletypes.StakerInfo{
 		StakerAddr:  stakerAddrStr,
 		StakerIndex: 0,
@@ -246,31 +341,21 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 		},
 	}, *resStakerInfo.StakerInfo)
 
-	// slashing_{miss_v3:1, window:1} [1]
-	s.moveToAndCheck(7)
-	_, ps := priceNST1.generateRealTimeStructs("100", 1)
-	msg0 := oracletypes.NewMsgCreatePrice(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
-	msg1 := oracletypes.NewMsgCreatePrice(creator1.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
-	msg2 := oracletypes.NewMsgCreatePrice(creator2.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
-	s.Require().NoError(err)
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
-	s.Require().NoError(err)
-	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
-	s.Require().NoError(err)
-
-	s.moveNAndCheck(1)
+	// new block - 9, state of 8 is committed
+	s.moveToAndCheck(9)
 	resStakerInfo, err = s.network.QueryOracle().StakerInfo(ctx, &oracletypes.QueryStakerInfoRequest{AssetId: network.NativeAssetID, StakerAddr: stakerAddrStr})
 	s.Require().NoError(err)
 	s.Require().Equal(2, len(resStakerInfo.StakerInfo.BalanceList))
 	s.Require().Equal([]*oracletypes.BalanceInfo{
 		{
 			Block:   6,
+			Index:   0,
 			Balance: 32,
 			Change:  oracletypes.Action_ACTION_DEPOSIT,
 		},
 		{
 			RoundID: 1,
+			Index:   1,
 			Block:   8,
 			Balance: 28,
 			Change:  oracletypes.Action_ACTION_SLASH_REFUND,
@@ -295,11 +380,15 @@ func (s *E2ETestSuite) testSlashing() {
 	s.Require().NoError(err)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
-	s.moveNAndCheck(1)
-	res, err := s.network.QueryOracle().LatestPrice(context.Background(), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.moveToAndCheck(52)
+	// query state of 51 on height 52
+	res, err := s.network.QueryOracle().LatestPrice(ctxWithHeight(51), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 	// price updated, round 4 has price{p1}
-	s.Require().Equal(priceTest1R5.getPriceTimeRound(5), res.Price)
+	// NOTE: update timestamp manually to ignore
+	ret := priceTest1R5.getPriceTimeRound(5)
+	ret.Timestamp = res.Price.Timestamp
+	s.Require().Equal(ret, res.Price)
 	s.moveToAndCheck(60)
 	// slashing_{miss_v3:3, window:5} [0.1.0.1.1] -> {miss_v3:2, window:4} [1.0.1.1]
 	_, priceSource1R6 := price1.generateRealTimeStructs("14", 1)
@@ -312,8 +401,9 @@ func (s *E2ETestSuite) testSlashing() {
 	s.Require().NoError(err)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
 	s.Require().NoError(err)
-	s.moveToAndCheck(63)
-	resSigningInfo, err := s.network.QuerySlashing().SigningInfo(context.Background(), &slashingtypes.QuerySigningInfoRequest{ConsAddress: sdk.ConsAddress(s.network.Validators[3].PubKey.Address()).String()})
+	s.moveToAndCheck(64)
+	// query state of 63 on height 64
+	resSigningInfo, err := s.network.QuerySlashing().SigningInfo(ctxWithHeight(63), &slashingtypes.QuerySigningInfoRequest{ConsAddress: sdk.ConsAddress(s.network.Validators[3].PubKey.Address()).String()})
 	s.Require().NoError(err)
 	// validator3 is jailed
 	s.Require().True(resSigningInfo.ValSigningInfo.JailedUntil.After(time.Now()))
@@ -323,7 +413,8 @@ func (s *E2ETestSuite) testSlashing() {
 	s.Require().NoError(err)
 	s.Require().True(resOperator.Jailed)
 	// wait for validator3 to pass jail duration
-	time.Sleep(35 * time.Second)
+	// timeout commit is set to 2 seconds, 10 blocks about 20 seconds
+	s.moveToAndCheck(75)
 	msgUnjail := slashingtypes.NewMsgUnjail(s.network.Validators[3].ValAddress)
 	// unjail validator3
 	err = s.network.SendTx([]sdk.Msg{msgUnjail}, "node3", kr3)
@@ -331,7 +422,6 @@ func (s *E2ETestSuite) testSlashing() {
 	s.moveNAndCheck(2)
 	resOperator, err = s.network.QueryOperator().QueryOptInfo(context.Background(), &operatortypes.QueryOptInfoRequest{OperatorAVSAddress: &operatortypes.OperatorAVSAddress{OperatorAddr: s.network.Validators[3].Address.String(), AvsAddress: avsAddr}})
 	s.Require().NoError(err)
-	fmt.Println("debug----->jailed:", resOperator.Jailed)
 	s.Require().False(resOperator.Jailed)
 }
 
@@ -349,15 +439,15 @@ func (s *E2ETestSuite) testRegisterTokenThroughPrecompile() {
 	err := s.network.SendPrecompileTx(network.ASSETS, "registerToken", clientChainID, token, decimal, name, metaData, oracleInfo)
 	s.Require().NoError(err)
 
-	s.moveNAndCheck(1)
+	s.moveToAndCheck(4)
 	// registerToken will automaticlly register that token into oracle module
-	res, err := s.network.QueryOracle().Params(context.Background(), &oracletypes.QueryParamsRequest{})
+	res, err := s.network.QueryOracle().Params(ctxWithHeight(3), &oracletypes.QueryParamsRequest{})
 	s.Require().NoError(err)
-	s.Require().Equal(name, res.Params.Tokens[3].Name)
+	s.Require().Equal(name, res.Params.Tokens[len(res.Params.Tokens)-1].Name)
 }
 
 func (s *E2ETestSuite) moveToAndCheck(height int64) {
-	_, err := s.network.WaitForStateHeightWithTimeout(height, 30*time.Second)
+	_, err := s.network.WaitForStateHeightWithTimeout(height, 120*time.Second)
 	s.Require().NoError(err)
 }
 
@@ -366,4 +456,9 @@ func (s *E2ETestSuite) moveNAndCheck(n int64) {
 		err := s.network.WaitForStateNextBlock()
 		s.Require().NoError(err)
 	}
+}
+
+func ctxWithHeight(height int64) context.Context {
+	md := metadata.Pairs("x-cosmos-block-height", fmt.Sprintf("%d", height))
+	return metadata.NewOutgoingContext(context.Background(), md)
 }

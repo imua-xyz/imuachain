@@ -16,12 +16,14 @@ const (
 	updateNativeTokenVirtualPriceFail
 	nstAssetNotSurpported
 	invalidPageLimit
+	failedInAggregation
+	quoteRecorded
 )
 
 // x/oracle module sentinel errors
 var (
 	ErrInvalidMsg                        = sdkerrors.Register(ModuleName, invalidMsg, "invalid input create price")
-	ErrPriceProposalIgnored              = sdkerrors.Register(ModuleName, priceProposalIgnored, "price proposal ignored")
+	ErrPriceProposalIgnored              = sdkerrors.Register(ModuleName, priceProposalIgnored, "quote is ignored")
 	ErrPriceProposalFormatInvalid        = sdkerrors.Register(ModuleName, priceProposalFormatInvalid, "price proposal message format invalid")
 	ErrInvalidParams                     = sdkerrors.Register(ModuleName, invalidParams, "invalid params")
 	ErrGetPriceAssetNotFound             = sdkerrors.Register(ModuleName, getPriceFailedAssetNotFound, "get price failed for asset not found")
@@ -29,4 +31,6 @@ var (
 	ErrUpdateNativeTokenVirtualPriceFail = sdkerrors.Register(ModuleName, updateNativeTokenVirtualPriceFail, "update native token balance change failed")
 	ErrNSTAssetNotSupported              = sdkerrors.Register(ModuleName, nstAssetNotSurpported, "nstAsset not supported")
 	ErrInvalidPagination                 = sdkerrors.Register(ModuleName, invalidPageLimit, "params for pagination is invalid")
+	ErrFailedInAggregation               = sdkerrors.Register(ModuleName, failedInAggregation, "failed in aggregation")
+	ErrQuoteRecorded                     = sdkerrors.Register(ModuleName, quoteRecorded, "quote recorded")
 )

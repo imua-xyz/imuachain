@@ -12,6 +12,7 @@ func (k Keeper) GetTokens(ctx sdk.Context) []*types.TokenIndex {
 	for idx, token := range params.Tokens {
 		ret = append(ret, &types.TokenIndex{
 			Token: token.Name,
+			// #nosec G115
 			Index: uint64(idx),
 		})
 	}

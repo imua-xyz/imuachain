@@ -18832,11 +18832,6 @@
                           "type": "string",
                           "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                         },
-                        "slash_fraction_miss": {
-                          "type": "string",
-                          "format": "byte",
-                          "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                        },
                         "slash_fraction_malicious": {
                           "type": "string",
                           "format": "byte",
@@ -19579,11 +19574,6 @@
                                 "type": "string",
                                 "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                               },
-                              "slash_fraction_miss": {
-                                "type": "string",
-                                "format": "byte",
-                                "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                              },
                               "slash_fraction_malicious": {
                                 "type": "string",
                                 "format": "byte",
@@ -19951,11 +19941,6 @@
                               "type": "string",
                               "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                             },
-                            "slash_fraction_miss": {
-                              "type": "string",
-                              "format": "byte",
-                              "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                            },
                             "slash_fraction_malicious": {
                               "type": "string",
                               "format": "byte",
@@ -20032,6 +20017,11 @@
             "schema": {
               "type": "object",
               "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "int64",
+                  "title": "version of the staker validator list changes"
+                },
                 "staker_info": {
                   "title": "all staker infos under the specified asset",
                   "type": "object",
@@ -20165,6 +20155,11 @@
             "schema": {
               "type": "object",
               "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "int64",
+                  "title": "version of the staker validator list changes"
+                },
                 "staker_infos": {
                   "type": "array",
                   "items": {
@@ -20349,6 +20344,11 @@
             "schema": {
               "type": "object",
               "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "int64",
+                  "title": "version of the staker validator list changes"
+                },
                 "staker_list": {
                   "title": "staker list including all stakers of request asset",
                   "type": "object",
@@ -23104,6 +23104,11 @@
                                 "type": "string",
                                 "format": "int64",
                                 "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                              },
+                              "historical_voting_power": {
+                                "type": "string",
+                                "format": "int64",
+                                "description": "the historical voting power at the time of the slash event."
                               }
                             }
                           }
@@ -41645,11 +41650,6 @@
               "type": "string",
               "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
             },
-            "slash_fraction_miss": {
-              "type": "string",
-              "format": "byte",
-              "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-            },
             "slash_fraction_malicious": {
               "type": "string",
               "format": "byte",
@@ -42143,11 +42143,6 @@
                         "type": "string",
                         "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                       },
-                      "slash_fraction_miss": {
-                        "type": "string",
-                        "format": "byte",
-                        "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                      },
                       "slash_fraction_malicious": {
                         "type": "string",
                         "format": "byte",
@@ -42630,11 +42625,6 @@
                       "type": "string",
                       "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                     },
-                    "slash_fraction_miss": {
-                      "type": "string",
-                      "format": "byte",
-                      "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                    },
                     "slash_fraction_malicious": {
                       "type": "string",
                       "format": "byte",
@@ -42905,11 +42895,6 @@
                   "type": "string",
                   "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                 },
-                "slash_fraction_miss": {
-                  "type": "string",
-                  "format": "byte",
-                  "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                },
                 "slash_fraction_malicious": {
                   "type": "string",
                   "format": "byte",
@@ -42925,6 +42910,11 @@
     "exocore.oracle.v1.QueryStakerInfoResponse": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string",
+          "format": "int64",
+          "title": "version of the staker validator list changes"
+        },
         "staker_info": {
           "title": "all staker infos under the specified asset",
           "type": "object",
@@ -42995,6 +42985,11 @@
     "exocore.oracle.v1.QueryStakerInfosResponse": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string",
+          "format": "int64",
+          "title": "version of the staker validator list changes"
+        },
         "staker_infos": {
           "type": "array",
           "items": {
@@ -43085,6 +43080,11 @@
     "exocore.oracle.v1.QueryStakerListResponse": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string",
+          "format": "int64",
+          "title": "version of the staker validator list changes"
+        },
         "staker_list": {
           "title": "staker list including all stakers of request asset",
           "type": "object",
@@ -43444,11 +43444,6 @@
                   "type": "string",
                   "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                 },
-                "slash_fraction_miss": {
-                  "type": "string",
-                  "format": "byte",
-                  "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                },
                 "slash_fraction_malicious": {
                   "type": "string",
                   "format": "byte",
@@ -43515,11 +43510,6 @@
         "oracle_malicious_jail_duration": {
           "type": "string",
           "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
-        },
-        "slash_fraction_miss": {
-          "type": "string",
-          "format": "byte",
-          "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
         },
         "slash_fraction_malicious": {
           "type": "string",
@@ -44970,6 +44960,11 @@
               "type": "string",
               "format": "int64",
               "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+            },
+            "historical_voting_power": {
+              "type": "string",
+              "format": "int64",
+              "description": "the historical voting power at the time of the slash event."
             }
           }
         }
@@ -45070,6 +45065,11 @@
                   "type": "string",
                   "format": "int64",
                   "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                },
+                "historical_voting_power": {
+                  "type": "string",
+                  "format": "int64",
+                  "description": "the historical voting power at the time of the slash event."
                 }
               }
             }
@@ -45488,6 +45488,11 @@
                         "type": "string",
                         "format": "int64",
                         "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                      },
+                      "historical_voting_power": {
+                        "type": "string",
+                        "format": "int64",
+                        "description": "the historical voting power at the time of the slash event."
                       }
                     }
                   }
@@ -45896,6 +45901,11 @@
           "type": "string",
           "format": "int64",
           "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+        },
+        "historical_voting_power": {
+          "type": "string",
+          "format": "int64",
+          "description": "the historical voting power at the time of the slash event."
         }
       },
       "title": "SlashExecutionInfo is the actual execution state for a slash event"

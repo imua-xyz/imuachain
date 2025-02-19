@@ -25,7 +25,7 @@ jobs:
     steps:
       - name: Permission issue fix
         # semgrep for some reason sets the working directory to exocore/exocore
-        run: git config --global --add safe.directory /__w/exocore/exocore
+        run: git config --global --add safe.directory /__w/imuachain/imuachain
       - uses: actions/checkout@v4
       - name: Get Diff
         uses: technote-space/get-diff-action@v6.1.2

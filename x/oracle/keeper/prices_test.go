@@ -48,6 +48,8 @@ func TestPricesGet(t *testing.T) {
 
 func TestPricesGetMultiAssets(t *testing.T) {
 	keeper, ctx := keepertest.OracleKeeper(t)
+	keeper.FeederManager.SetNilCaches()
+	keeper.FeederManager.BeginBlock(ctx)
 	keeper.SetPrices(ctx, testdata.P1)
 	assets := make(map[string]interface{})
 	assets["0x0b34c4d876cd569129cf56bafabb3f9e97a4ff42_0x9ce1"] = new(interface{})

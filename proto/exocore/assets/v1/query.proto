@@ -35,7 +35,7 @@ message QueryAllClientChainInfoResponse {
 // QueryStakingAssetInfo is the query for getting the staking asset info.
 message QueryStakingAssetInfo {
   // asset_id is the asset for which the query is made.
-  string asset_id = 1 ;
+  string asset_id = 1;
 }
 
 // QueryAllStakingAssetsInfo is the query for getting all staking assets info.
@@ -51,7 +51,7 @@ message QueryAllStakingAssetsInfoResponse {
 // QueryStakerAssetInfo is the query for getting the staker asset info.
 message QueryStakerAssetInfo {
   // stake_id is the staker id for which the query is made.
-  string staker_id = 1 ;
+  string staker_id = 1;
 }
 
 // QueryAssetInfoResponse is the response for the staker asset info.
@@ -63,9 +63,9 @@ message QueryAssetInfoResponse {
 // QuerySpecifiedAssetAmountReq is the query for getting the staker specified asset amount.
 message QuerySpecifiedAssetAmountReq {
   // staker_id is the staker id for which the query is made.
-  string staker_id = 1 ;
+  string staker_id = 1;
   // asset_id is the asset for which the query is made.
-  string asset_id = 2 ;
+  string asset_id = 2;
 }
 
 // QueryOperatorAssetInfos is the query for getting the operator asset info.

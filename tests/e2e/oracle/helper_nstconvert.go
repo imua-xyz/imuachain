@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"encoding/binary"
+	"math"
 	"strings"
 
 	"github.com/imroc/biu"
@@ -10,8 +11,7 @@ import (
 func convertBalanceChangeToBytes(stakerChanges [][]int) []byte {
 	if len(stakerChanges) == 0 {
 		// length equals to 0 means that alls takers have efb of 32 with 0 changes
-		ret := make([]byte, 32)
-		return ret
+		return make([]byte, 32)
 	}
 	str := ""
 	index := 0
@@ -23,6 +23,10 @@ func convertBalanceChangeToBytes(stakerChanges [][]int) []byte {
 
 		// change amount -> bytes
 		change := stakerChange[1]
+		if (change > 0 && change > math.MaxUint16) ||
+			(change < 0 && (-1*change) > math.MaxUint16) {
+			return make([]byte, 32)
+		}
 		var changeBytes []byte
 		symbol := 1
 		if change < 0 {
@@ -47,6 +51,7 @@ func convertBalanceChangeToBytes(stakerChanges [][]int) []byte {
 			} else {
 				// 2 byte
 				changeBytes = make([]byte, 2)
+				// #nosec G115  // change has been checked to make sure no overflow
 				binary.BigEndian.PutUint16(changeBytes, uint16(change))
 				moveLength := 16 - bits
 				changeBytes[0] <<= moveLength

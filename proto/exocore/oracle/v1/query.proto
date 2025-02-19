@@ -120,8 +120,10 @@ message QueryStakerListRequest {
 
 // QueryStakerListResponse is response type for Query/StakerList RPC method
 message QueryStakerListResponse {
+  // version of the staker validator list changes
+  int64 version = 1;
   // staker list including all stakers of request asset
-  StakerList staker_list = 1;
+  StakerList staker_list = 2;
 }
 
 // QueryStakerInfoRequest is request type for Query/StakerInfo RCP method
@@ -134,8 +136,10 @@ message QueryStakerInfoRequest {
 
 // QueryStakerInfoResponse is response type for Query/StakerInfo RCP method
 message QueryStakerInfoResponse {
+  // version of the staker validator list changes
+  int64 version = 1;
   // all staker infos under the specified asset
-  StakerInfo staker_info = 1;
+  StakerInfo staker_info = 2;
 }
 
 // QueryStakerInfosRequest is request type for Query/StakerInfos RCP method
@@ -148,10 +152,12 @@ message QueryStakerInfosRequest {
 
 // QueryStakerInfosResponse is response type for Query/StakerInfo RCP method
 message QueryStakerInfosResponse {
+  // version of the staker validator list changes
+  int64 version = 1;
   // all staker infos under the specified asset
-  repeated StakerInfo staker_infos = 1;
+  repeated StakerInfo staker_infos = 2;
   // pagination defines the pagination in the response.
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+  cosmos.base.query.v1beta1.PageResponse pagination = 3;
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
