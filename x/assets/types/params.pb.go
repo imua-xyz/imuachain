@@ -23,7 +23,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// GenesisState defines the deposit module's genesis state.
+// Params defines the parameters for the assets module.
 type Params struct {
 	// gateways is the addresses of gateways on Imuachain.
 	Gateways []string `protobuf:"bytes,1,rep,name=gateways,proto3" json:"gateways,omitempty"`
