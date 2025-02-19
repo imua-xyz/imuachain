@@ -139,6 +139,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
 	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)
+	suite.NoError(err)
 	suite.Equal(strings.ToLower(avsAddress), info.GetInfo().AvsAddress)
 
 	epoch, _ := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
@@ -151,7 +152,8 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	}
 
 	avsParams.Action = avstypes.DeRegisterAction
-	avsParams.CallerAddress, err = sdk.AccAddressFromBech32("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
+	avsParams.CallerAddress, err = sdk.AccAddressFromBech32(avsOwnerAddress[0])
+	suite.NoError(err)
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
 	info, err = suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)

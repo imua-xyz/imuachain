@@ -29,7 +29,7 @@ const (
 	GeneralAssetsAddrLength      = 32
 	GeneralClientChainAddrLength = 32
 	ClientChainLzIDIndexInTopics = 0
-	ImuachainOperatorAddrLength  = 42
+	ImuachainOperatorAddrLength  = 41
 
 	// MaxDecimal is set to prevent the overflow
 	// during the calculation of share and usd value.
