@@ -93,7 +93,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
-	exoWhiteListAddress := []common.Address{
+	imWhiteListAddresses := []common.Address{
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
@@ -112,7 +112,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 			common.HexToAddress(slashAddress),
 			common.HexToAddress(rewardAddress),
 			avsOwnerAddress,
-			exoWhiteListAddress,
+			imWhiteListAddresses,
 			assetID,
 			avsUnbondingPeriod,
 			minSelfDelegation,
@@ -354,7 +354,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
-	exoWhiteAddresses := []common.Address{
+	imWhiteListAddresses := []common.Address{
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
@@ -373,7 +373,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 			common.HexToAddress(slashAddress),
 			common.HexToAddress(rewardAddress),
 			avsOwnerAddress,
-			exoWhiteAddresses,
+			imWhiteListAddresses,
 			assetID,
 			avsUnbondingPeriod,
 			minSelfDelegation,

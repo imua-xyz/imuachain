@@ -24,7 +24,7 @@ func (k *Keeper) DelegateAssetToOperator(
 	logger.Info("DelegateAssetToOperator-nativeToken", "msg", msg)
 
 	delegationParamsList := newDelegationParams(
-		msg.BaseInfo, assetstypes.ExocoreAssetAddr, assetstypes.ExocoreChainLzID, common.Hash{},
+		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, common.Hash{},
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, delegationParams := range delegationParamsList {
@@ -66,7 +66,7 @@ func (k *Keeper) UndelegateAssetFromOperator(
 	uniqueHash := sha256.Sum256([]byte(combined))
 
 	inputParamsList := newDelegationParams(
-		msg.BaseInfo, assetstypes.ExocoreAssetAddr, assetstypes.ExocoreChainLzID, uniqueHash,
+		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, uniqueHash,
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, inputParams := range inputParamsList {

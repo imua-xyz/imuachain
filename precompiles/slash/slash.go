@@ -127,5 +127,5 @@ func (Precompile) IsTransaction(methodID string) bool {
 
 // Logger returns a precompile-specific logger.
 func (p Precompile) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("ExoCore module", "slash")
+	return ctx.Logger().With("Imuachain module", "slash")
 }

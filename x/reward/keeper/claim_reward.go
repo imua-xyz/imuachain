@@ -43,8 +43,9 @@ func (k Keeper) RewardForWithdraw(sdk.Context, *RewardParams) error {
 	// 	TotalDepositAmount: event.OpAmount,
 	// 	WithdrawableAmount: event.OpAmount,
 	// }
-	// // TODO: there should be a reward pool to be transferred from for native tokens' reward, don't update staker-asset-info, just transfer exo-native-token:pool->staker or handled by validators since the reward would be transferred to validators directly.
-	// if assetID != types.ExocoreAssetID {
+	// // TODO: there should be a reward pool to be transferred from for native tokens' reward, don't update staker-asset-info,
+	// just transfer im-native-token:pool->staker or handled by validators since the reward would be transferred to validators directly.
+	// if assetID != types.ImuachainAssetID {
 	// 	err := k.assetsKeeper.UpdateStakerAssetState(ctx, stakeID, assetID, changeAmount)
 	// 	if err != nil {
 	// 		return err

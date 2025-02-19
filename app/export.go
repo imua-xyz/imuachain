@@ -50,7 +50,7 @@ func NewDefaultGenesisState(cdc codec.Codec) simapp.GenesisState {
 
 // ExportAppStateAndValidators exports the state of the application for a genesis
 // file.
-func (app *ExocoreApp) ExportAppStateAndValidators(
+func (app *ImuachainApp) ExportAppStateAndValidators(
 	forZeroHeight bool, jailAllowedAddrs []string, modulesToExport []string,
 ) (servertypes.ExportedApp, error) {
 	// Creates context with current height and checks txs for ctx to be usable by start of next
@@ -91,7 +91,7 @@ func (app *ExocoreApp) ExportAppStateAndValidators(
 // NOTE zero height genesis is a temporary feature which will be deprecated
 //
 //	in favor of export at a block height
-func (app *ExocoreApp) prepForZeroHeightGenesis(
+func (app *ImuachainApp) prepForZeroHeightGenesis(
 	ctx sdk.Context,
 	_ []string,
 ) error {

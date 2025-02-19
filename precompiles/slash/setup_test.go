@@ -31,7 +31,7 @@ func TestPrecompileTestSuite(t *testing.T) {
 
 func (s *SlashPrecompileTestSuite) SetupTest() {
 	s.DoSetupTest()
-	precompile, err := slash.NewPrecompile(s.App.AssetsKeeper, s.App.ExoSlashKeeper, s.App.AuthzKeeper)
+	precompile, err := slash.NewPrecompile(s.App.AssetsKeeper, s.App.ImSlashKeeper, s.App.AuthzKeeper)
 	s.Require().NoError(err)
 	s.precompile = precompile
 }

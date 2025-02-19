@@ -8,7 +8,7 @@ IClaimReward constant CLAIM_REWARD_CONTRACT = IClaimReward(
     CLAIM_REWARD_PRECOMPILE_ADDRESS
 );
 
-/// @author Exocore Team
+/// @author Imuachain Team
 /// @title ClaimReward Precompile Contract
 /// @dev The interface through which solidity contracts will interact with ClaimReward
 /// @custom:address 0x0000000000000000000000000000000000000806

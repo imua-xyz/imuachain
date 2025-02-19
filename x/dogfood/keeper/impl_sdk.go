@@ -197,7 +197,7 @@ func (k Keeper) IterateBondedValidatorsByPower(
 	ctx sdk.Context, f func(int64, stakingtypes.ValidatorI) (stop bool),
 ) {
 	// this is the bonded validators, that is, those that are currently in this module.
-	prevList := k.GetAllExocoreValidators(ctx)
+	prevList := k.GetAllImuachainValidators(ctx)
 	sort.SliceStable(prevList, func(i, j int) bool {
 		return prevList[i].Power > prevList[j].Power
 	})

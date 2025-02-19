@@ -14,7 +14,7 @@ import (
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	"github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/x/evm/keeper"
-	exocoreevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
+	imuaevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
 
 // InitGenesis initializes genesis state based on exported genesis
@@ -71,7 +71,7 @@ func InitGenesis(
 	}
 
 	nonce := k.GetNewContractNonce(ctx)
-	for _, predeploy := range exocoreevmtypes.DefaultPredeploys {
+	for _, predeploy := range imuaevmtypes.DefaultPredeploys {
 		// load data from predeploys
 		addr := predeploy.GetByteAddress()
 		codeHash := predeploy.GetCodeHash()

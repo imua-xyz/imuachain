@@ -105,7 +105,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func (p Params) Validate() error {
 	// Some basic configure params validation:
 	// Maxnonce: This tells how many transactions for one round can a validator send, This also restrict how many blocks a window lasts for one round to collect transactions
-	// MaxDetID: This only works for DS, to tell how many continuous roundID_from_DS could be accept at most for one round of exorcore_oracle
+	// MaxDetID: This only works for DS, to tell how many continuous roundID_from_DS could be accept at most for one round of imuachain_oracle
 	// ThresholdA/ThresholdB: represents the threshold of voting power to confirm a price as final price
 	// Mode: tells how and when to confirm a final price, expect for voting power threshold, v1 set this value to 1 means final price will be confirmed as soon as it has reached the threshold of total voting power, and just ignore any remaining transactions followed for current round.
 	if p.MaxNonce < 1 || p.MaxDetId < 1 || p.ThresholdA < 1 || p.ThresholdB < p.ThresholdA || p.Mode != ConsensusModeASAP || p.MaxSizePrices < 1 {

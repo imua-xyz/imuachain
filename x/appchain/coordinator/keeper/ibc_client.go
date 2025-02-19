@@ -52,7 +52,7 @@ func (k Keeper) CreateClientForSubscriber(
 	}
 	subscriberUnbondingPeriod := subscriberParams.UnbondingPeriod
 	trustPeriod, err := commontypes.CalculateTrustPeriod(
-		// note that this is the client that will live on Exocore
+		// note that this is the client that will live on Imuachain
 		// and we use the counterparty's unbonding period as a base
 		subscriberUnbondingPeriod, coordinatorParams.TrustingPeriodFraction,
 	)

@@ -756,7 +756,7 @@ func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) 
 func (f *FeederManager) initCaches(ctx sdk.Context) {
 	f.cs = newCaches()
 	params := f.k.GetParams(ctx)
-	validatorSet := f.k.GetAllExocoreValidators(ctx)
+	validatorSet := f.k.GetAllImuachainValidators(ctx)
 	validatorPowers := make(map[string]*big.Int)
 	for _, v := range validatorSet {
 		validatorPowers[sdk.ConsAddress(v.Address).String()] = big.NewInt(v.Power)
@@ -782,7 +782,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	params := replayRecentParamsList[0].Params
 	replayRecentParamsList = replayRecentParamsList[1:]
 
-	validatorSet := f.k.GetAllExocoreValidators(ctx)
+	validatorSet := f.k.GetAllImuachainValidators(ctx)
 	validatorPowers := make(map[string]*big.Int)
 	for _, v := range validatorSet {
 		validatorPowers[sdk.ConsAddress(v.Address).String()] = big.NewInt(v.Power)

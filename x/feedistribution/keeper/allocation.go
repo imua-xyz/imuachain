@@ -29,7 +29,7 @@ func (k Keeper) AllocateTokens(ctx sdk.Context, totalPreviousPower int64) error 
 		return nil
 	}
 	logger.Info("Allocate tokens to all validators", "feesCollected amount is ", feesCollected)
-	// calculate fraction allocated to exocore validators
+	// calculate fraction allocated to imua validators
 	remaining := feesCollected
 	communityTax, err := k.GetCommunityTax(ctx)
 	if err != nil {
@@ -39,7 +39,7 @@ func (k Keeper) AllocateTokens(ctx sdk.Context, totalPreviousPower int64) error 
 
 	// allocate tokens proportionally to voting power of different validators
 	// TODO: Consider parallelizing later
-	allValidators := k.StakingKeeper.GetAllExocoreValidators(ctx) // GetAllValidators(suite.Ctx)
+	allValidators := k.StakingKeeper.GetAllImuachainValidators(ctx) // GetAllValidators(suite.Ctx)
 	for i, val := range allValidators {
 		pk, err := val.ConsPubKey()
 		if err != nil {

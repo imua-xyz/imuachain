@@ -1,14 +1,14 @@
 version: "3"
 
 services:
-  exocorenode0:
-    container_name: exocorenode0
-    image: "exocore/node"
+  imuanode0:
+    container_name: imuanode0
+    image: "imua/node"
     read_only: true
     environment:
       - DEBUG=1
       - ID=0
-      - LOG=${LOG:-exocore.log}
+      - LOG=${LOG:-imua.log}
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -21,19 +21,19 @@ services:
       - "26661:26660"
       - "8841:8546"
     volumes:
-      - ./build/.testnets:/home/exocore/data:Z
+      - ./build/.testnets:/home/imua/data:Z
     networks:
       localnet:
         ipv4_address: 192.168.0.2
 
-  exocorenode1:
-    container_name: exocorenode1
-    image: "exocore/node"
+  imuanode1:
+    container_name: imuanode1
+    image: "imua/node"
     read_only: true
     environment:
       - DEBUG=0
       - ID=1
-      - LOG=${LOG:-exocore.log}
+      - LOG=${LOG:-imua.log}
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -46,19 +46,19 @@ services:
       - "26662:26660"
       - "8842:8546"
     volumes:
-      - ./build/.testnets:/home/exocore/data:Z
+      - ./build/.testnets:/home/imua/data:Z
     networks:
       localnet:
         ipv4_address: 192.168.0.3
 
-  exocorenode2:
-    container_name: exocorenode2
-    image: "exocore/node"
+  imuanode2:
+    container_name: imuanode2
+    image: "imua/node"
     read_only: true
     environment:
       - DEBUG=0
       - ID=2
-      - LOG=${LOG:-exocore.log}
+      - LOG=${LOG:-imua.log}
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -71,19 +71,19 @@ services:
       - "26663:26660"
       - "8843:8546"
     volumes:
-      - ./build/.testnets:/home/exocore/data:Z
+      - ./build/.testnets:/home/imua/data:Z
     networks:
       localnet:
         ipv4_address: 192.168.0.4
 
-  exocorenode3:
-    container_name: exocorenode3
-    image: "exocore/node"
+  imuanode3:
+    container_name: imuanode3
+    image: "imua/node"
     read_only: true
     environment:
       - DEBUG=0
       - ID=3
-      - LOG=${LOG:-exocore.log}
+      - LOG=${LOG:-imua.log}
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -96,7 +96,7 @@ services:
       - "26664:26660"
       - "8844:8546"
     volumes:
-      - ./build/.testnets:/home/exocore/data:Z
+      - ./build/.testnets:/home/imua/data:Z
     networks:
       localnet:
         ipv4_address: 192.168.0.5

@@ -27,9 +27,9 @@ var (
 
 func (s *AssetsPrecompileSuite) TestCallDepositLSTFromEOA() {
 	// deposit params for test
-	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+	imuaLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	depositParams := assetstype.Params{
-		Gateways: []string{exocoreLzAppAddress},
+		Gateways: []string{imuaLzAppAddress},
 	}
 	assetAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	paddingAssetAddress := paddingClientChainAddress(assetAddress, assetstype.GeneralClientChainAddrLength)
@@ -88,9 +88,9 @@ func (s *AssetsPrecompileSuite) TestCallDepositLSTFromEOA() {
 
 func (s *AssetsPrecompileSuite) TestCallDepositToFromContract() {
 	// deposit params for test
-	exoCoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+	lzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	depositParams := assetstype.Params{
-		Gateways: []string{exoCoreLzAppAddress},
+		Gateways: []string{lzAppAddress},
 	}
 
 	assetAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
@@ -164,7 +164,7 @@ func (s *AssetsPrecompileSuite) TestCallDepositToFromContract() {
 
 	// testCallDepositToWithTryCatch
 	beforeEach()
-	depositParams.Gateways = []string{exoCoreLzAppAddress}
+	depositParams.Gateways = []string{lzAppAddress}
 	setDepositToArgs = prepareFunc(&depositParams, "testCallDepositToWithTryCatch")
 	// eventCheck = passCheck.WithExpEvents("ErrorOccurred")
 	// todo: need to check the ethereum log
@@ -177,9 +177,9 @@ func (s *AssetsPrecompileSuite) TestCallDepositToFromContract() {
 
 func (s *AssetsPrecompileSuite) TestCallWithdrawLSTFromEOA() {
 	// withdraw params for test
-	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+	imuaLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	params := assetstype.Params{
-		Gateways: []string{exocoreLzAppAddress},
+		Gateways: []string{imuaLzAppAddress},
 	}
 	usdtAddress := paddingClientChainAddress(common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7"), assetstype.GeneralClientChainAddrLength)
 	clientChainLzID := 101

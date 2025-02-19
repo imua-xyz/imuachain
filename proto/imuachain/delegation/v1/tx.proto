@@ -1,0 +1,125 @@
+syntax = "proto3";
+package imuachain.delegation.v1;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
+
+// ValueField is a field that holds a value of sdk.Int type.
+message ValueField {
+  // amount is the amount of the asset, as an sdk.Int.
+  string amount = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// DelegatedSingleAssetInfo is a single asset info that is delegated by a staker.
+message DelegatedSingleAssetInfo {
+  // asset_id is the asset id.
+  string asset_id = 1;
+  // since Cosmos uses an IAVL+ tree where the order of insertion affects the state root (even
+  // if the items are unrelated), and deserializing a protobuf map into Golang does not
+  // guarantee order, we cannot use a map here. Instead, we use a repeated field of key-value
+  // pairs.
+  repeated KeyValue per_operator_amounts = 3 [(gogoproto.nullable) = false];
+}
+
+// KeyValue is a key-value pair. It is a helper struct to represent a map in Protobuf.
+message KeyValue {
+  // key is the key of the key-value pair.
+  string key = 1;
+  // value is the value of the key-value pair.
+  ValueField value = 2;
+}
+
+// DelegationIncOrDecInfo is the delegation increase or decrease info.
+message DelegationIncOrDecInfo {
+  option (cosmos.msg.v1.signer) = "fromAddress";
+  option (amino.name) = "cosmos-sdk/MsgAddOrDecreaseDelegation";
+
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // from_address is the staker address
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // per_operator_amounts is the amount of the asset delegated to each operator.
+  repeated KeyValue per_operator_amounts = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgDelegation is the delegation Msg.
+message MsgDelegation {
+  // asset_id is the asset id.
+  string asset_id = 1;
+  // base_info is the delegation increase or decrease request container.
+  DelegationIncOrDecInfo base_info = 2;
+}
+
+// UndelegationRecord is the undelegation record, keyed by a RecordKey.
+message UndelegationRecord {
+  // staker_id is the staker id.
+  string staker_id = 1;
+  // asset_id is the asset id.
+  string asset_id = 2;
+  // operator_addr is the operator address.
+  string operator_addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // tx_hash is the transaction hash on the Imuachain chain.
+  string tx_hash = 4;
+  // block_number is the block number on Imuachain.
+  uint64 block_number = 5;
+  // completed_epoch_identifier is the epoch identifier
+  string completed_epoch_identifier = 6;
+  // completed_epoch_number is the epoch number on Imuachain at which the undelegation
+  // should be completed.
+  int64 completed_epoch_number = 7;
+  // undelegation_Id is a globally incrementing number used to identify an undelegation.
+  // It will be included in the key when storing the undelegation.
+  uint64 undelegation_id = 8;
+  // amount is the amount of the asset to be undelegated.
+  string amount = 9 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // actual_completed_amount is the actual amount of the asset that has been
+  // undelegated so far. it may be lower than the amount in the case of slashing.
+  string actual_completed_amount = 10 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// UndelegationRecordKeyList is the list of undelegation records.
+message UndelegationRecordKeyList {
+  // key_list is the list of undelegation record keys.
+  repeated string key_list = 1;
+}
+
+// DelegationResponse is the response to a delegation request.
+message DelegationResponse {}
+
+// MsgUndelegation is the undelegation Msg.
+message MsgUndelegation {
+  // asset_id is the identity of the asset.
+  string asset_id = 1;
+  // base_info is the delegation increase or decrease request container.
+  DelegationIncOrDecInfo base_info = 2;
+}
+
+// UndelegationResponse is the response to an undelegation request.
+message UndelegationResponse {}
+
+// Msg defines the delegation Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  // DelegateAssetToOperator delegates asset to operator.
+  rpc DelegateAssetToOperator(MsgDelegation) returns (DelegationResponse);
+  // UndelegateAssetFromOperator undelegates asset from operator.
+  rpc UndelegateAssetFromOperator(MsgUndelegation) returns (UndelegationResponse);
+}

@@ -64,7 +64,7 @@ func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 		}
 		// check if the key is active yet
 		isValidator := false
-		_, isValidator = wrapper.keeper.GetExocoreValidator(
+		_, isValidator = wrapper.keeper.GetImuachainValidator(
 			ctx, wrappedKey.ToConsAddr(),
 		)
 		if !isValidator {
@@ -73,7 +73,7 @@ func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 				ctx, operator, chainIDWithoutRevision,
 			)
 			if hasOldKey {
-				_, isValidator = wrapper.keeper.GetExocoreValidator(
+				_, isValidator = wrapper.keeper.GetImuachainValidator(
 					ctx, prevKey.ToConsAddr(),
 				)
 			}

@@ -14,7 +14,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	avsManagerPrecompile "github.com/imua-xyz/imuachain/precompiles/avs"
-	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	avstype "github.com/imua-xyz/imuachain/x/avs/types"
 	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
@@ -61,7 +61,8 @@ var baseTestCases = []avsTestCases{
 
 func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptinOperators]
-	operatorAddress, avsAddr, slashContract := "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph", suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	operatorAddress, avsAddr, slashContract :=
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(), suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 
 	operatorOptIn := func() {
 		optedInfo := &types.OptedInfo{
@@ -84,7 +85,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 			postCheck:   func(bz []byte) {},
 			gas:         100000,
 			expErr:      true,
-			errContains: fmt.Sprintf(exocmn.ErrContractInputParamOrType, 0, "common.Address", "0x0000000000000000000000000000000000000000"),
+			errContains: fmt.Sprintf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", "0x0000000000000000000000000000000000000000"),
 		},
 		{
 			"success - no operators",
@@ -390,7 +391,11 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 	testStartingEpoch := 1
 	setUp := func() {
 		avsName := "avsTest"
-		avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
+		avsOwnerAddress := []string{
+			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		}
 		assetID := suite.AssetIDs
 		avs := &avstype.AVSInfo{
 			Name:                avsName,
@@ -455,7 +460,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 
 func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodIsOperator]
-	opAccAddr, _ := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	opAccAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 
 	testCases := []avsTestCases{
 		{

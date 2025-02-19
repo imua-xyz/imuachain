@@ -1,10 +1,10 @@
 package types
 
 const (
-	// delegation of exo native asset, since UpdateStakerAssetState is not called for this case
-	EventTypeExoAssetDelegation = "exo_asset_delegation"
-	AttributeKeyOperator        = "operator"
-	AttributeKeyAmount          = "amount"
+	// delegation of IMUA native asset, since UpdateStakerAssetState is not called for this case
+	EventTypeImuaAssetDelegation = "imua_asset_delegation"
+	AttributeKeyOperator         = "operator"
+	AttributeKeyAmount           = "amount"
 
 	// delegation state
 	EventTypeDelegationStateUpdated    = "delegation_state_updated"

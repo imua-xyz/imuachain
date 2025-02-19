@@ -51,15 +51,15 @@ type ContractCallArgs struct {
 // compiled contract data and constructor arguments
 func DeployContract(
 	ctx sdk.Context,
-	exocoreApp *app.ExocoreApp,
+	imuaApp *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	queryClientEvm evm.QueryClient,
 	contract evm.CompiledContract,
 	constructorArgs ...interface{},
 ) (common.Address, error) {
-	chainID := exocoreApp.EvmKeeper.ChainID()
+	chainID := imuaApp.EvmKeeper.ChainID()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
-	nonce := exocoreApp.EvmKeeper.GetNonce(ctx, from)
+	nonce := imuaApp.EvmKeeper.GetNonce(ctx, from)
 
 	ctorArgs, err := contract.ABI.Pack("", constructorArgs...)
 	if err != nil {
@@ -76,19 +76,19 @@ func DeployContract(
 		ChainID:   chainID,
 		Nonce:     nonce,
 		GasLimit:  gas,
-		GasFeeCap: exocoreApp.FeeMarketKeeper.GetBaseFee(ctx),
+		GasFeeCap: imuaApp.FeeMarketKeeper.GetBaseFee(ctx),
 		GasTipCap: big.NewInt(1),
 		Input:     data,
 		Accesses:  &ethtypes.AccessList{},
 	})
 	msgEthereumTx.From = from.String()
 
-	res, err := DeliverEthTx(exocoreApp, priv, msgEthereumTx)
+	res, err := DeliverEthTx(imuaApp, priv, msgEthereumTx)
 	if err != nil {
 		return common.Address{}, err
 	}
 
-	if _, err := CheckEthTxResponse(res, exocoreApp.AppCodec()); err != nil {
+	if _, err := CheckEthTxResponse(res, imuaApp.AppCodec()); err != nil {
 		return common.Address{}, err
 	}
 
@@ -99,7 +99,7 @@ func DeployContract(
 // with the provided factoryAddress
 func DeployContractWithFactory(
 	ctx sdk.Context,
-	evmosApp *app.ExocoreApp,
+	evmosApp *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	factoryAddress common.Address,
 ) (common.Address, abci.ResponseDeliverTx, error) {

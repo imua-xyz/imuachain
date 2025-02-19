@@ -274,7 +274,7 @@ func (k Keeper) SlashWithInfractionReason(
 		k.Logger(ctx).Error("error when executing slash", "error", err, "avsAddr", avsAddr)
 		return sdkmath.ZeroInt()
 	}
-	// todo: The returned value should be the amount of burned Exo if we considering a slash from the reward
+	// todo: The returned value should be the amount of burned IMUA if we considering a slash from the reward
 	// Now it doesn't slash from the reward, so just return 0
 	return sdkmath.ZeroInt()
 }

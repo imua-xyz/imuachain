@@ -52,7 +52,7 @@ import (
 
 	cosmoshd "github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/evmos/evmos/v16/crypto/hd"
-	exocorecrypto "github.com/imua-xyz/imuachain/crypto"
+	imuacrypto "github.com/imua-xyz/imuachain/crypto"
 
 	// ekeyring "github.com/evmos/evmos/v16/crypto/keyring"
 
@@ -104,7 +104,7 @@ type Config struct {
 // testing requirements.
 func DefaultConfig() Config {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
-	chainID := fmt.Sprintf("exocore_%d-1", tmrand.Int63n(9999999999999)+1)
+	chainID := fmt.Sprintf("imua_%d-1", tmrand.Int63n(9999999999999)+1)
 	return Config{
 		Codec:             encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
@@ -126,7 +126,7 @@ func DefaultConfig() Config {
 		CleanupDir:      true,
 		SigningAlgo:     string(hd.EthSecp256k1Type),
 		// KeyringOptions:  []keyring.Option{hd.EthSecp256k1Option()},
-		KeyringOptions: []keyring.Option{exocorecrypto.Ed25519Option()},
+		KeyringOptions: []keyring.Option{imuacrypto.Ed25519Option()},
 		PrintMnemonic:  false,
 	}
 }
@@ -134,7 +134,7 @@ func DefaultConfig() Config {
 // NewAppConstructor returns a new Evmos AppConstructor
 func NewAppConstructor(encodingCfg params.EncodingConfig, chainID string) AppConstructor {
 	return func(val Validator) servertypes.Application {
-		return app.NewExocoreApp(
+		return app.NewImuachainApp(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
 			encodingCfg,
 			simutils.NewAppOptionsWithFlagHome(val.Ctx.Config.RootDir),
@@ -342,8 +342,8 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		ctx.Logger = logger
 
 		nodeDirName := fmt.Sprintf("node%d", i)
-		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "exocored")
-		clientDir := filepath.Join(network.BaseDir, nodeDirName, "exocorecli")
+		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "imuad")
+		clientDir := filepath.Join(network.BaseDir, nodeDirName, "imuacli")
 
 		err := os.MkdirAll(filepath.Join(nodeDir, "config"), 0o750)
 		if err != nil {
@@ -497,7 +497,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 	balances := sdk.NewCoins(
 		sdk.NewCoin(cfg.NativeDenom, cfg.AccountTokens),
 	)
-	gateWayAddressStr := "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph"
+	gateWayAddressStr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	gateWayAddr, _ := sdk.AccAddressFromBech32(gateWayAddressStr)
 	genBalances = append(genBalances, banktypes.Balance{Address: gateWayAddressStr, Coins: balances.Sort()})
 	genAccounts = append(genAccounts, &evmostypes.EthAccount{

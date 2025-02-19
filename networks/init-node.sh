@@ -4,10 +4,10 @@ CHAINDIR="$current_dir/build/.testnets"
 
 for node in {0..3}; do
 	NODE_DIR="$CHAINDIR/node$node"
-	GENESIS="$NODE_DIR/exocored/config/genesis.json"
-	TMP_GENESIS="$NODE_DIR/exocored/config/tmp_genesis.json"
-	APP_TOML="$NODE_DIR/exocored/config/app.toml"
-	CONFIG_TOML="$NODE_DIR/exocored/config/config.toml"
+	GENESIS="$NODE_DIR/imuad/config/genesis.json"
+	TMP_GENESIS="$NODE_DIR/imuad/config/tmp_genesis.json"
+	APP_TOML="$NODE_DIR/imuad/config/app.toml"
+	CONFIG_TOML="$NODE_DIR/imuad/config/config.toml"
 	# If TMP_GENESIS directory does not exist, create it
 	TMP_GENESIS_DIR=$(dirname "$TMP_GENESIS")
 	if [ ! -d "$TMP_GENESIS_DIR" ]; then

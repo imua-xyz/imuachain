@@ -94,7 +94,7 @@ var (
 )
 
 // ChainIDWithoutRevision returns the chainID without the revision number.
-// For example, "exocoretestnet_233-1" returns "exocoretestnet_233".
+// For example, "imuachaintestnet_233-1" returns "imuachaintestnet_233".
 func ChainIDWithoutRevision(chainID string) string {
 	if !ibcclienttypes.IsRevisionFormat(chainID) {
 		return chainID

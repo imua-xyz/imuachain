@@ -63,9 +63,9 @@ func paddingClientChainAddress(input []byte, outputLength int) []byte {
 // TestRun tests Delegate method through calling Run function.
 func (s *DelegationPrecompileSuite) TestRunDelegate() {
 	// deposit params for test
-	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+	imuaLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
-	opAccAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	opAccAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	clientChainLzID := 101
 	lzNonce := 0
 	delegationAmount := big.NewInt(50)
@@ -124,7 +124,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 		returnBytes []byte
 	}{
 		{
-			name: "fail - delegateToThroughClientChain transaction will fail because the exocoreLzAppAddress is mismatched",
+			name: "fail - delegateToThroughClientChain transaction will fail because the imuaLzAppAddress is mismatched",
 			malleate: func() (common.Address, []byte) {
 				return commonMalleate()
 			},
@@ -133,10 +133,10 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			returnBytes: failureRet,
 		},
 		{
-			name: "fail - delegateToThroughClientChain transaction will fail because the contract caller isn't the exoCoreLzAppAddr",
+			name: "fail - delegateToThroughClientChain transaction will fail because the contract caller isn't the imuaLzAppAddress",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					Gateways: []string{exocoreLzAppAddress},
+					Gateways: []string{imuaLzAppAddress},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -287,7 +287,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 	// deposit params for test
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
-	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	operatorAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	clientChainLzID := 101
 	lzNonce := uint64(0)
 	delegationAmount := big.NewInt(50)

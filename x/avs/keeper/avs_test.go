@@ -21,7 +21,11 @@ import (
 func (suite *AVSTestSuite) TestAVS() {
 	avsName := "avsTest"
 	avsAddress := suite.avsAddress
-	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
+	avsOwnerAddress := []string{
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+	}
 	assetID := suite.AssetIDs
 	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 
@@ -39,7 +43,7 @@ func (suite *AVSTestSuite) TestAVS() {
 		MinTotalStakeAmount: 1000,
 		AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 		AvsReward:           sdk.MustNewDecFromStr("0.002"),
-		TaskAddr:            "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr",
+		TaskAddr:            sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		WhitelistAddress:    []string{operatorAddress},
 	}
 
@@ -72,7 +76,11 @@ func (suite *AVSTestSuite) TestAVS() {
 
 func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 	avsName, avsAddres, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
+	avsOwnerAddress := []string{
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+	}
 	assetID := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
@@ -104,7 +112,11 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	// Test case setup
 	avsName, avsAddress, slashAddress := "avsTest", suite.avsAddress.String(), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
+	avsOwnerAddress := []string{
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+	}
 	assetID := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
@@ -139,7 +151,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	}
 
 	avsParams.Action = avstypes.DeRegisterAction
-	avsParams.CallerAddress, err = sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	avsParams.CallerAddress, err = sdk.AccAddressFromBech32("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
 	info, err = suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)

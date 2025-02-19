@@ -72,15 +72,15 @@ func Test_genKey(t *testing.T) {
 
 	for i := 0; i < 5; i++ {
 		address := utiltx.GenerateAddress()
-		exoAddress := sdk.AccAddress(address.Bytes()).String()
-		addresses[i] = exoAddress
+		imuaAddress := sdk.AccAddress(address.Bytes()).String()
+		addresses[i] = imuaAddress
 	}
 
-	t.Log("Generated EXO addresses:")
+	t.Log("Generated IM addresses:")
 	for _, address := range addresses {
 		t.Log(address)
 		if _, err := sdk.AccAddressFromBech32(address); err != nil {
-			t.Errorf("Invalid EXO address: %s", address)
+			t.Errorf("Invalid IM address: %s", address)
 		}
 	}
 }

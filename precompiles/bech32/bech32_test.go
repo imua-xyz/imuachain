@@ -61,7 +61,7 @@ func (s *Bech32PrecompileSuite) TestRun() {
 			"empty bech32 prefix provided, expected a non-empty string",
 		},
 		{
-			"pass - hex to bech32 account (exo)",
+			"pass - hex to bech32 account (im)",
 			func() *vm.Contract {
 				input, err := s.precompile.Pack(
 					bech32.MethodHexToBech32, inputAddr, config.Bech32Prefix,
@@ -82,7 +82,7 @@ func (s *Bech32PrecompileSuite) TestRun() {
 			"",
 		},
 		{
-			"pass - hex to bech32 validator operator (exovaloper)",
+			"pass - hex to bech32 validator operator (imvaloper)",
 			func() *vm.Contract {
 				input, err := s.precompile.Pack(
 					bech32.MethodHexToBech32, inputAddr, config.Bech32PrefixValAddr,
@@ -103,7 +103,7 @@ func (s *Bech32PrecompileSuite) TestRun() {
 			"",
 		},
 		{
-			"pass - hex to bech32 consensus address (exovalcons)",
+			"pass - hex to bech32 consensus address (imvalcons)",
 			func() *vm.Contract {
 				input, err := s.precompile.Pack(
 					bech32.MethodHexToBech32, inputAddr, config.Bech32PrefixConsAddr,

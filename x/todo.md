@@ -2,18 +2,18 @@
 
 ## common
 
-- use evm tx as the only entry for any exocore operation
+- use evm tx as the only entry for any imua operation
 - implement the invariant logic for every module to keep the state security
 - setting module parameter needs to be done through governance proposal
 - pay attention to each module's state when the EVM transaction fails.
-- consider which operations require depositing some exocore tokens to maintain security
+- consider which operations require depositing some imua tokens to maintain security
 
 ## deposit
 
 ## delegation
 
-- delegateTo and undelegateFrom might also need to be implemented using exocore as entry
-- Need to check the input parameters and deposit some exocore token when register to an operator
+- delegateTo and undelegateFrom might also need to be implemented using imua as entry
+- Need to check the input parameters and deposit some imua token when register to an operator
 - the operator can only be registered once
 - delegateTo might require the approval of operator to grant the operator permission for selecting a staking user
 
@@ -27,7 +27,7 @@
 
 - consider storing the reward state in its own module state
 
-## exoslash
+## imuaslash
 
 - record the slash states of all operators
 - provide the function to deploy slash condition for AVS

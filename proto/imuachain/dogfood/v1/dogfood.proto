@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package imuachain.dogfood.v1;
+
+import "cosmos/staking/v1beta1/staking.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/dogfood/types";
+
+// ImuachainValidator is a validator that is part of the Imuachain network. It is
+// used to validate and sign blocks.
+message ImuachainValidator {
+  // The address, as derived from the consensus key. It has no relation
+  // with the operator's account address.
+  bytes address = 1;
+  // Last known power
+  int64 power = 2;
+  // pubkey is the consensus public key of the validator, as a Protobuf Any.
+  // this type is mirrored from the SDK's validator type in x/staking.
+  google.protobuf.Any pubkey = 3 [
+    (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey",
+    (gogoproto.moretags) = "yaml:\"consensus_pubkey\""
+  ];
+}
+
+// AccountAddresses represents a list of account addresses. It is used to store the list of
+// operator addresses whose operations are maturing at an epoch.
+message AccountAddresses {
+  // list is the list of account addresses.
+  repeated bytes list = 1;
+}
+
+// UndelegationRecordKeys is a collection of undelegation record keys. This is used to store a
+// list of undelegation records to mature in the delegation module at the end of the epoch.
+message UndelegationRecordKeys {
+  // list is the list of undelegation record keys.
+  repeated bytes list = 1;
+}
+
+// Validators is a list of validators stored according to the staking module.
+message Validators {
+  // list is the list of validators.
+  repeated cosmos.staking.v1beta1.Validator list = 1 [(gogoproto.nullable) = false];
+}
+
+// ConsensusAddresses is a list of consensus addresses.
+message ConsensusAddresses {
+  // list is the list of consensus addresses.
+  repeated bytes list = 1;
+}

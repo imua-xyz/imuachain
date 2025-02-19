@@ -23,7 +23,7 @@ var (
 
 const (
 	// Amino names
-	updateParamsName = "exocore/MsgUpdateParamsForSlash"
+	updateParamsName = "imua/MsgUpdateParamsForSlash"
 )
 
 // NOTE: This is required for the GetSignBytes function

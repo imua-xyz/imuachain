@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package imuachain.reward.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/reward/types";
+option (gogoproto.goproto_getters_all) = false;
+
+// Pool is a reward pool.
+message Pool {
+  // Reward is the reward for a validator.
+  message Reward {
+    // coins is the reward amount, as `sdk.Coins`.
+    repeated cosmos.base.v1beta1.Coin coins = 2 [
+      (gogoproto.nullable) = false,
+      (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+    ];
+    // earnings_addr is the earnings address.
+    string earnings_addr = 3;
+    // validator receiving the rewards
+    string validator = 4;
+  }
+  // name of the pool
+  string name = 1;
+  // rewards details
+  repeated Reward rewards = 2 [(gogoproto.nullable) = false];
+}

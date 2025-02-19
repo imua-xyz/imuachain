@@ -1,12 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Exocore - gRPC Gateway docs",
+    "title": "Imuachain - gRPC Gateway docs",
     "description": "A REST interface for state queries and transactions",
     "version": "1.0.0"
   },
   "paths": {
-    "/exocore/epochs/v1/current_epoch/{identifier}": {
+    "/imuachain/epochs/v1/current_epoch/{identifier}": {
       "get": {
         "summary": "CurrentEpoch provide the current epoch for the specified identifier.",
         "operationId": "CurrentEpoch",
@@ -73,7 +73,7 @@
         ]
       }
     },
-    "/exocore/epochs/v1/epoch/{identifier}": {
+    "/imuachain/epochs/v1/epoch/{identifier}": {
       "get": {
         "summary": "EpochInfo provides the epoch information for the specified identifier.",
         "operationId": "EpochInfo",
@@ -178,7 +178,7 @@
         ]
       }
     },
-    "/exocore/epochs/v1/epochs": {
+    "/imuachain/epochs/v1/epochs": {
       "get": {
         "summary": "EpochInfos provide a list of currently running epochs.",
         "operationId": "EpochInfos",
@@ -16800,7 +16800,7 @@
         ]
       }
     },
-    "/exocore/dogfood/v1/operator_opt_out_finish_epoch/{operator_acc_addr}": {
+    "/imuachain/dogfood/v1/operator_opt_out_finish_epoch/{operator_acc_addr}": {
       "get": {
         "summary": "OperatorOptOutFinishEpoch queries the epoch when the operator's opt-out will finish.",
         "operationId": "OperatorOptOutFinishEpoch",
@@ -16870,7 +16870,7 @@
         ]
       }
     },
-    "/exocore/dogfood/v1/opt_outs_to_finish/{epoch}": {
+    "/imuachain/dogfood/v1/opt_outs_to_finish/{epoch}": {
       "get": {
         "summary": "OptOutsToFinish queries the operators whose opt-outs will finish at the given epoch.",
         "operationId": "OptOutsToFinish",
@@ -16944,7 +16944,7 @@
         ]
       }
     },
-    "/exocore/dogfood/v1/params": {
+    "/imuachain/dogfood/v1/params": {
       "get": {
         "summary": "Params queries the parameters of the module.",
         "operationId": "DogfoodParams",
@@ -17036,7 +17036,7 @@
         ]
       }
     },
-    "/exocore/dogfood/v1/undelegation_maturity_epoch/{record_key}": {
+    "/imuachain/dogfood/v1/undelegation_maturity_epoch/{record_key}": {
       "get": {
         "summary": "UndelegationMaturityEpoch queries the epoch when the undelegation will mature.",
         "operationId": "UndelegationMaturityEpoch",
@@ -17106,7 +17106,7 @@
         ]
       }
     },
-    "/exocore/dogfood/v1/undelegations_to_mature/{epoch}": {
+    "/imuachain/dogfood/v1/undelegations_to_mature/{epoch}": {
       "get": {
         "summary": "UndelegationsToMature queries the undelegations that will mature at the given epoch.",
         "operationId": "UndelegationsToMature",
@@ -17180,7 +17180,7 @@
         ]
       }
     },
-    "/exocore/dogfood/v1/validator/{cons_addr}": {
+    "/imuachain/dogfood/v1/validator/{cons_addr}": {
       "get": {
         "summary": "Validator queries the validator for the given consensus address. This is the bare-minimum validator:\npublic key, consensus address, power. No other params such as commission, jailed, etc. are included.",
         "operationId": "DogfoodValidator",
@@ -17276,7 +17276,7 @@
         ]
       }
     },
-    "/exocore/dogfood/v1/validators": {
+    "/imuachain/dogfood/v1/validators": {
       "get": {
         "summary": "Validators queries all validators. This is the bare-minimum validator: public key, consensus address, power.\nNo other params such as commission, jailed, etc. are included.",
         "operationId": "DogfoodValidators",
@@ -17317,7 +17317,7 @@
                         "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
                       }
                     },
-                    "description": "ExocoreValidator is a validator that is part of the Exocore network. It is\nused to validate and sign blocks."
+                    "description": "ImuachainValidator is a validator that is part of the Imuachain network. It is\nused to validate and sign blocks."
                   },
                   "description": "validators is the list of all validators."
                 },
@@ -17423,7 +17423,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/all_assets": {
+    "/imuachain/assets/v1/all_assets": {
       "get": {
         "summary": "AllStakingAssetsInfo queries all staking assets info.",
         "operationId": "QueAllStakingAssetsInfo",
@@ -17464,10 +17464,10 @@
                             "format": "uint64",
                             "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
                           },
-                          "exocore_chain_index": {
+                          "imua_chain_index": {
                             "type": "string",
                             "format": "uint64",
-                            "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                            "description": "imua_chain_index is the index of the client chain within the imuasystem."
                           },
                           "meta_info": {
                             "type": "string",
@@ -17527,7 +17527,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/all_client_chains": {
+    "/imuachain/assets/v1/all_client_chains": {
       "get": {
         "summary": "AllClientChainInfo queries all client chain info.",
         "operationId": "QueAllClientChainInfo",
@@ -17555,10 +17555,10 @@
                         "format": "uint64",
                         "description": "chain_id of the client chain. Not necessarily the EVM chain id."
                       },
-                      "exocore_chain_index": {
+                      "imua_chain_index": {
                         "type": "string",
                         "format": "uint64",
-                        "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                        "description": "imua_chain_index is the index of the client chain within the imuasystem."
                       },
                       "finalization_blocks": {
                         "type": "string",
@@ -17683,7 +17683,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/asset/{asset_id}": {
+    "/imuachain/assets/v1/asset/{asset_id}": {
       "get": {
         "summary": "StakingAssetInfo queries the staking asset info.",
         "operationId": "QueStakingAssetInfo",
@@ -17719,10 +17719,10 @@
                       "format": "uint64",
                       "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
                     },
-                    "exocore_chain_index": {
+                    "imua_chain_index": {
                       "type": "string",
                       "format": "uint64",
-                      "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                      "description": "imua_chain_index is the index of the client chain within the imuasystem."
                     },
                     "meta_info": {
                       "type": "string",
@@ -17786,7 +17786,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/client_chain/{chain_index}": {
+    "/imuachain/assets/v1/client_chain/{chain_index}": {
       "get": {
         "summary": "ClientChainInfoByIndex queries the client chain info by index.",
         "operationId": "QueClientChainInfoByIndex",
@@ -17809,10 +17809,10 @@
                   "format": "uint64",
                   "description": "chain_id of the client chain. Not necessarily the EVM chain id."
                 },
-                "exocore_chain_index": {
+                "imua_chain_index": {
                   "type": "string",
                   "format": "uint64",
-                  "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                  "description": "imua_chain_index is the index of the client chain within the imuasystem."
                 },
                 "finalization_blocks": {
                   "type": "string",
@@ -17886,7 +17886,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/operator_asset/{operator_addr}/{asset_id}": {
+    "/imuachain/assets/v1/operator_asset/{operator_addr}/{asset_id}": {
       "get": {
         "summary": "OperatorSpecifiedAssetAmount queries the operator specified asset amount.",
         "operationId": "QueOperatorSpecifiedAssetAmount",
@@ -17971,7 +17971,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/operator_assets/{operator_addr}": {
+    "/imuachain/assets/v1/operator_assets/{operator_addr}": {
       "get": {
         "summary": "OperatorAssetInfos queries the operator asset info.",
         "operationId": "QueOperatorAssetInfos",
@@ -18069,7 +18069,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/params": {
+    "/imuachain/assets/v1/params": {
       "get": {
         "summary": "Params retrieves the assets module params",
         "operationId": "AssetsParams",
@@ -18088,7 +18088,7 @@
                       "items": {
                         "type": "string"
                       },
-                      "description": "gateways is the addresses of gateways on Exocore."
+                      "description": "gateways is the addresses of gateways on Imuachain."
                     }
                   }
                 }
@@ -18135,7 +18135,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/staker_asset/{staker_id}/{asset_id}": {
+    "/imuachain/assets/v1/staker_asset/{staker_id}/{asset_id}": {
       "get": {
         "summary": "StakerSpecifiedAssetAmount queries the staker specified asset amount.",
         "operationId": "QueStakerSpecifiedAssetAmount",
@@ -18216,7 +18216,7 @@
         ]
       }
     },
-    "/exocore/assets/v1/staker_assets/{staker_id}": {
+    "/imuachain/assets/v1/staker_assets/{staker_id}": {
       "get": {
         "summary": "StakerAssetInfos queries the staker asset info.",
         "operationId": "QueStakerAssetInfos",
@@ -18310,10 +18310,10 @@
         ]
       }
     },
-    "/exocore/slash/v1/params": {
+    "/imuachain/slash/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
-        "operationId": "ExoSlashParams",
+        "operationId": "ImSlashParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -18367,7 +18367,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/index_recent_msg": {
+    "/imuachain/oracle/v1/index_recent_msg": {
       "get": {
         "summary": "Queries a IndexRecentMsg by index.",
         "operationId": "IndexRecentMsg",
@@ -18434,7 +18434,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/index_recent_params": {
+    "/imuachain/oracle/v1/index_recent_params": {
       "get": {
         "summary": "Queries a IndexRecentParams by index.",
         "operationId": "IndexRecentParams",
@@ -18501,7 +18501,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/latest_price/{token_id}": {
+    "/imuachain/oracle/v1/latest_price/{token_id}": {
       "get": {
         "summary": "Queries the latest price of a specific token",
         "operationId": "LatestPrice",
@@ -18588,7 +18588,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/params": {
+    "/imuachain/oracle/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "OracleParams",
@@ -18884,7 +18884,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/prices/{token_id}": {
+    "/imuachain/oracle/v1/prices/{token_id}": {
       "get": {
         "summary": "Queries a list of Prices items.",
         "operationId": "Prices",
@@ -18991,7 +18991,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/recent_msg": {
+    "/imuachain/oracle/v1/recent_msg": {
       "get": {
         "summary": "RecentMsgAll all RecentMsg items.",
         "operationId": "RecentMsgAll",
@@ -19181,7 +19181,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/recent_msg/{block}": {
+    "/imuachain/oracle/v1/recent_msg/{block}": {
       "get": {
         "summary": "Queries a list of RecentMsg items.",
         "operationId": "RecentMsg",
@@ -19320,7 +19320,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/recent_params": {
+    "/imuachain/oracle/v1/recent_params": {
       "get": {
         "summary": "RecentParamsAll query all RecentParams.",
         "operationId": "RecentParamsAll",
@@ -19689,7 +19689,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/recent_params/{block}": {
+    "/imuachain/oracle/v1/recent_params/{block}": {
       "get": {
         "summary": "Queries a list of RecentParams items.",
         "operationId": "RecentParams",
@@ -20007,7 +20007,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/staker_info/{asset_id}/{staker_addr}": {
+    "/imuachain/oracle/v1/staker_info/{asset_id}/{staker_addr}": {
       "get": {
         "summary": "StakerInfo shows the details for one staker required by input parsms of the specified asset",
         "operationId": "StakerInfo",
@@ -20145,7 +20145,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/staker_infos/{asset_id}": {
+    "/imuachain/oracle/v1/staker_infos/{asset_id}": {
       "get": {
         "summary": "StakerInfos shows the details for all stakers of the specified assets under native-restaking context",
         "operationId": "StakerInfos",
@@ -20334,7 +20334,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/staker_list": {
+    "/imuachain/oracle/v1/staker_list": {
       "get": {
         "summary": "StakerList shows all stakers related to the specified asset under native-restaking context",
         "operationId": "StakerList",
@@ -20414,7 +20414,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/token_indexes": {
+    "/imuachain/oracle/v1/token_indexes": {
       "get": {
         "summary": "TokenIndexes shows the map tells token and its index for further usage",
         "operationId": "TokenIndexes",
@@ -20486,7 +20486,7 @@
         ]
       }
     },
-    "/exocore/oracle/v1/validator_update_block": {
+    "/imuachain/oracle/v1/validator_update_block": {
       "get": {
         "summary": "Queries a ValidatorUpdateBlock by index.",
         "operationId": "ValidatorUpdateBlock",
@@ -20550,10 +20550,10 @@
         ]
       }
     },
-    "/exocore/exomint/v1/Params": {
+    "/imuachain/immint/v1/Params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
-        "operationId": "ExomintParams",
+        "operationId": "ImmintParams",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -20621,7 +20621,7 @@
         ]
       }
     },
-    "/exocore/feedistribution/v1/params": {
+    "/imuachain/feedistribution/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "FeeDistributionParams",
@@ -20688,7 +20688,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/associated_operator/{staker_id}": {
+    "/imuachain/delegation/v1/associated_operator/{staker_id}": {
       "get": {
         "summary": "QueryAssociatedOperatorByStaker queries the associated operator for the specified staker",
         "operationId": "QueryAssociatedOperatorByStaker",
@@ -20754,7 +20754,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/associated_stakers/{operator}": {
+    "/imuachain/delegation/v1/associated_stakers/{operator}": {
       "get": {
         "summary": "QueryAssociatedStakersByOperator queries the associated stakers for the specified operator",
         "operationId": "QueryAssociatedStakersByOperator",
@@ -20823,7 +20823,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/delegated_stakers/{operator}/{asset_id}": {
+    "/imuachain/delegation/v1/delegated_stakers/{operator}/{asset_id}": {
       "get": {
         "summary": "QueryDelegatedStakersByOperator queries the delegated stakers for the specified operator",
         "operationId": "QueryDelegatedStakersByOperator",
@@ -20904,7 +20904,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/delegations/{staker_id}/{asset_id}": {
+    "/imuachain/delegation/v1/delegations/{staker_id}/{asset_id}": {
       "get": {
         "summary": "DelegationInfo queries the delegation information for {stakerID, assetID}.",
         "operationId": "QueryDelegationInfo",
@@ -20991,7 +20991,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/pending_undelegations/{epoch_identifier}/{epoch_number}": {
+    "/imuachain/delegation/v1/pending_undelegations/{epoch_identifier}/{epoch_number}": {
       "get": {
         "summary": "QueryUndelegationsByEpochInfo queries all undelegations waiting to be completed by\n{epoch_identifier,epoch_number}.",
         "operationId": "QueryUndelegationsByEpochInfo",
@@ -21024,12 +21024,12 @@
                           },
                           "tx_hash": {
                             "type": "string",
-                            "description": "tx_hash is the transaction hash on the Exocore chain."
+                            "description": "tx_hash is the transaction hash on the Imuachain chain."
                           },
                           "block_number": {
                             "type": "string",
                             "format": "uint64",
-                            "description": "block_number is the block number on Exocore."
+                            "description": "block_number is the block number on Imuachain."
                           },
                           "completed_epoch_identifier": {
                             "type": "string",
@@ -21038,7 +21038,7 @@
                           "completed_epoch_number": {
                             "type": "string",
                             "format": "int64",
-                            "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+                            "description": "completed_epoch_number is the epoch number on Imuachain at which the undelegation\nshould be completed."
                           },
                           "undelegation_id": {
                             "type": "string",
@@ -21126,7 +21126,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/single_delegation/{staker_id}/{operator_addr}/{asset_id}": {
+    "/imuachain/delegation/v1/single_delegation/{staker_id}/{operator_addr}/{asset_id}": {
       "get": {
         "summary": "SingleDelegationInfo queries the single delegation information and the\nmaximum undelegatable amount for {staker, asset, operator}.",
         "operationId": "QuerySingleDelegationInfo",
@@ -21221,7 +21221,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/undelegation_hold_count/{staker_id}/{asset_id}/{undelegation_id}": {
+    "/imuachain/delegation/v1/undelegation_hold_count/{staker_id}/{asset_id}/{undelegation_id}": {
       "get": {
         "summary": "QueryUndelegationHoldCount queries the undelegation hold count.",
         "operationId": "QueryUndelegationHoldCount",
@@ -21303,7 +21303,7 @@
         ]
       }
     },
-    "/exocore/delegation/v1/undelegations/{staker_id}/{asset_id}": {
+    "/imuachain/delegation/v1/undelegations/{staker_id}/{asset_id}": {
       "get": {
         "summary": "QueryUndelegations queries all undelegations for\n{staker, asset}.",
         "operationId": "QueryUndelegations",
@@ -21336,12 +21336,12 @@
                           },
                           "tx_hash": {
                             "type": "string",
-                            "description": "tx_hash is the transaction hash on the Exocore chain."
+                            "description": "tx_hash is the transaction hash on the Imuachain chain."
                           },
                           "block_number": {
                             "type": "string",
                             "format": "uint64",
-                            "description": "block_number is the block number on Exocore."
+                            "description": "block_number is the block number on Imuachain."
                           },
                           "completed_epoch_identifier": {
                             "type": "string",
@@ -21350,7 +21350,7 @@
                           "completed_epoch_number": {
                             "type": "string",
                             "format": "int64",
-                            "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+                            "description": "completed_epoch_number is the epoch number on Imuachain at which the undelegation\nshould be completed."
                           },
                           "undelegation_id": {
                             "type": "string",
@@ -21437,7 +21437,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/GetAVSTaskInfoReq": {
+    "/imuachain/avs/v1/GetAVSTaskInfoReq": {
       "get": {
         "summary": "TaskInfo queries the task information.",
         "operationId": "QueryAVSTaskInfo",
@@ -21610,7 +21610,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/QueryAVSAddrByChainID/{chain}": {
+    "/imuachain/avs/v1/QueryAVSAddrByChainID/{chain}": {
       "get": {
         "summary": "QueryAVSAddrByChainID queries the avs address by chain id",
         "operationId": "QueryAVSAddrByChainID",
@@ -21676,7 +21676,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/QueryAVSInfo": {
+    "/imuachain/avs/v1/QueryAVSInfo": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "QueryAVSInfo",
@@ -21839,7 +21839,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/QueryChallengeInfo": {
+    "/imuachain/avs/v1/QueryChallengeInfo": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "QueryChallengeInfo",
@@ -21919,7 +21919,7 @@
         ]
       }
     },
-    "/exocore/avs/v1/QuerySubmitTaskResult": {
+    "/imuachain/avs/v1/QuerySubmitTaskResult": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "QuerySubmitTaskResult",
@@ -22039,7 +22039,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/all_operator_cons_addrs/{chain}": {
+    "/imuachain/operator/v1/all_operator_cons_addrs/{chain}": {
       "get": {
         "summary": "QueryAllOperatorConsAddrsByChainID queries all operators and their consensus addresses\nfor a specific chain ID",
         "operationId": "QueryAllOperatorConsAddrsByChainID",
@@ -22180,7 +22180,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/all_operator_cons_keys/{chain}": {
+    "/imuachain/operator/v1/all_operator_cons_keys/{chain}": {
       "get": {
         "summary": "QueryAllOperatorConsKeysByChainID queries all operators and their consensus public keys\nfor a specific chain ID",
         "operationId": "QueryAllOperatorConsKeysByChainID",
@@ -22332,7 +22332,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/all_operators": {
+    "/imuachain/operator/v1/all_operators": {
       "get": {
         "summary": "QueryAllOperators queries all operators.",
         "operationId": "QueryAllOperators",
@@ -22451,7 +22451,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/all_snapshot/{avs}": {
+    "/imuachain/operator/v1/all_snapshot/{avs}": {
       "get": {
         "summary": "QueryAllSnapshot queries all voting power snapshot for the specified AVS",
         "operationId": "QueryAllSnapshot",
@@ -22627,7 +22627,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/avs_usd_value": {
+    "/imuachain/operator/v1/avs_usd_value": {
       "get": {
         "summary": "QueryAVSUSDValue queries the USD value for the AVS",
         "operationId": "QueryAVSUSDValue",
@@ -22696,7 +22696,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/operator_cons_addr/{operator_acc_addr}/{chain}": {
+    "/imuachain/operator/v1/operator_cons_addr/{operator_acc_addr}/{chain}": {
       "get": {
         "summary": "QueryOperatorConsAddressForChainID queries the consensus address for the operator.",
         "operationId": "QueryOperatorConsAddressForChainID",
@@ -22776,7 +22776,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/operator_cons_key/{operator_acc_addr}/{chain}": {
+    "/imuachain/operator/v1/operator_cons_key/{operator_acc_addr}/{chain}": {
       "get": {
         "summary": "QueryOperatorConsKeyForChainID queries the consensus public key for the operator",
         "operationId": "QueryOperatorConsKeyForChainID",
@@ -22867,7 +22867,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/operator_info/{operator_addr}": {
+    "/imuachain/operator/v1/operator_info/{operator_addr}": {
       "get": {
         "summary": "QueryOperatorInfo queries the operator information.",
         "operationId": "QueryOperatorInfo",
@@ -22998,7 +22998,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/operator_slash_info/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}": {
+    "/imuachain/operator/v1/operator_slash_info/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}": {
       "get": {
         "summary": "QueryOperatorSlashInfo queries the slash information for the specified operator and AVS",
         "operationId": "QueryOperatorSlashInfo",
@@ -23028,12 +23028,12 @@
                           "submitted_height": {
                             "type": "string",
                             "format": "int64",
-                            "title": "submitted_height is the exocore block height at which the slash event is submitted"
+                            "title": "submitted_height is the imua block height at which the slash event is submitted"
                           },
                           "event_height": {
                             "type": "string",
                             "format": "int64",
-                            "title": "event_height is the exocore block height at which the slash event occurs"
+                            "title": "event_height is the imua block height at which the slash event occurs"
                           },
                           "is_vetoed": {
                             "type": "boolean",
@@ -23236,7 +23236,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/operator_usd_value/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}": {
+    "/imuachain/operator/v1/operator_usd_value/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}": {
       "get": {
         "summary": "QueryOperatorUSDValue queries the opted-in USD value for the operator",
         "operationId": "QueryOperatorUSDValue",
@@ -23326,7 +23326,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/opt/avs_list/{operator}": {
+    "/imuachain/operator/v1/opt/avs_list/{operator}": {
       "get": {
         "summary": "QueryAllAVSsByOperator queries avs list.",
         "operationId": "QueryAllAVSsByOperator",
@@ -23398,7 +23398,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/opt/operator_list/{avs}": {
+    "/imuachain/operator/v1/opt/operator_list/{avs}": {
       "get": {
         "summary": "QueryAllOperatorsWithOptInAVS queries  operator list by avs.",
         "operationId": "QueryAllOperatorsWithOptInAVS",
@@ -23470,7 +23470,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/opt_info/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}": {
+    "/imuachain/operator/v1/opt_info/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}": {
       "get": {
         "summary": "QueryOptInfo queries specified opted information.",
         "operationId": "QueryOptInfo",
@@ -23487,12 +23487,12 @@
                 "opted_in_height": {
                   "type": "string",
                   "format": "uint64",
-                  "title": "opted_in_height is the exocore block height at which the operator opted in"
+                  "title": "opted_in_height is the imua block height at which the operator opted in"
                 },
                 "opted_out_height": {
                   "type": "string",
                   "format": "uint64",
-                  "title": "opted_out_height is the exocore block height at which the operator opted out"
+                  "title": "opted_out_height is the imua block height at which the operator opted out"
                 },
                 "jailed": {
                   "type": "boolean",
@@ -23560,7 +23560,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/snapshot/{avs}/{height}": {
+    "/imuachain/operator/v1/snapshot/{avs}/{height}": {
       "get": {
         "summary": "QuerySpecifiedSnapshot queries the voting power snapshot of specified AVS and height",
         "operationId": "QuerySpecifiedSnapshot",
@@ -23680,7 +23680,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/snapshot_helper/{avs}": {
+    "/imuachain/operator/v1/snapshot_helper/{avs}": {
       "get": {
         "summary": "QuerySnapshotHelper queries the snapshot helper of the AVS",
         "operationId": "QuerySnapshotHelper",
@@ -23754,7 +23754,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/validator/{validator_acc_addr}/{chain}": {
+    "/imuachain/operator/v1/validator/{validator_acc_addr}/{chain}": {
       "get": {
         "summary": "Validator queries validator info for given validator address.",
         "operationId": "Validator",
@@ -23960,7 +23960,7 @@
         ]
       }
     },
-    "/exocore/operator/v1/validators/{chain}": {
+    "/imuachain/operator/v1/validators/{chain}": {
       "get": {
         "summary": "Validators queries all validators that match the given status.\nWhen called from another module, this query might consume a high amount of\ngas if the pagination field is incorrectly set.",
         "operationId": "Validators",
@@ -24714,7 +24714,7 @@
         ]
       }
     },
-    "/exocore/reward/v1/params": {
+    "/imuachain/reward/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "RewardParams",
@@ -24819,7 +24819,55 @@
       },
       "description": "PageResponse is to be embedded in gRPC response messages where the\ncorresponding request message has used PageRequest.\n\n message SomeResponse {\n         repeated Bar results = 1;\n         PageResponse page = 2;\n }"
     },
-    "exocore.epochs.v1.EpochInfo": {
+    "google.protobuf.Any": {
+      "type": "object",
+      "properties": {
+        "type_url": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        },
+        "value": {
+          "type": "string",
+          "format": "byte",
+          "description": "Must be a valid serialized protocol buffer of the above specified type."
+        }
+      },
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "grpc.gateway.runtime.Error": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type_url": {
+                "type": "string",
+                "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+              },
+              "value": {
+                "type": "string",
+                "format": "byte",
+                "description": "Must be a valid serialized protocol buffer of the above specified type."
+              }
+            },
+            "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+          }
+        }
+      }
+    },
+    "imuachain.epochs.v1.EpochInfo": {
       "type": "object",
       "properties": {
         "identifier": {
@@ -24857,7 +24905,7 @@
       },
       "description": "EpochInfo defines an epoch and its metadata. An epoch is a period of time\nthat is used to define a time frame for a system."
     },
-    "exocore.epochs.v1.QueryCurrentEpochResponse": {
+    "imuachain.epochs.v1.QueryCurrentEpochResponse": {
       "type": "object",
       "properties": {
         "current_epoch": {
@@ -24868,7 +24916,7 @@
       },
       "description": "QueryCurrentEpochResponse is the response type for the Query/EpochInfos RPC\nmethod."
     },
-    "exocore.epochs.v1.QueryEpochInfoResponse": {
+    "imuachain.epochs.v1.QueryEpochInfoResponse": {
       "type": "object",
       "properties": {
         "epoch": {
@@ -24917,7 +24965,7 @@
       },
       "description": "QueryEpochInfoResponse is the response type for the Query/EpochInfo RPC method."
     },
-    "exocore.epochs.v1.QueryEpochsInfoResponse": {
+    "imuachain.epochs.v1.QueryEpochsInfoResponse": {
       "type": "object",
       "properties": {
         "epochs": {
@@ -24985,54 +25033,6 @@
         }
       },
       "description": "QueryEpochsInfoResponse is the response type for the Query/EpochInfos RPC\nmethod."
-    },
-    "google.protobuf.Any": {
-      "type": "object",
-      "properties": {
-        "type_url": {
-          "type": "string",
-          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
-        },
-        "value": {
-          "type": "string",
-          "format": "byte",
-          "description": "Must be a valid serialized protocol buffer of the above specified type."
-        }
-      },
-      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
-    },
-    "grpc.gateway.runtime.Error": {
-      "type": "object",
-      "properties": {
-        "error": {
-          "type": "string"
-        },
-        "code": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "message": {
-          "type": "string"
-        },
-        "details": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "type_url": {
-                "type": "string",
-                "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
-              },
-              "value": {
-                "type": "string",
-                "format": "byte",
-                "description": "Must be a valid serialized protocol buffer of the above specified type."
-              }
-            },
-            "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
-          }
-        }
-      }
     },
     "evmos.erc20.v1.Owner": {
       "type": "string",
@@ -40484,7 +40484,7 @@
         }
       }
     },
-    "exocore.dogfood.v1.AccountAddresses": {
+    "imuachain.dogfood.v1.AccountAddresses": {
       "type": "object",
       "properties": {
         "list": {
@@ -40498,7 +40498,7 @@
       },
       "description": "AccountAddresses represents a list of account addresses. It is used to store the list of\noperator addresses whose operations are maturing at an epoch."
     },
-    "exocore.dogfood.v1.ExocoreValidator": {
+    "imuachain.dogfood.v1.ImuachainValidator": {
       "type": "object",
       "properties": {
         "address": {
@@ -40527,9 +40527,9 @@
           "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
         }
       },
-      "description": "ExocoreValidator is a validator that is part of the Exocore network. It is\nused to validate and sign blocks."
+      "description": "ImuachainValidator is a validator that is part of the Imuachain network. It is\nused to validate and sign blocks."
     },
-    "exocore.dogfood.v1.Params": {
+    "imuachain.dogfood.v1.Params": {
       "type": "object",
       "properties": {
         "epochs_until_unbonded": {
@@ -40565,7 +40565,7 @@
       },
       "description": "Params defines the parameters for the module."
     },
-    "exocore.dogfood.v1.QueryAllValidatorsResponse": {
+    "imuachain.dogfood.v1.QueryAllValidatorsResponse": {
       "type": "object",
       "properties": {
         "validators": {
@@ -40599,7 +40599,7 @@
                 "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
               }
             },
-            "description": "ExocoreValidator is a validator that is part of the Exocore network. It is\nused to validate and sign blocks."
+            "description": "ImuachainValidator is a validator that is part of the Imuachain network. It is\nused to validate and sign blocks."
           },
           "description": "validators is the list of all validators."
         },
@@ -40622,7 +40622,7 @@
       },
       "description": "QueryAllValidatorsResponse is response type for the Query/AllValidators RPC method."
     },
-    "exocore.dogfood.v1.QueryOperatorOptOutFinishEpochResponse": {
+    "imuachain.dogfood.v1.QueryOperatorOptOutFinishEpochResponse": {
       "type": "object",
       "properties": {
         "epoch": {
@@ -40633,7 +40633,7 @@
       },
       "description": "QueryOperatorOptOutFinishEpochResponse is response type for the\nQuery/OperatorOptOutFinishEpoch RPC method."
     },
-    "exocore.dogfood.v1.QueryParamsResponse": {
+    "imuachain.dogfood.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {
@@ -40675,7 +40675,7 @@
       },
       "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
-    "exocore.dogfood.v1.QueryUndelegationMaturityEpochResponse": {
+    "imuachain.dogfood.v1.QueryUndelegationMaturityEpochResponse": {
       "type": "object",
       "properties": {
         "epoch": {
@@ -40686,7 +40686,7 @@
       },
       "description": "QueryUndelegationMaturityEpochResponse is response type for the\nQuery/UndelegationMaturityEpoch RPC method."
     },
-    "exocore.dogfood.v1.QueryValidatorResponse": {
+    "imuachain.dogfood.v1.QueryValidatorResponse": {
       "type": "object",
       "properties": {
         "validator": {
@@ -40723,7 +40723,7 @@
       },
       "description": "QueryValidatorResponse is response type for the Query/Validator RPC method."
     },
-    "exocore.dogfood.v1.UndelegationRecordKeys": {
+    "imuachain.dogfood.v1.UndelegationRecordKeys": {
       "type": "object",
       "properties": {
         "list": {
@@ -40737,7 +40737,7 @@
       },
       "description": "UndelegationRecordKeys is a collection of undelegation record keys. This is used to store a\nlist of undelegation records to mature in the delegation module at the end of the epoch."
     },
-    "exocore.assets.v1.AssetByID": {
+    "imuachain.assets.v1.AssetByID": {
       "type": "object",
       "properties": {
         "asset_id": {
@@ -40769,7 +40769,7 @@
       },
       "title": "AssetByID is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an operator.\nIt is named AssetByID (since it is indexed by the assetID)"
     },
-    "exocore.assets.v1.AssetInfo": {
+    "imuachain.assets.v1.AssetInfo": {
       "type": "object",
       "properties": {
         "name": {
@@ -40794,10 +40794,10 @@
           "format": "uint64",
           "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
         },
-        "exocore_chain_index": {
+        "imua_chain_index": {
           "type": "string",
           "format": "uint64",
-          "description": "exocore_chain_index is the index of the client chain within the exosystem."
+          "description": "imua_chain_index is the index of the client chain within the imuasystem."
         },
         "meta_info": {
           "type": "string",
@@ -40806,7 +40806,7 @@
       },
       "description": "AssetInfo defines the information for an asset to be used in staking."
     },
-    "exocore.assets.v1.ClientChainInfo": {
+    "imuachain.assets.v1.ClientChainInfo": {
       "type": "object",
       "properties": {
         "name": {
@@ -40822,10 +40822,10 @@
           "format": "uint64",
           "description": "chain_id of the client chain. Not necessarily the EVM chain id."
         },
-        "exocore_chain_index": {
+        "imua_chain_index": {
           "type": "string",
           "format": "uint64",
-          "description": "exocore_chain_index is the index of the client chain within the exosystem."
+          "description": "imua_chain_index is the index of the client chain within the imuasystem."
         },
         "finalization_blocks": {
           "type": "string",
@@ -40849,7 +40849,7 @@
       },
       "description": "ClientChainInfo defines the client chain information."
     },
-    "exocore.assets.v1.DepositByAsset": {
+    "imuachain.assets.v1.DepositByAsset": {
       "type": "object",
       "properties": {
         "asset_id": {
@@ -40877,7 +40877,7 @@
       },
       "description": "DepositByAsset is a helper struct to be used in the genesis state.\nIt is used to store the asset id and its info for an staker.\nThe info contains the deposit amount, the withdrawable amount\nand the amount currently unbonding.\nIt is named DepositByAsset (since it is indexed by the assetID)\nand not Deposit to prevent conflict with CrossChainOpType."
     },
-    "exocore.assets.v1.OperatorAssetInfo": {
+    "imuachain.assets.v1.OperatorAssetInfo": {
       "type": "object",
       "properties": {
         "total_amount": {
@@ -40899,7 +40899,7 @@
       },
       "description": "OperatorAssetInfo defines the information for a single asset,\nfor an operator."
     },
-    "exocore.assets.v1.Params": {
+    "imuachain.assets.v1.Params": {
       "type": "object",
       "properties": {
         "gateways": {
@@ -40907,12 +40907,12 @@
           "items": {
             "type": "string"
           },
-          "description": "gateways is the addresses of gateways on Exocore."
+          "description": "gateways is the addresses of gateways on Imuachain."
         }
       },
       "description": "GenesisState defines the deposit module's genesis state."
     },
-    "exocore.assets.v1.QueryAllClientChainInfoResponse": {
+    "imuachain.assets.v1.QueryAllClientChainInfoResponse": {
       "type": "object",
       "properties": {
         "all_client_chain_infos": {
@@ -40933,10 +40933,10 @@
                 "format": "uint64",
                 "description": "chain_id of the client chain. Not necessarily the EVM chain id."
               },
-              "exocore_chain_index": {
+              "imua_chain_index": {
                 "type": "string",
                 "format": "uint64",
-                "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                "description": "imua_chain_index is the index of the client chain within the imuasystem."
               },
               "finalization_blocks": {
                 "type": "string",
@@ -40981,7 +40981,7 @@
       },
       "description": "QueryAllClientChainInfoResponse is the response for all client chains info."
     },
-    "exocore.assets.v1.QueryAllStakingAssetsInfoResponse": {
+    "imuachain.assets.v1.QueryAllStakingAssetsInfoResponse": {
       "type": "object",
       "properties": {
         "all_staking_assets_info": {
@@ -41015,10 +41015,10 @@
                     "format": "uint64",
                     "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
                   },
-                  "exocore_chain_index": {
+                  "imua_chain_index": {
                     "type": "string",
                     "format": "uint64",
-                    "description": "exocore_chain_index is the index of the client chain within the exosystem."
+                    "description": "imua_chain_index is the index of the client chain within the imuasystem."
                   },
                   "meta_info": {
                     "type": "string",
@@ -41038,7 +41038,7 @@
       },
       "description": "QueryAllStakingAssetsInfoResponse is the response for all staking assets info,\nindexed by the asset id."
     },
-    "exocore.assets.v1.QueryAssetInfoResponse": {
+    "imuachain.assets.v1.QueryAssetInfoResponse": {
       "type": "object",
       "properties": {
         "asset_infos": {
@@ -41076,7 +41076,7 @@
       },
       "description": "QueryAssetInfoResponse is the response for the staker asset info."
     },
-    "exocore.assets.v1.QueryOperatorAssetInfosResponse": {
+    "imuachain.assets.v1.QueryOperatorAssetInfosResponse": {
       "type": "object",
       "properties": {
         "asset_infos": {
@@ -41118,7 +41118,7 @@
       },
       "description": "QueryOperatorAssetInfosResponse is the response to the operator asset info query."
     },
-    "exocore.assets.v1.QueryParamsResponse": {
+    "imuachain.assets.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {
@@ -41130,14 +41130,14 @@
               "items": {
                 "type": "string"
               },
-              "description": "gateways is the addresses of gateways on Exocore."
+              "description": "gateways is the addresses of gateways on Imuachain."
             }
           }
         }
       },
       "description": "QueryParamsResponse is the response type for the Query/Params RPC\nmethod."
     },
-    "exocore.assets.v1.StakerAssetInfo": {
+    "imuachain.assets.v1.StakerAssetInfo": {
       "type": "object",
       "properties": {
         "total_deposit_amount": {
@@ -41155,7 +41155,7 @@
       },
       "description": "StakerAssetInfo defines the information for a single asset.\nThe type include three states:\nstaker's deposited, withdrawable, and currently unbonding amount."
     },
-    "exocore.assets.v1.StakingAssetInfo": {
+    "imuachain.assets.v1.StakingAssetInfo": {
       "type": "object",
       "properties": {
         "asset_basic_info": {
@@ -41184,10 +41184,10 @@
               "format": "uint64",
               "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
             },
-            "exocore_chain_index": {
+            "imua_chain_index": {
               "type": "string",
               "format": "uint64",
-              "description": "exocore_chain_index is the index of the client chain within the exosystem."
+              "description": "imua_chain_index is the index of the client chain within the imuasystem."
             },
             "meta_info": {
               "type": "string",
@@ -41202,11 +41202,11 @@
       },
       "description": "StakingAssetInfo defines the information for an asset to be used in staking."
     },
-    "exocore.slash.v1.Params": {
+    "imuachain.slash.v1.Params": {
       "type": "object",
       "description": "Params defines the parameters for the module."
     },
-    "exocore.slash.v1.QueryParamsResponse": {
+    "imuachain.slash.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {
@@ -41216,7 +41216,7 @@
       },
       "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
-    "exocore.oracle.v1.Action": {
+    "imuachain.oracle.v1.Action": {
       "type": "string",
       "enum": [
         "ACTION_ROUND_UNSPECIFIED",
@@ -41228,7 +41228,7 @@
       "description": "- ACTION_ROUND_UNSPECIFIED: balance updated when a new round generated\n - ACTION_DEPOSIT: balance updated when a deposit happened\n - ACTION_WITHDRAW: balance updated when a withdraw happened\n - ACTION_SLASH_REFUND: balance updatd when a slah/refund on beacon chain happened",
       "title": "Action defines the reason the balance changed"
     },
-    "exocore.oracle.v1.BalanceInfo": {
+    "imuachain.oracle.v1.BalanceInfo": {
       "type": "object",
       "properties": {
         "round_id": {
@@ -41266,7 +41266,7 @@
       },
       "title": "BalanceInfo tells effective-balance for native-restaking asset"
     },
-    "exocore.oracle.v1.Chain": {
+    "imuachain.oracle.v1.Chain": {
       "type": "object",
       "properties": {
         "name": {
@@ -41280,7 +41280,7 @@
       },
       "title": "Chain represents for the Chain on which token contracts deployed"
     },
-    "exocore.oracle.v1.ConsensusMode": {
+    "imuachain.oracle.v1.ConsensusMode": {
       "type": "string",
       "enum": [
         "CONSENSUS_MODE_UNSPECIFIED",
@@ -41289,7 +41289,7 @@
       "default": "CONSENSUS_MODE_UNSPECIFIED",
       "description": "ConsensusMode defines the consensus mode for the prices.\n\n - CONSENSUS_MODE_UNSPECIFIED: CONSENSUS_MODE_UNSPECIFIED defines an invalid mode.\n - CONSENSUS_MODE_ASAP: CONSENSUS_MODE_ASAP defines the mode to get final price immediately when the voting power\nexceeds the threshold."
     },
-    "exocore.oracle.v1.Endpoint": {
+    "imuachain.oracle.v1.Endpoint": {
       "type": "object",
       "properties": {
         "offchain": {
@@ -41309,7 +41309,7 @@
       },
       "title": "Endpoint tells where to fetch the price info"
     },
-    "exocore.oracle.v1.IndexRecentMsg": {
+    "imuachain.oracle.v1.IndexRecentMsg": {
       "type": "object",
       "properties": {
         "index": {
@@ -41323,7 +41323,7 @@
       },
       "title": "index for the cached recent messages"
     },
-    "exocore.oracle.v1.IndexRecentParams": {
+    "imuachain.oracle.v1.IndexRecentParams": {
       "type": "object",
       "properties": {
         "index": {
@@ -41337,7 +41337,7 @@
       },
       "title": "index for the cached recent params"
     },
-    "exocore.oracle.v1.MsgItem": {
+    "imuachain.oracle.v1.MsgItem": {
       "type": "object",
       "properties": {
         "feeder_id": {
@@ -41398,7 +41398,7 @@
       },
       "title": "MsgItem represents the message info of createPrice"
     },
-    "exocore.oracle.v1.NOMSource": {
+    "imuachain.oracle.v1.NOMSource": {
       "type": "object",
       "properties": {
         "source_ids": {
@@ -41417,7 +41417,7 @@
       },
       "title": "n out of m required source"
     },
-    "exocore.oracle.v1.Params": {
+    "imuachain.oracle.v1.Params": {
       "type": "object",
       "properties": {
         "chains": {
@@ -41660,7 +41660,7 @@
       },
       "description": "Params defines the parameters for the module."
     },
-    "exocore.oracle.v1.PriceSource": {
+    "imuachain.oracle.v1.PriceSource": {
       "type": "object",
       "properties": {
         "source_id": {
@@ -41702,7 +41702,7 @@
       },
       "title": "price with its corresponding source"
     },
-    "exocore.oracle.v1.PriceTimeDetID": {
+    "imuachain.oracle.v1.PriceTimeDetID": {
       "type": "object",
       "properties": {
         "price": {
@@ -41725,7 +41725,7 @@
       },
       "title": "token price with timestamp fetched from source\n{price:\"12345\",decimal:\"2\"}->price: 123.45 usdt"
     },
-    "exocore.oracle.v1.PriceTimeRound": {
+    "imuachain.oracle.v1.PriceTimeRound": {
       "type": "object",
       "properties": {
         "price": {
@@ -41749,7 +41749,7 @@
       },
       "title": "price with its specified timestamp and roundid(if from deteministic source)"
     },
-    "exocore.oracle.v1.Prices": {
+    "imuachain.oracle.v1.Prices": {
       "type": "object",
       "properties": {
         "token_id": {
@@ -41793,7 +41793,7 @@
       },
       "title": "prices of all rounds of a specific token"
     },
-    "exocore.oracle.v1.QueryAllRecentMsgResponse": {
+    "imuachain.oracle.v1.QueryAllRecentMsgResponse": {
       "type": "object",
       "properties": {
         "recent_msg": {
@@ -41896,7 +41896,7 @@
       },
       "title": "QueryAllRecentMsgResponse"
     },
-    "exocore.oracle.v1.QueryAllRecentParamsResponse": {
+    "imuachain.oracle.v1.QueryAllRecentParamsResponse": {
       "type": "object",
       "properties": {
         "recent_params": {
@@ -42178,7 +42178,7 @@
       },
       "title": "QueryAllRecentParamsResponse"
     },
-    "exocore.oracle.v1.QueryGetIndexRecentMsgResponse": {
+    "imuachain.oracle.v1.QueryGetIndexRecentMsgResponse": {
       "type": "object",
       "properties": {
         "index_recent_msg": {
@@ -42198,7 +42198,7 @@
       },
       "title": "QueryIndexRecentMsgResponse"
     },
-    "exocore.oracle.v1.QueryGetIndexRecentParamsResponse": {
+    "imuachain.oracle.v1.QueryGetIndexRecentParamsResponse": {
       "type": "object",
       "properties": {
         "index_recent_params": {
@@ -42218,7 +42218,7 @@
       },
       "title": "QueryGetIndexRecentParamsResponse"
     },
-    "exocore.oracle.v1.QueryGetLatestPriceResponse": {
+    "imuachain.oracle.v1.QueryGetLatestPriceResponse": {
       "type": "object",
       "properties": {
         "price": {
@@ -42248,7 +42248,7 @@
       },
       "title": "QueryGetLatestPriceResponse"
     },
-    "exocore.oracle.v1.QueryGetPricesResponse": {
+    "imuachain.oracle.v1.QueryGetPricesResponse": {
       "type": "object",
       "properties": {
         "prices": {
@@ -42298,7 +42298,7 @@
       },
       "title": "QueryGetPricesResponse"
     },
-    "exocore.oracle.v1.QueryGetRecentMsgResponse": {
+    "imuachain.oracle.v1.QueryGetRecentMsgResponse": {
       "type": "object",
       "properties": {
         "recent_msg": {
@@ -42380,7 +42380,7 @@
       },
       "title": "QueryGetRecentMsgResponse"
     },
-    "exocore.oracle.v1.QueryGetRecentParamsResponse": {
+    "imuachain.oracle.v1.QueryGetRecentParamsResponse": {
       "type": "object",
       "properties": {
         "recent_params": {
@@ -42641,7 +42641,7 @@
       },
       "title": "QueryGetRecentParamsResponse"
     },
-    "exocore.oracle.v1.QueryGetValidatorUpdateBlockResponse": {
+    "imuachain.oracle.v1.QueryGetValidatorUpdateBlockResponse": {
       "type": "object",
       "properties": {
         "validator_update_block": {
@@ -42658,7 +42658,7 @@
       },
       "title": "QueryGetValidatorUpdateBlockResponse"
     },
-    "exocore.oracle.v1.QueryParamsResponse": {
+    "imuachain.oracle.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {
@@ -42907,7 +42907,7 @@
       },
       "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
-    "exocore.oracle.v1.QueryStakerInfoResponse": {
+    "imuachain.oracle.v1.QueryStakerInfoResponse": {
       "type": "object",
       "properties": {
         "version": {
@@ -42982,7 +42982,7 @@
       },
       "title": "QueryStakerInfoResponse is response type for Query/StakerInfo RCP method"
     },
-    "exocore.oracle.v1.QueryStakerInfosResponse": {
+    "imuachain.oracle.v1.QueryStakerInfosResponse": {
       "type": "object",
       "properties": {
         "version": {
@@ -43077,7 +43077,7 @@
       },
       "title": "QueryStakerInfosResponse is response type for Query/StakerInfo RCP method"
     },
-    "exocore.oracle.v1.QueryStakerListResponse": {
+    "imuachain.oracle.v1.QueryStakerListResponse": {
       "type": "object",
       "properties": {
         "version": {
@@ -43101,7 +43101,7 @@
       },
       "title": "QueryStakerListResponse is response type for Query/StakerList RPC method"
     },
-    "exocore.oracle.v1.QueryTokenIndexesResponse": {
+    "imuachain.oracle.v1.QueryTokenIndexesResponse": {
       "type": "object",
       "properties": {
         "token_indexes": {
@@ -43126,7 +43126,7 @@
       },
       "title": "QueryTokenIndexesResponse is response type for Query/TokenIndexes RPC method"
     },
-    "exocore.oracle.v1.RecentMsg": {
+    "imuachain.oracle.v1.RecentMsg": {
       "type": "object",
       "properties": {
         "block": {
@@ -43202,7 +43202,7 @@
       },
       "title": "RecentMsg represent the messages to be cached for recent blocks"
     },
-    "exocore.oracle.v1.RecentParams": {
+    "imuachain.oracle.v1.RecentParams": {
       "type": "object",
       "properties": {
         "block": {
@@ -43457,7 +43457,7 @@
       },
       "title": "RecentParams represents the params cached for recent blocks"
     },
-    "exocore.oracle.v1.RuleSource": {
+    "imuachain.oracle.v1.RuleSource": {
       "type": "object",
       "properties": {
         "source_ids": {
@@ -43490,7 +43490,7 @@
       },
       "title": "specify data from which source is needed\nrule_1: specified sources\nrule_2: n out of total sources are required"
     },
-    "exocore.oracle.v1.SlashingParams": {
+    "imuachain.oracle.v1.SlashingParams": {
       "type": "object",
       "properties": {
         "reported_rounds_window": {
@@ -43519,7 +43519,7 @@
       },
       "title": "slashing related params"
     },
-    "exocore.oracle.v1.Source": {
+    "imuachain.oracle.v1.Source": {
       "type": "object",
       "properties": {
         "name": {
@@ -43557,7 +43557,7 @@
       },
       "title": "Source represents price data source"
     },
-    "exocore.oracle.v1.StakerInfo": {
+    "imuachain.oracle.v1.StakerInfo": {
       "type": "object",
       "properties": {
         "staker_addr": {
@@ -43621,7 +43621,7 @@
       },
       "title": "StakerInfo represents all related information for a staker of native-restaking"
     },
-    "exocore.oracle.v1.StakerList": {
+    "imuachain.oracle.v1.StakerList": {
       "type": "object",
       "properties": {
         "staker_addrs": {
@@ -43634,7 +43634,7 @@
       },
       "title": "StakerList tells which stakers are active for one specific native-restaking asset"
     },
-    "exocore.oracle.v1.Token": {
+    "imuachain.oracle.v1.Token": {
       "type": "object",
       "properties": {
         "name": {
@@ -43666,7 +43666,7 @@
       },
       "title": "Token represents the token info"
     },
-    "exocore.oracle.v1.TokenFeeder": {
+    "imuachain.oracle.v1.TokenFeeder": {
       "type": "object",
       "properties": {
         "token_id": {
@@ -43702,7 +43702,7 @@
       },
       "title": "Tokenfeeder represents a price oracle for one token"
     },
-    "exocore.oracle.v1.TokenIndex": {
+    "imuachain.oracle.v1.TokenIndex": {
       "type": "object",
       "properties": {
         "token": {
@@ -43717,7 +43717,7 @@
       },
       "title": "TokenIndex is the pair of tokenName and its index defined in params"
     },
-    "exocore.oracle.v1.ValidatorUpdateBlock": {
+    "imuachain.oracle.v1.ValidatorUpdateBlock": {
       "type": "object",
       "properties": {
         "block": {
@@ -43728,7 +43728,7 @@
       },
       "title": "ValidatorUpdateBlock"
     },
-    "exocore.exomint.v1.Params": {
+    "imuachain.immint.v1.Params": {
       "type": "object",
       "properties": {
         "mint_denom": {
@@ -43746,7 +43746,7 @@
       },
       "description": "Params defines the parameters for the module."
     },
-    "exocore.exomint.v1.QueryParamsResponse": {
+    "imuachain.immint.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {
@@ -43770,7 +43770,7 @@
       },
       "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
-    "exocore.feedistribution.v1.Params": {
+    "imuachain.feedistribution.v1.Params": {
       "type": "object",
       "properties": {
         "epoch_identifier": {
@@ -43784,7 +43784,7 @@
       },
       "description": "Params defines the parameters for the module."
     },
-    "exocore.feedistribution.v1.QueryParamsResponse": {
+    "imuachain.feedistribution.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {
@@ -43804,7 +43804,7 @@
       },
       "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
-    "exocore.delegation.v1.DelegationAmounts": {
+    "imuachain.delegation.v1.DelegationAmounts": {
       "type": "object",
       "properties": {
         "undelegatable_share": {
@@ -43818,7 +43818,7 @@
       },
       "description": "DelegationAmounts is the delegation amount response for a single delegation."
     },
-    "exocore.delegation.v1.QueryAssociatedOperatorByStakerResponse": {
+    "imuachain.delegation.v1.QueryAssociatedOperatorByStakerResponse": {
       "type": "object",
       "properties": {
         "operator": {
@@ -43828,7 +43828,7 @@
       },
       "title": "QueryAssociatedOperatorByStakerResponse is the response to QueryAssociatedOperatorByStakerReq"
     },
-    "exocore.delegation.v1.QueryAssociatedStakersByOperatorResponse": {
+    "imuachain.delegation.v1.QueryAssociatedStakersByOperatorResponse": {
       "type": "object",
       "properties": {
         "stakers": {
@@ -43841,7 +43841,7 @@
       },
       "title": "QueryAssociatedStakersByOperatorResponse is the response to QueryAssociatedStakersByOperatorReq"
     },
-    "exocore.delegation.v1.QueryDelegatedStakersByOperatorResponse": {
+    "imuachain.delegation.v1.QueryDelegatedStakersByOperatorResponse": {
       "type": "object",
       "properties": {
         "count": {
@@ -43859,7 +43859,7 @@
       },
       "title": "QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq"
     },
-    "exocore.delegation.v1.QueryDelegationInfoResponse": {
+    "imuachain.delegation.v1.QueryDelegationInfoResponse": {
       "type": "object",
       "properties": {
         "delegation_infos": {
@@ -43883,7 +43883,7 @@
       },
       "description": "QueryDelegationInfoResponse is the response for delegations by staker id and\nasset id."
     },
-    "exocore.delegation.v1.SingleDelegationInfoResponse": {
+    "imuachain.delegation.v1.SingleDelegationInfoResponse": {
       "type": "object",
       "properties": {
         "delegation_amounts": {
@@ -43908,7 +43908,7 @@
       },
       "title": "SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo"
     },
-    "exocore.delegation.v1.UndelegationAndHoldCount": {
+    "imuachain.delegation.v1.UndelegationAndHoldCount": {
       "type": "object",
       "properties": {
         "undelegation": {
@@ -43929,12 +43929,12 @@
             },
             "tx_hash": {
               "type": "string",
-              "description": "tx_hash is the transaction hash on the Exocore chain."
+              "description": "tx_hash is the transaction hash on the Imuachain chain."
             },
             "block_number": {
               "type": "string",
               "format": "uint64",
-              "description": "block_number is the block number on Exocore."
+              "description": "block_number is the block number on Imuachain."
             },
             "completed_epoch_identifier": {
               "type": "string",
@@ -43943,7 +43943,7 @@
             "completed_epoch_number": {
               "type": "string",
               "format": "int64",
-              "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+              "description": "completed_epoch_number is the epoch number on Imuachain at which the undelegation\nshould be completed."
             },
             "undelegation_id": {
               "type": "string",
@@ -43969,7 +43969,7 @@
       },
       "title": "UndelegationAndHoldCount includes the undelegation record and the\nhold count, which is used to construct the genesis state"
     },
-    "exocore.delegation.v1.UndelegationHoldCountResponse": {
+    "imuachain.delegation.v1.UndelegationHoldCountResponse": {
       "type": "object",
       "properties": {
         "hold_count": {
@@ -43980,7 +43980,7 @@
       },
       "description": "UndelegationHoldCountResponse is the response for the undelegation hold count."
     },
-    "exocore.delegation.v1.UndelegationRecord": {
+    "imuachain.delegation.v1.UndelegationRecord": {
       "type": "object",
       "properties": {
         "staker_id": {
@@ -43997,12 +43997,12 @@
         },
         "tx_hash": {
           "type": "string",
-          "description": "tx_hash is the transaction hash on the Exocore chain."
+          "description": "tx_hash is the transaction hash on the Imuachain chain."
         },
         "block_number": {
           "type": "string",
           "format": "uint64",
-          "description": "block_number is the block number on Exocore."
+          "description": "block_number is the block number on Imuachain."
         },
         "completed_epoch_identifier": {
           "type": "string",
@@ -44011,7 +44011,7 @@
         "completed_epoch_number": {
           "type": "string",
           "format": "int64",
-          "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+          "description": "completed_epoch_number is the epoch number on Imuachain at which the undelegation\nshould be completed."
         },
         "undelegation_id": {
           "type": "string",
@@ -44029,7 +44029,7 @@
       },
       "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
     },
-    "exocore.delegation.v1.UndelegationRecordList": {
+    "imuachain.delegation.v1.UndelegationRecordList": {
       "type": "object",
       "properties": {
         "undelegations": {
@@ -44055,12 +44055,12 @@
                   },
                   "tx_hash": {
                     "type": "string",
-                    "description": "tx_hash is the transaction hash on the Exocore chain."
+                    "description": "tx_hash is the transaction hash on the Imuachain chain."
                   },
                   "block_number": {
                     "type": "string",
                     "format": "uint64",
-                    "description": "block_number is the block number on Exocore."
+                    "description": "block_number is the block number on Imuachain."
                   },
                   "completed_epoch_identifier": {
                     "type": "string",
@@ -44069,7 +44069,7 @@
                   "completed_epoch_number": {
                     "type": "string",
                     "format": "int64",
-                    "description": "completed_epoch_number is the epoch number on Exocore at which the undelegation\nshould be completed."
+                    "description": "completed_epoch_number is the epoch number on Imuachain at which the undelegation\nshould be completed."
                   },
                   "undelegation_id": {
                     "type": "string",
@@ -44100,7 +44100,7 @@
       },
       "description": "UndelegationRecordList is the response to query undelegations."
     },
-    "exocore.avs.v1.AVSInfo": {
+    "imuachain.avs.v1.AVSInfo": {
       "type": "object",
       "properties": {
         "name": {
@@ -44201,7 +44201,7 @@
       },
       "title": "AVSinfo represent the information of avs"
     },
-    "exocore.avs.v1.OperatorActivePowerInfo": {
+    "imuachain.avs.v1.OperatorActivePowerInfo": {
       "type": "object",
       "properties": {
         "operator_addr": {
@@ -44215,7 +44215,7 @@
       },
       "description": "OperatorActivePowerInfo is the operator power info."
     },
-    "exocore.avs.v1.OperatorActivePowerList": {
+    "imuachain.avs.v1.OperatorActivePowerList": {
       "type": "object",
       "properties": {
         "operator_power_list": {
@@ -44239,7 +44239,7 @@
       },
       "title": "OperatorActivePowerList is the power list of operators opt-in to the current task.\nBecause power is always changing, record the power of all operators\nwho have completed tasks and submitted results by the task deadline"
     },
-    "exocore.avs.v1.Phase": {
+    "imuachain.avs.v1.Phase": {
       "type": "string",
       "enum": [
         "PHASE_UNSPECIFIED",
@@ -44250,7 +44250,7 @@
       "description": "- PHASE_UNSPECIFIED: Default value when phase is not specified\n - PHASE_PREPARE: First phase where operators prepare and submit their initial responses\n - PHASE_DO_COMMIT: Second phase where operators commit their prepared responses",
       "title": "It is a two-phase submission with two values, 1 and 2"
     },
-    "exocore.avs.v1.QueryAVSAddrByChainIDResponse": {
+    "imuachain.avs.v1.QueryAVSAddrByChainIDResponse": {
       "type": "object",
       "properties": {
         "avs_address": {
@@ -44260,7 +44260,7 @@
       },
       "title": "QueryAVSAddrByChainIDResponse is the response of avs address by chain id"
     },
-    "exocore.avs.v1.QueryAVSInfoResponse": {
+    "imuachain.avs.v1.QueryAVSInfoResponse": {
       "type": "object",
       "properties": {
         "info": {
@@ -44367,7 +44367,7 @@
       },
       "title": "QueryAVSInfoResponse is the response of avs related information"
     },
-    "exocore.avs.v1.QueryChallengeInfoResponse": {
+    "imuachain.avs.v1.QueryChallengeInfoResponse": {
       "type": "object",
       "properties": {
         "challenge_addr": {
@@ -44377,7 +44377,7 @@
       },
       "title": "QueryChallengeInfoResponse is the response of avs related information"
     },
-    "exocore.avs.v1.QuerySubmitTaskResultResponse": {
+    "imuachain.avs.v1.QuerySubmitTaskResultResponse": {
       "type": "object",
       "properties": {
         "info": {
@@ -44427,7 +44427,7 @@
       },
       "title": "QuerySubmitTaskResultResponse is the response of avs related information"
     },
-    "exocore.avs.v1.TaskInfo": {
+    "imuachain.avs.v1.TaskInfo": {
       "type": "object",
       "properties": {
         "task_contract_address": {
@@ -44537,7 +44537,7 @@
       },
       "description": "TaskContractInfo is the task info."
     },
-    "exocore.avs.v1.TaskResultInfo": {
+    "imuachain.avs.v1.TaskResultInfo": {
       "type": "object",
       "properties": {
         "operator_address": {
@@ -44639,7 +44639,7 @@
       },
       "description": "CommissionRates defines the initial commission rates to be used for creating\na validator."
     },
-    "exocore.operator.v1.ClientChainEarningAddrInfo": {
+    "imuachain.operator.v1.ClientChainEarningAddrInfo": {
       "type": "object",
       "properties": {
         "lz_client_chain_id": {
@@ -44654,7 +44654,7 @@
       },
       "description": "ClientChainEarningAddrInfo is the client chain earning address info."
     },
-    "exocore.operator.v1.ClientChainEarningAddrList": {
+    "imuachain.operator.v1.ClientChainEarningAddrList": {
       "type": "object",
       "properties": {
         "earning_info_list": {
@@ -44679,7 +44679,7 @@
       },
       "description": "ClientChainEarningAddrList is the list of client chain earning addresses.\nBecause the reward token provide by the AVS might be located at different client chain, the operator need to\nprovide the different client chain address to receive the token rewards."
     },
-    "exocore.operator.v1.DecValueField": {
+    "imuachain.operator.v1.DecValueField": {
       "type": "object",
       "properties": {
         "amount": {
@@ -44689,7 +44689,7 @@
       },
       "description": "DecValueField is a field that holds a value of sdk.LegacyDec type."
     },
-    "exocore.operator.v1.DelegatorInfo": {
+    "imuachain.operator.v1.DelegatorInfo": {
       "type": "object",
       "properties": {
         "asset_id": {
@@ -44723,7 +44723,7 @@
       },
       "title": "DelegatorInfo records the total opted-in USD value for the specified operator"
     },
-    "exocore.operator.v1.OperatorAVSAddress": {
+    "imuachain.operator.v1.OperatorAVSAddress": {
       "type": "object",
       "properties": {
         "operator_addr": {
@@ -44737,7 +44737,7 @@
       },
       "title": "OperatorAVSAddress includes the address of operator and AVS"
     },
-    "exocore.operator.v1.OperatorConsAddrPair": {
+    "imuachain.operator.v1.OperatorConsAddrPair": {
       "type": "object",
       "properties": {
         "operator_acc_addr": {
@@ -44755,7 +44755,7 @@
       },
       "description": "OperatorConsAddrPair holds the operator address and the corresponding consensus address."
     },
-    "exocore.operator.v1.OperatorConsKeyPair": {
+    "imuachain.operator.v1.OperatorConsKeyPair": {
       "type": "object",
       "properties": {
         "operator_acc_addr": {
@@ -44784,7 +44784,7 @@
       },
       "description": "OperatorConsKeyPair holds the operator address and the consensus public key currently in\nuse by the operator."
     },
-    "exocore.operator.v1.OperatorInfo": {
+    "imuachain.operator.v1.OperatorInfo": {
       "type": "object",
       "properties": {
         "earnings_addr": {
@@ -44856,7 +44856,7 @@
       },
       "description": "OperatorInfo is the operator info."
     },
-    "exocore.operator.v1.OperatorOptedUSDValue": {
+    "imuachain.operator.v1.OperatorOptedUSDValue": {
       "type": "object",
       "properties": {
         "self_usd_value": {
@@ -44874,7 +44874,7 @@
       },
       "title": "OperatorOptedUSDValue records the self and total opted-in USD value for the specified operator and AVS"
     },
-    "exocore.operator.v1.OperatorSlashInfo": {
+    "imuachain.operator.v1.OperatorSlashInfo": {
       "type": "object",
       "properties": {
         "slash_contract": {
@@ -44884,12 +44884,12 @@
         "submitted_height": {
           "type": "string",
           "format": "int64",
-          "title": "submitted_height is the exocore block height at which the slash event is submitted"
+          "title": "submitted_height is the imua block height at which the slash event is submitted"
         },
         "event_height": {
           "type": "string",
           "format": "int64",
-          "title": "event_height is the exocore block height at which the slash event occurs"
+          "title": "event_height is the imua block height at which the slash event occurs"
         },
         "is_vetoed": {
           "type": "boolean",
@@ -44971,7 +44971,7 @@
       },
       "title": "OperatorSlashInfo is the slash info of operator"
     },
-    "exocore.operator.v1.OperatorSlashInfoByID": {
+    "imuachain.operator.v1.OperatorSlashInfoByID": {
       "type": "object",
       "properties": {
         "slash_id": {
@@ -44989,12 +44989,12 @@
             "submitted_height": {
               "type": "string",
               "format": "int64",
-              "title": "submitted_height is the exocore block height at which the slash event is submitted"
+              "title": "submitted_height is the imua block height at which the slash event is submitted"
             },
             "event_height": {
               "type": "string",
               "format": "int64",
-              "title": "event_height is the exocore block height at which the slash event occurs"
+              "title": "event_height is the imua block height at which the slash event occurs"
             },
             "is_vetoed": {
               "type": "boolean",
@@ -45079,7 +45079,7 @@
       },
       "title": "OperatorSlashInfoByID includes the slash information and the slashID"
     },
-    "exocore.operator.v1.OperatorVotingPower": {
+    "imuachain.operator.v1.OperatorVotingPower": {
       "type": "object",
       "properties": {
         "operator_addr": {
@@ -45093,7 +45093,7 @@
       },
       "title": "OperatorVotingPower represents the voting power for the specified operator address"
     },
-    "exocore.operator.v1.OptedInfo": {
+    "imuachain.operator.v1.OptedInfo": {
       "type": "object",
       "properties": {
         "slash_contract": {
@@ -45103,12 +45103,12 @@
         "opted_in_height": {
           "type": "string",
           "format": "uint64",
-          "title": "opted_in_height is the exocore block height at which the operator opted in"
+          "title": "opted_in_height is the imua block height at which the operator opted in"
         },
         "opted_out_height": {
           "type": "string",
           "format": "uint64",
-          "title": "opted_out_height is the exocore block height at which the operator opted out"
+          "title": "opted_out_height is the imua block height at which the operator opted out"
         },
         "jailed": {
           "type": "boolean",
@@ -45117,7 +45117,7 @@
       },
       "title": "OptedInfo is the opted information about operator"
     },
-    "exocore.operator.v1.QueryAllAVSsByOperatorResponse": {
+    "imuachain.operator.v1.QueryAllAVSsByOperatorResponse": {
       "type": "object",
       "properties": {
         "avs_list": {
@@ -45130,7 +45130,7 @@
       },
       "description": "QueryAllAVSsByOperatorResponse is the response that includes a list of all operators\nand their consensus keys for a specified chain ID."
     },
-    "exocore.operator.v1.QueryAllOperatorConsAddrsByChainIDResponse": {
+    "imuachain.operator.v1.QueryAllOperatorConsAddrsByChainIDResponse": {
       "type": "object",
       "properties": {
         "operator_cons_addrs": {
@@ -45174,7 +45174,7 @@
       },
       "description": "QueryAllOperatorConsAddrsByChainIDResponse is the response that includes a list of all operators\nand their consensus addresses for a specified chain ID."
     },
-    "exocore.operator.v1.QueryAllOperatorConsKeysByChainIDResponse": {
+    "imuachain.operator.v1.QueryAllOperatorConsKeysByChainIDResponse": {
       "type": "object",
       "properties": {
         "operator_cons_keys": {
@@ -45229,7 +45229,7 @@
       },
       "description": "QueryAllOperatorConsKeysByChainIDResponse is the response that includes a list of all operators\nand their consensus keys for a specified chain ID."
     },
-    "exocore.operator.v1.QueryAllOperatorsByOptInAVSResponse": {
+    "imuachain.operator.v1.QueryAllOperatorsByOptInAVSResponse": {
       "type": "object",
       "properties": {
         "operator_list": {
@@ -45242,7 +45242,7 @@
       },
       "description": "QueryAllOperatorsWithOptInAVSResponse is the response that includes a list of all avs\n  for a specified operator address."
     },
-    "exocore.operator.v1.QueryAllOperatorsResponse": {
+    "imuachain.operator.v1.QueryAllOperatorsResponse": {
       "type": "object",
       "properties": {
         "operator_acc_addrs": {
@@ -45271,7 +45271,7 @@
       },
       "description": "QueryAllOperatorsResponse is the response containing all operator account addresses."
     },
-    "exocore.operator.v1.QueryAllSnapshotResponse": {
+    "imuachain.operator.v1.QueryAllSnapshotResponse": {
       "type": "object",
       "properties": {
         "snapshots": {
@@ -45350,7 +45350,7 @@
       },
       "title": "QueryAllSnapshotResponse is the response to obtain all voting power snapshot\nfor the specified AVS"
     },
-    "exocore.operator.v1.QueryOperatorConsAddressResponse": {
+    "imuachain.operator.v1.QueryOperatorConsAddressResponse": {
       "type": "object",
       "properties": {
         "cons_addr": {
@@ -45364,7 +45364,7 @@
       },
       "description": "QueryOperatorConsAddressResponse is the response for QueryOperatorConsAddressRequest."
     },
-    "exocore.operator.v1.QueryOperatorConsKeyResponse": {
+    "imuachain.operator.v1.QueryOperatorConsKeyResponse": {
       "type": "object",
       "properties": {
         "public_key": {
@@ -45389,7 +45389,7 @@
       },
       "description": "QueryOperatorConsKeyResponse is the response for QueryOperatorConsKeyRequest."
     },
-    "exocore.operator.v1.QueryOperatorSlashInfoResponse": {
+    "imuachain.operator.v1.QueryOperatorSlashInfoResponse": {
       "type": "object",
       "properties": {
         "all_slash_info": {
@@ -45412,12 +45412,12 @@
                   "submitted_height": {
                     "type": "string",
                     "format": "int64",
-                    "title": "submitted_height is the exocore block height at which the slash event is submitted"
+                    "title": "submitted_height is the imua block height at which the slash event is submitted"
                   },
                   "event_height": {
                     "type": "string",
                     "format": "int64",
-                    "title": "event_height is the exocore block height at which the slash event occurs"
+                    "title": "event_height is the imua block height at which the slash event occurs"
                   },
                   "is_vetoed": {
                     "type": "boolean",
@@ -45523,7 +45523,7 @@
       },
       "title": "QueryOperatorSlashInfoResponse is the response for GetOperatorSlashInfoRequest"
     },
-    "exocore.operator.v1.QueryOperatorUSDValueResponse": {
+    "imuachain.operator.v1.QueryOperatorUSDValueResponse": {
       "type": "object",
       "properties": {
         "usd_values": {
@@ -45547,7 +45547,7 @@
       },
       "description": "QueryOperatorUSDValueResponse is the response to obtain the USD value for operator."
     },
-    "exocore.operator.v1.QueryValidatorResponse": {
+    "imuachain.operator.v1.QueryValidatorResponse": {
       "type": "object",
       "properties": {
         "validator": {
@@ -45687,7 +45687,7 @@
       },
       "title": "QueryValidatorResponse is response type for the Query/Validator RPC method"
     },
-    "exocore.operator.v1.QueryValidatorsResponse": {
+    "imuachain.operator.v1.QueryValidatorsResponse": {
       "type": "object",
       "properties": {
         "validators": {
@@ -45846,7 +45846,7 @@
       },
       "title": "QueryValidatorsResponse is response type for the Query/Validators RPC method"
     },
-    "exocore.operator.v1.SlashExecutionInfo": {
+    "imuachain.operator.v1.SlashExecutionInfo": {
       "type": "object",
       "properties": {
         "slash_proportion": {
@@ -45910,7 +45910,7 @@
       },
       "title": "SlashExecutionInfo is the actual execution state for a slash event"
     },
-    "exocore.operator.v1.SlashFromAssetsPool": {
+    "imuachain.operator.v1.SlashFromAssetsPool": {
       "type": "object",
       "properties": {
         "asset_id": {
@@ -45924,7 +45924,7 @@
       },
       "title": "SlashFromAssetsPool records the slash detail from the operator assets pool"
     },
-    "exocore.operator.v1.SlashFromUndelegation": {
+    "imuachain.operator.v1.SlashFromUndelegation": {
       "type": "object",
       "properties": {
         "staker_id": {
@@ -45942,7 +45942,7 @@
       },
       "title": "SlashFromUndelegation records the slash detail from the undelegation"
     },
-    "exocore.operator.v1.SnapshotHelper": {
+    "imuachain.operator.v1.SnapshotHelper": {
       "type": "object",
       "properties": {
         "last_changed_height": {
@@ -45957,7 +45957,7 @@
       },
       "title": "SnapshotHelper is used to record the helper information for voting power snapshot update"
     },
-    "exocore.operator.v1.Validator": {
+    "imuachain.operator.v1.Validator": {
       "type": "object",
       "properties": {
         "operator_earnings_addr": {
@@ -46090,7 +46090,7 @@
       },
       "title": "Validator defines a validator, together with the total amount of the\nValidator's bond shares and their exchange rate to coins. Slashing results in\na decrease in the exchange rate, allowing correct calculation of future\nundelegations without iterating over delegators. When coins are delegated to\nthis validator, the validator is credited with a delegation whose number of\nbond shares is based on the amount of coins delegated divided by the current\nexchange rate. Voting power can be calculated as total bonded shares\nmultiplied by exchange rate"
     },
-    "exocore.operator.v1.VotingPowerSnapshot": {
+    "imuachain.operator.v1.VotingPowerSnapshot": {
       "type": "object",
       "properties": {
         "total_voting_power": {
@@ -46132,7 +46132,7 @@
       },
       "description": "VotingPowerSnapshot records historical voting power for AVSs at specific epochs\nor after slashing events.These snapshots are created at the end of each epoch and\nwhen slashing occurs, enabling historical queries of operator voting power at\nspecific points in time."
     },
-    "exocore.operator.v1.VotingPowerSnapshotKeyHeight": {
+    "imuachain.operator.v1.VotingPowerSnapshotKeyHeight": {
       "type": "object",
       "properties": {
         "snapshot_key_height": {
@@ -46573,11 +46573,11 @@
       },
       "description": "VersionParams contains the ABCI application version."
     },
-    "exocore.reward.v1.Params": {
+    "imuachain.reward.v1.Params": {
       "type": "object",
       "description": "Params defines the parameters for the module."
     },
-    "exocore.reward.v1.QueryParamsResponse": {
+    "imuachain.reward.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {

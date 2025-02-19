@@ -1,0 +1,10 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// ValidatorUpdateBlock
+message ValidatorUpdateBlock {
+  // block height on which the validator set changed
+  uint64 block = 1;
+}

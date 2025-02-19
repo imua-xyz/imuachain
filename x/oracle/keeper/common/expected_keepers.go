@@ -81,7 +81,7 @@ type KeeperDogfood = interface {
 	GetValidatorUpdates(ctx sdk.Context) []abci.ValidatorUpdate
 	GetValidatorByConsAddr(ctx sdk.Context, consAddr sdk.ConsAddress) (validator stakingtypes.Validator, found bool)
 
-	GetAllExocoreValidators(ctx sdk.Context) (validators []dogfoodtypes.ExocoreValidator)
+	GetAllImuachainValidators(ctx sdk.Context) (validators []dogfoodtypes.ImuachainValidator)
 	ValidatorByConsAddr(ctx sdk.Context, addr sdk.ConsAddress) stakingtypes.ValidatorI
 	SlashWithInfractionReason(ctx sdk.Context, addr sdk.ConsAddress, infractionHeight, power int64, slashFactor sdk.Dec, infraction stakingtypes.Infraction) sdkmath.Int
 	Jail(ctx sdk.Context, addr sdk.ConsAddress)

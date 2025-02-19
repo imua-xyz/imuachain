@@ -1,0 +1,25 @@
+syntax = "proto3";
+package imuachain.immint.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/immint/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  // mint_denom is the denomination of the minted coin
+  string mint_denom = 1;
+  // epoch_reward is the reward minted by the module, per epoch. note that
+  // this is in addition to any other fees that are collected, or rewards
+  // that are minted.
+  string epoch_reward = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // epoch_identifier is the epoch identifier used to determine when to mint
+  // the reward.
+  string epoch_identifier = 3;
+}

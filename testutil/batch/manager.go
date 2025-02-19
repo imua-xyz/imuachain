@@ -64,7 +64,7 @@ const (
 )
 
 var (
-	ExoDecimalReduction      = new(big.Int).Exp(big.NewInt(10), big.NewInt(types.BaseDenomUnit), nil)
+	ImuaDecimalReduction     = new(big.Int).Exp(big.NewInt(10), big.NewInt(types.BaseDenomUnit), nil)
 	logger                   = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	AssetsPrecompileAddr     = common.HexToAddress("0x0000000000000000000000000000000000000804")
 	DelegationPrecompileAddr = common.HexToAddress("0x0000000000000000000000000000000000000805")
@@ -105,7 +105,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 	// SQLite waits for 600000 milliseconds (10 minute) when encountering a lock conflict.
 	db.Exec("PRAGMA busy_timeout = 600000;")
 
-	// get the private key for the virtual exocore gateway address
+	// get the private key for the virtual imua gateway address
 	// most test transactions will be signed by this private key.
 	sk, err := crypto.HexToECDSA(config.FaucetSk)
 	if err != nil {

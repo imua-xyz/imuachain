@@ -1,0 +1,22 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// Nonce is a message that contains a nonce for a feeder
+message Nonce {
+  // FeederID is the ID of the feeder that corresponding to the nonce
+  uint64 feeder_id = 1 [(gogoproto.customname) = "FeederID"];
+  // value is the nonce value
+  uint32 value = 2;
+}
+
+// ValidatorNonce is a message that contains the nonces for a validator
+message ValidatorNonce {
+  // validator is the validator address
+  string validator = 1;
+  // nonces is the list of nonces for the feeders
+  repeated Nonce nonce_list = 2;
+}

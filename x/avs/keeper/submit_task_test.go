@@ -21,7 +21,7 @@ import (
 )
 
 func (suite *AVSTestSuite) prepareOperator() {
-	opAccAddr, err := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	opAccAddr, err := sdk.AccAddressFromBech32("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
 	suite.operatorAddr = opAccAddr
 	suite.NoError(err)
 	// register operator

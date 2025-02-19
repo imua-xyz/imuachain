@@ -3,6 +3,8 @@ package types
 import (
 	"testing"
 
+	testutiltx "github.com/evmos/evmos/v16/testutil/tx"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -19,10 +21,8 @@ func TestKeysTestSuite(t *testing.T) {
 }
 
 func (suite *KeysTestSuite) TestParseKeyForOperatorAndChainIDToConsKey() {
-	operator := "exo1rtg0cgw94ep744epyvanc0wdd5kedwql73vlmr"
-	operatorAddr, err := sdk.AccAddressFromBech32(operator)
-	suite.NoError(err)
-	chainIDWithoutRevision := "exocoretestnet_233"
+	operatorAddr := sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
+	chainIDWithoutRevision := "imuachaintestnet_233"
 	key := KeyForOperatorAndChainIDToConsKey(operatorAddr, chainIDWithoutRevision)
 
 	parsedAddr, parsedChainID, err := ParseKeyForOperatorAndChainIDToConsKey(key[1:])
@@ -32,10 +32,8 @@ func (suite *KeysTestSuite) TestParseKeyForOperatorAndChainIDToConsKey() {
 }
 
 func (suite *KeysTestSuite) TestParsePrevConsKey() {
-	operator := "exo1rtg0cgw94ep744epyvanc0wdd5kedwql73vlmr"
-	operatorAddr, err := sdk.AccAddressFromBech32(operator)
-	suite.NoError(err)
-	chainIDWithoutRevision := "exocoretestnet_233"
+	operatorAddr := sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
+	chainIDWithoutRevision := "imuachaintestnet_233"
 	key := KeyForChainIDAndOperatorToPrevConsKey(chainIDWithoutRevision, operatorAddr)
 
 	parsedChainID, parsedAddr, err := ParsePrevConsKey(key[1:])
@@ -45,10 +43,8 @@ func (suite *KeysTestSuite) TestParsePrevConsKey() {
 }
 
 func (suite *KeysTestSuite) TestParseKeyForOperatorKeyRemoval() {
-	operator := "exo1rtg0cgw94ep744epyvanc0wdd5kedwql73vlmr"
-	operatorAddr, err := sdk.AccAddressFromBech32(operator)
-	suite.NoError(err)
-	chainIDWithoutRevision := "exocoretestnet_233"
+	operatorAddr := sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
+	chainIDWithoutRevision := "imuachaintestnet_233"
 	key := KeyForOperatorKeyRemovalForChainID(operatorAddr, chainIDWithoutRevision)
 
 	parsedAddr, parsedChainID, err := ParseKeyForOperatorKeyRemoval(key[1:])

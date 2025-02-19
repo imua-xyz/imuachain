@@ -9,7 +9,7 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreatePrice{}, "oracle/CreatePrice", nil)
-	cdc.RegisterConcrete(Params{}, "exocore/x/oracle/Params", nil)
+	cdc.RegisterConcrete(Params{}, "imua/x/oracle/Params", nil)
 	// this line is used by starport scaffolding # 2
 }
 

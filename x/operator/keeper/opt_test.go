@@ -4,6 +4,7 @@ import (
 	"strings"
 	"time"
 
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/imua-xyz/imuachain/x/epochs/types"
 
 	sdkmath "cosmossdk.io/math"
@@ -40,12 +41,9 @@ func (suite *OperatorTestSuite) registerOperator(operator string) {
 }
 
 func (suite *OperatorTestSuite) prepareOperator() {
-	operator := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
-	opAccAddr, err := sdk.AccAddressFromBech32(operator)
-	suite.operatorAddr = opAccAddr
-	suite.NoError(err)
+	suite.operatorAddr = sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
 	// register operator
-	suite.registerOperator(operator)
+	suite.registerOperator(suite.operatorAddr.String())
 }
 
 func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Address, amount sdkmath.Int) {

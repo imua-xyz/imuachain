@@ -17,7 +17,7 @@ func (suite *DelegationTestSuite) TestUpdateNSTBalance() {
 	delegateAmountToDefaultOperator := sdkmath.NewInt(20)
 	undelegateAmountFromDefaultOperator := sdkmath.NewInt(10)
 	delegateAmountToAnotherOperator := sdkmath.NewInt(20)
-	anotherOperatorAddr, err := sdk.AccAddressFromBech32("exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph")
+	anotherOperatorAddr, err := sdk.AccAddressFromBech32("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
 	suite.NoError(err)
 
 	suite.basicPrepare()

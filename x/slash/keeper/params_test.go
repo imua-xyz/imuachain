@@ -6,10 +6,10 @@ import (
 
 func (suite *SlashTestSuite) TestParams() {
 	params := &slashtype.Params{}
-	err := suite.App.ExoSlashKeeper.SetParams(suite.Ctx, params)
+	err := suite.App.ImSlashKeeper.SetParams(suite.Ctx, params)
 	suite.NoError(err)
 
-	getParams, err := suite.App.ExoSlashKeeper.GetParams(suite.Ctx)
+	getParams, err := suite.App.ImSlashKeeper.GetParams(suite.Ctx)
 	suite.NoError(err)
 	suite.Equal(*params, *getParams)
 }

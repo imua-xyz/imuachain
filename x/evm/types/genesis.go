@@ -9,6 +9,6 @@ import (
 func DefaultGenesisState() *evmtype.GenesisState {
 	return &evmtype.GenesisState{
 		Accounts: []evmtype.GenesisAccount{},
-		Params:   ExocoreEvmDefaultParams(),
+		Params:   ImuachainEvmDefaultParams(),
 	}
 }

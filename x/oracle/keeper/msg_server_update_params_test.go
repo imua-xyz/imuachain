@@ -17,7 +17,7 @@ import (
 var _ = Describe("MsgUpdateParams", Ordered, func() {
 	var defaultParams types.Params
 	var patcher *Patches
-	chainIDtest := "exocoretestnet_233-1"
+	chainIDtest := "imuachaintestnet_233-1"
 	AfterAll(func() {
 		patcher.Reset()
 		ks.Reset()
@@ -37,8 +37,8 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 		privVal3 := mock.NewPV()
 		pubKey3, _ := privVal3.GetPubKey()
 
-		patcher = ApplyMethod(reflect.TypeOf(dogfoodkeeper.Keeper{}), "GetAllExocoreValidators", func(k dogfoodkeeper.Keeper, ctx sdk.Context) []dogfoodtypes.ExocoreValidator {
-			return []dogfoodtypes.ExocoreValidator{
+		patcher = ApplyMethod(reflect.TypeOf(dogfoodkeeper.Keeper{}), "GetAllImuachainValidators", func(k dogfoodkeeper.Keeper, ctx sdk.Context) []dogfoodtypes.ImuachainValidator {
+			return []dogfoodtypes.ImuachainValidator{
 				{
 					Address: pubKey1.Address(),
 					Power:   1,

@@ -12,8 +12,6 @@ import (
 	"github.com/evmos/evmos/v16/server/config"
 	"github.com/imua-xyz/imuachain/testutil/network"
 
-	exocorenetwork "github.com/imua-xyz/imuachain/testutil/network"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
@@ -28,7 +26,7 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up integration test suite")
 
 	var err error
-	cfg := exocorenetwork.DefaultConfig()
+	cfg := network.DefaultConfig()
 	cfg.JSONRPCAddress = config.DefaultJSONRPCAddress
 	cfg.NumValidators = 3
 	cfg.CleanupDir = true

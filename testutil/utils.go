@@ -22,7 +22,7 @@ import (
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
-	exocoreapp "github.com/imua-xyz/imuachain/app"
+	imuaapp "github.com/imua-xyz/imuachain/app"
 	"github.com/imua-xyz/imuachain/utils"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	distributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
@@ -50,7 +50,7 @@ type BaseTestSuite struct {
 	suite.Suite
 
 	Ctx        sdk.Context
-	App        *exocoreapp.ExocoreApp
+	App        *imuaapp.ImuachainApp
 	Address    common.Address
 	AccAddress sdk.AccAddress
 	StakerAddr string
@@ -90,12 +90,12 @@ func (suite *BaseTestSuite) SetupTest() {
 	suite.DoSetupTest()
 }
 
-// SetupWithGenesisValSet initializes a new ExocoreApp with a validator set and genesis accounts
+// SetupWithGenesisValSet initializes a new ImuachainApp with a validator set and genesis accounts
 // that also act as delegators.
 func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) {
 	pruneOpts := pruningtypes.NewPruningOptionsFromString(pruningtypes.PruningOptionDefault)
-	appI, genesisState := exocoreapp.SetupTestingApp(utils.DefaultChainID, &pruneOpts, false)()
-	app, ok := appI.(*exocoreapp.ExocoreApp)
+	appI, genesisState := imuaapp.SetupTestingApp(utils.DefaultChainID, &pruneOpts, false)()
+	app, ok := appI.(*imuaapp.ImuachainApp)
 	suite.Require().True(ok)
 
 	// set genesis accounts
@@ -441,7 +441,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		Time:            suite.InitTime,
 		ChainId:         utils.DefaultChainID,
 		Validators:      []abci.ValidatorUpdate{},
-		ConsensusParams: exocoreapp.DefaultConsensusParams,
+		ConsensusParams: imuaapp.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 	// committing the chain now is not required. doing so will skip the first block.
@@ -497,7 +497,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(utils.BaseDenom, amount)),
 	}
-	// Exocore modules genesis
+	// Imuachain modules genesis
 	// x/assets
 	suite.ClientChains = []assetstypes.ClientChainInfo{
 		{
@@ -520,7 +520,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 		},
 	}
 
-	// Initialize an ExocoreApp for test
+	// Initialize an ImuachainApp for test
 	suite.SetupWithGenesisValSet(
 		[]authtypes.GenesisAccount{acc}, append(suite.Balances, balance)...,
 	)

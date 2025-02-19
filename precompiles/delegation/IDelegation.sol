@@ -8,7 +8,7 @@ IDelegation constant DELEGATION_CONTRACT = IDelegation(
     DELEGATION_PRECOMPILE_ADDRESS
 );
 
-/// @author Exocore Team
+/// @author Imuachain Team
 /// @title delegation Precompile Contract
 /// @dev The interface through which solidity contracts will interact with delegation
 /// @custom:address 0x0000000000000000000000000000000000000805
@@ -17,7 +17,7 @@ interface IDelegation {
 /// @dev delegate the client chain assets to the operator through client chain, that will change the states in delegation and assets module
 /// Note that this address cannot be a module account.
 /// @param clientChainID is the layerZero chainID if it is supported.
-//  It might be allocated by Exocore when the client chain isn't supported
+//  It might be allocated by Imuachain when the client chain isn't supported
 //  by layerZero
 /// @param lzNonce The cross chain tx layerZero nonce
 /// @param assetsAddress The client chain asset Address
@@ -36,7 +36,7 @@ interface IDelegation {
 /// @dev undelegate the client chain assets from the operator through client chain, that will change the states in delegation and assets module
 /// Note that this address cannot be a module account.
 /// @param clientChainID is the layerZero chainID if it is supported.
-//  It might be allocated by Exocore when the client chain isn't supported
+//  It might be allocated by Imuachain when the client chain isn't supported
 //  by layerZero
 /// @param lzNonce The cross chain tx layerZero nonce
 /// @param assetsAddress The client chain asset Address
@@ -54,7 +54,7 @@ interface IDelegation {
 
 /// @dev associate the staker as being owned by the specified operator
 /// @param clientChainID is the layerZero chainID if it is supported.
-//  It might be allocated by Exocore when the client chain isn't supported
+//  It might be allocated by Imuachain when the client chain isn't supported
 //  by layerZero
 /// @param staker is the EVM address of the staker
 /// @param operator is the address that is to be marked as the owner.
@@ -66,7 +66,7 @@ interface IDelegation {
 
 /// @dev dissociate the operator from staker
 /// @param clientChainID is the layerZero chainID if it is supported.
-//  It might be allocated by Exocore when the client chain isn't supported
+//  It might be allocated by Imuachain when the client chain isn't supported
 //  by layerZero
 /// @param staker is the EVM address to remove the marking from.
     function dissociateOperatorFromStaker(

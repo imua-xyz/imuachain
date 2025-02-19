@@ -142,7 +142,7 @@ type OperatorHooks interface {
 	)
 }
 type StakingKeeper interface {
-	IsExocoreValidator(ctx sdk.Context, addr sdk.ConsAddress) bool
+	IsImuachainValidator(ctx sdk.Context, addr sdk.ConsAddress) bool
 }
 
 // EpochsKeeper represents the expected keeper interface for the epochs module.

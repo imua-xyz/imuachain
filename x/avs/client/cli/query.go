@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/spf13/cobra"
 )
@@ -41,7 +42,7 @@ func QueryAVSInfo() *cobra.Command {
 		Use:     "AVSInfo query <avsAddr>",
 		Short:   "AVSInfo query",
 		Long:    "AVSInfo query for current registered AVS",
-		Example: "exocored query avs AVSInfo  0x598ACcB5e7F83cA6B19D70592Def9E5b25B978CA",
+		Example: fmt.Sprintf("%s query avs AVSInfo  0x598ACcB5e7F83cA6B19D70592Def9E5b25B978CA", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
@@ -73,7 +74,7 @@ func QueryAVSAddrByChainID() *cobra.Command {
 		Use:     "AVSAddrByChainID <chainID>",
 		Short:   "AVSAddrByChainID <chainID>",
 		Long:    "AVSAddrByChainID query for AVS address by chainID",
-		Example: "exocored query avs AVSAddrByChainID exocoretestnet_233-1",
+		Example: fmt.Sprintf("%s query avs AVSAddrByChainID imuachaintestnet_233-1", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -101,7 +102,7 @@ func QueryTaskInfo() *cobra.Command {
 		Use:     "TaskInfo <task-address-in-hex> <task-id>",
 		Short:   "Query the TaskInfo by its address and ID",
 		Long:    "Query the currently registered tasks for an AVS by the task's address and ID",
-		Example: "exocored query avs TaskInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2",
+		Example: fmt.Sprintf("%s query avs TaskInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
@@ -133,7 +134,7 @@ func QuerySubmitTaskResult() *cobra.Command {
 		Use:     "SubmitTaskResult <task-address-in-hex> <task-id> <operator-addreess>",
 		Short:   "Query the SubmitTaskResult by taskAddr  taskID operatorAddr",
 		Long:    "Query the currently submitted Task Result",
-		Example: "exocored query avs SubmitTaskResult 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 exo1mq6pj6f5tafmgkk6lehew5radfq3w20gpegzs5",
+		Example: fmt.Sprintf("%s query avs SubmitTaskResult 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj", version.AppName),
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
@@ -166,7 +167,7 @@ func QueryChallengeInfo() *cobra.Command {
 		Use:     "ChallengeInfo <task-address-in-hex> <task-id> <operator-addreess>",
 		Short:   "Query the ChallengeInfo by taskAddr  taskID operatorAddr",
 		Long:    "Query the currently Challenge Info  ",
-		Example: "exocored query avs ChallengeInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 exo1mq6pj6f5tafmgkk6lehew5radfq3w20gpegzs5",
+		Example: fmt.Sprintf("%s query avs ChallengeInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj", version.AppName),
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {

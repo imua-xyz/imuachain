@@ -201,7 +201,7 @@ func (k Keeper) RemoveShareFromOperator(
 
 // RemoveShare updates all states regarding staker and operator when removing share.
 // It might be used for undelegation, slash and native token. For the native token,
-// it will be considered a slash operation in exocore when the asset amount is reduced
+// it will be considered a slash operation in imua when the asset amount is reduced
 // by the client chain slash.
 func (k Keeper) RemoveShare(
 	ctx sdk.Context, isUndelegation bool, operator sdk.AccAddress, stakerID, assetID string, share sdkmath.LegacyDec,
@@ -221,8 +221,8 @@ func (k Keeper) RemoveShare(
 	}
 	if isUndelegation {
 		deltaAmount.WaitUndelegationAmount = removeToken
-		// don't update staker asset info for exo-native-token
-		if assetID != assetstype.ExocoreAssetID {
+		// don't update staker asset info for imua-native-token
+		if assetID != assetstype.ImuachainAssetID {
 			// todo: TotalDepositAmount might be influenced by slash and precision loss,
 			// consider removing it, it can be recalculated from the share for RPC query.
 			_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, assetstype.DeltaStakerSingleAsset{

@@ -57,7 +57,7 @@ const (
 )
 
 var (
-	// KeyPrefixRestakerDelegationInfo restakerID = clientChainAddr+'_'+ExoCoreChainIndex
+	// KeyPrefixRestakerDelegationInfo restakerID = clientChainAddr+'_'+ImuachainIndex
 	// KeyPrefixRestakerDelegationInfo
 	// key-value:
 	// restakerID +'/'+assetID+'/'+operatorAddr -> DelegationAmounts
@@ -69,7 +69,7 @@ var (
 	// KeyPrefixLastUndelegationID key-value:
 	// prefixForLastUndelegationID -> uint64
 	// We use an incrementing number to identify undelegations because we support different
-	// assets across multiple client chains and the Exocore chain.
+	// assets across multiple client chains and the Imuachain chain.
 	KeyPrefixLastUndelegationID = []byte{prefixForLastUndelegationID}
 
 	// KeyPrefixUndelegationInfo singleRecordKey = operatorAddr+BlockHeight+UndelegationID+txHash

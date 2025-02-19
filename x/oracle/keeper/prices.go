@@ -55,8 +55,8 @@ func (k Keeper) GetPrices(
 
 // return latest price for one specified price
 func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.Price, error) {
-	// for native token exo, we temporarily use default price
-	if assetID == assetstypes.ExocoreAssetID {
+	// for native token IMUA, we temporarily use default price
+	if assetID == assetstypes.ImuachainAssetID {
 		return types.Price{
 			Value:   sdkmath.NewInt(types.DefaultPriceValue),
 			Decimal: types.DefaultPriceDecimal,
@@ -99,8 +99,8 @@ func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]inter
 	prices = make(map[string]types.Price)
 	info := ""
 	for assetID := range assets {
-		// for native token exo, we temporarily use default price
-		if assetID == assetstypes.ExocoreAssetID {
+		// for native token IMUA, we temporarily use default price
+		if assetID == assetstypes.ImuachainAssetID {
 			prices[assetID] = types.Price{
 				Value:   sdkmath.NewInt(types.DefaultPriceValue),
 				Decimal: types.DefaultPriceDecimal,

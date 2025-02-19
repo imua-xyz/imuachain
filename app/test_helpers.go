@@ -79,13 +79,13 @@ func init() {
 	config.SetBip44CoinType(cfg)
 }
 
-// Setup initializes a new Exocore. A Nop logger is set in Exocore.
+// Setup initializes a new Imuachain. A Nop logger is set in Imuachain.
 func Setup(
 	isCheckTx bool,
 	feemarketGenesis *feemarkettypes.GenesisState,
 	chainID string,
 	isPrintLog bool,
-) *ExocoreApp {
+) *ImuachainApp {
 	privVal := mock.NewPV()
 	pubKey, _ := privVal.GetPubKey()
 
@@ -108,7 +108,7 @@ func Setup(
 	} else {
 		logger = log.NewNopLogger()
 	}
-	app := NewExocoreApp(
+	app := NewImuachainApp(
 		logger,
 		db, nil, true, map[int64]bool{},
 		DefaultNodeHome, 5,
@@ -148,7 +148,7 @@ func Setup(
 	return app
 }
 
-func GenesisStateWithValSet(app *ExocoreApp, genesisState simapp.GenesisState,
+func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 	valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
 	balances ...banktypes.Balance,
 ) simapp.GenesisState {
@@ -329,7 +329,7 @@ func SetupTestingApp(chainID string, pruneOpts *pruningtypes.PruningOptions, isP
 		if pruneOpts != nil {
 			baseAppOptions = append(baseAppOptions, baseapp.SetPruning(*pruneOpts))
 		}
-		app := NewExocoreApp(
+		app := NewImuachainApp(
 			logger,
 			db, nil, true,
 			map[int64]bool{},

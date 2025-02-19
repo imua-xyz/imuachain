@@ -307,7 +307,7 @@ func NewGenStateAssets(operatorAccAddresses []sdk.AccAddress, depositAmount, sta
 		DefaultGenStateAssets.Tokens[i].StakingTotalAmount = totalDepositAmount
 	}
 	for _, operatorAccAddress := range operatorAccAddresses {
-		// use the same address []byte for operator(exo..) and staker(0x...), both derived from the same pubkey and since evmos use ethsecp256k1, this address is generated from keccak-256(.) instead of ripemd160(sha256(.))
+		// use the same address []byte for operator(im1..) and staker(0x...), both derived from the same pubkey and since evmos use ethsecp256k1, this address is generated from keccak-256(.) instead of ripemd160(sha256(.))
 		stakerAddrStr := hexutil.Encode(operatorAccAddress)
 		depositsByAssets := make([]assetstypes.DepositByAsset, 0, nAssets)
 		assetsStates := make([]assetstypes.AssetByID, 0, nAssets)

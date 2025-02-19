@@ -127,7 +127,7 @@ func (k Keeper) UpdateNSTBalance(
 			}
 		}
 		// In this case, we only print a log as a reminder. This situation will only occur when the total slashing amount
-		// from the client chain and Exocore chain is greater than the total staking amount.
+		// from the client chain and Imuachain chain is greater than the total staking amount.
 		if pendingSlashAmount.IsPositive() {
 			ctx.Logger().Info("UpdateNSTBalance all staking funds has been slashed, the remaining amount is:", "stakerID", stakerID, "assetID", assetID, "pendingSlashAmount", pendingSlashAmount)
 		}

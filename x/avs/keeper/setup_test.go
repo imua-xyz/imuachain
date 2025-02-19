@@ -59,10 +59,10 @@ func (suite *AVSTestSuite) SetupTest() {
 	epochInfo, _ := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochID)
 	suite.EpochDuration = epochInfo.Duration + time.Nanosecond // extra buffer
 	suite.operatorAddresses = []string{
-		"exo1ve9s2u8c7u44la93pen79hwdd4zse2zku73cjp",
-		"exo1edwpx7243z5ls7qehmzwwsnnvtm8ms0dgr6ukq",
-		"exo1x28fd5v0mxjpevll60j5lf2jz4ksrpsdvck43r",
-		"exo1pkeqsekm0wsu4d5wqntf32t9l0sn35xquk65kz",
-		"exo1wsqzfdkmv5a4wu7788uw7zjaqfj6rcrm7q69dg",
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
 }

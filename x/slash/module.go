@@ -1,4 +1,4 @@
-package exoslash
+package imslash
 
 import (
 	"context"

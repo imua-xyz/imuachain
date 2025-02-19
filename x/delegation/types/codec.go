@@ -23,8 +23,8 @@ var (
 
 const (
 	// Amino names
-	delegateAssetToOperator     = "exocore/MsgDelegation"
-	UndelegateAssetFromOperator = "exocore/MsgUndelegation"
+	delegateAssetToOperator     = "imua/MsgDelegation"
+	UndelegateAssetFromOperator = "imua/MsgUndelegation"
 )
 
 // NOTE: This is required for the GetSignBytes function

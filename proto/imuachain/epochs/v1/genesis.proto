@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package imuachain.epochs.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/epochs/types";
+
+// EpochInfo defines an epoch and its metadata. An epoch is a period of time
+// that is used to define a time frame for a system.
+message EpochInfo {
+  // identifier is the unique identifier of the epoch, typically, the measure
+  // of time used to define the epoch.
+  string identifier = 1;
+  // start_time of the epoch. it may be in the future, in which case, the epoch
+  // is not yet active.
+  google.protobuf.Timestamp start_time = 2 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+  // duration is the time in between epoch i and epoch i+1. for an epoch to
+  // be meaningful, the duration should be more than the block time of the chain.
+  google.protobuf.Duration duration = 3 [
+    (gogoproto.stdduration) = true,
+    (gogoproto.nullable) = false,
+    (gogoproto.jsontag) = "duration,omitempty",
+    (gogoproto.moretags) = "yaml:\"duration\""
+  ];
+  // current_epoch is the number of the currently ongoing epoch, identified by the
+  // identifier. the first epoch starts during the first block whose block time
+  // is greater than or equal to the start_time of the epoch.
+  int64 current_epoch = 4;
+  // current_epoch_start_time is the start time of the current time interval, which
+  // is (current_epoch_start_time, current_epoch_start_time + duration]. when we say
+  // that the timer has "ticked", it means that the interval's components are increased
+  // by the duration. note, however, that only one tick can occur in any given block.
+  //
+  // the above constraint results in a deviation from the "ideal" tick time / the wall
+  // clock time. this is particularly obvious when a chain goes down.
+  // say, at t = 13, the interval is (10, 10 + 5 = 15].
+  // at t = 14, it is unchanged even in a new block, since 10 < t <= 15
+  // at t = 15, it is unchanged even in a new block, since 10 < t <= 15
+  // at t = 16, it increases to (15, 20]. but then assume that the chain goes down
+  // and comes back up at t = 35, producing 1 block each second after that as well.
+  // at t = 35, the interval increases by 1 tick to (15, 20] (at the block end).
+  // at t = 36, it increases to (20, 25].
+  // at t = 37, it increases to (25, 30].
+  // at t = 38, it increases to (30, 35].
+  // at t = 39, it increases to (35, 40].
+  // at t = 40, it is unchanged even in a new block, since 35 < t <= 40.
+  // at t = 41, it increases to (40, 45].
+  google.protobuf.Timestamp current_epoch_start_time = 5 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
+  // epoch_counting_started is true if the epoch counting has started for this identifier.
+  // it is independent of the epoch number or the time; it just indicates that at least
+  // one epoch for this identifier has started counting.
+  bool epoch_counting_started = 6;
+  // current_epoch_start_height is the block height at which the current epoch started,
+  // or the height at which the timer last "ticked".
+  int64 current_epoch_start_height = 7;
+}
+
+// GenesisState defines the state of the module.
+message GenesisState {
+  // epochs is the list of epochs that have been defined.
+  repeated EpochInfo epochs = 1 [(gogoproto.nullable) = false];
+}

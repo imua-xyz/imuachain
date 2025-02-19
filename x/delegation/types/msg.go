@@ -98,9 +98,9 @@ func validateDelegationInfo(assetID string, baseInfo *DelegationIncOrDecInfo) er
 			)
 		}
 	}
-	if assetID != assetstype.ExocoreAssetID {
+	if assetID != assetstype.ImuachainAssetID {
 		return ErrInvalidAssetID.Wrapf(
-			"only nativeToken is support, expected:%s,got:%s", assetstype.ExocoreAssetID, assetID,
+			"only nativeToken is support, expected:%s,got:%s", assetstype.ImuachainAssetID, assetID,
 		)
 	}
 	if _, err := sdk.AccAddressFromBech32(baseInfo.FromAddress); err != nil {

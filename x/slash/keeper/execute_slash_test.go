@@ -28,7 +28,7 @@ func (suite *SlashTestSuite) TestSlash() {
 
 		// test the case that the slash  hasn't registered
 		event.AssetsAddress = usdcAddress[:]
-		err = suite.App.ExoSlashKeeper.Slash(suite.Ctx, event)
+		err = suite.App.ImSlashKeeper.Slash(suite.Ctx, event)
 		suite.ErrorContains(err, slashtype.ErrSlashAssetNotExist.Error())
 
 		stakerID, assetID := types.GetStakeIDAndAssetID(depositEvent.ClientChainLzID, depositEvent.StakerAddress, depositEvent.AssetsAddress)
@@ -42,7 +42,7 @@ func (suite *SlashTestSuite) TestSlash() {
 
 		// test the normal case
 		event.AssetsAddress = usdtAddress[:]
-		err = suite.App.ExoSlashKeeper.Slash(suite.Ctx, event)
+		err = suite.App.ImSlashKeeper.Slash(suite.Ctx, event)
 		suite.NoError(err)
 
 		// check state after slash

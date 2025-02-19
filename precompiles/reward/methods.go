@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
-	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 	"github.com/imua-xyz/imuachain/x/assets/types"
 )
 
@@ -29,7 +29,7 @@ func (p Precompile) Reward(
 	// check the invalidation of caller contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
 	if err != nil || !authorized {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller)
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
 	rewardParam, err := p.GetRewardParamsFromInputs(ctx, args)

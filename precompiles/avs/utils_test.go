@@ -89,7 +89,7 @@ func (suite *AVSManagerPrecompileSuite) prepare() {
 	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	depositAmount := sdkmath.NewInt(100)
 	delegationAmount := sdkmath.NewInt(50)
-	suite.prepareOperator("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	suite.prepareOperator("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
 	suite.prepareDeposit(usdtAddress, depositAmount)
 	suite.prepareDelegation(true, usdtAddress, delegationAmount)
 }
@@ -97,8 +97,8 @@ func (suite *AVSManagerPrecompileSuite) prepare() {
 func (suite *AVSManagerPrecompileSuite) prepareAvs(assetIDs []string, task string) {
 	avsOwnerAddress := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
-		"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr",
-		"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2",
+		sdk.AccAddress(suite.Address.Bytes()).String(),
+		sdk.AccAddress(suite.Address.Bytes()).String(),
 	}
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		Action:          avstypes.RegisterAction,

@@ -82,7 +82,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	//    if it has, queue an update.
 	// 5. keep in mind the total vote power.
 	totalPower := math.ZeroInt()
-	prevList := k.GetAllExocoreValidators(ctx)
+	prevList := k.GetAllImuachainValidators(ctx)
 	// prevMap is a map of the previous validators, indexed by the consensus address
 	// and the value being the vote power.
 	prevMap := make(map[string]int64, len(prevList))

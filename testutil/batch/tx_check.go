@@ -265,15 +265,15 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 }
 
 func (m *Manager) FundingCheck() error {
-	err := CheckObjectsBalance(m, &Staker{}, m.config.StakerExoAmount)
+	err := CheckObjectsBalance(m, &Staker{}, m.config.StakerImuaAmount)
 	if err != nil {
 		return err
 	}
-	err = CheckObjectsBalance(m, &Operator{}, m.config.OperatorExoAmount)
+	err = CheckObjectsBalance(m, &Operator{}, m.config.OperatorImuaAmount)
 	if err != nil {
 		return err
 	}
-	err = CheckObjectsBalance(m, &AVS{}, m.config.AVSExoAmount)
+	err = CheckObjectsBalance(m, &AVS{}, m.config.AVSImuaAmount)
 	if err != nil {
 		return err
 	}

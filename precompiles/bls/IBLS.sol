@@ -8,7 +8,7 @@ IBLS constant BLS_CONTRACT = IBLS(
     BLS_PRECOMPILE_ADDRESS
 );
 
-/// @author Exocore Team
+/// @author Imuachain Team
 /// @title BLS Precompile Contract
 /// @dev The interface through which solidity contracts will interact with BLS
 /// @custom:address 0x0000000000000000000000000000000000000809

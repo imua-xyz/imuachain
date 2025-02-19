@@ -12,7 +12,7 @@ import (
 )
 
 func (suite *AVSTestSuite) TestOperator_pubkey() {
-	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	operatorAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 
 	privateKey, err := blst.RandKey()
 	fmt.Println("privateKey:", hex.EncodeToString(privateKey.Marshal()))
