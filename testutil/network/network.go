@@ -104,7 +104,7 @@ type Config struct {
 // testing requirements.
 func DefaultConfig() Config {
 	encCfg := encoding.MakeConfig(app.ModuleBasics)
-	chainID := fmt.Sprintf("imua_%d-1", tmrand.Int63n(9999999999999)+1)
+	chainID := fmt.Sprintf("imuachain_%d-1", tmrand.Int63n(9999999999999)+1)
 	return Config{
 		Codec:             encCfg.Codec,
 		TxConfig:          encCfg.TxConfig,
