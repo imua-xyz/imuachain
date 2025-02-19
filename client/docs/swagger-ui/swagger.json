@@ -21247,7 +21247,7 @@
     },
     "/exocore/avs/v1/avs_info": {
       "get": {
-        "summary": "Query avs info by avs address.",
+        "summary": "Query avs info by avs address",
         "operationId": "QueryAVSInfo",
         "responses": {
           "200": {
@@ -21423,7 +21423,7 @@
             "name": "avs_address",
             "description": "avs_address is the address of avs.",
             "in": "query",
-            "required": true,
+            "required": false,
             "type": "string"
           }
         ],
@@ -21434,7 +21434,7 @@
     },
     "/exocore/avs/v1/avs_task_info/{task_address}/{task_id}": {
       "get": {
-        "summary": "TaskInfo queries the task information.",
+        "summary": "Query the task info by task address and task id.",
         "operationId": "QueryAVSTaskInfo",
         "responses": {
           "200": {
@@ -21624,7 +21624,7 @@
     },
     "/exocore/avs/v1/challenge_info/{task_address}/{task_id}": {
       "get": {
-        "summary": "Query the challenge info by task address and task id.",
+        "summary": "Query the challenge info by task address and task id",
         "operationId": "QueryChallengeInfo",
         "responses": {
           "200": {
@@ -21697,7 +21697,7 @@
     },
     "/exocore/avs/v1/submit_task_result/{task_address}/{task_id}/{operator_address}": {
       "get": {
-        "summary": "Submit task result for the specified task and operator.",
+        "summary": "Submit task result for the specified task and operator",
         "operationId": "QuerySubmitTaskResult",
         "responses": {
           "200": {

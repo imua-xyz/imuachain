@@ -554,15 +554,15 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Parameters queries the parameters of the module.
+	// Query avs info by avs address
 	QueryAVSInfo(ctx context.Context, in *QueryAVSInfoReq, opts ...grpc.CallOption) (*QueryAVSInfoResponse, error)
-	// TaskInfo queries the task information.
+	// Query the task info by task address and task id.
 	QueryAVSTaskInfo(ctx context.Context, in *QueryAVSTaskInfoReq, opts ...grpc.CallOption) (*TaskInfo, error)
-	// QueryAVSAddressByChainID queries the avs address by chain id
+	// Query the avs address by chain id
 	QueryAVSAddressByChainID(ctx context.Context, in *QueryAVSAddressByChainIDReq, opts ...grpc.CallOption) (*QueryAVSAddressByChainIDResponse, error)
-	// Parameters queries the parameters of the module.
+	// Submit task result for the specified task and operator
 	QuerySubmitTaskResult(ctx context.Context, in *QuerySubmitTaskResultReq, opts ...grpc.CallOption) (*QuerySubmitTaskResultResponse, error)
-	// Parameters queries the parameters of the module.
+	// Query the challenge info by task address and task id
 	QueryChallengeInfo(ctx context.Context, in *QueryChallengeInfoReq, opts ...grpc.CallOption) (*QueryChallengeInfoResponse, error)
 }
 
@@ -621,15 +621,15 @@ func (c *queryClient) QueryChallengeInfo(ctx context.Context, in *QueryChallenge
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Parameters queries the parameters of the module.
+	// Query avs info by avs address
 	QueryAVSInfo(context.Context, *QueryAVSInfoReq) (*QueryAVSInfoResponse, error)
-	// TaskInfo queries the task information.
+	// Query the task info by task address and task id.
 	QueryAVSTaskInfo(context.Context, *QueryAVSTaskInfoReq) (*TaskInfo, error)
-	// QueryAVSAddressByChainID queries the avs address by chain id
+	// Query the avs address by chain id
 	QueryAVSAddressByChainID(context.Context, *QueryAVSAddressByChainIDReq) (*QueryAVSAddressByChainIDResponse, error)
-	// Parameters queries the parameters of the module.
+	// Submit task result for the specified task and operator
 	QuerySubmitTaskResult(context.Context, *QuerySubmitTaskResultReq) (*QuerySubmitTaskResultResponse, error)
-	// Parameters queries the parameters of the module.
+	// Query the challenge info by task address and task id
 	QueryChallengeInfo(context.Context, *QueryChallengeInfoReq) (*QueryChallengeInfoResponse, error)
 }
 

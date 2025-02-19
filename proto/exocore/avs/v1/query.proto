@@ -72,23 +72,23 @@ message QueryChallengeInfoResponse {
 
 // Query defines the gRPC querier service.
 service Query {
-  // Parameters queries the parameters of the module.
+  // Query avs info by avs address
   rpc QueryAVSInfo(QueryAVSInfoReq) returns (QueryAVSInfoResponse) {
     option (google.api.http).get = "/exocore/avs/v1/avs_info";
   }
-  // TaskInfo queries the task information.
+  // Query the task info by task address and task id.
   rpc QueryAVSTaskInfo(QueryAVSTaskInfoReq) returns (TaskInfo) {
     option (google.api.http).get = "/exocore/avs/v1/avs_task_info/{task_address}/{task_id}";
   }
-  // QueryAVSAddressByChainID queries the avs address by chain id
+  // Query the avs address by chain id
   rpc QueryAVSAddressByChainID(QueryAVSAddressByChainIDReq) returns (QueryAVSAddressByChainIDResponse) {
     option (google.api.http).get = "/exocore/avs/v1/avs_address/{chain}";
   }
-  // Parameters queries the parameters of the module.
+  // Submit task result for the specified task and operator
   rpc QuerySubmitTaskResult(QuerySubmitTaskResultReq) returns (QuerySubmitTaskResultResponse) {
     option (google.api.http).get = "/exocore/avs/v1/submit_task_result/{task_address}/{task_id}/{operator_address}";
   }
-  // Parameters queries the parameters of the module.
+  // Query the challenge info by task address and task id
   rpc QueryChallengeInfo(QueryChallengeInfoReq) returns (QueryChallengeInfoResponse) {
     option (google.api.http).get = "/exocore/avs/v1/challenge_info/{task_address}/{task_id}";
   }
