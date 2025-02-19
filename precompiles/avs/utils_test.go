@@ -97,8 +97,8 @@ func (suite *AVSManagerPrecompileSuite) prepare() {
 func (suite *AVSManagerPrecompileSuite) prepareAvs(assetIDs []string, task string) {
 	avsOwnerAddress := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
-		sdk.AccAddress(suite.Address.Bytes()).String(),
-		sdk.AccAddress(suite.Address.Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		Action:          avstypes.RegisterAction,

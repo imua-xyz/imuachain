@@ -24,7 +24,7 @@ Thank you for considering making contributions to Imuachain and related reposito
 Imuachain uses [Tendermint’s coding repo](https://github.com/tendermint/coding)
 for overall information on repository workflow and standards.
 
-Contributing to this repo can mean many things such as participating in discussion or proposing code changes.
+Contributing to this repo can mean many things, such as participating in discussion or proposing code changes.
 To ensure a smooth workflow for all contributors,
 the following general procedure for contributing has been established:
 
@@ -43,10 +43,10 @@ the following general procedure for contributing has been established:
        However, if you are eager and do not get a prompt response, feel free to dive on in!
     4. Follow standard Github best practices:
         1. Fork the repo
-        2. Branch from the HEAD of `development`(For core developers working within the Imuachain repo, to ensure a
+        2. Branch from the HEAD of `develop` (For core developers working within the Imuachain repo, to ensure a
            clear ownership of branches, branches must be named with the convention `{moniker}/{issue#}-branch-name`).
         3. Make commits
-        4. Submit a PR to `development`
+        4. Submit a PR to `develop`
     5. Be sure to submit the PR in `Draft` mode.
        Submit your PR early, even if it's incomplete as this indicates to the community you're working on something
        and allows them to provide comments early in the development process.
@@ -81,7 +81,7 @@ refer to [Tendermint ADRs](https://github.com/tendermint/tendermint/tree/master/
 Please note that Go requires code to live under absolute paths, which complicates forking.
 While my fork lives at `https://github.com/imua-xyz/imuachain`,
 the code should never exist at `$GOPATH/src/github.com/imua-xyz/imuachain`.
-Instead, we use `git remote` to add the fork as a new remote for the original repo,`$GOPATH/src/github.com/imua-xyz/imuachain`,
+Instead, we use `git remote` to add the fork as a new remote for the original repo, `$GOPATH/src/github.com/imua-xyz/imuachain`,
 and do all the work there.
 
 For instance, to create a fork and work on a branch of it, you would:
@@ -124,7 +124,7 @@ should become this after rebase:
 More about rebase [here](https://git-scm.com/docs/git-rebase) and
 [here](https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase#:~:text=What%20is%20git%20rebase%3F,of%20a%20feature%20branching%20workflow.)
 
-Please **NO DOT** make Pull Requests from `development`.
+Please **NO DOT** make Pull Requests from `develop`.
 
 ## Dependencies
 
@@ -171,13 +171,13 @@ For example, in vscode your `.vscode/settings.json` should look like:
 
 ## Development Procedure
 
-1. The latest state of development is on `development`.
-2. `development` must never
+1. The latest state of development is on `develop`.
+2. `develop` must never
    fail `make lint, make test, make test-race, make test-rpc, make test-import`
-3. No `--force` onto `development` (except when reverting a broken commit, which should seldom happen).
-4. Create your feature branch from `development` either on `github.com/imua-xyz/imuachain`, or your fork (
+3. No `--force` onto `develop` (except when reverting a broken commit, which should seldom happen).
+4. Create your feature branch from `develop` either on `github.com/imua-xyz/imuachain`, or your fork (
    using `git remote add origin`).
-5. Before submitting a pull request, begin `git rebase` on top of `development`.
+5. Before submitting a pull request, begin `git rebase` on top of `develop`.
 
 ## Testing
 
@@ -208,9 +208,9 @@ For example, a new change to the `bank` module might have the following message:
 
 ### PR Targeting
 
-Ensure that you base and target your PR on the `development` branch.
+Ensure that you base and target your PR on the `develop` branch.
 
-All feature additions should be targeted against `development`.
+All feature additions should be targeted against `develop`.
 Bug fixes for an outstanding release candidate should be
 targeted against the release candidate branch.
 
@@ -240,13 +240,13 @@ All PRs require two Reviews before merge. When reviewing PRs, please use the fol
 
 ### Pull Merge Procedure
 
-1. Ensure pull branch is rebased on `development`.
+1. Ensure pull branch is rebased on `develop`.
 2. Run `make test` to ensure that all tests pass.
 3. Squash merge pull request.
 
 ### Release Procedure
 
-1. Start on `development`.
+1. Start on `develop`.
 2. Create the release candidate branch `rc/v*` (going forward known as `RC`)
    and ensure it's protected against pushing from anyone except the release manager/coordinator.
    No PRs targeting this branch should be merged unless exceptional circumstances arise.
@@ -255,10 +255,10 @@ All PRs require two Reviews before merge. When reviewing PRs, please use the fol
    Copy the entries into a `RELEASE_CHANGELOG.md`.
    This is needed so the bot knows which entries to add to the release page on GitHub.
 4. Kick off a large round of simulation testing (e.g. 400 seeds for 2k blocks).
-5. If errors are found during the simulation testing, commit the fixes to `development` and create a new `RC` branch (
+5. If errors are found during the simulation testing, commit the fixes to `develop` and create a new `RC` branch (
    making sure to increment the `rcN`).
 6. After simulation has successfully completed, create the release branch (`release/vX.XX.X`) from the `RC` branch.
-7. Create a PR to `development` to incorporate the `CHANGELOG.md` updates.
+7. Create a PR to `develop` to incorporate the `CHANGELOG.md` updates.
 8. Tag the release (use `git tag -a`) and create a release in Github.
 9. Delete the `RC` branches.
 

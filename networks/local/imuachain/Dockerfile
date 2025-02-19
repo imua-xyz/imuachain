@@ -4,7 +4,7 @@ RUN apk add --no-cache build-base~=0.5 git~=2.43 linux-headers~=6.5
 WORKDIR /go/work
 # Add source files
 COPY . ./
-# build imua
+# build imuachain
 #COPY ./imuad /go/work/build
 RUN LEDGER_ENABLED=false make build
 

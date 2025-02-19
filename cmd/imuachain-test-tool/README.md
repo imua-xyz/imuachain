@@ -4,8 +4,8 @@ This is a custom tool designed to batch-send test transactions to the Imuchain n
 or routine automated testing of the Imuchain network.
 
 Currently, all test transactions are executed by directly calling precompiles and are signed using automatically
-generated private keys. Therefore, a customized Imuachain node is required for use, with the node configured to disable
-the precompile's gateway contract address check. The branch of customized Imuachain is as below:
+generated private keys. Therefore, a customized Imuachain node, which disables the caller address check on precompiles,
+is required for use. The branch of customized Imuachain is as below:
 https://github.com/imua-xyz/imuachain/tree/pressure-test
 
 When using the test tool to batch-send test transactions, you can dynamically adjust the number of test objects and the
@@ -56,7 +56,7 @@ The specific processes for the two types of testing are as follows:
 A local node needs to be started through `local_node.sh` before testing.
 
 1. automated testing:
-    Step 1: Initialize the configuration file in current directory
+    Step 1: Initialize the configuration file in the current directory
 
     ```shell
     imuachain-test-tool init --home
@@ -70,13 +70,13 @@ A local node needs to be started through `local_node.sh` before testing.
 
 2. manual testing:
 
-    Step 1: Initialize the configuration file in current directory
+    Step 1: Initialize the configuration file in the current directory
 
     ```shell
     imuachain-test-tool init --home
     ```
 
-    Step 2: Prepare test environment
+    Step 2: Prepare the test environment
 
     ```shell
      imuachain-test-tool prepare --home .
