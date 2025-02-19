@@ -18,7 +18,7 @@ ifdef GITHUB_TOKEN
 	endif
 endif
 NAMESPACE := imua-xyz
-PROJECT := imua
+PROJECT := imuachain
 DOCKER_IMAGE := $(shell echo $(NAMESPACE)/$(PROJECT) | tr '[:upper:]' '[:lower:]')
 COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
 DOCKER_TAG := $(COMMIT_HASH)
@@ -500,7 +500,6 @@ localnet-build:
 	$(MAKE) -C networks
 
 # Generate multi node configuration files and initialize configurations
-# TODO: imua testnet chainid is still under consideration and need to be finalized later
 localnet-init: localnet-stop
 	imuad testnet init-files --chain-id imualocalnet_232-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
 	./networks/init-node.sh

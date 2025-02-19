@@ -1,4 +1,4 @@
-# This is the published docker image for imua.
+# This is the published docker image for imuachain.
 
 FROM golang:1.21.12-alpine3.19 AS build-env
 

@@ -1,6 +1,6 @@
 # Imuachain Contributor Guidelines
 
-- [Imuachain Contributor Guidelines](#imua-contributor-guidelines)
+- [Imuachain Contributor Guidelines](#imuachain-contributor-guidelines)
     - [General Procedure](#general-procedure)
     - [Architecture Decision Records (ADR)](#architecture-decision-records-adr)
     - [Forking](#forking)

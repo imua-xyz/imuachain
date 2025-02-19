@@ -25,7 +25,7 @@ jobs:
     if: (github.actor != 'dependabot[bot]')
     steps:
       - name: Permission issue fix
-        # semgrep for some reason sets the working directory to imua/imua
+        # semgrep for some reason sets the working directory to imuachain/imuachain
         run: git config --global --add safe.directory /__w/imuachain/imuachain
       - uses: actions/checkout@v4
       - name: Get Diff
