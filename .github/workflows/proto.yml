@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  proto-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
           make proto-gen
         if: env.GIT_DIFF
 
-  lint:
+  proto-lint:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -45,7 +45,7 @@ jobs:
         with:
           input: "proto"
 
-  break-check:
+  proto-break-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

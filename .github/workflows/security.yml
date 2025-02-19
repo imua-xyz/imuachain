@@ -13,7 +13,7 @@ permissions:
   security-events: write
 
 jobs:
-  Gosec:
+  cosmos-gosec-security-scan:
     permissions:
       contents: read
       security-events: write
