@@ -99,14 +99,14 @@ func DeployContract(
 // with the provided factoryAddress
 func DeployContractWithFactory(
 	ctx sdk.Context,
-	ImuachainApp *app.ImuachainApp,
+	imuachainApp *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	factoryAddress common.Address,
 ) (common.Address, abci.ResponseDeliverTx, error) {
-	chainID := ImuachainApp.EvmKeeper.ChainID()
+	chainID := imuachainApp.EvmKeeper.ChainID()
 	from := common.BytesToAddress(priv.PubKey().Address().Bytes())
-	factoryNonce := ImuachainApp.EvmKeeper.GetNonce(ctx, factoryAddress)
-	nonce := ImuachainApp.EvmKeeper.GetNonce(ctx, from)
+	factoryNonce := imuachainApp.EvmKeeper.GetNonce(ctx, factoryAddress)
+	nonce := imuachainApp.EvmKeeper.GetNonce(ctx, from)
 
 	msgEthereumTx := evm.NewTx(&evm.EvmTxArgs{
 		ChainID:  chainID,
@@ -117,12 +117,12 @@ func DeployContractWithFactory(
 	})
 	msgEthereumTx.From = from.String()
 
-	res, err := DeliverEthTx(ImuachainApp, priv, msgEthereumTx)
+	res, err := DeliverEthTx(imuachainApp, priv, msgEthereumTx)
 	if err != nil {
 		return common.Address{}, abci.ResponseDeliverTx{}, err
 	}
 
-	if _, err := CheckEthTxResponse(res, ImuachainApp.AppCodec()); err != nil {
+	if _, err := CheckEthTxResponse(res, imuachainApp.AppCodec()); err != nil {
 		return common.Address{}, abci.ResponseDeliverTx{}, err
 	}
 
