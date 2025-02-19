@@ -1,4 +1,4 @@
-# imua
+# imuachain
 
 Imuachain is an omnichain restaking protocol that combines the crypto-economic security from multiple blockchain networks
 and tokens, and extends it to any off-chain system. The protocol is designed with a modular architecture, incorporating

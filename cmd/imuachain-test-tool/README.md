@@ -1,7 +1,7 @@
 # imuachain-test-tool
 
-This is a custom tool designed to batch-send test transactions to the Imuachain chain. It can be used for stress testing
-or routine automated testing of the Imuachain chain.
+This is a custom tool designed to batch-send test transactions to the Imuchain network. It can be used for stress testing
+or routine automated testing of the Imuchain network.
 
 Currently, all test transactions are executed by directly calling precompiles and are signed using automatically
 generated private keys. Therefore, a customized Imuachain node is required for use, with the node configured to disable
@@ -10,7 +10,7 @@ https://github.com/imua-xyz/imuachain/tree/pressure-test
 
 When using the test tool to batch-send test transactions, you can dynamically adjust the number of test objects and the
 transaction sending rate in the configuration file to control the test volume. This allows for routine automated testing
-and stress testing of the Imuachain chain.
+and stress testing of the Imuchain network.
 
 ## functionalities
 
@@ -20,8 +20,8 @@ The current implementation primarily provides the following functionalities:
    the configuration file, and saves them to the local SQLite database.
 2. Transfers a specified amount of IMUA tokens to the created test objects, the amount has been defined in the
    configuration file, which will be used to sign subsequent test transactions.
-3. Registers the created test objects onto the Imuachain chain.
-4. Saves the existing assets and AVS (dogfood) information on the Imuachain chain to the local SQLite database.
+3. Registers the created test objects onto the Imuchain network.
+4. Saves the existing assets and AVS (dogfood) information on the Imuchain network to the local SQLite database.
 5. Adds the newly created test assets to the asset list supported by the dogfood AVS.
 6. Opts in the newly created test operators into all test-created AVS and the dogfood AVS.
 7. Uses the private keys of all created stakers to batch-send deposit test transactions. Each asset initiates a test
