@@ -24,8 +24,8 @@ STOPSIGNAL SIGTERM
 VOLUME /imua
 WORKDIR /imua
 
-COPY ./networks/local/imua/wrapper.sh /usr/bin/wrapper.sh
-COPY --from=build /go/work/build/imuad /imua
+COPY ./networks/local/imuachain/wrapper.sh /usr/bin/wrapper.sh
+COPY --from=build /go/work/build/imuad /imuachain
 
 HEALTHCHECK --interval=30s --timeout=30s --retries=3 CMD curl -f http://localhost:26657/health || exit 1
 
