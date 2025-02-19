@@ -5,9 +5,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
 // NewGenesis returns a new genesis state with the given inputs.

@@ -3,8 +3,8 @@ package aggregator
 import (
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type confirmedPrice struct {

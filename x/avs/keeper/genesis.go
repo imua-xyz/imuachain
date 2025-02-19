@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

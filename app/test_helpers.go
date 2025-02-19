@@ -24,9 +24,9 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/mock"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -35,13 +35,13 @@ import (
 	evmostypes "github.com/evmos/evmos/v16/types"
 	feemarkettypes "github.com/evmos/evmos/v16/x/feemarket/types"
 
-	"github.com/ExocoreNetwork/exocore/cmd/config"
-	"github.com/ExocoreNetwork/exocore/utils"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/cmd/config"
+	"github.com/imua-xyz/imuachain/utils"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func init() {

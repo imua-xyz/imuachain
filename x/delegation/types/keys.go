@@ -3,11 +3,11 @@ package types
 import (
 	"strings"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // constants

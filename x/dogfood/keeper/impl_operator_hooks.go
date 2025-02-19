@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // OperatorHooksWrapper is the wrapper structure that implements the operator hooks for the

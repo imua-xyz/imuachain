@@ -13,10 +13,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -24,6 +20,10 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/imua-xyz/imuachain/x/oracle/client/cli"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/cache"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var (

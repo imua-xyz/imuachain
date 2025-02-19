@@ -3,7 +3,7 @@ package aggregator
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

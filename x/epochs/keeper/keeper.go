@@ -8,7 +8,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 type (

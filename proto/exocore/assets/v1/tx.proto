@@ -8,7 +8,7 @@ import "exocore/assets/v1/params.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/assets/types";
+option go_package = "github.com/imua-xyz/imuachain/x/assets/types";
 
 // ValueField is a field that holds a value of sdk.Int type.
 message ValueField {

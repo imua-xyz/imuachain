@@ -4,11 +4,11 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/aggregator"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/aggregator"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/cache"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var updatedFeederIDs []string

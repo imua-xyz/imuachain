@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/ExocoreNetwork/exocore/utils"
 	evmtype "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
 // ExocoreAvailableEVMExtensions defines the default active precompiles

@@ -3,10 +3,10 @@ package tx
 import (
 	"fmt"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"

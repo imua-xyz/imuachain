@@ -7,10 +7,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/ExocoreNetwork/exocore/x/delegation/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 func (k Keeper) AllUndelegations(ctx sdk.Context) (undelegations []types.UndelegationRecord, err error) {

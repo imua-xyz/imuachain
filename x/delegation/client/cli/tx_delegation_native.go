@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/ExocoreNetwork/exocore/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 func CmdDelegate() *cobra.Command {

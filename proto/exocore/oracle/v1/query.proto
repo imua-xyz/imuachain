@@ -15,79 +15,79 @@ import "exocore/oracle/v1/validator_update_block.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
 // Query defines the gRPC querier service.
 service Query {
   // stakerList shows all stakers related to the specified asset under native-restaking context
   rpc StakerList (QueryStakerListRequest) returns (QueryStakerListResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/staker_list";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/staker_list";
   }
 
   // StakerInfos shows the details for all stakers of the specified assets under native-restaking context
   rpc StakerInfos (QueryStakerInfosRequest) returns (QueryStakerInfosResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/staker_infos/{asset_id}";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/staker_infos/{asset_id}";
   }
 
   // StakerInfo shows the details for one staker required by input parsms of the specified asset
   rpc StakerInfo (QueryStakerInfoRequest) returns (QueryStakerInfoResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/staker_info/{asset_id}/{staker_addr}";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/staker_info/{asset_id}/{staker_addr}";
   }
 
   
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/params";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/params";
   }
 
   // Queries a list of Prices items.
   rpc Prices(QueryGetPricesRequest) returns (QueryGetPricesResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/prices/{token_id}";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/prices/{token_id}";
   }
 
   // Queries the latest price of a specific token
   rpc LatestPrice(QueryGetLatestPriceRequest) returns (QueryGetLatestPriceResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/latest_price/{token_id}";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/latest_price/{token_id}";
   }
 
   //  rpc PricesAll (QueryAllPricesRequest) returns (QueryAllPricesResponse) {
-  //    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/prices";
+  //    option (google.api.http).get = "/imua-xyz/imuachain/oracle/prices";
   //
   //  }
 
   // Queries a ValidatorUpdateBlock by index.
   rpc ValidatorUpdateBlock(QueryGetValidatorUpdateBlockRequest) returns (QueryGetValidatorUpdateBlockResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/validator_update_block";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/validator_update_block";
   }
 
   // Queries a IndexRecentParams by index.
   rpc IndexRecentParams(QueryGetIndexRecentParamsRequest) returns (QueryGetIndexRecentParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/index_recent_params";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/index_recent_params";
   }
 
   // Queries a IndexRecentMsg by index.
   rpc IndexRecentMsg(QueryGetIndexRecentMsgRequest) returns (QueryGetIndexRecentMsgResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/index_recent_msg";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/index_recent_msg";
   }
 
   // Queries a list of RecentMsg items.
   rpc RecentMsg(QueryGetRecentMsgRequest) returns (QueryGetRecentMsgResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/recent_msg/{block}";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/recent_msg/{block}";
   }
 
   // RecentMsgAll all RecentMsg items.
   rpc RecentMsgAll(QueryAllRecentMsgRequest) returns (QueryAllRecentMsgResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/recent_msg";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/recent_msg";
   }
 
   // Queries a list of RecentParams items.
   rpc RecentParams(QueryGetRecentParamsRequest) returns (QueryGetRecentParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/recent_params/{block}";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/recent_params/{block}";
   }
 
   // RecentParamsAll query all RecentParams.
   rpc RecentParamsAll(QueryAllRecentParamsRequest) returns (QueryAllRecentParamsResponse) {
-    option (google.api.http).get = "/ExocoreNetwork/exocore/oracle/recent_params";
+    option (google.api.http).get = "/imua-xyz/imuachain/oracle/recent_params";
   }
 }
 

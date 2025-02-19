@@ -39,17 +39,17 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	app "github.com/ExocoreNetwork/exocore/app"
-	evmosclient "github.com/ExocoreNetwork/exocore/client"
-	"github.com/ExocoreNetwork/exocore/client/debug"
 	"github.com/evmos/evmos/v16/encoding"
 	"github.com/evmos/evmos/v16/ethereum/eip712"
 	evmosserver "github.com/evmos/evmos/v16/server"
 	servercfg "github.com/evmos/evmos/v16/server/config"
 	srvflags "github.com/evmos/evmos/v16/server/flags"
+	app "github.com/imua-xyz/imuachain/app"
+	evmosclient "github.com/imua-xyz/imuachain/client"
+	"github.com/imua-xyz/imuachain/client/debug"
 
-	cmdcfg "github.com/ExocoreNetwork/exocore/cmd/config"
 	evmoskr "github.com/evmos/evmos/v16/crypto/keyring"
+	cmdcfg "github.com/imua-xyz/imuachain/cmd/config"
 )
 
 const (

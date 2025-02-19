@@ -5,16 +5,16 @@ import (
 	"math/big"
 	"time"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 
 	sdkmath "cosmossdk.io/math"
 
-	avsManagerPrecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/ethereum/go-ethereum/common"
+	avsManagerPrecompile "github.com/imua-xyz/imuachain/precompiles/avs"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 
 	"github.com/ethereum/go-ethereum/core/vm"
 )

@@ -9,7 +9,7 @@ BINDIR ?= $(GOPATH)/bin
 EXOCORE_BINARY = exocored
 EXOCORE_DIR = exocore
 BUILDDIR ?= $(CURDIR)/build
-HTTPS_GIT := https://github.com/ExocoreNetwork/exocore
+HTTPS_GIT := https://github.com/imua-xyz/imuachain
 DOCKER := $(shell which docker)
 DOCKER_BUILDKIT=1
 DOCKER_ARGS=
@@ -286,7 +286,7 @@ swagger-update-docs: statik
 .PHONY: swagger-update-docs
 
 godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/ExocoreNetwork/exocore"
+	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/imua-xyz/imuachain"
 	godoc -http=:6060
 
 ###############################################################################
@@ -524,7 +524,7 @@ localnet-show-logstream:
 ###                                Releasing                                ###
 ###############################################################################
 
-PACKAGE_NAME:=github.com/ExocoreNetwork/exocore
+PACKAGE_NAME:=github.com/imua-xyz/imuachain
 # There is no `goreleaser-cross` package for 1.21.12, so we use the next
 # available version of v1.22 with goreleaser version 2.0.0
 GOLANG_CROSS_VERSION  = v1.22-v2.0.0

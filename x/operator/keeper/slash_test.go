@@ -4,12 +4,12 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/operator/keeper"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {

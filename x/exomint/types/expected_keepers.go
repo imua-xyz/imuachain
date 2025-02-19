@@ -1,8 +1,8 @@
 package types
 
 import (
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 // AccountKeeper defines the expected interface for the account keeper.

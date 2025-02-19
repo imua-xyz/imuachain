@@ -2,13 +2,13 @@ package types
 
 import (
 	"cosmossdk.io/math"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // EpochsKeeper represents the expected keeper interface for the epochs module.

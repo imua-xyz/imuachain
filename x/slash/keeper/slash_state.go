@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 )
 
 func (k Keeper) SetFrozenStatus(ctx sdk.Context, operatorAddr string, status bool) (err error) {

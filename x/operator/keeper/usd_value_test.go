@@ -4,10 +4,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
 	"github.com/ethereum/go-ethereum/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 )
 
 const (

@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

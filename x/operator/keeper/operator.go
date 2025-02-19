@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // SetOperatorInfo is used to store the operator's information on the chain.

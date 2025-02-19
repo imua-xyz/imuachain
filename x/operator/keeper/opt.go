@@ -4,9 +4,9 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type AssetPriceAndDecimal struct {

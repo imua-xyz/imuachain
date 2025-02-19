@@ -2,8 +2,8 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type OracleKeeper interface {

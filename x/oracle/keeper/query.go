@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var _ types.QueryServer = Keeper{}

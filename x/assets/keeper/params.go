@@ -5,10 +5,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (k Keeper) SetParams(ctx sdk.Context, params *assetstypes.Params) error {

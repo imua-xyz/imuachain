@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func CmdQueryParams() *cobra.Command {

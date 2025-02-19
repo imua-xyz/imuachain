@@ -4,11 +4,11 @@ import (
 	"sort"
 
 	"cosmossdk.io/math"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (k Keeper) BeginBlock(ctx sdk.Context) {

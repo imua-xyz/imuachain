@@ -16,9 +16,9 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/testutil/tx"
 	evm "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/testutil/tx"
 )
 
 // ContractArgs are the params used for calling a smart contract.

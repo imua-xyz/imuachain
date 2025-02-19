@@ -4,10 +4,10 @@ import (
 	"errors"
 
 	sdkmath "cosmossdk.io/math"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // UpdateVotingPower update the voting power of the specified AVS and its operators at

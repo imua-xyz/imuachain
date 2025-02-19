@@ -3,7 +3,7 @@ package keeper
 import (
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
+	"github.com/imua-xyz/imuachain/precompiles/delegation"
 	"golang.org/x/exp/slices"
 
 	tmtypes "github.com/cometbft/cometbft/types"

@@ -10,12 +10,12 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 )
 

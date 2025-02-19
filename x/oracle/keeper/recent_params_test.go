@@ -4,11 +4,11 @@ import (
 	"strconv"
 	"testing"
 
-	keepertest "github.com/ExocoreNetwork/exocore/testutil/keeper"
-	"github.com/ExocoreNetwork/exocore/testutil/nullify"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
+	"github.com/imua-xyz/imuachain/testutil/nullify"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 

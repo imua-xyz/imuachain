@@ -4,16 +4,16 @@ import (
 	"math/big"
 
 	sdkmath "cosmossdk.io/math"
-	assetsprecompile "github.com/ExocoreNetwork/exocore/precompiles/assets"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
+	assetsprecompile "github.com/imua-xyz/imuachain/precompiles/assets"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (s *AssetsPrecompileSuite) TestIsTransaction() {
@@ -226,7 +226,7 @@ func (s *AssetsPrecompileSuite) TestRunDepositLST() {
 						s.Require().ErrorContains(err, tc.errContains)*/
 				// for failed cases we expect it returns bool value instead of error
 				// this is a workaround because the error returned by precompile can not be caught in EVM
-				// see https://github.com/ExocoreNetwork/exocore/issues/70
+				// see https://github.com/imua-xyz/imuachain/issues/70
 				// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 				result, err := s.precompile.ABI.Unpack(assetsprecompile.MethodDepositLST, bz)
 				s.Require().NoError(err)

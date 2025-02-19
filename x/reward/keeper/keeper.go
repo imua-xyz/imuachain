@@ -10,10 +10,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 
-	"github.com/ExocoreNetwork/exocore/utils/key"
-	assetsKeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	avsKeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	"github.com/ExocoreNetwork/exocore/x/reward/types"
+	"github.com/imua-xyz/imuachain/utils/key"
+	assetsKeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	avsKeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
+	"github.com/imua-xyz/imuachain/x/reward/types"
 )
 
 var (

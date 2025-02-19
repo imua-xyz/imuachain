@@ -3,9 +3,9 @@ package assets_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

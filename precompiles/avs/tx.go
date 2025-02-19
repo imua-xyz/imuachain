@@ -7,14 +7,14 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	avskeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 const (

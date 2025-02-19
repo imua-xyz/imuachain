@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // SetRecentMsg set a specific recentMsg in the store from its index

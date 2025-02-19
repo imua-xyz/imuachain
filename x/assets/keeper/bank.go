@@ -5,8 +5,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 type DepositWithdrawParams struct {

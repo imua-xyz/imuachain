@@ -7,7 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 func TestMsgUpdateParams(t *testing.T) {

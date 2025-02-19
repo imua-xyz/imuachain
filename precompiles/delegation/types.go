@@ -6,11 +6,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	"github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interface{}) (*delegationtypes.DelegationOrUndelegationParams, error) {

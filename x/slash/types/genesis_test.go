@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 	"github.com/stretchr/testify/require"
 )
 

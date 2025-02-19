@@ -10,7 +10,7 @@ import (
 	// "github.com/cosmos/cosmos-sdk/client/flags"
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ExocoreNetwork/exocore/x/reward/types"
+	"github.com/imua-xyz/imuachain/x/reward/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

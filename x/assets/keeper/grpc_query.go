@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"

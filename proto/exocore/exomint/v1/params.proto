@@ -4,7 +4,7 @@ package exocore.exomint.v1;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/exomint/types";
+option go_package = "github.com/imua-xyz/imuachain/x/exomint/types";
 
 // Params defines the parameters for the module.
 message Params {

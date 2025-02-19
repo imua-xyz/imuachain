@@ -3,9 +3,9 @@ package types_test
 import (
 	"testing"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/evmos/evmos/v16/types"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/stretchr/testify/require"
 )
 

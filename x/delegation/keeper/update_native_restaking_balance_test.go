@@ -2,8 +2,8 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	assettypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assettypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (suite *DelegationTestSuite) TestUpdateNSTBalance() {

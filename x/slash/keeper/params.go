@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 )
 
 // SetParams The function related to module parameter should be deleted

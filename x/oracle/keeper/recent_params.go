@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // SetRecentParams set a specific recentParams in the store from its index

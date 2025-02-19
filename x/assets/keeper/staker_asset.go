@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

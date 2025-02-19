@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ExocoreNetwork/exocore/utils/key"
+	"github.com/imua-xyz/imuachain/utils/key"
 )
 
 //go:generate moq -pkg mock -out ./mock/store.go . ValidatedProtoMarshaler

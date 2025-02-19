@@ -3,9 +3,9 @@ package cache
 import (
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var zeroBig = big.NewInt(0)

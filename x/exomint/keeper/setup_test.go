@@ -3,11 +3,11 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/ExocoreNetwork/exocore/x/exomint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/imua-xyz/imuachain/x/exomint/types"
 )
 
 var s *KeeperTestSuite

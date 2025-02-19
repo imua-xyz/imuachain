@@ -4,8 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	tmdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -15,9 +13,11 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	"github.com/stretchr/testify/require"
 )
 

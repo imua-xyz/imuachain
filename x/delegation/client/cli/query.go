@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

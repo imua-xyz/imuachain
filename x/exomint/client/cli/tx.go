@@ -1,7 +1,7 @@
 package cli
 
 import (
-	types "github.com/ExocoreNetwork/exocore/x/exomint/types"
+	types "github.com/imua-xyz/imuachain/x/exomint/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

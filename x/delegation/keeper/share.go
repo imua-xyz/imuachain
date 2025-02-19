@@ -3,9 +3,9 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // TokensFromShares calculate the token amount of provided shares, then truncated to Int

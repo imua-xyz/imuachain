@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/client/keys"
 	"github.com/cometbft/cometbft/libs/cli"
 	"github.com/cometbft/cometbft/privval"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -16,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethcrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/client/keys"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 

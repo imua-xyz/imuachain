@@ -3,10 +3,10 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // NewGenesis creates a new genesis state with the provided parameters and

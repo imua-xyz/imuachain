@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 const layout = "2006-01-02 15:04:05"

@@ -3,8 +3,8 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // GetEpochsUntilUnbonded returns the number of epochs after which an unbonding that is made

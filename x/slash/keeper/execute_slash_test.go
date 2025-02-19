@@ -2,11 +2,11 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/slash/keeper"
-	slashtype "github.com/ExocoreNetwork/exocore/x/slash/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	"github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/slash/keeper"
+	slashtype "github.com/imua-xyz/imuachain/x/slash/types"
 )
 
 func (suite *SlashTestSuite) TestSlash() {

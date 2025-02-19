@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	sdkmath "cosmossdk.io/math"
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // oracleInfo: '[tokenName],[chainName],[tokenDecimal](,[interval],[contract](,[ChainDesc:{...}],[TokenDesc:{...}]))'

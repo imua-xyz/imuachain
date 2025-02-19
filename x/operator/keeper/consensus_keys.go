@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -13,8 +13,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )

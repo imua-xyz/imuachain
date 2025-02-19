@@ -1,6 +1,6 @@
 package aggregator
 
-import "github.com/ExocoreNetwork/exocore/x/oracle/types"
+import "github.com/imua-xyz/imuachain/x/oracle/types"
 
 func newPTD(detID, price string) *types.PriceTimeDetID {
 	return &types.PriceTimeDetID{

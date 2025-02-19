@@ -48,14 +48,14 @@ import (
 	evmostypes "github.com/evmos/evmos/v16/types"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 
-	cmdcfg "github.com/ExocoreNetwork/exocore/cmd/config"
 	evmoskr "github.com/evmos/evmos/v16/crypto/keyring"
 	"github.com/evmos/evmos/v16/testutil/network"
+	cmdcfg "github.com/imua-xyz/imuachain/cmd/config"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 var (

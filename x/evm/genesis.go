@@ -10,9 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/ExocoreNetwork/exocore/x/evm/keeper"
 	evmostypes "github.com/evmos/evmos/v16/types"
 	"github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/x/evm/keeper"
 )
 
 // InitGenesis initializes genesis state based on exported genesis

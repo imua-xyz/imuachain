@@ -30,7 +30,6 @@ import (
 
 	"cosmossdk.io/simapp"
 	"cosmossdk.io/simapp/params"
-	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -51,6 +50,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/evmos/evmos/v16/crypto/hd"
+	"github.com/imua-xyz/imuachain/app"
 
 	"github.com/evmos/evmos/v16/encoding"
 	"github.com/evmos/evmos/v16/server/config"

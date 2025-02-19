@@ -1,6 +1,6 @@
 package cache
 
-import "github.com/ExocoreNetwork/exocore/x/oracle/types"
+import "github.com/imua-xyz/imuachain/x/oracle/types"
 
 var defaultParams = types.Params{
 	Chains:       []*types.Chain{{Name: "-", Desc: "-"}, {Name: "Ethereum", Desc: "-"}},

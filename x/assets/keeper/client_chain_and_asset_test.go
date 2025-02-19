@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	"cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (suite *StakingAssetsTestSuite) TestGenesisClientChainAndAssetInfo() {

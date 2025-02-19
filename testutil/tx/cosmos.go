@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
 var (

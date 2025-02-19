@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/cache"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/cache"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {

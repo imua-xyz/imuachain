@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"math/big"
 
-	exocoresapp "github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/precompiles/testutil"
-	exocoreutil "github.com/ExocoreNetwork/exocore/testutil"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	exocoresapp "github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/precompiles/testutil"
+	exocoreutil "github.com/imua-xyz/imuachain/testutil"
 )
 
 // Call is a helper function to call any arbitrary smart contract.

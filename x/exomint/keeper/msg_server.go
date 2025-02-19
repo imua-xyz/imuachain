@@ -5,8 +5,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/ExocoreNetwork/exocore/x/exomint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/exomint/types"
 )
 
 type msgServer struct {

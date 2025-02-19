@@ -2,7 +2,7 @@
 
 FROM golang:1.21.12-alpine3.19 AS build-env
 
-WORKDIR /go/src/github.com/ExocoreNetwork/exocore
+WORKDIR /go/src/github.com/imua-xyz/imuachain
 
 COPY go.mod go.sum ./
 
@@ -20,7 +20,7 @@ FROM alpine:3.19
 
 WORKDIR /root
 
-COPY --from=build-env /go/src/github.com/ExocoreNetwork/exocore/build/exocored /usr/bin/exocored
+COPY --from=build-env /go/src/github.com/imua-xyz/imuachain/build/exocored /usr/bin/exocored
 COPY --from=build-env /go/bin/toml-cli /usr/bin/toml-cli
 
 RUN apk add --no-cache ca-certificates=20240226-r0 libstdc++=13.2.1_git20231014-r0 jq=1.7.1-r0 curl=8.9.1-r0 bash=5.2.21-r0 vim=9.0.2127-r0 lz4=1.9.4-r5 rclone=1.65.0-r3 \

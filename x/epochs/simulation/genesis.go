@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"github.com/cosmos/cosmos-sdk/types/module"
 )

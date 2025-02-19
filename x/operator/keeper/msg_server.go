@@ -4,8 +4,8 @@ import (
 	context "context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type MsgServerImpl struct {

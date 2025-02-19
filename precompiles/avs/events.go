@@ -1,11 +1,11 @@
 package avs
 
 import (
-	avskeep "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	avskeep "github.com/imua-xyz/imuachain/x/avs/keeper"
 )
 
 const (

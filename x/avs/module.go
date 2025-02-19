@@ -9,9 +9,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -19,6 +16,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	"github.com/imua-xyz/imuachain/x/avs/client/cli"
+	"github.com/imua-xyz/imuachain/x/avs/keeper"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 // type check to ensure the interface is properly implemented

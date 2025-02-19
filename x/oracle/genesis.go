@@ -1,9 +1,9 @@
 package oracle
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

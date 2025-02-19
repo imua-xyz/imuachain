@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // UnbondingTime returns the time duration of the unbonding period. It is part of the

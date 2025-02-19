@@ -11,8 +11,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type (

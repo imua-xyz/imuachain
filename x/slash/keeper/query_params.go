@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

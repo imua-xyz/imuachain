@@ -3,12 +3,12 @@ package assets_test
 import (
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/testutil"
-	"github.com/ExocoreNetwork/exocore/precompiles/testutil/contracts"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/precompiles/testutil"
+	"github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // General variables used for integration tests
@@ -226,7 +226,7 @@ func (s *AssetsPrecompileSuite) TestCallWithdrawLSTFromEOA() {
 
 	// for failed cases we expect it returns bool value instead of error
 	// this is a workaround because the error returned by precompile can not be caught in EVM
-	// see https://github.com/ExocoreNetwork/exocore/issues/70
+	// see https://github.com/imua-xyz/imuachain/issues/70
 	// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 	s.Require().NoError(err)
 

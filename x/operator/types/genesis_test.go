@@ -3,13 +3,13 @@ package types_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/utils"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/utils"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 	"github.com/stretchr/testify/suite"
 )
 

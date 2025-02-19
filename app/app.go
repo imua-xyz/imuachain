@@ -10,24 +10,24 @@ import (
 	"path/filepath"
 	"sort"
 
-	distr "github.com/ExocoreNetwork/exocore/x/feedistribution"
-	distrkeeper "github.com/ExocoreNetwork/exocore/x/feedistribution/keeper"
-	distrtypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle"
+	distr "github.com/imua-xyz/imuachain/x/feedistribution"
+	distrkeeper "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
+	distrtypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	"github.com/imua-xyz/imuachain/x/oracle"
 
-	oracleKeeper "github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	oracleTypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	oracleKeeper "github.com/imua-xyz/imuachain/x/oracle/keeper"
+	oracleTypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
-	"github.com/ExocoreNetwork/exocore/x/avs"
-	"github.com/ExocoreNetwork/exocore/x/operator"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
+	"github.com/imua-xyz/imuachain/x/avs"
+	"github.com/imua-xyz/imuachain/x/operator"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 
-	exoslash "github.com/ExocoreNetwork/exocore/x/slash"
+	exoslash "github.com/imua-xyz/imuachain/x/slash"
 
-	avsManagerKeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	avsManagerTypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	slashKeeper "github.com/ExocoreNetwork/exocore/x/slash/keeper"
-	exoslashTypes "github.com/ExocoreNetwork/exocore/x/slash/types"
+	avsManagerKeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
+	avsManagerTypes "github.com/imua-xyz/imuachain/x/avs/types"
+	slashKeeper "github.com/imua-xyz/imuachain/x/slash/keeper"
+	exoslashTypes "github.com/imua-xyz/imuachain/x/slash/types"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -35,23 +35,23 @@ import (
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	// for EIP-1559 fee handling
-	ethante "github.com/ExocoreNetwork/exocore/app/ante/evm"
+	ethante "github.com/imua-xyz/imuachain/app/ante/evm"
 	// for encoding and decoding of EIP-712 messages
 	"github.com/evmos/evmos/v16/ethereum/eip712"
 
-	"github.com/ExocoreNetwork/exocore/x/assets"
-	assetsKeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetsTypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/assets"
+	assetsKeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetsTypes "github.com/imua-xyz/imuachain/x/assets/types"
 
-	"github.com/ExocoreNetwork/exocore/x/delegation"
-	delegationKeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	delegationTypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/delegation"
+	delegationKeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	delegationTypes "github.com/imua-xyz/imuachain/x/delegation/types"
 
-	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 
-	"github.com/ExocoreNetwork/exocore/x/reward"
-	rewardKeeper "github.com/ExocoreNetwork/exocore/x/reward/keeper"
-	rewardTypes "github.com/ExocoreNetwork/exocore/x/reward/types"
+	"github.com/imua-xyz/imuachain/x/reward"
+	rewardKeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
+	rewardTypes "github.com/imua-xyz/imuachain/x/reward/types"
 
 	// increases or decreases block gas limit based on usage
 	"github.com/evmos/evmos/v16/x/feemarket"
@@ -64,10 +64,10 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 
-	"github.com/ExocoreNetwork/exocore/app/ante"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
+	"github.com/imua-xyz/imuachain/app/ante"
 
 	"github.com/evmos/evmos/v16/precompiles/common"
 
@@ -170,29 +170,29 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
-	staking "github.com/ExocoreNetwork/exocore/x/dogfood"
-	stakingkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
-	stakingtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	staking "github.com/imua-xyz/imuachain/x/dogfood"
+	stakingkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
+	stakingtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 
-	exomint "github.com/ExocoreNetwork/exocore/x/exomint"
-	exomintkeeper "github.com/ExocoreNetwork/exocore/x/exomint/keeper"
-	exominttypes "github.com/ExocoreNetwork/exocore/x/exomint/types"
+	exomint "github.com/imua-xyz/imuachain/x/exomint"
+	exomintkeeper "github.com/imua-xyz/imuachain/x/exomint/keeper"
+	exominttypes "github.com/imua-xyz/imuachain/x/exomint/types"
 
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
-	"github.com/ExocoreNetwork/exocore/x/evm"
-	evmkeeper "github.com/ExocoreNetwork/exocore/x/evm/keeper"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/x/evm"
+	evmkeeper "github.com/imua-xyz/imuachain/x/evm/keeper"
 
 	"github.com/evmos/evmos/v16/encoding"
 	evmostypes "github.com/evmos/evmos/v16/types"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs"
-	epochskeeper "github.com/ExocoreNetwork/exocore/x/epochs/keeper"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/epochs"
+	epochskeeper "github.com/imua-xyz/imuachain/x/epochs/keeper"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"github.com/evmos/evmos/v16/x/erc20"
 	erc20keeper "github.com/evmos/evmos/v16/x/erc20/keeper"

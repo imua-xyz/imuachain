@@ -4,18 +4,18 @@ import (
 	"strings"
 	"time"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	avskeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	sdkmath "cosmossdk.io/math"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type StateForCheck struct {

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 	"github.com/stretchr/testify/suite"
 )
 

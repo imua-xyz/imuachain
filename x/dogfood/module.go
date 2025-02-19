@@ -10,9 +10,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/client/cli"
+	"github.com/imua-xyz/imuachain/x/dogfood/keeper"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"

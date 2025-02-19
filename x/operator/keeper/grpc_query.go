@@ -4,14 +4,14 @@ import (
 	"context"
 	"errors"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 var _ types.QueryServer = &Keeper{}

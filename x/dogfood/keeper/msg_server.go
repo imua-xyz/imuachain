@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	"cosmossdk.io/errors"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	avskeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	epochstypes "github.com/evmos/evmos/v16/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 type msgServer struct {

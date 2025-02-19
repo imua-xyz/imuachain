@@ -13,7 +13,7 @@ import (
 	utiltx "github.com/evmos/evmos/v16/testutil/tx"
 	evm "github.com/evmos/evmos/v16/x/evm/types"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/suite"

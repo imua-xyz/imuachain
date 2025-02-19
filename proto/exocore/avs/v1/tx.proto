@@ -8,7 +8,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/avs/types";
+option go_package = "github.com/imua-xyz/imuachain/x/avs/types";
 
 // AVSinfo represent the information of avs
 message AVSInfo {

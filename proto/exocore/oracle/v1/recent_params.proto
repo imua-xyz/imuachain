@@ -3,7 +3,7 @@ package exocore.oracle.v1;
 
 import "exocore/oracle/v1/params.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
 // RecentParams represents the params cached for recent blocks
 message RecentParams {

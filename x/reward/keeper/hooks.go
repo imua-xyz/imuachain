@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	"github.com/ExocoreNetwork/exocore/x/reward/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/reward/types"
 )
 
 // EpochsHooksWrapper is the wrapper structure that implements the epochs hooks for the avs

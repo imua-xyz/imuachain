@@ -10,9 +10,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/ExocoreNetwork/exocore/x/exomint/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/exomint/keeper"
-	"github.com/ExocoreNetwork/exocore/x/exomint/types"
+	"github.com/imua-xyz/imuachain/x/exomint/client/cli"
+	"github.com/imua-xyz/imuachain/x/exomint/keeper"
+	"github.com/imua-xyz/imuachain/x/exomint/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"

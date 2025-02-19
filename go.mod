@@ -1,4 +1,4 @@
-module github.com/ExocoreNetwork/exocore
+module github.com/imua-xyz/imuachain
 
 go 1.21.12
 

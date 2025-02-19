@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/x/slash/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/slash/keeper"
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,6 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/imua-xyz/imuachain/x/slash/client/cli"
+	"github.com/imua-xyz/imuachain/x/slash/keeper"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 	"github.com/spf13/cobra"
 )
 

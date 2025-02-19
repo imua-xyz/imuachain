@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/testutil"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/testutil"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/stretchr/testify/suite"
 
 	. "github.com/onsi/ginkgo/v2"

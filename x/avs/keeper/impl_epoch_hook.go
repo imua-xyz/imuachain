@@ -3,11 +3,11 @@ package keeper
 import (
 	"strconv"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 
 	sdkmath "cosmossdk.io/math"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 // EpochsHooksWrapper is the wrapper structure that implements the epochs hooks for the avs

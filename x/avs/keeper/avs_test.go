@@ -3,13 +3,13 @@ package keeper_test
 import (
 	"time"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	utiltx "github.com/evmos/evmos/v16/testutil/tx"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/keeper"
+	"github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *AVSTestSuite) TestAVS() {

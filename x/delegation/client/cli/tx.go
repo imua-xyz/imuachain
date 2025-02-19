@@ -1,7 +1,7 @@
 package cli
 
 import (
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"

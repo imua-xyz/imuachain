@@ -9,7 +9,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-//go:generate mockgen -destination mock_keeper_test.go -package common github.com/ExocoreNetwork/exocore/x/oracle/keeper/common KeeperOracle
+//go:generate mockgen -destination mock_keeper_test.go -package common github.com/imua-xyz/imuachain/x/oracle/keeper/common KeeperOracle
 
 //go:generate mockgen -destination mock_validator_test.go -package common github.com/cosmos/cosmos-sdk/x/staking/types ValidatorI
 

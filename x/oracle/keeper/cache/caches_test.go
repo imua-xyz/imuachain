@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	. "github.com/smartystreets/goconvey/convey"
 	// "go.uber.org/mock/gomock"
 )

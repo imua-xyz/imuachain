@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/stretchr/testify/require"
 )
 

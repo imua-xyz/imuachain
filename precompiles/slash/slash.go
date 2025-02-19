@@ -5,8 +5,6 @@ import (
 	"embed"
 	"fmt"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	slashKeeper "github.com/ExocoreNetwork/exocore/x/slash/keeper"
 	"github.com/cometbft/cometbft/libs/log"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	slashKeeper "github.com/imua-xyz/imuachain/x/slash/keeper"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

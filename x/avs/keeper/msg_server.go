@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 type MsgServerImpl struct {

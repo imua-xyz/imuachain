@@ -3,18 +3,18 @@ package keeper
 import (
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/utils"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID, because /* the slash  */event occurs in dogfood doesn't have a TxID. It isn't submitted through an external transaction.

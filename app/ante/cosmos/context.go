@@ -3,11 +3,11 @@ package cosmos
 import (
 	"fmt"
 
-	anteutils "github.com/ExocoreNetwork/exocore/app/ante/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	evmostypes "github.com/evmos/evmos/v16/types"
+	anteutils "github.com/imua-xyz/imuachain/app/ante/utils"
 )
 
 var _ GasTx = (*legacytx.StdTx)(nil) // assert StdTx implements GasTx

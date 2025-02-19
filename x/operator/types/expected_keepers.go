@@ -2,11 +2,11 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var _ OracleKeeper = MockOracle{}

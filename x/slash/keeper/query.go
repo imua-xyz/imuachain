@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 )
 
 var _ types.QueryServer = Keeper{}

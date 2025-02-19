@@ -2,13 +2,13 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // EpochsKeeper represents the expected keeper interface for the epochs module.

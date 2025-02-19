@@ -3,8 +3,8 @@ package keeper
 import (
 	"strings"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/delegation/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/delegation/types"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

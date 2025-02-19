@@ -6,8 +6,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/imroc/biu"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // workflow:
