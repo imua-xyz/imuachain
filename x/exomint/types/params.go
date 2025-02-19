@@ -6,11 +6,11 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 
 	"cosmossdk.io/math"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
 const (

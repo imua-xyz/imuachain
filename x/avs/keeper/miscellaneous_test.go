@@ -5,11 +5,11 @@ import (
 	"reflect"
 	"testing"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 func TestReceiptMarshalBinary(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	cosmosante "github.com/ExocoreNetwork/exocore/app/ante/cosmos"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	cosmosante "github.com/imua-xyz/imuachain/app/ante/cosmos"
 
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 )

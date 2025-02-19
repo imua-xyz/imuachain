@@ -1,6 +1,6 @@
 package keeper
 
-import "github.com/ExocoreNetwork/exocore/x/appchain/subscriber/types"
+import "github.com/imua-xyz/imuachain/x/appchain/subscriber/types"
 
 // msgServer is a wrapper around the Keeper (which is the actual implementation) and
 // satisfies the MsgServer interface.

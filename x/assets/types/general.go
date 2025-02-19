@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"

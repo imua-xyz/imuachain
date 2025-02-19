@@ -1,9 +1,9 @@
 package cli
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 	"github.com/spf13/cobra"
 )
 

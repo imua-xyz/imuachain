@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/ExocoreNetwork/exocore/x/reward/types"
+	"github.com/imua-xyz/imuachain/x/reward/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

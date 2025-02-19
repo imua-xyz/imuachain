@@ -11,9 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/evmos/evmos/v16/encoding"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/testutil/tx"
 )
 
 // Commit commits a block at a given time. Reminder: At the end of each

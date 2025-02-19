@@ -5,8 +5,8 @@ import (
 	"testing"
 	time "time"
 
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 func TestValidate(t *testing.T) {

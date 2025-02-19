@@ -6,21 +6,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	"github.com/ethereum/go-ethereum/common"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
-	avsprecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
-	"github.com/ExocoreNetwork/exocore/testutil/tx"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
+	avsprecompile "github.com/imua-xyz/imuachain/precompiles/avs"
+	"github.com/imua-xyz/imuachain/testutil/tx"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	"golang.org/x/xerrors"
 )
 

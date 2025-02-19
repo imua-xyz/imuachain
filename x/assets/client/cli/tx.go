@@ -3,7 +3,7 @@ package cli
 import (
 	"strings"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

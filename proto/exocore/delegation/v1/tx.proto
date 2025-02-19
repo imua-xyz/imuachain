@@ -6,7 +6,7 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/delegation/types";
+option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
 
 // ValueField is a field that holds a value of sdk.Int type.
 message ValueField {

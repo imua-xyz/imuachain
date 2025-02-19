@@ -3,9 +3,9 @@ package keeper
 import (
 	"strconv"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // GetUnbondingCompletionEpoch returns the epoch at the end of which

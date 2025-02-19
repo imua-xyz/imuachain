@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package exocore.epochs.v1;
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/epochs/types";
+option go_package = "github.com/imua-xyz/imuachain/x/epochs/types";
 
 // Epoch represents a specific epoch with its number and associated identifier.
 // It is not used within this module; rather, it is designed by other modules

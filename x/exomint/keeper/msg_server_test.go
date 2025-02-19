@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/x/exomint/types"
+	"github.com/imua-xyz/imuachain/x/exomint/types"
 )
 
 func (suite *KeeperTestSuite) TestUpdateParams() {

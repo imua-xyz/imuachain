@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	types "github.com/ExocoreNetwork/exocore/x/exomint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	types "github.com/imua-xyz/imuachain/x/exomint/types"
 )
 
 // EpochsHooksWrapper is the wrapper structure that implements the epochs hooks for the

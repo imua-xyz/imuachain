@@ -2,14 +2,14 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *KeeperTestSuite) TestUndelegations() {

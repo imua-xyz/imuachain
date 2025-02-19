@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package exocore.oracle.v1;
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
 // ValidatorReportInfo represents the information to describe the miss status of a validator reporting prices
 message ValidatorReportInfo {

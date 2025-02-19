@@ -1,9 +1,9 @@
 package types
 
 import (
-	"github.com/ExocoreNetwork/exocore/utils"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 const (

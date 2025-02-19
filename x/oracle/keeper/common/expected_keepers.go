@@ -4,13 +4,13 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type Price struct {

@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

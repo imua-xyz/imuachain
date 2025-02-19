@@ -3,15 +3,15 @@ package keeper
 import (
 	"strings"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // UpdateOperatorSlashInfo This is a function to store the slash info related to an operator

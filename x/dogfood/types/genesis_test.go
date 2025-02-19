@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 	"github.com/stretchr/testify/suite"
 )
 

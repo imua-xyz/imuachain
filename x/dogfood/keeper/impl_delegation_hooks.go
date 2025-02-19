@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // DelegationHooksWrapper is the wrapper structure that implements the delegation hooks for the

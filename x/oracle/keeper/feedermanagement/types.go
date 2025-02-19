@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type Submitter interface {

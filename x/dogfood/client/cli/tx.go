@@ -3,7 +3,7 @@ package cli
 import (
 	sdkmath "cosmossdk.io/math"
 
-	types "github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	types "github.com/imua-xyz/imuachain/x/dogfood/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

@@ -5,9 +5,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // UpdateStakingAssetTotalAmount updating the total deposited amount of a specified asset in exoCore chain

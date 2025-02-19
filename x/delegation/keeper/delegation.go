@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // DelegateTo : It doesn't need to check the active status of the operator in middlewares when

@@ -3,12 +3,12 @@ package main
 import (
 	"os"
 
-	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/app"
 
-	cmdcfg "github.com/ExocoreNetwork/exocore/cmd/config"
+	cmdcfg "github.com/imua-xyz/imuachain/cmd/config"
 )
 
 func main() {

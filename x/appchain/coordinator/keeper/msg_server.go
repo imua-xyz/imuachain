@@ -5,8 +5,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
 )
 
 // msgServer is a wrapper around the Keeper (which is the actual implementation) and

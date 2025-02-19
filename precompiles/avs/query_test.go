@@ -5,20 +5,20 @@ import (
 	"math/big"
 	"time"
 
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 
 	sdkmath "cosmossdk.io/math"
 
-	avsManagerPrecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstype "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
+	avsManagerPrecompile "github.com/imua-xyz/imuachain/precompiles/avs"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	avstype "github.com/imua-xyz/imuachain/x/avs/types"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 
 	"github.com/ethereum/go-ethereum/common"
 

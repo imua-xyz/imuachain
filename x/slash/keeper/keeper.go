@@ -4,15 +4,15 @@ import (
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/imua-xyz/imuachain/x/assets/keeper"
 
-	"github.com/ExocoreNetwork/exocore/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/slash/types"
 )
 
 type Keeper struct {

@@ -4,8 +4,8 @@ import (
 	"math/big"
 	"math/rand"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/testdata"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/testdata"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type Test struct {

@@ -6,7 +6,7 @@ import "exocore/avs/v1/tx.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/avs/types";
+option go_package = "github.com/imua-xyz/imuachain/x/avs/types";
 
 // QueryAVSInfoReq is the request to query avs related information
 message QueryAVSInfoReq {

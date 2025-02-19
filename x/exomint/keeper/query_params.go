@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/ExocoreNetwork/exocore/x/exomint/types"
+	"github.com/imua-xyz/imuachain/x/exomint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"

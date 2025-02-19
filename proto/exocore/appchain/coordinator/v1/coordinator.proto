@@ -5,7 +5,7 @@ package exocore.appchain.coordinator.v1;
 import "exocore/appchain/coordinator/v1/tx.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types";
+option go_package = "github.com/imua-xyz/imuachain/x/appchain/coordinator/types";
 
 // PendingSubscriberChainRequests is a helper structure to store a list of
 // subscriber chain requests that are pending activation.

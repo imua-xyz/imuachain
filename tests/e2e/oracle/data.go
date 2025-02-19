@@ -1,7 +1,7 @@
 package oracle
 
 import (
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var now = "2025-01-01 00:00:00"

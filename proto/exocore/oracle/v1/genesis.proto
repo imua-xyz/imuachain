@@ -13,7 +13,7 @@ import "exocore/oracle/v1/slashing.proto";
 import "exocore/oracle/v1/validator_update_block.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
 // GenesisState defines the oracle module's genesis state.
 message GenesisState {

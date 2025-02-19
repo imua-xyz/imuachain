@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/ExocoreNetwork/exocore/testutil/keeper"
-	"github.com/ExocoreNetwork/exocore/testutil/nullify"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
+	"github.com/imua-xyz/imuachain/testutil/nullify"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func TestValidatorUpdateBlockQuery(t *testing.T) {

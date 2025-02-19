@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

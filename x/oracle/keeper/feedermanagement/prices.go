@@ -8,7 +8,7 @@ import (
 	"slices"
 	"sort"
 
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func GetPriceInfoFromProtoPriceTimeDetID(p *oracletypes.PriceTimeDetID) *PriceInfo {

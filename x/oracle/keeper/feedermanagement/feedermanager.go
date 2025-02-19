@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func NewFeederManager(k common.KeeperOracle) *FeederManager {

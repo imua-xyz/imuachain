@@ -4,10 +4,10 @@ import (
 	"sort"
 
 	"cosmossdk.io/math"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 // Based on the epoch, AllocateTokens performs reward and fee distribution to all validators.

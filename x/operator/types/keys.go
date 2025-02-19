@@ -4,8 +4,8 @@ import (
 	"encoding/binary"
 	"math"
 
-	"github.com/ExocoreNetwork/exocore/utils"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	"github.com/imua-xyz/imuachain/utils"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 
 	"golang.org/x/xerrors"
 

@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/keeper"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/imua-xyz/imuachain/x/feedistribution/client/cli"
+	"github.com/imua-xyz/imuachain/x/feedistribution/keeper"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/spf13/cobra"
 
 	abci "github.com/cometbft/cometbft/abci/types"

@@ -4,12 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/cmd/config"
-	stakingkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
-	epochskeeper "github.com/ExocoreNetwork/exocore/x/epochs/keeper"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	distrkeeper "github.com/ExocoreNetwork/exocore/x/feedistribution/keeper"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	tmdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -21,6 +15,12 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distrtestutil "github.com/cosmos/cosmos-sdk/x/distribution/testutil"
 	"github.com/golang/mock/gomock"
+	"github.com/imua-xyz/imuachain/cmd/config"
+	stakingkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
+	epochskeeper "github.com/imua-xyz/imuachain/x/epochs/keeper"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	distrkeeper "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/stretchr/testify/require"
 )
 

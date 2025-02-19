@@ -3,11 +3,11 @@ package avs
 import (
 	"fmt"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	"golang.org/x/xerrors"
 )
 

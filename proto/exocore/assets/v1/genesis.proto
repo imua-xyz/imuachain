@@ -6,7 +6,7 @@ import "exocore/assets/v1/params.proto";
 import "exocore/assets/v1/tx.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/assets/types";
+option go_package = "github.com/imua-xyz/imuachain/x/assets/types";
 
 // GenesisState defines the assets module's state. It needs to encompass
 // all of the state that is required to start the chain from the genesis

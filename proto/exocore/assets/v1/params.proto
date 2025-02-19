@@ -3,7 +3,7 @@ package exocore.assets.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/assets/types";
+option go_package = "github.com/imua-xyz/imuachain/x/assets/types";
 
 // GenesisState defines the deposit module's genesis state.
 message Params {

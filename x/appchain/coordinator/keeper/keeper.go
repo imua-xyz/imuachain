@@ -5,11 +5,11 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 
-	commontypes "github.com/ExocoreNetwork/exocore/x/appchain/common/types"
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	commontypes "github.com/imua-xyz/imuachain/x/appchain/common/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
 )
 
 type Keeper struct {

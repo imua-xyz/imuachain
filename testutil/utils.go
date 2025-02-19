@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"time"
 
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
-	"github.com/ExocoreNetwork/exocore/cmd/config"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	"github.com/imua-xyz/imuachain/cmd/config"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
 	"cosmossdk.io/math"
 
@@ -19,18 +19,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/exp/rand"
 
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
-	exocoreapp "github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/utils"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	distributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	exocoreapp "github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/utils"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	distributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	operatorkeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -44,6 +40,10 @@ import (
 	evmostypes "github.com/evmos/evmos/v16/types"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	operatorkeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type BaseTestSuite struct {

@@ -12,11 +12,11 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/ExocoreNetwork/exocore/x/reward/keeper"
+	"github.com/imua-xyz/imuachain/x/reward/keeper"
 
-	"github.com/ExocoreNetwork/exocore/x/reward/types"
+	"github.com/imua-xyz/imuachain/x/reward/types"
 
-	"github.com/ExocoreNetwork/exocore/x/reward/client/cli"
+	"github.com/imua-xyz/imuachain/x/reward/client/cli"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"

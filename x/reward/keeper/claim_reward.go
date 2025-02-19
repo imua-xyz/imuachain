@@ -3,11 +3,11 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	rtypes "github.com/ExocoreNetwork/exocore/x/reward/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/core"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/imua-xyz/imuachain/x/assets/types"
+	rtypes "github.com/imua-xyz/imuachain/x/reward/types"
 )
 
 type RewardParams struct {

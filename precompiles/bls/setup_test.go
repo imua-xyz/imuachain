@@ -3,10 +3,10 @@ package bls_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/bls"
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/precompiles/bls"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 	blscommon "github.com/prysmaticlabs/prysm/v4/crypto/bls/common"
 	"github.com/stretchr/testify/suite"

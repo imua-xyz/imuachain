@@ -10,9 +10,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/cmd/config"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/cmd/config"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	sdktx "github.com/cosmos/cosmos-sdk/client/tx"

@@ -3,15 +3,15 @@ package keeper
 import (
 	"fmt"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

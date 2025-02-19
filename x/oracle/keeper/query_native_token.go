@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

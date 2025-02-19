@@ -3,13 +3,13 @@ package keys_test
 import (
 	"testing"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/crypto/secp256k1"
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdked25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdksecp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/stretchr/testify/suite"
 )
 

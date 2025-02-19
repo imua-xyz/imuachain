@@ -3,9 +3,9 @@ package bech32_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/bech32"
+	"github.com/imua-xyz/imuachain/precompiles/bech32"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

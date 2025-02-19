@@ -7,10 +7,10 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	stakingkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
+	stakingkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 type (

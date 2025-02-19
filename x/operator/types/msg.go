@@ -2,9 +2,9 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
 
 const (

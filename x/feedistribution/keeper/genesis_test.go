@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 func (suite *KeeperTestSuite) TestExportGenesis() {

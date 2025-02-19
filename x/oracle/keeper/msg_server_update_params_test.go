@@ -3,13 +3,13 @@ package keeper_test
 import (
 	reflect "reflect"
 
-	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	testdata "github.com/ExocoreNetwork/exocore/x/oracle/keeper/testdata"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	testdata "github.com/imua-xyz/imuachain/x/oracle/keeper/testdata"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )

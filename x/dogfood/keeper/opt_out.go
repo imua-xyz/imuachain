@@ -3,8 +3,8 @@ package keeper
 import (
 	"strconv"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // SetOptOutInformation sets information related to an operator's opt out.

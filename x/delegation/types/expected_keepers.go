@@ -2,9 +2,9 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 var _ SlashKeeper = VirtualSlashKeeper{}

@@ -547,10 +547,6 @@ github.com/BurntSushi/toml v1.3.2/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbi
 github.com/ChainSafe/go-schnorrkel v1.0.0 h1:3aDA67lAykLaG1y3AOjs88dMxC88PgUuHRrLeDnvGIM=
 github.com/ChainSafe/go-schnorrkel v1.0.0/go.mod h1:dpzHYVxLZcp8pjlV+O+UR8K0Hp/z7vcchBSbMBEhCw4=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
-github.com/ExocoreNetwork/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812 h1:4P/4GZ89DOy9uNPDlEwebPytKltbimq8wn9XiuX96vw=
-github.com/ExocoreNetwork/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812/go.mod h1:w0vtRYI4I0/O8eihq6ZuDvlca4ZiYCKN6vpakG9zHcc=
-github.com/ExocoreNetwork/price-feeder v0.1.15 h1:FjagpGphhXRlJDlc/ZIlZOXLjKLWrGFaErxav+KIsx8=
-github.com/ExocoreNetwork/price-feeder v0.1.15/go.mod h1:CgVrnt5K1Yp8/y7Dz/UFU0g3B86Hx9DjJHHiQz2z0rY=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c/go.mod h1:X0CRv0ky0k6m906ixxpzmDRLvX58TFUKS2eePweuyxk=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
@@ -1164,6 +1160,10 @@ github.com/improbable-eng/grpc-web v0.15.0 h1:BN+7z6uNXZ1tQGcNAuaU1YjsLTApzkjt2t
 github.com/improbable-eng/grpc-web v0.15.0/go.mod h1:1sy9HKV4Jt9aEs9JSnkWlRJPuPtwNr0l57L4f878wP8=
 github.com/imroc/biu v0.0.0-20170329141542-0376ce6761c0 h1:pkyNAS9IQiZgseFrdhZC4cloBo2k2O2Son/k+3NquwY=
 github.com/imroc/biu v0.0.0-20170329141542-0376ce6761c0/go.mod h1:wscexmyH+oDXfQr1q8PAZUXfKnxCUcNm62D/M5Ec8Lw=
+github.com/imua-xyz/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812 h1:9LcKMUeHSmwbSmMiCkSOiPg0+DCR0dPpzgzZWc83HBg=
+github.com/imua-xyz/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812/go.mod h1:w0vtRYI4I0/O8eihq6ZuDvlca4ZiYCKN6vpakG9zHcc=
+github.com/imua-xyz/price-feeder v0.1.16-0.20250219142917-5ea492552d53 h1:Ba5gUPR0l/O5NZLdg8cULlKbl/T1qgzx6KHfNJFe8Bs=
+github.com/imua-xyz/price-feeder v0.1.16-0.20250219142917-5ea492552d53/go.mod h1:vy1Cx1lmuWWgYUx5ZKJq6qReHTYvn2juHI5NCCaBoZM=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=

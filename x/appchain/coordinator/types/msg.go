@@ -5,10 +5,10 @@ import (
 	"strings"
 
 	sdkerrors "cosmossdk.io/errors"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"github.com/cometbft/cometbft/libs/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 const TypeRegisterSubscriberChain = "register_subscriber_chain"

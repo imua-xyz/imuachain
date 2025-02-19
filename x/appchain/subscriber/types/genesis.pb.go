@@ -5,7 +5,7 @@ package types
 
 import (
 	fmt "fmt"
-	types "github.com/ExocoreNetwork/exocore/x/appchain/common/types"
+	types "github.com/imua-xyz/imuachain/x/appchain/common/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"

@@ -3,8 +3,8 @@ package feedistribute
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/keeper"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	"github.com/imua-xyz/imuachain/x/feedistribution/keeper"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

@@ -1,8 +1,8 @@
 package keeper_test
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 // Test helpers

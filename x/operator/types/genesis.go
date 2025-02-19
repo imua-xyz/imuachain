@@ -3,11 +3,11 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	"github.com/ExocoreNetwork/exocore/utils"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	"github.com/imua-xyz/imuachain/utils"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func NewGenesisState(

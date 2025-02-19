@@ -5,7 +5,7 @@ import "cosmos_proto/cosmos.proto";
 import "exocore/operator/v1/tx.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
+option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
 
 // GenesisState defines the operator module's genesis state.
 message GenesisState {

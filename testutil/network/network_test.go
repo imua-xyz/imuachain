@@ -8,11 +8,11 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/ExocoreNetwork/exocore/testutil/network"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/evmos/evmos/v16/server/config"
+	"github.com/imua-xyz/imuachain/testutil/network"
 
-	exocorenetwork "github.com/ExocoreNetwork/exocore/testutil/network"
+	exocorenetwork "github.com/imua-xyz/imuachain/testutil/network"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"

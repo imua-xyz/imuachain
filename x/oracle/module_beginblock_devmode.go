@@ -5,10 +5,10 @@ package oracle
 import (
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/feedermanagement"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/feedermanagement"
 )
 
 // BeginBlock contains the logic that is automatically triggered at the beginning of each block

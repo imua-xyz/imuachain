@@ -3,17 +3,17 @@ package slash_test
 import (
 	"math/big"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/precompiles/slash"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/precompiles/slash"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (s *SlashPrecompileTestSuite) TestIsTransaction() {

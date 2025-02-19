@@ -1,6 +1,6 @@
 package testdata
 
-import "github.com/ExocoreNetwork/exocore/x/oracle/types"
+import "github.com/imua-xyz/imuachain/x/oracle/types"
 
 const t = "2024-05-01 01:01:01"
 

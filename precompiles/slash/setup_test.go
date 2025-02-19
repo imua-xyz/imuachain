@@ -3,9 +3,9 @@ package slash_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/slash"
+	"github.com/imua-xyz/imuachain/precompiles/slash"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

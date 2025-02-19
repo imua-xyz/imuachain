@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	rewardtype "github.com/ExocoreNetwork/exocore/x/reward/types"
+	rewardtype "github.com/imua-xyz/imuachain/x/reward/types"
 )
 
 func (suite *RewardTestSuite) TestParams() {

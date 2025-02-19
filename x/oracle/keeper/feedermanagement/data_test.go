@@ -1,6 +1,6 @@
 package feedermanagement
 
-import oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+import oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
 var (
 	ps1 = &priceSource{

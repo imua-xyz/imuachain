@@ -8,7 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

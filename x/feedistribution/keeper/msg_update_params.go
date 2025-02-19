@@ -6,10 +6,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/ExocoreNetwork/exocore/utils"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/imua-xyz/imuachain/utils"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 func (k msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {

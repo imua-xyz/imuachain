@@ -2,10 +2,10 @@ package testutil
 
 import (
 	"cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/utils"
-	exominttypes "github.com/ExocoreNetwork/exocore/x/exomint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	"github.com/imua-xyz/imuachain/utils"
+	exominttypes "github.com/imua-xyz/imuachain/x/exomint/types"
 )
 
 // FundAccount is a utility function that funds an account by minting and

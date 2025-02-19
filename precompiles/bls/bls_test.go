@@ -3,8 +3,8 @@ package bls_test
 import (
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/bls"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/imua-xyz/imuachain/precompiles/bls"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 )
 

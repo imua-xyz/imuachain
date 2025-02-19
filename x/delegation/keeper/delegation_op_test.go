@@ -5,23 +5,23 @@ import (
 	"math"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
-	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/testutil"
+	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatortype "github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatortype "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *DelegationTestSuite) basicPrepare() {

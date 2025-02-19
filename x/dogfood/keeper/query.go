@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 

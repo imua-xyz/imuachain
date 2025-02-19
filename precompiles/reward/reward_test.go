@@ -3,17 +3,17 @@ package reward_test
 import (
 	"math/big"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/precompiles/reward"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/precompiles/reward"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (s *RewardPrecompileTestSuite) TestIsTransaction() {
@@ -174,7 +174,7 @@ func (s *RewardPrecompileTestSuite) TestRunRewardThroughClientChain() {
 			} else {
 				// for failed cases we expect it returns bool value instead of error
 				// this is a workaround because the error returned by precompile can not be caught in EVM
-				// see https://github.com/ExocoreNetwork/exocore/issues/70
+				// see https://github.com/imua-xyz/imuachain/issues/70
 				// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 				s.Require().NoError(err, "expected no error when running the precompile")
 				s.Require().Equal(tc.returnBytes, bz, "expected returned bytes to be nil")

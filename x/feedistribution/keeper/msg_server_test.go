@@ -6,9 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/ExocoreNetwork/exocore/testutil/keeper"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/keeper"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
+	"github.com/imua-xyz/imuachain/x/feedistribution/keeper"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 func setupMsgServer(t testing.TB) (keeper.Keeper, types.MsgServer, context.Context) {

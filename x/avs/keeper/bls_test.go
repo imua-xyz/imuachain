@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 	blscommon "github.com/prysmaticlabs/prysm/v4/crypto/bls/common"
 )

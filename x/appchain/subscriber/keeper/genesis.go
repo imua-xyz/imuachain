@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/appchain/subscriber/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/appchain/subscriber/types"
 )
 
 func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) []abci.ValidatorUpdate {

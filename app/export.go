@@ -5,7 +5,6 @@ import (
 
 	"cosmossdk.io/simapp"
 
-	"github.com/ExocoreNetwork/exocore/utils"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -15,6 +14,7 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/utils"
 
 	"github.com/evmos/evmos/v16/encoding"
 )

@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"

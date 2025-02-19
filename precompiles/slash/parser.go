@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"math/big"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/x/slash/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	"github.com/imua-xyz/imuachain/x/slash/keeper"
 )
 
 func (p Precompile) GetSlashParamsFromInputs(ctx sdk.Context, args []interface{}) (*keeper.SlashParams, error) {

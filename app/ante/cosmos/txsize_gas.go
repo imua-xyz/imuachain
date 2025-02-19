@@ -1,7 +1,6 @@
 package cosmos
 
 import (
-	anteutils "github.com/ExocoreNetwork/exocore/app/ante/utils"
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -11,6 +10,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	anteutils "github.com/imua-xyz/imuachain/app/ante/utils"
 )
 
 // to the size of tx before calling next AnteHandler. Note, the gas costs will be

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 const (

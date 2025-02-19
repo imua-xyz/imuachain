@@ -28,8 +28,8 @@ Contributing to this repo can mean many things such as participating in discussi
 To ensure a smooth workflow for all contributors,
 the following general procedure for contributing has been established:
 
-1. Either [open](https://github.com/ExocoreNetwork/exocore/issues/new/choose)
-   or [find](https://github.com/ExocoreNetwork/exocore/issues) an issue you have identified and would like to contribute
+1. Either [open](https://github.com/imua-xyz/imuachain/issues/new/choose)
+   or [find](https://github.com/imua-xyz/imuachain/issues) an issue you have identified and would like to contribute
    to resolving.
 2. Participate in thoughtful discussion on that issue.
 3. If you would like to contribute:
@@ -79,15 +79,15 @@ refer to [Tendermint ADRs](https://github.com/tendermint/tendermint/tree/master/
 ## Forking
 
 Please note that Go requires code to live under absolute paths, which complicates forking.
-While my fork lives at `https://github.com/ExocoreNetwork/exocore`,
-the code should never exist at `$GOPATH/src/github.com/ExocoreNetwork/exocore`.
-Instead, we use `git remote` to add the fork as a new remote for the original repo,`$GOPATH/src/github.com/ExocoreNetwork/exocore`,
+While my fork lives at `https://github.com/imua-xyz/imuachain`,
+the code should never exist at `$GOPATH/src/github.com/imua-xyz/imuachain`.
+Instead, we use `git remote` to add the fork as a new remote for the original repo,`$GOPATH/src/github.com/imua-xyz/imuachain`,
 and do all the work there.
 
 For instance, to create a fork and work on a branch of it, you would:
 
 1. Create the fork on github, using the fork button.
-2. Go to the original repo checked out locally. (i.e. `$GOPATH/src/github.com/ExocoreNetwork/exocore`)
+2. Go to the original repo checked out locally. (i.e. `$GOPATH/src/github.com/imua-xyz/imuachain`)
 3. `git remote rename origin upstream`
 4. `git remote add origin git@github.com:$USERNAME/Exocore.git`
 
@@ -175,7 +175,7 @@ For example, in vscode your `.vscode/settings.json` should look like:
 2. `development` must never
    fail `make lint, make test, make test-race, make test-rpc, make test-import`
 3. No `--force` onto `development` (except when reverting a broken commit, which should seldom happen).
-4. Create your feature branch from `development` either on `github.com/ExocoreNetwork/exocore`, or your fork (
+4. Create your feature branch from `development` either on `github.com/imua-xyz/imuachain`, or your fork (
    using `git remote add origin`).
 5. Before submitting a pull request, begin `git rebase` on top of `development`.
 

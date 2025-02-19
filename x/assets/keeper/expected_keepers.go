@@ -2,8 +2,8 @@ package keeper
 
 import (
 	sdkmath "cosmossdk.io/math"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // this keeper interface is defined here to avoid a circular dependency

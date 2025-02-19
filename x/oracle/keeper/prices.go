@@ -4,10 +4,10 @@ import (
 	"encoding/binary"
 
 	sdkmath "cosmossdk.io/math"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // SetPrices set a specific prices in the store from its index

@@ -208,7 +208,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["oracle"]["params"]["token_feeders"][1]["end_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# custom epoch definitions can be added here, if required.
-	# see https://github.com/ExocoreNetwork/exocore/blob/82b2509ad33ab7679592dcb1aa56a7a811128410/local_node.sh#L123 as an example
+	# see https://github.com/imua-xyz/imuachain/blob/82b2509ad33ab7679592dcb1aa56a7a811128410/local_node.sh#L123 as an example
 
 	# generate oracle_env_chainlink.yaml file
 	oracle_env_chainlink_content=$(

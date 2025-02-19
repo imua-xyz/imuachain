@@ -12,11 +12,11 @@ import (
 	"golang.org/x/exp/constraints"
 	"golang.org/x/xerrors"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
 
 const (

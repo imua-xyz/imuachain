@@ -3,9 +3,9 @@ package types
 import (
 	"fmt"
 
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 const (

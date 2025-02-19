@@ -10,10 +10,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
-	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
+	"github.com/imua-xyz/imuachain/precompiles/delegation"
 	"golang.org/x/xerrors"
 )
 

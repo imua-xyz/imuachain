@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
-	"github.com/ExocoreNetwork/exocore/x/assets/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/assets/keeper"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -17,6 +15,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/imua-xyz/imuachain/x/assets/client/cli"
+	"github.com/imua-xyz/imuachain/x/assets/keeper"
 	"github.com/spf13/cobra"
 )
 

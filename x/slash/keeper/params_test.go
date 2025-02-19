@@ -1,7 +1,7 @@
 package keeper_test
 
 import (
-	slashtype "github.com/ExocoreNetwork/exocore/x/slash/types"
+	slashtype "github.com/imua-xyz/imuachain/x/slash/types"
 )
 
 func (suite *SlashTestSuite) TestParams() {

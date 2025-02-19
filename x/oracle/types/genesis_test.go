@@ -5,7 +5,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 

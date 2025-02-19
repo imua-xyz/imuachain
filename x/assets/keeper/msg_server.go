@@ -3,10 +3,10 @@ package keeper
 import (
 	"context"
 
-	"github.com/ExocoreNetwork/exocore/utils"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/imua-xyz/imuachain/utils"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 var _ assetstype.MsgServer = &Keeper{}

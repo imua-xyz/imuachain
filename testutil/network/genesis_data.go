@@ -5,11 +5,11 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 const (

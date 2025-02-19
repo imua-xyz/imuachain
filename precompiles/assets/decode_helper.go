@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	exocmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 // TypedArgs provides helper methods for safely asserting common argument types

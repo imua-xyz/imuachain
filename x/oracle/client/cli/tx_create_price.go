@@ -4,10 +4,10 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/spf13/cobra"
 )
 

@@ -3,10 +3,10 @@ package feedistribute_test
 import (
 	"testing"
 
-	keepertest "github.com/ExocoreNetwork/exocore/testutil/keeper"
-	"github.com/ExocoreNetwork/exocore/testutil/nullify"
-	feedistribute "github.com/ExocoreNetwork/exocore/x/feedistribution/module"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
+	"github.com/imua-xyz/imuachain/testutil/nullify"
+	feedistribute "github.com/imua-xyz/imuachain/x/feedistribution/module"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/stretchr/testify/require"
 )
 

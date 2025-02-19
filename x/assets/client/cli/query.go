@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/assets/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"

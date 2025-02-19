@@ -3,7 +3,7 @@ package exocore.oracle.v1;
 
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/oracle/types";
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
 // Nonce is a message that contains a nonce for a feeder
 message Nonce {

@@ -4,7 +4,7 @@ package exocore.avs.v1;
 import "exocore/avs/v1/tx.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/ExocoreNetwork/exocore/x/avs/types";
+option go_package = "github.com/imua-xyz/imuachain/x/avs/types";
 
 // GenesisState defines the avs module's state. It needs to encompass
 // all of the state that is required to start the chain from the genesis

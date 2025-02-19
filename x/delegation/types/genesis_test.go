@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/stretchr/testify/suite"
 )
 

@@ -5,13 +5,13 @@ import (
 	"embed"
 	"fmt"
 
-	avsKeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	avsKeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

@@ -3,20 +3,20 @@ package keeper
 import (
 	"fmt"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/imua-xyz/imuachain/x/delegation/keeper"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 type (

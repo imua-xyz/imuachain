@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/cosmos/gogoproto/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // InitValidatorReportInfo creates a new item for a first-seen validator to track their performance

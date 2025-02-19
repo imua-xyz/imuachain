@@ -12,10 +12,10 @@ import (
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	cosmosante "github.com/ExocoreNetwork/exocore/app/ante/cosmos"
-	evmante "github.com/ExocoreNetwork/exocore/app/ante/evm"
-	anteutils "github.com/ExocoreNetwork/exocore/app/ante/utils"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	cosmosante "github.com/imua-xyz/imuachain/app/ante/cosmos"
+	evmante "github.com/imua-xyz/imuachain/app/ante/evm"
+	anteutils "github.com/imua-xyz/imuachain/app/ante/utils"
 )
 
 // HandlerOptions defines the list of module keepers required to run the Evmos

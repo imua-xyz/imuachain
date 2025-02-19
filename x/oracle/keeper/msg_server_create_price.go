@@ -9,8 +9,8 @@ import (
 	"time"
 
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 const (

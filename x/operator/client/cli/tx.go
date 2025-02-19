@@ -15,7 +15,7 @@ import (
 	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 const (

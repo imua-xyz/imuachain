@@ -4,10 +4,10 @@ import (
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
-	anteutils "github.com/ExocoreNetwork/exocore/app/ante/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	evmante "github.com/evmos/evmos/v16/app/ante/evm"
+	anteutils "github.com/imua-xyz/imuachain/app/ante/utils"
 )
 
 // MinGasPriceDecorator will check if the transaction's fee is at least as large

@@ -6,11 +6,11 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/testdata"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/testdata"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-//go:generate mockgen -destination mock_cachereader_test.go -package feedermanagement github.com/ExocoreNetwork/exocore/x/oracle/keeper/feedermanagement CacheReader
+//go:generate mockgen -destination mock_cachereader_test.go -package feedermanagement github.com/imua-xyz/imuachain/x/oracle/keeper/feedermanagement CacheReader
 
 func TestFeederManagement(t *testing.T) {
 	Convey("compare FeederManager", t, func() {

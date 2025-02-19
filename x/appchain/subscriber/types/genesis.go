@@ -1,7 +1,7 @@
 package types
 
 import (
-	commontypes "github.com/ExocoreNetwork/exocore/x/appchain/common/types"
+	commontypes "github.com/imua-xyz/imuachain/x/appchain/common/types"
 )
 
 // DefaultGenesis returns the default genesis state.

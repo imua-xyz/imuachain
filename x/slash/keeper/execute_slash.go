@@ -3,9 +3,9 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 
-	//	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	//	"github.com/imua-xyz/imuachain/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 type SlashParams struct {

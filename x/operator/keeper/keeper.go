@@ -6,10 +6,10 @@ import (
 	sdkmath "cosmossdk.io/math"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type Keeper struct {

@@ -31,7 +31,6 @@ import (
 
 	"cosmossdk.io/simapp"
 	"cosmossdk.io/simapp/params"
-	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -49,10 +48,11 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/imua-xyz/imuachain/app"
 
-	exocorecrypto "github.com/ExocoreNetwork/exocore/crypto"
 	cosmoshd "github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/evmos/evmos/v16/crypto/hd"
+	exocorecrypto "github.com/imua-xyz/imuachain/crypto"
 
 	// ekeyring "github.com/evmos/evmos/v16/crypto/keyring"
 

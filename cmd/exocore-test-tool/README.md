@@ -6,7 +6,7 @@ or routine automated testing of the Exocore chain.
 Currently, all test transactions are executed by directly calling precompiles and are signed using automatically
 generated private keys. Therefore, a customized Exocore node is required for use, with the node configured to disable
 the precompile's gateway contract address check. The branch of customized Exocore is as below:
-https://github.com/ExocoreNetwork/exocore/tree/pressure-test
+https://github.com/imua-xyz/imuachain/tree/pressure-test
 
 When using the test tool to batch-send test transactions, you can dynamically adjust the number of test objects and the
 transaction sending rate in the configuration file to control the test volume. This allows for routine automated testing

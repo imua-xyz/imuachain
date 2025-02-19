@@ -12,12 +12,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -26,6 +25,7 @@ import (
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 	cryptohd "github.com/evmos/evmos/v16/crypto/hd"
 	"github.com/evmos/evmos/v16/encoding"
+	"github.com/imua-xyz/imuachain/app"
 	"github.com/stretchr/testify/assert"
 )
 

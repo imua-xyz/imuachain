@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestEpochInfos() {

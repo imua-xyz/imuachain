@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/x/exomint/types"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/exomint/types"
 )
 
 func TestValidate(t *testing.T) {

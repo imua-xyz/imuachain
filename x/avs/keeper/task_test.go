@@ -3,9 +3,9 @@ package keeper_test
 import (
 	"strconv"
 
-	types "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	types "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 func (suite *AVSTestSuite) TestTaskInfo() {

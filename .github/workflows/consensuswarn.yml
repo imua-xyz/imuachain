@@ -26,4 +26,4 @@ jobs:
       - uses: orijtech/consensuswarn@956f047a43f56021a28afdfb2a2291a20955f48d
         with:
           # example.com/pkg/path.Type.Method
-          roots: 'github.com/ExocoreNetwork/exocore/app.ExocoreApp.DeliverTx,github.com/ExocoreNetwork/exocore/app.ExocoreApp.BeginBlocker,github.com/ExocoreNetwork/exocore/app.ExocoreApp.EndBlocker'
+          roots: 'github.com/imua-xyz/imuachain/app.ExocoreApp.DeliverTx,github.com/imua-xyz/imuachain/app.ExocoreApp.BeginBlocker,github.com/imua-xyz/imuachain/app.ExocoreApp.EndBlocker'

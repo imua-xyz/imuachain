@@ -1,8 +1,8 @@
 package types
 
 import (
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
 
 var _ OperatorHooks = &MultiOperatorHooks{}

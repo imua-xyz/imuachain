@@ -6,10 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/x/evm/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/imua-xyz/imuachain/x/evm/types"
 )
 
 const (

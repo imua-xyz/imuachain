@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/BurntSushi/toml"
-	"github.com/ExocoreNetwork/exocore/testutil/batch"
+	"github.com/imua-xyz/imuachain/testutil/batch"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"

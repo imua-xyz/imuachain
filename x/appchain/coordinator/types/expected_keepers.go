@@ -3,11 +3,11 @@ package types
 import (
 	time "time"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 // AVSKeeper represents the expected keeper interface for the AVS module.

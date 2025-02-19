@@ -7,8 +7,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"gopkg.in/yaml.v2"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 const (
