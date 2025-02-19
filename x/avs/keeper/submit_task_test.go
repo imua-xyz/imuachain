@@ -29,6 +29,7 @@ func (suite *AVSTestSuite) prepareOperator() {
 		FromAddress: suite.operatorAddr.String(),
 		Info: &operatorTypes.OperatorInfo{
 			EarningsAddr: suite.operatorAddr.String(),
+			ApproveAddr:  suite.operatorAddr.String(),
 		},
 	}
 	_, err = s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -52,7 +53,7 @@ func (suite *AVSTestSuite) prepareDeposit(assetAddr common.Address, amount sdkma
 		OpAmount:        suite.depositAmount,
 		AssetsAddress:   assetAddr[:],
 	}
-	err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
+	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
 	suite.NoError(err)
 }
 

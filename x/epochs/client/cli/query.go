@@ -28,6 +28,7 @@ func GetQueryCmd(string) *cobra.Command {
 
 	cmd.AddCommand(GetCmdEpochsInfos())
 	cmd.AddCommand(GetCmdCurrentEpoch())
+	cmd.AddCommand(GetCmdEpochInfo())
 
 	return cmd
 }
@@ -93,6 +94,41 @@ func GetCmdCurrentEpoch() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.CurrentEpoch(cmd.Context(), &types.QueryCurrentEpochRequest{
+				Identifier: args[0],
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// GetCmdEpochInfo provides epoch info for the given identifier.
+func GetCmdEpochInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "epoch-info <identifier>",
+		Short: "Query epoch info for the given identifier",
+		Example: strings.TrimSpace(
+			fmt.Sprintf(`$ %s query %s epoch-info week`,
+				version.AppName, types.ModuleName,
+			),
+		),
+		Args: cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.EpochInfo(cmd.Context(), &types.QueryEpochInfoRequest{
 				Identifier: args[0],
 			})
 			if err != nil {

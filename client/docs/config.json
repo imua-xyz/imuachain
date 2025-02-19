@@ -142,7 +142,9 @@
       "url": "./tmp-swagger-gen/exocore/dogfood/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "DogfoodParams"
+          "Params": "DogfoodParams",
+          "Validator": "DogfoodValidator",
+          "Validators": "DogfoodValidators"
         }
       }
     },

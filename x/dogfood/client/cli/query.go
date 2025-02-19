@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -32,6 +34,7 @@ func GetQueryCmd(string) *cobra.Command {
 	cmd.AddCommand(CmdQueryUndelegationsToMature())
 	cmd.AddCommand(CmdQueryUndelegationMaturityEpoch())
 	cmd.AddCommand(CmdQueryValidator())
+	cmd.AddCommand(CmdQueryValidators())
 
 	return cmd
 }
@@ -196,8 +199,42 @@ func CmdQueryValidator() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 			address := args[0]
-			res, err := queryClient.QueryValidator(
-				cmd.Context(), &types.QueryValidatorRequest{ConsAddr: address},
+			consAddress, err := sdk.ConsAddressFromBech32(address)
+			if err != nil {
+				return err
+			}
+			res, err := queryClient.Validator(
+				cmd.Context(), &types.QueryValidatorRequest{ConsAddr: consAddress.String()},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryValidators() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validators",
+		Short: "shows all validators",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+			res, err := queryClient.Validators(
+				cmd.Context(), &types.QueryAllValidatorsRequest{Pagination: pageReq},
 			)
 			if err != nil {
 				return err

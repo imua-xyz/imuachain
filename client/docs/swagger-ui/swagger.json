@@ -73,6 +73,111 @@
         ]
       }
     },
+    "/exocore/epochs/v1/epoch/{identifier}": {
+      "get": {
+        "summary": "EpochInfo provides the epoch information for the specified identifier.",
+        "operationId": "EpochInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "epoch": {
+                  "description": "epoch is the EpochInfo for the requested epoch.",
+                  "type": "object",
+                  "properties": {
+                    "identifier": {
+                      "type": "string",
+                      "description": "identifier is the unique identifier of the epoch, typically, the measure\nof time used to define the epoch."
+                    },
+                    "start_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "start_time of the epoch. it may be in the future, in which case, the epoch\nis not yet active."
+                    },
+                    "duration": {
+                      "type": "string",
+                      "description": "duration is the time in between epoch i and epoch i+1. for an epoch to\nbe meaningful, the duration should be more than the block time of the chain."
+                    },
+                    "current_epoch": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "current_epoch is the number of the currently ongoing epoch, identified by the\nidentifier. the first epoch starts during the first block whose block time\nis greater than or equal to the start_time of the epoch."
+                    },
+                    "current_epoch_start_time": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "current_epoch_start_time is the start time of the current time interval, which\nis (current_epoch_start_time, current_epoch_start_time + duration]. when we say\nthat the timer has \"ticked\", it means that the interval's components are increased\nby the duration. note, however, that only one tick can occur in any given block.\n\nthe above constraint results in a deviation from the \"ideal\" tick time / the wall\nclock time. this is particularly obvious when a chain goes down.\nsay, at t = 13, the interval is (10, 10 + 5 = 15].\nat t = 14, it is unchanged even in a new block, since 10 < t <= 15\nat t = 15, it is unchanged even in a new block, since 10 < t <= 15\nat t = 16, it increases to (15, 20]. but then assume that the chain goes down\nand comes back up at t = 35, producing 1 block each second after that as well.\nat t = 35, the interval increases by 1 tick to (15, 20] (at the block end).\nat t = 36, it increases to (20, 25].\nat t = 37, it increases to (25, 30].\nat t = 38, it increases to (30, 35].\nat t = 39, it increases to (35, 40].\nat t = 40, it is unchanged even in a new block, since 35 < t <= 40.\nat t = 41, it increases to (40, 45]."
+                    },
+                    "epoch_counting_started": {
+                      "type": "boolean",
+                      "description": "epoch_counting_started is true if the epoch counting has started for this identifier.\nit is independent of the epoch number or the time; it just indicates that at least\none epoch for this identifier has started counting."
+                    },
+                    "current_epoch_start_height": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "current_epoch_start_height is the block height at which the current epoch started,\nor the height at which the timer last \"ticked\"."
+                    }
+                  }
+                },
+                "block_time": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "block_time is the block time of the query block ctx."
+                }
+              },
+              "description": "QueryEpochInfoResponse is the response type for the Query/EpochInfo RPC method."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "identifier",
+            "description": "identifier of the epoch for which the information is requested.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/exocore/epochs/v1/epochs": {
       "get": {
         "summary": "EpochInfos provide a list of currently running epochs.",
@@ -17077,41 +17182,47 @@
     },
     "/exocore/dogfood/v1/validator/{cons_addr}": {
       "get": {
-        "summary": "QueryValidator queries the validator for the given consensus address.",
-        "operationId": "QueryValidator",
+        "summary": "Validator queries the validator for the given consensus address. This is the bare-minimum validator:\npublic key, consensus address, power. No other params such as commission, jailed, etc. are included.",
+        "operationId": "DogfoodValidator",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
               "type": "object",
               "properties": {
-                "address": {
-                  "type": "string",
-                  "format": "byte",
-                  "description": "The address, as derived from the consensus key. It has no relation\nwith the operator's account address."
-                },
-                "power": {
-                  "type": "string",
-                  "format": "int64",
-                  "title": "Last known power"
-                },
-                "pubkey": {
+                "validator": {
+                  "description": "validator is the validator being queried.",
                   "type": "object",
                   "properties": {
-                    "type_url": {
-                      "type": "string",
-                      "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
-                    },
-                    "value": {
+                    "address": {
                       "type": "string",
                       "format": "byte",
-                      "description": "Must be a valid serialized protocol buffer of the above specified type."
+                      "description": "The address, as derived from the consensus key. It has no relation\nwith the operator's account address."
+                    },
+                    "power": {
+                      "type": "string",
+                      "format": "int64",
+                      "title": "Last known power"
+                    },
+                    "pubkey": {
+                      "type": "object",
+                      "properties": {
+                        "type_url": {
+                          "type": "string",
+                          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+                        },
+                        "value": {
+                          "type": "string",
+                          "format": "byte",
+                          "description": "Must be a valid serialized protocol buffer of the above specified type."
+                        }
+                      },
+                      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
                     }
-                  },
-                  "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+                  }
                 }
               },
-              "description": "ExocoreValidator is a validator that is part of the Exocore network. It is\nused to validate and sign blocks."
+              "description": "QueryValidatorResponse is response type for the Query/Validator RPC method."
             }
           },
           "default": {
@@ -17158,6 +17269,153 @@
             "in": "path",
             "required": true,
             "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/exocore/dogfood/v1/validators": {
+      "get": {
+        "summary": "Validators queries all validators. This is the bare-minimum validator: public key, consensus address, power.\nNo other params such as commission, jailed, etc. are included.",
+        "operationId": "DogfoodValidators",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "validators": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "address": {
+                        "type": "string",
+                        "format": "byte",
+                        "description": "The address, as derived from the consensus key. It has no relation\nwith the operator's account address."
+                      },
+                      "power": {
+                        "type": "string",
+                        "format": "int64",
+                        "title": "Last known power"
+                      },
+                      "pubkey": {
+                        "type": "object",
+                        "properties": {
+                          "type_url": {
+                            "type": "string",
+                            "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+                          },
+                          "value": {
+                            "type": "string",
+                            "format": "byte",
+                            "description": "Must be a valid serialized protocol buffer of the above specified type."
+                          }
+                        },
+                        "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+                      }
+                    },
+                    "description": "ExocoreValidator is a validator that is part of the Exocore network. It is\nused to validate and sign blocks."
+                  },
+                  "description": "validators is the list of all validators."
+                },
+                "pagination": {
+                  "description": "pagination defines the pagination in the response.",
+                  "type": "object",
+                  "properties": {
+                    "next_key": {
+                      "type": "string",
+                      "format": "byte",
+                      "description": "next_key is the key to be passed to PageRequest.key to\nquery the next page most efficiently. It will be empty if\nthere are no more results."
+                    },
+                    "total": {
+                      "type": "string",
+                      "format": "uint64",
+                      "title": "total is total number of results available if PageRequest.count_total\nwas set, its value is undefined otherwise"
+                    }
+                  }
+                }
+              },
+              "description": "QueryAllValidatorsResponse is response type for the Query/AllValidators RPC method."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string",
+                        "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte",
+                        "description": "Must be a valid serialized protocol buffer of the above specified type."
+                      }
+                    },
+                    "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -18574,11 +18832,6 @@
                           "type": "string",
                           "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                         },
-                        "slash_fraction_miss": {
-                          "type": "string",
-                          "format": "byte",
-                          "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                        },
                         "slash_fraction_malicious": {
                           "type": "string",
                           "format": "byte",
@@ -19321,11 +19574,6 @@
                                 "type": "string",
                                 "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                               },
-                              "slash_fraction_miss": {
-                                "type": "string",
-                                "format": "byte",
-                                "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                              },
                               "slash_fraction_malicious": {
                                 "type": "string",
                                 "format": "byte",
@@ -19693,11 +19941,6 @@
                               "type": "string",
                               "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                             },
-                            "slash_fraction_miss": {
-                              "type": "string",
-                              "format": "byte",
-                              "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                            },
                             "slash_fraction_malicious": {
                               "type": "string",
                               "format": "byte",
@@ -19774,6 +20017,11 @@
             "schema": {
               "type": "object",
               "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "int64",
+                  "title": "version of the staker validator list changes"
+                },
                 "staker_info": {
                   "title": "all staker infos under the specified asset",
                   "type": "object",
@@ -19907,6 +20155,11 @@
             "schema": {
               "type": "object",
               "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "int64",
+                  "title": "version of the staker validator list changes"
+                },
                 "staker_infos": {
                   "type": "array",
                   "items": {
@@ -20091,6 +20344,11 @@
             "schema": {
               "type": "object",
               "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "int64",
+                  "title": "version of the staker validator list changes"
+                },
                 "staker_list": {
                   "title": "staker list including all stakers of request asset",
                   "type": "object",
@@ -22880,6 +23138,11 @@
                                 "type": "string",
                                 "format": "int64",
                                 "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                              },
+                              "historical_voting_power": {
+                                "type": "string",
+                                "format": "int64",
+                                "description": "the historical voting power at the time of the slash event."
                               }
                             }
                           }
@@ -24638,6 +24901,55 @@
         }
       },
       "description": "QueryCurrentEpochResponse is the response type for the Query/EpochInfos RPC\nmethod."
+    },
+    "exocore.epochs.v1.QueryEpochInfoResponse": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "description": "epoch is the EpochInfo for the requested epoch.",
+          "type": "object",
+          "properties": {
+            "identifier": {
+              "type": "string",
+              "description": "identifier is the unique identifier of the epoch, typically, the measure\nof time used to define the epoch."
+            },
+            "start_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "start_time of the epoch. it may be in the future, in which case, the epoch\nis not yet active."
+            },
+            "duration": {
+              "type": "string",
+              "description": "duration is the time in between epoch i and epoch i+1. for an epoch to\nbe meaningful, the duration should be more than the block time of the chain."
+            },
+            "current_epoch": {
+              "type": "string",
+              "format": "int64",
+              "description": "current_epoch is the number of the currently ongoing epoch, identified by the\nidentifier. the first epoch starts during the first block whose block time\nis greater than or equal to the start_time of the epoch."
+            },
+            "current_epoch_start_time": {
+              "type": "string",
+              "format": "date-time",
+              "description": "current_epoch_start_time is the start time of the current time interval, which\nis (current_epoch_start_time, current_epoch_start_time + duration]. when we say\nthat the timer has \"ticked\", it means that the interval's components are increased\nby the duration. note, however, that only one tick can occur in any given block.\n\nthe above constraint results in a deviation from the \"ideal\" tick time / the wall\nclock time. this is particularly obvious when a chain goes down.\nsay, at t = 13, the interval is (10, 10 + 5 = 15].\nat t = 14, it is unchanged even in a new block, since 10 < t <= 15\nat t = 15, it is unchanged even in a new block, since 10 < t <= 15\nat t = 16, it increases to (15, 20]. but then assume that the chain goes down\nand comes back up at t = 35, producing 1 block each second after that as well.\nat t = 35, the interval increases by 1 tick to (15, 20] (at the block end).\nat t = 36, it increases to (20, 25].\nat t = 37, it increases to (25, 30].\nat t = 38, it increases to (30, 35].\nat t = 39, it increases to (35, 40].\nat t = 40, it is unchanged even in a new block, since 35 < t <= 40.\nat t = 41, it increases to (40, 45]."
+            },
+            "epoch_counting_started": {
+              "type": "boolean",
+              "description": "epoch_counting_started is true if the epoch counting has started for this identifier.\nit is independent of the epoch number or the time; it just indicates that at least\none epoch for this identifier has started counting."
+            },
+            "current_epoch_start_height": {
+              "type": "string",
+              "format": "int64",
+              "description": "current_epoch_start_height is the block height at which the current epoch started,\nor the height at which the timer last \"ticked\"."
+            }
+          }
+        },
+        "block_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "block_time is the block time of the query block ctx."
+        }
+      },
+      "description": "QueryEpochInfoResponse is the response type for the Query/EpochInfo RPC method."
     },
     "exocore.epochs.v1.QueryEpochsInfoResponse": {
       "type": "object",
@@ -40287,6 +40599,63 @@
       },
       "description": "Params defines the parameters for the module."
     },
+    "exocore.dogfood.v1.QueryAllValidatorsResponse": {
+      "type": "object",
+      "properties": {
+        "validators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "address": {
+                "type": "string",
+                "format": "byte",
+                "description": "The address, as derived from the consensus key. It has no relation\nwith the operator's account address."
+              },
+              "power": {
+                "type": "string",
+                "format": "int64",
+                "title": "Last known power"
+              },
+              "pubkey": {
+                "type": "object",
+                "properties": {
+                  "type_url": {
+                    "type": "string",
+                    "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+                  },
+                  "value": {
+                    "type": "string",
+                    "format": "byte",
+                    "description": "Must be a valid serialized protocol buffer of the above specified type."
+                  }
+                },
+                "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+              }
+            },
+            "description": "ExocoreValidator is a validator that is part of the Exocore network. It is\nused to validate and sign blocks."
+          },
+          "description": "validators is the list of all validators."
+        },
+        "pagination": {
+          "description": "pagination defines the pagination in the response.",
+          "type": "object",
+          "properties": {
+            "next_key": {
+              "type": "string",
+              "format": "byte",
+              "description": "next_key is the key to be passed to PageRequest.key to\nquery the next page most efficiently. It will be empty if\nthere are no more results."
+            },
+            "total": {
+              "type": "string",
+              "format": "uint64",
+              "title": "total is total number of results available if PageRequest.count_total\nwas set, its value is undefined otherwise"
+            }
+          }
+        }
+      },
+      "description": "QueryAllValidatorsResponse is response type for the Query/AllValidators RPC method."
+    },
     "exocore.dogfood.v1.QueryOperatorOptOutFinishEpochResponse": {
       "type": "object",
       "properties": {
@@ -40350,6 +40719,43 @@
         }
       },
       "description": "QueryUndelegationMaturityEpochResponse is response type for the\nQuery/UndelegationMaturityEpoch RPC method."
+    },
+    "exocore.dogfood.v1.QueryValidatorResponse": {
+      "type": "object",
+      "properties": {
+        "validator": {
+          "description": "validator is the validator being queried.",
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string",
+              "format": "byte",
+              "description": "The address, as derived from the consensus key. It has no relation\nwith the operator's account address."
+            },
+            "power": {
+              "type": "string",
+              "format": "int64",
+              "title": "Last known power"
+            },
+            "pubkey": {
+              "type": "object",
+              "properties": {
+                "type_url": {
+                  "type": "string",
+                  "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+                },
+                "value": {
+                  "type": "string",
+                  "format": "byte",
+                  "description": "Must be a valid serialized protocol buffer of the above specified type."
+                }
+              },
+              "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+            }
+          }
+        }
+      },
+      "description": "QueryValidatorResponse is response type for the Query/Validator RPC method."
     },
     "exocore.dogfood.v1.UndelegationRecordKeys": {
       "type": "object",
@@ -41278,11 +41684,6 @@
               "type": "string",
               "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
             },
-            "slash_fraction_miss": {
-              "type": "string",
-              "format": "byte",
-              "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-            },
             "slash_fraction_malicious": {
               "type": "string",
               "format": "byte",
@@ -41776,11 +42177,6 @@
                         "type": "string",
                         "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                       },
-                      "slash_fraction_miss": {
-                        "type": "string",
-                        "format": "byte",
-                        "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                      },
                       "slash_fraction_malicious": {
                         "type": "string",
                         "format": "byte",
@@ -42263,11 +42659,6 @@
                       "type": "string",
                       "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                     },
-                    "slash_fraction_miss": {
-                      "type": "string",
-                      "format": "byte",
-                      "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                    },
                     "slash_fraction_malicious": {
                       "type": "string",
                       "format": "byte",
@@ -42538,11 +42929,6 @@
                   "type": "string",
                   "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                 },
-                "slash_fraction_miss": {
-                  "type": "string",
-                  "format": "byte",
-                  "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                },
                 "slash_fraction_malicious": {
                   "type": "string",
                   "format": "byte",
@@ -42558,6 +42944,11 @@
     "exocore.oracle.v1.QueryStakerInfoResponse": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string",
+          "format": "int64",
+          "title": "version of the staker validator list changes"
+        },
         "staker_info": {
           "title": "all staker infos under the specified asset",
           "type": "object",
@@ -42628,6 +43019,11 @@
     "exocore.oracle.v1.QueryStakerInfosResponse": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string",
+          "format": "int64",
+          "title": "version of the staker validator list changes"
+        },
         "staker_infos": {
           "type": "array",
           "items": {
@@ -42718,6 +43114,11 @@
     "exocore.oracle.v1.QueryStakerListResponse": {
       "type": "object",
       "properties": {
+        "version": {
+          "type": "string",
+          "format": "int64",
+          "title": "version of the staker validator list changes"
+        },
         "staker_list": {
           "title": "staker list including all stakers of request asset",
           "type": "object",
@@ -43077,11 +43478,6 @@
                   "type": "string",
                   "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
                 },
-                "slash_fraction_miss": {
-                  "type": "string",
-                  "format": "byte",
-                  "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
-                },
                 "slash_fraction_malicious": {
                   "type": "string",
                   "format": "byte",
@@ -43148,11 +43544,6 @@
         "oracle_malicious_jail_duration": {
           "type": "string",
           "title": "oracle_malicious_jail_duration defines the duratin one validator should be jailed for malicious behavior"
-        },
-        "slash_fraction_miss": {
-          "type": "string",
-          "format": "byte",
-          "title": "slash_fraction_miss defines the fraction one validator should be punished for msissing reporting price"
         },
         "slash_fraction_malicious": {
           "type": "string",
@@ -44706,6 +45097,11 @@
               "type": "string",
               "format": "int64",
               "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+            },
+            "historical_voting_power": {
+              "type": "string",
+              "format": "int64",
+              "description": "the historical voting power at the time of the slash event."
             }
           }
         }
@@ -44806,6 +45202,11 @@
                   "type": "string",
                   "format": "int64",
                   "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                },
+                "historical_voting_power": {
+                  "type": "string",
+                  "format": "int64",
+                  "description": "the historical voting power at the time of the slash event."
                 }
               }
             }
@@ -45224,6 +45625,11 @@
                         "type": "string",
                         "format": "int64",
                         "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+                      },
+                      "historical_voting_power": {
+                        "type": "string",
+                        "format": "int64",
+                        "description": "the historical voting power at the time of the slash event."
                       }
                     }
                   }
@@ -45632,6 +46038,11 @@
           "type": "string",
           "format": "int64",
           "title": "undelegation_filter_height records the height before which undelegations are not slashed"
+        },
+        "historical_voting_power": {
+          "type": "string",
+          "format": "int64",
+          "description": "the historical voting power at the time of the slash event."
         }
       },
       "title": "SlashExecutionInfo is the actual execution state for a slash event"

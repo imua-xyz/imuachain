@@ -49,7 +49,7 @@ func (p Precompile) DepositOrWithdraw(
 	}
 
 	// call assets keeper to perform the deposit or withdraw action
-	err = p.assetsKeeper.PerformDepositOrWithdraw(ctx, depositWithdrawParams)
+	finalDepositAmount, err := p.assetsKeeper.PerformDepositOrWithdraw(ctx, depositWithdrawParams)
 	if err != nil {
 		return nil, err
 	}
@@ -72,13 +72,8 @@ func (p Precompile) DepositOrWithdraw(
 		}
 	}
 
-	// get the latest asset state of staker to return.
-	stakerID, assetID := assetstypes.GetStakerIDAndAssetID(depositWithdrawParams.ClientChainLzID, depositWithdrawParams.StakerAddress, depositWithdrawParams.AssetsAddress)
-	info, err := p.assetsKeeper.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetID)
-	if err != nil {
-		return nil, err
-	}
-	return method.Outputs.Pack(true, info.TotalDepositAmount.BigInt())
+	// return the latest asset state of staker
+	return method.Outputs.Pack(true, finalDepositAmount.BigInt())
 }
 
 func (p Precompile) RegisterOrUpdateClientChain(
@@ -97,8 +92,7 @@ func (p Precompile) RegisterOrUpdateClientChain(
 	if err != nil {
 		return nil, err
 	}
-	updated := p.assetsKeeper.ClientChainExists(ctx, clientChainInfo.LayerZeroChainID)
-	err = p.assetsKeeper.SetClientChainInfo(ctx, clientChainInfo)
+	updated, err := p.assetsKeeper.SetClientChainInfo(ctx, clientChainInfo)
 	if err != nil {
 		return nil, err
 	}

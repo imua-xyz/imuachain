@@ -2,6 +2,7 @@ name: Lint
 # Lint runs golangci-lint over the entire exocore repository. The `golangci` will pass without
 # running if no *.{go, mod, sum} files have been changed.
 on:
+  merge_group:
   pull_request:
   push:
     branches:

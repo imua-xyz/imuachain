@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
@@ -26,10 +27,15 @@ import (
 type NSTAssetID string
 
 const (
-	NSTETHAssetAddr = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+	// NSTETHAssetAddr = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 	// TODO: we currently support NSTETH only which has capped effective balance for one validator
 	// TODO: this is a bad practice, and for Lz, they have different version of endpoint with different chainID
 	// Do the validation before invoke oracle related functions instead of check these hard code ids here.
+	ETHMainnetChainID  = "0x7595"
+	ETHLocalnetChainID = "0x65"
+	ETHHoleskyChainID  = "0x9d19"
+	ETHSepoliaChainID  = "0x9ce1"
+
 	NSTETHAssetIDMainnet  NSTAssetID = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x7595"
 	NSTETHAssetIDLocalnet NSTAssetID = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65"
 	NSTETHAssetIDHolesky  NSTAssetID = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x9d19"
@@ -111,7 +117,9 @@ func (k Keeper) GetAllStakerInfosAssets(ctx sdk.Context) (ret []types.StakerInfo
 	for ; iterator.Valid(); iterator.Next() {
 		assetID, _ := types.ParseNativeTokenStakerKey(iterator.Key())
 		if l == 0 || ret[l-1].AssetId != assetID {
+			version := k.GetNSTVersion(ctx, assetID)
 			ret = append(ret, types.StakerInfosAssets{
+				NstVersion:  version,
 				AssetId:     assetID,
 				StakerInfos: make([]*types.StakerInfo, 0),
 			})
@@ -156,9 +164,11 @@ func (k Keeper) GetAllStakerListAssets(ctx sdk.Context) (ret []types.StakerListA
 	for ; iterator.Valid(); iterator.Next() {
 		v := &types.StakerList{}
 		k.cdc.MustUnmarshal(iterator.Value(), v)
+		version := k.GetNSTVersion(ctx, string(iterator.Key()))
 		ret = append(ret, types.StakerListAssets{
 			AssetId:    string(iterator.Key()),
 			StakerList: v,
+			NstVersion: version,
 		})
 	}
 	return ret
@@ -199,6 +209,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		newBalance = *(stakerInfo.BalanceList[latestIndex])
 		newBalance.Index++
 	}
+	// #nosec G115
 	newBalance.Block = uint64(ctx.BlockHeight())
 	if amountInt64 > 0 {
 		newBalance.Change = types.Action_ACTION_DEPOSIT
@@ -256,27 +267,35 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		store.Set(key, bz)
 	}
 
+	// valid veriosn start from 1
+	version := k.IncreaseNSTVersion(ctx, assetID)
 	// we use index to sync with client about status of stakerInfo.ValidatorPubkeyList
-	eventValue := fmt.Sprintf("%d_%s_%d", stakerInfo.StakerIndex, validatorPubkey, newBalance.Index)
+	eventValue := fmt.Sprintf("%d_%s_%d", stakerInfo.StakerIndex, validatorPubkey, version)
 	if newBalance.Change == types.Action_ACTION_DEPOSIT {
 		eventValue = fmt.Sprintf("%s_%s", types.AttributeValueNativeTokenDeposit, eventValue)
 	} else {
 		eventValue = fmt.Sprintf("%s_%s", types.AttributeValueNativeTokenWithdraw, eventValue)
 	}
-	// emit an event to tell a new valdiator added/or a validator is removed for the staker
+	// emit an event to tell the details that a new valdiator added/or a validator is removed for the staker
+	// deposit_stakerID_validatorKey
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,
 		sdk.NewAttribute(types.AttributeKeyNativeTokenChange, eventValue),
 	))
+
 	return nil
 }
 
 // UpdateNSTByBalanceChange updates balance info for staker under native-restaking asset of assetID when its balance changed by slash/refund on the source chain (beacon chain for eth)
-func (k Keeper) UpdateNSTByBalanceChange(ctx sdk.Context, assetID string, rawData []byte, roundID uint64) error {
+func (k Keeper) UpdateNSTByBalanceChange(ctx sdk.Context, assetID string, price types.PriceTimeRound, version int64) error {
 	if !IsLimitedChangeNST(assetID) {
 		return types.ErrNSTAssetNotSupported
 	}
+	if version != k.GetNSTVersion(ctx, assetID) {
+		return errors.New("version not match")
+	}
 	_, chainID, _ := assetstypes.ParseID(assetID)
+	rawData := []byte(price.Price)
 	if len(rawData) < 32 {
 		return errors.New("length of indicate maps for stakers should be exactly 32 bytes")
 	}
@@ -304,13 +323,10 @@ func (k Keeper) UpdateNSTByBalanceChange(ctx sdk.Context, assetID string, rawDat
 			newBalance = *(stakerInfo.BalanceList[length-1])
 		}
 		newBalance.Block = uint64(ctx.BlockHeight())
-		if newBalance.RoundID == roundID {
-			newBalance.Index++
-		} else {
-			newBalance.RoundID = roundID
-			newBalance.Index = 0
-		}
+		// we set index as a global reference used through all rounds
+		newBalance.Index++
 		newBalance.Change = types.Action_ACTION_SLASH_REFUND
+		newBalance.RoundID = price.RoundID
 		// balance update are based on initial/max effective balance: 32
 		maxBalance := maxEffectiveBalance(assetID) * (len(stakerInfo.ValidatorPubkeyList))
 		balance := maxBalance + change
@@ -342,6 +358,43 @@ func (k Keeper) UpdateNSTByBalanceChange(ctx sdk.Context, assetID string, rawDat
 	return nil
 }
 
+// IncreaseNSTVersion increases the version of native token for assetID
+func (k Keeper) IncreaseNSTVersion(ctx sdk.Context, assetID string) int64 {
+	store := ctx.KVStore(k.storeKey)
+	key := types.NativeTokenVersionKey(assetID)
+	value := store.Get(key)
+	if value == nil {
+		// set the first index of version to 1
+		store.Set(key, sdk.Uint64ToBigEndian(1))
+		return 1
+	}
+	version := sdk.BigEndianToUint64(value) + 1
+	store.Set(key, sdk.Uint64ToBigEndian(version))
+	// #nosec G115
+	// TODO: use uint64 for version, the price-feeder may need corresponding change
+	return int64(version)
+}
+
+// IncreaseNSTVersion increases the version of native token for assetID
+func (k Keeper) SetNSTVersion(ctx sdk.Context, assetID string, version int64) int64 {
+	store := ctx.KVStore(k.storeKey)
+	key := types.NativeTokenVersionKey(assetID)
+	// #nosec version is not negative
+	store.Set(key, sdk.Uint64ToBigEndian(uint64(version)))
+	return version
+}
+
+func (k Keeper) GetNSTVersion(ctx sdk.Context, assetID string) int64 {
+	store := ctx.KVStore(k.storeKey)
+	key := types.NativeTokenVersionKey(assetID)
+	value := store.Get(key)
+	if value == nil {
+		return 0
+	}
+	// #nosec G115
+	return int64(sdk.BigEndianToUint64(value))
+}
+
 func (k Keeper) getDecimal(ctx sdk.Context, assetID string) (int, sdkmath.Int, error) {
 	decimalMap, err := k.assetsKeeper.GetAssetsDecimal(ctx, map[string]interface{}{assetID: nil})
 	if err != nil {
@@ -349,78 +402,6 @@ func (k Keeper) getDecimal(ctx sdk.Context, assetID string) (int, sdkmath.Int, e
 	}
 	decimal := decimalMap[assetID]
 	return int(decimal), sdkmath.NewIntWithDecimal(1, int(decimal)), nil
-}
-
-// TODO: This conversion has limited length for balance change, it suites for beaconchain currently, If we extend to other changes, this method need to be upgrade
-// for value that might be too big leading too long length of the change value, many related changes need to be done since the message size might be too big then
-// parseBalanceChange parses rawData to details of amount change for all stakers relative to native restaking
-func parseBalanceChangeCapped(rawData []byte, sl types.StakerList) (map[string]int, error) {
-	// eg. 0100-000011
-	// first part 0100 tells that the effective-balance of staker corresponding to index 2 in StakerList
-	// the left part 000011. we use the first 4 bits to tell the length of this number, and it shows as 1 here, the 5th bit is used to tell symbol of the number, 1 means negative, then we can get the abs number indicate by the length. It's -1 here, means effective-balane is 32-1 on beacon chain for now
-	// the first 32 bytes are information to indicates effective-balance of which staker has changed, 1 means changed, 0 means not. 32 bytes can represents changes for at most 256 stakers
-	indexes := rawData[:32]
-	// bytes after first 32 are details of effective-balance change for each staker which has been marked with 1 in the first 32 bytes, for those who are marked with 0 will just be ignored
-	// For each staker we support at most 256 validators to join, so the biggest effective-balance change we would have is 256*32, then we need 13 bits to represents the number for each staker. And for compression we use 4 bits to tell the length of bits without leading 0 this number has.
-	// Then with the symbol we need at most 18 bits for each staker's effective-balance change: 0000.0.0000-0000-0000 (the leading 0 will be ignored for the last 13 bits)
-	changes := rawData[32:]
-	index := -1
-	byteIndex := 0
-	bitOffset := 0
-	lengthBits := 5
-	stakerChanges := make(map[string]int)
-	for _, b := range indexes {
-		for i := 7; i >= 0; i-- {
-			index++
-			if (b>>i)&1 == 1 {
-				lenValue := changes[byteIndex] << bitOffset
-				bitsLeft := 8 - bitOffset
-				lenValue >>= (8 - lengthBits)
-				if bitsLeft < lengthBits {
-					byteIndex++
-					lenValue |= changes[byteIndex] >> (8 - lengthBits + bitsLeft)
-					bitOffset = lengthBits - bitsLeft
-				} else {
-					if bitOffset += lengthBits; bitOffset == 8 {
-						bitOffset = 0
-					}
-					if bitsLeft == lengthBits {
-						byteIndex++
-					}
-				}
-
-				symbol := lenValue & 1
-				lenValue >>= 1
-				if lenValue <= 0 {
-					// the range of length we accept is 1-15(the max we will use is actually 13)
-					return stakerChanges, errors.New("length of change value must be at least 1 bit")
-				}
-
-				bitsExtracted := 0
-				stakerChange := 0
-				for bitsExtracted < int(lenValue) {
-					bitsLeft := 8 - bitOffset
-					byteValue := changes[byteIndex] << bitOffset
-					if (int(lenValue) - bitsExtracted) < bitsLeft {
-						bitsLeft = int(lenValue) - bitsExtracted
-						bitOffset += bitsLeft
-					} else {
-						byteIndex++
-						bitOffset = 0
-					}
-					byteValue >>= (8 - bitsLeft)
-					stakerChange = (stakerChange << bitsLeft) | int(byteValue)
-					bitsExtracted += bitsLeft
-				}
-				stakerChange++
-				if symbol == 1 {
-					stakerChange *= -1
-				}
-				stakerChanges[sl.StakerAddrs[index]] = stakerChange
-			}
-		}
-	}
-	return stakerChanges, nil
 }
 
 // TODO use []byte and assetstypes.GetStakerIDAndAssetID for stakerAddr representation
@@ -435,4 +416,16 @@ func IsLimitedChangeNST(assetID string) bool {
 
 func maxEffectiveBalance(assetID string) int {
 	return maxEffectiveBalances[NSTAssetID(assetID)]
+}
+
+func getNSTVersionFromDetID(detID string) (int64, error) {
+	parsedDetID := strings.Split(detID, "_")
+	if len(parsedDetID) != 2 {
+		return 0, fmt.Errorf("invalid detID for nst, should be in format of detID_version, got:%s", detID)
+	}
+	nstVersion, err := strconv.ParseInt(parsedDetID[1], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse version from:%s, error:%w", parsedDetID[1], err)
+	}
+	return nstVersion, nil
 }

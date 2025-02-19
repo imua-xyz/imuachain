@@ -21,6 +21,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
 			EarningsAddr: operatorAddressString,
+			ApproveAddr:  operatorAddressString,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(
@@ -47,7 +48,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 		AssetsAddress:   assetAddr.Bytes(),
 		OpAmount:        amount,
 	}
-	err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
+	_, err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
 	suite.NoError(err)
 	// delegate
 	delegationParams := &delegationtypes.DelegationOrUndelegationParams{
@@ -157,6 +158,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
 			EarningsAddr: operatorAddressString,
+			ApproveAddr:  operatorAddressString,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(
@@ -184,7 +186,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 		AssetsAddress:   assetAddr.Bytes(),
 		OpAmount:        amount.Mul(sdkmath.NewInt(5)),
 	}
-	err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
+	_, err = suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParams)
 	suite.NoError(err)
 	// delegate
 	delegationParams := &delegationtypes.DelegationOrUndelegationParams{

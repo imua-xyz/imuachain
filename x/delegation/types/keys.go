@@ -119,6 +119,11 @@ func GetUndelegationRecordKey(blockHeight, undelegationID uint64, txHash string,
 	)
 }
 
+// GetKey returns the key for the undelegation record
+func (r *UndelegationRecord) GetKey() []byte {
+	return GetUndelegationRecordKey(r.BlockNumber, r.UndelegationId, r.TxHash, r.OperatorAddr)
+}
+
 type UndelegationKeyFields struct {
 	BlockHeight    uint64
 	UndelegationID uint64

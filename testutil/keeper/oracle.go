@@ -97,6 +97,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		Interval:       10,
 	})
 	k.SetParams(ctx, p4Test)
+	k.FeederManager.InitCachesForTest(k, &p4Test, nil)
 
 	return &k, ctx
 }

@@ -8,6 +8,7 @@ const (
 	NativeTokenPriceKeyPrefix      = NativeTokenKeyPrefix + "price/value/"
 	NativeTokenStakerInfoKeyPrefix = NativeTokenKeyPrefix + "stakerInfo/value/"
 	NativeTokenStakerListKeyPrefix = NativeTokenKeyPrefix + "stakerList/value/"
+	NativeTokenVersionKeyPrefix    = NativeTokenKeyPrefix + "version/"
 )
 
 // NativeTokenStakerKeyPrefix returns the prefix for stakerInfo key
@@ -40,4 +41,8 @@ func ParseNativeTokenStakerKey(key []byte) (assetID, stakerAddr string) {
 		panic("key of stakerInfo must be construct by 2 infos: assetID/stakerAddr")
 	}
 	return parsed[0], parsed[1]
+}
+
+func NativeTokenVersionKey(assetID string) []byte {
+	return append([]byte(NativeTokenVersionKeyPrefix), []byte(assetID)...)
 }

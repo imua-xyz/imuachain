@@ -18,7 +18,7 @@ import (
 func (suite *OperatorTestSuite) TestOperatorInfo() {
 	info := &operatortype.OperatorInfo{
 		EarningsAddr:     suite.AccAddress.String(),
-		ApproveAddr:      "",
+		ApproveAddr:      suite.AccAddress.String(),
 		OperatorMetaInfo: "test operator",
 		ClientChainEarningsAddr: &operatortype.ClientChainEarningAddrList{
 			EarningInfoList: []*operatortype.ClientChainEarningAddrInfo{
@@ -42,6 +42,7 @@ func (suite *OperatorTestSuite) TestAllOperators() {
 		OperatorAddress: suite.AccAddress.String(),
 		OperatorInfo: operatortype.OperatorInfo{
 			EarningsAddr:     suite.AccAddress.String(),
+			ApproveAddr:      suite.AccAddress.String(),
 			OperatorMetaInfo: "testOperator",
 			Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		},

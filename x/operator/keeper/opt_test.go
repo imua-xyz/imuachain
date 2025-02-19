@@ -32,6 +32,7 @@ func (suite *OperatorTestSuite) registerOperator(operator string) {
 		FromAddress: operator,
 		Info: &operatorTypes.OperatorInfo{
 			EarningsAddr: operator,
+			ApproveAddr:  operator,
 		},
 	}
 	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -60,7 +61,7 @@ func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Addr
 		OpAmount:        amount,
 		AssetsAddress:   assetAddr[:],
 	}
-	err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
+	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
 	suite.NoError(err)
 }
 

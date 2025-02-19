@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -83,7 +84,6 @@ func DefaultParams() Params {
 			MinReportedPerWindow:        sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(2)),
 			OracleMissJailDuration:      600 * time.Second,
 			OracleMaliciousJailDuration: 30 * 24 * time.Hour,
-			SlashFractionMiss:           sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(20)),
 			SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
 		},
 	}
@@ -123,9 +123,6 @@ func (p Params) Validate() error {
 	}
 	if slashing.MinReportedPerWindow.GT(oneDec) || !slashing.MinReportedPerWindow.IsPositive() {
 		return ErrInvalidParams.Wrapf("MinReportedPerWindow must be in (0, 1], got %v", slashing.MinReportedPerWindow)
-	}
-	if slashing.SlashFractionMiss.GT(oneDec) || !slashing.SlashFractionMiss.IsPositive() {
-		return ErrInvalidParams.Wrapf("SlashFractionMiss must be in (0, 1], got %v", slashing.SlashFractionMiss)
 	}
 	if slashing.SlashFractionMalicious.GT(oneDec) || !slashing.SlashFractionMalicious.IsPositive() {
 		return ErrInvalidParams.Wrapf("SlashFractionMalicious must be in (0, 1], got %v", slashing.SlashFractionMalicious)
@@ -294,6 +291,7 @@ func (p Params) UpdateTokens(currentHeight uint64, tokens ...*Token) (Params, er
 				if len(t.AssetID) > 0 {
 					token.AssetID = t.AssetID
 				}
+				// #nosec G115 - tokenID is actually uint since it's index of array
 				if !p.TokenStarted(uint64(tokenID), currentHeight) {
 					// contractAddres is mainly used as a description information
 					if len(t.ContractAddress) > 0 {
@@ -504,6 +502,18 @@ func (p Params) GetTokenIDFromAssetID(assetID string) int {
 	return 0
 }
 
+func (p Params) GetAssetIDForNSTFromTokenID(tokenID uint64) string {
+	assetIDs := p.GetAssetIDsFromTokenID(tokenID)
+	for _, assetID := range assetIDs {
+		if nstChain, ok := strings.CutPrefix(strings.ToLower(assetID), NSTIDPrefix); ok {
+			if NSTChain, ok := NSTChainsInverted[nstChain]; ok {
+				return fmt.Sprintf("%s_%s", NSTAssetAddr[NSTChain], nstChain)
+			}
+		}
+	}
+	return ""
+}
+
 func (p Params) GetAssetIDsFromTokenID(tokenID uint64) []string {
 	if tokenID >= uint64(len(p.Tokens)) {
 		return nil
@@ -525,7 +535,8 @@ func (p Params) IsValidSource(sourceID uint64) bool {
 
 func (p Params) GetTokenFeeder(feederID uint64) *TokenFeeder {
 	for k, v := range p.TokenFeeders {
-		if uint64(k) == feederID {
+		// #nosec G115  // index of array is uint
+		if k >= 0 && uint64(k) == feederID {
 			return v
 		}
 	}
@@ -534,6 +545,7 @@ func (p Params) GetTokenFeeder(feederID uint64) *TokenFeeder {
 
 func (p Params) GetTokenInfo(feederID uint64) *Token {
 	for k, v := range p.TokenFeeders {
+		// #nosec G115  // index of arry is uint
 		if uint64(k) == feederID {
 			return p.Tokens[v.TokenID]
 		}
@@ -559,6 +571,7 @@ func (p Params) CheckRules(feederID uint64, prices []*PriceSource) (bool, error)
 				if source.Valid {
 					notFound = true
 					for _, p := range prices {
+						// #nosec G115  // index of array is uint
 						if p.SourceID == uint64(sID) {
 							notFound = false
 							break
@@ -593,4 +606,29 @@ func (p Params) CheckDecimal(feederID uint64, decimal int32) bool {
 	feeder := p.TokenFeeders[feederID]
 	token := p.Tokens[feeder.TokenID]
 	return token.Decimal == decimal
+}
+
+func (p Params) IsForceSealingUpdate(params *Params) bool {
+	if params == nil {
+		return false
+	}
+	if p.MaxNonce != params.MaxNonce ||
+		p.MaxDetId != params.MaxDetId ||
+		p.ThresholdA != params.ThresholdA ||
+		p.ThresholdB != params.ThresholdB ||
+		p.Mode != params.Mode {
+		return true
+	}
+	return false
+}
+
+func (p Params) IsSlashingResetUpdate(params *Params) bool {
+	if params == nil || params.Slashing == nil {
+		return false
+	}
+	if p.Slashing.ReportedRoundsWindow != params.Slashing.ReportedRoundsWindow ||
+		p.Slashing.MinReportedPerWindow != params.Slashing.MinReportedPerWindow {
+		return true
+	}
+	return false
 }

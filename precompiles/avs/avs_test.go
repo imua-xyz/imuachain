@@ -395,6 +395,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 			FromAddress: operatorAddress.String(),
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: operatorAddress.String(),
+				ApproveAddr:  operatorAddress.String(),
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)
@@ -560,6 +561,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 			FromAddress: operatorAddress.String(),
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: operatorAddress.String(),
+				ApproveAddr:  operatorAddress.String(),
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)

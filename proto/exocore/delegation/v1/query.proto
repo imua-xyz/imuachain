@@ -221,4 +221,5 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/exocore/delegation/v1/delegated_stakers/{operator}/{asset_id}";
   }
+
 }

@@ -13,6 +13,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -22,15 +23,26 @@ import (
 // There is no current way implemented to delete an operator's registration or edit it.
 // TODO: implement operator edit function, which should allow editing:
 // approve address?
+// name (meta info)
 // commission, subject to limits and once within 24 hours.
 // client chain earnings addresses (maybe append only?)
 func (k *Keeper) SetOperatorInfo(
 	ctx sdk.Context, addr string, info *operatortypes.OperatorInfo,
 ) (err error) {
+	if info == nil {
+		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator info is nil")
+	}
 	// #nosec G703 // already validated in `ValidateBasic`
 	opAccAddr, err := sdk.AccAddressFromBech32(addr)
 	if err != nil {
 		return errorsmod.Wrap(err, "SetOperatorInfo: error occurred when parse acc address from Bech32")
+	}
+	// already checked that addr is valid, so only check match below
+	if addr != info.EarningsAddr {
+		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator address does not match earnings address")
+	}
+	if addr != info.ApproveAddr {
+		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator address does not match approve address")
 	}
 	// if already registered, this request should go to EditOperator.
 	// TODO: EditOperator needs to be implemented.
@@ -63,6 +75,22 @@ func (k *Keeper) SetOperatorInfo(
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
 	bz := k.cdc.MustMarshal(info)
 	store.Set(opAccAddr, bz)
+
+	// TODO validate operator name does not already exist
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeRegisterOperator,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyMetaInfo, info.OperatorMetaInfo),
+			sdk.NewAttribute(stakingtypes.AttributeKeyCommissionRate, info.Commission.Rate.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyMaxCommissionRate, info.Commission.MaxRate.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyMaxChangeRate, info.Commission.MaxChangeRate.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyCommissionUpdateTime, sdk.FormatTimeString(info.Commission.UpdateTime)),
+			// TODO: add ClientChainEarningsAddr.EarningInfoList to the event
+		),
+	)
+
 	return nil
 }
 
@@ -125,6 +153,17 @@ func (k *Keeper) HandleOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string, 
 	// restore the info after handling
 	bz := k.cdc.MustMarshal(info)
 	store.Set(infoKey, bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeOptInfoUpdated,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operatorAddr),
+			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+			sdk.NewAttribute(operatortypes.AttributeKeySlashContract, info.SlashContract),
+			sdk.NewAttribute(operatortypes.AttributeKeyOptInHeight, fmt.Sprintf("%d", info.OptedInHeight)),
+			sdk.NewAttribute(operatortypes.AttributeKeyOptOutHeight, fmt.Sprintf("%d", info.OptedOutHeight)),
+			sdk.NewAttribute(operatortypes.AttributeKeyJailed, fmt.Sprintf("%t", info.Jailed)),
+		),
+	)
 	return nil
 }
 

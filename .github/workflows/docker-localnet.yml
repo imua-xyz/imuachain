@@ -1,5 +1,6 @@
 name: Docker build for localnet
 on:
+  merge_group:
   pull_request:
   push:
     branches:
@@ -12,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  docker-localnet-build:
     runs-on: ubuntu-latest
 
     steps:

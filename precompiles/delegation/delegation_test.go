@@ -81,7 +81,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			AssetsAddress:   usdtAddress,
 			OpAmount:        depositAmount,
 		}
-		err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
+		_, err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
 		s.Require().NoError(err)
 	}
 	registerOperator := func() {
@@ -89,6 +89,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			FromAddress: opAccAddr,
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: opAccAddr,
+				ApproveAddr:  opAccAddr,
 			},
 		}
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -301,7 +302,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 			AssetsAddress:   usdtAddress,
 			OpAmount:        depositAmount,
 		}
-		err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
+		_, err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
 		s.Require().NoError(err)
 	}
 
@@ -325,6 +326,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 			FromAddress: operatorAddr,
 			Info: &operatortypes.OperatorInfo{
 				EarningsAddr: operatorAddr,
+				ApproveAddr:  operatorAddr,
 			},
 		}
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

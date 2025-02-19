@@ -24,7 +24,14 @@ func (k Keeper) StakerInfos(goCtx context.Context, req *types.QueryStakerInfosRe
 		return nil, ErrUnsupportedAsset
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	return k.GetStakerInfos(ctx, req)
+
+	stakerInfosResp, err := k.GetStakerInfos(ctx, req)
+	if err != nil {
+		return stakerInfosResp, err
+	}
+	version := k.GetNSTVersion(ctx, req.AssetId)
+	stakerInfosResp.Version = version
+	return stakerInfosResp, nil
 }
 
 func (k Keeper) StakerInfo(goCtx context.Context, req *types.QueryStakerInfoRequest) (*types.QueryStakerInfoResponse, error) {
@@ -36,7 +43,8 @@ func (k Keeper) StakerInfo(goCtx context.Context, req *types.QueryStakerInfoRequ
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	stakerInfo := k.GetStakerInfo(ctx, req.AssetId, req.StakerAddr)
-	return &types.QueryStakerInfoResponse{StakerInfo: &stakerInfo}, nil
+	version := k.GetNSTVersion(ctx, req.AssetId)
+	return &types.QueryStakerInfoResponse{Version: version, StakerInfo: &stakerInfo}, nil
 }
 
 func (k Keeper) StakerList(goCtx context.Context, req *types.QueryStakerListRequest) (*types.QueryStakerListResponse, error) {
@@ -48,5 +56,6 @@ func (k Keeper) StakerList(goCtx context.Context, req *types.QueryStakerListRequ
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	stakerList := k.GetStakerList(ctx, req.AssetId)
-	return &types.QueryStakerListResponse{StakerList: &stakerList}, nil
+	version := k.GetNSTVersion(ctx, req.AssetId)
+	return &types.QueryStakerListResponse{Version: version, StakerList: &stakerList}, nil
 }

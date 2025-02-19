@@ -20,6 +20,10 @@ service Query {
   rpc CurrentEpoch(QueryCurrentEpochRequest) returns (QueryCurrentEpochResponse) {
     option (google.api.http).get = "/exocore/epochs/v1/current_epoch/{identifier}";
   }
+  // EpochInfo provides the epoch information for the specified identifier.
+  rpc EpochInfo(QueryEpochInfoRequest) returns (QueryEpochInfoResponse) {
+    option (google.api.http).get = "/exocore/epochs/v1/epoch/{identifier}";
+  }
 }
 
 // QueryEpochsInfoRequest is the request type for the Query/EpochInfos RPC
@@ -41,6 +45,23 @@ message QueryEpochsInfoResponse {
   ];
   // pagination defines the pagination for the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 3;
+}
+
+// QueryEpochInfoRequest is the request type for the Query/EpochInfo RPC method.
+message QueryEpochInfoRequest {
+  // identifier of the epoch for which the information is requested.
+  string identifier = 1;
+}
+
+// QueryEpochInfoResponse is the response type for the Query/EpochInfo RPC method.
+message QueryEpochInfoResponse {
+  // epoch is the EpochInfo for the requested epoch.
+  EpochInfo epoch = 1 [(gogoproto.nullable) = false];
+  // block_time is the block time of the query block ctx.
+  google.protobuf.Timestamp block_time = 2 [
+    (gogoproto.stdtime) = true,
+    (gogoproto.nullable) = false
+  ];
 }
 
 // QueryCurrentEpochRequest is the request type for the Query/EpochInfos RPC

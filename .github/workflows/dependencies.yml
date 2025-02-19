@@ -1,6 +1,8 @@
 name: "Dependency Review"
 # only run on pull requests and not any branch.
-on: pull_request
+on:
+  merge_group:
+  pull_request:
 
 permissions:
   contents: read

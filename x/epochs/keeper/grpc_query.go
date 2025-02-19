@@ -71,3 +71,25 @@ func (k Keeper) CurrentEpoch(
 		CurrentEpoch: info.CurrentEpoch,
 	}, nil
 }
+
+// GetEpochInfo provides epoch info of specified identifier
+func (k Keeper) EpochInfo(
+	c context.Context,
+	req *types.QueryEpochInfoRequest,
+) (*types.QueryEpochInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	info, found := k.GetEpochInfo(ctx, req.Identifier)
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "epoch info not found: %s", req.Identifier)
+	}
+
+	return &types.QueryEpochInfoResponse{
+		Epoch:     info,
+		BlockTime: ctx.BlockTime(),
+	}, nil
+}

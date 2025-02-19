@@ -17,7 +17,7 @@ func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 	}
 
 	// test the initial storage of statker assets state
-	err := suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
+	_, err := suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
 	suite.Require().NoError(err)
 
 	// test that the retrieved value is correct
@@ -29,7 +29,7 @@ func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 	// test valid increase of staker asset state
 	ethUniInitialChangeValue.TotalDepositAmount = math.NewInt(500)
 	ethUniInitialChangeValue.WithdrawableAmount = math.NewInt(500)
-	err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
+	_, err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
 	suite.Require().NoError(err)
 
 	getInfo, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, ethUniAssetID)
@@ -40,7 +40,7 @@ func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 	// test valid decrease of staker asset state
 	ethUniInitialChangeValue.TotalDepositAmount = math.NewInt(-500)
 	ethUniInitialChangeValue.WithdrawableAmount = math.NewInt(-500)
-	err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
+	_, err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
 	suite.Require().NoError(err)
 	getInfo, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, ethUniAssetID)
 	suite.Require().NoError(err)
@@ -50,7 +50,7 @@ func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 	// test the decreased amount is bigger than original state
 	ethUniInitialChangeValue.TotalDepositAmount = math.NewInt(-2000)
 	ethUniInitialChangeValue.WithdrawableAmount = math.NewInt(-500)
-	err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
+	_, err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
 	suite.Require().Error(err, assetstype.ErrSubAmountIsMoreThanOrigin)
 	getInfo, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, ethUniAssetID)
 	suite.Require().NoError(err)
@@ -59,7 +59,7 @@ func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 
 	ethUniInitialChangeValue.TotalDepositAmount = math.NewInt(-500)
 	ethUniInitialChangeValue.WithdrawableAmount = math.NewInt(-2000)
-	err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
+	_, err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
 	suite.Require().Error(err, assetstype.ErrSubAmountIsMoreThanOrigin)
 	getInfo, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, ethUniAssetID)
 	suite.Require().NoError(err)
@@ -72,7 +72,7 @@ func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 		TotalDepositAmount: math.NewInt(2000),
 		WithdrawableAmount: math.NewInt(2000),
 	}
-	err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUsdtAssetID, ethUsdtInitialChangeValue)
+	_, err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUsdtAssetID, ethUsdtInitialChangeValue)
 	suite.Require().NoError(err)
 	getInfo, err = suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, ethUsdtAssetID)
 	suite.Require().NoError(err)
@@ -104,9 +104,9 @@ func (suite *StakingAssetsTestSuite) TestGetStakerAssetInfos() {
 			Info:    assetstype.StakerAssetInfo(ethUsdtInitialChangeValue),
 		},
 	}
-	err := suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
+	_, err := suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
 	suite.Require().NoError(err)
-	err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUsdtAssetID, ethUsdtInitialChangeValue)
+	_, err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUsdtAssetID, ethUsdtInitialChangeValue)
 	suite.Require().NoError(err)
 
 	// test get all assets state of staker

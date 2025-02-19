@@ -55,6 +55,8 @@ message StakerInfosAssets {
   string asset_id = 1;
   // stakerInfos
   repeated StakerInfo staker_infos = 2;
+  // nst_version is the version of nst to track validator list changes
+  int64 nst_version = 3;
 }
 
 // stakerListAssets bond stakerList to their related assets id
@@ -63,6 +65,8 @@ message StakerListAssets {
   string asset_id = 1;
   // stakerList
   StakerList staker_list = 2;
+  // nst_version is the version of nst to track validator list changes
+  int64 nst_version = 3;
 }
 
 // ValidatorMissedRounds record missed rounds indexes for a validator which consAddr corresponding to the address

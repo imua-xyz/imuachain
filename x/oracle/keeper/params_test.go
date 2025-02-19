@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	testkeeper "github.com/ExocoreNetwork/exocore/testutil/keeper"
+	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/testdata"
 	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetParams(t *testing.T) {
 	k, ctx := testkeeper.OracleKeeper(t)
-	params := types.DefaultParams()
+	params := testdata.DefaultParamsForTest()
 
 	k.SetParams(ctx, params)
 
@@ -176,7 +177,7 @@ func TestUpdateTokenFeederUpdate(t *testing.T) {
 			err:    nil,
 		},
 	}
-	p := DefaultParamsForTest()
+	p := testdata.DefaultParamsForTest()
 	p.Tokens = append(p.Tokens, &types.Token{
 		Name:            "TEST",
 		ChainID:         1,
@@ -217,14 +218,14 @@ func TestUpdateTokenFeederUpdate(t *testing.T) {
 }
 
 func TestParamsValidate(t *testing.T) {
-	p := types.DefaultParams()
+	p := testdata.DefaultParamsForTest()
 	p.MaxSizePrices = 0
 	err := p.Validate()
 	require.ErrorIs(t, err, types.ErrInvalidParams.Wrap("invalid MaxSizePrices"))
 }
 
 func TestTokenFeederValidate(t *testing.T) {
-	p := types.DefaultParams()
+	p := testdata.DefaultParamsForTest()
 	cases := []struct {
 		name         string
 		prevEndBlock uint64
@@ -269,7 +270,7 @@ func TestTokenFeederValidate(t *testing.T) {
 		},
 		{
 			name:         "valid case with two feeders",
-			prevEndBlock: 1000015,
+			prevEndBlock: 35,
 			feeder: &types.TokenFeeder{
 				TokenID:        1,
 				RuleID:         1,
@@ -282,7 +283,7 @@ func TestTokenFeederValidate(t *testing.T) {
 	}
 	for _, testCase := range cases {
 		t.Run(testCase.name, func(t *testing.T) {
-			p = DefaultParamsForTest()
+			p = testdata.DefaultParamsForTest()
 			p.TokenFeeders[1].EndBlock = testCase.prevEndBlock
 			p.TokenFeeders = append(p.TokenFeeders, testCase.feeder)
 			err := p.Validate()

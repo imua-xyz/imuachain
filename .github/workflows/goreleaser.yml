@@ -4,6 +4,7 @@ permissions:
   contents: write
 
 on:
+  merge_group:
   push:
     tags:
       - "v*.*.*"

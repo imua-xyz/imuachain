@@ -66,7 +66,7 @@ func (s *SlashPrecompileTestSuite) TestRunSlash() {
 			AssetsAddress:   usdtAddress,
 			OpAmount:        depositAmount,
 		}
-		err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
+		_, err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
 		s.Require().NoError(err)
 	}
 

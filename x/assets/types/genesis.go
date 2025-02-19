@@ -86,9 +86,12 @@ func (gs GenesisState) ValidateTokens(lzIDs map[uint64]struct{}) (map[string]mat
 			)
 		}
 
-		// ensure there are no deposits for this asset already (since they are handled in the
-		// genesis exec). while it is possible to remove this field entirely (and assume 0),
-		// i did not do so in order to make the genesis state more explicit.
+		// the initial deposit quantity should be non-negative.
+		// ideally, we should verify that this quantity sums
+		// each staker's deposit, but that is not possible solely inside
+		// this module.
+		// deposit = free + pending undelegation + delegated, of which
+		// the last is not stored in this module.
 		if info.StakingTotalAmount.IsNil() ||
 			info.StakingTotalAmount.IsNegative() {
 			return errorsmod.Wrapf(

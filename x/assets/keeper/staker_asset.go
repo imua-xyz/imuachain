@@ -138,7 +138,9 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 // UpdateStakerAssetState is used to update the staker asset state
 // The input `changeAmount` represents the values that you want to add or decrease,using positive or negative values for increasing and decreasing,respectively. The function will calculate and update new state after a successful check.
 // The function will be called when there is deposit or withdraw related to the specified staker.
-func (k Keeper) UpdateStakerAssetState(ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset) (err error) {
+func (k Keeper) UpdateStakerAssetState(
+	ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset,
+) (info *assetstype.StakerAssetInfo, err error) {
 	// get the latest state,use the default initial state if the state hasn't been stored
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakerAssetInfos)
 	key := assetstype.GetJoinedStoreKey(stakerID, assetID)
@@ -154,22 +156,50 @@ func (k Keeper) UpdateStakerAssetState(ctx sdk.Context, stakerID string, assetID
 	// update all states of the specified restaker asset
 	err = assetstype.UpdateAssetValue(&assetState.TotalDepositAmount, &changeAmount.TotalDepositAmount)
 	if err != nil {
-		return errorsmod.Wrap(err, "UpdateStakerAssetState TotalDepositAmount error")
+		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState TotalDepositAmount error")
 	}
 	err = assetstype.UpdateAssetValue(&assetState.WithdrawableAmount, &changeAmount.WithdrawableAmount)
 	if err != nil {
-		return errorsmod.Wrap(err, "UpdateStakerAssetState CanWithdrawAmountOrWantChangeValue error")
+		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState CanWithdrawAmountOrWantChangeValue error")
 	}
 	err = assetstype.UpdateAssetValue(&assetState.PendingUndelegationAmount, &changeAmount.PendingUndelegationAmount)
 	if err != nil {
-		return errorsmod.Wrap(err, "UpdateStakerAssetState WaitUndelegationAmountOrWantChangeValue error")
+		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState WaitUndelegationAmountOrWantChangeValue error")
 	}
 
 	// store the updated state
 	bz := k.cdc.MustMarshal(&assetState)
 	store.Set(key, bz)
 
-	return nil
+	// emit event with new amount.
+	// the indexer can pick this up and update the staker's asset state
+	// without needing to know the prior state. it can also use the
+	// event type to index a deposit or withdrawal history.
+	// this event is only emitted here; callers of this function with
+	// other side effects may emit events dedicated to those side effects
+	// in addition to this event.
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			assetstype.EventTypeUpdatedStakerAsset,
+			sdk.NewAttribute(
+				assetstype.AttributeKeyStakerID, stakerID,
+			),
+			sdk.NewAttribute(
+				assetstype.AttributeKeyAssetID, assetID,
+			),
+			sdk.NewAttribute(
+				assetstype.AttributeKeyDepositAmount, assetState.TotalDepositAmount.String(),
+			),
+			sdk.NewAttribute(
+				assetstype.AttributeKeyWithdrawableAmount, assetState.WithdrawableAmount.String(),
+			),
+			sdk.NewAttribute(
+				assetstype.AttributeKeyPendingUndelegationAmount, assetState.PendingUndelegationAmount.String(),
+			),
+		),
+	)
+
+	return &assetState, nil
 }
 
 func (k Keeper) GetStakerBalanceByAsset(ctx sdk.Context, stakerID string, assetID string) (balance assetstype.StakerBalance, err error) {

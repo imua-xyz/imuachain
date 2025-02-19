@@ -94,12 +94,15 @@ func (am AppModule) WeightedOperations(module.SimulationState) []simtypes.Weight
 	return []simtypes.WeightedOperation{}
 }
 
-// EndBlock executes all ABCI EndBlock logic respective to the claim module. It
-// returns no validator updates.
+// EndBlock executes all ABCI EndBlock logic respective to this module.
+// It returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	am.keeper.EndBlock(ctx, req)
 	return []abci.ValidatorUpdate{}
 }
+
+// BeginBlock executes all ABCI BeginBlock logic respective to this module.
+func (AppModule) BeginBlock(sdk.Context, abci.RequestBeginBlock) {}
 
 // DefaultGenesis returns a default GenesisState for the module, marshaled to json.RawMessage.
 // The default GenesisState need to be defined by the module developer and is primarily used for

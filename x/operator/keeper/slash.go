@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"strings"
+	"encoding/json"
 
 	"github.com/ExocoreNetwork/exocore/utils"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -16,10 +16,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID, because /* the slash  */event occurs in dogfood doesn't have a TxID. It isn't submitted through an external transaction.
+// GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID, because /* the slash  */event occurs in
+// dogfood doesn't have a TxID. It isn't submitted through an external transaction.
 func GetSlashIDForDogfood(infraction stakingtypes.Infraction, infractionHeight int64) string {
-	// #nosec G701
-	return strings.Join([]string{hexutil.EncodeUint64(uint64(infraction)), hexutil.EncodeUint64(uint64(infractionHeight))}, utils.DelimiterForID)
+	slashIDBytes := utils.AppendMany(
+		utils.Uint32ToBigEndian(uint32(infraction)),
+		sdk.Uint64ToBigEndian(uint64(infractionHeight)))
+	return hexutil.Encode(slashIDBytes)
 }
 
 // SlashFromUndelegation executes the slash from an undelegation, reduce the .ActualCompletedAmount from undelegationRecords
@@ -87,6 +90,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		SlashUndelegations:       make([]types.SlashFromUndelegation, 0),
 		SlashAssetsPool:          make([]types.SlashFromAssetsPool, 0),
 		UndelegationFilterHeight: snapshotHeight,
+		HistoricalVotingPower:    parameter.Power,
 	}
 	// slash from the unbonding stakers
 	if parameter.SlashEventHeight < ctx.BlockHeight() {
@@ -95,6 +99,17 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 			slashFromUndelegation := SlashFromUndelegation(undelegation, newSlashProportion)
 			if slashFromUndelegation != nil {
 				executionInfo.SlashUndelegations = append(executionInfo.SlashUndelegations, *slashFromUndelegation)
+				ctx.EventManager().EmitEvent(
+					sdk.NewEvent(
+						types.EventTypeUndelegationSlashed,
+						sdk.NewAttribute(types.AttributeKeyRecordID, hexutil.Encode(undelegation.GetKey())),
+						// amount left after slashing has been performed
+						sdk.NewAttribute(types.AttributeKeyAmount, undelegation.ActualCompletedAmount.String()),
+						// slashed quantity
+						sdk.NewAttribute(types.AttributeKeySlashAmount, slashFromUndelegation.Amount.String()),
+					),
+				)
+
 			}
 			return nil
 		}
@@ -106,8 +121,9 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		}
 	}
 
-	// slash from the assets pool of the operator
+	// slash from the assets pool of the operator, emits operator asset info status event.
 	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
+		// iterate over each operator + asset and reduce the total amount by the slash amount
 		slashAmount := newSlashProportion.MulInt(state.TotalAmount).TruncateInt()
 		remainingAmount := state.TotalAmount.Sub(slashAmount)
 		// todo: consider slash all assets if the remaining amount is too small,
@@ -116,8 +132,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		// all shares need to be cleared if the asset amount is slashed to zero,
 		// otherwise there will be a problem in updating the shares when handling
 		// the new delegations.
-		if remainingAmount.IsZero() &&
-			k.delegationKeeper.HasStakerList(ctx, parameter.Operator.String(), assetID) {
+		if remainingAmount.IsZero() && k.delegationKeeper.HasStakerList(ctx, parameter.Operator.String(), assetID) {
 			// clear the share of other stakers
 			stakerList, err := k.delegationKeeper.GetStakersByOperator(ctx, parameter.Operator.String(), assetID)
 			if err != nil {
@@ -135,11 +150,20 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 			state.OperatorShare = sdkmath.LegacyZeroDec()
 		}
 		state.TotalAmount = remainingAmount
-		// TODO: check if pendingUndelegation also zero => delete this item, and this operator should be opted out if all aasets falls to 0 since the miniself is not satisfied then.
+		// TODO: check if pendingUndelegation also zero => delete this item, and this operator should be opted out if
+		// all assets falls to 0 since the miniself is not satisfied then.
 		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashFromAssetsPool{
 			AssetID: assetID,
 			Amount:  slashAmount,
 		})
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeOperatorAssetSlashed,
+				sdk.NewAttribute(types.AttributeKeyOperator, parameter.Operator.String()),
+				sdk.NewAttribute(types.AttributeKeyAssetID, assetID),
+				sdk.NewAttribute(types.AttributeKeyAmount, slashAmount.String()),
+			),
+		)
 		return nil
 	}
 	err = k.assetsKeeper.IterateAssetsForOperator(ctx, true, parameter.Operator.String(), nil, opFuncToIterateAssets)
@@ -155,10 +179,15 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if err != nil {
 		return err
 	}
-	snapshotKeyLastHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEventHeight)
+	slashEventEpochStartHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, parameter.AVSAddr, parameter.SlashEventHeight)
 	if err != nil {
 		return err
 	}
+	k.Logger(ctx).Info("execute slashing", "eventHeight", parameter.SlashEventHeight, "avsAddr", parameter.AVSAddr, "operator", parameter.Operator, "slashID", parameter.SlashID, "slashType", parameter.SlashType)
+	// Marshal the snapshot to improve the user experience when printing the voting power decimal through the logger
+	// so we don't have to address the error here.
+	snapshotJSON, _ := json.Marshal(snapshot)
+	k.Logger(ctx).Info("the voting power snapshot info is:", "filter_height", slashEventEpochStartHeight, "snapshot", string(snapshotJSON))
 	// get the historical voting power from the snapshot for the other AVSs
 	if !parameter.IsDogFood {
 		votingPower := types.GetSpecifiedVotingPower(parameter.Operator.String(), snapshot.OperatorVotingPowers)
@@ -178,7 +207,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	// slash assets according to the input information
 	// using cache context to ensure the atomicity of slash execution.
 	cc, writeFunc := ctx.CacheContext()
-	executionInfo, err := k.SlashAssets(cc, snapshotKeyLastHeight, parameter)
+	executionInfo, err := k.SlashAssets(cc, slashEventEpochStartHeight, parameter)
 	if err != nil {
 		return err
 	}

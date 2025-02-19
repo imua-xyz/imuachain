@@ -14,7 +14,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 	// Set if defined
 	if genState.ValidatorUpdateBlock != nil {
-		k.SetValidatorUpdateBlock(ctx, *genState.ValidatorUpdateBlock)
+		k.SetValidatorUpdateForCache(ctx, *genState.ValidatorUpdateBlock)
 	}
 	// Set if defined
 	if genState.IndexRecentParams != nil {
@@ -39,6 +39,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// Set all stakerInfos for assetIDs
 	for _, elem := range genState.StakerInfosAssets {
 		k.SetStakerInfos(ctx, elem.AssetId, elem.StakerInfos)
+		k.SetNSTVersion(ctx, elem.AssetId, elem.NstVersion)
 	}
 	// set validatorReportInfos
 	for _, elem := range genState.ValidatorReportInfos {

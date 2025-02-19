@@ -83,7 +83,7 @@ func (k *Keeper) EndBlock(
 				continue
 			}
 		} else {
-			err = k.assetsKeeper.UpdateStakerAssetState(cc, record.StakerId, record.AssetId, assetstypes.DeltaStakerSingleAsset{
+			_, err = k.assetsKeeper.UpdateStakerAssetState(cc, record.StakerId, record.AssetId, assetstypes.DeltaStakerSingleAsset{
 				WithdrawableAmount:        record.ActualCompletedAmount,
 				PendingUndelegationAmount: recordAmountNeg,
 			})

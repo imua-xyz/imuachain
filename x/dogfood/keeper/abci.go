@@ -5,6 +5,7 @@ import (
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	"github.com/ExocoreNetwork/exocore/utils"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -12,6 +13,20 @@ import (
 func (k Keeper) BeginBlock(ctx sdk.Context) {
 	// for IBC, track historical validator set
 	k.TrackHistoricalInfo(ctx)
+	// check if event needs to be emitted
+	if k.ShouldEmitAvsEvent(ctx) {
+		defer k.ClearEmitAvsEventFlag(ctx)
+		// emit the event
+		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+		_, avsAddress := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeDogfoodAvsCreated,
+				sdk.NewAttribute(types.AttributeKeyChainIDWithoutRev, chainIDWithoutRevision),
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddress),
+			),
+		)
+	}
 }
 
 func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {

@@ -17,8 +17,11 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 	// client_chain.go
 	for i := range data.ClientChains {
 		info := data.ClientChains[i]
-		if err := k.SetClientChainInfo(ctx, &info); err != nil {
+		if updated, err := k.SetClientChainInfo(ctx, &info); err != nil {
 			panic(errorsmod.Wrap(err, "failed to set client chain info"))
+		} else if updated {
+			// should not happen if validate-genesis has been called.
+			panic(errorsmod.Wrapf(types.ErrInvalidGenesisData, "duplicate client chain found: %s", info.Name))
 		}
 	}
 	// client_chain_asset.go
@@ -40,7 +43,8 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 			info := depositsByStaker.Info
 			infoAsChange := types.DeltaStakerSingleAsset(info)
 			// set the deposited and free values for the staker
-			if err := k.UpdateStakerAssetState(
+			// this will not emit an event.
+			if _, err := k.UpdateStakerAssetState(
 				ctx, stakerID, assetID, infoAsChange,
 			); err != nil {
 				panic(errorsmod.Wrap(err, "failed to set deposit info"))

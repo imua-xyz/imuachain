@@ -204,6 +204,7 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 			OperatorAddress: operator.String(),
 			OperatorInfo: operatortypes.OperatorInfo{
 				EarningsAddr:     operator.String(),
+				ApproveAddr:      operator.String(),
 				OperatorMetaInfo: "operator1",
 				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			},

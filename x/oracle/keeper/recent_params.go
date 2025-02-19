@@ -6,6 +6,38 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) SetParamsForCache(ctx sdk.Context, params types.RecentParams) {
+	block := uint64(ctx.BlockHeight())
+	index, found := k.GetIndexRecentParams(ctx)
+	if found {
+		// if the maxNonce is changed in this block, all rounds would be force sealed, so it's ok to use either the old or new maxNonce
+		maxNonce := k.GetParams(ctx).MaxNonce
+		l := len(index.Index)
+		if l > 0 {
+			// keep at least one history params before appending current new params
+			prev := index.Index[0]
+			idx := 0
+			// #nosec G115
+			if prev <= block-uint64(maxNonce) && l > 1 {
+				for i := 1; i < l; i++ {
+					k.RemoveRecentParams(ctx, prev)
+					b := index.Index[i]
+					// #nosec G115
+					if b > block-uint64(maxNonce) {
+						break
+					}
+					prev = b
+					idx = i
+				}
+			}
+			index.Index = index.Index[idx:]
+		}
+	}
+	index.Index = append(index.Index, block)
+	k.SetIndexRecentParams(ctx, index)
+	k.SetRecentParams(ctx, params)
+}
+
 // SetRecentParams set a specific recentParams in the store from its index
 func (k Keeper) SetRecentParams(ctx sdk.Context, recentParams types.RecentParams) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecentParamsKeyPrefix))
@@ -76,4 +108,41 @@ func (k Keeper) GetAllRecentParamsAsMap(ctx sdk.Context) (result map[int64]*type
 	}
 
 	return
+}
+
+// GetRecentParamsWithinMaxNonce returns all recentParams within the maxNonce and the latest recentParams separately
+func (k Keeper) GetRecentParamsWithinMaxNonce(ctx sdk.Context) (recentParamsList []*types.RecentParams, prev, latest types.RecentParams) {
+	maxNonce := k.GetParams(ctx).MaxNonce
+	var startHeight uint64
+	if uint64(ctx.BlockHeight()) > uint64(maxNonce) {
+		startHeight = uint64(ctx.BlockHeight()) - uint64(maxNonce)
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RecentParamsKeyPrefix))
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+
+	defer iterator.Close()
+
+	recentParamsList = make([]*types.RecentParams, 0, maxNonce)
+	notFound := true
+	for ; iterator.Valid(); iterator.Next() {
+		var val types.RecentParams
+		k.cdc.MustUnmarshal(iterator.Value(), &val)
+		latest = val
+		if val.Block >= startHeight {
+			if notFound {
+				notFound = false
+			}
+			recentParamsList = append(recentParamsList, &val)
+		}
+		if notFound {
+			prev = val
+		}
+
+	}
+	if len(recentParamsList) > 0 {
+		if prev.Block == recentParamsList[0].Block {
+			prev = types.RecentParams{}
+		}
+	}
+	return recentParamsList, prev, latest
 }

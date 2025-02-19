@@ -43,7 +43,7 @@ func (suite *DelegationTestSuite) prepareDeposit(depositAmount sdkmath.Int) *ass
 		OpAmount:        depositAmount,
 	}
 	depositEvent.AssetsAddress = suite.assetAddr[:]
-	err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositEvent)
+	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositEvent)
 	suite.NoError(err)
 	return depositEvent
 }
@@ -62,6 +62,7 @@ func (suite *DelegationTestSuite) prepareDelegation(delegationAmount sdkmath.Int
 		FromAddress: operator.String(),
 		Info: &operatortype.OperatorInfo{
 			EarningsAddr: operator.String(),
+			ApproveAddr:  operator.String(),
 		},
 	}
 	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -137,6 +138,7 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
 			EarningsAddr: opAccAddr.String(),
+			ApproveAddr:  opAccAddr.String(),
 		},
 	}
 	_, err = s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -226,6 +228,7 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
 			EarningsAddr: opAccAddr.String(),
+			ApproveAddr:  opAccAddr.String(),
 		},
 	}
 	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

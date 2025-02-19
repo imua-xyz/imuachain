@@ -421,6 +421,7 @@ func getTestExocoreGenesis(
 			OperatorInfo: operatortypes.OperatorInfo{
 				EarningsAddr:     operator.String(),
 				OperatorMetaInfo: "operator1",
+				ApproveAddr:      operator.String(),
 				Commission: stakingtypes.NewCommission(
 					sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec(),
 				),

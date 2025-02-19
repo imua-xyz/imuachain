@@ -133,7 +133,19 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			WhitelistAddresses: params.WhitelistAddresses,
 		}
 
-		return k.SetAVSInfo(ctx, avs)
+		if err := k.SetAVSInfo(ctx, avs); err != nil {
+			return err
+		}
+		// emit the event
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeAvsCreated,
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avs.AvsAddress),
+			),
+		)
+
+		return nil
+
 	case types.DeRegisterAction:
 		if avsInfo == nil {
 			return errorsmod.Wrap(types.ErrUnregisterNonExistent, fmt.Sprintf("the avsaddress is :%s", params.AvsAddress))
@@ -432,6 +444,7 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 		return errorsmod.Wrap(types.ErrEpochNotFound, fmt.Sprintf("epoch info not found %s",
 			avsInfo.EpochIdentifier))
 	}
+	// #nosec G115
 	if epoch.CurrentEpoch <= int64(taskInfo.StartingEpoch)+int64(taskInfo.TaskResponsePeriod)+int64(taskInfo.TaskStatisticalPeriod) {
 		return errorsmod.Wrap(
 			types.ErrSubmitTooSoonError,
@@ -442,6 +455,7 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 	err = k.SetTaskChallengedInfo(ctx, params.TaskID, params.CallerAddress.String(), params.TaskContractAddress)
 	if err != nil {
 		return err
+
 	}
 
 	taskInfo.ActualThreshold = strconv.Itoa(int(params.ActualThreshold))
@@ -577,6 +591,7 @@ func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskR
 				fmt.Sprintf("SetTaskResultInfo:the TaskResponse period has not started , CurrentEpoch:%d", epoch.CurrentEpoch),
 			)
 		}
+		// #nosec G115
 		if epoch.CurrentEpoch > int64(task.StartingEpoch)+int64(task.TaskResponsePeriod)+int64(task.TaskStatisticalPeriod) {
 			return errorsmod.Wrap(
 				types.ErrSubmitTooLateError,

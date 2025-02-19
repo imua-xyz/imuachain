@@ -12,6 +12,9 @@ option go_package = "github.com/ExocoreNetwork/exocore/x/operator/types";
 
 // DecValueField is a field that holds a value of sdk.LegacyDec type.
 message DecValueField {
+  // remove the default stringer for DecValueField and instead implement
+  // amount.String() to get the string value.
+  option (gogoproto.goproto_stringer) = false;
   // amount is the USD value of the asset, as an sdk.LegacyDec.
   string amount = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
@@ -221,6 +224,8 @@ message SlashExecutionInfo {
   repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
   // undelegation_filter_height records the height before which undelegations are not slashed
   int64 undelegation_filter_height = 5;
+  // the historical voting power at the time of the slash event.
+  int64 historical_voting_power = 6;
 }
 
 // OperatorSlashInfo is the slash info of operator

@@ -135,6 +135,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# x/operator
 	jq '.app_state["operator"]["operators"][0]["operator_address"]="'"$LOCAL_ADDRESS_EXO"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operators"][0]["operator_info"]["earnings_addr"]="'"$LOCAL_ADDRESS_EXO"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["operator"]["operators"][0]["operator_info"]["approve_addr"]="'"$LOCAL_ADDRESS_EXO"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operators"][0]["operator_info"]["operator_meta_info"]="operator1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operators"][0]["operator_info"]["commission"]["commission_rates"]["rate"]="0.0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operators"][0]["operator_info"]["commission"]["commission_rates"]["max_rate"]="0.0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"

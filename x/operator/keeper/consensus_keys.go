@@ -14,6 +14,7 @@ import (
 	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -67,8 +68,6 @@ func (k *Keeper) setOperatorConsKeyForChainID(
 	if k.IsOperatorRemovingKeyFromChainID(ctx, opAccAddr, chainID) {
 		return types.ErrAlreadyRemovingKey
 	}
-	// convert to bytes
-	bz := k.cdc.MustMarshal(wrappedKey.ToTmProtoKey())
 	consAddr := wrappedKey.ToConsAddr()
 	// check if the provided key is already in use by another operator. such use
 	// also includes whether it was replaced by the same operator. this check ensures
@@ -88,16 +87,20 @@ func (k *Keeper) setOperatorConsKeyForChainID(
 			return nil
 		}
 		// if this key is different, we will set the vote power of the old key to 0
-		// in the validator update. but, we must only do so once in a block, since the
+		// in the validator update. but, we must only do so once in an epoch, since the
 		// first existing key is the one to replace with 0 vote power and not any others.
 		alreadyRecorded, _ = k.getOperatorPrevConsKeyForChainID(ctx, opAccAddr, chainID)
 		if !alreadyRecorded {
+			// TODO edge case wherein `key` is not active, so `prevKey` should not be
+			// recorded. ideally, this should be verified from x/dogfood or x/appchain.
+			// make a `ConfirmKeyActivation(chainID, consAddr)` function in x/dogfood.
+			// if IsKeyActive(chainID, prevKey.toConsAddr()) is false, then do not record.
 			k.setOperatorPrevConsKeyForChainID(
 				ctx, opAccAddr, chainID, prevKey,
 			)
 		}
 	}
-	k.setOperatorConsKeyForChainIDUnchecked(ctx, opAccAddr, consAddr, chainID, bz)
+	k.setOperatorConsKeyForChainIDUnchecked(ctx, opAccAddr, chainID, wrappedKey)
 	// only call the hooks if this is not genesis
 	if !genesis {
 		if found {
@@ -115,10 +118,11 @@ func (k *Keeper) setOperatorConsKeyForChainID(
 // no error checking of the input. The caller must do the error checking
 // and then call this function.
 func (k Keeper) setOperatorConsKeyForChainIDUnchecked(
-	ctx sdk.Context, opAccAddr sdk.AccAddress, consAddr sdk.ConsAddress,
-	chainID string, bz []byte,
+	ctx sdk.Context, opAccAddr sdk.AccAddress,
+	chainID string, wrappedKey keytypes.WrappedConsKey,
 ) {
 	store := ctx.KVStore(k.storeKey)
+	bz := k.cdc.MustMarshal(wrappedKey.ToTmProtoKey())
 	// forward lookup
 	// given operator address and chain id, find the consensus key,
 	// since it is sorted by operator address, it helps for faster indexing by operator
@@ -137,7 +141,26 @@ func (k Keeper) setOperatorConsKeyForChainIDUnchecked(
 	// prune it once the validator set update id matures (if key replacement).
 	// this pruning will be triggered by the app chain module and will not be
 	// recorded here.
-	store.Set(types.KeyForChainIDAndConsKeyToOperator(chainID, consAddr), opAccAddr.Bytes())
+	consAddr := wrappedKey.ToConsAddr()
+	store.Set(
+		types.KeyForChainIDAndConsKeyToOperator(chainID, consAddr),
+		opAccAddr.Bytes(),
+	)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSetConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			// convert to hex-string to avoid bech32-encoding
+			sdk.NewAttribute(
+				types.AttributeKeyConsensusAddress,
+				// non-checksummed version without "0x" prefix
+				common.Bytes2Hex(consAddr[:]),
+			),
+			sdk.NewAttribute(types.AttributeKeyConsKeyHex, wrappedKey.ToHex()),
+		),
+	)
 }
 
 // setOperatorPrevConsKeyForChainID sets the previous (consensus) public key for the given
@@ -153,6 +176,15 @@ func (k *Keeper) setOperatorPrevConsKeyForChainID(
 	bz := k.cdc.MustMarshal(prevKey.ToTmProtoKey())
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.KeyForChainIDAndOperatorToPrevConsKey(chainID, opAccAddr), bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSetPrevConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, prevKey.ToConsAddr().String()),
+			sdk.NewAttribute(types.AttributeKeyConsKeyHex, prevKey.ToHex()),
+		),
+	)
 }
 
 // GetOperatorPrevConsKeyForChainID gets the previous (consensus) public key for the given
@@ -263,6 +295,16 @@ func (k *Keeper) InitiateOperatorKeyRemovalForChainID(
 	// can only be called if the operator is currently opted in.
 	store := ctx.KVStore(k.storeKey)
 	store.Set(types.KeyForOperatorKeyRemovalForChainID(opAccAddr, chainID), []byte{})
+	// TODO: emit after calling hook?
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeInitRemoveConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, key.ToConsAddr().String()),
+			sdk.NewAttribute(types.AttributeKeyConsKeyHex, key.ToHex()),
+		),
+	)
 	k.Hooks().AfterOperatorKeyRemovalInitiated(ctx, opAccAddr, chainID, key)
 }
 
@@ -301,6 +343,15 @@ func (k Keeper) CompleteOperatorKeyRemovalForChainID(
 	store.Delete(types.KeyForChainIDAndOperatorToConsKey(chainID, opAccAddr))
 	store.Delete(types.KeyForChainIDAndConsKeyToOperator(chainID, consAddr))
 	store.Delete(types.KeyForOperatorKeyRemovalForChainID(opAccAddr, chainID))
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeEndRemoveConsKey,
+			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, prevKey.ToConsAddr().String()),
+			sdk.NewAttribute(types.AttributeKeyConsKeyHex, prevKey.ToHex()),
+		),
+	)
 	return nil
 }
 
@@ -455,7 +506,16 @@ func (k Keeper) ClearPreviousConsensusKeys(ctx sdk.Context, chainID string) {
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		store.Delete(iterator.Key())
+		key := iterator.Key()
+		store.Delete(key)
+		operatorAddr := key[1+len(partialKey):]
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeRemovePrevConsKey,
+				sdk.NewAttribute(types.AttributeKeyOperator, sdk.AccAddress(operatorAddr).String()),
+				sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+			),
+		)
 	}
 }
 
