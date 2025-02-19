@@ -40910,7 +40910,7 @@
           "description": "gateways is the addresses of gateways on Imuachain."
         }
       },
-      "description": "GenesisState defines the deposit module's genesis state."
+      "description": "Params defines the parameters for the assets module."
     },
     "imuachain.assets.v1.QueryAllClientChainInfoResponse": {
       "type": "object",
