@@ -330,17 +330,6 @@ func request_Query_QueryChallengeInfo_0(ctx context.Context, marshaler runtime.M
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
 	}
 
-	val, ok = pathParams["operator_address"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "operator_address")
-	}
-
-	protoReq.OperatorAddress, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "operator_address", err)
-	}
-
 	msg, err := client.QueryChallengeInfo(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
@@ -377,17 +366,6 @@ func local_request_Query_QueryChallengeInfo_0(ctx context.Context, marshaler run
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "task_id", err)
-	}
-
-	val, ok = pathParams["operator_address"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "operator_address")
-	}
-
-	protoReq.OperatorAddress, err = runtime.String(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "operator_address", err)
 	}
 
 	msg, err := server.QueryChallengeInfo(ctx, &protoReq)
@@ -669,7 +647,7 @@ var (
 
 	pattern_Query_QuerySubmitTaskResult_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"exocore", "avs", "v1", "submit_task_result", "task_address", "task_id", "operator_address"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_QueryChallengeInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"exocore", "avs", "v1", "challenge_info", "task_address", "task_id", "operator_address"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_QueryChallengeInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"exocore", "avs", "v1", "challenge_info", "task_address", "task_id"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

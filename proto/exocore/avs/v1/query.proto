@@ -56,8 +56,6 @@ message QueryChallengeInfoReq {
   string task_address = 1 [(gogoproto.customname) = "TaskAddress"];
   // task_id is the task identifier
   string task_id = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  // operator_address is the operator address,its type should be a sdk.AccAddress
-  string operator_address = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // QuerySubmitTaskResultResponse is the response of avs related information
@@ -92,6 +90,6 @@ service Query {
   }
   // Parameters queries the parameters of the module.
   rpc QueryChallengeInfo(QueryChallengeInfoReq) returns (QueryChallengeInfoResponse) {
-    option (google.api.http).get = "/exocore/avs/v1/challenge_info/{task_address}/{task_id}/{operator_address}";
+    option (google.api.http).get = "/exocore/avs/v1/challenge_info/{task_address}/{task_id}";
   }
 }

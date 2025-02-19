@@ -21181,7 +21181,7 @@
     },
     "/exocore/avs/v1/avs_address/{chain}": {
       "get": {
-        "summary": "QueryAVSAddressByChainID queries the avs address by chain id",
+        "summary": "Query the avs address by chain id",
         "operationId": "QueryAVSAddressByChainID",
         "responses": {
           "200": {
@@ -21247,7 +21247,7 @@
     },
     "/exocore/avs/v1/avs_info": {
       "get": {
-        "summary": "Parameters queries the parameters of the module.",
+        "summary": "Query avs info by avs address.",
         "operationId": "QueryAVSInfo",
         "responses": {
           "200": {
@@ -21423,7 +21423,7 @@
             "name": "avs_address",
             "description": "avs_address is the address of avs.",
             "in": "query",
-            "required": false,
+            "required": true,
             "type": "string"
           }
         ],
@@ -21622,9 +21622,9 @@
         ]
       }
     },
-    "/exocore/avs/v1/challenge_info/{task_address}/{task_id}/{operator_address}": {
+    "/exocore/avs/v1/challenge_info/{task_address}/{task_id}": {
       "get": {
-        "summary": "Parameters queries the parameters of the module.",
+        "summary": "Query the challenge info by task address and task id.",
         "operationId": "QueryChallengeInfo",
         "responses": {
           "200": {
@@ -21688,13 +21688,6 @@
             "in": "path",
             "required": true,
             "type": "string"
-          },
-          {
-            "name": "operator_address",
-            "description": "operator_address is the operator address,its type should be a sdk.AccAddress",
-            "in": "path",
-            "required": true,
-            "type": "string"
           }
         ],
         "tags": [
@@ -21704,7 +21697,7 @@
     },
     "/exocore/avs/v1/submit_task_result/{task_address}/{task_id}/{operator_address}": {
       "get": {
-        "summary": "Parameters queries the parameters of the module.",
+        "summary": "Submit task result for the specified task and operator.",
         "operationId": "QuerySubmitTaskResult",
         "responses": {
           "200": {
