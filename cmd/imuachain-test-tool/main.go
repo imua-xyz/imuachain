@@ -71,7 +71,7 @@ var initCmd = &cobra.Command{
 	Short: "init the default config for the test tool",
 	Long: "init the default config for the test tool, using test-tool-config.toml " +
 		"as the default name of the config file",
-	Example: "imua-test-tool init --home .",
+	Example: "imuachain-test-tool init --home .",
 	Args:    cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
 		configFilePath := filepath.Join(homePath, batch.ConfigFileName)
@@ -98,7 +98,7 @@ var startCmd = &cobra.Command{
 	Short: "start the test tool",
 	Long: "Start the testing tool to automatically perform preparation steps " +
 		"and batch tests for multiple message types.",
-	Example: "imuast-tool start --home .",
+	Example: "imuachain-test-tool start --home .",
 	Args:    cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
 		// Start the app manager in a separate goroutine
@@ -116,7 +116,7 @@ var prepareCmd = &cobra.Command{
 	Use:     "prepare",
 	Short:   "prepare for the batch test",
 	Long:    "prepare the test objects, funding, registration and opting-in for the test tool",
-	Example: "imuast-tool prepare --home .",
+	Example: "imuachain-test-tool prepare --home .",
 	Args:    cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
 		if err := appManager.Prepare(); err != nil {
@@ -132,7 +132,7 @@ var batchTestCmd = &cobra.Command{
 	Short: "batch test",
 	Long: "batch test the multiple functions, the msgType should be: \r\n" +
 		"depositLST,delegate,undelegate and withdrawLST",
-	Example: "imuast-tool batch-test depositLST --home .",
+	Example: "imuachain-test-tool batch-test depositLST --home .",
 	Args:    cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		// Start the app manager in a separate goroutine
@@ -151,7 +151,7 @@ var QueryHelperRecordCmd = &cobra.Command{
 	Use:     "query-helper-record",
 	Short:   "query the helper record info",
 	Long:    "query the helper record info, the info includes: current-batch-id",
-	Example: "imuast-tool query-helper-record --home .",
+	Example: "imuachain-test-tool query-helper-record --home .",
 	Args:    cobra.NoArgs,
 	Run: func(_ *cobra.Command, _ []string) {
 		helperRecord, err := batch.LoadObjectByID[batch.HelperRecord](sqliteDB, batch.SqliteDefaultStartID)
@@ -171,7 +171,7 @@ var QueryTestObjectsCmd = &cobra.Command{
 	Use:     "query-test-objects <object>",
 	Short:   "query the specified test objects",
 	Long:    "query the specified test objects, the object type is: asset, staker, operator and AVS",
-	Example: "imuast-tool query-test-objects staker --home .",
+	Example: "imuachain-test-tool query-test-objects staker --home .",
 	Args:    cobra.ExactArgs(1),
 	Run: func(_ *cobra.Command, args []string) {
 		var err error
@@ -229,7 +229,7 @@ var QueryTxRecordCmd = &cobra.Command{
 		"1: pending\r\n" +
 		"2: OnChainButFailed\r\n" +
 		"3: OnChainAndSuccessful",
-	Example: "imuast-tool query-tx-record depositLST 1 1 --home .",
+	Example: "imuachain-test-tool query-tx-record depositLST 1 1 --home .",
 	Args:    cobra.ExactArgs(3),
 	Run: func(_ *cobra.Command, args []string) {
 		batchID, err := strconv.ParseUint(args[1], 10, 32)

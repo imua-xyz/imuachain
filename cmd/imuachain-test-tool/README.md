@@ -1,4 +1,4 @@
-# imua-test-tool
+# imuachain-test-tool
 
 This is a custom tool designed to batch-send test transactions to the Imuachain chain. It can be used for stress testing
 or routine automated testing of the Imuachain chain.
@@ -59,13 +59,13 @@ A local node needs to be started through `local_node.sh` before testing.
     Step 1: Initialize the configuration file in current directory
 
     ```shell
-    imua-test-tool init --home
+    imuachain-test-tool init --home
     ```
 
     Step 2: Start the test tool
 
     ```shell
-    imua-test-tool start --home .
+    imuachain-test-tool start --home .
     ```
 
 2. manual testing:
@@ -73,25 +73,25 @@ A local node needs to be started through `local_node.sh` before testing.
     Step 1: Initialize the configuration file in current directory
 
     ```shell
-    imua-test-tool init --home
+    imuachain-test-tool init --home
     ```
 
     Step 2: Prepare test environment
 
     ```shell
-     imua-test-tool prepare --home .
+     imuachain-test-tool prepare --home .
     ```
 
     Step 3: Run batch tests
 
     ```shell
-    imua-test-tool batch-test depositLST --home .
+    imuachain-test-tool batch-test depositLST --home .
     ```
 
 We can query transactions for a specific batch and status using the following command, either during or after the test:
 
 ```shell
-imua-test-tool query-tx-record <msgType> <batch-id> <status>
+imuachain-test-tool query-tx-record <msgType> <batch-id> <status>
 ```
 
 ## go binding generation
