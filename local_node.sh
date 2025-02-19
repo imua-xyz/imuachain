@@ -229,21 +229,23 @@ EOF
 	# generate oracle_feeder.yaml file
 	oracle_feeder_content=$(
 		cat <<EOF
-sources:
-  - chainlink
 tokens:
-  - ETHUSDT
-  - WSTETHUSDT
+  - token: ETHUSDT
+    sources: chainlink
+  - token: NSTETH
+    sources: beaconchain
+  - token: WSTETH
+    sources: chainlink
 sender:
-  mnemonic: ""
   path: $HOMEDIR/config
 exocore:
   chainid: $CHAINID
   appName: exocore
-  rpc: 127.0.0.1:9090
-  ws:
-    addr: !!str ws://127.0.0.1:26657
-    endpoint: /websocket
+  grpc: 127.0.0.1:9090
+  ws: !!str ws://127.0.0.1:26657/websocket
+  rpc: !!str http://127.0.0.1:26657
+debugger:
+  grpc: !!str :50051
 EOF
 	)
 
