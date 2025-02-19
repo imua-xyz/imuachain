@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package imuachain.delegation.v1;
 
+import "gogoproto/gogo.proto";
 import "imuachain/delegation/v1/query.proto";
 import "imuachain/delegation/v1/tx.proto";
-import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
 

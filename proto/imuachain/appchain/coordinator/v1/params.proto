@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package imuachain.appchain.coordinator.v1;
 
-import "imuachain/epochs/v1/epochs.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "ibc/lightclients/tendermint/v1/tendermint.proto";
+import "imuachain/epochs/v1/epochs.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/appchain/coordinator/types";
 

@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package imuachain.oracle.v1;
 
+import "gogoproto/gogo.proto";
 import "imuachain/oracle/v1/index_recent_msg.proto";
 import "imuachain/oracle/v1/index_recent_params.proto";
 import "imuachain/oracle/v1/native_token.proto";
@@ -11,7 +12,6 @@ import "imuachain/oracle/v1/recent_msg.proto";
 import "imuachain/oracle/v1/recent_params.proto";
 import "imuachain/oracle/v1/slashing.proto";
 import "imuachain/oracle/v1/validator_update_block.proto";
-import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 

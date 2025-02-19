@@ -2,9 +2,9 @@ syntax = "proto3";
 package imuachain.feedistribution.v1;
 
 import "amino/amino.proto";
+import "gogoproto/gogo.proto";
 import "imuachain/feedistribution/v1/distribution.proto";
 import "imuachain/feedistribution/v1/params.proto";
-import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 

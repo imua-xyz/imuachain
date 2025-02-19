@@ -2,9 +2,9 @@ syntax = "proto3";
 package imuachain.avs.v1;
 
 import "cosmos_proto/cosmos.proto";
-import "imuachain/avs/v1/tx.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/avs/v1/tx.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/avs/types";
 

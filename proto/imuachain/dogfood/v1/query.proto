@@ -4,10 +4,10 @@ package imuachain.dogfood.v1;
 
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
-import "imuachain/dogfood/v1/dogfood.proto";
-import "imuachain/dogfood/v1/params.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/dogfood/v1/dogfood.proto";
+import "imuachain/dogfood/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/dogfood/types";
 

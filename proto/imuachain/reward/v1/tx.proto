@@ -4,8 +4,8 @@ package imuachain.reward.v1;
 
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
-import "imuachain/reward/v1/params.proto";
 import "gogoproto/gogo.proto";
+import "imuachain/reward/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/reward/types";
 

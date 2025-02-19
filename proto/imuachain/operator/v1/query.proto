@@ -5,10 +5,10 @@ import "amino/amino.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
 import "cosmos_proto/cosmos.proto";
-import "imuachain/operator/v1/tx.proto";
-import "imuachain/operator/v1/validator.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/operator/v1/tx.proto";
+import "imuachain/operator/v1/validator.proto";
 import "tendermint/crypto/keys.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/operator/types";

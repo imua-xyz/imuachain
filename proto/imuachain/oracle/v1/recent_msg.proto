@@ -1,8 +1,8 @@
 syntax = "proto3";
 package imuachain.oracle.v1;
 
-import "imuachain/oracle/v1/price.proto";
 import "gogoproto/gogo.proto";
+import "imuachain/oracle/v1/price.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 

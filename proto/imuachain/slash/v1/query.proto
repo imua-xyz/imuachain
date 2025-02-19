@@ -1,8 +1,8 @@
 syntax = "proto3";
 package imuachain.slash.v1;
 
-import "imuachain/slash/v1/params.proto";
 import "google/api/annotations.proto";
+import "imuachain/slash/v1/params.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/imua-xyz/imuachain/x/slash/types";

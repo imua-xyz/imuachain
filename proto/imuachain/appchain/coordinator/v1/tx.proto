@@ -4,9 +4,9 @@ package imuachain.appchain.coordinator.v1;
 
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
-import "imuachain/appchain/common/v1/common.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/appchain/common/v1/common.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/appchain/coordinator/types";
 
