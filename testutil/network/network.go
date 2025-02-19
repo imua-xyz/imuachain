@@ -498,14 +498,17 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		sdk.NewCoin(cfg.NativeDenom, cfg.AccountTokens),
 	)
 	gateWayAddressStr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
-	gateWayAddr, _ := sdk.AccAddressFromBech32(gateWayAddressStr)
+	gateWayAddr, err := sdk.AccAddressFromBech32(gateWayAddressStr)
+	if err != nil {
+		return nil, err
+	}
 	genBalances = append(genBalances, banktypes.Balance{Address: gateWayAddressStr, Coins: balances.Sort()})
 	genAccounts = append(genAccounts, &evmostypes.EthAccount{
 		BaseAccount: authtypes.NewBaseAccount(gateWayAddr, nil, 0, 0),
 		CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
 	})
 
-	err := initGenFiles(cfg, genAccounts, genBalances, genFiles, network.Validators, commissionRate)
+	err = initGenFiles(cfg, genAccounts, genBalances, genFiles, network.Validators, commissionRate)
 	if err != nil {
 		return nil, err
 	}
