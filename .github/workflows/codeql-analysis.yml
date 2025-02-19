@@ -17,6 +17,7 @@ permissions:
   security-events: write
 
 on:
+  merge_group:
   push:
     branches: [develop, main, master]
   pull_request:

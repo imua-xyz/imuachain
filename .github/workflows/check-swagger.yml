@@ -1,6 +1,7 @@
 name: Check Proto Swagger Generation
 
 on:
+  merge_group:
   pull_request:
   push:
     branches:

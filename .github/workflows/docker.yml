@@ -1,5 +1,6 @@
 name: Docker build in root directory
 on:
+  merge_group:
   pull_request:
   push:
     branches:

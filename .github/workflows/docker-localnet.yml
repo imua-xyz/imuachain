@@ -1,5 +1,6 @@
 name: Docker build for localnet
 on:
+  merge_group:
   pull_request:
   push:
     branches:

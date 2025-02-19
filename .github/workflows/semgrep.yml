@@ -2,6 +2,7 @@ name: Semgrep
 permissions:
   contents: read
 on:
+  merge_group:
   # Scan changed files in PRs, block on new issues only (existing issues ignored)
   pull_request: {}
   push:
