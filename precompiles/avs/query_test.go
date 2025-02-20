@@ -528,7 +528,6 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 				}
 			},
 			func(bz []byte) {
-
 				result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetTaskInfo, bz)
 				s.Require().NoError(err)
 				taskInfo := result[0].(struct {
@@ -681,7 +680,6 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
 	OperatorAddress1 := "exo15zuxnywxyx9ndsw3n49za84secmqd66gk3x5zl"
 	OperatorAddress2 := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
 	setUp := func() {
-
 		info1 := &avstype.TaskResultInfo{
 			TaskContractAddress: taskAddress,
 			OperatorAddress:     OperatorAddress1,
@@ -739,7 +737,6 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
 				}
 			},
 			func(bz []byte) {
-
 				result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetOperatorTaskResponseList, bz)
 				s.Require().NoError(err)
 				resInfo := result[0].([]struct {
@@ -785,7 +782,6 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponse() {
 	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 	OperatorAddress := "exo15zuxnywxyx9ndsw3n49za84secmqd66gk3x5zl"
 	setUp := func() {
-
 		info := &avstype.TaskResultInfo{
 			TaskContractAddress: taskAddress,
 			OperatorAddress:     OperatorAddress,
@@ -810,7 +806,6 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponse() {
 				}
 			},
 			func(bz []byte) {
-
 				result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetOperatorTaskResponse, bz)
 				s.Require().NoError(err)
 				resInfo := result[0].(struct {

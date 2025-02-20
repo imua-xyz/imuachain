@@ -85,6 +85,7 @@ func (suite *AVSManagerPrecompileSuite) TestIsTransaction() {
 		})
 	}
 }
+
 func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
 	// Default variables used during tests.
 	gas := uint64(2_000)

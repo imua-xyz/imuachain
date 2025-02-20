@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"math/big"
 	"strconv"
+
+	sdkmath "cosmossdk.io/math"
 
 	types "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -64,5 +65,4 @@ func (suite *AVSTestSuite) TestTaskActualThreshold() {
 	suite.True(param <= 100)
 	expectThreshold := sdkmath.LegacyNewDecFromBigInt(new(big.Int).SetUint64(param))
 	suite.True(actualThreshold.GTE(expectThreshold))
-
 }

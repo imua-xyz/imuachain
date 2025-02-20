@@ -455,7 +455,6 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 	err = k.SetTaskChallengedInfo(ctx, params.TaskID, params.CallerAddress.String(), params.TaskContractAddress)
 	if err != nil {
 		return err
-
 	}
 
 	taskInfo.ActualThreshold = strconv.Itoa(int(params.ActualThreshold))

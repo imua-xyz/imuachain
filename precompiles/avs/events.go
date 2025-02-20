@@ -274,7 +274,6 @@ func (p Precompile) EmitTaskSubmittedByOperator(ctx sdk.Context, stateDB vm.Stat
 	// Prepare the event data:sender,TaskResponse, BlsSignature, Phase
 	arguments := abi.Arguments{event.Inputs[2], event.Inputs[3], event.Inputs[4], event.Inputs[5]}
 	packed, err := arguments.Pack(common.Address(params.CallerAddress), params.TaskResponse, params.BlsSignature, uint8(params.Phase))
-
 	if err != nil {
 		return err
 	}
