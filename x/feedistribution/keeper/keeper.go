@@ -101,7 +101,7 @@ func (k Keeper) GetFeePool(ctx sdk.Context) (feePool *types.FeePool) {
 // get accumulated commission for a validator
 func (k Keeper) GetValidatorAccumulatedCommission(ctx sdk.Context, val sdk.ValAddress) (commission types.ValidatorAccumulatedCommission) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetValidatorAccumulatedCommissionKey(val))
+	b := store.Get(types.GetOperatorAccumulatedCommissionKey(val))
 	if b == nil {
 		return types.ValidatorAccumulatedCommission{}
 	}
@@ -125,15 +125,15 @@ func (k Keeper) GetAllValidatorData(ctx sdk.Context) (map[string]interface{}, er
 		value := iterator.Value()
 
 		switch {
-		case bytes.HasPrefix(key, types.GetValidatorAccumulatedCommissionKey(sdk.ValAddress{})):
+		case bytes.HasPrefix(key, types.GetOperatorAccumulatedCommissionKey(sdk.ValAddress{})):
 			if err := k.processValidatorAccumulatedCommission(key, value, &commissions); err != nil {
 				return nil, err
 			}
-		case bytes.HasPrefix(key, types.GetValidatorCurrentRewardsKey(sdk.ValAddress{})):
+		case bytes.HasPrefix(key, types.GetOperatorCurrentRewardsKey(sdk.ValAddress{})):
 			if err := k.processValidatorCurrentRewards(key, value, &currentList); err != nil {
 				return nil, err
 			}
-		case bytes.HasPrefix(key, types.GetValidatorOutstandingRewardsKey(sdk.ValAddress{})):
+		case bytes.HasPrefix(key, types.GetOperatorOutstandingRewardsKey(sdk.ValAddress{})):
 			if err := k.processValidatorOutstandingRewards(key, value, &outList); err != nil {
 				return nil, err
 			}
@@ -162,7 +162,7 @@ func (k Keeper) processValidatorAccumulatedCommission(key, value []byte, commiss
 	if err := k.cdc.Unmarshal(value, &commission); err != nil {
 		return err
 	}
-	valAddrKey := bytes.TrimPrefix(key, types.GetValidatorAccumulatedCommissionKey(sdk.ValAddress{}))
+	valAddrKey := bytes.TrimPrefix(key, types.GetOperatorAccumulatedCommissionKey(sdk.ValAddress{}))
 	valAddr := sdk.ValAddress(valAddrKey[1:])
 	*commissions = append(*commissions, types.ValidatorAccumulatedCommissions{
 		ValAddr:    sdk.AccAddress(valAddr).String(),
@@ -177,7 +177,7 @@ func (k Keeper) processValidatorCurrentRewards(key, value []byte, currentList *[
 	if err := k.cdc.Unmarshal(value, &rewards); err != nil {
 		return err
 	}
-	valAddrKey := bytes.TrimPrefix(key, types.GetValidatorCurrentRewardsKey(sdk.ValAddress{}))
+	valAddrKey := bytes.TrimPrefix(key, types.GetOperatorCurrentRewardsKey(sdk.ValAddress{}))
 	valAddr := sdk.ValAddress(valAddrKey[1:])
 	*currentList = append(*currentList, types.ValidatorCurrentRewardsList{
 		ValAddr:        sdk.AccAddress(valAddr).String(),
@@ -192,7 +192,7 @@ func (k Keeper) processValidatorOutstandingRewards(key, value []byte, outList *[
 	if err := k.cdc.Unmarshal(value, &outstandingRewards); err != nil {
 		return err
 	}
-	valAddrKey := bytes.TrimPrefix(key, types.GetValidatorOutstandingRewardsKey(sdk.ValAddress{}))
+	valAddrKey := bytes.TrimPrefix(key, types.GetOperatorOutstandingRewardsKey(sdk.ValAddress{}))
 	valAddr := sdk.ValAddress(valAddrKey[1:])
 	if len(valAddr) == 0 {
 		return fmt.Errorf("failed to parse validator address from valAddrKey")
@@ -230,13 +230,13 @@ func (k Keeper) SetValidatorAccumulatedCommission(ctx sdk.Context, val sdk.ValAd
 		bz = k.cdc.MustMarshal(&commission)
 	}
 
-	store.Set(types.GetValidatorAccumulatedCommissionKey(val), bz)
+	store.Set(types.GetOperatorAccumulatedCommissionKey(val), bz)
 }
 
 // get current rewards for a validator
 func (k Keeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.ValAddress) (rewards types.ValidatorCurrentRewards) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetValidatorCurrentRewardsKey(val))
+	b := store.Get(types.GetOperatorCurrentRewardsKey(val))
 	k.cdc.MustUnmarshal(b, &rewards)
 	return
 }
@@ -245,13 +245,13 @@ func (k Keeper) GetValidatorCurrentRewards(ctx sdk.Context, val sdk.ValAddress) 
 func (k Keeper) SetValidatorCurrentRewards(ctx sdk.Context, val sdk.ValAddress, rewards types.ValidatorCurrentRewards) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshal(&rewards)
-	store.Set(types.GetValidatorCurrentRewardsKey(val), b)
+	store.Set(types.GetOperatorCurrentRewardsKey(val), b)
 }
 
 // get validator outstanding rewards
 func (k Keeper) GetValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddress) (rewards types.ValidatorOutstandingRewards) {
 	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.GetValidatorOutstandingRewardsKey(val))
+	bz := store.Get(types.GetOperatorOutstandingRewardsKey(val))
 	k.cdc.MustUnmarshal(bz, &rewards)
 	return
 }
@@ -260,7 +260,7 @@ func (k Keeper) GetValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddre
 func (k Keeper) SetValidatorOutstandingRewards(ctx sdk.Context, val sdk.ValAddress, rewards types.ValidatorOutstandingRewards) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshal(&rewards)
-	store.Set(types.GetValidatorOutstandingRewardsKey(val), b)
+	store.Set(types.GetOperatorOutstandingRewardsKey(val), b)
 }
 
 // set the reward to delegator
