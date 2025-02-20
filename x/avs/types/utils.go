@@ -25,7 +25,7 @@ type TaskInfoParams struct {
 	TaskResponsePeriod    uint64         `json:"task_response_period"`
 	TaskStatisticalPeriod uint64         `json:"task_statistical_period"`
 	TaskChallengePeriod   uint64         `json:"task_challenge_period"`
-	ThresholdPercentage   uint64         `json:"threshold_percentage"`
+	ThresholdPercentage   uint8          `json:"threshold_percentage"`
 	StartingEpoch         uint64         `json:"starting_epoch"`
 	OperatorAddress       sdk.AccAddress `json:"operator_address"`
 	TaskResponseHash      string         `json:"task_response_hash"`
@@ -40,7 +40,7 @@ type TaskInfoParams struct {
 }
 type BlsParams struct {
 	OperatorAddress               sdk.AccAddress
-	Name                          string
+	AvsAddress                    common.Address
 	PubKey                        []byte
 	PubkeyRegistrationSignature   []byte
 	PubkeyRegistrationMessageHash []byte
@@ -70,12 +70,13 @@ const (
 )
 
 type ChallengeParams struct {
-	TaskContractAddress common.Address `json:"task_contract_address"`
-	TaskHash            []byte         `json:"hash"`
-	TaskID              uint64         `json:"task_id"`
-	OperatorAddress     sdk.AccAddress `json:"operator_address"`
-	TaskResponseHash    []byte         `json:"task_response_hash"`
-	CallerAddress       sdk.AccAddress `json:"caller_address"`
+	TaskContractAddress     common.Address   `json:"task_contract_address"`
+	TaskID                  uint64           `json:"task_id"`
+	CallerAddress           sdk.AccAddress   `json:"caller_address"`
+	ActualThreshold         uint8            `json:"actual_threshold"`
+	IsExpected              bool             `json:"is_expected"`
+	EligibleRewardOperators []common.Address `json:"eligible_reward_operators"`
+	EligibleSlashOperators  []common.Address `json:"eligible_slash_operators"`
 }
 
 type TaskResultParams struct {
@@ -96,4 +97,15 @@ func ValidatePhase(phase Phase) error {
 	default:
 		return fmt.Errorf("invalid phase value: %d", phase)
 	}
+}
+
+func AddressToString(addresses []common.Address) []string {
+	if len(addresses) == 0 {
+		return nil
+	}
+	result := make([]string, len(addresses))
+	for i, address := range addresses {
+		result[i] = address.String()
+	}
+	return result
 }

@@ -26,15 +26,15 @@ func (suite *AVSTestSuite) TestAVS() {
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
-	assetID := suite.AssetIDs
+	assetIDs := suite.AssetIDs
 	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 
 	avs := &types.AVSInfo{
 		Name:                avsName,
 		AvsAddress:          avsAddress.String(),
-		SlashAddr:           utiltx.GenerateAddress().String(),
-		AvsOwnerAddress:     avsOwnerAddress,
-		AssetIDs:            assetID,
+		SlashAddress:        utiltx.GenerateAddress().String(),
+		AvsOwnerAddresses:   avsOwnerAddress,
+		AssetIDs:            assetIDs,
 		AvsUnbondingPeriod:  2,
 		MinSelfDelegation:   10,
 		EpochIdentifier:     epochstypes.DayEpochID,
@@ -43,8 +43,8 @@ func (suite *AVSTestSuite) TestAVS() {
 		MinTotalStakeAmount: 1000,
 		AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 		AvsReward:           sdk.MustNewDecFromStr("0.002"),
-		TaskAddr:            sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
-		WhitelistAddress:    []string{operatorAddress},
+		TaskAddress:         sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		WhitelistAddresses:  []string{operatorAddress},
 	}
 
 	err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
@@ -81,19 +81,19 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
-	assetID := suite.AssetIDs
+	assetIDs := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
-		AvsName:            avsName,
-		AvsAddress:         common.HexToAddress(avsAddres),
-		Action:             avstypes.RegisterAction,
-		RewardContractAddr: common.HexToAddress(rewardAddress),
-		AvsOwnerAddress:    avsOwnerAddress,
-		AssetID:            assetID,
-		MinSelfDelegation:  uint64(10),
-		UnbondingPeriod:    uint64(2),
-		SlashContractAddr:  common.HexToAddress(slashAddress),
-		EpochIdentifier:    epochstypes.DayEpochID,
+		AvsName:               avsName,
+		AvsAddress:            common.HexToAddress(avsAddres),
+		Action:                avstypes.RegisterAction,
+		RewardContractAddress: common.HexToAddress(rewardAddress),
+		AvsOwnerAddresses:     avsOwnerAddress,
+		AssetIDs:              assetIDs,
+		MinSelfDelegation:     uint64(10),
+		UnbondingPeriod:       uint64(2),
+		SlashContractAddress:  common.HexToAddress(slashAddress),
+		EpochIdentifier:       epochstypes.DayEpochID,
 	}
 
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
@@ -117,18 +117,18 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
-	assetID := suite.AssetIDs
+	assetIDs := suite.AssetIDs
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
-		AvsName:           avsName,
-		AvsAddress:        common.HexToAddress(avsAddress),
-		Action:            avstypes.DeRegisterAction,
-		AvsOwnerAddress:   avsOwnerAddress,
-		AssetID:           assetID,
-		MinSelfDelegation: uint64(10),
-		UnbondingPeriod:   uint64(2),
-		SlashContractAddr: common.HexToAddress(slashAddress),
-		EpochIdentifier:   epochstypes.DayEpochID,
+		AvsName:              avsName,
+		AvsAddress:           common.HexToAddress(avsAddress),
+		Action:               avstypes.DeRegisterAction,
+		AvsOwnerAddresses:    avsOwnerAddress,
+		AssetIDs:             assetIDs,
+		MinSelfDelegation:    uint64(10),
+		UnbondingPeriod:      uint64(2),
+		SlashContractAddress: common.HexToAddress(slashAddress),
+		EpochIdentifier:      epochstypes.DayEpochID,
 	}
 
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
@@ -200,4 +200,12 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	suite.NoError(err)
 	err = suite.App.AVSManagerKeeper.OperatorOptAction(suite.Ctx, operatorParams)
 	suite.NoError(err)
+}
+
+func (suite *AVSTestSuite) TestAddressSwitch() {
+	addr := common.HexToAddress("0x8dF46478a83Ab2a429979391E9546A12AfF9E33f")
+	var accAddress sdk.AccAddress = addr[:]
+	suite.Equal("im13h6xg79g82e2g2vhjwg7j4r2z2hlncel7zgwsx", accAddress.String())
+	commonAddress := common.Address(accAddress)
+	suite.Equal(common.HexToAddress("0x8dF46478a83Ab2a429979391E9546A12AfF9E33f"), commonAddress)
 }

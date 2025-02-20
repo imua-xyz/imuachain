@@ -116,7 +116,7 @@ func (k Keeper) UpdateParams(
 	err := k.avsKeeper.UpdateAVSInfo(c, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:           c.ChainID(),
 		AvsAddress:        common.HexToAddress(avsAddr),
-		AssetID:           nextParams.AssetIDs,
+		AssetIDs:          nextParams.AssetIDs,
 		UnbondingPeriod:   uint64(nextParams.EpochsUntilUnbonded),
 		MinSelfDelegation: nextParams.MinSelfDelegation.Uint64(),
 		EpochIdentifier:   nextParams.EpochIdentifier,

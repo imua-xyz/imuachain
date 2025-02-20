@@ -84,22 +84,22 @@ func (suite *AVSTestSuite) prepareMulDelegation(operatorAddress sdk.AccAddress, 
 
 func (suite *AVSTestSuite) prepareMulAvs(assetIDs []string) {
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
-		AvsName:             "avs01",
-		Action:              avstypes.RegisterAction,
-		EpochIdentifier:     epochstypes.HourEpochID,
-		AvsAddress:          common.HexToAddress(suite.avsAddr),
-		AssetID:             assetIDs,
-		TaskAddr:            suite.taskAddress,
-		SlashContractAddr:   common.Address{},
-		RewardContractAddr:  common.Address{},
-		MinSelfDelegation:   0,
-		AvsOwnerAddress:     nil,
-		UnbondingPeriod:     7,
-		MinOptInOperators:   3,
-		MinStakeAmount:      2,
-		MinTotalStakeAmount: 2,
-		AvsSlash:            2,
-		AvsReward:           3,
+		AvsName:               "avs01",
+		Action:                avstypes.RegisterAction,
+		EpochIdentifier:       epochstypes.HourEpochID,
+		AvsAddress:            common.HexToAddress(suite.avsAddr),
+		AssetIDs:              assetIDs,
+		TaskAddress:           suite.taskAddress,
+		SlashContractAddress:  common.Address{},
+		RewardContractAddress: common.Address{},
+		MinSelfDelegation:     0,
+		AvsOwnerAddresses:     nil,
+		UnbondingPeriod:       7,
+		MinOptInOperators:     3,
+		MinStakeAmount:        2,
+		MinTotalStakeAmount:   2,
+		AvsSlash:              2,
+		AvsReward:             3,
 	})
 
 	suite.NoError(err)
@@ -129,9 +129,9 @@ func (suite *AVSTestSuite) prepareMulOperatorubkey() {
 		suite.Require().NoError(err)
 		publicKey := privateKey.PublicKey()
 		blsPub := &avstypes.BlsPubKeyInfo{
-			Operator: operatorAddress,
-			PubKey:   publicKey.Marshal(),
-			Name:     "",
+			OperatorAddress: operatorAddress,
+			PubKey:          publicKey.Marshal(),
+			AvsAddress:      suite.avsAddr,
 		}
 		err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 		suite.Require().NoError(err)
@@ -153,7 +153,7 @@ func (suite *AVSTestSuite) prepareMulTaskInfo() {
 		TaskChallengePeriod:   2,
 		ThresholdPercentage:   60,
 		StartingEpoch:         uint64(epoch.CurrentEpoch + 1),
-		ActualThreshold:       0,
+		ActualThreshold:       "33",
 		OptInOperators:        operatorList,
 	}
 	err = suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)

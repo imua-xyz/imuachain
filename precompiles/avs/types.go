@@ -2,233 +2,107 @@ package avs
 
 import (
 	"fmt"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
 	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
-	"golang.org/x/xerrors"
 )
 
-func (p Precompile) GetAVSParamsFromInputs(_ sdk.Context, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
+func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.Address, method *abi.Method, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
 	if len(args) != len(p.ABI.Methods[MethodRegisterAVS].Inputs) {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodRegisterAVS].Inputs), len(args))
+	}
+	var avsPayload Payload
+	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to Payload struct: %s", err)
 	}
 	avsParams := &avstypes.AVSRegisterOrDeregisterParams{}
 	//	we'd better not use evm.Origin but let the precompile caller pass in the sender address,
 	//	since tx.origin has some security issue and might not be supported
 	//	in a long term: https://docs.soliditylang.org/en/latest/security-considerations.html#tx-origin
-	callerAddress, ok := args[0].(common.Address)
-	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+	if !common.IsHexAddress(avsPayload.AVSParams.Sender.String()) {
+		return nil, fmt.Errorf("the contract input parameter sender error,value:%v", avsPayload.AVSParams.Sender)
 	}
-	avsParams.CallerAddress = callerAddress[:]
-	avsName, ok := args[1].(string)
-	if !ok || avsName == "" {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "string", avsName)
+	// The provided sender address should always be equal to the origin address.
+	// In case the contract caller address is the same as the sender address provided,
+	// update the sender address to be equal to the origin address.
+	// Otherwise, if the provided sender address is different from the origin address,
+	// return an error because is a forbidden operation
+	_, err := CheckOriginAndSender(contract, origin, avsPayload.AVSParams.Sender)
+	if err != nil {
+		return nil, err
 	}
-	avsParams.AvsName = avsName
+
+	avsParams.CallerAddress = avsPayload.AVSParams.Sender[:]
+	avsParams.AvsName = avsPayload.AVSParams.AvsName
 	// When creating tasks in AVS, check the minimum requirements,minStakeAmount at least greater than 0
-	minStakeAmount, ok := args[2].(uint64)
-	if !ok || minStakeAmount == 0 {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "uint64", minStakeAmount)
+	if avsPayload.AVSParams.MinStakeAmount == 0 {
+		return nil, fmt.Errorf("the contract input parameter MinStakeAmount error,value:%v", avsPayload.AVSParams.MinStakeAmount)
 	}
-	avsParams.MinStakeAmount = minStakeAmount
+	avsParams.MinStakeAmount = avsPayload.AVSParams.MinStakeAmount
 
-	taskAddr, ok := args[3].(common.Address)
-	if !ok || taskAddr == (common.Address{}) {
-		return nil, xerrors.Errorf(imuacmn.ErrContractInputParamOrType, 3, "common.Address", taskAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.TaskAddress.String()) {
+		return nil, fmt.Errorf("the contract input parameter TaskAddr error,value:%v", avsPayload.AVSParams.TaskAddress)
 	}
-	avsParams.TaskAddr = taskAddr
+	avsParams.TaskAddress = avsPayload.AVSParams.TaskAddress
 
-	slashContractAddr, ok := args[4].(common.Address)
-	if !ok || (slashContractAddr == common.Address{}) {
-		return nil, xerrors.Errorf(imuacmn.ErrContractInputParamOrType, 4, "common.Address", slashContractAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.SlashAddress.String()) {
+		return nil, fmt.Errorf("the contract input parameter SlashAddress error,value:%v", avsPayload.AVSParams.SlashAddress)
 	}
-	avsParams.SlashContractAddr = slashContractAddr
+	avsParams.SlashContractAddress = avsPayload.AVSParams.SlashAddress
 
-	rewardContractAddr, ok := args[5].(common.Address)
-	if !ok || (rewardContractAddr == common.Address{}) {
-		return nil, xerrors.Errorf(imuacmn.ErrContractInputParamOrType, 5, "common.Address", rewardContractAddr)
+	if !common.IsHexAddress(avsPayload.AVSParams.RewardAddress.String()) {
+		return nil, fmt.Errorf("the contract input parameter RewardAddress error,value:%v", avsPayload.AVSParams.RewardAddress)
 	}
-	avsParams.RewardContractAddr = rewardContractAddr
+	avsParams.RewardContractAddress = avsPayload.AVSParams.RewardAddress
 
-	// bech32
-	avsOwnerAddress, ok := args[6].([]common.Address)
-	if !ok || avsOwnerAddress == nil {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 6, "[]common.Address", avsOwnerAddress)
+	if avsPayload.AVSParams.AvsOwnerAddresses == nil {
+		return nil, fmt.Errorf("the contract input parameter AvsOwnerAddresses error,value:%v", avsPayload.AVSParams.AvsOwnerAddresses)
 	}
-	imAddresses := make([]string, len(avsOwnerAddress))
-	for i, addr := range avsOwnerAddress {
-		var accAddr sdk.AccAddress = addr[:]
-		imAddresses[i] = accAddr.String()
+	exoAddresses := make([]string, len(avsPayload.AVSParams.AvsOwnerAddresses))
+	for i, address := range avsPayload.AVSParams.AvsOwnerAddresses {
+		var accAddress sdk.AccAddress = address[:]
+		exoAddresses[i] = accAddress.String()
 	}
-	avsParams.AvsOwnerAddress = imAddresses
-	// bech32
-	whitelistAddress, ok := args[7].([]common.Address)
-	if !ok || whitelistAddress == nil {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 7, "[]common.Address", whitelistAddress)
+	avsParams.AvsOwnerAddresses = exoAddresses
+
+	if avsPayload.AVSParams.WhitelistAddresses == nil {
+		return nil, fmt.Errorf("the contract input parameter WhitelistAddresses error,value:%v", avsPayload.AVSParams.WhitelistAddresses)
 	}
-	imwhiteAddresses := make([]string, len(whitelistAddress))
-	for i, addr := range whitelistAddress {
-		var accAddr sdk.AccAddress = addr[:]
-		imwhiteAddresses[i] = accAddr.String()
+	exoWhiteAddresses := make([]string, len(avsPayload.AVSParams.WhitelistAddresses))
+	for i, address := range avsPayload.AVSParams.WhitelistAddresses {
+		var accAddress sdk.AccAddress = address[:]
+		exoWhiteAddresses[i] = accAddress.String()
 	}
-	avsParams.WhitelistAddress = imwhiteAddresses
+	avsParams.WhitelistAddresses = exoWhiteAddresses
 	// string, since it is the address_id representation
-	assetID, ok := args[8].([]string)
-	if !ok || len(assetID) == 0 {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 8, "[]string", assetID)
+	if avsPayload.AVSParams.AssetIDs == nil {
+		return nil, fmt.Errorf("the contract input parameter AssetIds error,value:%v", avsPayload.AVSParams.AssetIDs)
 	}
-	avsParams.AssetID = assetID
+	avsParams.AssetIDs = avsPayload.AVSParams.AssetIDs
 
-	unbondingPeriod, ok := args[9].(uint64)
-	if !ok || unbondingPeriod == 0 {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 9, "uint64", unbondingPeriod)
+	avsParams.UnbondingPeriod = avsPayload.AVSParams.AvsUnbondingPeriod
+
+	avsParams.MinSelfDelegation = avsPayload.AVSParams.MinSelfDelegation
+
+	if avsPayload.AVSParams.EpochIdentifier == "" {
+		return nil, fmt.Errorf("the contract input parameter EpochIdentifier error,value:%v", avsPayload.AVSParams.EpochIdentifier)
 	}
-	avsParams.UnbondingPeriod = unbondingPeriod
+	avsParams.EpochIdentifier = avsPayload.AVSParams.EpochIdentifier
 
-	minSelfDelegation, ok := args[10].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 10, "uint64", minSelfDelegation)
-	}
-	avsParams.MinSelfDelegation = minSelfDelegation
+	avsParams.MinOptInOperators = avsPayload.AVSParams.MiniOptInOperators
 
-	epochIdentifier, ok := args[11].(string)
-	if !ok || epochIdentifier == "" {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 11, "string", epochIdentifier)
-	}
-	avsParams.EpochIdentifier = epochIdentifier
+	avsParams.MinTotalStakeAmount = avsPayload.AVSParams.MinTotalStakeAmount
 
-	// The parameters below are used when creating tasks, to ensure that the minimum criteria are met by the set
-	// of operators.
+	avsParams.AvsReward = avsPayload.AVSParams.AvsRewardProportion
 
-	taskParam, ok := args[12].([]uint64)
-	if !ok || taskParam == nil || len(taskParam) != 4 {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 12, "[]string", taskParam)
-	}
-	minOptInOperators := taskParam[0]
-	avsParams.MinOptInOperators = minOptInOperators
-
-	minTotalStakeAmount := taskParam[1]
-	avsParams.MinTotalStakeAmount = minTotalStakeAmount
-
-	avsReward := taskParam[2]
-	avsParams.AvsReward = avsReward
-
-	avsSlash := taskParam[3]
-	avsParams.AvsSlash = avsSlash
-
-	return avsParams, nil
-}
-
-func (p Precompile) GetAVSParamsFromUpdateInputs(_ sdk.Context, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
-	if len(args) != len(p.ABI.Methods[MethodRegisterAVS].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodRegisterAVS].Inputs), len(args))
-	}
-	avsParams := &avstypes.AVSRegisterOrDeregisterParams{}
-	callerAddress, ok := args[0].(common.Address)
-	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
-	}
-	avsParams.CallerAddress = callerAddress[:]
-
-	avsName, ok := args[1].(string)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "string", avsName)
-	}
-	avsParams.AvsName = avsName
-	// When creating tasks in AVS, check the minimum requirements,minStakeAmount at least greater than 0
-	minStakeAmount, ok := args[2].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "uint64", minStakeAmount)
-	}
-	avsParams.MinStakeAmount = minStakeAmount
-
-	taskAddr, ok := args[3].(common.Address)
-	if !ok || taskAddr == (common.Address{}) {
-		return nil, xerrors.Errorf(imuacmn.ErrContractInputParamOrType, 3, "common.Address", taskAddr)
-	}
-	avsParams.TaskAddr = taskAddr
-
-	slashContractAddr, ok := args[4].(common.Address)
-	if !ok {
-		return nil, xerrors.Errorf(imuacmn.ErrContractInputParamOrType, 4, "common.Address", slashContractAddr)
-	}
-	avsParams.SlashContractAddr = slashContractAddr
-
-	rewardContractAddr, ok := args[5].(common.Address)
-	if !ok {
-		return nil, xerrors.Errorf(imuacmn.ErrContractInputParamOrType, 5, "common.Address", rewardContractAddr)
-	}
-	avsParams.RewardContractAddr = rewardContractAddr
-
-	// bech32
-	avsOwnerAddress, ok := args[6].([]common.Address)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 6, "[]common.Address", avsOwnerAddress)
-	}
-	imAddresses := make([]string, len(avsOwnerAddress))
-	for i, addr := range avsOwnerAddress {
-		var accAddr sdk.AccAddress = addr[:]
-		imAddresses[i] = accAddr.String()
-	}
-	avsParams.AvsOwnerAddress = imAddresses
-	// bech32
-	whitelistAddress, ok := args[7].([]common.Address)
-	if !ok || whitelistAddress == nil {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 7, "[]common.Address", whitelistAddress)
-	}
-	imWhiteAddresses := make([]string, len(whitelistAddress))
-	for i, addr := range whitelistAddress {
-		var accAddr sdk.AccAddress = addr[:]
-		imWhiteAddresses[i] = accAddr.String()
-	}
-	avsParams.WhitelistAddress = imWhiteAddresses
-	// string, since it is the address_id representation
-	assetID, ok := args[8].([]string)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 8, "[]string", assetID)
-	}
-	avsParams.AssetID = assetID
-
-	unbondingPeriod, ok := args[9].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 9, "uint64", unbondingPeriod)
-	}
-	avsParams.UnbondingPeriod = unbondingPeriod
-
-	minSelfDelegation, ok := args[10].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 10, "uint64", minSelfDelegation)
-	}
-	avsParams.MinSelfDelegation = minSelfDelegation
-
-	epochIdentifier, ok := args[11].(string)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 11, "string", epochIdentifier)
-	}
-	avsParams.EpochIdentifier = epochIdentifier
-
-	// The parameters below are used when creating tasks, to ensure that the minimum criteria are met by the set
-	// of operators.
-
-	taskParam, ok := args[12].([]uint64)
-	if !ok || taskParam == nil || len(taskParam) != 4 {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 12, "[]string", taskParam)
-	}
-	minOptInOperators := taskParam[0]
-	avsParams.MinOptInOperators = minOptInOperators
-
-	minTotalStakeAmount := taskParam[1]
-	avsParams.MinTotalStakeAmount = minTotalStakeAmount
-
-	avsReward := taskParam[2]
-	avsParams.AvsReward = avsReward
-
-	avsSlash := taskParam[3]
-	avsParams.AvsSlash = avsSlash
+	avsParams.AvsSlash = avsPayload.AVSParams.AvsSlashProportion
 
 	return avsParams, nil
 }
@@ -267,8 +141,8 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	}
 	taskParams.TaskChallengePeriod = taskChallengePeriod
 
-	thresholdPercentage, ok := args[5].(uint64)
-	if !ok {
+	thresholdPercentage, ok := args[5].(uint8)
+	if !ok || thresholdPercentage > 100 {
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 5, "uint64", thresholdPercentage)
 	}
 	taskParams.ThresholdPercentage = thresholdPercentage
@@ -279,4 +153,100 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	}
 	taskParams.TaskStatisticalPeriod = taskStatisticalPeriod
 	return taskParams, nil
+}
+
+// Params is a utility structure used to wrap args received by the
+// Solidity interface of the avs function.
+type Params struct {
+	Sender              common.Address   `abi:"sender"`              // the sender of the  transaction
+	AvsName             string           `abi:"avsName"`             // the name of AVS
+	MinStakeAmount      uint64           `abi:"minStakeAmount"`      // the minimum amount of funds staked by each operator
+	TaskAddress         common.Address   `abi:"taskAddress"`         // the task address of AVS
+	SlashAddress        common.Address   `abi:"slashAddress"`        // the slash address of AVS
+	RewardAddress       common.Address   `abi:"rewardAddress"`       // the reward address of AVS
+	AvsOwnerAddresses   []common.Address `abi:"avsOwnerAddresses"`   // the owners who have permission for AVS
+	WhitelistAddresses  []common.Address `abi:"whitelistAddresses"`  // the whitelist address of the operator
+	AssetIDs            []string         `abi:"assetIDs"`            // the basic asset information of AVS
+	AvsUnbondingPeriod  uint64           `abi:"avsUnbondingPeriod"`  // the unbonding duration of AVS
+	MinSelfDelegation   uint64           `abi:"minSelfDelegation"`   // the minimum delegation amount for an operator
+	EpochIdentifier     string           `abi:"epochIdentifier"`     // the AVS epoch identifier
+	MiniOptInOperators  uint64           `abi:"miniOptInOperators"`  // the minimum number of opt-in operators
+	MinTotalStakeAmount uint64           `abi:"minTotalStakeAmount"` // the minimum total amount of stake by all operators
+	AvsRewardProportion uint64           `abi:"avsRewardProportion"` // the proportion of reward for AVS
+	AvsSlashProportion  uint64           `abi:"avsSlashProportion"`  // the proportion of slash for AVS
+}
+
+// Payload is the same as the expected input of the avs function in the Solidity interface.
+type Payload struct {
+	AVSParams Params
+}
+
+// ParseAVStData parses the packet data from the outpost precompiled contract.
+func ParseAVStData(method *abi.Method, args []interface{}) (Params, error) {
+	if len(args) != 1 {
+		return Params{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
+	}
+
+	var avsPayload Payload
+	if err := method.Inputs.Copy(&avsPayload, args); err != nil {
+		return Params{}, fmt.Errorf("error while unpacking args to Payload struct: %s", err)
+	}
+	return avsPayload.AVSParams, nil
+}
+
+// CheckOriginAndSender ensures the correct sender is being used.
+func CheckOriginAndSender(contract *vm.Contract, origin common.Address, sender common.Address) (common.Address, error) {
+	if contract.CallerAddress == sender {
+		return origin, nil
+	} else if origin != sender {
+		return common.Address{}, fmt.Errorf(imuacmn.ErrDifferentOriginFromSender, origin.String(), sender.String())
+	}
+	return sender, nil
+}
+
+type TaskInfo struct {
+	TaskContractAddress     common.Address
+	Name                    string
+	Hash                    []byte
+	TaskID                  uint64
+	TaskResponsePeriod      uint64
+	TaskStatisticalPeriod   uint64
+	TaskChallengePeriod     uint64
+	ThresholdPercentage     uint8
+	StartingEpoch           uint64
+	ActualThreshold         string
+	OptInOperators          []common.Address
+	SignedOperators         []common.Address
+	NoSignedOperators       []common.Address
+	ErrSignedOperators      []common.Address
+	TaskTotalPower          string
+	OperatorActivePower     []OperatorActivePower
+	IsExpected              bool
+	EligibleRewardOperators []common.Address
+	EligibleSlashOperators  []common.Address
+}
+type OperatorActivePower struct {
+	Operator common.Address
+	Power    *big.Int
+}
+
+type TaskResultInfo struct {
+	OperatorAddress     common.Address
+	TaskResponseHash    string
+	TaskResponse        []byte
+	BlsSignature        []byte
+	TaskContractAddress common.Address
+	TaskID              uint64
+	Phase               uint8
+}
+
+type OperatorResInfo struct {
+	TaskContractAddress common.Address
+	TaskID              uint64
+	OperatorAddress     common.Address
+	TaskResponseHash    string
+	TaskResponse        []byte
+	BlsSignature        []byte
+	Power               *big.Int
+	Phase               uint8
 }

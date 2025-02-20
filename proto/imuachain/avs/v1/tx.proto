@@ -18,14 +18,14 @@ message AVSInfo {
   string avs_address = 2;
   // min_stake_amount is the minimum stake amount required for a task to start
   uint64 min_stake_amount = 3;
-  // task_addr is the address of task as a hex string
-  string task_addr = 4;
-  // slash_addr is the hex address of the slashing contract for the AVS
-  string slash_addr = 5;
-  // reward_addr is the hex address of the reward contract for the AVS
-  string reward_addr = 6;
-  // avs_owner_address are the bech32 addresses of the owners of the avs
-  repeated string avs_owner_address = 7;
+  // task_address is the address of task as a hex string
+  string task_address = 4;
+  // slash_address is the hex address of the slashing contract for the AVS
+  string slash_address = 5;
+  // reward_address is the hex address of the reward contract for the AVS
+  string reward_address = 6;
+  // avs_owner_addresses are the bech32 addresses of the owners of the avs
+  repeated string avs_owner_addresses = 7;
   // asset_ids is a list of asset_ids that the AVS accepts
   repeated string asset_ids = 8 [(gogoproto.customname) = "AssetIDs"];
   // avs_unbonding_period is the number of epochs that an operator must wait to unbond
@@ -54,8 +54,13 @@ message AVSInfo {
   ];
   // asset_reward_commission_epoch_basis is the avs reward distribution based on asset per epoch end.
   map<string, int64> asset_reward_amount_epoch_basis = 18;
-  // whitelist_address are the bech32 addresses ,whitelist address of supported operators
-  repeated string whitelist_address = 19;
+  // whitelist_addresses are the bech32 addresses ,whitelist address of supported operators
+  repeated string whitelist_addresses = 19;
+  // reward_asset_list is a collection of asset bundles rewarded of the task
+  // if the task is successful, the operator will receive the bonus amount
+  // if the task is unsuccessful, the operator will not receive any bonus amount
+  // the bonus amount is calculated by the proportion of the total active power
+  RewardAssetList reward_asset_list = 20;
 }
 
 // Status and proof of each operator
@@ -99,21 +104,21 @@ message TaskInfo {
   uint64 task_statistical_period = 6;
   // challenge period for  task
   uint64 task_challenge_period = 7;
-  // Signature threshold percentage
+  // Signature threshold percentage，less than or equal to 100
   uint64 threshold_percentage = 8;
   // Effective current epoch, accounting for current_epoch + 1
   // and current_epoch is the integer identifier of the epoch module
   uint64 starting_epoch = 9;
 
   // actual_threshold is the Actual threshold
-  uint64 actual_threshold = 10;
-  // opt_in_count when creating a task, the actual opt-in operator counts at this moment
+  string actual_threshold = 10;
+  // opt_in_operators when creating a task, the actual opt-in operators at this moment
   repeated string opt_in_operators = 11;
-  // signed_count is Actual number of signatures already signed
+  // signed_operators is Actual operators of signatures already signed
   repeated string signed_operators = 12;
-  // no_signed_count is the final number of unsigned operators
+  // no_signed_operators is the final  unsigned operators
   repeated string no_signed_operators = 13;
-  // err_signed_count is the number of operators with final incorrect signatures
+  // err_signed_operators is the operators which final incorrect signatures
   repeated string err_signed_operators = 14;
   // task_total_power is the USD value owned by the avs task itself.
   string task_total_power = 15 [
@@ -124,6 +129,35 @@ message TaskInfo {
   ];
   // operator_active_power_list is a power list of operators opt-in to the current task
   OperatorActivePowerList operator_active_power = 16;
+  // is_expected indicates whether the task meets expectations
+  // if is_expected is false, the task is considered unsuccessful
+  // and the operators will not receive any rewards
+  // if is_expected is true, the task is considered successful
+  // and operators who complete the task honestly will be rewarded
+  bool is_expected = 17;
+  // eligible_reward_operators list of operator that are eligible for rewards,the contract deployed by avs provides validation rules
+  // if the operator is eligible for rewards, it will receive rewards based on the proportion of the total staking amount
+  // calculated by the operator's active power and the total power of the task
+  repeated string eligible_reward_operators = 18;
+  // eligible_slash_operators list of operator that are eligible for slash,the contract deployed by avs provides validation rules
+  repeated string eligible_slash_operators = 19;
+}
+
+// RewardAssetList is a collection of asset bundles rewarded of the task
+message RewardAssetList {
+  // reward_asset_list is a collection of asset bundles rewarded of the task.
+  repeated RewardAssetInfo reward_asset_list = 1;
+}
+// RewardAssetInfo is an asset bundle for task rewards
+message RewardAssetInfo {
+  // asset_id is a asset that the AVS support
+  string asset_id = 1;
+  // total_amount is the total amount of the asset.
+  string total_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // OperatorActivePowerList is the power list of operators opt-in to the current task.
@@ -136,8 +170,8 @@ message OperatorActivePowerList {
 
 // OperatorActivePowerInfo is the operator power info.
 message OperatorActivePowerInfo {
-  // operator_addr is the operator  address.
-  string operator_addr = 1;
+  // operator_address is the operator  address.
+  string operator_address = 1;
   // active_power is the USD value owned by the operator itself.
   string active_power = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
@@ -149,10 +183,10 @@ message OperatorActivePowerInfo {
 
 // BlsPubKeyInfo is the task info.
 message BlsPubKeyInfo {
-  // operator address
-  string operator = 1;
-  // the name of public keys
-  string name = 2;
+  // operator_address is the acc address of operator 
+  string operator_address = 1;
+  // avs_address is the address of avs as a hex string
+  string avs_address = 2;
   // the bls public keys of the operator
   bytes pub_key = 3;
 }

@@ -95,10 +95,10 @@ func (gs GenesisState) Validate() error {
 	// Check for duplicated taskID
 	taskNumMap := make(map[string]bool)
 	for _, taskNum := range gs.TaskNums {
-		if !common.IsHexAddress(taskNum.TaskAddr) {
-			return fmt.Errorf("invalid hex address: %s", taskNum.TaskAddr)
+		if !common.IsHexAddress(taskNum.TaskAddress) {
+			return fmt.Errorf("invalid hex address: %s", taskNum.TaskAddress)
 		}
-		taskNumKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskNum.TaskAddr),
+		taskNumKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskNum.TaskAddress),
 			strconv.FormatUint(taskNum.TaskId, 10))
 		if taskNumMap[string(taskNumKey)] {
 			return fmt.Errorf("duplicate task ID %v ", taskNum)
@@ -109,9 +109,9 @@ func (gs GenesisState) Validate() error {
 	// Check for duplicated pubKey
 	pubKeyMap := make(map[string]bool)
 	for _, key := range gs.BlsPubKeys {
-		_, err := sdk.AccAddressFromBech32(key.Operator)
+		_, err := sdk.AccAddressFromBech32(key.OperatorAddress)
 		if err != nil {
-			return fmt.Errorf("invalid operatorAddress address: %s", key.Operator)
+			return fmt.Errorf("invalid operatorAddress address: %s", key.OperatorAddress)
 		}
 		if key.PubKey == nil {
 			return fmt.Errorf("pubKey is nil: %v", key)

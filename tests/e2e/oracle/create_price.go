@@ -408,7 +408,7 @@ func (s *E2ETestSuite) testSlashing() {
 	// validator3 is jailed
 	s.Require().True(resSigningInfo.ValSigningInfo.JailedUntil.After(time.Now()))
 	chainID := avstypes.ChainIDWithoutRevision(s.network.Config.ChainID)
-	avsAddr := avstypes.GenerateAVSAddr(chainID)
+	avsAddr := avstypes.GenerateAVSAddress(chainID)
 	resOperator, err := s.network.QueryOperator().QueryOptInfo(context.Background(), &operatortypes.QueryOptInfoRequest{OperatorAVSAddress: &operatortypes.OperatorAVSAddress{OperatorAddr: s.network.Validators[3].Address.String(), AvsAddress: avsAddr}})
 	s.Require().NoError(err)
 	s.Require().True(resOperator.Jailed)

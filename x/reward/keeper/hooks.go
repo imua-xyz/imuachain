@@ -53,7 +53,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			return
 		}
 		assetID := avsInfo.Info.AssetIDs
-		ownerAddress := avsInfo.Info.AvsOwnerAddress
+		ownerAddress := avsInfo.Info.AvsOwnerAddresses
 
 		for _, operator := range ownerAddress {
 			opAddr, err := sdk.AccAddressFromBech32(operator)

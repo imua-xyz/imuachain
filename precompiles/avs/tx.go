@@ -31,19 +31,20 @@ const (
 // RegisterAVS AVSInfoRegister register the avs related information and change the state in avs keeper module.
 func (p Precompile) RegisterAVS(
 	ctx sdk.Context,
-	_ common.Address,
+	origin common.Address,
 	contract *vm.Contract,
 	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
 	// parse the avs input params first.
-	avsParams, err := p.GetAVSParamsFromInputs(ctx, args)
+	avsParams, err := p.GetAVSParamsFromInputs(contract, origin, method, args)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "parse args error")
 	}
+
 	// verification of the calling address to ensure it is avs contract owner
-	if !slices.Contains(avsParams.AvsOwnerAddress, avsParams.CallerAddress.String()) {
+	if !slices.Contains(avsParams.AvsOwnerAddresses, avsParams.CallerAddress.String()) {
 		return nil, errorsmod.Wrap(err, "not qualified to registerOrDeregister")
 	}
 	// The AVS registration is done by the calling contract.
@@ -83,11 +84,8 @@ func (p Precompile) DeregisterAVS(
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "string", avsName)
 	}
 	avsParams.AvsName = avsName
-
 	avsParams.AvsAddress = contract.CallerAddress
 	avsParams.Action = avstypes.DeRegisterAction
-	// validates that this is owner
-
 	err := p.avsKeeper.UpdateAVSInfo(ctx, avsParams)
 	if err != nil {
 		return nil, err
@@ -100,14 +98,14 @@ func (p Precompile) DeregisterAVS(
 
 func (p Precompile) UpdateAVS(
 	ctx sdk.Context,
-	_ common.Address,
+	origin common.Address,
 	contract *vm.Contract,
 	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
 	// parse the avs input params first.
-	avsParams, err := p.GetAVSParamsFromUpdateInputs(ctx, args)
+	avsParams, err := p.GetAVSParamsFromInputs(contract, origin, method, args)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, "parse args error")
 	}
@@ -119,7 +117,7 @@ func (p Precompile) UpdateAVS(
 		return nil, err
 	}
 	// If avs UpdateAction check CallerAddress
-	if !slices.Contains(previousAVSInfo.Info.AvsOwnerAddress, avsParams.CallerAddress.String()) {
+	if !slices.Contains(previousAVSInfo.Info.AvsOwnerAddresses, avsParams.CallerAddress.String()) {
 		return nil, fmt.Errorf("this caller not qualified to update %s", avsParams.CallerAddress)
 	}
 	err = p.avsKeeper.UpdateAVSInfo(ctx, avsParams)
@@ -192,7 +190,7 @@ func (p Precompile) UnbindOperatorToAVS(
 	return method.Outputs.Pack(true)
 }
 
-// CreateAVSTask Middleware uses imua's default avstask template to create tasks in avstask module.
+// CreateAVSTask Middleware uses imuachain's default avstask template to create tasks in avstask module.
 func (p Precompile) CreateAVSTask(
 	ctx sdk.Context,
 	_ common.Address,
@@ -236,31 +234,42 @@ func (p Precompile) Challenge(
 	}
 	challengeParams.CallerAddress = callerAddress[:]
 
-	taskHash, ok := args[1].([]byte)
+	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "[]byte", taskHash)
-	}
-	challengeParams.TaskHash = taskHash
-
-	taskID, ok := args[2].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "uint64", taskID)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "uint64", args[1])
 	}
 	challengeParams.TaskID = taskID
 
-	taskResponseHash, ok := args[3].([]byte)
+	taskAddress, ok := args[2].(common.Address)
+	if !ok || (taskAddress == common.Address{}) {
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "common.Address", taskAddress)
+	}
+	challengeParams.TaskContractAddress = taskAddress
+
+	actualThreshold, ok := args[3].(uint8)
 	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", taskResponseHash)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "uint8", actualThreshold)
 	}
-	challengeParams.TaskResponseHash = taskResponseHash
+	challengeParams.ActualThreshold = actualThreshold
 
-	operatorAddress, ok := args[4].(common.Address)
-	if !ok || operatorAddress == (common.Address{}) {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "common.Address", operatorAddress)
+	isExpected, ok := args[4].(bool)
+	if !ok {
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "bool", isExpected)
 	}
-	operator := operatorAddress[:]
+	challengeParams.IsExpected = isExpected
 
-	challengeParams.OperatorAddress = operator
+	eligibleRewardOperators, ok := args[5].([]common.Address)
+	if !ok {
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 5, "[]common.Address", eligibleRewardOperators)
+	}
+	challengeParams.EligibleRewardOperators = eligibleRewardOperators
+
+	eligibleSlashOperators, ok := args[6].([]common.Address)
+	if !ok {
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 6, "[]common.Address", eligibleSlashOperators)
+	}
+
+	challengeParams.EligibleSlashOperators = eligibleSlashOperators
 	err := p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
 	if err != nil {
 		return nil, err
@@ -272,7 +281,6 @@ func (p Precompile) Challenge(
 	return method.Outputs.Pack(true)
 }
 
-// RegisterBLSPublicKey
 func (p Precompile) RegisterBLSPublicKey(
 	ctx sdk.Context,
 	_ common.Address,
@@ -290,29 +298,29 @@ func (p Precompile) RegisterBLSPublicKey(
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	blsParams.OperatorAddress = callerAddress[:]
-	name, ok := args[1].(string)
-	if !ok || name == "" {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "string", name)
+	avsAddress, ok := args[1].(common.Address)
+	if !ok || (avsAddress == common.Address{}) {
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
 	}
-	blsParams.Name = name
+	blsParams.AvsAddress = avsAddress
 
-	pubkeyBz, ok := args[2].([]byte)
+	pubKeyBz, ok := args[2].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", pubkeyBz)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", pubKeyBz)
 	}
-	blsParams.PubKey = pubkeyBz
+	blsParams.PubKey = pubKeyBz
 
-	pubkeyRegistrationSignature, ok := args[3].([]byte)
+	pubKeyRegistrationSignature, ok := args[3].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", pubkeyRegistrationSignature)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", pubKeyRegistrationSignature)
 	}
-	blsParams.PubkeyRegistrationSignature = pubkeyRegistrationSignature
+	blsParams.PubkeyRegistrationSignature = pubKeyRegistrationSignature
 
-	pubkeyRegistrationMessageHash, ok := args[4].([]byte)
+	pubKeyRegistrationMessageHash, ok := args[4].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "[]byte", pubkeyRegistrationMessageHash)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "[]byte", pubKeyRegistrationMessageHash)
 	}
-	blsParams.PubkeyRegistrationMessageHash = pubkeyRegistrationMessageHash
+	blsParams.PubkeyRegistrationMessageHash = pubKeyRegistrationMessageHash
 
 	err := p.avsKeeper.RegisterBLSPublicKey(ctx, blsParams)
 	if err != nil {
@@ -367,11 +375,11 @@ func (p Precompile) OperatorSubmitTask(
 	}
 	resultParams.BlsSignature = blsSignature
 
-	taskAddr, ok := args[4].(common.Address)
-	if !ok || (taskAddr == common.Address{}) {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "common.Address", taskAddr)
+	taskAddress, ok := args[4].(common.Address)
+	if !ok || (taskAddress == common.Address{}) {
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "common.Address", taskAddress)
 	}
-	resultParams.TaskContractAddress = taskAddr
+	resultParams.TaskContractAddress = taskAddress
 
 	phase, ok := args[5].(uint8)
 	if !ok {

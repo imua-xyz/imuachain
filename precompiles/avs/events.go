@@ -67,7 +67,7 @@ func (p Precompile) EmitAVSRegistered(ctx sdk.Context, stateDB vm.StateDB, avs *
 
 	// Prepare the event data: sender, avsName
 	arguments := abi.Arguments{event.Inputs[1], event.Inputs[2]}
-	packed, err := arguments.Pack(avs.CallerAddress.String(), avs.AvsName)
+	packed, err := arguments.Pack(common.Address(avs.CallerAddress), avs.AvsName)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (p Precompile) EmitAVSUpdated(ctx sdk.Context, stateDB vm.StateDB, avs *avs
 
 	// Prepare the event data: sender, avsName
 	arguments := abi.Arguments{event.Inputs[1], event.Inputs[2]}
-	packed, err := arguments.Pack(avs.CallerAddress.String(), avs.AvsName)
+	packed, err := arguments.Pack(common.Address(avs.CallerAddress), avs.AvsName)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (p Precompile) EmitAVSDeregistered(ctx sdk.Context, stateDB vm.StateDB, avs
 
 	// Prepare the event data: sender, avsName
 	arguments := abi.Arguments{event.Inputs[1], event.Inputs[2]}
-	packed, err := arguments.Pack(avs.CallerAddress.String(), avs.AvsName)
+	packed, err := arguments.Pack(common.Address(avs.CallerAddress), avs.AvsName)
 	if err != nil {
 		return err
 	}
@@ -154,7 +154,7 @@ func (p Precompile) EmitOperatorJoined(ctx sdk.Context, stateDB vm.StateDB, para
 
 	// Prepare the event data: operatorAddress
 	arguments := abi.Arguments{event.Inputs[1]}
-	packed, err := arguments.Pack(params.OperatorAddress.String())
+	packed, err := arguments.Pack(common.Address(params.OperatorAddress))
 	if err != nil {
 		return err
 	}
@@ -183,7 +183,7 @@ func (p Precompile) EmitOperatorOuted(ctx sdk.Context, stateDB vm.StateDB, param
 
 	// Prepare the event data: operatorAddress
 	arguments := abi.Arguments{event.Inputs[1]}
-	packed, err := arguments.Pack(params.OperatorAddress.String())
+	packed, err := arguments.Pack(common.Address(params.OperatorAddress))
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func (p Precompile) EmitTaskCreated(ctx sdk.Context, stateDB vm.StateDB, task *a
 		event.Inputs[2], event.Inputs[3], event.Inputs[4],
 		event.Inputs[5], event.Inputs[6], event.Inputs[7], event.Inputs[8],
 	}
-	packed, err := arguments.Pack(task.CallerAddress.String(), task.TaskName, task.Hash, task.TaskResponsePeriod, task.TaskChallengePeriod,
+	packed, err := arguments.Pack(common.Address(task.CallerAddress), task.TaskName, task.Hash, task.TaskResponsePeriod, task.TaskChallengePeriod,
 		task.ThresholdPercentage, task.TaskStatisticalPeriod)
 	if err != nil {
 		return err
@@ -238,18 +238,20 @@ func (p Precompile) EmitTaskCreated(ctx sdk.Context, stateDB vm.StateDB, task *a
 func (p Precompile) EmitChallengeInitiated(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.ChallengeParams) error {
 	arguments := p.ABI.Events[EventTypeChallengeInitiated].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypeChallengeInitiated, arguments,
-		params.CallerAddress.String(),
-		params.TaskHash,
 		params.TaskID,
-		params.TaskResponseHash,
-		params.OperatorAddress.String())
+		params.TaskContractAddress,
+		common.Address(params.CallerAddress),
+		params.ActualThreshold,
+		params.IsExpected,
+		params.EligibleRewardOperators,
+		params.EligibleSlashOperators)
 }
 
 func (p Precompile) EmitPublicKeyRegistered(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.BlsParams) error {
 	arguments := p.ABI.Events[EventTypePublicKeyRegistered].Inputs
 	return p.emitEvent(ctx, stateDB, EventTypePublicKeyRegistered, arguments,
-		params.OperatorAddress.String(),
-		params.Name)
+		common.Address(params.OperatorAddress),
+		params.AvsAddress)
 }
 
 func (p Precompile) EmitTaskSubmittedByOperator(ctx sdk.Context, stateDB vm.StateDB, params *avstypes.TaskResultParams) error {
@@ -271,9 +273,7 @@ func (p Precompile) EmitTaskSubmittedByOperator(ctx sdk.Context, stateDB vm.Stat
 	}
 	// Prepare the event data:sender,TaskResponse, BlsSignature, Phase
 	arguments := abi.Arguments{event.Inputs[2], event.Inputs[3], event.Inputs[4], event.Inputs[5]}
-	// #nosec G115
-	// TODO: consider modify define of Phase to uint8
-	packed, err := arguments.Pack(params.CallerAddress.String(), params.TaskResponse, params.BlsSignature, uint8(params.Phase))
+	packed, err := arguments.Pack(common.Address(params.CallerAddress), params.TaskResponse, params.BlsSignature, uint8(params.Phase))
 	if err != nil {
 		return err
 	}

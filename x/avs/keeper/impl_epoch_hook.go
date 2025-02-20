@@ -44,7 +44,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			operatorPowerTotal := sdkmath.LegacyZeroDec()
 			for _, res := range value {
 				// Find signed operators
-				if res.BlsSignature != nil {
+				if res.BlsSignature != nil && res.TaskResponseHash != "" || res.TaskResponse != nil {
 					signedOperatorList = append(signedOperatorList, res.OperatorAddress)
 					if avsAddr == "" {
 						avsInfo := wrapper.keeper.GetAVSInfoByTaskAddress(ctx, res.TaskContractAddress)
@@ -64,7 +64,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 					}
 
 					operatorSelfPower := &types.OperatorActivePowerInfo{
-						OperatorAddr:    res.OperatorAddress,
+						OperatorAddress: res.OperatorAddress,
 						SelfActivePower: power.ActiveUSDValue,
 					}
 					operatorPowers = append(operatorPowers, operatorSelfPower)
@@ -79,6 +79,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			}
 			diff := types.Difference(taskInfo.OptInOperators, signedOperatorList)
 			taskInfo.SignedOperators = signedOperatorList
+			// If a signature is submitted only once, it is counted as NoSignedOperators
 			taskInfo.NoSignedOperators = diff
 			taskInfo.OperatorActivePower = &types.OperatorActivePowerList{OperatorPowerList: operatorPowers}
 			// Calculate actual threshold
@@ -90,12 +91,6 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 				// continue
 			}
 			taskInfo.TaskTotalPower = taskPowerTotal
-
-			if !taskPowerTotal.IsZero() && !operatorPowerTotal.IsZero() {
-				actualThreshold := taskPowerTotal.Quo(operatorPowerTotal).Mul(sdk.NewDec(100))
-				taskInfo.ActualThreshold = actualThreshold.BigInt().Uint64()
-			}
-
 			// Update the taskInfo in the state
 			err = wrapper.keeper.SetTaskInfo(ctx, taskInfo)
 			if err != nil {

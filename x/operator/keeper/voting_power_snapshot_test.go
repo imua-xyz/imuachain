@@ -60,7 +60,7 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 		suite.NoError(err)
 		// opt in the dogfood AVS
 		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
-		dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+		dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 		pubKey := testutiltx.GenerateConsensusKey()
 		suite.Require().NotNil(pubKey)
 		err = suite.App.OperatorKeeper.OptInWithConsKey(suite.Ctx, operators[i], dogfoodAVSAddr, pubKey)
@@ -286,7 +286,7 @@ func (suite *OperatorTestSuite) TestGenesisSnapshot() {
 	suite.prepareForSnapshotTesting(operatorNumber)
 	firstBlockHeight := suite.Ctx.BlockHeight()
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	for i := int64(0); i < blockNumberPerEpoch; i++ {
 		height, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, dogfoodAVSAddr, firstBlockHeight)
 		suite.NoError(err)

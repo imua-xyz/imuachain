@@ -19,15 +19,15 @@ func (suite *AVSTestSuite) TestOperator_pubkey() {
 
 	publicKey := privateKey.PublicKey()
 	blsPub := &types.BlsPubKeyInfo{
-		Operator: operatorAddr,
-		PubKey:   publicKey.Marshal(),
-		Name:     "",
+		OperatorAddress: operatorAddr,
+		PubKey:          publicKey.Marshal(),
+		AvsAddress:      suite.avsAddress.String(),
 	}
 	fmt.Println("pubkey:", hex.EncodeToString(publicKey.Marshal()))
 	err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 	suite.NoError(err)
 
-	pub, err := suite.App.AVSManagerKeeper.GetOperatorPubKey(suite.Ctx, operatorAddr)
+	pub, err := suite.App.AVSManagerKeeper.GetOperatorPubKey(suite.Ctx, operatorAddr, suite.avsAddress.String())
 	suite.NoError(err)
 	suite.Equal(publicKey.Marshal(), pub.PubKey)
 

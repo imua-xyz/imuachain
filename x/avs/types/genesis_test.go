@@ -61,8 +61,8 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "duplicated task num",
 			genState: &types.GenesisState{
 				TaskNums: []types.TaskID{
-					{TaskAddr: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1},
-					{TaskAddr: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1},
+					{TaskAddress: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1},
+					{TaskAddress: "0x9876543210fedcba9876543210fedcba98765432", TaskId: 1},
 				},
 			},
 			valid: false,
@@ -100,7 +100,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "invalid BLS public key info with invalid operator address",
 			genState: &types.GenesisState{
 				BlsPubKeys: []types.BlsPubKeyInfo{
-					{Operator: "0x9876543210fedcba9876543210fedcba98765432", PubKey: nil},
+					{OperatorAddress: "0x9876543210fedcba9876543210fedcba98765432", PubKey: nil},
 				},
 			},
 			valid: false,

@@ -96,7 +96,7 @@ func (suite *OperatorTestSuite) prepareAvs(avsName string, assetIDs []string, ep
 		Action:          avstypes.RegisterAction,
 		EpochIdentifier: epochIdentifier,
 		AvsAddress:      common.HexToAddress(suite.avsAddr),
-		AssetID:         assetIDs,
+		AssetIDs:        assetIDs,
 		UnbondingPeriod: unbondingPeriod,
 	})
 	suite.NoError(err)

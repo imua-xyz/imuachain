@@ -78,22 +78,22 @@ func (suite *AVSTestSuite) prepareDelegation(isDelegation bool, assetAddr common
 
 func (suite *AVSTestSuite) prepareAvs(assetIDs []string) {
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
-		AvsName:             "avs01",
-		Action:              avstypes.RegisterAction,
-		EpochIdentifier:     epochstypes.HourEpochID,
-		AvsAddress:          common.HexToAddress(suite.avsAddr),
-		AssetID:             assetIDs,
-		TaskAddr:            suite.taskAddress,
-		SlashContractAddr:   common.Address{},
-		RewardContractAddr:  common.Address{},
-		MinSelfDelegation:   3,
-		AvsOwnerAddress:     nil,
-		UnbondingPeriod:     7,
-		MinOptInOperators:   0,
-		MinStakeAmount:      2,
-		MinTotalStakeAmount: 2,
-		AvsSlash:            2,
-		AvsReward:           3,
+		AvsName:               "avs01",
+		Action:                avstypes.RegisterAction,
+		EpochIdentifier:       epochstypes.HourEpochID,
+		AvsAddress:            common.HexToAddress(suite.avsAddr),
+		AssetIDs:              assetIDs,
+		TaskAddress:           suite.taskAddress,
+		SlashContractAddress:  common.Address{},
+		RewardContractAddress: common.Address{},
+		MinSelfDelegation:     3,
+		AvsOwnerAddresses:     nil,
+		UnbondingPeriod:       7,
+		MinOptInOperators:     0,
+		MinStakeAmount:        2,
+		MinTotalStakeAmount:   2,
+		AvsSlash:              2,
+		AvsReward:             3,
 	})
 
 	suite.NoError(err)
@@ -112,9 +112,9 @@ func (suite *AVSTestSuite) prepareOperatorubkey() {
 	suite.blsKey = privateKey
 	publicKey := privateKey.PublicKey()
 	blsPub := &avstypes.BlsPubKeyInfo{
-		Operator: suite.operatorAddr.String(),
-		PubKey:   publicKey.Marshal(),
-		Name:     "",
+		OperatorAddress: suite.operatorAddr.String(),
+		PubKey:          publicKey.Marshal(),
+		AvsAddress:      suite.avsAddr,
 	}
 
 	err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
@@ -136,7 +136,7 @@ func (suite *AVSTestSuite) prepareTaskInfo() {
 		TaskChallengePeriod:   2,
 		ThresholdPercentage:   60,
 		StartingEpoch:         uint64(epoch.CurrentEpoch + 1),
-		ActualThreshold:       0,
+		ActualThreshold:       "0",
 		OptInOperators:        operatorList,
 		TaskTotalPower:        sdk.Dec(sdkmath.ZeroInt()),
 	}

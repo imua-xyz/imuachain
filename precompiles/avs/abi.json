@@ -5,14 +5,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -30,14 +30,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -55,14 +55,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -78,34 +78,46 @@
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "sender",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "bytes",
-				"name": "taskHash",
-				"type": "bytes"
-			},
-			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "uint64",
 				"name": "taskID",
 				"type": "uint64"
 			},
 			{
-				"indexed": false,
-				"internalType": "bytes",
-				"name": "taskResponseHash",
-				"type": "bytes"
+				"indexed": true,
+				"internalType": "address",
+				"name": "taskContractAddress",
+				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
-				"name": "operatorAddress",
-				"type": "string"
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint8",
+				"name": "actualThreshold",
+				"type": "uint8"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isExpected",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "address[]",
+				"name": "eligibleRewardOperators",
+				"type": "address[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "address[]",
+				"name": "eligibleSlashOperators",
+				"type": "address[]"
 			}
 		],
 		"name": "ChallengeInitiated",
@@ -117,14 +129,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "OperatorJoined",
@@ -136,14 +148,14 @@
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			}
 		],
 		"name": "OperatorLeft",
@@ -154,15 +166,15 @@
 		"inputs": [
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
+				"internalType": "address",
+				"name": "avsAddress",
+				"type": "address"
 			}
 		],
 		"name": "PublicKeyRegistered",
@@ -180,14 +192,14 @@
 			{
 				"indexed": true,
 				"internalType": "uint64",
-				"name": "taskId",
+				"name": "taskID",
 				"type": "uint64"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -215,9 +227,9 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "uint64",
+				"internalType": "uint8",
 				"name": "thresholdPercentage",
-				"type": "uint64"
+				"type": "uint8"
 			},
 			{
 				"indexed": false,
@@ -241,14 +253,14 @@
 			{
 				"indexed": true,
 				"internalType": "uint64",
-				"name": "taskId",
+				"name": "taskID",
 				"type": "uint64"
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
+				"internalType": "address",
 				"name": "sender",
-				"type": "string"
+				"type": "address"
 			},
 			{
 				"indexed": false,
@@ -280,24 +292,34 @@
 				"type": "address"
 			},
 			{
-				"internalType": "bytes",
-				"name": "taskHash",
-				"type": "bytes"
-			},
-			{
 				"internalType": "uint64",
 				"name": "taskID",
 				"type": "uint64"
 			},
 			{
-				"internalType": "bytes",
-				"name": "taskResponseHash",
-				"type": "bytes"
+				"internalType": "address",
+				"name": "taskContractAddress",
+				"type": "address"
 			},
 			{
-				"internalType": "address",
-				"name": "operatorAddress",
-				"type": "address"
+				"internalType": "uint8",
+				"name": "actualThreshold",
+				"type": "uint8"
+			},
+			{
+				"internalType": "bool",
+				"name": "isExpected",
+				"type": "bool"
+			},
+			{
+				"internalType": "address[]",
+				"name": "eligibleRewardOperators",
+				"type": "address[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "eligibleSlashOperators",
+				"type": "address[]"
 			}
 		],
 		"name": "challenge",
@@ -339,9 +361,9 @@
 				"type": "uint64"
 			},
 			{
-				"internalType": "uint64",
+				"internalType": "uint8",
 				"name": "thresholdPercentage",
-				"type": "uint64"
+				"type": "uint8"
 			},
 			{
 				"internalType": "uint64",
@@ -407,7 +429,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			}
 		],
@@ -426,7 +448,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			}
 		],
@@ -436,6 +458,30 @@
 				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "taskAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint64",
+				"name": "taskID",
+				"type": "uint64"
+			}
+		],
+		"name": "getChallengeInfo",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "challenger",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -464,12 +510,12 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "avsAddr",
+				"name": "avsAddress",
 				"type": "address"
 			},
 			{
 				"internalType": "address",
-				"name": "operatorAddr",
+				"name": "operatorAddress",
 				"type": "address"
 			}
 		],
@@ -488,16 +534,63 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "avsAddress",
+				"name": "taskAddress",
 				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint64",
+				"name": "taskID",
+				"type": "uint64"
 			}
 		],
-		"name": "getOptInOperators",
+		"name": "getOperatorTaskResponse",
 		"outputs": [
 			{
-				"internalType": "string[]",
-				"name": "operators",
-				"type": "string[]"
+				"components": [
+					{
+						"internalType": "address",
+						"name": "operatorAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "taskResponseHash",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes",
+						"name": "taskResponse",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bytes",
+						"name": "blsSignature",
+						"type": "bytes"
+					},
+					{
+						"internalType": "address",
+						"name": "taskContractAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskID",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint8",
+						"name": "phase",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct TaskResultInfo",
+				"name": "taskResultInfo",
+				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",
@@ -507,7 +600,97 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "operator",
+				"name": "taskAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint64",
+				"name": "taskID",
+				"type": "uint64"
+			}
+		],
+		"name": "getOperatorTaskResponseList",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "taskContractAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskID",
+						"type": "uint64"
+					},
+					{
+						"internalType": "address",
+						"name": "operatorAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "taskResponseHash",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes",
+						"name": "taskResponse",
+						"type": "bytes"
+					},
+					{
+						"internalType": "bytes",
+						"name": "blsSignature",
+						"type": "bytes"
+					},
+					{
+						"internalType": "uint256",
+						"name": "power",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint8",
+						"name": "phase",
+						"type": "uint8"
+					}
+				],
+				"internalType": "struct OperatorResInfo[]",
+				"name": "operatorResInfo",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "avsAddress",
+				"type": "address"
+			}
+		],
+		"name": "getOptInOperators",
+		"outputs": [
+			{
+				"internalType": "address[]",
+				"name": "operators",
+				"type": "address[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operatorAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "avsAddress",
 				"type": "address"
 			}
 		],
@@ -526,7 +709,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "taskAddr",
+				"name": "taskAddress",
 				"type": "address"
 			},
 			{
@@ -538,9 +721,118 @@
 		"name": "getTaskInfo",
 		"outputs": [
 			{
-				"internalType": "uint64[]",
-				"name": "info",
-				"type": "uint64[]"
+				"components": [
+					{
+						"internalType": "address",
+						"name": "taskContractAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "name",
+						"type": "string"
+					},
+					{
+						"internalType": "bytes",
+						"name": "hash",
+						"type": "bytes"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskID",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskResponsePeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskStatisticalPeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "taskChallengePeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint8",
+						"name": "thresholdPercentage",
+						"type": "uint8"
+					},
+					{
+						"internalType": "uint64",
+						"name": "startingEpoch",
+						"type": "uint64"
+					},
+					{
+						"internalType": "string",
+						"name": "actualThreshold",
+						"type": "string"
+					},
+					{
+						"internalType": "address[]",
+						"name": "optInOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "signedOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "noSignedOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "errSignedOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string",
+						"name": "taskTotalPower",
+						"type": "string"
+					},
+					{
+						"components": [
+							{
+								"internalType": "address",
+								"name": "operator",
+								"type": "address"
+							},
+							{
+								"internalType": "uint256",
+								"name": "power",
+								"type": "uint256"
+							}
+						],
+						"internalType": "struct OperatorActivePower[]",
+						"name": "operatorActivePower",
+						"type": "tuple[]"
+					},
+					{
+						"internalType": "bool",
+						"name": "isExpected",
+						"type": "bool"
+					},
+					{
+						"internalType": "address[]",
+						"name": "eligibleRewardOperators",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "eligibleSlashOperators",
+						"type": "address[]"
+					}
+				],
+				"internalType": "struct TaskInfo",
+				"name": "taskInfo",
+				"type": "tuple"
 			}
 		],
 		"stateMutability": "view",
@@ -550,7 +842,7 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "operatorAddr",
+				"name": "operatorAddress",
 				"type": "address"
 			}
 		],
@@ -612,69 +904,91 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "sender",
-				"type": "address"
-			},
-			{
-				"internalType": "string",
-				"name": "avsName",
-				"type": "string"
-			},
-			{
-				"internalType": "uint64",
-				"name": "minStakeAmount",
-				"type": "uint64"
-			},
-			{
-				"internalType": "address",
-				"name": "taskAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "slashAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "rewardAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address[]",
-				"name": "avsOwnerAddress",
-				"type": "address[]"
-			},
-			{
-				"internalType": "address[]",
-				"name": "whitelistAddress",
-				"type": "address[]"
-			},
-			{
-				"internalType": "string[]",
-				"name": "assetIds",
-				"type": "string[]"
-			},
-			{
-				"internalType": "uint64",
-				"name": "avsUnbondingPeriod",
-				"type": "uint64"
-			},
-			{
-				"internalType": "uint64",
-				"name": "minSelfDelegation",
-				"type": "uint64"
-			},
-			{
-				"internalType": "string",
-				"name": "epochIdentifier",
-				"type": "string"
-			},
-			{
-				"internalType": "uint64[]",
+				"components": [
+					{
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "avsName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minStakeAmount",
+						"type": "uint64"
+					},
+					{
+						"internalType": "address",
+						"name": "taskAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "slashAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "rewardAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address[]",
+						"name": "avsOwnerAddresses",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "whitelistAddresses",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "assetIDs",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsUnbondingPeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minSelfDelegation",
+						"type": "uint64"
+					},
+					{
+						"internalType": "string",
+						"name": "epochIdentifier",
+						"type": "string"
+					},
+					{
+						"internalType": "uint64",
+						"name": "miniOptInOperators",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minTotalStakeAmount",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsRewardProportion",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsSlashProportion",
+						"type": "uint64"
+					}
+				],
+				"internalType": "struct AVSParams",
 				"name": "params",
-				"type": "uint64[]"
+				"type": "tuple"
 			}
 		],
 		"name": "registerAVS",
@@ -696,9 +1010,9 @@
 				"type": "address"
 			},
 			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
+				"internalType": "address",
+				"name": "avsAddress",
+				"type": "address"
 			},
 			{
 				"internalType": "bytes",
@@ -749,69 +1063,91 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "sender",
-				"type": "address"
-			},
-			{
-				"internalType": "string",
-				"name": "avsName",
-				"type": "string"
-			},
-			{
-				"internalType": "uint64",
-				"name": "minStakeAmount",
-				"type": "uint64"
-			},
-			{
-				"internalType": "address",
-				"name": "taskAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "slashAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "rewardAddr",
-				"type": "address"
-			},
-			{
-				"internalType": "address[]",
-				"name": "avsOwnerAddress",
-				"type": "address[]"
-			},
-			{
-				"internalType": "address[]",
-				"name": "whitelistAddress",
-				"type": "address[]"
-			},
-			{
-				"internalType": "string[]",
-				"name": "assetIds",
-				"type": "string[]"
-			},
-			{
-				"internalType": "uint64",
-				"name": "avsUnbondingPeriod",
-				"type": "uint64"
-			},
-			{
-				"internalType": "uint64",
-				"name": "minSelfDelegation",
-				"type": "uint64"
-			},
-			{
-				"internalType": "string",
-				"name": "epochIdentifier",
-				"type": "string"
-			},
-			{
-				"internalType": "uint64[]",
+				"components": [
+					{
+						"internalType": "address",
+						"name": "sender",
+						"type": "address"
+					},
+					{
+						"internalType": "string",
+						"name": "avsName",
+						"type": "string"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minStakeAmount",
+						"type": "uint64"
+					},
+					{
+						"internalType": "address",
+						"name": "taskAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "slashAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "rewardAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "address[]",
+						"name": "avsOwnerAddresses",
+						"type": "address[]"
+					},
+					{
+						"internalType": "address[]",
+						"name": "whitelistAddresses",
+						"type": "address[]"
+					},
+					{
+						"internalType": "string[]",
+						"name": "assetIDs",
+						"type": "string[]"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsUnbondingPeriod",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minSelfDelegation",
+						"type": "uint64"
+					},
+					{
+						"internalType": "string",
+						"name": "epochIdentifier",
+						"type": "string"
+					},
+					{
+						"internalType": "uint64",
+						"name": "miniOptInOperators",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "minTotalStakeAmount",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsRewardProportion",
+						"type": "uint64"
+					},
+					{
+						"internalType": "uint64",
+						"name": "avsSlashProportion",
+						"type": "uint64"
+					}
+				],
+				"internalType": "struct AVSParams",
 				"name": "params",
-				"type": "uint64[]"
+				"type": "tuple"
 			}
 		],
 		"name": "updateAVS",

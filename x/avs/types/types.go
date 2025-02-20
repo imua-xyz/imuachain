@@ -57,16 +57,16 @@ type AVSRegisterOrDeregisterParams struct {
 	AvsAddress common.Address
 	// MinStakeAmount is the minimum amount of stake for a task to be considered valid.
 	MinStakeAmount uint64
-	// TaskAddr is the hex address of the task contract.
-	TaskAddr common.Address
-	// SlashContractAddr is the hex address of the slash contract.
-	SlashContractAddr common.Address
-	// RewardContractAddr is the hex address of the reward contract.
-	RewardContractAddr common.Address
-	// AvsOwnerAddress is the list of bech32 addresses of the AVS owners.
-	AvsOwnerAddress []string
-	// AssetID is the list of asset IDs that the AVS is allowed to use.
-	AssetID             []string
+	// TaskAddress is the hex address of the task contract.
+	TaskAddress common.Address
+	// SlashContractAddress is the hex address of the slash contract.
+	SlashContractAddress common.Address
+	// RewardContractAddress is the hex address of the reward contract.
+	RewardContractAddress common.Address
+	// AvsOwnerAddresses is the list of bech32 addresses of the AVS owners.
+	AvsOwnerAddresses []string
+	// AssetIDs is the list of asset IDs that the AVS is allowed to use.
+	AssetIDs            []string
 	Params              []string
 	UnbondingPeriod     uint64
 	MinSelfDelegation   uint64
@@ -78,8 +78,8 @@ type AVSRegisterOrDeregisterParams struct {
 	AvsReward           uint64
 	AvsSlash            uint64
 	Action              OperatorAction
-	// WhitelistAddress is the list of bech32 address of the operators.
-	WhitelistAddress []string
+	// WhitelistAddresses is the list of bech32 address of the operators.
+	WhitelistAddresses []string
 }
 
 var (
@@ -103,10 +103,10 @@ func ChainIDWithoutRevision(chainID string) string {
 	return splitStr[0]
 }
 
-// GenerateAVSAddr generates a hex AVS address based on the chainID.
+// GenerateAVSAddress generates a hex AVS address based on the chainID.
 // It returns a hex address as a string.
-func GenerateAVSAddr(chainID string) string {
-	avsAddr := common.BytesToAddress(
+func GenerateAVSAddress(chainID string) string {
+	avsAddress := common.BytesToAddress(
 		crypto.Keccak256(
 			append(
 				ChainIDPrefix,
@@ -114,7 +114,7 @@ func GenerateAVSAddr(chainID string) string {
 			),
 		),
 	)
-	return strings.ToLower(avsAddr.String())
+	return strings.ToLower(avsAddress.String())
 }
 
 type TaskResponse struct {

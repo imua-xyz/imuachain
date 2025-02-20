@@ -40,7 +40,7 @@ func (k Keeper) InitGenesis(
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	if exists, avsAddr, err = k.avsKeeper.RegisterAVSWithChainID(ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:           chainIDWithoutRevision,
-		AssetID:           genState.Params.AssetIDs,
+		AssetIDs:          genState.Params.AssetIDs,
 		UnbondingPeriod:   uint64(genState.Params.EpochsUntilUnbonded),
 		MinSelfDelegation: genState.Params.MinSelfDelegation.Uint64(),
 		EpochIdentifier:   epochID,

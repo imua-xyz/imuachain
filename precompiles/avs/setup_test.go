@@ -21,11 +21,11 @@ type AVSManagerPrecompileSuite struct {
 	testutil.BaseTestSuite
 	precompile *avs.Precompile
 	// needed by test
-	operatorAddr          sdk.AccAddress
-	avsAddr               string
+	operatorAddress       sdk.AccAddress
+	avsAddress            string
 	assetID               string
 	stakerID              string
-	assetAddr             common.Address
+	assetAddress          common.Address
 	assetDecimal          uint32
 	clientChainLzID       uint64
 	depositAmount         sdkmath.Int

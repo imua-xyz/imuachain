@@ -17,17 +17,17 @@ func (k Keeper) QueryAVSInfo(ctx context.Context, req *types.QueryAVSInfoReq) (*
 
 func (k Keeper) QueryAVSTaskInfo(ctx context.Context, req *types.QueryAVSTaskInfoReq) (*types.TaskInfo, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	return k.GetTaskInfo(c, req.TaskId, req.TaskAddr)
+	return k.GetTaskInfo(c, req.TaskId, req.TaskAddress)
 }
 
-// QueryAVSAddrByChainID is an implementation of the QueryAVSAddrByChainID gRPC method
-func (k Keeper) QueryAVSAddrByChainID(ctx context.Context, req *types.QueryAVSAddrByChainIDReq) (*types.QueryAVSAddrByChainIDResponse, error) {
+// QueryAVSAddressByChainID is an implementation of the QueryAVSAddrByChainID gRPC method
+func (k Keeper) QueryAVSAddressByChainID(ctx context.Context, req *types.QueryAVSAddressByChainIDReq) (*types.QueryAVSAddressByChainIDResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
 	isChainAvs, avsAddr := k.IsAVSByChainID(c, types.ChainIDWithoutRevision(req.Chain))
 	if !isChainAvs {
 		return nil, types.ErrNotYetRegistered
 	}
-	return &types.QueryAVSAddrByChainIDResponse{AVSAddress: avsAddr}, nil
+	return &types.QueryAVSAddressByChainIDResponse{AVSAddress: avsAddr}, nil
 }
 
 func (k Keeper) QuerySubmitTaskResult(ctx context.Context, req *types.QuerySubmitTaskResultReq) (*types.QuerySubmitTaskResultResponse, error) {
@@ -37,7 +37,7 @@ func (k Keeper) QuerySubmitTaskResult(ctx context.Context, req *types.QuerySubmi
 		return &types.QuerySubmitTaskResultResponse{}, err
 	}
 
-	info, err := k.GetTaskResultInfo(c, req.OperatorAddr, req.TaskAddress, id)
+	info, err := k.GetTaskResultInfo(c, req.OperatorAddress, req.TaskAddress, id)
 	return &types.QuerySubmitTaskResultResponse{
 		Info: info,
 	}, err
@@ -50,8 +50,8 @@ func (k Keeper) QueryChallengeInfo(ctx context.Context, req *types.QueryChalleng
 		return &types.QueryChallengeInfoResponse{}, err
 	}
 
-	addr, err := k.GetTaskChallengedInfo(c, req.OperatorAddr, req.TaskAddress, id)
+	addr, err := k.GetTaskChallengedInfo(c, req.TaskAddress, id)
 	return &types.QueryChallengeInfoResponse{
-		ChallengeAddr: addr,
+		ChallengeAddress: addr,
 	}, err
 }

@@ -29,49 +29,49 @@ type StateForCheck struct {
 	StakerShare      sdkmath.LegacyDec
 }
 
-func (suite *AVSManagerPrecompileSuite) prepareOperator(addr string) {
-	opAccAddr, err := sdk.AccAddressFromBech32(addr)
-	suite.operatorAddr = opAccAddr
+func (suite *AVSManagerPrecompileSuite) prepareOperator(address string) {
+	opAccAddress, err := sdk.AccAddressFromBech32(address)
+	suite.operatorAddress = opAccAddress
 	suite.NoError(err)
 	// register operator
 	registerReq := &operatorTypes.RegisterOperatorReq{
-		FromAddress: suite.operatorAddr.String(),
+		FromAddress: suite.operatorAddress.String(),
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr: suite.operatorAddr.String(),
-			ApproveAddr:  suite.operatorAddr.String(),
+			EarningsAddr: suite.operatorAddress.String(),
+			ApproveAddr:  suite.operatorAddress.String(),
 		},
 	}
 	_, err = s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
 	suite.NoError(err)
 }
 
-func (suite *AVSManagerPrecompileSuite) prepareDeposit(assetAddr common.Address, amount sdkmath.Int) {
+func (suite *AVSManagerPrecompileSuite) prepareDeposit(assetAddress common.Address, amount sdkmath.Int) {
 	clientChainLzID := uint64(101)
-	suite.avsAddr = common.BytesToAddress([]byte("avsTestAddr")).String()
-	suite.assetAddr = assetAddr
+	suite.avsAddress = common.BytesToAddress([]byte("avsTestAddress")).String()
+	suite.assetAddress = assetAddress
 	suite.assetDecimal = 6
 	suite.clientChainLzID = clientChainLzID
 	suite.depositAmount = amount
 	suite.updatedAmountForOptIn = sdkmath.NewInt(20)
-	suite.stakerID, suite.assetID = assetstypes.GetStakerIDAndAssetID(suite.clientChainLzID, suite.Address[:], suite.assetAddr[:])
+	suite.stakerID, suite.assetID = assetstypes.GetStakerIDAndAssetID(suite.clientChainLzID, suite.Address[:], suite.assetAddress[:])
 	// staking assets
 	depositParam := &assetskeeper.DepositWithdrawParams{
 		ClientChainLzID: suite.clientChainLzID,
 		Action:          assetstypes.DepositLST,
 		StakerAddress:   suite.Address[:],
 		OpAmount:        suite.depositAmount,
-		AssetsAddress:   assetAddr[:],
+		AssetsAddress:   assetAddress[:],
 	}
 	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
 	suite.NoError(err)
 }
 
-func (suite *AVSManagerPrecompileSuite) prepareDelegation(isDelegation bool, assetAddr common.Address, amount sdkmath.Int) {
+func (suite *AVSManagerPrecompileSuite) prepareDelegation(isDelegation bool, assetAddress common.Address, amount sdkmath.Int) {
 	suite.delegationAmount = amount
 	param := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   suite.clientChainLzID,
-		AssetsAddress:   assetAddr[:],
-		OperatorAddress: suite.operatorAddr,
+		AssetsAddress:   assetAddress[:],
+		OperatorAddress: suite.operatorAddress,
 		StakerAddress:   suite.Address[:],
 		OpAmount:        amount,
 		TxHash:          common.HexToHash("0x24c4a315d757249c12a7a1d7b6fb96261d49deee26f06a3e1787d008b445c3ac"),
@@ -95,25 +95,25 @@ func (suite *AVSManagerPrecompileSuite) prepare() {
 }
 
 func (suite *AVSManagerPrecompileSuite) prepareAvs(assetIDs []string, task string) {
-	avsOwnerAddress := []string{
+	avsOwnerAddresses := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
-		Action:          avstypes.RegisterAction,
-		EpochIdentifier: epochstypes.HourEpochID,
-		AvsAddress:      common.HexToAddress(suite.avsAddr),
-		AssetID:         assetIDs,
-		TaskAddr:        common.HexToAddress(task),
-		AvsOwnerAddress: avsOwnerAddress,
+		Action:            avstypes.RegisterAction,
+		EpochIdentifier:   epochstypes.HourEpochID,
+		AvsAddress:        common.HexToAddress(suite.avsAddress),
+		AssetIDs:          assetIDs,
+		TaskAddress:       common.HexToAddress(task),
+		AvsOwnerAddresses: avsOwnerAddresses,
 	})
 	suite.NoError(err)
 }
 
 func (suite *AVSManagerPrecompileSuite) CheckState(expectedState *StateForCheck) {
 	// check opted info
-	optInfo, err := suite.App.OperatorKeeper.GetOptedInfo(suite.Ctx, suite.operatorAddr.String(), suite.avsAddr)
+	optInfo, err := suite.App.OperatorKeeper.GetOptedInfo(suite.Ctx, suite.operatorAddress.String(), suite.avsAddress)
 	if expectedState.OptedInfo == nil {
 		suite.True(strings.Contains(err.Error(), operatorTypes.ErrNoKeyInTheStore.Error()))
 	} else {
@@ -121,7 +121,7 @@ func (suite *AVSManagerPrecompileSuite) CheckState(expectedState *StateForCheck)
 		suite.Equal(*expectedState.OptedInfo, *optInfo)
 	}
 	// check total USD value for AVS and operator
-	value, err := suite.App.OperatorKeeper.GetAVSUSDValue(suite.Ctx, suite.avsAddr)
+	value, err := suite.App.OperatorKeeper.GetAVSUSDValue(suite.Ctx, suite.avsAddress)
 	if expectedState.AVSTotalShare.IsNil() {
 		suite.True(strings.Contains(err.Error(), operatorTypes.ErrNoKeyInTheStore.Error()))
 	} else {
@@ -129,7 +129,7 @@ func (suite *AVSManagerPrecompileSuite) CheckState(expectedState *StateForCheck)
 		suite.Equal(expectedState.AVSTotalShare, value)
 	}
 
-	optedUSDValues, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, suite.avsAddr, suite.operatorAddr.String())
+	optedUSDValues, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, suite.avsAddress, suite.operatorAddress.String())
 	if expectedState.AVSOperatorShare.IsNil() {
 		fmt.Println("the err is:", err)
 		suite.True(strings.Contains(err.Error(), operatorTypes.ErrNoKeyInTheStore.Error()))
@@ -142,7 +142,7 @@ func (suite *AVSManagerPrecompileSuite) CheckState(expectedState *StateForCheck)
 func (suite *AVSManagerPrecompileSuite) TestOptIn() {
 	suite.prepare()
 	suite.prepareAvs([]string{"0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, utiltx.GenerateAddress().String())
-	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 	suite.NoError(err)
 	// check if the related state is correct
 	price, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
@@ -170,31 +170,31 @@ func (suite *AVSManagerPrecompileSuite) TestOptIn() {
 func (suite *AVSManagerPrecompileSuite) TestOptInList() {
 	suite.prepare()
 	suite.prepareAvs([]string{"0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, utiltx.GenerateAddress().String())
-	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+	err := suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 	suite.NoError(err)
 	// check if the related state is correct
-	operatorList, err := suite.App.OperatorKeeper.GetOptedInOperatorListByAVS(suite.Ctx, suite.avsAddr)
+	operatorList, err := suite.App.OperatorKeeper.GetOptedInOperatorListByAVS(suite.Ctx, suite.avsAddress)
 	suite.NoError(err)
-	suite.Contains(operatorList, suite.operatorAddr.String())
+	suite.Contains(operatorList, suite.operatorAddress.String())
 
-	avsList, err := suite.App.OperatorKeeper.GetOptedInAVSForOperator(suite.Ctx, suite.operatorAddr.String())
+	avsList, err := suite.App.OperatorKeeper.GetOptedInAVSForOperator(suite.Ctx, suite.operatorAddress.String())
 	suite.NoError(err)
 
-	suite.Contains(avsList, suite.avsAddr)
+	suite.Contains(avsList, suite.avsAddress)
 }
 
 func (suite *AVSManagerPrecompileSuite) TestOptOut() {
 	suite.prepare()
 	suite.prepareAvs([]string{"0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, utiltx.GenerateAddress().String())
-	err := suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+	err := suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 	suite.EqualError(err, operatorTypes.ErrNotOptedIn.Error())
 
-	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 	suite.NoError(err)
 	optInHeight := suite.Ctx.BlockHeight()
 	suite.NextBlock()
 
-	err = suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+	err = suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 	suite.NoError(err)
 
 	expectedState := &StateForCheck{

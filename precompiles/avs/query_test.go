@@ -60,8 +60,8 @@ var baseTestCases = []avsTestCases{
 }
 
 func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
-	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptinOperators]
-	operatorAddress, avsAddr, slashContract :=
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptInOperators]
+	operatorAddress, avsAddress, slashContract :=
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(), suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 
 	operatorOptIn := func() {
@@ -71,7 +71,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),
 			OptedOutHeight: types.DefaultOptedOutHeight,
 		}
-		err := suite.App.OperatorKeeper.SetOptedInfo(suite.Ctx, operatorAddress, avsAddr.String(), optedInfo)
+		err := suite.App.OperatorKeeper.SetOptedInfo(suite.Ctx, operatorAddress, avsAddress.String(), optedInfo)
 		suite.NoError(err)
 	}
 	testCases := []avsTestCases{
@@ -96,7 +96,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 			},
 			func(bz []byte) {
 				var out []string
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptinOperators, bz)
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptInOperators, bz)
 				suite.Require().NoError(err, "failed to unpack output", err)
 				suite.Require().Equal(0, len(out))
 			},
@@ -113,11 +113,12 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 				}
 			},
 			func(bz []byte) {
-				var out []string
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptinOperators, bz)
+				var out []common.Address
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetOptInOperators, bz)
 				suite.Require().NoError(err, "failed to unpack output", err)
 				suite.Require().Equal(1, len(out))
-				suite.Require().Equal(operatorAddress, out[0])
+				acc, err := sdk.AccAddressFromBech32(operatorAddress)
+				suite.Require().Equal(common.BytesToAddress(acc), out[0])
 			},
 			100000,
 			false,
@@ -130,7 +131,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 		suite.Run(tc.name, func() {
 			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
 
-			bz, err := suite.precompile.GetOptedInOperatorAccAddrs(suite.Ctx, contract, &method, tc.malleate())
+			bz, err := suite.precompile.GetOptedInOperatorAccAddresses(suite.Ctx, contract, &method, tc.malleate())
 
 			if tc.expErr {
 				suite.Require().Error(err)
@@ -151,11 +152,11 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 	setUp := func() {
 		suite.prepare()
 		// register the new token
-		usdcAddr := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+		usdcAddress := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 		usdcClientChainAsset := assetstype.AssetInfo{
 			Name:             "USD coin",
 			Symbol:           "USDC",
-			Address:          usdcAddr.String(),
+			Address:          usdcAddress.String(),
 			Decimals:         6,
 			LayerZeroChainID: 101,
 			MetaInfo:         "USDC",
@@ -171,18 +172,18 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 		// register the new AVS
 		suite.prepareAvs([]string{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65", "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, utiltx.GenerateAddress().String())
 		// opt in
-		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
-		suite.prepareDeposit(usdcAddr, sdkmath.NewInt(1e8))
+		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
 		usdcPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		delegatedAmount := sdkmath.NewIntWithDecimal(8, 7)
-		suite.prepareDelegation(true, usdcAddr, delegatedAmount)
+		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
 		usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
@@ -198,7 +199,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 			func() []interface{} {
 				setUp()
 				return []interface{}{
-					common.HexToAddress(suite.avsAddr),
+					common.HexToAddress(suite.avsAddress),
 				}
 			},
 			func(bz []byte) {
@@ -239,11 +240,11 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 	setUp := func() {
 		suite.prepare()
 		// register the new token
-		usdcAddr := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+		usdcAddress := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 		usdcClientChainAsset := assetstype.AssetInfo{
 			Name:             "USD coin",
 			Symbol:           "USDC",
-			Address:          usdcAddr.String(),
+			Address:          usdcAddress.String(),
 			Decimals:         6,
 			LayerZeroChainID: 101,
 			MetaInfo:         "USDC",
@@ -259,18 +260,18 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 		// register the new AVS
 		suite.prepareAvs([]string{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65", "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, utiltx.GenerateAddress().String())
 		// opt in
-		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
-		suite.prepareDeposit(usdcAddr, sdkmath.NewInt(1e8))
+		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
 		usdcPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		delegatedAmount := sdkmath.NewIntWithDecimal(8, 7)
-		suite.prepareDelegation(true, usdcAddr, delegatedAmount)
+		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
 		usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
@@ -286,8 +287,8 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 			func() []interface{} {
 				setUp()
 				return []interface{}{
-					common.HexToAddress(suite.avsAddr),
-					common.BytesToAddress(suite.operatorAddr),
+					common.HexToAddress(suite.avsAddress),
+					common.BytesToAddress(suite.operatorAddress),
 				}
 			},
 			func(bz []byte) {
@@ -322,20 +323,20 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 }
 
 func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
-	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubkey]
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubKey]
 	privateKey, err := blst.RandKey()
 	suite.NoError(err)
-	addr := utiltx.GenerateAddress()
-	var operatorAddr sdk.AccAddress = addr[:]
+	address := utiltx.GenerateAddress()
+	var operatorAddress sdk.AccAddress = address[:]
 
 	publicKey := privateKey.PublicKey()
 	setUp := func() {
-		suite.prepareOperator(operatorAddr.String())
+		suite.prepareOperator(operatorAddress.String())
 
 		blsPub := &avstype.BlsPubKeyInfo{
-			Operator: operatorAddr.String(),
-			PubKey:   publicKey.Marshal(),
-			Name:     "",
+			OperatorAddress: operatorAddress.String(),
+			PubKey:          publicKey.Marshal(),
+			AvsAddress:      "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 		}
 		err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 		suite.NoError(err)
@@ -346,12 +347,13 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 			func() []interface{} {
 				setUp()
 				return []interface{}{
-					addr,
+					address,
+					common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
 				}
 			},
 			func(bz []byte) {
 				var out []byte
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetRegisteredPubkey, bz)
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetRegisteredPubKey, bz)
 				suite.Require().NoError(err, "failed to unpack output", err)
 				suite.Require().Equal(48, len(out))
 				suite.Require().Equal(publicKey.Marshal(), out)
@@ -367,7 +369,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 		suite.Run(tc.name, func() {
 			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
 
-			bz, err := suite.precompile.GetRegisteredPubkey(suite.Ctx, contract, &method, tc.malleate())
+			bz, err := suite.precompile.GetRegisteredPubKey(suite.Ctx, contract, &method, tc.malleate())
 
 			if tc.expErr {
 				suite.Require().Error(err)
@@ -391,7 +393,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 	testStartingEpoch := 1
 	setUp := func() {
 		avsName := "avsTest"
-		avsOwnerAddress := []string{
+		avsOwnerAddresses := []string{
 			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
@@ -400,8 +402,8 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 		avs := &avstype.AVSInfo{
 			Name:                avsName,
 			AvsAddress:          avsAddress,
-			SlashAddr:           utiltx.GenerateAddress().String(),
-			AvsOwnerAddress:     avsOwnerAddress,
+			SlashAddress:        utiltx.GenerateAddress().String(),
+			AvsOwnerAddresses:   avsOwnerAddresses,
 			AssetIDs:            assetID,
 			AvsUnbondingPeriod:  uint64(testAVSUnbondingPeriod),
 			MinSelfDelegation:   uint64(testMinSelfDelegation),
@@ -411,7 +413,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 			MinTotalStakeAmount: uint64(testMinTotalStakeAmount),
 			AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 			AvsReward:           sdk.MustNewDecFromStr("0.002"),
-			TaskAddr:            "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+			TaskAddress:         "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
 		}
 
 		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
@@ -531,11 +533,34 @@ func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 				}
 			},
 			func(bz []byte) {
-				var out []uint64
-
-				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetTaskInfo, bz)
+				result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetTaskInfo, bz)
+				s.Require().NoError(err)
+				taskInfo := result[0].(struct {
+					TaskContractAddress   common.Address   `json:"taskContractAddress"`
+					Name                  string           `json:"name"`
+					Hash                  []byte           `json:"hash"`
+					TaskID                uint64           `json:"taskID"`
+					TaskResponsePeriod    uint64           `json:"taskResponsePeriod"`
+					TaskStatisticalPeriod uint64           `json:"taskStatisticalPeriod"`
+					TaskChallengePeriod   uint64           `json:"taskChallengePeriod"`
+					ThresholdPercentage   uint8            `json:"thresholdPercentage"`
+					StartingEpoch         uint64           `json:"startingEpoch"`
+					ActualThreshold       string           `json:"actualThreshold"`
+					OptInOperators        []common.Address `json:"optInOperators"`
+					SignedOperators       []common.Address `json:"signedOperators"`
+					NoSignedOperators     []common.Address `json:"noSignedOperators"`
+					ErrSignedOperators    []common.Address `json:"errSignedOperators"`
+					TaskTotalPower        string           `json:"taskTotalPower"`
+					OperatorActivePower   []struct {
+						Operator common.Address `json:"operator"`
+						Power    *big.Int       `json:"power"`
+					} `json:"operatorActivePower"`
+					IsExpected              bool             `json:"isExpected"`
+					EligibleRewardOperators []common.Address `json:"eligibleRewardOperators"`
+					EligibleSlashOperators  []common.Address `json:"eligibleSlashOperators"`
+				})
+				suite.Require().Equal(taskInfo.TaskContractAddress, common.HexToAddress(taskAddress))
 				suite.Require().NoError(err, "failed to unpack output", err)
-				suite.Require().Equal([]uint64{5, 10, 60}, out)
 			},
 			100000,
 			false,
@@ -591,6 +616,227 @@ func (suite *AVSManagerPrecompileSuite) TestGetCurrentEpoch() {
 			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
 
 			bz, err := suite.precompile.GetCurrentEpoch(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+
+func (suite *AVSManagerPrecompileSuite) TestGetChallengeInfo() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetChallengeInfo]
+	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	challengeAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
+	taskID := uint64(3)
+	setUp := func() {
+		suite.App.AVSManagerKeeper.SetTaskChallengedInfo(suite.Ctx, taskID, challengeAddr, common.HexToAddress(taskAddress))
+	}
+	testCases := []avsTestCases{
+		{
+			"success - existent ChallengeInfo",
+			func() []interface{} {
+				setUp()
+				return []interface{}{
+					common.HexToAddress(taskAddress),
+					taskID,
+				}
+			},
+			func(bz []byte) {
+				var out common.Address
+				err := suite.precompile.UnpackIntoInterface(&out, avsManagerPrecompile.MethodGetChallengeInfo, bz)
+				suite.Require().NoError(err, "failed to unpack output", err)
+				address, _ := sdk.AccAddressFromBech32(challengeAddr)
+				suite.Require().Equal(common.BytesToAddress(address), out)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.GetChallengeInfo(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+
+func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOperatorTaskResponseList]
+	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	OperatorAddress1 := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
+	OperatorAddress2 := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
+	setUp := func() {
+		info1 := &avstype.TaskResultInfo{
+			TaskContractAddress: taskAddress,
+			OperatorAddress:     OperatorAddress1,
+			TaskId:              uint64(3),
+			Phase:               2,
+			TaskResponseHash:    "hash1",
+			BlsSignature:        []byte("BlsSignature1"),
+			TaskResponse:        []byte("TaskResponse1"),
+		}
+		info2 := &avstype.TaskResultInfo{
+			TaskContractAddress: taskAddress,
+			OperatorAddress:     OperatorAddress2,
+			TaskId:              uint64(3),
+			Phase:               2,
+			TaskResponseHash:    "hash2",
+			BlsSignature:        []byte("BlsSignature2"),
+			TaskResponse:        []byte("TaskResponse2"),
+		}
+		info := &avstype.TaskInfo{
+			TaskContractAddress:   taskAddress,
+			Name:                  "test-avstask-01",
+			TaskId:                uint64(3),
+			Hash:                  []byte("task"),
+			TaskResponsePeriod:    10,
+			StartingEpoch:         5,
+			TaskStatisticalPeriod: 60,
+			TaskTotalPower:        sdk.Dec(sdkmath.ZeroInt()),
+			SignedOperators:       []string{OperatorAddress1, OperatorAddress2},
+			OperatorActivePower: &avstype.OperatorActivePowerList{
+				OperatorPowerList: []*avstype.OperatorActivePowerInfo{
+					{
+						OperatorAddress: OperatorAddress1,
+						SelfActivePower: sdk.MustNewDecFromStr("544"),
+					},
+					{
+						OperatorAddress: OperatorAddress2,
+						SelfActivePower: sdk.MustNewDecFromStr("514"),
+					},
+				},
+			},
+		}
+		err := suite.App.AVSManagerKeeper.SetTaskInfo(suite.Ctx, info)
+		suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, info1)
+		suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, info2)
+		suite.NoError(err)
+	}
+	testCases := []avsTestCases{
+		{
+			"success - existent task response",
+			func() []interface{} {
+				setUp()
+				return []interface{}{
+					common.HexToAddress(taskAddress),
+					uint64(3),
+				}
+			},
+			func(bz []byte) {
+				result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetOperatorTaskResponseList, bz)
+				s.Require().NoError(err)
+				resInfo := result[0].([]struct {
+					TaskContractAddress common.Address `json:"taskContractAddress"`
+					TaskID              uint64         `json:"taskID"`
+					OperatorAddress     common.Address `json:"operatorAddress"`
+					TaskResponseHash    string         `json:"taskResponseHash"`
+					TaskResponse        []byte         `json:"taskResponse"`
+					BlsSignature        []byte         `json:"blsSignature"`
+					Power               *big.Int       `json:"power"`
+					Phase               uint8          `json:"phase"`
+				})
+				suite.Require().Equal(len(resInfo), 2)
+				suite.Require().NoError(err, "failed to unpack output", err)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.GetOperatorTaskResponseList(suite.Ctx, contract, &method, tc.malleate())
+
+			if tc.expErr {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.errContains)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().NotEmpty(bz)
+				tc.postCheck(bz)
+			}
+		})
+	}
+}
+
+func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponse() {
+	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOperatorTaskResponse]
+	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	opAccAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+	setUp := func() {
+		info := &avstype.TaskResultInfo{
+			TaskContractAddress: taskAddress,
+			OperatorAddress:     opAccAddr.String(),
+			TaskId:              uint64(3),
+			Phase:               2,
+			TaskResponseHash:    "hash",
+			BlsSignature:        []byte("BlsSignature"),
+			TaskResponse:        []byte("TaskResponse"),
+		}
+
+		suite.App.AVSManagerKeeper.SetTaskResultInfo(suite.Ctx, info)
+	}
+	testCases := []avsTestCases{
+		{
+			"success - existent task response",
+			func() []interface{} {
+				setUp()
+				return []interface{}{
+					common.HexToAddress(taskAddress),
+					common.Address(opAccAddr.Bytes()),
+					uint64(3),
+				}
+			},
+			func(bz []byte) {
+				result, err := s.precompile.Unpack(avsManagerPrecompile.MethodGetOperatorTaskResponse, bz)
+				s.Require().NoError(err)
+				resInfo := result[0].(struct {
+					OperatorAddress     common.Address `json:"operatorAddress"`
+					TaskResponseHash    string         `json:"taskResponseHash"`
+					TaskResponse        []byte         `json:"taskResponse"`
+					BlsSignature        []byte         `json:"blsSignature"`
+					TaskContractAddress common.Address `json:"taskContractAddress"`
+					TaskID              uint64         `json:"taskID"`
+					Phase               uint8          `json:"phase"`
+				})
+				suite.Require().Equal(resInfo.TaskContractAddress, common.HexToAddress(taskAddress))
+				suite.Require().NoError(err, "failed to unpack output", err)
+			},
+			100000,
+			false,
+			"",
+		},
+	}
+	testCases = append(testCases, baseTestCases[0])
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			contract := vm.NewContract(vm.AccountRef(suite.Address), suite.precompile, big.NewInt(0), tc.gas)
+
+			bz, err := suite.precompile.GetOperatorTaskResponse(suite.Ctx, contract, &method, tc.malleate())
 
 			if tc.expErr {
 				suite.Require().Error(err)

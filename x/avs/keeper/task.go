@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 	"sort"
 	"strconv"
@@ -60,29 +61,31 @@ func (k *Keeper) IsExistTask(ctx sdk.Context, taskID, taskContractAddress string
 }
 
 func (k *Keeper) SetOperatorPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) (err error) {
-	operatorAddress, err := sdk.AccAddressFromBech32(pub.Operator)
+	operatorAddress, err := sdk.AccAddressFromBech32(pub.OperatorAddress)
 	if err != nil {
 		return types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress.String()), strings.ToLower(pub.AvsAddress))
 	bz := k.cdc.MustMarshal(pub)
-	store.Set(operatorAddress, bz)
+	store.Set(infoKey, bz)
+	store.Set(pub.PubKey, pub.PubKey)
 	return nil
 }
 
-func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, addr string) (pub *types.BlsPubKeyInfo, err error) {
-	opAccAddr, err := sdk.AccAddressFromBech32(addr)
+func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, operatorAddress, avsAddress string) (pub *types.BlsPubKeyInfo, err error) {
+	opAccAddr, err := sdk.AccAddressFromBech32(operatorAddress)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "GetOperatorPubKey: error occurred when parsing account address from Bech32: "+addr)
+		return nil, errorsmod.Wrap(err, "GetOperatorPubKey: error occurred when parsing account address from Bech32: "+operatorAddress)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
-	// key := common.HexToAddress(incentive.Contract)
-	isExist := store.Has(opAccAddr)
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avsAddress))
+	isExist := store.Has(infoKey)
 	if !isExist {
 		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
 			fmt.Sprintf("GetOperatorPubKey: public key not found for address %s", opAccAddr))
 	}
-	value := store.Get(opAccAddr)
+	value := store.Get(infoKey)
 	ret := types.BlsPubKeyInfo{}
 	k.cdc.MustUnmarshal(value, &ret)
 	return &ret, nil
@@ -106,20 +109,33 @@ func (k *Keeper) GetAllBlsPubKeys(ctx sdk.Context) ([]types.BlsPubKeyInfo, error
 	pubKeys := make([]types.BlsPubKeyInfo, 0, count)
 	for ; iterator.Valid(); iterator.Next() {
 		var pubKey types.BlsPubKeyInfo
-		err := k.cdc.Unmarshal(iterator.Value(), &pubKey)
-		if err != nil {
-			return nil, errorsmod.Wrap(err, "GetAllBlsPubKeys: failed to unmarshal pubkey")
+		if !bytes.Equal(iterator.Key(), iterator.Value()) {
+			err := k.cdc.Unmarshal(iterator.Value(), &pubKey)
+			if err != nil {
+				return nil, errorsmod.Wrap(err, "GetAllBlsPubKeys: failed to unmarshal pubkey")
+			}
+			pubKeys = append(pubKeys, pubKey)
 		}
-		pubKeys = append(pubKeys, pubKey)
+
 	}
 
 	return pubKeys, nil
 }
 
-func (k *Keeper) IsExistPubKey(ctx sdk.Context, addr string) bool {
-	opAccAddr, _ := sdk.AccAddressFromBech32(addr)
+func (k *Keeper) IsExistPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
-	return store.Has(opAccAddr)
+	return store.Has(pub.PubKey)
+}
+
+func (k *Keeper) IsExistPubKeyForAVS(ctx sdk.Context, operator, avs string) bool {
+	opAccAddr, err := sdk.AccAddressFromBech32(operator)
+	if err != nil {
+		return false
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avs))
+
+	return store.Has(infoKey)
 }
 
 // IterateTaskAVSInfo iterate through task
@@ -177,8 +193,8 @@ func (k *Keeper) GetAllTaskNums(ctx sdk.Context) ([]types.TaskID, error) {
 		taskAddr := strings.ToLower(common.BytesToAddress(iterator.Key()).Hex())
 		id := sdk.BigEndianToUint64(iterator.Value())
 		ret = append(ret, types.TaskID{
-			TaskAddr: taskAddr,
-			TaskId:   id,
+			TaskAddress: taskAddr,
+			TaskId:      id,
 		})
 	}
 	return ret, nil
@@ -269,10 +285,10 @@ func (k Keeper) GroupTasksByIDAndAddress(tasks []types.TaskResultInfo) map[strin
 
 // SetTaskChallengedInfo is used to store the challenger's challenge information.
 func (k *Keeper) SetTaskChallengedInfo(
-	ctx sdk.Context, taskID uint64, operatorAddress, challengeAddr string,
+	ctx sdk.Context, taskID uint64, challengeAddr string,
 	taskAddr common.Address,
 ) (err error) {
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskAddr.String()),
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskAddr.String()),
 		strconv.FormatUint(taskID, 10))
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
@@ -285,19 +301,19 @@ func (k *Keeper) SetTaskChallengedInfo(
 	return nil
 }
 
-func (k *Keeper) IsExistTaskChallengedInfo(ctx sdk.Context, operatorAddress, taskContractAddress string, taskID uint64) bool {
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskContractAddress),
+func (k *Keeper) IsExistTaskChallengedInfo(ctx sdk.Context, taskContractAddress string, taskID uint64) bool {
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
 	return store.Has(infoKey)
 }
 
-func (k *Keeper) GetTaskChallengedInfo(ctx sdk.Context, operatorAddress, taskContractAddress string, taskID uint64) (addr string, err error) {
+func (k *Keeper) GetTaskChallengedInfo(ctx sdk.Context, taskContractAddress string, taskID uint64) (addr string, err error) {
 	if !common.IsHexAddress(taskContractAddress) {
 		return "", types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskContractAddress),
+	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	value := store.Get(infoKey)
 	if value == nil {
@@ -330,7 +346,7 @@ func (k *Keeper) SetAllTaskChallengedInfo(ctx sdk.Context, states []types.Challe
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
 	for i := range states {
 		state := states[i]
-		bz, err := sdk.AccAddressFromBech32(state.ChallengeAddr)
+		bz, err := sdk.AccAddressFromBech32(state.ChallengeAddress)
 		if err != nil {
 			return err
 		}
@@ -364,8 +380,8 @@ func (k *Keeper) GetAllChallengeInfos(ctx sdk.Context) ([]types.ChallengeInfo, e
 		}
 
 		ret = append(ret, types.ChallengeInfo{
-			Key:           key,
-			ChallengeAddr: challengeAddr.String(),
+			Key:              key,
+			ChallengeAddress: challengeAddr.String(),
 		})
 	}
 	return ret, nil

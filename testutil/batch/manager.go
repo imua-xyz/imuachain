@@ -132,7 +132,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		db:                 db,
 		FaucetSK:           sk,
 		KeyRing:            KeyRing,
-		DogfoodAddr:        avstypes.GenerateAVSAddr(avstypes.ChainIDWithoutRevision(config.ChainID)),
+		DogfoodAddr:        avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(config.ChainID)),
 		NodeEVMHTTPClients: make([]*ethclient.Client, config.ChainValidatorNumber),
 		NodeEVMWSClients:   make([]*ethclient.Client, config.ChainValidatorNumber),
 		NodeClientCtx:      make([]client.Context, config.ChainValidatorNumber),

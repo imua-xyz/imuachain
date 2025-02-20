@@ -11,7 +11,7 @@ option go_package = "github.com/imua-xyz/imuachain/x/immint/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/imuachain/immint/v1/Params";
+    option (google.api.http).get = "/imuachain/immint/v1/params";
   }
 }
 

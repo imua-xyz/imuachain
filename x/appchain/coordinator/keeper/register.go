@@ -38,13 +38,13 @@ func (k Keeper) AddSubscriberChain(
 	unbondingEpochs := (req.SubscriberParams.UnbondingPeriod + epochInfo.Duration - 1) / epochInfo.Duration
 	if _, err := k.avsKeeper.RegisterAVSWithChainID(ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:           req.ChainID,
-		AssetID:           req.AssetIDs,
+		AssetIDs:          req.AssetIDs,
 		UnbondingPeriod:   uint64(unbondingEpochs), // estimated
 		MinSelfDelegation: req.MinSelfDelegationUsd,
 		EpochIdentifier:   req.EpochIdentifier,
 		ChainID:           req.ChainID,
 		// TODO: remove the owner role and make it controllable by subscriber-governance
-		AvsOwnerAddress: []string{req.FromAddress},
+		AvsOwnerAddresses: []string{req.FromAddress},
 	}); err != nil {
 		return nil, types.ErrInvalidRegistrationParams.Wrap(err.Error())
 	}

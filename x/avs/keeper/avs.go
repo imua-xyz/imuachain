@@ -48,10 +48,10 @@ func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, e
 	if err != nil {
 		return "", errorsmod.Wrap(err, fmt.Sprintf("GetAVSSlashContract: key is %s", avsAddr))
 	}
-	if avsInfo.Info.SlashAddr == (common.Address{}).String() {
+	if avsInfo.Info.SlashAddress == (common.Address{}).String() {
 		return "", nil
 	}
-	return avsInfo.Info.SlashAddr, nil
+	return avsInfo.Info.SlashAddress, nil
 }
 
 // GetAVSMinimumSelfDelegation returns the minimum self-delegation required for the AVS, on a per-operator basis.
@@ -104,7 +104,7 @@ func (k *Keeper) GetAVSInfoByTaskAddress(ctx sdk.Context, taskAddr string) types
 	}
 	taskAddr = strings.ToLower(taskAddr)
 	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) (stop bool) {
-		if taskAddr == avsInfo.GetTaskAddr() {
+		if taskAddr == avsInfo.GetTaskAddress() {
 			avs = avsInfo
 			return true // stop because we found the AVS
 		}
@@ -153,7 +153,7 @@ func (k Keeper) RegisterAVSWithChainID(
 	if len(params.ChainID) == 0 {
 		return false, common.Address{}, errorsmod.Wrap(types.ErrNotNull, "RegisterAVSWithChainID: chainID is null")
 	}
-	avsAddrStr := types.GenerateAVSAddr(params.ChainID)
+	avsAddrStr := types.GenerateAVSAddress(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
 	// check that the AVS is registered
 	if isAvs, _ := k.IsAVS(ctx, avsAddrStr); isAvs {
@@ -241,25 +241,25 @@ func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error
 // Returns true if the operator is whitelisted, false otherwise.
 // Returns an error if the AVS address is invalid, the operator address is invalid,
 // or if the operator is not in the whitelist.
-func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (bool, error) {
+func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddress string) (bool, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
 		return false, errorsmod.Wrap(err, fmt.Sprintf("IsWhitelisted: key is %s", avsAddr))
 	}
-	_, err = sdk.AccAddressFromBech32(operatorAddr)
+	_, err = sdk.AccAddressFromBech32(operatorAddress)
 	if err != nil {
 		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parsing account acc address from Bech32")
 	}
 	// whitelist is disabled for avs of the dogfood type
-	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == types.GenerateAVSAddr(avsInfo.Info.ChainId) {
+	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == types.GenerateAVSAddress(avsInfo.Info.ChainId) {
 		return true, nil
 	}
 	// Currently avs has no whitelist set and any operator can optin
-	if len(avsInfo.Info.WhitelistAddress) == 0 {
+	if len(avsInfo.Info.WhitelistAddresses) == 0 {
 		return true, nil
 	}
-	if !slices.Contains(avsInfo.Info.WhitelistAddress, operatorAddr) {
-		return false, errorsmod.Wrap(err, fmt.Sprintf("operator %s not in whitelist", operatorAddr))
+	if !slices.Contains(avsInfo.Info.WhitelistAddresses, operatorAddress) {
+		return false, errorsmod.Wrap(err, fmt.Sprintf("operator %s not in whitelist", operatorAddress))
 	}
 	return true, nil
 }

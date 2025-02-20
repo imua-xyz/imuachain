@@ -38,7 +38,7 @@ func (suite *AVSTestSuite) TestEpochEnd_TaskCalculation() {
 		OptInOperators:        suite.operatorAddresses,
 		NoSignedOperators:     nil,
 		SignedOperators:       suite.operatorAddresses,
-		ActualThreshold:       7766279631452241920,
+		ActualThreshold:       "33",
 	}
 	diff := avstypes.Difference(expectInfo.SignedOperators, info.SignedOperators)
 

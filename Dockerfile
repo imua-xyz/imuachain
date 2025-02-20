@@ -27,7 +27,7 @@ RUN apk add --no-cache \
 	ca-certificates=20241121-r1 \
 	libstdc++~=13.2 \
 	jq~=1.7 \
-	curl~=8.12 \
+	curl~=8.12.1-r0 \
 	bash~=5.2 \
     && addgroup -g 1000 imua \
     && adduser -S -h /home/imua -D imua -u 1000 -G imua

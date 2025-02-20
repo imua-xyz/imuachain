@@ -86,10 +86,13 @@ func (suite *AVSManagerPrecompileSuite) TestIsTransaction() {
 	}
 }
 
-func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
+func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
+	// Default variables used during tests.
+	gas := uint64(2_000)
+	senderAddress := utiltx.GenerateAddress()
 	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []common.Address{
-		suite.Address,
+	avsOwnerAddresses := []common.Address{
+		s.Address,
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
@@ -97,114 +100,67 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
-	assetID := suite.AssetIDs
-	minStakeAmount, taskAddr := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	assetIDs := s.AssetIDs
+	minStakeAmount, taskAddress := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
-	params := []uint64{2, 3, 4, 4}
-	commonMalleate := func() (common.Address, []byte) {
-		input, err := suite.precompile.Pack(
-			avs.MethodRegisterAVS,
-			suite.Address,
-			avsName,
-			minStakeAmount,
-			common.HexToAddress(taskAddr),
-			common.HexToAddress(slashAddress),
-			common.HexToAddress(rewardAddress),
-			avsOwnerAddress,
-			imWhiteListAddresses,
-			assetID,
-			avsUnbondingPeriod,
-			minSelfDelegation,
-			epochIdentifier,
-			params,
-		)
-		suite.Require().NoError(err, "failed to pack input")
-		return common.HexToAddress("0x3e108c058e8066DA635321Dc3018294cA82ddEdf"), input
-	}
-
-	successRet, err := suite.precompile.Methods[avs.MethodRegisterAVS].Outputs.Pack(true)
-	suite.Require().NoError(err)
-
-	testcases := []struct {
+	method := s.precompile.Methods[avs.MethodRegisterAVS]
+	testCases := []struct {
 		name        string
-		malleate    func() (common.Address, []byte)
-		readOnly    bool
-		expPass     bool
+		sender      common.Address
+		origin      common.Address
+		malleate    func() []interface{}
+		ibcSetup    bool
+		expError    bool
 		errContains string
-		returnBytes []byte
 	}{
 		{
-			name: "pass for avs-registered",
-			malleate: func() (common.Address, []byte) {
-				return commonMalleate()
+			name:   "pass for avs-registered",
+			sender: senderAddress,
+			origin: senderAddress,
+			malleate: func() []interface{} {
+				return []interface{}{
+					avs.Params{
+						Sender:              senderAddress,
+						AvsName:             avsName,
+						MinStakeAmount:      minStakeAmount,
+						TaskAddress:         common.HexToAddress(taskAddress),
+						SlashAddress:        common.HexToAddress(slashAddress),
+						RewardAddress:       common.HexToAddress(rewardAddress),
+						AvsOwnerAddresses:   avsOwnerAddresses,
+						WhitelistAddresses:  imWhiteListAddresses,
+						AssetIDs:            assetIDs,
+						AvsUnbondingPeriod:  avsUnbondingPeriod,
+						MinSelfDelegation:   minSelfDelegation,
+						EpochIdentifier:     epochIdentifier,
+						MiniOptInOperators:  1,
+						MinTotalStakeAmount: 1,
+						AvsRewardProportion: 5,
+						AvsSlashProportion:  5,
+					},
+				}
 			},
-			readOnly:    false,
-			expPass:     true,
-			returnBytes: successRet,
+			expError: false,
+			ibcSetup: true,
 		},
 	}
 
-	for _, tc := range testcases {
-		tc := tc
-		suite.Run(tc.name, func() {
-			baseFee := suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx)
-
-			// malleate testcase
-			caller, input := tc.malleate()
-
-			contract := vm.NewPrecompile(vm.AccountRef(caller), suite.precompile, big.NewInt(0), uint64(1e6))
-			contract.Input = input
-
-			contractAddr := contract.Address()
-			// Build and sign Ethereum transaction
-			txArgs := evmtypes.EvmTxArgs{
-				ChainID:   suite.App.EvmKeeper.ChainID(),
-				Nonce:     0,
-				To:        &contractAddr,
-				Amount:    nil,
-				GasLimit:  100000,
-				GasPrice:  app.MainnetMinGasPrices.BigInt(),
-				GasFeeCap: baseFee,
-				GasTipCap: big.NewInt(1),
-				Accesses:  &ethtypes.AccessList{},
-			}
-			msgEthereumTx := evmtypes.NewTx(&txArgs)
-
-			msgEthereumTx.From = suite.Address.String()
-			err := msgEthereumTx.Sign(suite.EthSigner, suite.Signer)
-			suite.Require().NoError(err, "failed to sign Ethereum message")
-
-			// Instantiate config
-			proposerAddress := suite.Ctx.BlockHeader().ProposerAddress
-			cfg, err := suite.App.EvmKeeper.EVMConfig(suite.Ctx, proposerAddress, suite.App.EvmKeeper.ChainID())
-			suite.Require().NoError(err, "failed to instantiate EVM config")
-
-			msg, err := msgEthereumTx.AsMessage(suite.EthSigner, baseFee)
-			suite.Require().NoError(err, "failed to instantiate Ethereum message")
-
-			// Instantiate EVM
-			evm := suite.App.EvmKeeper.NewEVM(
-				suite.Ctx, msg, cfg, nil, suite.StateDB,
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			contract := vm.NewContract(vm.AccountRef(tc.sender), s.precompile, big.NewInt(0), gas)
+			_, err := s.precompile.RegisterAVS(
+				s.Ctx,
+				tc.origin,
+				contract,
+				s.StateDB,
+				&method,
+				tc.malleate(),
 			)
-
-			params := suite.App.EvmKeeper.GetParams(suite.Ctx)
-			activePrecompiles := params.GetActivePrecompilesAddrs()
-			precompileMap := suite.App.EvmKeeper.Precompiles(activePrecompiles...)
-			err = vm.ValidatePrecompiles(precompileMap, activePrecompiles)
-			suite.Require().NoError(err, "invalid precompiles", activePrecompiles)
-			evm.WithPrecompiles(precompileMap, activePrecompiles)
-
-			// Run precompiled contract
-			bz, err := suite.precompile.Run(evm, contract, tc.readOnly)
-			// Check results
-			if tc.expPass {
-				suite.Require().NoError(err, "expected no error when running the precompile")
-				suite.Require().Equal(tc.returnBytes, bz, "the return doesn't match the expected result")
+			if tc.expError {
+				s.Require().ErrorContains(err, tc.errContains)
 			} else {
-				suite.Require().Error(err, "expected error to be returned when running the precompile")
-				suite.Require().Nil(bz, "expected returned bytes to be nil")
-				suite.Require().ErrorContains(err, tc.errContains)
+				s.Require().NoError(err)
 			}
 		})
 	}
@@ -226,28 +182,28 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 	suite.Require().NoError(err)
 	setUp := func() {
 		slashAddress, rewardAddress := "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-		avsOwnerAddress := []string{
+		avsOwnerAddresses := []string{
 			sdk.AccAddress(suite.Address.Bytes()).String(),
 			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		}
-		assetID := suite.AssetIDs
-		minStakeAmount, taskAddr := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+		assetIDs := suite.AssetIDs
+		minStakeAmount, taskAddress := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 		avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 		epochIdentifier := epochstypes.DayEpochID
 		params := []uint64{2, 3, 4, 4}
 		avs := &types.AVSInfo{
 			Name:                avsName,
 			AvsAddress:          suite.Address.String(),
-			SlashAddr:           slashAddress,
-			RewardAddr:          rewardAddress,
-			AvsOwnerAddress:     avsOwnerAddress,
-			AssetIDs:            assetID,
+			SlashAddress:        slashAddress,
+			RewardAddress:       rewardAddress,
+			AvsOwnerAddresses:   avsOwnerAddresses,
+			AssetIDs:            assetIDs,
 			AvsUnbondingPeriod:  avsUnbondingPeriod,
 			MinSelfDelegation:   minSelfDelegation,
 			EpochIdentifier:     epochIdentifier,
 			StartingEpoch:       1,
-			TaskAddr:            taskAddr,
+			TaskAddress:         taskAddress,
 			MinStakeAmount:      minStakeAmount,
 			MinOptInOperators:   params[0],
 			MinTotalStakeAmount: params[1],
@@ -292,12 +248,12 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 			contract := vm.NewPrecompile(vm.AccountRef(caller), suite.precompile, big.NewInt(0), uint64(1e6))
 			contract.Input = input
 
-			contractAddr := contract.Address()
+			contractAddress := contract.Address()
 			// Build and sign Ethereum transaction
 			txArgs := evmtypes.EvmTxArgs{
 				ChainID:   suite.App.EvmKeeper.ChainID(),
 				Nonce:     0,
-				To:        &contractAddr,
+				To:        &contractAddress,
 				Amount:    nil,
 				GasLimit:  100000,
 				GasPrice:  app.MainnetMinGasPrices.BigInt(),
@@ -348,9 +304,11 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 }
 
 func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
-	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []common.Address{
-		suite.Address,
+	gas := uint64(2_000)
+	senderAddress := utiltx.GenerateAddress()
+	avsName, slashAddress, rewardAddress := "avsTest-update", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsOwnerAddresses := []common.Address{
+		s.Address,
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
@@ -358,138 +316,67 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
-	assetID := suite.AssetIDs
-	minStakeAmount, taskAddr := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
+	assetIDs := s.AssetIDs
+	minStakeAmount, taskAddr := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
-	params := []uint64{2, 3, 4, 4}
-	commonMalleate := func() (common.Address, []byte) {
-		input, err := suite.precompile.Pack(
-			avs.MethodUpdateAVS,
-			suite.Address,
-			avsName,
-			minStakeAmount,
-			common.HexToAddress(taskAddr),
-			common.HexToAddress(slashAddress),
-			common.HexToAddress(rewardAddress),
-			avsOwnerAddress,
-			imWhiteListAddresses,
-			assetID,
-			avsUnbondingPeriod,
-			minSelfDelegation,
-			epochIdentifier,
-			params,
-		)
-		suite.Require().NoError(err, "failed to pack input")
-		return suite.Address, input
-	}
-
-	successRet, err := suite.precompile.Methods[avs.MethodUpdateAVS].Outputs.Pack(true)
-	suite.Require().NoError(err)
-	setUp := func() {
-		avs := &types.AVSInfo{
-			Name:                avsName,
-			AvsAddress:          suite.Address.String(),
-			SlashAddr:           slashAddress,
-			RewardAddr:          rewardAddress,
-			AvsOwnerAddress:     []string{sdk.AccAddress(suite.Address.Bytes()).String()},
-			AssetIDs:            assetID,
-			AvsUnbondingPeriod:  avsUnbondingPeriod,
-			MinSelfDelegation:   minSelfDelegation,
-			EpochIdentifier:     epochIdentifier,
-			StartingEpoch:       1,
-			TaskAddr:            taskAddr,
-			MinStakeAmount:      minStakeAmount,
-			MinOptInOperators:   params[0],
-			MinTotalStakeAmount: params[1],
-			AvsReward:           sdk.MustNewDecFromStr(strconv.Itoa(int(params[1]))),
-			AvsSlash:            sdk.MustNewDecFromStr(strconv.Itoa(int(params[2]))),
-		}
-
-		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
-		suite.NoError(err)
-	}
-	testcases := []struct {
+	method := s.precompile.Methods[avs.MethodUpdateAVS]
+	testCases := []struct {
 		name        string
-		malleate    func() (common.Address, []byte)
-		readOnly    bool
-		expPass     bool
+		sender      common.Address
+		origin      common.Address
+		malleate    func() []interface{}
+		ibcSetup    bool
+		expError    bool
 		errContains string
-		returnBytes []byte
 	}{
 		{
-			name: "pass for avs-update",
-			malleate: func() (common.Address, []byte) {
-				setUp()
-				return commonMalleate()
+			name:   "pass for avs-update",
+			sender: senderAddress,
+			origin: senderAddress,
+			malleate: func() []interface{} {
+				return []interface{}{
+					avs.Params{
+						Sender:              senderAddress,
+						AvsName:             avsName,
+						MinStakeAmount:      minStakeAmount,
+						TaskAddress:         common.HexToAddress(taskAddr),
+						SlashAddress:        common.HexToAddress(slashAddress),
+						RewardAddress:       common.HexToAddress(rewardAddress),
+						AvsOwnerAddresses:   avsOwnerAddresses,
+						WhitelistAddresses:  imWhiteListAddresses,
+						AssetIDs:            assetIDs,
+						AvsUnbondingPeriod:  avsUnbondingPeriod,
+						MinSelfDelegation:   minSelfDelegation,
+						EpochIdentifier:     epochIdentifier,
+						MiniOptInOperators:  1,
+						MinTotalStakeAmount: 1,
+						AvsRewardProportion: 5,
+						AvsSlashProportion:  5,
+					},
+				}
 			},
-			readOnly:    false,
-			expPass:     true,
-			returnBytes: successRet,
+			expError: false,
+			ibcSetup: true,
 		},
 	}
 
-	for _, tc := range testcases {
-		tc := tc
-		suite.Run(tc.name, func() {
-			baseFee := suite.App.FeeMarketKeeper.GetBaseFee(suite.Ctx)
-
-			// malleate testcase
-			caller, input := tc.malleate()
-
-			contract := vm.NewPrecompile(vm.AccountRef(caller), suite.precompile, big.NewInt(0), uint64(1e6))
-			contract.Input = input
-
-			contractAddr := suite.Address
-			// Build and sign Ethereum transaction
-			txArgs := evmtypes.EvmTxArgs{
-				ChainID:   suite.App.EvmKeeper.ChainID(),
-				Nonce:     0,
-				To:        &contractAddr,
-				Amount:    nil,
-				GasLimit:  100000,
-				GasPrice:  app.MainnetMinGasPrices.BigInt(),
-				GasFeeCap: baseFee,
-				GasTipCap: big.NewInt(1),
-				Accesses:  &ethtypes.AccessList{},
-			}
-			msgEthereumTx := evmtypes.NewTx(&txArgs)
-
-			msgEthereumTx.From = suite.Address.String()
-			err := msgEthereumTx.Sign(suite.EthSigner, suite.Signer)
-			suite.Require().NoError(err, "failed to sign Ethereum message")
-
-			// Instantiate config
-			proposerAddress := suite.Ctx.BlockHeader().ProposerAddress
-			cfg, err := suite.App.EvmKeeper.EVMConfig(suite.Ctx, proposerAddress, suite.App.EvmKeeper.ChainID())
-			suite.Require().NoError(err, "failed to instantiate EVM config")
-
-			msg, err := msgEthereumTx.AsMessage(suite.EthSigner, baseFee)
-			suite.Require().NoError(err, "failed to instantiate Ethereum message")
-
-			// Instantiate EVM
-			evm := suite.App.EvmKeeper.NewEVM(
-				suite.Ctx, msg, cfg, nil, suite.StateDB,
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest()
+			contract := vm.NewContract(vm.AccountRef(tc.sender), s.precompile, big.NewInt(0), gas)
+			_, err := s.precompile.RegisterAVS(
+				s.Ctx,
+				tc.origin,
+				contract,
+				s.StateDB,
+				&method,
+				tc.malleate(),
 			)
-
-			params := suite.App.EvmKeeper.GetParams(suite.Ctx)
-			activePrecompiles := params.GetActivePrecompilesAddrs()
-			precompileMap := suite.App.EvmKeeper.Precompiles(activePrecompiles...)
-			err = vm.ValidatePrecompiles(precompileMap, activePrecompiles)
-			suite.Require().NoError(err, "invalid precompiles", activePrecompiles)
-			evm.WithPrecompiles(precompileMap, activePrecompiles)
-
-			// Run precompiled contract
-			bz, err := suite.precompile.Run(evm, contract, tc.readOnly)
-
-			// Check results
-			if tc.expPass {
-				suite.Require().NoError(err, "expected no error when running the precompile")
-				suite.Require().Equal(tc.returnBytes, bz, "the return doesn't match the expected result")
+			if tc.expError {
+				s.Require().ErrorContains(err, tc.errContains)
 			} else {
-				suite.Require().Error(err, "expected error to be returned when running the precompile")
-				suite.Require().Nil(bz, "expected returned bytes to be nil")
-				suite.Require().ErrorContains(err, tc.errContains)
+				s.Require().NoError(err)
 			}
 		})
 	}
@@ -498,8 +385,8 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 	// from := s.Address
 	operatorAddress := sdk.AccAddress(suite.Address.Bytes())
-	assetID := suite.AssetIDs
-	minStakeAmount, taskAddr := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
+	assetIDs := suite.AssetIDs
+	minStakeAmount, taskAddress := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
 	params := []uint64{2, 3, 4, 4}
@@ -525,7 +412,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 		})
 	}
 	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []string{
+	avsOwnerAddresses := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
@@ -535,15 +422,15 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 		avs := &types.AVSInfo{
 			Name:                avsName,
 			AvsAddress:          suite.Address.String(),
-			SlashAddr:           slashAddress,
-			RewardAddr:          rewardAddress,
-			AvsOwnerAddress:     avsOwnerAddress,
-			AssetIDs:            assetID,
+			SlashAddress:        slashAddress,
+			RewardAddress:       rewardAddress,
+			AvsOwnerAddresses:   avsOwnerAddresses,
+			AssetIDs:            assetIDs,
 			AvsUnbondingPeriod:  avsUnbondingPeriod,
 			MinSelfDelegation:   minSelfDelegation,
 			EpochIdentifier:     epochIdentifier,
 			StartingEpoch:       1,
-			TaskAddr:            taskAddr,
+			TaskAddress:         taskAddress,
 			MinStakeAmount:      minStakeAmount,
 			MinOptInOperators:   params[0],
 			MinTotalStakeAmount: params[1],
@@ -578,16 +465,16 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 			malleate: func() (common.Address, []byte) {
 				registerOperator()
 				setUp()
-				avsAddr, intput := commonMalleate()
+				avsAddress, intput := commonMalleate()
 				asset := suite.Assets[0]
 				_, defaultAssetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.LayerZeroChainID, "", asset.Address)
 				err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &types.AVSRegisterOrDeregisterParams{
 					Action:     types.UpdateAction,
-					AvsAddress: avsAddr,
-					AssetID:    []string{defaultAssetID},
+					AvsAddress: avsAddress,
+					AssetIDs:   []string{defaultAssetID},
 				})
 				suite.NoError(err)
-				return avsAddr, intput
+				return avsAddress, intput
 			},
 			readOnly:    false,
 			expPass:     true,
@@ -606,12 +493,12 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 			contract.Input = input
 			contract.CallerAddress = caller
 
-			contractAddr := contract.Address()
+			contractAddress := contract.Address()
 			// Build and sign Ethereum transaction
 			txArgs := evmtypes.EvmTxArgs{
 				ChainID:   suite.App.EvmKeeper.ChainID(),
 				Nonce:     0,
-				To:        &contractAddr,
+				To:        &contractAddress,
 				Amount:    nil,
 				GasLimit:  100000,
 				GasPrice:  app.MainnetMinGasPrices.BigInt(),
@@ -664,8 +551,8 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 	// from := s.Address
 	operatorAddress := sdk.AccAddress(suite.Address.Bytes())
-	assetID := suite.AssetIDs
-	minStakeAmount, taskAddr := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
+	assetIDs := suite.AssetIDs
+	minStakeAmount, taskAddress := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
 	params := []uint64{2, 3, 4, 4}
@@ -691,25 +578,25 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 		})
 	}
 	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
-	avsOwnerAddress := []string{
+	avsOwnerAddresses := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
 
 	setUp := func() {
-		avs := &types.AVSInfo{
+		avsInfo := &types.AVSInfo{
 			Name:                avsName,
 			AvsAddress:          suite.Address.String(),
-			SlashAddr:           slashAddress,
-			RewardAddr:          rewardAddress,
-			AvsOwnerAddress:     avsOwnerAddress,
-			AssetIDs:            assetID,
+			SlashAddress:        slashAddress,
+			RewardAddress:       rewardAddress,
+			AvsOwnerAddresses:   avsOwnerAddresses,
+			AssetIDs:            assetIDs,
 			AvsUnbondingPeriod:  avsUnbondingPeriod,
 			MinSelfDelegation:   minSelfDelegation,
 			EpochIdentifier:     epochIdentifier,
 			StartingEpoch:       1,
-			TaskAddr:            taskAddr,
+			TaskAddress:         taskAddress,
 			MinStakeAmount:      minStakeAmount,
 			MinOptInOperators:   params[0],
 			MinTotalStakeAmount: params[1],
@@ -717,10 +604,10 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 			AvsSlash:            sdk.MustNewDecFromStr(strconv.Itoa(int(params[2]))),
 		}
 
-		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
+		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avsInfo)
 		suite.NoError(err)
 	}
-	optin := func() {
+	optIn := func() {
 		operatorParams := &types.OperatorOptParams{}
 		operatorParams.OperatorAddress = operatorAddress
 		operatorParams.AvsAddress = suite.Address
@@ -753,7 +640,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 			malleate: func() (common.Address, []byte) {
 				registerOperator()
 				setUp()
-				optin()
+				optIn()
 				return commonMalleate()
 			},
 			readOnly:    false,
@@ -773,12 +660,12 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 			contract.Input = input
 			contract.CallerAddress = caller
 
-			contractAddr := contract.Address()
+			contractAddress := contract.Address()
 			// Build and sign Ethereum transaction
 			txArgs := evmtypes.EvmTxArgs{
 				ChainID:   suite.App.EvmKeeper.ChainID(),
 				Nonce:     0,
-				To:        &contractAddr,
+				To:        &contractAddress,
 				Amount:    nil,
 				GasLimit:  100000,
 				GasPrice:  app.MainnetMinGasPrices.BigInt(),
@@ -830,15 +717,15 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 
 // TestRun tests the precompiles Run method reg avstask.
 func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
-	taskAddr := utiltx.GenerateAddress()
+	taskAddress := utiltx.GenerateAddress()
 	setUp := func() {
 		suite.prepare()
 		// register the new token
-		usdcAddr := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
+		usdcAddress := common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48")
 		usdcClientChainAsset := assetstypes.AssetInfo{
 			Name:             "USD coin",
 			Symbol:           "USDC",
-			Address:          usdcAddr.String(),
+			Address:          usdcAddress.String(),
 			Decimals:         6,
 			LayerZeroChainID: 101,
 			MetaInfo:         "USDC",
@@ -852,20 +739,20 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 		)
 		suite.NoError(err)
 		// register the new AVS
-		suite.prepareAvs([]string{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65", "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, taskAddr.String())
+		suite.prepareAvs([]string{"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65", "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"}, taskAddress.String())
 		// opt in
-		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
-		suite.prepareDeposit(usdcAddr, sdkmath.NewInt(1e8))
+		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
 		usdcPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
 		delegatedAmount := sdkmath.NewIntWithDecimal(8, 7)
-		suite.prepareDelegation(true, usdcAddr, delegatedAmount)
+		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
 		operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
@@ -879,7 +766,7 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 			rand.Bytes(3),
 			uint64(3),
 			uint64(3),
-			uint64(3),
+			uint8(3),
 			uint64(3),
 		)
 		suite.Require().NoError(err, "failed to pack input")
@@ -917,14 +804,14 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 
 			contract := vm.NewPrecompile(vm.AccountRef(caller), suite.precompile, big.NewInt(0), uint64(1e6))
 			contract.Input = input
-			contract.CallerAddress = taskAddr
+			contract.CallerAddress = taskAddress
 
-			contractAddr := contract.Address()
+			contractAddress := contract.Address()
 			// Build and sign Ethereum transaction
 			txArgs := evmtypes.EvmTxArgs{
 				ChainID:   suite.App.EvmKeeper.ChainID(),
 				Nonce:     0,
-				To:        &contractAddr,
+				To:        &contractAddress,
 				Amount:    nil,
 				GasLimit:  100000,
 				GasPrice:  app.MainnetMinGasPrices.BigInt(),
