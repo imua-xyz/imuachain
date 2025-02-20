@@ -241,19 +241,16 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price string, roundID uint64) {
 	storedNextRoundID := k.GetNextRoundID(ctx, tokenID)
 	pTR, ok := k.GetPriceTRLatest(ctx, tokenID)
-
 	if ok {
 		price = pTR.Price
 	} else {
 		pTR = types.PriceTimeRound{}
 	}
-
 	if nextRoundID < storedNextRoundID {
 		roundID = storedNextRoundID - 1
 		// we don't append new price if storedNextRoundID is larger than expected
 		return
 	}
-
 	if nextRoundID > storedNextRoundID {
 		// if storedNextRoundID is too old, we just set it with input params
 		store := k.getPriceTRStore(ctx, tokenID)
@@ -261,13 +258,9 @@ func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price
 		binary.BigEndian.PutUint64(b, nextRoundID)
 		store.Set(types.PricesNextRoundIDKey, b)
 	}
-
 	roundID = nextRoundID
-
 	pTR.RoundID = nextRoundID
-
 	k.AppendPriceTR(ctx, tokenID, pTR, types.NilDetID)
-
 	return
 }
 
