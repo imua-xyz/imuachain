@@ -31,51 +31,48 @@ func init() {
 
 const (
 	// EpochIdentifier defines the epoch identifier for fee distribution module
-	prefixParams          = "feedistributionPrefixParams"
-	prefixEpochIdentifier = "feedistrEpochPrefixEpochIdentifier"
-	prefixFeePool         = "feePoolKey"
+	prefixParams byte = iota + 1
+	prefixEpochIdentifier
+	prefixFeePool
+	prefixOperatorOutstandingRewards
+	prefixDelegatorWithdrawAddr
+	prefixDelegatorStartingInfo
+	prefixOperatorHistoricalRewards
+	prefixOperatorCurrentRewards
+	prefixOperatorAccumulatedCommission
+	prefixOperatorSlashEvent
+	prefixStakerOutstandingRewards
 )
 
 var (
-	KeyPrefixParams                      = KeyPrefix(prefixParams)
-	KeyPrefixEpochIdentifier             = KeyPrefix(prefixEpochIdentifier)
-	FeePoolKey                           = KeyPrefix(prefixFeePool)
-	ValidatorAccumulatedCommissionPrefix = []byte{0x00} // key for accumulated validator commission
-	ValidatorCurrentRewardsPrefix        = []byte{0x01} // key for current validator rewards
-	ValidatorOutstandingRewardsPrefix    = []byte{0x02} // key for outstanding rewards
-	StakerOutstandingRewardsPrefix       = []byte{0x03} // key for outstanding rewards of staker
+	KeyPrefixParams          = []byte{prefixParams}
+	KeyPrefixEpochIdentifier = []byte{prefixEpochIdentifier}
+
+	//
+	FeePoolKey                          = []byte{prefixFeePool}
+	OperatorOutstandingRewardsPrefix    = []byte{prefixOperatorOutstandingRewards}    // key for outstanding rewards
+	DelegatorWithdrawAddrPrefix         = []byte{prefixDelegatorWithdrawAddr}         // key for delegator withdraw address
+	DelegatorStartingInfoPrefix         = []byte{prefixDelegatorStartingInfo}         // key for delegator starting info
+	OperatorHistoricalRewardsPrefix     = []byte{prefixOperatorHistoricalRewards}     // key for historical operators rewards / stake
+	OperatorCurrentRewardsPrefix        = []byte{prefixOperatorCurrentRewards}        // key for current operator rewards
+	OperatorAccumulatedCommissionPrefix = []byte{prefixOperatorAccumulatedCommission} // key for accumulated operator commission
+	OperatorSlashEventPrefix            = []byte{prefixOperatorSlashEvent}            // key for operator slash fraction
+	StakerOutstandingRewardsPrefix      = []byte{prefixStakerOutstandingRewards}      // key for outstanding rewards of staker
 )
 
-var (
-	EventTypeCommission         = "commission"
-	EventTypeSetWithdrawAddress = "set_withdraw_address"
-	EventTypeRewards            = "rewards"
-	EventTypeWithdrawRewards    = "withdraw_rewards"
-	EventTypeWithdrawCommission = "withdraw_commission"
-	EventTypeProposerReward     = "proposer_reward"
-
-	AttributeKeyWithdrawAddress = "withdraw_address"
-	AttributeKeyValidator       = "validator"
-	AttributeKeyDelegator       = "delegator"
-)
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
+// GetOperatorAccumulatedCommissionKey creates the key for a validator's current commission.
+func GetOperatorAccumulatedCommissionKey(v sdk.ValAddress) []byte {
+	return append(OperatorAccumulatedCommissionPrefix, address.MustLengthPrefix(v.Bytes())...)
 }
 
-// GetValidatorAccumulatedCommissionKey creates the key for a validator's current commission.
-func GetValidatorAccumulatedCommissionKey(v sdk.ValAddress) []byte {
-	return append(ValidatorAccumulatedCommissionPrefix, address.MustLengthPrefix(v.Bytes())...)
+// GetOperatorCurrentRewardsKey creates the key for a validator's current rewards.
+func GetOperatorCurrentRewardsKey(v sdk.ValAddress) []byte {
+	return append(OperatorCurrentRewardsPrefix, address.MustLengthPrefix(v.Bytes())...)
 }
 
-// GetValidatorCurrentRewardsKey creates the key for a validator's current rewards.
-func GetValidatorCurrentRewardsKey(v sdk.ValAddress) []byte {
-	return append(ValidatorCurrentRewardsPrefix, address.MustLengthPrefix(v.Bytes())...)
-}
-
-// GetValidatorOutstandingRewardsKey creates the outstanding rewards key for a validator.
-func GetValidatorOutstandingRewardsKey(valAddr sdk.ValAddress) []byte {
-	return append(ValidatorOutstandingRewardsPrefix, address.MustLengthPrefix(valAddr.Bytes())...)
+// GetOperatorOutstandingRewardsKey creates the outstanding rewards key for a validator.
+func GetOperatorOutstandingRewardsKey(valAddr sdk.ValAddress) []byte {
+	return append(OperatorOutstandingRewardsPrefix, address.MustLengthPrefix(valAddr.Bytes())...)
 }
 
 // GetStakerOutstandingRewardsKey creates the outstanding rewards key for the staker.
