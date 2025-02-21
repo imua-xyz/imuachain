@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 	"math/big"
 	"strings"
 	"time"
@@ -194,4 +197,26 @@ func (suite *AVSTestSuite) TestAddressSwitch() {
 	suite.Equal("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", accAddress.String())
 	commonAddress := common.Address(accAddress)
 	suite.Equal(common.HexToAddress("0x8dF46478a83Ab2a429979391E9546A12AfF9E33f"), commonAddress)
+}
+
+func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
+	privateKey, err := blst.RandKey()
+	suite.NoError(err)
+	publicKey := privateKey.PublicKey()
+	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+	expectedMessage := "ExoCore-" + types.ChainIDWithoutRevision(suite.Ctx.ChainID()) + "-" + strings.ToLower(operatorAddress.String())
+	expectedHash := crypto.Keccak256Hash([]byte(expectedMessage))
+	sig := privateKey.Sign(expectedHash.Bytes())
+	params := &types.BlsParams{
+		OperatorAddress:               operatorAddress,
+		AvsAddress:                    testutiltx.GenerateAddress(),
+		PubKey:                        publicKey.Marshal(),
+		PubkeyRegistrationSignature:   sig.Marshal(),
+		PubkeyRegistrationMessageHash: expectedHash.Bytes(),
+		Message:                       expectedMessage,
+	}
+ 
+	err = suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, params)
+	suite.NoError(err)
+
 }
