@@ -2,8 +2,6 @@ package types
 
 const (
 	// ModuleName defines the module name
-	// TODO: if the upgrade module is used, this should be changed to "imslash" through that.
-	// If it is not used, change it right now. CC @TimmyExogenous.
 	ModuleName = "imslash"
 
 	// StoreKey defines the primary module store key
