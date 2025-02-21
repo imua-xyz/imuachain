@@ -230,6 +230,61 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 			},
 		},
 		{
+			name: "reuse BLS key - same operator + avs",
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
+
+				params := types.BlsParams{
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+				err = suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, &params)
+				suite.NoError(err)
+				return &params
+			},
+			errorContains: types.ErrAlreadyExists.Error() + "a key has already been set for this operator and avs",
+		},
+		{
+			name: "reuse BLS key - different operator + same avs",
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
+
+				params := types.BlsParams{
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+				err = suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, &params)
+				suite.NoError(err)
+
+				anotherOperatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg = fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), anotherOperatorAddress.String())
+				hashedMsg = crypto.Keccak256Hash([]byte(msg))
+				sig = privateKey.Sign(hashedMsg.Bytes())
+
+				return &types.BlsParams{
+					OperatorAddress:             anotherOperatorAddress,
+					AvsAddress:                  params.AvsAddress,
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+			},
+			errorContains: types.ErrAlreadyExists.Error() + "this BLS key is already in use",
+		},
+		{
 			name: "wrong chain ID",
 			setupParams: func() *types.BlsParams {
 				privateKey, err := blst.RandKey()
@@ -285,6 +340,46 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 					AvsAddress:                  testutiltx.GenerateAddress(),
 					PubKey:                      anotherPrivateKey.PublicKey().Marshal(),
 					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+			},
+			errorContains: types.ErrSigNotMatchPubKey.Error(),
+		},
+		{
+			name: "invalid public key format",
+			setupParams: func() *types.BlsParams {
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				return &types.BlsParams{
+					OperatorAddress: operatorAddress,
+					AvsAddress:      testutiltx.GenerateAddress(),
+					PubKey:          []byte("invalid"),
+				}
+			},
+			errorContains: types.ErrSigNotMatchPubKey.Error(),
+		},
+		{
+			name: "invalid signature format",
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				return &types.BlsParams{
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: []byte("invalid"),
+				}
+			},
+			errorContains: types.ErrSigNotMatchPubKey.Error(),
+		},
+		{
+			name: "empty operator address",
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
+				return &types.BlsParams{
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: []byte{},
 				}
 			},
 			errorContains: types.ErrSigNotMatchPubKey.Error(),
