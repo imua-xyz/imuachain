@@ -10,7 +10,7 @@ rem             C:\msys64\usr\bin
 
 set KEY="dev0"
 # TODO: imua testnet chainid is still under consideration and need to be finalized later
-set CHAINID="imualocalnet_232-1"
+set CHAINID="imuachainlocalnet_232-1"
 set MONIKER="localtestnet"
 set KEYRING="test"
 set ALGO="eth_secp256k1"

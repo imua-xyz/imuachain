@@ -1,7 +1,7 @@
 #!/bin/bash
 
 KEY="dev0"
-CHAINID="imualocalnet_232-1"
+CHAINID="imuachainlocalnet_232-1"
 MONIKER="mymoniker"
 DATA_DIR=$(mktemp -d -t imua-datadir.XXXXX)
 

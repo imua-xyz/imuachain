@@ -96,7 +96,7 @@ var DefaultTestToolConfig = TestToolConfig{
 	OperatorImuaAmount:       10,
 	AVSImuaAmount:            10,
 	ChainValidatorNumber:     1,
-	ChainID:                  "imualocalnet_232-1",
+	ChainID:                  "imuachainlocalnet_232-1",
 	DefaultClientChainID:     101,
 	NodesRPC:                 []string{"http://127.0.0.1:26657"},
 	NodesEVMRPCHTTP:          []string{"http://127.0.0.1:8545"},

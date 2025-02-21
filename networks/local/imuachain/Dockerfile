@@ -18,7 +18,7 @@ RUN apk add --no-cache libstdc++~=13.2 \
     && adduser -S -h /home/imua -D imua -u 1000 -G imua
 EXPOSE 26656 26657 1317 9090 8545 8546
 USER imua
-CMD ["start", "--log_format", "plain", "--chain-id", "imualocalnet_232-1", "--metrics", "--json-rpc.api", "eth,txpool,personal,net,debug,web3", "--api.enable", "--json-rpc.enable", "true", "--minimum-gas-prices", "0.0001hua"]
+CMD ["start", "--log_format", "plain", "--chain-id", "imuachainlocalnet_232-1", "--metrics", "--json-rpc.api", "eth,txpool,personal,net,debug,web3", "--api.enable", "--json-rpc.enable", "true", "--minimum-gas-prices", "0.0001hua"]
 # by default, a SIGKILL is sent after 10 seconds. We need to override this to allow graceful shutdown.
 STOPSIGNAL SIGTERM
 VOLUME /imua

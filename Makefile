@@ -501,7 +501,7 @@ localnet-build:
 
 # Generate multi node configuration files and initialize configurations
 localnet-init: localnet-stop
-	imuad testnet init-files --chain-id imualocalnet_232-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
+	imuad testnet init-files --chain-id imuachainlocalnet_232-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
 	./networks/init-node.sh
 
 # Start a 4-node testnet locally
