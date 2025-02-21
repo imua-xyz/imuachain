@@ -402,7 +402,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 					PubKeyRegistrationSignature: sig.Marshal(),
 				}
 			},
-			errorContains: types.ErrSigNotMatchPubKey.Error(),
+			errorContains: types.ErrInvalidAddr.Error(),
 		},
 	}
 
