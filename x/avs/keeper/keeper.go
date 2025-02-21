@@ -292,22 +292,13 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	// The message should contain (ExoCore-$chain-id-$operator-address)  marker to prevent replay attacks.
 	// Looking forward to this format: "ExoCore-exocorelocalnet_232-exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
 	// Note that the address of the operator must be lowercase
-	expectedMessage := "ExoCore-" + types.ChainIDWithoutRevision(ctx.ChainID()) + "-" + strings.ToLower(params.OperatorAddress.String())
-
-	if params.Message != expectedMessage {
-		return fmt.Errorf("invalid message format: %s", params.Message)
-	}
-	// check msg hash
-	msgHash := params.PubKeyRegistrationMessageHash
+	expectedMessage := "BLS Signed Message-" + types.ChainIDWithoutRevision(ctx.ChainID()) + "-" + strings.ToLower(params.OperatorAddress.String())
 
 	expectedHash := crypto.Keccak256Hash([]byte(expectedMessage))
-	if !bytes.Equal(msgHash, expectedHash.Bytes()) {
-		return fmt.Errorf("the input hash failed to validate: %s", params.Message)
-	}
 
 	sig := params.PubKeyRegistrationSignature
 	pubKey, _ := bls.PublicKeyFromBytes(params.PubKey)
-	valid, err := blst.VerifySignature(sig, [32]byte(msgHash), pubKey)
+	valid, err := blst.VerifySignature(sig, expectedHash, pubKey)
 	if err != nil || !valid {
 		return errorsmod.Wrap(types.ErrSigNotMatchPubKey, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}

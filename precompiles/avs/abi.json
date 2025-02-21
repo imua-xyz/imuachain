@@ -1021,12 +1021,7 @@
 			},
 			{
 				"internalType": "bytes",
-				"name": "pubkeyRegistrationSignature",
-				"type": "bytes"
-			},
-			{
-				"internalType": "bytes",
-				"name": "pubkeyRegistrationMessageHash",
+				"name": "pubKeyRegistrationSignature",
 				"type": "bytes"
 			}
 		],

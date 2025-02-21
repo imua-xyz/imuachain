@@ -315,18 +315,7 @@ func (p Precompile) RegisterBLSPublicKey(
 		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", pubKeyRegistrationSignature)
 	}
 	blsParams.PubKeyRegistrationSignature = pubKeyRegistrationSignature
-
-	pubKeyRegistrationMessageHash, ok := args[4].([]byte)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "[]byte", pubKeyRegistrationMessageHash)
-	}
-	blsParams.PubKeyRegistrationMessageHash = pubKeyRegistrationMessageHash
-
-	msg, ok := args[5].(string)
-	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "string", msg)
-	}
-	blsParams.Message = msg
+	
 	err := p.avsKeeper.RegisterBLSPublicKey(ctx, blsParams)
 	if err != nil {
 		return nil, err

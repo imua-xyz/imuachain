@@ -204,16 +204,14 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 	suite.NoError(err)
 	publicKey := privateKey.PublicKey()
 	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-	expectedMessage := "ExoCore-" + types.ChainIDWithoutRevision(suite.Ctx.ChainID()) + "-" + strings.ToLower(operatorAddress.String())
+	expectedMessage := "BLS Signed Message-" + types.ChainIDWithoutRevision(suite.Ctx.ChainID()) + "-" + strings.ToLower(operatorAddress.String())
 	expectedHash := crypto.Keccak256Hash([]byte(expectedMessage))
 	sig := privateKey.Sign(expectedHash.Bytes())
 	params := &types.BlsParams{
-		OperatorAddress:               operatorAddress,
-		AvsAddress:                    testutiltx.GenerateAddress(),
-		PubKey:                        publicKey.Marshal(),
-		PubKeyRegistrationSignature:   sig.Marshal(),
-		PubKeyRegistrationMessageHash: expectedHash.Bytes(),
-		Message:                       expectedMessage,
+		OperatorAddress:             operatorAddress,
+		AvsAddress:                  testutiltx.GenerateAddress(),
+		PubKey:                      publicKey.Marshal(),
+		PubKeyRegistrationSignature: sig.Marshal(),
 	}
 
 	err = suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, params)
