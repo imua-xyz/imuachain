@@ -44,6 +44,7 @@ type BlsParams struct {
 	PubKey                        []byte
 	PubkeyRegistrationSignature   []byte
 	PubkeyRegistrationMessageHash []byte
+	Message                       string
 }
 
 type ProofParams struct {
