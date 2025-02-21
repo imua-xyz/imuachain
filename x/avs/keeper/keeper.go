@@ -292,13 +292,13 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	// The message should contain (BLS Signed Message-$chain-id-$operator-address)  marker to prevent replay attacks.
 	// Looking forward to this format: "BLS Signed Message-exocorelocalnet_232-exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
 	// Note that the address of the operator must be lowercase
-	expectedMessage := "BLS Signed Message-" + types.ChainIDWithoutRevision(ctx.ChainID()) + "-" + strings.ToLower(params.OperatorAddress.String())
+	expectedMessage := types.SignatureHeader + "\n" + types.ChainIDWithoutRevision(ctx.ChainID()) + "\n" + strings.ToLower(params.OperatorAddress.String())
 
-	expectedHash := crypto.Keccak256Hash([]byte(expectedMessage))
+	hashedMsg := crypto.Keccak256Hash([]byte(expectedMessage))
 
 	sig := params.PubKeyRegistrationSignature
 	pubKey, _ := bls.PublicKeyFromBytes(params.PubKey)
-	valid, err := blst.VerifySignature(sig, expectedHash, pubKey)
+	valid, err := blst.VerifySignature(sig, hashedMsg, pubKey)
 	if err != nil || !valid {
 		return errorsmod.Wrap(types.ErrSigNotMatchPubKey, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}

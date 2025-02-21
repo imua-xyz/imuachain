@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/big"
 	"strings"
 	"time"
@@ -205,7 +206,8 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 	suite.NoError(err)
 	publicKey := privateKey.PublicKey()
 	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-	expectedMessage := "BLS Signed Message-" + types.ChainIDWithoutRevision(suite.Ctx.ChainID()) + "-" + strings.ToLower(operatorAddress.String())
+	expectedMessage := types.SignatureHeader + "\n" + types.ChainIDWithoutRevision(suite.Ctx.ChainID()) + "\n" + strings.ToLower(operatorAddress.String())
+	fmt.Println(expectedMessage)
 	expectedHash := crypto.Keccak256Hash([]byte(expectedMessage))
 	sig := privateKey.Sign(expectedHash.Bytes())
 	params := &types.BlsParams{

@@ -195,7 +195,7 @@ interface IAVSManager {
     /// @param sender The external address for calling this method.
     /// @param avsAddress The address of AVS.
     /// @param pubKey the public keys of the operator
-    /// @param pubKeyRegistrationSignature the public keys of the operator
+    /// @param pubKeyRegistrationSignature the bls signature of the operator
     function registerBLSPublicKey(
         address sender,
         address avsAddress,
