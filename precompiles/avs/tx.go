@@ -316,6 +316,7 @@ func (p Precompile) RegisterBLSPublicKey(
 	}
 	blsParams.PubKeyRegistrationSignature = pubKeyRegistrationSignature
 
+	// validates key format by itself so we don't need to do it before this.
 	err := p.avsKeeper.RegisterBLSPublicKey(ctx, blsParams)
 	if err != nil {
 		return nil, err

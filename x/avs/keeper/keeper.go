@@ -296,7 +296,10 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	hashedMsg := crypto.Keccak256Hash([]byte(msg))
 
 	sig := params.PubKeyRegistrationSignature
-	pubKey, _ := bls.PublicKeyFromBytes(params.PubKey)
+	pubKey, err := bls.PublicKeyFromBytes(params.PubKey)
+	if err != nil {
+		return errorsmod.Wrap(types.ErrParsePubKey, fmt.Sprintf("the operator is %s", params.OperatorAddress))
+	}
 	valid, err := blst.VerifySignature(sig, hashedMsg, pubKey)
 	if err != nil || !valid {
 		return errorsmod.Wrap(types.ErrSigNotMatchPubKey, fmt.Sprintf("the operator is %s", params.OperatorAddress))

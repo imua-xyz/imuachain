@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -249,7 +250,10 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				suite.NoError(err)
 				return &params
 			},
-			errorContains: types.ErrAlreadyExists.Error() + "a key has already been set for this operator and avs",
+			errorContains: errorsmod.Wrap(
+				types.ErrAlreadyExists,
+				"a key has already been set for this operator and avs",
+			).Error(),
 		},
 		{
 			name: "reuse BLS key - different operator + same avs",
@@ -282,7 +286,10 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 					PubKeyRegistrationSignature: sig.Marshal(),
 				}
 			},
-			errorContains: types.ErrAlreadyExists.Error() + "this BLS key is already in use",
+			errorContains: errorsmod.Wrap(
+				types.ErrAlreadyExists,
+				"this BLS key is already in use",
+			).Error(),
 		},
 		{
 			name: "wrong chain ID",
@@ -328,17 +335,19 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 			setupParams: func() *types.BlsParams {
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
-				anotherPrivateKey, err := blst.RandKey()
-				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
-
+				// generate a different private key
+				anotherPrivateKey, err := blst.RandKey()
+				suite.NoError(err)
+				anotherPublicKey := anotherPrivateKey.PublicKey()
 				return &types.BlsParams{
-					OperatorAddress:             operatorAddress,
-					AvsAddress:                  testutiltx.GenerateAddress(),
-					PubKey:                      anotherPrivateKey.PublicKey().Marshal(),
+					OperatorAddress: operatorAddress,
+					AvsAddress:      testutiltx.GenerateAddress(),
+					// provide a different public key than the one which signed it, so that verification fails
+					PubKey:                      anotherPublicKey.Marshal(),
 					PubKeyRegistrationSignature: sig.Marshal(),
 				}
 			},
@@ -347,14 +356,20 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 		{
 			name: "invalid public key format",
 			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
 				return &types.BlsParams{
-					OperatorAddress: operatorAddress,
-					AvsAddress:      testutiltx.GenerateAddress(),
-					PubKey:          []byte("invalid"),
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      []byte("invalid"),
+					PubKeyRegistrationSignature: sig.Marshal(),
 				}
 			},
-			errorContains: types.ErrSigNotMatchPubKey.Error(),
+			errorContains: types.ErrParsePubKey.Error(),
 		},
 		{
 			name: "invalid signature format",
@@ -374,12 +389,17 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 		{
 			name: "empty operator address",
 			setupParams: func() *types.BlsParams {
+				operatorAddress := sdk.AccAddress{}
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
+				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
 				return &types.BlsParams{
+					OperatorAddress:             operatorAddress,
 					AvsAddress:                  testutiltx.GenerateAddress(),
 					PubKey:                      privateKey.PublicKey().Marshal(),
-					PubKeyRegistrationSignature: []byte{},
+					PubKeyRegistrationSignature: sig.Marshal(),
 				}
 			},
 			errorContains: types.ErrSigNotMatchPubKey.Error(),
