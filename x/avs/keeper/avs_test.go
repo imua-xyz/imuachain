@@ -8,6 +8,7 @@ import (
 
 	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
 	"cosmossdk.io/math"
@@ -15,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ExocoreNetwork/exocore/x/avs/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
@@ -83,7 +83,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 	avsParams := &types.AVSRegisterOrDeregisterParams{
 		AvsName:               avsName,
 		AvsAddress:            common.HexToAddress(avsAddres),
-		Action:                avstypes.RegisterAction,
+		Action:                types.RegisterAction,
 		RewardContractAddress: common.HexToAddress(rewardAddress),
 		AvsOwnerAddresses:     avsOwnerAddress,
 		AssetIDs:              assetIDs,
@@ -115,7 +115,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	avsParams := &types.AVSRegisterOrDeregisterParams{
 		AvsName:              avsName,
 		AvsAddress:           common.HexToAddress(avsAddress),
-		Action:               avstypes.DeRegisterAction,
+		Action:               types.DeRegisterAction,
 		AvsOwnerAddresses:    avsOwnerAddress,
 		AssetIDs:             assetIDs,
 		MinSelfDelegation:    uint64(10),
@@ -128,10 +128,11 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	suite.Error(err)
 	suite.Contains(err.Error(), types.ErrUnregisterNonExistent.Error())
 
-	avsParams.Action = avstypes.RegisterAction
+	avsParams.Action = types.RegisterAction
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
 	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)
+	suite.NoError(err)
 	suite.Equal(strings.ToLower(avsAddress), info.GetInfo().AvsAddress)
 
 	epoch, _ := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
@@ -143,22 +144,24 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 		suite.Equal(epoch.CurrentEpoch, epochEnd+1)
 	}
 
-	avsParams.Action = avstypes.DeRegisterAction
+	avsParams.Action = types.DeRegisterAction
 	avsParams.CallerAddress, err = sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	suite.NoError(err)
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
 	info, err = suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)
 	suite.Error(err)
 	suite.Contains(err.Error(), types.ErrNoKeyInTheStore.Error())
+	suite.Nil(info)
 }
 
 func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	avsAddress := suite.avsAddress
 	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 
-	operatorParams := &avstypes.OperatorOptParams{
+	operatorParams := &types.OperatorOptParams{
 		AvsAddress:      avsAddress,
-		Action:          avstypes.RegisterAction,
+		Action:          types.RegisterAction,
 		OperatorAddress: operatorAddress,
 	}
 	//  operator Not Exist
@@ -202,21 +205,103 @@ func (suite *AVSTestSuite) TestAddressSwitch() {
 }
 
 func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
-	privateKey, err := blst.RandKey()
-	suite.NoError(err)
-	publicKey := privateKey.PublicKey()
-	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-	expectedMessage := types.SignatureHeader + "\n" + types.ChainIDWithoutRevision(suite.Ctx.ChainID()) + "\n" + strings.ToLower(operatorAddress.String())
-	fmt.Println(expectedMessage)
-	expectedHash := crypto.Keccak256Hash([]byte(expectedMessage))
-	sig := privateKey.Sign(expectedHash.Bytes())
-	params := &types.BlsParams{
-		OperatorAddress:             operatorAddress,
-		AvsAddress:                  testutiltx.GenerateAddress(),
-		PubKey:                      publicKey.Marshal(),
-		PubKeyRegistrationSignature: sig.Marshal(),
+	type testCase struct {
+		name          string
+		setupParams   func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams)
+		expectedError error
+		errorContains string
 	}
 
-	err = suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, params)
-	suite.NoError(err)
+	testCases := []testCase{
+		{
+			name: "successful registration",
+			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
+				privateKey, _ := blst.RandKey()
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
+
+				return privateKey, operatorAddress, &types.BlsParams{
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+			},
+			expectedError: nil,
+		},
+		{
+			name: "wrong chain ID",
+			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
+				privateKey, _ := blst.RandKey()
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg := fmt.Sprintf(types.BLSMessageToSign, "onemorechain_211", operatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
+
+				return privateKey, operatorAddress, &types.BlsParams{
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+			},
+			errorContains: types.ErrSigNotMatchPubKey.Error(),
+		},
+		{
+			name: "wrong operator address in signature",
+			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
+				privateKey, _ := blst.RandKey()
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				anotherOperatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), anotherOperatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
+
+				return privateKey, operatorAddress, &types.BlsParams{
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      privateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+			},
+			errorContains: types.ErrSigNotMatchPubKey.Error(),
+		},
+		{
+			name: "mismatched BLS key",
+			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
+				privateKey, _ := blst.RandKey()
+				anotherPrivateKey, _ := blst.RandKey()
+				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
+				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				hashedMsg := crypto.Keccak256Hash([]byte(msg))
+				sig := privateKey.Sign(hashedMsg.Bytes())
+
+				return privateKey, operatorAddress, &types.BlsParams{
+					OperatorAddress:             operatorAddress,
+					AvsAddress:                  testutiltx.GenerateAddress(),
+					PubKey:                      anotherPrivateKey.PublicKey().Marshal(),
+					PubKeyRegistrationSignature: sig.Marshal(),
+				}
+			},
+			errorContains: types.ErrSigNotMatchPubKey.Error(),
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(tc.name, func() {
+			_, _, params := tc.setupParams()
+			err := suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, params)
+
+			if tc.expectedError != nil {
+				suite.Equal(tc.expectedError, err)
+			} else if tc.errorContains != "" {
+				suite.Error(err)
+				suite.Contains(err.Error(), tc.errorContains)
+			} else {
+				suite.NoError(err)
+			}
+		})
+	}
 }

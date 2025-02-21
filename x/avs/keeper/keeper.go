@@ -288,13 +288,12 @@ func (k Keeper) CreateAVSTask(ctx sdk.Context, params *types.TaskInfoParams) (ui
 
 func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) error {
 	// check bls signature to prevent rogue key attacks
-	// a message parameter to validate that this signature is intended solely for RegisterBLSPublicKey.
-	// The message should contain (BLS Signed Message-$chain-id-$operator-address)  marker to prevent replay attacks.
-	// Looking forward to this format: "BLS Signed Message-exocorelocalnet_232-exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
-	// Note that the address of the operator must be lowercase
-	expectedMessage := types.SignatureHeader + "\n" + types.ChainIDWithoutRevision(ctx.ChainID()) + "\n" + strings.ToLower(params.OperatorAddress.String())
-
-	hashedMsg := crypto.Keccak256Hash([]byte(expectedMessage))
+	// use a templated message to
+	// (1) validate that this signature is intended solely for RegisterBLSPublicKey
+	// (2) prevent replay attacks by including the chain-id and operator-address
+	// note that the operator address is bech32 encoded and thus already lowercase
+	msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(ctx.ChainID()), params.OperatorAddress.String())
+	hashedMsg := crypto.Keccak256Hash([]byte(msg))
 
 	sig := params.PubKeyRegistrationSignature
 	pubKey, _ := bls.PublicKeyFromBytes(params.PubKey)
@@ -307,7 +306,7 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	}
 	blsInfo := &types.BlsPubKeyInfo{
 		AvsAddress:      strings.ToLower(params.AvsAddress.String()),
-		OperatorAddress: strings.ToLower(params.OperatorAddress.String()),
+		OperatorAddress: params.OperatorAddress.String(),
 		PubKey:          params.PubKey,
 	}
 	// check a bls key can only be used once.

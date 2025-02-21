@@ -49,8 +49,8 @@ var (
 )
 
 const (
-	InvalidTaskID   = 0
-	SignatureHeader = "BLS Signed Message"
+	InvalidTaskID    = 0
+	BLSMessageToSign = "BLS12-381 Signed Message\nChainIDWithoutRevision: %s\nAccAddressBech32: %s"
 )
 
 type AVSRegisterOrDeregisterParams struct {
