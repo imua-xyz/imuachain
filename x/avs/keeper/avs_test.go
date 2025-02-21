@@ -8,7 +8,6 @@ import (
 
 	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
 	"cosmossdk.io/math"
@@ -207,40 +206,40 @@ func (suite *AVSTestSuite) TestAddressSwitch() {
 func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 	type testCase struct {
 		name          string
-		setupParams   func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams)
-		expectedError error
+		setupParams   func() *types.BlsParams
 		errorContains string
 	}
 
 	testCases := []testCase{
 		{
 			name: "successful registration",
-			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
-				privateKey, _ := blst.RandKey()
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
-				return privateKey, operatorAddress, &types.BlsParams{
+				return &types.BlsParams{
 					OperatorAddress:             operatorAddress,
 					AvsAddress:                  testutiltx.GenerateAddress(),
 					PubKey:                      privateKey.PublicKey().Marshal(),
 					PubKeyRegistrationSignature: sig.Marshal(),
 				}
 			},
-			expectedError: nil,
 		},
 		{
 			name: "wrong chain ID",
-			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
-				privateKey, _ := blst.RandKey()
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 				msg := fmt.Sprintf(types.BLSMessageToSign, "onemorechain_211", operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
-				return privateKey, operatorAddress, &types.BlsParams{
+				return &types.BlsParams{
 					OperatorAddress:             operatorAddress,
 					AvsAddress:                  testutiltx.GenerateAddress(),
 					PubKey:                      privateKey.PublicKey().Marshal(),
@@ -251,15 +250,16 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 		},
 		{
 			name: "wrong operator address in signature",
-			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
-				privateKey, _ := blst.RandKey()
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 				anotherOperatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), anotherOperatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
-				return privateKey, operatorAddress, &types.BlsParams{
+				return &types.BlsParams{
 					OperatorAddress:             operatorAddress,
 					AvsAddress:                  testutiltx.GenerateAddress(),
 					PubKey:                      privateKey.PublicKey().Marshal(),
@@ -270,15 +270,17 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 		},
 		{
 			name: "mismatched BLS key",
-			setupParams: func() (bls.SecretKey, sdk.AccAddress, *types.BlsParams) {
-				privateKey, _ := blst.RandKey()
-				anotherPrivateKey, _ := blst.RandKey()
+			setupParams: func() *types.BlsParams {
+				privateKey, err := blst.RandKey()
+				suite.NoError(err)
+				anotherPrivateKey, err := blst.RandKey()
+				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
-				return privateKey, operatorAddress, &types.BlsParams{
+				return &types.BlsParams{
 					OperatorAddress:             operatorAddress,
 					AvsAddress:                  testutiltx.GenerateAddress(),
 					PubKey:                      anotherPrivateKey.PublicKey().Marshal(),
@@ -291,12 +293,10 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			_, _, params := tc.setupParams()
+			params := tc.setupParams()
 			err := suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, params)
 
-			if tc.expectedError != nil {
-				suite.Equal(tc.expectedError, err)
-			} else if tc.errorContains != "" {
+			if tc.errorContains != "" {
 				suite.Error(err)
 				suite.Contains(err.Error(), tc.errorContains)
 			} else {
