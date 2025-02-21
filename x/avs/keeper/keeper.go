@@ -314,7 +314,7 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	if k.IsExistPubKeyForAVS(ctx, params.OperatorAddress.String(), params.AvsAddress.String()) {
 		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the operator is :%s", params.OperatorAddress))
 	}
-	bls := &types.BlsPubKeyInfo{
+	blsInfo := &types.BlsPubKeyInfo{
 		AvsAddress:      strings.ToLower(params.AvsAddress.String()),
 		OperatorAddress: strings.ToLower(params.OperatorAddress.String()),
 		PubKey:          params.PubKey,
@@ -322,10 +322,10 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	// check a bls key can only be used once.
 	// if operator are using multiple servers for different AVSs .
 	// In case one server is compromised, signing can continue as expected on the AVSs for which there has been no compromise.
-	if k.IsExistPubKey(ctx, bls) {
+	if k.IsExistPubKey(ctx, blsInfo) {
 		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the bls key is already exists:%s", bls.PubKey))
 	}
-	return k.SetOperatorPubKey(ctx, bls)
+	return k.SetOperatorPubKey(ctx, blsInfo)
 }
 
 func (k Keeper) OperatorOptAction(ctx sdk.Context, params *types.OperatorOptParams) error {
