@@ -3,7 +3,7 @@ package keeper
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/imua-xyz/imuachain/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/imslash/types"
 )
 
 func (k Keeper) SetFrozenStatus(ctx sdk.Context, operatorAddr string, status bool) (err error) {

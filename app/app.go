@@ -22,12 +22,12 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator"
 	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 
-	imslash "github.com/imua-xyz/imuachain/x/slash"
+	imslash "github.com/imua-xyz/imuachain/x/imslash"
 
 	avsManagerKeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
 	avsManagerTypes "github.com/imua-xyz/imuachain/x/avs/types"
-	slashKeeper "github.com/imua-xyz/imuachain/x/slash/keeper"
-	imslashtypes "github.com/imua-xyz/imuachain/x/slash/types"
+	slashKeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
+	imslashtypes "github.com/imua-xyz/imuachain/x/imslash/types"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"

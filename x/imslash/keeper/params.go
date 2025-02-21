@@ -3,7 +3,7 @@ package keeper
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/imua-xyz/imuachain/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/imslash/types"
 )
 
 // SetParams The function related to module parameter should be deleted

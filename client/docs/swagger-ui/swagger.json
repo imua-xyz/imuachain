@@ -18310,7 +18310,7 @@
         ]
       }
     },
-    "/imuachain/slash/v1/params": {
+    "/imuachain/imslash/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
         "operationId": "ImSlashParams",
@@ -41236,11 +41236,11 @@
       },
       "description": "StakingAssetInfo defines the information for an asset to be used in staking."
     },
-    "imuachain.slash.v1.Params": {
+    "imuachain.imslash.v1.Params": {
       "type": "object",
       "description": "Params defines the parameters for the module."
     },
-    "imuachain.slash.v1.QueryParamsResponse": {
+    "imuachain.imslash.v1.QueryParamsResponse": {
       "type": "object",
       "properties": {
         "params": {

@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/imua-xyz/imuachain/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/imslash/types"
 	"github.com/stretchr/testify/require"
 )
 

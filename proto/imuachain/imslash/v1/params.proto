@@ -1,0 +1,7 @@
+syntax = "proto3";
+package imuachain.imslash.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/imslash/types";
+
+// Params defines the parameters for the module.
+message Params {}

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/imua-xyz/imuachain/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/imslash/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

@@ -12,9 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/imua-xyz/imuachain/x/slash/client/cli"
-	"github.com/imua-xyz/imuachain/x/slash/keeper"
-	"github.com/imua-xyz/imuachain/x/slash/types"
+	"github.com/imua-xyz/imuachain/x/imslash/client/cli"
+	"github.com/imua-xyz/imuachain/x/imslash/keeper"
+	"github.com/imua-xyz/imuachain/x/imslash/types"
 	"github.com/spf13/cobra"
 )
 

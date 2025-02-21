@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
-	slashKeeper "github.com/imua-xyz/imuachain/x/slash/keeper"
+	slashKeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}

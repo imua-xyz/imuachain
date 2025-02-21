@@ -20,8 +20,8 @@ import (
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	avskeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	imuaslashkeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
 	rewardkeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
-	imuaslashkeeper "github.com/imua-xyz/imuachain/x/slash/keeper"
 	"golang.org/x/exp/maps"
 )
 

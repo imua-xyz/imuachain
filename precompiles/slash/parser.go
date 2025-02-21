@@ -9,7 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
-	"github.com/imua-xyz/imuachain/x/slash/keeper"
+	"github.com/imua-xyz/imuachain/x/imslash/keeper"
 )
 
 func (p Precompile) GetSlashParamsFromInputs(ctx sdk.Context, args []interface{}) (*keeper.SlashParams, error) {

@@ -1,17 +1,17 @@
 syntax = "proto3";
-package imuachain.slash.v1;
+package imuachain.imslash.v1;
 
 import "google/api/annotations.proto";
-import "imuachain/slash/v1/params.proto";
+import "imuachain/imslash/v1/params.proto";
 // this line is used by starport scaffolding # 1
 
-option go_package = "github.com/imua-xyz/imuachain/x/slash/types";
+option go_package = "github.com/imua-xyz/imuachain/x/imslash/types";
 
 // Query defines the gRPC querier service.
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/imuachain/slash/v1/params";
+    option (google.api.http).get = "/imuachain/imslash/v1/params";
   }
 }
 
