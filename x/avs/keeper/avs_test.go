@@ -1,12 +1,13 @@
 package keeper_test
 
 import (
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 	"math/big"
 	"strings"
 	"time"
+
+	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
 	"cosmossdk.io/math"
 	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
@@ -216,5 +217,4 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 
 	err = suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, params)
 	suite.NoError(err)
-
 }

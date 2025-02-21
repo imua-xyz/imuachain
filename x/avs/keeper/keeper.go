@@ -289,8 +289,8 @@ func (k Keeper) CreateAVSTask(ctx sdk.Context, params *types.TaskInfoParams) (ui
 func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) error {
 	// check bls signature to prevent rogue key attacks
 	// a message parameter to validate that this signature is intended solely for RegisterBLSPublicKey.
-	// The message should contain (ExoCore-$chain-id-$operator-address)  marker to prevent replay attacks.
-	// Looking forward to this format: "ExoCore-exocorelocalnet_232-exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	// The message should contain (BLS Signed Message-$chain-id-$operator-address)  marker to prevent replay attacks.
+	// Looking forward to this format: "BLS Signed Message-exocorelocalnet_232-exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
 	// Note that the address of the operator must be lowercase
 	expectedMessage := "BLS Signed Message-" + types.ChainIDWithoutRevision(ctx.ChainID()) + "-" + strings.ToLower(params.OperatorAddress.String())
 
