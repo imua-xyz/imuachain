@@ -298,14 +298,14 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 		return fmt.Errorf("invalid message format: %s", params.Message)
 	}
 	// check msg hash
-	msgHash := params.PubkeyRegistrationMessageHash
+	msgHash := params.PubKeyRegistrationMessageHash
 
 	expectedHash := crypto.Keccak256Hash([]byte(expectedMessage))
 	if !bytes.Equal(msgHash, expectedHash.Bytes()) {
 		return fmt.Errorf("the input hash failed to validate: %s", params.Message)
 	}
 
-	sig := params.PubkeyRegistrationSignature
+	sig := params.PubKeyRegistrationSignature
 	pubKey, _ := bls.PublicKeyFromBytes(params.PubKey)
 	valid, err := blst.VerifySignature(sig, [32]byte(msgHash), pubKey)
 	if err != nil || !valid {
@@ -323,7 +323,7 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	// if operator are using multiple servers for different AVSs .
 	// In case one server is compromised, signing can continue as expected on the AVSs for which there has been no compromise.
 	if k.IsExistPubKey(ctx, blsInfo) {
-		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the bls key is already exists:%s", bls.PubKey))
+		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the bls key is already exists:%s", blsInfo.PubKey))
 	}
 	return k.SetOperatorPubKey(ctx, blsInfo)
 }

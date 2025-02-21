@@ -42,8 +42,8 @@ type BlsParams struct {
 	OperatorAddress               sdk.AccAddress
 	AvsAddress                    common.Address
 	PubKey                        []byte
-	PubkeyRegistrationSignature   []byte
-	PubkeyRegistrationMessageHash []byte
+	PubKeyRegistrationSignature   []byte
+	PubKeyRegistrationMessageHash []byte
 	Message                       string
 }
 

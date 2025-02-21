@@ -211,11 +211,11 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 		OperatorAddress:               operatorAddress,
 		AvsAddress:                    testutiltx.GenerateAddress(),
 		PubKey:                        publicKey.Marshal(),
-		PubkeyRegistrationSignature:   sig.Marshal(),
-		PubkeyRegistrationMessageHash: expectedHash.Bytes(),
+		PubKeyRegistrationSignature:   sig.Marshal(),
+		PubKeyRegistrationMessageHash: expectedHash.Bytes(),
 		Message:                       expectedMessage,
 	}
- 
+
 	err = suite.App.AVSManagerKeeper.RegisterBLSPublicKey(suite.Ctx, params)
 	suite.NoError(err)
 
