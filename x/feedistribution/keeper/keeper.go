@@ -79,18 +79,18 @@ func (k Keeper) Logger() log.Logger {
 func (k Keeper) SetFeePool(ctx sdk.Context, feePool *types.FeePool) {
 	store := ctx.KVStore(k.storeKey)
 	b := k.cdc.MustMarshal(feePool)
-	store.Set(types.FeePoolKey, b)
+	store.Set(types.KeyPrefixFeePools, b)
 }
 
 // get the global fee pool distribution info
 func (k Keeper) GetFeePool(ctx sdk.Context) (feePool *types.FeePool) {
 	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.FeePoolKey)
+	b := store.Get(types.KeyPrefixFeePools)
 	if b == nil {
 		feePool := &types.FeePool{}
 		store := ctx.KVStore(k.storeKey)
 		b := k.cdc.MustMarshal(feePool)
-		store.Set(types.FeePoolKey, b)
+		store.Set(types.KeyPrefixFeePools, b)
 		return feePool
 	}
 	fp := &types.FeePool{}
