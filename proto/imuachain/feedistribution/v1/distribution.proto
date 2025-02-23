@@ -3,12 +3,13 @@ package imuachain.feedistribution.v1;
 
 import "amino/amino.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 option (gogoproto.equal_all) = true;
 
-// ValidatorHistoricalRewards represents historical rewards for a validator.
+// OperatorHistoricalRewards represents historical rewards for an operator.
 // Height is implicit within the store key.
 // Cumulative reward ratio is the sum from the zeroeth period
 // until this period of rewards / tokens, per the spec.
@@ -20,7 +21,7 @@ option (gogoproto.equal_all) = true;
 //  + number of slashes which ended the associated period (and might need to
 //  read that record)
 //  + one per validator for the zeroeth period, set on initialization
-message ValidatorHistoricalRewards {
+message OperatorHistoricalRewards {
   // cumulative_reward_ratio is the  ratio defined
   repeated cosmos.base.v1beta1.DecCoin cumulative_reward_ratio = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
@@ -31,10 +32,37 @@ message ValidatorHistoricalRewards {
   uint32 reference_count = 2;
 }
 
-// ValidatorCurrentRewards represents current rewards and current
-// period for a validator kept as a running counter and incremented
+message DelegatorStaringInfoPerEpoch {
+  uint64 previous_period = 1;
+  string stake           = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  
+}
+
+// DelegatorStartingInfo represents the starting info for a delegator reward
+// period. It tracks the previous validator period, the delegation's amount of
+// staking token, and the creation height (to check later on if any slashes have
+// occurred). NOTE: Even though validators are slashed to whole staking tokens,
+// the delegators within the validator may be left with less than a full token,
+// thus sdk.Dec is used.
+message DelegatorStartingInfo {
+  uint64 previous_period = 1;
+  string stake           = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+  uint64 height = 3
+  [(gogoproto.jsontag) = "creation_height", (amino.field_name) = "creation_height", (amino.dont_omitempty) = true];
+}
+
+// OperatorCurrentRewards represents current rewards and current
+// period for an operator kept as a running counter and incremented
 // each block as long as the validator's tokens remain constant.
-message ValidatorCurrentRewards {
+message OperatorCurrentRewards {
   // current rewards
   repeated cosmos.base.v1beta1.DecCoin rewards = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
@@ -45,9 +73,9 @@ message ValidatorCurrentRewards {
   uint64 period = 2;
 }
 
-// ValidatorAccumulatedCommission represents accumulated commission
-// for a validator kept as a running counter, can be withdrawn at any time.
-message ValidatorAccumulatedCommission {
+// OperatorAccumulatedCommission represents accumulated commission
+// for an operator kept as a running counter, can be withdrawn at any time.
+message OperatorAccumulatedCommission {
   // commission is the commission for a validator
   repeated cosmos.base.v1beta1.DecCoin commission = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
@@ -56,9 +84,9 @@ message ValidatorAccumulatedCommission {
   ];
 }
 
-// ValidatorOutstandingRewards represents outstanding (un-withdrawn) rewards
-// for a validator inexpensive to track, allows simple sanity checks.
-message ValidatorOutstandingRewards {
+// OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards
+// for an operator inexpensive to track, allows simple sanity checks.
+message OperatorOutstandingRewards {
   // rewards represents the rewards for the validator
   repeated cosmos.base.v1beta1.DecCoin rewards = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
