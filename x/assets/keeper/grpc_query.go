@@ -110,3 +110,14 @@ func (k Keeper) QueOperatorSpecifiedAssetAmount(ctx context.Context, req *assets
 	}
 	return k.GetOperatorSpecifiedAssetInfo(c, addr, strings.ToLower(req.AssetId))
 }
+
+func (k Keeper) QueryStakerBalance(ctx context.Context, req *assetstype.QueryStakerBalanceRequest) (*assetstype.QueryStakerBalanceResponse, error) {
+	c := sdk.UnwrapSDKContext(ctx)
+	stakerBalance, err := k.GetStakerBalanceByAsset(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
+	if err != nil {
+		return nil, err
+	}
+	return &assetstype.QueryStakerBalanceResponse{
+		StakerBalance: &stakerBalance,
+	}, nil
+}

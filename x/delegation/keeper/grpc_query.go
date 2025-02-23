@@ -22,8 +22,10 @@ func (k *Keeper) QuerySingleDelegationInfo(ctx context.Context, req *delegationt
 		return nil, err
 	}
 	return &delegationtype.SingleDelegationInfoResponse{
-		DelegationAmounts:      delegationAmounts,
-		MaxUndelegatableAmount: singleAmount,
+		SingleDelegationInfo: &delegationtype.SingleDelegationInfo{
+			DelegationAmounts:      delegationAmounts,
+			MaxUndelegatableAmount: singleAmount,
+		},
 	}, nil
 }
 

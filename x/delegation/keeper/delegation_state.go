@@ -207,9 +207,22 @@ func (k *Keeper) GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, ope
 // GetDelegationInfo query the staker's asset info that has been delegated.
 func (k *Keeper) GetDelegationInfo(ctx sdk.Context, stakerID, assetID string) (*delegationtype.QueryDelegationInfoResponse, error) {
 	var ret delegationtype.QueryDelegationInfoResponse
-	ret.DelegationInfos = make(map[string]*delegationtype.DelegationAmounts)
+	ret.DelegationInfos = make([]*delegationtype.DelegationInfoAndOperator, 0)
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
-		ret.DelegationInfos[keys.OperatorAddr] = amounts
+		// calculate the maximum undelegatable amount
+		singleAmount, err := k.UndelegatableAmount(ctx, assetID, keys.OperatorAddr, amounts)
+		if err != nil {
+			return false, err
+		}
+		ret.DelegationInfos = append(ret.DelegationInfos,
+			&delegationtype.DelegationInfoAndOperator{
+				Operator: keys.OperatorAddr,
+				DelegationInfo: &delegationtype.SingleDelegationInfo{
+					DelegationAmounts:      amounts,
+					MaxUndelegatableAmount: singleAmount,
+				},
+			},
+		)
 		return false, nil
 	}
 	err := k.IterateDelegationsForStakerAndAsset(ctx, stakerID, assetID, opFunc)

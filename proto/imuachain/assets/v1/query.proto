@@ -99,6 +99,62 @@ message QueryParamsResponse {
   Params params = 1;
 }
 
+// StakerBalance is a struct to describe the balance of a staker for a specific asset
+// balance = withdrawable + delegated + pendingUndelegated
+// pendingUndelegated is the amount of the asset that is during unbonding period and not yet withdrawable
+// it would finally be withdrawable after the unbonding period, but the final amount may be less than the pendingUndelegated
+// because of the penalty during the unbonding period
+message StakerBalance {
+  // staker_id is the staker id for which the query is made.
+  string staker_id = 1;
+  // asset_id is the asset for which the query is made.
+  string asset_id = 2;
+  // balance = withdrawable + delegated + pendingUndelegated
+  string balance = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // withdrawable is the amount that can be withdrawn
+  string withdrawable = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // delegated is the amount that has been delegated to the operators
+  string delegated = 5 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // pending_undelegated is the amount that has been undelegated but not been completed
+  string pending_undelegated = 6 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // total_deposited is the total deposit amount, compared to the balance, it might include slashed amount
+  string total_deposited = 7 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// QueryStakerBalanceRequest is the request type for the Query/QueryStakerBalance RPC method.
+message QueryStakerBalanceRequest {
+  // staker_id is the staker id for which the query is made.
+  string staker_id = 1;
+  // asset_id is the asset for which the query is made.
+  string asset_id = 2;
+}
+
+// QueryStakerBalanceResponse is the response type for the Query/QueryStakerBalance RPC method.
+message QueryStakerBalanceResponse {
+  // staker_balance is the response for QueryStakerBalanceRequest
+  StakerBalance staker_balance = 1;
+}
+
 // Query defines the gRPC query service for the assets module.
 service Query {
   // Params retrieves the assets module params
@@ -145,5 +201,10 @@ service Query {
   rpc QueOperatorSpecifiedAssetAmount(QueryOperatorSpecifiedAssetAmountReq) returns (OperatorAssetInfo) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/assets/v1/operator_asset/{operator_addr}/{asset_id}";
+  }
+  // QueryStakerBalance queries the staker balance for specified asset
+  rpc QueryStakerBalance(QueryStakerBalanceRequest) returns (QueryStakerBalanceResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/staker_balance/{staker_id}/{asset_id}";
   }
 }

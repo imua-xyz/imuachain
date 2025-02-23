@@ -167,11 +167,11 @@ func (p Precompile) GetStakerBalanceByToken(
 		ClientChainID:      clientChainID,
 		StakerAddress:      stakerAddress,
 		TokenID:            assetAddress,
-		Balance:            balance.Balance,
-		Withdrawable:       balance.Withdrawable,
-		Delegated:          balance.Delegated,
-		PendingUndelegated: balance.PendingUndelegated,
-		TotalDeposited:     balance.TotalDeposited,
+		Balance:            balance.Balance.BigInt(),
+		Withdrawable:       balance.Withdrawable.BigInt(),
+		Delegated:          balance.Delegated.BigInt(),
+		PendingUndelegated: balance.PendingUndelegated.BigInt(),
+		TotalDeposited:     balance.TotalDeposited.BigInt(),
 	}
 
 	return method.Outputs.Pack(true, result)

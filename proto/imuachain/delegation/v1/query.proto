@@ -51,11 +51,31 @@ message DelegationAmounts {
   ];
 }
 
+// SingleDelegationInfo includes the share, amount and pending undelegation amount
+message SingleDelegationInfo {
+  // delegation_amounts is the delegation info recorded in the KVStore
+  DelegationAmounts delegation_amounts = 1 ;
+  // max_undelegatable_amount is the maximum amount that can be undelegated
+  string max_undelegatable_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// DelegationInfoAndOperator includes the SingleDelegationInfo and operator address
+message DelegationInfoAndOperator {
+  // operator is the operator address of this delegation
+  string operator = 1;
+  // delegation_info is the delegation information
+  SingleDelegationInfo delegation_info = 2;
+}
+
 // QueryDelegationInfoResponse is the response for delegations by staker id and
 // asset id.
 message QueryDelegationInfoResponse {
   // delegation_infos is the delegation information for each operator.
-  map<string, DelegationAmounts> delegation_infos = 1;
+  repeated DelegationInfoAndOperator delegation_infos = 1;
 }
 
 // SingleDelegationInfoReq is the request to obtain the single delegation information
@@ -71,14 +91,8 @@ message SingleDelegationInfoReq {
 
 // SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo
 message SingleDelegationInfoResponse {
-  // delegation_amounts is the delegation info recorded in the KVStore
-  DelegationAmounts delegation_amounts = 1;
-  // max_undelegatable_amount is the maximum amount that can be undelegated
-  string max_undelegatable_amount = 2 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
+  // single_delegation_info
+  SingleDelegationInfo single_delegation_info = 1 ;
 }
 
 // UndelegationHoldCountReq is the request to obtain the undelegation hold count.
