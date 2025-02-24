@@ -11,9 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/evmos/evmos/v16/encoding"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/testutil/tx"
 )
 
 // Commit commits a block at a given time. Reminder: At the end of each
@@ -22,7 +22,7 @@ import (
 //  2. DeliverTx
 //  3. EndBlock
 //  4. Commit
-func Commit(ctx sdk.Context, app *app.ExocoreApp, t time.Duration, vs *tmtypes.ValidatorSet) (sdk.Context, error) {
+func Commit(ctx sdk.Context, app *app.ImuachainApp, t time.Duration, vs *tmtypes.ValidatorSet) (sdk.Context, error) {
 	header, err := commit(ctx, app, t, vs)
 	if err != nil {
 		return ctx, err
@@ -34,7 +34,7 @@ func Commit(ctx sdk.Context, app *app.ExocoreApp, t time.Duration, vs *tmtypes.V
 // CommitAndCreateNewCtx commits a block at a given time creating a ctx with the current settings
 // This is useful to keep test settings that could be affected by EndBlockers, e.g.
 // setting a baseFee == 0 and expecting this condition to continue after commit
-func CommitAndCreateNewCtx(ctx sdk.Context, app *app.ExocoreApp, t time.Duration, vs *tmtypes.ValidatorSet, useUncachedCtx bool) (sdk.Context, error) {
+func CommitAndCreateNewCtx(ctx sdk.Context, app *app.ImuachainApp, t time.Duration, vs *tmtypes.ValidatorSet, useUncachedCtx bool) (sdk.Context, error) {
 	header, err := commit(ctx, app, t, vs)
 	if err != nil {
 		return ctx, err
@@ -62,7 +62,7 @@ func CommitAndCreateNewCtx(ctx sdk.Context, app *app.ExocoreApp, t time.Duration
 // DeliverTx delivers a cosmos tx for a given set of msgs
 func DeliverTx(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	gasPrice *sdkmath.Int,
 	msgs ...sdk.Msg,
@@ -70,7 +70,7 @@ func DeliverTx(
 	txConfig := encoding.MakeConfig(app.ModuleBasics).TxConfig
 	tx, err := tx.PrepareCosmosTx(
 		ctx,
-		appExocore,
+		appImuachain,
 		tx.CosmosTxArgs{
 			TxCfg:    txConfig,
 			Priv:     priv,
@@ -83,24 +83,24 @@ func DeliverTx(
 	if err != nil {
 		return abci.ResponseDeliverTx{}, err
 	}
-	return BroadcastTxBytes(appExocore, txConfig.TxEncoder(), tx)
+	return BroadcastTxBytes(appImuachain, txConfig.TxEncoder(), tx)
 }
 
 // DeliverEthTx generates and broadcasts a Cosmos Tx populated with MsgEthereumTx messages.
 // If a private key is provided, it will attempt to sign all messages with the given private key,
 // otherwise, it will assume the messages have already been signed.
 func DeliverEthTx(
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	msgs ...sdk.Msg,
 ) (abci.ResponseDeliverTx, error) {
 	txConfig := encoding.MakeConfig(app.ModuleBasics).TxConfig
 
-	tx, err := tx.PrepareEthTx(txConfig, appExocore, priv, msgs...)
+	tx, err := tx.PrepareEthTx(txConfig, appImuachain, priv, msgs...)
 	if err != nil {
 		return abci.ResponseDeliverTx{}, err
 	}
-	res, err := BroadcastTxBytes(appExocore, txConfig.TxEncoder(), tx)
+	res, err := BroadcastTxBytes(appImuachain, txConfig.TxEncoder(), tx)
 	if err != nil {
 		return abci.ResponseDeliverTx{}, err
 	}
@@ -117,18 +117,18 @@ func DeliverEthTx(
 // otherwise, it will assume the messages have already been signed. It does not check if the Eth tx is
 // successful or not.
 func DeliverEthTxWithoutCheck(
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	msgs ...sdk.Msg,
 ) (abci.ResponseDeliverTx, error) {
 	txConfig := encoding.MakeConfig(app.ModuleBasics).TxConfig
 
-	tx, err := tx.PrepareEthTx(txConfig, appExocore, priv, msgs...)
+	tx, err := tx.PrepareEthTx(txConfig, appImuachain, priv, msgs...)
 	if err != nil {
 		return abci.ResponseDeliverTx{}, err
 	}
 
-	res, err := BroadcastTxBytes(appExocore, txConfig.TxEncoder(), tx)
+	res, err := BroadcastTxBytes(appImuachain, txConfig.TxEncoder(), tx)
 	if err != nil {
 		return abci.ResponseDeliverTx{}, err
 	}
@@ -139,7 +139,7 @@ func DeliverEthTxWithoutCheck(
 // CheckTx checks a cosmos tx for a given set of msgs
 func CheckTx(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	gasPrice *sdkmath.Int,
 	msgs ...sdk.Msg,
@@ -148,7 +148,7 @@ func CheckTx(
 
 	tx, err := tx.PrepareCosmosTx(
 		ctx,
-		appExocore,
+		appImuachain,
 		tx.CosmosTxArgs{
 			TxCfg:    txConfig,
 			Priv:     priv,
@@ -161,26 +161,26 @@ func CheckTx(
 	if err != nil {
 		return abci.ResponseCheckTx{}, err
 	}
-	return checkTxBytes(appExocore, txConfig.TxEncoder(), tx)
+	return checkTxBytes(appImuachain, txConfig.TxEncoder(), tx)
 }
 
 // CheckEthTx checks a Ethereum tx for a given set of msgs
 func CheckEthTx(
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	priv cryptotypes.PrivKey,
 	msgs ...sdk.Msg,
 ) (abci.ResponseCheckTx, error) {
 	txConfig := encoding.MakeConfig(app.ModuleBasics).TxConfig
 
-	tx, err := tx.PrepareEthTx(txConfig, appExocore, priv, msgs...)
+	tx, err := tx.PrepareEthTx(txConfig, appImuachain, priv, msgs...)
 	if err != nil {
 		return abci.ResponseCheckTx{}, err
 	}
-	return checkTxBytes(appExocore, txConfig.TxEncoder(), tx)
+	return checkTxBytes(appImuachain, txConfig.TxEncoder(), tx)
 }
 
 // BroadcastTxBytes encodes a transaction and calls DeliverTx on the App.
-func BroadcastTxBytes(app *app.ExocoreApp, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseDeliverTx, error) {
+func BroadcastTxBytes(app *app.ImuachainApp, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseDeliverTx, error) {
 	// bz are bytes to be broadcasted over the network
 	bz, err := txEncoder(tx)
 	if err != nil {
@@ -198,7 +198,7 @@ func BroadcastTxBytes(app *app.ExocoreApp, txEncoder sdk.TxEncoder, tx sdk.Tx) (
 
 // commit is a private helper function that runs the EndBlocker logic, commits the changes,
 // updates the header, runs the BeginBlocker function and returns the updated header
-func commit(ctx sdk.Context, app *app.ExocoreApp, t time.Duration, vs *tmtypes.ValidatorSet) (tmproto.Header, error) {
+func commit(ctx sdk.Context, app *app.ImuachainApp, t time.Duration, vs *tmtypes.ValidatorSet) (tmproto.Header, error) {
 	header := ctx.BlockHeader()
 
 	if vs != nil {
@@ -228,7 +228,7 @@ func commit(ctx sdk.Context, app *app.ExocoreApp, t time.Duration, vs *tmtypes.V
 }
 
 // checkTxBytes encodes a transaction and calls checkTx on the app.
-func checkTxBytes(app *app.ExocoreApp, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseCheckTx, error) {
+func checkTxBytes(app *app.ImuachainApp, txEncoder sdk.TxEncoder, tx sdk.Tx) (abci.ResponseCheckTx, error) {
 	bz, err := txEncoder(tx)
 	if err != nil {
 		return abci.ResponseCheckTx{}, err

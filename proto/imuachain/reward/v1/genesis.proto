@@ -1,0 +1,13 @@
+syntax = "proto3";
+package imuachain.reward.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/reward/v1/params.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/reward/types";
+
+// GenesisState defines the reward module's genesis state.
+message GenesisState {
+  // params represents the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}

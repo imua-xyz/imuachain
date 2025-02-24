@@ -2,12 +2,12 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	"github.com/ExocoreNetwork/exocore/utils"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	"github.com/imua-xyz/imuachain/utils"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 func (k Keeper) BeginBlock(ctx sdk.Context) {
@@ -82,7 +82,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	//    if it has, queue an update.
 	// 5. keep in mind the total vote power.
 	totalPower := math.ZeroInt()
-	prevList := k.GetAllExocoreValidators(ctx)
+	prevList := k.GetAllImuachainValidators(ctx)
 	// prevMap is a map of the previous validators, indexed by the consensus address
 	// and the value being the vote power.
 	prevMap := make(map[string]int64, len(prevList))

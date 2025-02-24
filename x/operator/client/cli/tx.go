@@ -15,7 +15,7 @@ import (
 	stakingcli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 const (
@@ -184,7 +184,7 @@ func CmdOptIntoAVS() *cobra.Command {
 		// square brackets are optional while angle brackets are required arguments.
 		Use:     "opt-into-avs <avs-address> [public-key-in-JSON-format]",
 		Short:   "opt into an AVS by specifying its address, with an optional public key",
-		Example: "exocore tx operator opt-into-avs 0x0000000000000000000000000000000000000000 $(exocored tendermint show-validator)",
+		Example: "imua tx operator opt-into-avs 0x0000000000000000000000000000000000000000 $(imuad tendermint show-validator)",
 		Args:    cobra.RangeArgs(1, 2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)

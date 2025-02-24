@@ -3,17 +3,17 @@ package keeper
 import (
 	"encoding/json"
 
-	"github.com/ExocoreNetwork/exocore/utils"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/utils"
 
 	sdkmath "cosmossdk.io/math"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID, because /* the slash  */event occurs in
@@ -274,7 +274,7 @@ func (k Keeper) SlashWithInfractionReason(
 		k.Logger(ctx).Error("error when executing slash", "error", err, "avsAddr", avsAddr)
 		return sdkmath.ZeroInt()
 	}
-	// todo: The returned value should be the amount of burned Exo if we considering a slash from the reward
+	// todo: The returned value should be the amount of burned IMUA if we considering a slash from the reward
 	// Now it doesn't slash from the reward, so just return 0
 	return sdkmath.ZeroInt()
 }

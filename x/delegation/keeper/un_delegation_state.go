@@ -5,16 +5,16 @@ import (
 	"math"
 	"strings"
 
-	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
-	"github.com/ExocoreNetwork/exocore/utils"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 
-	"github.com/ExocoreNetwork/exocore/x/delegation/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // AllUndelegations function returns all the undelegation records in the module.

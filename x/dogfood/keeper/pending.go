@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // SetPendingOptOuts sets the pending opt-outs to be applied at the end of the block.

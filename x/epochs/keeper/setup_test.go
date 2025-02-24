@@ -3,10 +3,10 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 var s *KeeperTestSuite

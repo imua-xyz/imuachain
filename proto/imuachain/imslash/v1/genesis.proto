@@ -1,0 +1,15 @@
+syntax = "proto3";
+package imuachain.imslash.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/imslash/v1/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/imua-xyz/imuachain/x/imslash/types";
+
+// GenesisState defines the imuaslash module's genesis state.
+message GenesisState {
+  // params defines all the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+  // this line is used by starport scaffolding # genesis/proto/state
+}

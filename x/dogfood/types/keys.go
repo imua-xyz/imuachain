@@ -18,8 +18,8 @@ const (
 )
 
 const (
-	// ExocoreValidatorBytePrefix is the prefix for the validator store.
-	ExocoreValidatorBytePrefix byte = iota + 1
+	// ImuachainValidatorBytePrefix is the prefix for the validator store.
+	ImuachainValidatorBytePrefix byte = iota + 1
 
 	// QueuedOperationsByte was the byte used to store the queue of operations.
 	// It is no longer used, but it is retained for backward compatibility.
@@ -80,9 +80,9 @@ const (
 	EmitAvsEventByte
 )
 
-// ExocoreValidatorKey returns the key for the validator store.
-func ExocoreValidatorKey(address sdk.AccAddress) []byte {
-	return append([]byte{ExocoreValidatorBytePrefix}, address.Bytes()...)
+// ImuachainValidatorKey returns the key for the validator store.
+func ImuachainValidatorKey(address sdk.AccAddress) []byte {
+	return append([]byte{ImuachainValidatorBytePrefix}, address.Bytes()...)
 }
 
 // OptOutsToFinishKey returns the key for the operator opt out maturity store (epoch -> list of

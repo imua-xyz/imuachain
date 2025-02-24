@@ -5,8 +5,6 @@ import (
 	"embed"
 	"fmt"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	slashKeeper "github.com/ExocoreNetwork/exocore/x/slash/keeper"
 	"github.com/cometbft/cometbft/libs/log"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	slashKeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -127,5 +127,5 @@ func (Precompile) IsTransaction(methodID string) bool {
 
 // Logger returns a precompile-specific logger.
 func (p Precompile) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("ExoCore module", "slash")
+	return ctx.Logger().With("Imuachain module", "slash")
 }

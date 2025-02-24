@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package imuachain.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/oracle/v1/index_recent_msg.proto";
+import "imuachain/oracle/v1/index_recent_params.proto";
+import "imuachain/oracle/v1/native_token.proto";
+import "imuachain/oracle/v1/params.proto";
+import "imuachain/oracle/v1/prices.proto";
+import "imuachain/oracle/v1/recent_msg.proto";
+import "imuachain/oracle/v1/recent_params.proto";
+import "imuachain/oracle/v1/slashing.proto";
+import "imuachain/oracle/v1/validator_update_block.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// GenesisState defines the oracle module's genesis state.
+message GenesisState {
+  // module params
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  // prices of all tokens including NST
+  repeated Prices prices_list = 2 [(gogoproto.nullable) = false];
+
+  // TODO: userDefinedTokenFeeder
+  //  information for memory-cache recovery
+  //  latest block on which the validator set be updated
+  ValidatorUpdateBlock validator_update_block = 3;
+  // index for the cached recent params
+  IndexRecentParams index_recent_params = 4;
+  // index for the cached recent messages
+  IndexRecentMsg index_recent_msg = 5;
+  // cached recent messages
+  repeated RecentMsg recent_msg_list = 6 [(gogoproto.nullable) = false];
+  // cached recent params
+  repeated RecentParams recent_params_list = 7 [(gogoproto.nullable) = false];
+
+  // information for NST related
+  // stakerInfos for each nst token
+  repeated StakerInfosAssets staker_infos_assets = 8 [(gogoproto.nullable) = false];
+  // stakerList for each nst token
+  repeated StakerListAssets staker_list_assets = 9 [(gogoproto.nullable) = false];
+
+  // information for slashing history
+  // ValidatorReportInfo records all the validatorReportInfos
+  repeated ValidatorReportInfo validator_report_infos = 10 [(gogoproto.nullable) = false];
+  // ValidatorMissedRounds records missedRounds for all validators seen
+  repeated ValidatorMissedRounds validator_missed_rounds = 11 [(gogoproto.nullable) = false];
+}
+
+// stakerInfosAssets bond stakerinfos to their related assets id
+message StakerInfosAssets {
+  // asset_id tells the assetid which the stakerInfos belong to
+  string asset_id = 1;
+  // stakerInfos
+  repeated StakerInfo staker_infos = 2;
+  // nst_version is the version of nst to track validator list changes
+  int64 nst_version = 3;
+}
+
+// stakerListAssets bond stakerList to their related assets id
+message StakerListAssets {
+  // asset_id tells the assetid which the stakerList belong to
+  string asset_id = 1;
+  // stakerList
+  StakerList staker_list = 2;
+  // nst_version is the version of nst to track validator list changes
+  int64 nst_version = 3;
+}
+
+// ValidatorMissedRounds record missed rounds indexes for a validator which consAddr corresponding to the address
+message ValidatorMissedRounds {
+  // address of validator
+  string address = 1;
+  // missed_rounds tells how many rounds this validtor had missed for current windo
+  repeated MissedRound missed_rounds = 2;
+}
+
+// MissedRound records if round with index is missed
+message MissedRound {
+  // index of the round in current window
+  uint64 index = 1;
+  // if this round is missed
+  bool missed = 2;
+}

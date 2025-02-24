@@ -5,8 +5,8 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
 // NewGenesis returns a new genesis state with the given inputs.
@@ -251,7 +251,7 @@ func (gs GenesisState) ValidateOperatorAssets(tokensTotalStaking map[string]math
 			// the sum amount of operators shouldn't be greater than the total staking amount of this asset.
 			// however, this line should not apply for the native asset, since that is handled by x/bank.
 			if asset.Info.TotalAmount.Add(asset.Info.PendingUndelegationAmount).GT(totalStaking) &&
-				asset.AssetID != ExocoreAssetID {
+				asset.AssetID != ImuachainAssetID {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"operator's sum amount exceeds the total staking amount for %s: %+v",

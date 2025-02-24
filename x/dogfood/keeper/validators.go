@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 // UnbondingTime returns the time duration of the unbonding period. It is part of the
@@ -44,7 +44,7 @@ func (k Keeper) ApplyValidatorChanges(
 	logger := k.Logger(ctx)
 	for _, change := range changes {
 		addr := change.Key.ToConsAddr()
-		val, found := k.GetExocoreValidator(ctx, addr)
+		val, found := k.GetImuachainValidator(ctx, addr)
 		switch found {
 		case true:
 			// update or delete an existing validator.
@@ -52,7 +52,7 @@ func (k Keeper) ApplyValidatorChanges(
 			if change.Power < 1 {
 				// guard for errors within the hooks.
 				cc, writeFunc := ctx.CacheContext()
-				k.DeleteExocoreValidator(cc, addr)
+				k.DeleteImuachainValidator(cc, addr)
 				// sdk slashing.AfterValidatorRemoved deletes the lookup from cons address to
 				// cons pub key
 				if err := k.Hooks().AfterValidatorRemoved(cc, addr, nil); err != nil {
@@ -64,7 +64,7 @@ func (k Keeper) ApplyValidatorChanges(
 				val.Power = change.Power
 				// guard for errors within the hooks.
 				cc, writeFunc := ctx.CacheContext()
-				k.SetExocoreValidator(ctx, val)
+				k.SetImuachainValidator(ctx, val)
 				// sdk slashing.AfterValidatorCreated stores the lookup from cons address to
 				// cons pub key. it loads the validator from `valAddr` (operator address)
 				// via stakingkeeeper.Validator(ctx, valAddr)
@@ -88,14 +88,14 @@ func (k Keeper) ApplyValidatorChanges(
 		case false:
 			if change.Power > 0 {
 				// create a new validator.
-				ocVal, err := types.NewExocoreValidator(addr, change.Power, change.Key.ToSdkKey())
+				ocVal, err := types.NewImuachainValidator(addr, change.Power, change.Key.ToSdkKey())
 				if err != nil {
-					logger.Error("could not create new exocore validator", "error", err)
+					logger.Error("could not create new imua validator", "error", err)
 					continue
 				}
 				// guard for errors within the hooks.
 				cc, writeFunc := ctx.CacheContext()
-				k.SetExocoreValidator(cc, ocVal)
+				k.SetImuachainValidator(cc, ocVal)
 				err = k.Hooks().AfterValidatorBonded(cc, addr, nil)
 				if err != nil {
 					logger.Error("error in AfterValidatorBonded", "error", err)
@@ -131,21 +131,21 @@ func (k Keeper) ApplyValidatorChanges(
 	return ret
 }
 
-// SetExocoreValidator stores a validator based on the pub key derived address. This
+// SetImuachainValidator stores a validator based on the pub key derived address. This
 // is accessible in the genesis state via `val_set`.
-func (k Keeper) SetExocoreValidator(ctx sdk.Context, validator types.ExocoreValidator) {
+func (k Keeper) SetImuachainValidator(ctx sdk.Context, validator types.ImuachainValidator) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&validator)
 
-	store.Set(types.ExocoreValidatorKey(validator.Address), bz)
+	store.Set(types.ImuachainValidatorKey(validator.Address), bz)
 }
 
-// GetExocoreValidator gets a validator based on the pub key derived (consensus) address.
-func (k Keeper) GetExocoreValidator(
+// GetImuachainValidator gets a validator based on the pub key derived (consensus) address.
+func (k Keeper) GetImuachainValidator(
 	ctx sdk.Context, addr sdk.ConsAddress,
-) (validator types.ExocoreValidator, found bool) {
+) (validator types.ImuachainValidator, found bool) {
 	store := ctx.KVStore(k.storeKey)
-	v := store.Get(types.ExocoreValidatorKey(addr.Bytes()))
+	v := store.Get(types.ImuachainValidatorKey(addr.Bytes()))
 	if v == nil {
 		return
 	}
@@ -155,30 +155,30 @@ func (k Keeper) GetExocoreValidator(
 	return
 }
 
-// IsExocoreValidator gets a validator based on the pub key derived (consensus) address.
-func (k Keeper) IsExocoreValidator(
+// IsImuachainValidator gets a validator based on the pub key derived (consensus) address.
+func (k Keeper) IsImuachainValidator(
 	ctx sdk.Context, addr sdk.ConsAddress,
 ) bool {
 	store := ctx.KVStore(k.storeKey)
-	return store.Has(types.ExocoreValidatorKey(addr.Bytes()))
+	return store.Has(types.ImuachainValidatorKey(addr.Bytes()))
 }
 
-// DeleteExocoreValidator deletes a validator based on the pub key derived address.
-func (k Keeper) DeleteExocoreValidator(ctx sdk.Context, addr sdk.ConsAddress) {
+// DeleteImuachainValidator deletes a validator based on the pub key derived address.
+func (k Keeper) DeleteImuachainValidator(ctx sdk.Context, addr sdk.ConsAddress) {
 	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.ExocoreValidatorKey(addr.Bytes()))
+	store.Delete(types.ImuachainValidatorKey(addr.Bytes()))
 }
 
-// GetAllExocoreValidators returns all validators in the store.
-func (k Keeper) GetAllExocoreValidators(
+// GetAllImuachainValidators returns all validators in the store.
+func (k Keeper) GetAllImuachainValidators(
 	ctx sdk.Context,
-) (validators []types.ExocoreValidator) {
+) (validators []types.ImuachainValidator) {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{types.ExocoreValidatorBytePrefix})
+	iterator := sdk.KVStorePrefixIterator(store, []byte{types.ImuachainValidatorBytePrefix})
 
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		val := types.ExocoreValidator{}
+		val := types.ImuachainValidator{}
 		k.cdc.MustUnmarshal(iterator.Value(), &val)
 		validators = append(validators, val)
 	}
@@ -251,7 +251,7 @@ func (k Keeper) TrackHistoricalInfo(ctx sdk.Context) {
 
 	// Create HistoricalInfo struct
 	lastVals := []stakingtypes.Validator{}
-	for _, v := range k.GetAllExocoreValidators(ctx) {
+	for _, v := range k.GetAllImuachainValidators(ctx) {
 		pk, err := v.ConsPubKey()
 		if err != nil {
 			// since we stored the validator in the first place, something like this
@@ -284,7 +284,7 @@ func (k Keeper) TrackHistoricalInfo(ctx sdk.Context) {
 // MustGetCurrentValidatorsAsABCIUpdates gets all validators converted
 // to the ABCI validator update type. It panics in case of failure.
 func (k Keeper) MustGetCurrentValidatorsAsABCIUpdates(ctx sdk.Context) []abci.ValidatorUpdate {
-	vals := k.GetAllExocoreValidators(ctx)
+	vals := k.GetAllImuachainValidators(ctx)
 	valUpdates := make([]abci.ValidatorUpdate, 0, len(vals))
 	for _, v := range vals {
 		pk, err := v.ConsPubKey()

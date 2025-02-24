@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	commontypes "github.com/ExocoreNetwork/exocore/x/appchain/common/types"
-	"github.com/ExocoreNetwork/exocore/x/appchain/subscriber/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	commontypes "github.com/imua-xyz/imuachain/x/appchain/common/types"
+	"github.com/imua-xyz/imuachain/x/appchain/subscriber/types"
 )
 
 // SetParams sets the appchain coordinator parameters.

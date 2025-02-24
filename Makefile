@@ -6,10 +6,9 @@ TMVERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
-EXOCORE_BINARY = exocored
-EXOCORE_DIR = exocore
+IMUACHAIN_BINARY = imuad
 BUILDDIR ?= $(CURDIR)/build
-HTTPS_GIT := https://github.com/ExocoreNetwork/exocore
+HTTPS_GIT := https://github.com/imua-xyz/imuachain
 DOCKER := $(shell which docker)
 DOCKER_BUILDKIT=1
 DOCKER_ARGS=
@@ -18,8 +17,8 @@ ifdef GITHUB_TOKEN
 		DOCKER_ARGS += --secret id=GITHUB_TOKEN
 	endif
 endif
-NAMESPACE := ExocoreNetwork
-PROJECT := exocore
+NAMESPACE := imua-xyz
+PROJECT := imuachain
 DOCKER_IMAGE := $(shell echo $(NAMESPACE)/$(PROJECT) | tr '[:upper:]' '[:lower:]')
 COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
 DOCKER_TAG := $(COMMIT_HASH)
@@ -68,8 +67,8 @@ build_tags := $(strip $(build_tags))
 
 # process linker flags
 
-ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=exocore \
-          -X github.com/cosmos/cosmos-sdk/version.AppName=$(exocore_BINARY) \
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=imuachain \
+          -X github.com/cosmos/cosmos-sdk/version.AppName=$(IMUACHAIN_BINARY) \
           -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
           -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
           -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(TMVERSION)
@@ -137,15 +136,15 @@ $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
 
 build-test-tool:
-	go build $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/exocore-test-tool
+	go build $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/imuachain-test-tool
 install-test-tool:
-	go install $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/exocore-test-tool
+	go install $(BUILD_FLAGS) $(BUILD_ARGS) ./cmd/imuachain-test-tool
 
 build-reproducible: go.sum
 	$(DOCKER) rm latest-build || true
 	$(DOCKER) run --volume=$(CURDIR):/sources:ro \
         --env TARGET_PLATFORMS='linux/amd64' \
-        --env APP=exocored \
+        --env APP=imuad \
         --env VERSION=$(VERSION) \
         --env COMMIT=$(COMMIT) \
         --env CGO_ENABLED=1 \
@@ -160,12 +159,12 @@ build-docker:
 	$(DOCKER) tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
 	# docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:${COMMIT_HASH}
 	# move the binaries to the ./build directory
-	mkdir -p ./build/.exocored
-	echo '#!/usr/bin/env bash' > ./build/exocored
-	echo "IMAGE_NAME=${DOCKER_IMAGE}:${COMMIT_HASH}" >> ./build/exocored
-	echo 'SCRIPT_PATH=$$(cd $$(dirname $$0) && pwd -P)' >> ./build/exocored
-	echo 'docker run -it --rm -v $${SCRIPT_PATH}/.exocored:/home/exocore/.exocored $$IMAGE_NAME exocored "$$@"' >> ./build/exocored
-	chmod +x ./build/exocored
+	mkdir -p ./build/.imuad
+	echo '#!/usr/bin/env bash' > ./build/imuad
+	echo "IMAGE_NAME=${DOCKER_IMAGE}:${COMMIT_HASH}" >> ./build/imuad
+	echo 'SCRIPT_PATH=$$(cd $$(dirname $$0) && pwd -P)' >> ./build/imuad
+	echo 'docker run -it --rm -v $${SCRIPT_PATH}/.imuad:/home/imua/.imuad $$IMAGE_NAME imuad "$$@"' >> ./build/imuad
+	chmod +x ./build/imuad
 
 push-docker: build-docker
 	$(DOCKER) push ${DOCKER_IMAGE}:${DOCKER_TAG}
@@ -292,7 +291,7 @@ swagger-update-docs: statik
 .PHONY: swagger-update-docs
 
 godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/ExocoreNetwork/exocore"
+	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/imua-xyz/imuachain"
 	godoc -http=:6060
 
 ###############################################################################
@@ -340,7 +339,7 @@ test-e2e:
 		make build-docker; \
 	fi
 	@mkdir -p ./build
-	@rm -rf build/.exocored
+	@rm -rf build/.imuad
 	@INITIAL_VERSION=$(INITIAL_VERSION) TARGET_VERSION=$(TARGET_VERSION) \
 	E2E_SKIP_CLEANUP=$(E2E_SKIP_CLEANUP) MOUNT_PATH=$(MOUNT_PATH) CHAIN_ID=$(CHAIN_ID) \
 	go test -v ./tests/e2e -run ^TestIntegrationTestSuite$
@@ -501,9 +500,8 @@ localnet-build:
 	$(MAKE) -C networks
 
 # Generate multi node configuration files and initialize configurations
-# TODO: exocore testnet chainid is still under consideration and need to be finalized later
 localnet-init: localnet-stop
-	exocored testnet init-files --chain-id exocorelocalnet_232-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
+	imuad testnet init-files --chain-id imuachainlocalnet_232-1 --v 4 -o  $(CURDIR)/build/.testnets --starting-ip-address 192.168.0.2 --keyring-backend=test && \
 	./networks/init-node.sh
 
 # Start a 4-node testnet locally
@@ -524,15 +522,15 @@ localnet-clean:
 localnet-unsafe-reset:
 	docker-compose down
 ifeq ($(OS),Windows_NT)
-	@docker run --rm -v $(CURDIR)\build\node0\exocored:/exocore\Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
-	@docker run --rm -v $(CURDIR)\build\node1\exocored:/exocore\Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
-	@docker run --rm -v $(CURDIR)\build\node2\exocored:/exocore\Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
-	@docker run --rm -v $(CURDIR)\build\node3\exocored:/exocore\Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
+	@docker run --rm -v $(CURDIR)\build\node0\imuad:/imua\Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
+	@docker run --rm -v $(CURDIR)\build\node1\imuad:/imua\Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
+	@docker run --rm -v $(CURDIR)\build\node2\imuad:/imua\Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
+	@docker run --rm -v $(CURDIR)\build\node3\imuad:/imua\Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
 else
-	@docker run --rm -v $(CURDIR)/build/node0/exocored:/exocore:Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
-	@docker run --rm -v $(CURDIR)/build/node1/exocored:/exocore:Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
-	@docker run --rm -v $(CURDIR)/build/node2/exocored:/exocore:Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
-	@docker run --rm -v $(CURDIR)/build/node3/exocored:/exocore:Z exocore/node "./exocored tendermint unsafe-reset-all --home=/exocore"
+	@docker run --rm -v $(CURDIR)/build/node0/imuad:/imua:Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
+	@docker run --rm -v $(CURDIR)/build/node1/imuad:/imua:Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
+	@docker run --rm -v $(CURDIR)/build/node2/imuad:/imua:Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
+	@docker run --rm -v $(CURDIR)/build/node3/imuad:/imua:Z imua/node "./imuad tendermint unsafe-reset-all --home=/imua"
 endif
 
 # Clean testnet
@@ -545,7 +543,7 @@ localnet-show-logstream:
 ###                                Releasing                                ###
 ###############################################################################
 
-PACKAGE_NAME:=github.com/ExocoreNetwork/exocore
+PACKAGE_NAME:=github.com/imua-xyz/imuachain
 # There is no `goreleaser-cross` package for 1.21.12, so we use the next
 # available version of v1.22 with goreleaser version 2.0.0
 GOLANG_CROSS_VERSION  = v1.22-v2.0.0

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 // TypedArgs provides helper methods for safely asserting common argument types
@@ -29,77 +29,77 @@ func (ta *TypedArgs) RequireLen(expected int) error {
 
 func (ta *TypedArgs) GetUint8(index int) (uint8, error) {
 	if index >= len(ta.args) {
-		return 0, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
+		return 0, fmt.Errorf(imuacmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
 	val, ok := ta.args[index].(uint8)
 	if !ok {
-		return 0, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "uint8", ta.args[index])
+		return 0, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "uint8", ta.args[index])
 	}
 	return val, nil
 }
 
 func (ta *TypedArgs) GetUint32(index int) (uint32, error) {
 	if index >= len(ta.args) {
-		return 0, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
+		return 0, fmt.Errorf(imuacmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
 	val, ok := ta.args[index].(uint32)
 	if !ok {
-		return 0, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "uint32", ta.args[index])
+		return 0, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "uint32", ta.args[index])
 	}
 	return val, nil
 }
 
 func (ta *TypedArgs) GetBytes(index int) ([]byte, error) {
 	if index >= len(ta.args) {
-		return nil, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
+		return nil, fmt.Errorf(imuacmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
 	val, ok := ta.args[index].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "[]byte", ta.args[index])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "[]byte", ta.args[index])
 	}
 	return val, nil
 }
 
 func (ta *TypedArgs) GetString(index int) (string, error) {
 	if index >= len(ta.args) {
-		return "", fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
+		return "", fmt.Errorf(imuacmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
 	val, ok := ta.args[index].(string)
 	if !ok {
-		return "", fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "string", ta.args[index])
+		return "", fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "string", ta.args[index])
 	}
 	return val, nil
 }
 
 func (ta *TypedArgs) GetBigInt(index int) (*big.Int, error) {
 	if index >= len(ta.args) {
-		return nil, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
+		return nil, fmt.Errorf(imuacmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
 	val, ok := ta.args[index].(*big.Int)
 	if !ok || val == nil {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "*big.Int", ta.args[index])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "*big.Int", ta.args[index])
 	}
 	return val, nil
 }
 
 func (ta *TypedArgs) GetEVMAddress(index int) (common.Address, error) {
 	if index >= len(ta.args) {
-		return common.Address{}, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
+		return common.Address{}, fmt.Errorf(imuacmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
 	val, ok := ta.args[index].(common.Address)
 	if !ok {
-		return common.Address{}, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "address", ta.args[index])
+		return common.Address{}, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "address", ta.args[index])
 	}
 	return val, nil
 }
 
 func (ta *TypedArgs) GetEVMAddressSlice(index int) ([]common.Address, error) {
 	if index >= len(ta.args) {
-		return nil, fmt.Errorf(exocmn.ErrIndexOutOfRange, index, len(ta.args))
+		return nil, fmt.Errorf(imuacmn.ErrIndexOutOfRange, index, len(ta.args))
 	}
 	val, ok := ta.args[index].([]common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "[]common.Address", ta.args[index])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "[]common.Address", ta.args[index])
 	}
 	return val, nil
 }
@@ -110,7 +110,7 @@ func (ta *TypedArgs) GetPositiveUint8(index int) (uint8, error) {
 		return 0, err
 	}
 	if val == 0 {
-		return 0, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "uint8", ta.args[index])
+		return 0, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "uint8", ta.args[index])
 	}
 	return val, nil
 }
@@ -121,7 +121,7 @@ func (ta *TypedArgs) GetPositiveUint32(index int) (uint32, error) {
 		return 0, err
 	}
 	if val == 0 {
-		return 0, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "uint32", ta.args[index])
+		return 0, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "uint32", ta.args[index])
 	}
 	return val, nil
 }
@@ -132,7 +132,7 @@ func (ta *TypedArgs) GetRequiredBytes(index int) ([]byte, error) {
 		return nil, err
 	}
 	if len(val) == 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "[]byte", ta.args[index])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "[]byte", ta.args[index])
 	}
 	return val, nil
 }
@@ -143,7 +143,7 @@ func (ta *TypedArgs) GetRequiredString(index int) (string, error) {
 		return "", err
 	}
 	if len(val) == 0 {
-		return "", fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "string", ta.args[index])
+		return "", fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "string", ta.args[index])
 	}
 	return val, nil
 }
@@ -154,7 +154,7 @@ func (ta *TypedArgs) GetPositiveBigInt(index int) (*big.Int, error) {
 		return nil, err
 	}
 	if val.Sign() <= 0 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, index, "*big.Int", ta.args[index])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, index, "*big.Int", ta.args[index])
 	}
 	return val, nil
 }
@@ -165,7 +165,7 @@ func (ta *TypedArgs) GetRequiredBytesPrefix(index int, length uint32) ([]byte, e
 		return nil, err
 	}
 	if len(val) < int(length) {
-		return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, len(val), length)
+		return nil, fmt.Errorf(imuacmn.ErrInvalidAddrLength, len(val), length)
 	}
 	return val[:length], nil
 }
@@ -176,7 +176,7 @@ func (ta *TypedArgs) GetRequiredEVMAddressSlice(index int) ([]common.Address, er
 		return nil, err
 	}
 	if len(val) == 0 {
-		return nil, fmt.Errorf(exocmn.ErrEmptyGateways)
+		return nil, fmt.Errorf(imuacmn.ErrEmptyGateways)
 	}
 	return val, nil
 }

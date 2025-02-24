@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package imuachain.delegation.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/delegation/v1/query.proto";
+import "imuachain/delegation/v1/tx.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
+
+// GenesisState defines the delegation module's state. It needs to encompass
+// all of the state that is required to start the chain from the genesis
+// or in the event of a restart. At this point, it is only built with
+// the former in mind. There are no params in this module.
+message GenesisState {
+  // associations represents the association between a staker and an operator.
+  repeated StakerToOperator associations = 1 [(gogoproto.nullable) = false];
+  // delegation_states is a list of all delegation states.
+  repeated DelegationStates delegation_states = 2 [(gogoproto.nullable) = false];
+  // stakers_by_operator is a staker list for the operators
+  repeated StakersByOperator stakers_by_operator = 3 [(gogoproto.nullable) = false];
+  // undelegations is a list of all undelegations
+  repeated UndelegationAndHoldCount undelegations = 4 [(gogoproto.nullable) = false];
+  // last_undelegation_id is a globally incremented ID assigned to undelegations.
+  uint64 last_undelegation_id = 5;
+}
+
+// DelegationStates is a helper struct for the delegation state
+// used to construct the genesis state
+message DelegationStates {
+  // key is used for storing the delegation states,
+  // which is a combination of the staker ID, asset ID, and operator address.
+  string key = 1;
+  // states is the value of undelegation state for the above key
+  DelegationAmounts states = 2 [(gogoproto.nullable) = false];
+}
+
+// StakersByOperator is a helper struct for an operator's staker list
+// used to construct the genesis state
+message StakersByOperator {
+  // key is used for storing the staker list,
+  // which is a combination of the operator address and the asset ID.
+  string key = 1;
+  // stakers is the stakers list for the above key
+  repeated string stakers = 2;
+}
+
+// DelegationsByStaker is a list of delegations for a single staker.
+message DelegationsByStaker {
+  // staker_id is the staker's account address + _ + l0 chain id (hex).``
+  string staker_id = 1;
+  // delegations is the list of delegations for the staker, indexed by the
+  // asset_id.
+  repeated DelegatedSingleAssetInfo delegations = 2 [(gogoproto.nullable) = false];
+}
+
+// StakerToOperator is the association between a staker and an operator.
+message StakerToOperator {
+  // staker_id is the staker's account address + _ + l0 chain id (hex).
+  string staker_id = 1;
+  // operator is the bech32 address of the operator.
+  string operator = 2;
+}

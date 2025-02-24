@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package imuachain.appchain.subscriber.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/appchain/subscriber/types";
+
+// Msg defines the Msg service.
+service Msg {}

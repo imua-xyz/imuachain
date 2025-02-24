@@ -6,19 +6,19 @@ import (
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
-	assetsprecompile "github.com/ExocoreNetwork/exocore/precompiles/assets"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
+	assetsprecompile "github.com/imua-xyz/imuachain/precompiles/assets"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (s *AssetsPrecompileSuite) TestIsTransaction() {
@@ -77,7 +77,7 @@ func paddingClientChainAddress(input []byte, outputLength int) []byte {
 // TestRunDepositTo tests DepositOrWithdraw method through calling Run function..
 func (s *AssetsPrecompileSuite) TestRunDeposit() {
 	// assetsprecompile params for test
-	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+	imuaLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	usdtAddress := paddingClientChainAddress(common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7"), assetstype.GeneralClientChainAddrLength)
 	usdcAddress := paddingClientChainAddress(common.FromHex("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"), assetstype.GeneralClientChainAddrLength)
 	clientChainLzID := 101
@@ -115,7 +115,7 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 		extra       func()
 	}{
 		{
-			name: "fail - depositTo transaction will fail because the exocoreLzAppAddress is mismatched",
+			name: "fail - depositTo transaction will fail because the imuaLzAppAddress is mismatched",
 			malleate: func() (common.Address, []byte) {
 				return commonMalleate(assetsprecompile.MethodDepositLST, assetAddr, opAmount)
 			},
@@ -124,10 +124,10 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 			errContains: assetstype.ErrNotAuthorizedGateway.Error(),
 		},
 		{
-			name: "fail - depositTo transaction will fail because the contract caller isn't the exoCoreLzAppAddr",
+			name: "fail - depositTo transaction will fail because the contract caller isn't the imuaLzAppAddress",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					Gateways: []string{exocoreLzAppAddress},
+					Gateways: []string{imuaLzAppAddress},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -272,7 +272,7 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 						s.Require().ErrorContains(err, tc.errContains)*/
 				// for failed cases we expect it returns bool value instead of error
 				// this is a workaround because the error returned by precompile can not be caught in EVM
-				// see https://github.com/ExocoreNetwork/exocore/issues/70
+				// see https://github.com/imua-xyz/imuachain/issues/70
 				// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 				result, err := s.precompile.ABI.Unpack(assetsprecompile.MethodDepositLST, bz)
 				s.Require().NoError(err)

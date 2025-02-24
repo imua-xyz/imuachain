@@ -1,0 +1,14 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+import "imuachain/oracle/v1/params.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// RecentParams represents the params cached for recent blocks
+message RecentParams {
+  // block height of which the params from
+  uint64 block = 1;
+  // params the module params
+  Params params = 2;
+}

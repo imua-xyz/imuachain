@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 	blscommon "github.com/prysmaticlabs/prysm/v4/crypto/bls/common"
 )
 
 func (suite *AVSTestSuite) TestOperator_pubkey() {
-	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	operatorAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 
 	privateKey, err := blst.RandKey()
 	fmt.Println("privateKey:", hex.EncodeToString(privateKey.Marshal()))

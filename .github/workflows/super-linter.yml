@@ -17,7 +17,7 @@ on:
   pull_request:
     branches: ["develop", "main", "master"]
 jobs:
-  run-lint:
+  run-super-linter:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

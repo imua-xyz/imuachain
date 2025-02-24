@@ -3,9 +3,9 @@ package cli
 import (
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/spf13/cobra"
 )
 

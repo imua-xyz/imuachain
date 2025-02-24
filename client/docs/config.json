@@ -1,13 +1,13 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Exocore - gRPC Gateway docs",
+    "title": "Imuachain - gRPC Gateway docs",
     "description": "A REST interface for state queries and transactions",
     "version": "1.0.0"
   },
   "apis": [
     {
-      "url": "./tmp-swagger-gen/exocore/epochs/v1/query.swagger.json"
+      "url": "./tmp-swagger-gen/imuachain/epochs/v1/query.swagger.json"
     },
     {
       "url": "./tmp-swagger-gen/evmos/erc20/v1/query.swagger.json",
@@ -139,7 +139,7 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/dogfood/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/imuachain/dogfood/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "DogfoodParams",
@@ -149,7 +149,7 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/assets/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/imuachain/assets/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "AssetsParams"
@@ -157,15 +157,15 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/slash/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/imuachain/imslash/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "ExoSlashParams"
+          "Params": "ImSlashParams"
         }
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/oracle/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/imuachain/oracle/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "OracleParams"
@@ -173,15 +173,15 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/exomint/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/imuachain/immint/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "ExomintParams"
+          "Params": "ImmintParams"
         }
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/feedistribution/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/imuachain/feedistribution/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "FeeDistributionParams"
@@ -189,13 +189,13 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/delegation/v1/query.swagger.json"
+      "url": "./tmp-swagger-gen/imuachain/delegation/v1/query.swagger.json"
     },
     {
-      "url": "./tmp-swagger-gen/exocore/avs/v1/query.swagger.json"
+      "url": "./tmp-swagger-gen/imuachain/avs/v1/query.swagger.json"
     },
     {
-      "url": "./tmp-swagger-gen/exocore/operator/v1/query.swagger.json"
+      "url": "./tmp-swagger-gen/imuachain/operator/v1/query.swagger.json"
     },
     {
       "url": "./tmp-swagger-gen/cosmos/upgrade/v1beta1/query.swagger.json",
@@ -222,7 +222,7 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/exocore/reward/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/imuachain/reward/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "RewardParams"

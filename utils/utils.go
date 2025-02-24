@@ -12,23 +12,23 @@ import (
 	"golang.org/x/exp/constraints"
 	"golang.org/x/xerrors"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/crypto/types/multisig"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
 
 const (
 	// MainnetChainID defines the Evmos EIP155 chain ID for mainnet
 	// TODO: the mainnet chainid is still under consideration and need to be finalized later
-	MainnetChainID = "exocore_234"
+	MainnetChainID = "imuachain_234"
 	// TestnetChainID defines the Evmos EIP155 chain ID for testnet
 	// TODO: the testnet chainid is still under consideration and need to be finalized later
-	TestnetChainID = "exocoretestnet_233"
+	TestnetChainID = "imuachaintestnet_233"
 	// DefaultChainID is the standard chain id used for testing purposes
 	DefaultChainID = MainnetChainID + "-1"
-	// BaseDenom defines the Exocore mainnet denomination
+	// BaseDenom defines the Imuachain mainnet denomination
 	BaseDenom = "hua"
 
 	// DelimiterForCombinedKey is the delimiter used for constructing the combined key.
@@ -122,11 +122,11 @@ func CommonValidation[T any, V constraints.Ordered, D any](
 	return seen, nil
 }
 
-// // GetExocoreAddressFromBech32 returns the sdk.Account address of given address,
+// // GetAccountAddressFromBech32 returns the sdk.Account address of given address,
 // // while also changing bech32 human readable prefix (HRP) to the value set on
 // // the global sdk.Config (eg: `evmos`).
 // // The function fails if the provided bech32 address is invalid.
-// func GetExocoreAddressFromBech32(address string) (sdk.AccAddress, error) {
+// func GetAccountAddressFromBech32(address string) (sdk.AccAddress, error) {
 // 	bech32Prefix := strings.SplitN(address, "1", 2)[0]
 // 	if bech32Prefix == address {
 // 		return nil, errorsmod.Wrapf(errortypes.ErrInvalidAddress, "invalid bech32 address: %s", address)

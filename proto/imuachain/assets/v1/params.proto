@@ -1,0 +1,12 @@
+syntax = "proto3";
+package imuachain.assets.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/assets/types";
+
+// Params defines the parameters for the assets module.
+message Params {
+  // gateways is the addresses of gateways on Imuachain.
+  repeated string gateways = 1 [(gogoproto.customname) = "Gateways"];
+}

@@ -8,7 +8,7 @@ ISlash constant SLASH_CONTRACT = ISlash(
     SLASH_PRECOMPILE_ADDRESS
 );
 
-/// @author Exocore Team
+/// @author Imuachain Team
 /// @title Slash Precompile Contract
 /// @dev The interface through which solidity contracts will interact with Slash
 /// @custom:address 0x0000000000000000000000000000000000000807

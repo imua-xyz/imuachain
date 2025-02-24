@@ -2,9 +2,9 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/delegation/keeper"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 func (suite *DelegationTestSuite) TestTokensFromShares() {

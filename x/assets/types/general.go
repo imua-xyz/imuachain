@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	ExocoreChainLzID  = 0
-	ExocoreAssetAddr  = "0x0000000000000000000000000000000000000000"
-	ExocoreAssetID    = "0x0000000000000000000000000000000000000000_0x0"
-	ExocoreAssetDenom = utils.BaseDenom
+	ImuachainLzID       = 0
+	ImuachainAssetAddr  = "0x0000000000000000000000000000000000000000"
+	ImuachainAssetID    = "0x0000000000000000000000000000000000000000_0x0"
+	ImuachainAssetDenom = utils.BaseDenom
 
 	FillCharForRestakingAssetAddr = 0xee
 )
@@ -29,7 +29,7 @@ const (
 	GeneralAssetsAddrLength      = 32
 	GeneralClientChainAddrLength = 32
 	ClientChainLzIDIndexInTopics = 0
-	ExoCoreOperatorAddrLength    = 42
+	ImuachainOperatorAddrLength  = 41
 
 	// MaxDecimal is set to prevent the overflow
 	// during the calculation of share and usd value.

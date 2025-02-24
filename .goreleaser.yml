@@ -5,9 +5,9 @@ before:
     - go mod download
 
 builds:
-  - id: "exocored-darwin"
-    main: ./cmd/exocored
-    binary: bin/exocored
+  - id: "imuad-darwin"
+    main: ./cmd/imuad
+    binary: bin/imuad
     env:
       - CGO_ENABLED=1
       - CC=o64-clang
@@ -19,10 +19,10 @@ builds:
     flags:
       - -tags=cgo
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=exocore -X github.com/cosmos/cosmos-sdk/version.AppName=exocored -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  - id: "exocored-darwin-arm64"
-    main: ./cmd/exocored
-    binary: bin/exocored
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "imuad-darwin-arm64"
+    main: ./cmd/imuad
+    binary: bin/imuad
     env:
       - CGO_ENABLED=1
       - CC=oa64-clang
@@ -34,10 +34,10 @@ builds:
     flags:
       - -tags=cgo
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=exocore -X github.com/cosmos/cosmos-sdk/version.AppName=exocored -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  - id: "exocored-linux"
-    main: ./cmd/exocored
-    binary: bin/exocored
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "imuad-linux"
+    main: ./cmd/imuad
+    binary: bin/imuad
     env:
       - CGO_ENABLED=1
       - CC=gcc
@@ -49,10 +49,10 @@ builds:
     flags:
       - -tags=cgo
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=exocore -X github.com/cosmos/cosmos-sdk/version.AppName=exocored -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  - id: "exocored-linux-arm64"
-    main: ./cmd/exocored
-    binary: bin/exocored
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "imuad-linux-arm64"
+    main: ./cmd/imuad
+    binary: bin/imuad
     env:
       - CGO_ENABLED=1
       - CC=aarch64-linux-gnu-gcc
@@ -64,10 +64,10 @@ builds:
     flags:
       - -tags=cgo
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=exocore -X github.com/cosmos/cosmos-sdk/version.AppName=exocored -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  - id: "exocored-windows"
-    main: ./cmd/exocored
-    binary: bin/exocored
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  - id: "imuad-windows"
+    main: ./cmd/imuad
+    binary: bin/imuad
     env:
       - CGO_ENABLED=1
       - CC=x86_64-w64-mingw32-gcc
@@ -80,7 +80,7 @@ builds:
       - -tags=cgo
       - -buildmode=exe
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=exocore -X github.com/cosmos/cosmos-sdk/version.AppName=exocored -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
 
 archives:
   - name_template: '{{ .ProjectName }}_{{ .Version }}_{{- title .Os }}_{{ .Arch }}'
@@ -88,11 +88,11 @@ archives:
       - goos: windows
         format: zip
     builds:
-      - exocored-darwin
-      - exocored-darwin-arm64
-      - exocored-windows
-      - exocored-linux
-      - exocored-linux-arm64
+      - imuad-darwin
+      - imuad-darwin-arm64
+      - imuad-windows
+      - imuad-linux
+      - imuad-linux-arm64
   
 checksum:
   name_template: 'checksums.txt'

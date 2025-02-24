@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/ExocoreNetwork/exocore/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
 // ChainIDWithLenKey returns the key with the following format:

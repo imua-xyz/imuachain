@@ -3,7 +3,7 @@ package feedermanagement
 import (
 	"testing"
 
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 	. "github.com/smartystreets/goconvey/convey"
 	gomock "go.uber.org/mock/gomock"
 )

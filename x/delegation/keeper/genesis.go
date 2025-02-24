@@ -2,11 +2,11 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

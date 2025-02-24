@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 func (suite *KeeperTestSuite) TestExportGenesis() {
@@ -18,7 +18,7 @@ func (suite *KeeperTestSuite) TestExportGenesis() {
 	epsilon := time.Nanosecond // negligible amount of buffer duration
 	suite.Commit()
 	suite.CommitAfter(time.Hour*24 + epsilon - time.Minute)
-	allValidators := suite.App.StakingKeeper.GetAllExocoreValidators(suite.Ctx) // GetAllValidators(suite.Ctx)
+	allValidators := suite.App.StakingKeeper.GetAllImuachainValidators(suite.Ctx) // GetAllValidators(suite.Ctx)
 	for i, val := range allValidators {
 		pk, err := val.ConsPubKey()
 		if err != nil {

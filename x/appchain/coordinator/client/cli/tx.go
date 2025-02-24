@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

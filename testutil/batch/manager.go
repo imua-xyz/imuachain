@@ -19,20 +19,17 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 	"github.com/evmos/evmos/v16/crypto/hd"
 	"github.com/evmos/evmos/v16/encoding"
+	"github.com/imua-xyz/imuachain/app"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
-	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
+	"github.com/imua-xyz/imuachain/precompiles/delegation"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	"github.com/ExocoreNetwork/exocore/types"
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -45,6 +42,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	"github.com/imua-xyz/imuachain/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"golang.org/x/xerrors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -64,7 +64,7 @@ const (
 )
 
 var (
-	ExoDecimalReduction      = new(big.Int).Exp(big.NewInt(10), big.NewInt(types.BaseDenomUnit), nil)
+	ImuaDecimalReduction     = new(big.Int).Exp(big.NewInt(10), big.NewInt(types.BaseDenomUnit), nil)
 	logger                   = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	AssetsPrecompileAddr     = common.HexToAddress("0x0000000000000000000000000000000000000804")
 	DelegationPrecompileAddr = common.HexToAddress("0x0000000000000000000000000000000000000805")
@@ -105,7 +105,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 	// SQLite waits for 600000 milliseconds (10 minute) when encountering a lock conflict.
 	db.Exec("PRAGMA busy_timeout = 600000;")
 
-	// get the private key for the virtual exocore gateway address
+	// get the private key for the virtual imua gateway address
 	// most test transactions will be signed by this private key.
 	sk, err := crypto.HexToECDSA(config.FaucetSk)
 	if err != nil {

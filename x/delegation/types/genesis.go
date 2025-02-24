@@ -3,15 +3,15 @@ package types
 import (
 	"encoding/hex"
 
-	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	"golang.org/x/xerrors"
 )
 

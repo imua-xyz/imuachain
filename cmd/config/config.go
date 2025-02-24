@@ -8,7 +8,7 @@ import (
 
 const (
 	// Bech32Prefix defines the Bech32 prefix used for EthAccounts
-	Bech32Prefix = "exo"
+	Bech32Prefix = "im"
 
 	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address
 	Bech32PrefixAccAddr = Bech32Prefix
@@ -26,8 +26,9 @@ const (
 
 const (
 	// DisplayDenom defines the denomination displayed to users in client applications.
-	DisplayDenom = "exo"
-	// BaseDenom defines to the default denomination used in Exocore (EVM, governance, etc.)
+	// We capitalize it to match ETH and wei logic.
+	DisplayDenom = "IMUA"
+	// BaseDenom defines to the default denomination used in Imuachain (EVM, governance, etc.)
 	BaseDenom = "hua"
 )
 

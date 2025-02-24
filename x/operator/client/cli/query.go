@@ -2,18 +2,20 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 	"golang.org/x/xerrors"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/spf13/cobra"
 )
 
@@ -284,7 +286,7 @@ func QueryOperatorUSDValue() *cobra.Command {
 		Use:     "operator-usd-value <operatorAddr> <avsAddr>",
 		Short:   "Get the opted-in USD value",
 		Long:    "Get the opted-in USD value for the operator",
-		Example: "exocored query operator QueryOperatorUSDValue exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Example: fmt.Sprintf("%s query operator QueryOperatorUSDValue im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
@@ -342,7 +344,7 @@ func QueryOperatorSlashInfo() *cobra.Command {
 		Use:     "operator-slash-info <operatorAddr> <avsAddr>",
 		Short:   "Get the the slash information for the operator",
 		Long:    "Get the the slash information for the operator",
-		Example: "exocored query operator QueryOperatorSlashInfo exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Example: fmt.Sprintf("%s query operator QueryOperatorSlashInfo im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
@@ -375,7 +377,7 @@ func QueryAllOperatorsWithOptInAVS() *cobra.Command {
 		Use:     "get-operator-list <avsAddr>",
 		Short:   "Get list of operators by AVS",
 		Long:    "Get the list of operators who have opted in to the specified AVS",
-		Example: "exocored query operator get-operator-list 0x598ACcB5e7F83cA6B19D70592Def9E5b25B978CA",
+		Example: fmt.Sprintf("%s query operator get-operator-list 0x598ACcB5e7F83cA6B19D70592Def9E5b25B978CA", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
@@ -407,7 +409,7 @@ func QueryAllAVSsByOperator() *cobra.Command {
 		Use:     "get-avs-list <operatorAddr>",
 		Short:   "Get list of AVSs by operator",
 		Long:    "Get a list of AVSs to which an operator has opted in",
-		Example: "exocored query operator get-avs-list exo1mq6pj6f5tafmgkk6lehew5radfq3w20gpegzs5",
+		Example: fmt.Sprintf("%s query operator get-avs-list im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			addr, err := sdk.AccAddressFromBech32(args[0])
@@ -440,7 +442,7 @@ func GetOptInfo() *cobra.Command {
 		Use:     "opt-info <operatorAddr> <avsAddr>",
 		Short:   "Get opt info",
 		Long:    "Get opt info of specified operator and AVS",
-		Example: "exocored query operator GetOptInfo exo1c5x7mxphvgavjhu0au9jjqnfqcyspevtyy27mz 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Example: fmt.Sprintf("%s query operator GetOptInfo im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
@@ -466,7 +468,7 @@ func QuerySnapshotHelper() *cobra.Command {
 		Use:     "query-snapshot-helper <avsAddr>",
 		Short:   "Get the voting power snapshot helper for the avs",
 		Long:    "Get the voting power snapshot helper for the avs",
-		Example: "exocored query operator query-snapshot-helper 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Example: fmt.Sprintf("%s query operator query-snapshot-helper 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
@@ -498,7 +500,7 @@ func QueryAllSnapshot() *cobra.Command {
 		Short: "Get the all voting power snapshots for the avs",
 		Long: "Get all voting power snapshots for the AVS. " +
 			"The number of stored snapshots should be the unbonding duration plus one.",
-		Example: "exocored query operator query-all-snapshot 0xaa089ba103f765fcea44808bd3d4073523254c57",
+		Example: fmt.Sprintf("%s query operator query-all-snapshot 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
@@ -535,7 +537,7 @@ func QuerySpecifiedSnapshot() *cobra.Command {
 		Short: "Get the AVS voting power snapshot at specified height",
 		Long: "Get the AVS voting power snapshot at specified height" +
 			"The number of stored snapshots should be the unbonding duration plus one.",
-		Example: "exocored query operator query-specified-snapshot 0xaa089ba103f765fcea44808bd3d4073523254c57 3",
+		Example: fmt.Sprintf("%s query operator query-specified-snapshot 0xaa089ba103f765fcea44808bd3d4073523254c57 3", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {

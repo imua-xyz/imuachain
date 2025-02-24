@@ -18,7 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/ExocoreNetwork/exocore/utils"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -28,16 +27,17 @@ import (
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 	"github.com/evmos/evmos/v16/encoding"
 	evmostypes "github.com/evmos/evmos/v16/types"
+	"github.com/imua-xyz/imuachain/utils"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // EthDefaultConsensusParams defines the default Tendermint consensus params used in
-// EvmosApp testing.
+// ImuachainApp testing.
 var EthDefaultConsensusParams = &tmtypes.ConsensusParams{
 	Block: &tmtypes.BlockParams{
 		MaxBytes: 200000,
@@ -55,15 +55,15 @@ var EthDefaultConsensusParams = &tmtypes.ConsensusParams{
 	},
 }
 
-// EthSetup initializes a new EvmosApp. A Nop logger is set in EvmosApp.
-func EthSetup(isCheckTx bool, patchGenesis func(*ExocoreApp, simapp.GenesisState) simapp.GenesisState) *ExocoreApp {
+// EthSetup initializes a new ImuachainApp. A Nop logger is set in ImuachainApp.
+func EthSetup(isCheckTx bool, patchGenesis func(*ImuachainApp, simapp.GenesisState) simapp.GenesisState) *ImuachainApp {
 	return EthSetupWithDB(isCheckTx, patchGenesis, dbm.NewMemDB())
 }
 
-// EthSetupWithDB initializes a new EvmosApp. A Nop logger is set in EvmosApp.
-func EthSetupWithDB(isCheckTx bool, patchGenesis func(*ExocoreApp, simapp.GenesisState) simapp.GenesisState, db dbm.DB) *ExocoreApp {
+// EthSetupWithDB initializes a new ImuachainApp. A Nop logger is set in ImuachainApp.
+func EthSetupWithDB(isCheckTx bool, patchGenesis func(*ImuachainApp, simapp.GenesisState) simapp.GenesisState, db dbm.DB) *ImuachainApp {
 	chainID := utils.TestnetChainID + "-1"
-	app := NewExocoreApp(log.NewNopLogger(),
+	app := NewImuachainApp(log.NewNopLogger(),
 		db,
 		nil,
 		true,

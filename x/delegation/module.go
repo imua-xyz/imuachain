@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/x/delegation/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -16,6 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/imua-xyz/imuachain/x/delegation/client/cli"
+	"github.com/imua-xyz/imuachain/x/delegation/keeper"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/spf13/cobra"
 )
 

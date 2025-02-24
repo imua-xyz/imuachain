@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // UpdateOperatorUSDValue is a function to update the USD share for specified operator and Avs,

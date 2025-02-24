@@ -10,14 +10,14 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/epochs/keeper"
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/imua-xyz/imuachain/x/epochs/client/cli"
+	"github.com/imua-xyz/imuachain/x/epochs/keeper"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 var (

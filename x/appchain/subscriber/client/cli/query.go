@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/ExocoreNetwork/exocore/x/appchain/subscriber/types"
+	"github.com/imua-xyz/imuachain/x/appchain/subscriber/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

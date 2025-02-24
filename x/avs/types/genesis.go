@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // this line is used by starport scaffolding # genesis/types/import

@@ -2,8 +2,8 @@ package types
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 var (
@@ -98,9 +98,9 @@ func validateDelegationInfo(assetID string, baseInfo *DelegationIncOrDecInfo) er
 			)
 		}
 	}
-	if assetID != assetstype.ExocoreAssetID {
+	if assetID != assetstype.ImuachainAssetID {
 		return ErrInvalidAssetID.Wrapf(
-			"only nativeToken is support, expected:%s,got:%s", assetstype.ExocoreAssetID, assetID,
+			"only nativeToken is support, expected:%s,got:%s", assetstype.ImuachainAssetID, assetID,
 		)
 	}
 	if _, err := sdk.AccAddressFromBech32(baseInfo.FromAddress); err != nil {

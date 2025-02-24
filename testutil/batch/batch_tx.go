@@ -10,10 +10,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
-	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
+	"github.com/imua-xyz/imuachain/precompiles/delegation"
 	"golang.org/x/xerrors"
 )
 
@@ -209,7 +209,7 @@ func (m *Manager) EnqueueDelegationTxs(batchID uint, msgType string) error {
 					if err == nil {
 						// Undelegates half of the total amount. The expected check value will also be half.
 						// The reason for keeping some amount delegated is to ensure there is always a portion
-						// delegated to the operators, which helps in testing the Exocore chain.
+						// delegated to the operators, which helps in testing the Imuachain chain.
 						opAmount = delegatedAmount.Quo(sdkmath.NewInt(2))
 						expectedCheckValue = delegatedAmount.Sub(opAmount)
 					}
@@ -283,7 +283,7 @@ func (m *Manager) SignAndSendTxs(tx interface{}) (string, string, error) {
 	} else {
 		return txID, "", xerrors.Errorf("unsupported transaction type: %v", reflect.TypeOf(tx))
 	}
-	// todo: address the cosmos transaction for the delegation/undelegation of Exo token.
+	// todo: address the cosmos transaction for the delegation/undelegation of IMUA token.
 
 	// update the tx record in the local db for future check
 	height, err := m.NodeEVMHTTPClients[DefaultNodeIndex].BlockNumber(m.ctx)

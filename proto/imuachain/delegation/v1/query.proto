@@ -1,0 +1,225 @@
+syntax = "proto3";
+package imuachain.delegation.v1;
+
+import "cosmos/query/v1/query.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "imuachain/delegation/v1/tx.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
+
+// DelegationInfoReq is the request to obtain the delegation information
+// by staker id and asset id.
+message DelegationInfoReq {
+  // staker_id is the staker id.
+  string staker_id = 1;
+  // asset_id is the asset id.
+  string asset_id = 2;
+}
+
+// StakerList is a list to save a batch of stakers
+message StakerList {
+  // stakers is a list of stakers. the caller is responsible for ensuring
+  // uniqueness of the stakers, since dumping this into a map could lead
+  // to non-deterministic behavior.
+  repeated string stakers = 1;
+}
+
+// DelegationAmounts is the delegation amount response for a single delegation.
+message DelegationAmounts {
+  // undelegatable_share is the share that can be undelegated.
+  // It's to reduce the state updating when slash occurs.
+  // S_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,
+  // and the T_j represents the change in staker's asset amount when some external
+  // operations occur, such as: delegation, undelegation and slashing.
+  // S_j represents the change in the staker's asset share,
+  // so the updated share should be added by it.
+  // A special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.
+  // For the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares.
+  string undelegatable_share = 1 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // wait_undelegation_amount is the amount that is waiting to be unbonded.
+  string wait_undelegation_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// QueryDelegationInfoResponse is the response for delegations by staker id and
+// asset id.
+message QueryDelegationInfoResponse {
+  // delegation_infos is the delegation information for each operator.
+  map<string, DelegationAmounts> delegation_infos = 1;
+}
+
+// SingleDelegationInfoReq is the request to obtain the single delegation information
+// and the maximum undelegatable amount of specific delegation.
+message SingleDelegationInfoReq {
+  // staker_id is the staker id.
+  string staker_id = 1;
+  // operator_addr is the operator address.
+  string operator_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // asset_id is the asset id.
+  string asset_id = 3;
+}
+
+// SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo
+message SingleDelegationInfoResponse {
+  // delegation_amounts is the delegation info recorded in the KVStore
+  DelegationAmounts delegation_amounts = 1;
+  // max_undelegatable_amount is the maximum amount that can be undelegated
+  string max_undelegatable_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// UndelegationHoldCountReq is the request to obtain the undelegation hold count.
+message UndelegationHoldCountReq {
+  // staker_id is the staker id.
+  string staker_id = 1;
+  // asset_id is the asset id.
+  string asset_id = 2;
+  // undelegation_id is the undelegation id
+  uint64 undelegation_id = 3;
+}
+
+// UndelegationHoldCountResponse is the response for the undelegation hold count.
+message UndelegationHoldCountResponse {
+  // hold_count is the number of undelegations that are on hold.
+  uint64 hold_count = 1;
+}
+
+// UndelegationsReq is the request to obtain all delegations
+// by staker id and asset id.
+message UndelegationsReq {
+  // staker_id is the staker id.
+  string staker_id = 1;
+  // asset_id is the asset id.
+  string asset_id = 2;
+}
+
+// UndelegationsByEpochInfoReq is the request to obtain all undelegations waiting to be completed
+// by epoch info.
+message UndelegationsByEpochInfoReq {
+  // epoch_identifier is the epoch identifier to query.
+  string epoch_identifier = 1;
+  // epoch_number is the epoch number to query.
+  int64 epoch_number = 2;
+}
+
+// UndelegationAndHoldCount includes the undelegation record and the
+// hold count, which is used to construct the genesis state
+message UndelegationAndHoldCount {
+  // undelegation is the single undelegation record
+  UndelegationRecord undelegation = 1;
+  // hold_count represents the number of holds on this undelegation
+  uint64 hold_count = 2;
+}
+
+// UndelegationRecordList is the response to query undelegations.
+message UndelegationRecordList {
+  // undelegations is the returned undelegations with hold count
+  repeated UndelegationAndHoldCount undelegations = 1;
+}
+
+// QueryAssociatedOperatorByStakerReq is the request to obtain the associated operator of the specified staker
+message QueryAssociatedOperatorByStakerReq {
+  // stake_id is the staker id for which the query is made.
+  string staker_id = 1;
+}
+
+// QueryAssociatedOperatorByStakerResponse is the response to QueryAssociatedOperatorByStakerReq
+message QueryAssociatedOperatorByStakerResponse {
+  // operator is the returned operator owner of the specified staker
+  string operator = 1;
+}
+
+// QueryAssociatedStakersByOperatorReq is the request to obtain the associated stakers of the specified operator
+message QueryAssociatedStakersByOperatorReq {
+  // operator is the operator address for which the query is made.
+  string operator = 1;
+}
+
+// QueryAssociatedStakersByOperatorResponse is the response to QueryAssociatedStakersByOperatorReq
+message QueryAssociatedStakersByOperatorResponse {
+  // stakers is the returned stakers associated to the specified operator
+  repeated string stakers = 1;
+}
+
+// QueryDelegatedStakersByOperatorReq is the request to obtain the delegated stakers of the specified operator
+message QueryDelegatedStakersByOperatorReq {
+  // operator is the operator address for which the query is made.
+  string operator = 1;
+  // asset_id is the asset id.
+  string asset_id = 2;
+}
+
+// QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq
+message QueryDelegatedStakersByOperatorResponse {
+  // count is the number of stakers
+  uint64 count = 1;
+  // stakers is the returned stakers associated to the specified operator
+  repeated string stakers = 2;
+}
+
+// Query is the service API for the delegation module.
+service Query {
+  // DelegationInfo queries the delegation information for {stakerID, assetID}.
+  rpc QueryDelegationInfo(DelegationInfoReq) returns (QueryDelegationInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/delegations/{staker_id}/{asset_id}";
+  }
+  // SingleDelegationInfo queries the single delegation information and the
+  // maximum undelegatable amount for {staker, asset, operator}.
+  rpc QuerySingleDelegationInfo(SingleDelegationInfoReq) returns (SingleDelegationInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/single_delegation/{staker_id}/{operator_addr}/{asset_id}";
+  }
+
+  // QueryUndelegationHoldCount queries the undelegation hold count.
+  rpc QueryUndelegationHoldCount(UndelegationHoldCountReq) returns (UndelegationHoldCountResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/undelegation_hold_count/{staker_id}/{asset_id}/{undelegation_id}";
+  }
+
+  // QueryUndelegations queries all undelegations for
+  // {staker, asset}.
+  rpc QueryUndelegations(UndelegationsReq) returns (UndelegationRecordList) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/undelegations/{staker_id}/{asset_id}";
+  }
+
+  // QueryUndelegationsByEpochInfo queries all undelegations waiting to be completed by
+  // {epoch_identifier,epoch_number}.
+  rpc QueryUndelegationsByEpochInfo(UndelegationsByEpochInfoReq) returns (UndelegationRecordList) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/pending_undelegations/{epoch_identifier}/{epoch_number}";
+  }
+
+  // QueryAssociatedOperatorByStaker queries the associated operator for the specified staker
+  rpc QueryAssociatedOperatorByStaker(QueryAssociatedOperatorByStakerReq) returns (QueryAssociatedOperatorByStakerResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/associated_operator/{staker_id}";
+  }
+
+  // QueryAssociatedStakersByOperator queries the associated stakers for the specified operator
+  rpc QueryAssociatedStakersByOperator(QueryAssociatedStakersByOperatorReq) returns (QueryAssociatedStakersByOperatorResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/associated_stakers/{operator}";
+  }
+
+  // QueryDelegatedStakersByOperator queries the delegated stakers for the specified operator
+  rpc QueryDelegatedStakersByOperator(QueryDelegatedStakersByOperatorReq) returns (QueryDelegatedStakersByOperatorResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/delegation/v1/delegated_stakers/{operator}/{asset_id}";
+  }
+
+}

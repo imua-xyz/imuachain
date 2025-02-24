@@ -17,7 +17,7 @@ import (
 
 func init() {
 	cfg := sdk.GetConfig()
-	cfg.SetBech32PrefixForAccount("exo", "exopub")
+	cfg.SetBech32PrefixForAccount("im", "impub")
 }
 
 func TestIsSupportedKeys(t *testing.T) {
@@ -73,7 +73,7 @@ func TestIsSupportedKeys(t *testing.T) {
 	}
 }
 
-func TestExocoreCoinDenom(t *testing.T) {
+func TestImuaChainDenom(t *testing.T) {
 	testCases := []struct {
 		name     string
 		denom    string
@@ -136,17 +136,17 @@ func TestIsValidChainIDWithoutRevision(t *testing.T) {
 	}{
 		{
 			name:      "invalid chainID: include delimiter",
-			chainID:   "exocore/testnet_233",
+			chainID:   "imua/testnet_233",
 			expResult: false,
 		},
 		{
 			name:      "invalid chainID: include revision",
-			chainID:   "exocoretestnet_233-6",
+			chainID:   "imuachaintestnet_233-6",
 			expResult: false,
 		},
 		{
 			name:      "valid chainID",
-			chainID:   "exocoretestnet_233",
+			chainID:   "imuachaintestnet_233",
 			expResult: true,
 		},
 	}

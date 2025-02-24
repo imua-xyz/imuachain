@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
 var (
@@ -44,7 +44,7 @@ type CosmosTxArgs struct {
 // It returns the signed transaction and an error
 func PrepareCosmosTx(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	args CosmosTxArgs,
 ) (authsigning.Tx, error) {
 	txBuilder := args.TxCfg.NewTxBuilder()
@@ -67,7 +67,7 @@ func PrepareCosmosTx(
 
 	return signCosmosTx(
 		ctx,
-		appExocore,
+		appImuachain,
 		args,
 		txBuilder,
 	)
@@ -77,12 +77,12 @@ func PrepareCosmosTx(
 // the provided private key
 func signCosmosTx(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	args CosmosTxArgs,
 	txBuilder client.TxBuilder,
 ) (authsigning.Tx, error) {
 	addr := sdk.AccAddress(args.Priv.PubKey().Address().Bytes())
-	seq, err := appExocore.AccountKeeper.GetSequence(ctx, addr)
+	seq, err := appImuachain.AccountKeeper.GetSequence(ctx, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func signCosmosTx(
 	}
 
 	// Second round: all signer infos are set, so each signer can sign.
-	accNumber := appExocore.AccountKeeper.GetAccount(ctx, addr).GetAccountNumber()
+	accNumber := appImuachain.AccountKeeper.GetAccount(ctx, addr).GetAccountNumber()
 	signerData := authsigning.SignerData{
 		ChainID:       args.ChainID,
 		AccountNumber: accNumber,

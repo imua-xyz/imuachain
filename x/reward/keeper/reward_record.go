@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/reward/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/imua-xyz/imuachain/x/reward/types"
 )
 
 type rewardRecord struct {

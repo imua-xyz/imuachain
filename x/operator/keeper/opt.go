@@ -7,12 +7,12 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type AssetPriceAndDecimal struct {

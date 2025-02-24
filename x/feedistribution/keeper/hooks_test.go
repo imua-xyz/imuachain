@@ -7,16 +7,16 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatorkeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatorkeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *KeeperTestSuite) TestEpochHooks() {
@@ -28,7 +28,7 @@ func (suite *KeeperTestSuite) TestEpochHooks() {
 	epsilon := time.Nanosecond // negligible amount of buffer duration
 	suite.Commit()
 	suite.CommitAfter(time.Hour*24 + epsilon - time.Minute)
-	allValidators := suite.App.StakingKeeper.GetAllExocoreValidators(suite.Ctx) // GetAllValidators(suite.Ctx)
+	allValidators := suite.App.StakingKeeper.GetAllImuachainValidators(suite.Ctx) // GetAllValidators(suite.Ctx)
 	for i, val := range allValidators {
 		pk, err := val.ConsPubKey()
 		if err != nil {

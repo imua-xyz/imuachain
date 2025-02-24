@@ -10,12 +10,12 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/cmd/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/imua-xyz/imuachain/cmd/config"
 	"golang.org/x/xerrors"
 )
 
@@ -142,7 +142,7 @@ func GetTxIDsByBatchTypeAndStatus(db *gorm.DB, batchID uint, txType string, stat
 	return ids, int64(len(ids)), nil
 }
 
-func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) error {
+func FundingObjects[T AddressForFunding](m *Manager, model T, needImua int64) error {
 	if m.config.AddrNumberInMultiSend <= 0 {
 		return xerrors.Errorf("invalid AddrNumberInMultiSend:%d", m.config.AddrNumberInMultiSend)
 	}
@@ -171,15 +171,15 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 		if err != nil {
 			return xerrors.Errorf("can't get balance,addr:%s, err: %w", object.EvmAddress().String(), err)
 		}
-		exoBalance := big.NewInt(0).Quo(balance, ExoDecimalReduction).Int64()
-		logger.Info("the exo balance is:", "addr", object.EvmAddress(), "balance", balance, "exoBalance", exoBalance, "needExo", needExo)
-		if exoBalance < needExo {
+		imuaBalance := big.NewInt(0).Quo(balance, ImuaDecimalReduction).Int64()
+		logger.Info("the IMUA balance is:", "addr", object.EvmAddress(), "balance", balance, "imuaBalance", imuaBalance, "needImua", needImua)
+		if imuaBalance < needImua {
 			objectAccAddr := object.AccAddress()
-			amount := sdktypes.NewInt(needExo - exoBalance)
+			amount := sdktypes.NewInt(needImua - imuaBalance)
 
 			addrNumberInOneMsg++
 			inputAmount = inputAmount.Add(amount)
-			huaAmount := amount.Mul(sdkmath.NewIntFromBigInt(ExoDecimalReduction))
+			huaAmount := amount.Mul(sdkmath.NewIntFromBigInt(ImuaDecimalReduction))
 			outputs = append(outputs, banktypes.Output{
 				Address: objectAccAddr.String(), // Sender address
 				Coins:   sdktypes.Coins{sdktypes.NewCoin(config.BaseDenom, huaAmount)},
@@ -188,7 +188,7 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 		logger.Info("generate inputs and outputs", "id", id, "objectNumber", objectNumber, "addrNumberInOneMsg", addrNumberInOneMsg, "AddrNumberInMultiSend", m.config.AddrNumberInMultiSend)
 		if addrNumberInOneMsg != 0 &&
 			(addrNumberInOneMsg == m.config.AddrNumberInMultiSend || id == uint(objectNumber)) {
-			inputHuaAmount := inputAmount.Mul(sdkmath.NewIntFromBigInt(ExoDecimalReduction))
+			inputHuaAmount := inputAmount.Mul(sdkmath.NewIntFromBigInt(ImuaDecimalReduction))
 			totalInputAmount = totalInputAmount.Add(inputHuaAmount)
 			input.Coins = sdktypes.Coins{sdktypes.NewCoin(config.BaseDenom, inputHuaAmount)}
 			multiSendMsgs = append(multiSendMsgs, &banktypes.MsgMultiSend{
@@ -231,7 +231,7 @@ func FundingObjects[T AddressForFunding](m *Manager, model T, needExo int64) err
 	return nil
 }
 
-func CheckObjectsBalance[T AddressForFunding](m *Manager, model T, needExo int64) error {
+func CheckObjectsBalance[T AddressForFunding](m *Manager, model T, needImua int64) error {
 	ethClient := m.NodeEVMHTTPClients[DefaultNodeIndex]
 	opFunc := func(_ uint, _ int64, object T) error {
 		if !object.ShouldFund() {
@@ -242,10 +242,10 @@ func CheckObjectsBalance[T AddressForFunding](m *Manager, model T, needExo int64
 		if err != nil {
 			return xerrors.Errorf("can't get balance,addr:%s, err:%w", object.EvmAddress().String(), err)
 		}
-		exoBalance := big.NewInt(0).Quo(balance, ExoDecimalReduction).Int64()
-		if exoBalance < needExo {
-			logger.Info("the exo balance isn't enough:", "object", object.ObjectName(), "addr", object.EvmAddress(), "exoBalance", exoBalance, "needExo", needExo)
-			return xerrors.Errorf("the exo balance isn't enough, object:%s, need:%d, cur:%d", object.ObjectName(), needExo, exoBalance)
+		imuaBalance := big.NewInt(0).Quo(balance, ImuaDecimalReduction).Int64()
+		if imuaBalance < needImua {
+			logger.Info("the IMUA balance isn't enough:", "object", object.ObjectName(), "addr", object.EvmAddress(), "imuaBalance", imuaBalance, "needImua", needImua)
+			return xerrors.Errorf("the imua balance isn't enough, object:%s, need:%d, cur:%d", object.ObjectName(), needImua, imuaBalance)
 		}
 		return nil
 	}

@@ -7,12 +7,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 const (
@@ -36,10 +36,10 @@ func (p Precompile) DepositOrWithdraw(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	// check the invalidation of caller contract,the caller must be exoCore LzApp contract
+	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
 	if err != nil || !authorized {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller)
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
 	// parse the depositTo input params
@@ -82,10 +82,10 @@ func (p Precompile) RegisterOrUpdateClientChain(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	// check the invalidation of caller contract,the caller must be exoCore LzApp contract
+	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
 	if err != nil || !authorized {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller)
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
 	clientChainInfo, err := p.ClientChainInfoFromInputs(ctx, args)
@@ -105,10 +105,10 @@ func (p Precompile) RegisterToken(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	// the caller must be the ExocoreGateway contract
+	// the caller must be the home chain Gateway contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
 	if err != nil || !authorized {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller)
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
 	// parse inputs
@@ -147,10 +147,10 @@ func (p Precompile) UpdateToken(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	// the caller must be the ExocoreGateway contract
+	// the caller must be the home chain Gateway contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
 	if err != nil || !authorized {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller)
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
 	// parse inputs

@@ -3,10 +3,10 @@ package keeper
 import (
 	"context"
 
-	utils "github.com/ExocoreNetwork/exocore/utils"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	utils "github.com/imua-xyz/imuachain/utils"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {

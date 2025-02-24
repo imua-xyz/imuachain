@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 const (
@@ -91,7 +91,7 @@ func (p Precompile) Bech32ToHex(
 
 	// check the bytes length, since BytesToAddress silently crops
 	if len(addressBz) != common.AddressLength {
-		return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, len(addressBz), common.AddressLength)
+		return nil, fmt.Errorf(imuacmn.ErrInvalidAddrLength, len(addressBz), common.AddressLength)
 	}
 
 	// pack the address bytes

@@ -6,10 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/ExocoreNetwork/exocore/testutil/keeper"
-	"github.com/ExocoreNetwork/exocore/testutil/nullify"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
+	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
+	"github.com/imua-xyz/imuachain/testutil/nullify"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func createTestIndexRecentParams(keeper *keeper.Keeper, ctx sdk.Context) types.IndexRecentParams {

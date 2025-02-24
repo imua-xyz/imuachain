@@ -7,11 +7,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 func (p Precompile) GetAVSParamsFromInputs(contract *vm.Contract, origin common.Address, method *abi.Method, args []interface{}) (*avstypes.AVSRegisterOrDeregisterParams, error) {
@@ -114,42 +114,42 @@ func (p Precompile) GetTaskParamsFromInputs(_ sdk.Context, args []interface{}) (
 	taskParams := &avstypes.TaskInfoParams{}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	taskParams.CallerAddress = callerAddress[:]
 	name, ok := args[1].(string)
 	if !ok || name == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", name)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "string", name)
 	}
 	taskParams.TaskName = name
 
 	hash, ok := args[2].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", hash)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", hash)
 	}
 	taskParams.Hash = hash
 
 	taskResponsePeriod, ok := args[3].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "uint64", taskResponsePeriod)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "uint64", taskResponsePeriod)
 	}
 	taskParams.TaskResponsePeriod = taskResponsePeriod
 
 	taskChallengePeriod, ok := args[4].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "uint64", taskChallengePeriod)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "uint64", taskChallengePeriod)
 	}
 	taskParams.TaskChallengePeriod = taskChallengePeriod
 
 	thresholdPercentage, ok := args[5].(uint8)
 	if !ok || thresholdPercentage > 100 {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "uint64", thresholdPercentage)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 5, "uint64", thresholdPercentage)
 	}
 	taskParams.ThresholdPercentage = thresholdPercentage
 
 	taskStatisticalPeriod, ok := args[6].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "uint64", taskStatisticalPeriod)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 6, "uint64", taskStatisticalPeriod)
 	}
 	taskParams.TaskStatisticalPeriod = taskStatisticalPeriod
 	return taskParams, nil
@@ -199,7 +199,7 @@ func CheckOriginAndSender(contract *vm.Contract, origin common.Address, sender c
 	if contract.CallerAddress == sender {
 		return origin, nil
 	} else if origin != sender {
-		return common.Address{}, fmt.Errorf(exocmn.ErrDifferentOriginFromSender, origin.String(), sender.String())
+		return common.Address{}, fmt.Errorf(imuacmn.ErrDifferentOriginFromSender, origin.String(), sender.String())
 	}
 	return sender, nil
 }

@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -65,20 +65,20 @@ func (k Keeper) GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInf
 			Info:    stateInfo,
 		})
 	}
-	// add exo-native-token info
-	info, err := k.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetstype.ExocoreAssetID)
+	// add imua-native-token info
+	info, err := k.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetstype.ImuachainAssetID)
 	if err != nil {
 		return nil, err
 	}
 	ret = append(ret, assetstype.DepositByAsset{
-		AssetID: assetstype.ExocoreAssetID,
+		AssetID: assetstype.ImuachainAssetID,
 		Info:    *info,
 	})
 	return ret, nil
 }
 
 func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, assetID string) (info *assetstype.StakerAssetInfo, err error) {
-	if assetID == assetstype.ExocoreAssetID {
+	if assetID == assetstype.ImuachainAssetID {
 		stakerAddrStr, _, err := assetstype.ParseID(stakerID)
 		if err != nil {
 			return nil, errorsmod.Wrap(err, "failed to parse stakerID")
@@ -88,7 +88,7 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 			return nil, errorsmod.Wrap(err, "failed to decode staker address")
 		}
 		stakerAcc := sdk.AccAddress(stakerAccDecode)
-		balance := k.bk.GetBalance(ctx, stakerAcc, assetstype.ExocoreAssetDenom)
+		balance := k.bk.GetBalance(ctx, stakerAcc, assetstype.ImuachainAssetDenom)
 		info := &assetstype.StakerAssetInfo{
 			TotalDepositAmount:        balance.Amount,
 			WithdrawableAmount:        balance.Amount,

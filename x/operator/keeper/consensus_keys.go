@@ -4,25 +4,25 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	oracletype "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )
@@ -468,7 +468,7 @@ func (k Keeper) ValidatorByConsAddrForChainID(
 	val.MinSelfDelegation = sdk.TokensFromConsensusPower(minSelfDelegation.TruncateInt64(), sdk.DefaultPowerReduction)
 
 	// get opted usd values, then use the total usd value as the virtual tokens and shares
-	// we use USD to simulate the staking token for the cosmos-SDK because the Exocore is
+	// we use USD to simulate the staking token for the cosmos-SDK because the Imuachain is
 	// a multi-token staking system. The tokens and shares are always balanced.
 	operatorUSDValues, err := k.GetOrCalculateOperatorUSDValues(ctx, operatorAddr, avsAddrStr)
 	if err != nil {
@@ -630,7 +630,7 @@ func (k *Keeper) GetAllOperatorConsKeyRecords(ctx sdk.Context) ([]types.Operator
 	return ret, nil
 }
 
-// GetValidatorByConsAddrForChainID returns a exocore types.Validator for the given consensus
+// GetValidatorByConsAddrForChainID returns a imua types.Validator for the given consensus
 // address and chain id.
 func (k Keeper) GetValidatorByConsAddrForChainID(
 	ctx sdk.Context, consAddr sdk.ConsAddress, chainIDWithoutRevision string,
@@ -669,7 +669,7 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		ctx.Logger().Error(" new validator error", "err", err)
 		return types.Validator{}, false
 	}
-	val.Active = k.stakingKeeper.IsExocoreValidator(ctx, wrappedKey.ToConsAddr())
+	val.Active = k.stakingKeeper.IsImuachainValidator(ctx, wrappedKey.ToConsAddr())
 	val.OperatorEarningsAddr = ops.EarningsAddr
 	val.OperatorApproveAddr = ops.ApproveAddr
 	val.OperatorMetaInfo = ops.OperatorMetaInfo

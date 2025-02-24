@@ -2,10 +2,10 @@ package keeper
 
 import (
 	errorsmod "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/utils"
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
+	"github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.
@@ -52,7 +52,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 		}
 	}
 
-	exoDelegation := sdk.ZeroInt()
+	imuaDelegation := sdk.ZeroInt()
 	for _, assets := range data.OperatorAssets {
 		for _, assetInfo := range assets.AssetsState {
 			// #nosec G703 // already validated
@@ -62,24 +62,24 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 			if err != nil {
 				panic(errorsmod.Wrap(err, "failed to set operator asset info"))
 			}
-			if assetInfo.AssetID == types.ExocoreAssetID {
-				exoDelegation = exoDelegation.Add(assetInfo.Info.TotalAmount)
+			if assetInfo.AssetID == types.ImuachainAssetID {
+				imuaDelegation = imuaDelegation.Add(assetInfo.Info.TotalAmount)
 			}
 		}
 	}
 
-	// check that this exoDelegation amount is reflected in x/bank
+	// check that this imuaDelegation amount is reflected in x/bank
 	address := k.ak.GetModuleAccount(ctx, delegationtypes.DelegatedPoolName).GetAddress()
 	balance := k.bk.GetBalance(ctx, address, utils.BaseDenom)
 	// slashing is lazily applied at the time of withdrawal. it means that
-	// exoDelegation may have been slashed, but balance will never be slashed.
-	// it implies that exoDelegation should be less than or equal to balance.
-	// or conversely, if exoDelegation is greater than balance, we have a problem.
-	if exoDelegation.GT(balance.Amount) {
+	// imuaDelegation may have been slashed, but balance will never be slashed.
+	// it implies that imuaDelegation should be less than or equal to balance.
+	// or conversely, if imuaDelegation is greater than balance, we have a problem.
+	if imuaDelegation.GT(balance.Amount) {
 		panic(errorsmod.Wrapf(
 			types.ErrInvalidGenesisData,
-			"delegated pool account balance is too low, exoDelegation: %s, balance: %s",
-			exoDelegation, balance.Amount,
+			"delegated pool account balance is too low, imuaDelegation: %s, balance: %s",
+			imuaDelegation, balance.Amount,
 		).Error())
 	}
 }

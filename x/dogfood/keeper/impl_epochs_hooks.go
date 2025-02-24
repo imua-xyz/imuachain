@@ -3,9 +3,9 @@ package keeper
 import (
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 // EpochsHooksWrapper is the wrapper structure that implements the epochs hooks for the dogfood

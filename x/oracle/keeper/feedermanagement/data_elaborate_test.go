@@ -3,7 +3,7 @@ package feedermanagement
 import (
 	"math"
 
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type price oracletypes.MsgItem

@@ -18,12 +18,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -33,6 +27,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	cmttime "github.com/cometbft/cometbft/types/time"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -307,7 +307,7 @@ func NewGenStateAssets(operatorAccAddresses []sdk.AccAddress, depositAmount, sta
 		DefaultGenStateAssets.Tokens[i].StakingTotalAmount = totalDepositAmount
 	}
 	for _, operatorAccAddress := range operatorAccAddresses {
-		// use the same address []byte for operator(exo..) and staker(0x...), both derived from the same pubkey and since evmos use ethsecp256k1, this address is generated from keccak-256(.) instead of ripemd160(sha256(.))
+		// use the same address []byte for operator(im1..) and staker(0x...), both derived from the same pubkey and since evmos use ethsecp256k1, this address is generated from keccak-256(.) instead of ripemd160(sha256(.))
 		stakerAddrStr := hexutil.Encode(operatorAccAddress)
 		depositsByAssets := make([]assetstypes.DepositByAsset, 0, nAssets)
 		assetsStates := make([]assetstypes.AssetByID, 0, nAssets)

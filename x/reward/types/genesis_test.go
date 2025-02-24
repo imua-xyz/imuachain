@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/x/reward/types"
+	"github.com/imua-xyz/imuachain/x/reward/types"
 	"github.com/stretchr/testify/require"
 )
 

@@ -3,7 +3,7 @@ package oracle
 import (
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/testutil/network"
+	"github.com/imua-xyz/imuachain/testutil/network"
 	"github.com/stretchr/testify/suite"
 )
 

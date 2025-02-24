@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/utils"
 	"golang.org/x/xerrors"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // constants
@@ -57,7 +57,7 @@ const (
 )
 
 var (
-	// KeyPrefixRestakerDelegationInfo restakerID = clientChainAddr+'_'+ExoCoreChainIndex
+	// KeyPrefixRestakerDelegationInfo restakerID = clientChainAddr+'_'+ImuachainIndex
 	// KeyPrefixRestakerDelegationInfo
 	// key-value:
 	// restakerID +'/'+assetID+'/'+operatorAddr -> DelegationAmounts
@@ -69,7 +69,7 @@ var (
 	// KeyPrefixLastUndelegationID key-value:
 	// prefixForLastUndelegationID -> uint64
 	// We use an incrementing number to identify undelegations because we support different
-	// assets across multiple client chains and the Exocore chain.
+	// assets across multiple client chains and the Imuachain chain.
 	KeyPrefixLastUndelegationID = []byte{prefixForLastUndelegationID}
 
 	// KeyPrefixUndelegationInfo singleRecordKey = operatorAddr+BlockHeight+UndelegationID+txHash

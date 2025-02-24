@@ -4,10 +4,10 @@ import (
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
-	anteutils "github.com/ExocoreNetwork/exocore/app/ante/utils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/evmos/evmos/v16/types"
+	anteutils "github.com/imua-xyz/imuachain/app/ante/utils"
 )
 
 // GasWantedDecorator keeps track of the gasWanted amount on the current block in transient store

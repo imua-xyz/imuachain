@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -31,7 +31,7 @@ func (k Keeper) QueClientChainInfoByIndex(ctx context.Context, info *assetstype.
 	return k.GetClientChainInfoByIndex(c, info.ChainIndex)
 }
 
-// QueAllClientChainInfo query all client chain info that have been registered in exoCore
+// QueAllClientChainInfo query all client chain info that have been registered in Imuachain
 // the key of returned map is clientChainLzID, the value is the client chain info.
 func (k Keeper) QueAllClientChainInfo(goCtx context.Context, req *assetstype.QueryAllClientChainInfo) (*assetstype.QueryAllClientChainInfoResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)

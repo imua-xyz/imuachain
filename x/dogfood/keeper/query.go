@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -107,7 +107,7 @@ func (q Querier) Validator(
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid consensus address")
 	}
-	validator, found := q.Keeper.GetExocoreValidator(ctx, consAddressBytes)
+	validator, found := q.Keeper.GetImuachainValidator(ctx, consAddressBytes)
 	if !found {
 		return nil, status.Error(codes.NotFound, "validator not found")
 	}
@@ -124,20 +124,20 @@ func (q Querier) Validators(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	store := ctx.KVStore(q.Keeper.storeKey)
-	valStore := prefix.NewStore(store, []byte{types.ExocoreValidatorBytePrefix})
+	valStore := prefix.NewStore(store, []byte{types.ImuachainValidatorBytePrefix})
 
 	validators, pageRes, err := query.GenericFilteredPaginate(
-		q.Keeper.cdc, valStore, req.Pagination, func(_ []byte, val *types.ExocoreValidator) (*types.ExocoreValidator, error) {
+		q.Keeper.cdc, valStore, req.Pagination, func(_ []byte, val *types.ImuachainValidator) (*types.ImuachainValidator, error) {
 			return val, nil
-		}, func() *types.ExocoreValidator {
-			return &types.ExocoreValidator{}
+		}, func() *types.ImuachainValidator {
+			return &types.ImuachainValidator{}
 		})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// convert pointer to value
-	vals := make([]types.ExocoreValidator, len(validators))
+	vals := make([]types.ImuachainValidator, len(validators))
 	for i, val := range validators {
 		vals[i] = *val
 	}

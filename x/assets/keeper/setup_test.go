@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
 	"github.com/stretchr/testify/suite"
 )

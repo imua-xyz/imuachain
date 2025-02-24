@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strconv"
 
-	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/spf13/cobra"
 )
 

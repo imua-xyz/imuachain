@@ -10,11 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/ExocoreNetwork/exocore/x/evm/keeper"
-	exocoreevmtypes "github.com/ExocoreNetwork/exocore/x/evm/types"
 	evmostypes "github.com/evmos/evmos/v16/types"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	"github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/x/evm/keeper"
+	imuaevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
 
 // InitGenesis initializes genesis state based on exported genesis
@@ -71,7 +71,7 @@ func InitGenesis(
 	}
 
 	nonce := k.GetNewContractNonce(ctx)
-	for _, predeploy := range exocoreevmtypes.DefaultPredeploys {
+	for _, predeploy := range imuaevmtypes.DefaultPredeploys {
 		// load data from predeploys
 		addr := predeploy.GetByteAddress()
 		codeHash := predeploy.GetCodeHash()

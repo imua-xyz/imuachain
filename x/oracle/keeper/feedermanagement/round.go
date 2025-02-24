@@ -3,7 +3,7 @@ package feedermanagement
 import (
 	"fmt"
 
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader, algo AggAlgorithm) *round {

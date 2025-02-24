@@ -1,0 +1,25 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/oracle/v1/price.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// RecentMsg represent the messages to be cached for recent blocks
+message RecentMsg {
+  // block height these messages from
+  uint64 block = 1;
+  // cached messages
+  repeated MsgItem msgs = 2;
+}
+
+// MsgItem represents the message info of createPrice
+message MsgItem {
+  // feeder_id tells of wich feeder this price if corresponding to
+  uint64 feeder_id = 2 [(gogoproto.customname) = "FeederID"];
+  // p_source price with its source info
+  repeated PriceSource p_sources = 3;
+  // validator tells which validator create this price
+  string validator = 4;
+}

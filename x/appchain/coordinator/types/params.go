@@ -4,11 +4,11 @@ import (
 	fmt "fmt"
 	time "time"
 
-	commontypes "github.com/ExocoreNetwork/exocore/x/appchain/common/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	commontypes "github.com/imua-xyz/imuachain/x/appchain/common/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 const (

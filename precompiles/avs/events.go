@@ -4,11 +4,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 const (

@@ -1,0 +1,149 @@
+syntax = "proto3";
+package imuachain.assets.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "imuachain/assets/v1/genesis.proto";
+import "imuachain/assets/v1/params.proto";
+import "imuachain/assets/v1/tx.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/assets/types";
+
+// QueryClientChainInfo is the query for getting the client chain info by index.
+message QueryClientChainInfo {
+  // chain_index is the index of the chain.
+  uint64 chain_index = 1;
+}
+
+// QueryAllClientChainInfo is the query for all client chains info.
+message QueryAllClientChainInfo {
+  // pagination related options.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryAllClientChainInfoResponse is the response for all client chains info.
+message QueryAllClientChainInfoResponse {
+  // all_client_chain_infos is a list of all client chain info.
+  repeated ClientChainInfo all_client_chain_infos = 1;
+  // pagination related response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryStakingAssetInfo is the query for getting the staking asset info.
+message QueryStakingAssetInfo {
+  // asset_id is the asset for which the query is made.
+  string asset_id = 1;
+}
+
+// QueryAllStakingAssetsInfo is the query for getting all staking assets info.
+message QueryAllStakingAssetsInfo {}
+
+// QueryAllStakingAssetsInfoResponse is the response for all staking assets info,
+// indexed by the asset id.
+message QueryAllStakingAssetsInfoResponse {
+  // all_staking_assets_info is the response for all staking assets info.
+  repeated StakingAssetInfo all_staking_assets_info = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStakerAssetInfo is the query for getting the staker asset info.
+message QueryStakerAssetInfo {
+  // stake_id is the staker id for which the query is made.
+  string staker_id = 1;
+}
+
+// QueryAssetInfoResponse is the response for the staker asset info.
+message QueryAssetInfoResponse {
+  // asset_infos is the response for the staker asset info, indexed by the asset id.
+  repeated DepositByAsset asset_infos = 1 [(gogoproto.nullable) = false];
+}
+
+// QuerySpecifiedAssetAmountReq is the query for getting the staker specified asset amount.
+message QuerySpecifiedAssetAmountReq {
+  // staker_id is the staker id for which the query is made.
+  string staker_id = 1;
+  // asset_id is the asset for which the query is made.
+  string asset_id = 2;
+}
+
+// QueryOperatorAssetInfos is the query for getting the operator asset info.
+message QueryOperatorAssetInfos {
+  // operator_addr is the operator address for which the query is made.
+  string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// QueryOperatorAssetInfosResponse is the response to the operator asset info query.
+message QueryOperatorAssetInfosResponse {
+  // asset_infos is the response for the operator asset info, indexed by the asset id.
+  repeated AssetByID asset_infos = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryOperatorSpecifiedAssetAmountReq is the query for getting the operator
+// specified asset amount.
+message QueryOperatorSpecifiedAssetAmountReq {
+  // operator_addr is the operator address for which the query is made.
+  string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // asset_id is the asset for which the query is made.
+  string asset_id = 2;
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC
+// method.
+message QueryParamsResponse {
+  // params defines the parameters for this module.
+  Params params = 1;
+}
+
+// Query defines the gRPC query service for the assets module.
+service Query {
+  // Params retrieves the assets module params
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/imuachain/assets/v1/params";
+  }
+
+  // ClientChainInfoByIndex queries the client chain info by index.
+  rpc QueClientChainInfoByIndex(QueryClientChainInfo) returns (ClientChainInfo) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/client_chain/{chain_index}";
+  }
+  // AllClientChainInfo queries all client chain info.
+  rpc QueAllClientChainInfo(QueryAllClientChainInfo) returns (QueryAllClientChainInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/all_client_chains";
+  }
+  // StakingAssetInfo queries the staking asset info.
+  rpc QueStakingAssetInfo(QueryStakingAssetInfo) returns (StakingAssetInfo) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/asset/{asset_id}";
+  }
+  // AllStakingAssetsInfo queries all staking assets info.
+  rpc QueAllStakingAssetsInfo(QueryAllStakingAssetsInfo) returns (QueryAllStakingAssetsInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/all_assets";
+  }
+  // StakerAssetInfos queries the staker asset info.
+  rpc QueStakerAssetInfos(QueryStakerAssetInfo) returns (QueryAssetInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/staker_assets/{staker_id}";
+  }
+  // StakerSpecifiedAssetAmount queries the staker specified asset amount.
+  rpc QueStakerSpecifiedAssetAmount(QuerySpecifiedAssetAmountReq) returns (StakerAssetInfo) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/staker_asset/{staker_id}/{asset_id}";
+  }
+  // OperatorAssetInfos queries the operator asset info.
+  rpc QueOperatorAssetInfos(QueryOperatorAssetInfos) returns (QueryOperatorAssetInfosResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/operator_assets/{operator_addr}";
+  }
+  // OperatorSpecifiedAssetAmount queries the operator specified asset amount.
+  rpc QueOperatorSpecifiedAssetAmount(QueryOperatorSpecifiedAssetAmountReq) returns (OperatorAssetInfo) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/assets/v1/operator_asset/{operator_addr}/{asset_id}";
+  }
+}

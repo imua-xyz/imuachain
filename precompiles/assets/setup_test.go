@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

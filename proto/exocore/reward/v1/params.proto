@@ -1,7 +1,0 @@
-syntax = "proto3";
-package exocore.reward.v1;
-
-option go_package = "github.com/ExocoreNetwork/exocore/x/reward/types";
-
-// Params defines the parameters for the module.
-message Params {}

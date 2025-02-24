@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"strconv"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/ethereum/go-ethereum/common"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 func (suite *AVSTestSuite) Test_GroupStatistics() {

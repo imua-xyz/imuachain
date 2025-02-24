@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // DelegateTo : It doesn't need to check the active status of the operator in middlewares when
@@ -39,7 +39,7 @@ func (k *Keeper) delegateTo(
 		return delegationtype.ErrOperatorIsFrozen
 	}
 	stakerID, assetID := assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
-	if assetID != assetstype.ExocoreAssetID {
+	if assetID != assetstype.ImuachainAssetID {
 		// check if the staker asset has been deposited and the canWithdraw amount is bigger than the delegation amount
 		info, err := k.assetsKeeper.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetID)
 		if err != nil {
@@ -58,7 +58,7 @@ func (k *Keeper) delegateTo(
 			return err
 		}
 	} else {
-		coins := sdk.NewCoins(sdk.NewCoin(assetstype.ExocoreAssetDenom, params.OpAmount))
+		coins := sdk.NewCoins(sdk.NewCoin(assetstype.ImuachainAssetDenom, params.OpAmount))
 		// transfer the delegation amount from the staker account to the delegated pool
 		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, params.StakerAddress, delegationtype.DelegatedPoolName, coins); err != nil {
 			return err
@@ -82,7 +82,7 @@ func (k *Keeper) delegateTo(
 		// non-native case handled within UpdateStakerAssetState
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				delegationtype.EventTypeExoAssetDelegation,
+				delegationtype.EventTypeImuaAssetDelegation,
 				sdk.NewAttribute(delegationtype.AttributeKeyStakerID, sdk.AccAddress(params.StakerAddress).String()),
 				sdk.NewAttribute(delegationtype.AttributeKeyOperator, params.OperatorAddress.String()),
 				sdk.NewAttribute(delegationtype.AttributeKeyAmount, params.OpAmount.String()),
@@ -195,7 +195,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 
 	recordKey := r.GetKey()
 	// emit an event to track the undelegation record identifiers.
-	// for the ExocoreAssetID undelegation, this event is used to track asset state as well.
+	// for the ImuachainAssetID undelegation, this event is used to track asset state as well.
 	// for other undelegations, it is instead tracked from the staker asset state.
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -224,11 +224,11 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 // first call DissociateOperatorFromStaker.
 // However, each operator may be associated with multiple stakers.
 // This function is not available for end users to call directly, and such calls must be made
-// via the ExocoreGateway. The gateway associates the `msg.sender` of the call, along with the
+// via the ImuachainGateway. The gateway associates the `msg.sender` of the call, along with the
 // chain id, with the operator. Since it associates `msg.sender`, we do not need to check that
 // this request is signed by the staker.
 // TODO: It may be possible that an address, which is an EOA staker on a client chain, is a
-// contract on Exocore. When that happens, the contract may be able to call the Gateway to
+// contract on Imuachain. When that happens, the contract may be able to call the Gateway to
 // maliciously associate the staker with an operator. The probability of this, however, is
 // infinitesimal (10^-60) so we will not do anything about it for now.
 // The solution could be to require that such associations originate from the client chain.

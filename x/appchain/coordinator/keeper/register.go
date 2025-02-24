@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 // AddSubscriberChain adds a subscriber chain to the pending list. It will be started at the

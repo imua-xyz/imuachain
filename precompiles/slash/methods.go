@@ -3,11 +3,11 @@ package slash
 import (
 	"fmt"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 const (
@@ -28,7 +28,7 @@ func (p Precompile) SubmitSlash(
 	// check the invalidation of caller contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
 	if err != nil || !authorized {
-		return nil, fmt.Errorf(exocmn.ErrContractCaller)
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
 	slashParam, err := p.GetSlashParamsFromInputs(ctx, args)

@@ -6,10 +6,10 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/spf13/cobra"
 )
 

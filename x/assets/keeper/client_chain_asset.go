@@ -5,12 +5,12 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
-// UpdateStakingAssetTotalAmount updating the total deposited amount of a specified asset in exoCore chain
+// UpdateStakingAssetTotalAmount updating the total deposited amount of a specified asset in Imuachain chain
 // The function will be called when stakers deposit and withdraw their assets
 func (k Keeper) UpdateStakingAssetTotalAmount(ctx sdk.Context, assetID string, changeAmount sdkmath.Int) (err error) {
 	if changeAmount.IsNil() {
@@ -47,8 +47,8 @@ func (k Keeper) UpdateStakingAssetTotalAmount(ctx sdk.Context, assetID string, c
 }
 
 // SetStakingAssetInfo todo: Temporarily use clientChainAssetAddr+'_'+LayerZeroChainID as the key.
-// It provides a function to register the client chain assets supported by Exocore.
-// New assets may be registered via ExocoreGateway, which uses precompiles to call this function.
+// It provides a function to register the client chain assets supported by Imuachain.
+// New assets may be registered via HomeChainGateway, which uses precompiles to call this function.
 // If an asset with the provided assetID already exists, it will return an error.
 func (k Keeper) SetStakingAssetInfo(ctx sdk.Context, info *assetstype.StakingAssetInfo) (err error) {
 	if info.AssetBasicInfo.Decimals > assetstype.MaxDecimal {
@@ -77,7 +77,7 @@ func (k Keeper) SetStakingAssetInfo(ctx sdk.Context, info *assetstype.StakingAss
 			sdk.NewAttribute(assetstype.AttributeKeyDecimals, fmt.Sprintf("%d", info.AssetBasicInfo.Decimals)),
 			sdk.NewAttribute(assetstype.AttributeKeyLZID, fmt.Sprintf("%d", info.AssetBasicInfo.LayerZeroChainID)),
 			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, info.AssetBasicInfo.MetaInfo),
-			sdk.NewAttribute(assetstype.AttributeKeyExocoreChainIdx, fmt.Sprintf("%d", info.AssetBasicInfo.ExocoreChainIndex)),
+			sdk.NewAttribute(assetstype.AttributeKeyImuachainIndex, fmt.Sprintf("%d", info.AssetBasicInfo.ImuaChainIndex)),
 			sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, info.StakingTotalAmount.String()),
 		),
 	)

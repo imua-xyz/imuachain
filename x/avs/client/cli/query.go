@@ -8,9 +8,10 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/spf13/cobra"
 )
 
@@ -27,7 +28,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 
 	cmd.AddCommand(
 		QueryAVSInfo(),
-		QueryAVSAddrByChainID(),
+		QueryAVSAddressByChainID(),
 		QueryTaskInfo(),
 		QueryChallengeInfo(),
 		QuerySubmitTaskResult(),
@@ -40,18 +41,13 @@ func QueryAVSInfo() *cobra.Command {
 		Use:     "AVSInfo query <avsAddr>",
 		Short:   "AVSInfo query",
 		Long:    "AVSInfo query for current registered AVS",
-		Example: "exocored query avs AVSInfo  0x598ACcB5e7F83cA6B19D70592Def9E5b25B978CA",
+		Example: fmt.Sprintf("%s query avs AVSInfo 0x598ACcB5e7F83cA6B19D70592Def9E5b25B978CA", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !common.IsHexAddress(args[0]) {
-				return xerrors.Errorf("invalid avs  address,err:%s", types.ErrInvalidAddr)
-			}
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			queryClient, clientCtx, err := commonQuerySetup(cmd, args[0])
 			if err != nil {
 				return err
 			}
-
-			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryAVSInfoReq{
 				AVSAddress: args[0],
 			}
@@ -66,21 +62,21 @@ func QueryAVSInfo() *cobra.Command {
 	return cmd
 }
 
-// QueryAVSAddrByChainID returns a command to query AVS address by chainID
-func QueryAVSAddrByChainID() *cobra.Command {
+// QueryAVSAddressByChainID returns a command to query AVS address by chainID
+func QueryAVSAddressByChainID() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "AVSAddrByChainID <chainID>",
 		Short:   "AVSAddrByChainID <chainID>",
 		Long:    "AVSAddrByChainID query for AVS address by chainID",
-		Example: "exocored query avs AVSAddrByChainID exocoretestnet_233-1",
+		Example: fmt.Sprintf("%s query avs AVSAddrByChainID imuachaintestnet_233-1", version.AppName),
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			// pass the default address so it doesn't matter
+			queryClient, clientCtx, err := commonQuerySetup(cmd, common.Address{}.Hex())
 			if err != nil {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryAVSAddressByChainIDReq{
 				Chain: args[0],
 			}
@@ -95,23 +91,34 @@ func QueryAVSAddrByChainID() *cobra.Command {
 	return cmd
 }
 
+// commonQuerySetup handles the common setup logic for query commands
+func commonQuerySetup(cmd *cobra.Command, taskAddress string) (types.QueryClient, client.Context, error) {
+	if !common.IsHexAddress(taskAddress) {
+		return nil, client.Context{}, xerrors.Errorf("invalid address,err:%s", types.ErrInvalidAddr)
+	}
+
+	clientCtx, err := client.GetClientQueryContext(cmd)
+	if err != nil {
+		return nil, client.Context{}, err
+	}
+
+	queryClient := types.NewQueryClient(clientCtx)
+	return queryClient, clientCtx, nil
+}
+
 func QueryTaskInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "TaskInfo <task-address-in-hex> <task-id>",
 		Short:   "Query the TaskInfo by its address and ID",
 		Long:    "Query the currently registered tasks for an AVS by the task's address and ID",
-		Example: "exocored query avs TaskInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2",
+		Example: fmt.Sprintf("%s query avs TaskInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !common.IsHexAddress(args[0]) {
-				return xerrors.Errorf("invalid task  address,err:%s", types.ErrInvalidAddr)
-			}
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			queryClient, clientCtx, err := commonQuerySetup(cmd, args[0])
 			if err != nil {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryAVSTaskInfoReq{
 				TaskAddress: args[0],
 				TaskId:      args[1],
@@ -132,18 +139,13 @@ func QuerySubmitTaskResult() *cobra.Command {
 		Use:     "SubmitTaskResult <task-address-in-hex> <task-id> <operator-addreess>",
 		Short:   "Query the SubmitTaskResult by taskAddr  taskID operatorAddr",
 		Long:    "Query the currently submitted Task Result",
-		Example: "exocored query avs SubmitTaskResult 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 exo1mq6pj6f5tafmgkk6lehew5radfq3w20gpegzs5",
+		Example: fmt.Sprintf("%s query avs SubmitTaskResult 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2 im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj", version.AppName),
 		Args:    cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !common.IsHexAddress(args[0]) {
-				return xerrors.Errorf("invalid   address,err:%s", types.ErrInvalidAddr)
-			}
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			queryClient, clientCtx, err := commonQuerySetup(cmd, args[0])
 			if err != nil {
 				return err
 			}
-
-			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QuerySubmitTaskResultReq{
 				TaskAddress:     args[0],
 				TaskId:          args[1],
@@ -164,19 +166,15 @@ func QueryChallengeInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "ChallengeInfo <task-address-in-hex> <task-id>",
 		Short:   "Query the ChallengeInfo by taskAddr and taskID",
-		Long:    "Query the currently Challenge Info  ",
-		Example: "exocored query avs ChallengeInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2",
+		Long:    "Query the currently Challenge Info",
+		Example: fmt.Sprintf("%s query avs ChallengeInfo 0x96949787E6a209AFb4dE035754F79DC9982D3F2a 2", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !common.IsHexAddress(args[0]) {
-				return xerrors.Errorf("invalid address,err:%s", types.ErrInvalidAddr)
-			}
-			clientCtx, err := client.GetClientQueryContext(cmd)
+			queryClient, clientCtx, err := commonQuerySetup(cmd, args[0])
 			if err != nil {
 				return err
 			}
 
-			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryChallengeInfoReq{
 				TaskAddress: args[0],
 				TaskId:      args[1],

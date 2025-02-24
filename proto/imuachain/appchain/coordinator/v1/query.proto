@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package imuachain.appchain.coordinator.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "imuachain/appchain/common/v1/common.proto";
+import "imuachain/appchain/coordinator/v1/params.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/appchain/coordinator/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // QueryParams returns the appchain coordinator module parameters.
+  rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http) = {get: "/appchain/coordinator/params"};
+  }
+  // QuerySubscriberGenesis returns the genesis state for a subscriber chain.
+  rpc QuerySubscriberGenesis(QuerySubscriberGenesisRequest) returns (QuerySubscriberGenesisResponse) {
+    option (google.api.http) = {get: "/imuachain/appchain/coordinator/v1/subscriber_genesis/{chain}"};
+  }
+}
+
+// QueryParamsRequest is the request type for the Query.QueryParams RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query.QueryParams RPC method.
+message QueryParamsResponse {
+  // params is the parameters for the appchain coordinator module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QuerySubscriberGenesisRequest is the request type for the Query.QuerySubscriberGenesis RPC method.
+message QuerySubscriberGenesisRequest {
+  // chain is the chain ID of the subscriber chain. we intentionally don't use ChainID so that
+  // the query can work (it does not support custom names).
+  string chain = 1;
+}
+
+// QuerySubscriberGenesisResponse is the response type for the Query.QuerySubscriberGenesis RPC method.
+message QuerySubscriberGenesisResponse {
+  // subscriber_genesis is the genesis state for the subscriber chain.
+  imuachain.appchain.common.v1.SubscriberGenesisState subscriber_genesis = 1 [(gogoproto.nullable) = false];
+}

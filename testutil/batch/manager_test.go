@@ -12,12 +12,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -26,6 +25,7 @@ import (
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 	cryptohd "github.com/evmos/evmos/v16/crypto/hd"
 	"github.com/evmos/evmos/v16/encoding"
+	"github.com/imua-xyz/imuachain/app"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,7 +65,7 @@ func Test_QueryAllBalance(t *testing.T) {
 	assert.NoError(t, err)
 	fmt.Println("the from address is:", fromAddr.String())
 
-	fromAddr, err = sdktypes.AccAddressFromBech32("exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph")
+	fromAddr, err = sdktypes.AccAddressFromBech32("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
 	assert.NoError(t, err)
 	balances, err := appManager.QueryAllBalance(fromAddr)
 	assert.NoError(t, err)
@@ -84,9 +84,9 @@ func Test_FaucetSk(t *testing.T) {
 	fmt.Println("the key record address is:", keyRecordAddr.String())
 	faucetEvmAddr := crypto.PubkeyToAddress(appManager.FaucetSK.PublicKey)
 	fmt.Println("the faucet evm address is:", faucetEvmAddr.String())
-	faucetExoAddr := sdktypes.AccAddress(faucetEvmAddr.Bytes())
-	fmt.Println("the faucet exo address is:", faucetExoAddr.String())
-	assert.Equal(t, faucetExoAddr, keyRecordAddr)
+	faucetImAddr := sdktypes.AccAddress(faucetEvmAddr.Bytes())
+	fmt.Println("the faucet im address is:", faucetImAddr.String())
+	assert.Equal(t, faucetImAddr, keyRecordAddr)
 }
 
 func Test_ImportPrivKeyHex(t *testing.T) {
@@ -101,8 +101,8 @@ func Test_ImportPrivKeyHex(t *testing.T) {
 	assert.NoError(t, err)
 	evmAddr := crypto.PubkeyToAddress(sk.PublicKey)
 	fmt.Println("the evm address is:", evmAddr.String())
-	exoAddr := sdktypes.AccAddress(evmAddr.Bytes())
-	fmt.Println("the exo address is:", exoAddr.String())
+	imAddr := sdktypes.AccAddress(evmAddr.Bytes())
+	fmt.Println("the im address is:", imAddr.String())
 
 	err = KeyRing.ImportPrivKeyHex(keyName, "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE", ethsecp256k1.KeyType)
 	assert.NoError(t, err)
@@ -114,7 +114,7 @@ func Test_ImportPrivKeyHex(t *testing.T) {
 	keyRecordAddr, err := keyRecord.GetAddress()
 	assert.NoError(t, err)
 	fmt.Println("the key record address is:", keyRecordAddr.String())
-	assert.Equal(t, exoAddr.String(), keyRecordAddr.String())
+	assert.Equal(t, imAddr.String(), keyRecordAddr.String())
 }
 
 func Test_queryEvmTx(t *testing.T) {

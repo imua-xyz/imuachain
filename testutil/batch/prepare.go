@@ -6,21 +6,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	"github.com/ethereum/go-ethereum/common"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/assets"
-	avsprecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
-	"github.com/ExocoreNetwork/exocore/testutil/tx"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/imua-xyz/imuachain/precompiles/assets"
+	avsprecompile "github.com/imua-xyz/imuachain/precompiles/avs"
+	"github.com/imua-xyz/imuachain/testutil/tx"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	"golang.org/x/xerrors"
 )
 
@@ -90,33 +90,33 @@ func (m *Manager) LoadSequence(addr common.Address) (uint64, error) {
 
 func (m *Manager) FundAndCheckStakers() error {
 	logger.Info("start funding stakers")
-	err := FundingObjects(m, &Staker{}, m.config.StakerExoAmount)
+	err := FundingObjects(m, &Staker{}, m.config.StakerImuaAmount)
 	if err != nil {
 		return xerrors.Errorf("can't fund stakers,err:%w", err)
 	}
 	time.Sleep(time.Duration(m.config.BatchTxsCheckInterval) * time.Second)
-	err = CheckObjectsBalance(m, &Staker{}, m.config.StakerExoAmount)
+	err = CheckObjectsBalance(m, &Staker{}, m.config.StakerImuaAmount)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// Funding : send Exo token to the test objects, which can be used for the tx fee in the next tests.
-// all Exo token is sent from the faucet sk.
+// Funding : send IMUA token to the test objects, which can be used for the tx fee in the next tests.
+// all IMUA token is sent from the faucet sk.
 func (m *Manager) Funding() error {
 	logger.Info("start funding stakers")
-	err := FundingObjects(m, &Staker{}, m.config.StakerExoAmount)
+	err := FundingObjects(m, &Staker{}, m.config.StakerImuaAmount)
 	if err != nil {
 		return xerrors.Errorf("can't fund stakers,err:%w", err)
 	}
 	logger.Info("start funding operators")
-	err = FundingObjects(m, &Operator{}, m.config.OperatorExoAmount)
+	err = FundingObjects(m, &Operator{}, m.config.OperatorImuaAmount)
 	if err != nil {
 		return xerrors.Errorf("can't fund operators,err:%w", err)
 	}
 	logger.Info("start funding AVSs")
-	err = FundingObjects(m, &AVS{}, m.config.AVSExoAmount)
+	err = FundingObjects(m, &AVS{}, m.config.AVSImuaAmount)
 	if err != nil {
 		return xerrors.Errorf("can't fund AVSs,err:%w", err)
 	}
@@ -401,7 +401,7 @@ func (m *Manager) OperatorsOptInCheck(opFuncIfCheckFail func(operator *Operator,
 		avsOpFunc := func(_ uint, _ int64, avs *AVS) error {
 			if avs.IsDogfood() {
 				// skip the dogfood AVS and continue addressing the other AVSs
-				// todo: the test operators need to launch the Exocore node if they want to opt into the dogfood
+				// todo: the test operators need to launch the Imuachain node if they want to opt into the dogfood
 				return nil
 			}
 			// check if the operator has been registered.

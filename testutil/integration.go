@@ -9,8 +9,8 @@ import (
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/ExocoreNetwork/exocore/app"
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
+	"github.com/imua-xyz/imuachain/app"
 )
 
 // SubmitProposal delivers a submit proposal tx for a given gov content.
@@ -18,7 +18,7 @@ import (
 // event.
 func SubmitProposal(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	pk *ethsecp256k1.PrivKey,
 	content govv1beta1.Content,
 	eventNum int,
@@ -31,7 +31,7 @@ func SubmitProposal(
 	if err != nil {
 		return id, err
 	}
-	res, err := DeliverTx(ctx, appExocore, pk, nil, msg)
+	res, err := DeliverTx(ctx, appImuachain, pk, nil, msg)
 	if err != nil {
 		return id, err
 	}
@@ -47,7 +47,7 @@ func SubmitProposal(
 // Delegate delivers a delegate tx
 func Delegate(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	priv *ethsecp256k1.PrivKey,
 	delegateAmount sdk.Coin,
 	validator stakingtypes.Validator,
@@ -60,13 +60,13 @@ func Delegate(
 	}
 
 	delegateMsg := stakingtypes.NewMsgDelegate(accountAddress, val, delegateAmount)
-	return DeliverTx(ctx, appExocore, priv, nil, delegateMsg)
+	return DeliverTx(ctx, appImuachain, priv, nil, delegateMsg)
 }
 
 // Vote delivers a vote tx with the VoteOption "yes"
 func Vote(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	priv *ethsecp256k1.PrivKey,
 	proposalID uint64,
 	voteOption govv1beta1.VoteOption,
@@ -74,5 +74,5 @@ func Vote(
 	accountAddress := sdk.AccAddress(priv.PubKey().Address().Bytes())
 
 	voteMsg := govv1beta1.NewMsgVote(accountAddress, proposalID, voteOption)
-	return DeliverTx(ctx, appExocore, priv, nil, voteMsg)
+	return DeliverTx(ctx, appImuachain, priv, nil, voteMsg)
 }

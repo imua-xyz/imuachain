@@ -3,11 +3,11 @@ package keeper
 import (
 	"strings"
 
-	epochtypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 const InitialEpochNumber int64 = 1

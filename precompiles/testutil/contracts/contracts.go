@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"math/big"
 
-	exocoresapp "github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/precompiles/testutil"
-	exocoreutil "github.com/ExocoreNetwork/exocore/testutil"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	imuasapp "github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/precompiles/testutil"
+	imuautil "github.com/imua-xyz/imuachain/testutil"
 )
 
 // Call is a helper function to call any arbitrary smart contract.
-func Call(ctx sdk.Context, app *exocoresapp.ExocoreApp, args CallArgs) (res abci.ResponseDeliverTx, ethRes *evmtypes.MsgEthereumTxResponse, err error) {
+func Call(ctx sdk.Context, app *imuasapp.ImuachainApp, args CallArgs) (res abci.ResponseDeliverTx, ethRes *evmtypes.MsgEthereumTxResponse, err error) {
 	var (
 		nonce    uint64
 		gasLimit = args.GasLimit
@@ -78,7 +78,7 @@ func Call(ctx sdk.Context, app *exocoresapp.ExocoreApp, args CallArgs) (res abci
 	})
 	msg.From = addr.Hex()
 
-	res, err = exocoreutil.DeliverEthTx(app, args.PrivKey, msg)
+	res, err = imuautil.DeliverEthTx(app, args.PrivKey, msg)
 	if err != nil {
 		return abci.ResponseDeliverTx{}, nil, fmt.Errorf("error during deliver tx: %s", err)
 	}
@@ -96,7 +96,7 @@ func Call(ctx sdk.Context, app *exocoresapp.ExocoreApp, args CallArgs) (res abci
 
 // CallContractAndCheckLogs is a helper function to call any arbitrary smart contract and check that the logs
 // contain the expected events.
-func CallContractAndCheckLogs(ctx sdk.Context, app *exocoresapp.ExocoreApp, cArgs CallArgs, logCheckArgs testutil.LogCheckArgs) (abci.ResponseDeliverTx, *evmtypes.MsgEthereumTxResponse, error) {
+func CallContractAndCheckLogs(ctx sdk.Context, app *imuasapp.ImuachainApp, cArgs CallArgs, logCheckArgs testutil.LogCheckArgs) (abci.ResponseDeliverTx, *evmtypes.MsgEthereumTxResponse, error) {
 	res, ethRes, err := Call(ctx, app, cArgs)
 	if err != nil {
 		return abci.ResponseDeliverTx{}, nil, err

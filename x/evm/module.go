@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	evmtype "github.com/ExocoreNetwork/exocore/x/evm/types"
+	evmtype "github.com/imua-xyz/imuachain/x/evm/types"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -20,9 +20,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
-	"github.com/ExocoreNetwork/exocore/x/evm/client/cli"
-	"github.com/ExocoreNetwork/exocore/x/evm/keeper"
 	"github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/x/evm/client/cli"
+	"github.com/imua-xyz/imuachain/x/evm/keeper"
 )
 
 // consensusVersion defines the current x/evm module consensus version.

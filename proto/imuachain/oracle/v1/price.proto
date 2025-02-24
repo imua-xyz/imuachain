@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package imuachain.oracle.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// token price with timestamp fetched from source
+// {price:"12345",decimal:"2"}->price: 123.45 usdt
+message PriceTimeDetID {
+  // price at a specific point(timestamp of non-deterministic source, roundId of deteministic source)
+  string price = 1;
+  // decimal of the corresponding price
+  int32 decimal = 2;
+  // timestamp when the price corresponding to
+  string timestamp = 3;
+  // det_id is used for deterministic source to tell of which round from this source the price is corresponded
+  string det_id = 4 [(gogoproto.customname) = "DetID"];
+}
+
+// price with its corresponding source
+message PriceSource {
+  // source_id refers to id from Params.SourceList, where this price fetched from, 0 is reserved for custom usage
+  uint64 source_id = 1 [(gogoproto.customname) = "SourceID"];
+  // if source is deteministic like chainlink with roundID, set this value with which returned from source
+  // up to 3 values in case of the async of network, to give more time for oracle nodes(validators) get into consensus
+  // eg.with deterministic source, this array will contian 3 continuous values up to latest
+  // for non-deterministic source, it's a choice by v2 rules.
+  repeated PriceTimeDetID prices = 2;
+  // used for 0-sourceID-customDefinedSource
+  string desc = 3;
+}
+
+// price with its specified timestamp and roundid(if from deteministic source)
+message PriceTimeRound {
+  // price
+  string price = 1;
+  // decimal of the corresponding price
+  int32 decimal = 2;
+  // timestamp when the price is corresponded
+  string timestamp = 3;
+  // roundid of the price if the source is deteministic
+  uint64 round_id = 4 [(gogoproto.customname) = "RoundID"];
+}

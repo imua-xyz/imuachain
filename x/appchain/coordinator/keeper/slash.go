@@ -3,8 +3,8 @@ package keeper
 import (
 	"time"
 
-	types "github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
 )
 
 // TODO: this file should be in the x/avs keeper instead.

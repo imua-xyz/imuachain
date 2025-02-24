@@ -16,7 +16,7 @@ const (
 	AttributeKeyName               = "name"
 	AttributeKeyMetaInfo           = "meta_info"
 	AttributeKeyChainID            = "chain_id"
-	AttributeKeyExocoreChainIdx    = "exocore_chain_index"
+	AttributeKeyImuachainIndex     = "imuachain_index"
 	AttributeKeyFinalizationBlocks = "finalization_blocks"
 	AttributeKeyLZID               = "layer_zero_chain_id"
 	AttributeKeySigType            = "signature_type"

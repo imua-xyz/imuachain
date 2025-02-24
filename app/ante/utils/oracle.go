@@ -1,8 +1,8 @@
 package utils
 
 import (
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // TxSizeLimit limits max size of a create-price tx, this is calculated based on one nativeTokenbalance message of worst case(max size), which will need 576 bytes for balance update

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/stretchr/testify/suite"
 )
 

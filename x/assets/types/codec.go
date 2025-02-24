@@ -3,7 +3,6 @@ package types
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 )
 
@@ -23,9 +22,8 @@ var (
 
 const (
 	// Amino names
-	setExoCoreAddrName  = "exocore/MsgSetExoCoreAddr"
-	registerClientChain = "exocore/RegisterClientChain"
-	registerAsset       = "exocore/RegisterAsset"
+	registerClientChain = "imuagisterClientChain"
+	registerAsset       = "imuagisterAsset"
 )
 
 // NOTE: This is required for the GetSignBytes function
@@ -36,11 +34,6 @@ func init() {
 
 // RegisterInterfaces register implementations
 func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
-		&MsgSetExoCoreAddr{},
-	)
-
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 
@@ -48,7 +41,6 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 // concrete types on the provided LegacyAmino codec. These types are used for
 // Amino JSON serialization and EIP-712 compatibility.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgSetExoCoreAddr{}, setExoCoreAddrName, nil)
 	cdc.RegisterConcrete(&RegisterClientChainReq{}, registerClientChain, nil)
 	cdc.RegisterConcrete(&RegisterAssetReq{}, registerAsset, nil)
 }

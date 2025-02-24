@@ -9,12 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	sdkmath "cosmossdk.io/math"
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // oracleInfo: '[tokenName],[chainName],[tokenDecimal](,[interval],[contract](,[ChainDesc:{...}],[TokenDesc:{...}]))'
@@ -104,7 +104,7 @@ func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []interface{})
 		return nil, err
 	}
 	if addressLength < assetstypes.MinClientChainAddrLength {
-		return nil, fmt.Errorf(exocmn.ErrInvalidAddrLength, addressLength, assetstypes.MinClientChainAddrLength)
+		return nil, fmt.Errorf(imuacmn.ErrInvalidAddrLength, addressLength, assetstypes.MinClientChainAddrLength)
 	}
 
 	name, err := ta.GetRequiredString(2)
@@ -112,7 +112,7 @@ func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []interface{})
 		return nil, err
 	}
 	if len(name) > assetstypes.MaxChainTokenNameLength {
-		return nil, fmt.Errorf(exocmn.ErrInvalidNameLength, name, len(name), assetstypes.MaxChainTokenNameLength)
+		return nil, fmt.Errorf(imuacmn.ErrInvalidNameLength, name, len(name), assetstypes.MaxChainTokenNameLength)
 	}
 
 	metaInfo, err := ta.GetRequiredString(3)
@@ -120,7 +120,7 @@ func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []interface{})
 		return nil, err
 	}
 	if metaInfo == "" || len(metaInfo) > assetstypes.MaxChainTokenMetaInfoLength {
-		return nil, fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metaInfo, len(metaInfo), assetstypes.MaxChainTokenMetaInfoLength)
+		return nil, fmt.Errorf(imuacmn.ErrInvalidMetaInfoLength, metaInfo, len(metaInfo), assetstypes.MaxChainTokenMetaInfoLength)
 	}
 
 	signatureType, err := ta.GetString(4)
@@ -168,7 +168,7 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 		return nil, nil, err
 	}
 	if len(name) > assetstypes.MaxChainTokenNameLength {
-		return nil, nil, fmt.Errorf(exocmn.ErrInvalidNameLength, name, len(name), assetstypes.MaxChainTokenNameLength)
+		return nil, nil, fmt.Errorf(imuacmn.ErrInvalidNameLength, name, len(name), assetstypes.MaxChainTokenNameLength)
 	}
 
 	metaInfo, err := ta.GetRequiredString(4) // Must not be empty
@@ -176,7 +176,7 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 		return nil, nil, err
 	}
 	if len(metaInfo) > assetstypes.MaxChainTokenMetaInfoLength {
-		return nil, nil, fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metaInfo, len(metaInfo), assetstypes.MaxChainTokenMetaInfoLength)
+		return nil, nil, fmt.Errorf(imuacmn.ErrInvalidMetaInfoLength, metaInfo, len(metaInfo), assetstypes.MaxChainTokenMetaInfoLength)
 	}
 
 	oracleInfoStr, err := ta.GetRequiredString(5) // Must not be empty
@@ -220,7 +220,7 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 		oracleInfo.Chain.Name = parsed[1]
 		oracleInfo.Token.Decimal = parsed[2]
 	default:
-		return nil, nil, errors.New(exocmn.ErrInvalidOracleInfo)
+		return nil, nil, errors.New(imuacmn.ErrInvalidOracleInfo)
 	}
 
 	return asset, oracleInfo, nil
@@ -252,7 +252,7 @@ func (p Precompile) UpdateTokenFromInputs(ctx sdk.Context, args []interface{}) (
 		return 0, "", "", err
 	}
 	if len(metadata) > assetstypes.MaxChainTokenMetaInfoLength {
-		return 0, "", "", fmt.Errorf(exocmn.ErrInvalidMetaInfoLength, metadata, len(metadata), assetstypes.MaxChainTokenMetaInfoLength)
+		return 0, "", "", fmt.Errorf(imuacmn.ErrInvalidMetaInfoLength, metadata, len(metadata), assetstypes.MaxChainTokenMetaInfoLength)
 	}
 
 	return clientChainID, hexAssetAddr, metadata, nil

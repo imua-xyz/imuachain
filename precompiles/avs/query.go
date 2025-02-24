@@ -8,13 +8,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	avstype "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
+	avstype "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 const (
@@ -43,11 +43,11 @@ func (p Precompile) GetRegisteredPubKey(
 	}
 	operatorAddress, ok := args[0].(common.Address)
 	if !ok || operatorAddress == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddress)
 	}
 	avsAddress, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
 	}
 	var accAddress sdk.AccAddress = operatorAddress[:]
 	blsPubKeyInfo, err := p.avsKeeper.GetOperatorPubKey(ctx, accAddress.String(), avsAddress.String())
@@ -72,7 +72,7 @@ func (p Precompile) GetOptedInOperatorAccAddresses(
 
 	avsAddress, ok := args[0].(common.Address)
 	if !ok || avsAddress == (common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
 
 	list, err := p.avsKeeper.GetOperatorKeeper().GetOptedInOperatorListByAVS(ctx, strings.ToLower(avsAddress.String()))
@@ -103,7 +103,7 @@ func (p Precompile) GetAVSUSDValue(
 	}
 	avsAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
 	amount, err := p.avsKeeper.GetOperatorKeeper().GetAVSUSDValue(ctx, avsAddress.String())
 	if err != nil {
@@ -127,11 +127,11 @@ func (p Precompile) GetOperatorOptedUSDValue(
 	}
 	avsAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
 	operatorAddress, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", operatorAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "common.Address", operatorAddress)
 	}
 	var accAddress sdk.AccAddress = operatorAddress[:]
 	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddress.String()), accAddress.String())
@@ -155,7 +155,7 @@ func (p Precompile) GetAVSEpochIdentifier(
 	}
 	avsAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", avsAddress)
 	}
 
 	avs, err := p.avsKeeper.GetAVSInfo(ctx, avsAddress.String())
@@ -181,7 +181,7 @@ func (p Precompile) IsOperator(
 	}
 	operatorAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", operatorAddress)
 	}
 
 	param := operatorAddress[:]
@@ -201,11 +201,11 @@ func (p Precompile) GetTaskInfo(
 	}
 	taskAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
 	}
 	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", taskID)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "uint64", taskID)
 	}
 
 	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddress.String())
@@ -280,7 +280,7 @@ func (p Precompile) GetCurrentEpoch(
 	}
 	epochIdentifier, ok := args[0].(string)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "string", epochIdentifier)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "string", epochIdentifier)
 	}
 	epoch, flag := p.avsKeeper.GetEpochKeeper().GetEpochInfo(ctx, epochIdentifier)
 	if !flag {
@@ -300,11 +300,11 @@ func (p Precompile) GetOperatorTaskResponseList(
 	}
 	taskAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
 	}
 	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", taskID)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "uint64", taskID)
 	}
 
 	task, err := p.avsKeeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddress.String())
@@ -358,15 +358,15 @@ func (p Precompile) GetOperatorTaskResponse(
 	}
 	taskAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
 	}
 	operatorAddress, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", operatorAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "common.Address", operatorAddress)
 	}
 	taskID, ok := args[2].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "uint64", taskID)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "uint64", taskID)
 	}
 	var accAddress sdk.AccAddress = operatorAddress[:]
 
@@ -398,11 +398,11 @@ func (p Precompile) GetChallengeInfo(
 	}
 	taskAddress, ok := args[0].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", taskAddress)
 	}
 	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", taskID)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "uint64", taskID)
 	}
 
 	addr, err := p.avsKeeper.GetTaskChallengedInfo(ctx, taskAddress.String(), taskID)

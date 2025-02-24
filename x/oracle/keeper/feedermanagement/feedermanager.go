@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	sdkerrors "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper/common"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func NewFeederManager(k common.KeeperOracle) *FeederManager {
@@ -275,15 +275,17 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 			if !ok {
 				logger.Info("commit round with price from previous", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
 				// #nosec G115  // tokenID is index of slice
-				f.k.GrowRoundID(ctx, uint64(r.tokenID))
+				f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
 			} else {
 				if f.cs.IsRuleV1(r.feederID) {
 					priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
 					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
 
 					// #nosec G115  // tokenID is index of slice
-					f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit, finalPrice.DetID)
-					// f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit)
+					if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit, finalPrice.DetID); !updated {
+						// failed to append price due to roundID gap, and this is a 'should-not-happen' case
+						f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
+					}
 
 					fstr := strconv.FormatInt(feederID, 10)
 					successFeederIDs = append(successFeederIDs, fstr) // there's no valid price for any round yet
@@ -756,7 +758,7 @@ func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) 
 func (f *FeederManager) initCaches(ctx sdk.Context) {
 	f.cs = newCaches()
 	params := f.k.GetParams(ctx)
-	validatorSet := f.k.GetAllExocoreValidators(ctx)
+	validatorSet := f.k.GetAllImuachainValidators(ctx)
 	validatorPowers := make(map[string]*big.Int)
 	for _, v := range validatorSet {
 		validatorPowers[sdk.ConsAddress(v.Address).String()] = big.NewInt(v.Power)
@@ -782,7 +784,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	params := replayRecentParamsList[0].Params
 	replayRecentParamsList = replayRecentParamsList[1:]
 
-	validatorSet := f.k.GetAllExocoreValidators(ctx)
+	validatorSet := f.k.GetAllImuachainValidators(ctx)
 	validatorPowers := make(map[string]*big.Int)
 	for _, v := range validatorSet {
 		validatorPowers[sdk.ConsAddress(v.Address).String()] = big.NewInt(v.Power)

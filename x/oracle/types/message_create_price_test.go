@@ -3,8 +3,8 @@ package types
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/imua-xyz/imuachain/testutil/sample"
 
 	// sdkerrors "cosmossdk.io/errors""
 	"github.com/stretchr/testify/require"

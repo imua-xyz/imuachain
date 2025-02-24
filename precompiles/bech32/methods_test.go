@@ -3,12 +3,12 @@ package bech32_test
 import (
 	"fmt"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/bech32"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	"github.com/imua-xyz/imuachain/precompiles/bech32"
 
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 )
 
 func (s *Bech32PrecompileSuite) TestHexToBech32() {

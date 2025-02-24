@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ExocoreNetwork/exocore/utils"
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -39,9 +39,10 @@ const (
 	prefixOperatorAssetInfo
 	prefixOperatorOptedInMiddlewareAssetInfo
 
-	prefixRestakerExocoreAddr
-
-	prefixRestakerExocoreAddrReverse
+	// unused prefixes for backward compatibility
+	// originally: KeyPrefixReStakerExoCoreAddr and Reverse
+	_
+	_
 
 	prefixParams
 )
@@ -64,14 +65,6 @@ var (
 	// KeyPrefixOperatorAssetInfos key->value: operatorAddr+'/'+AssetID-> OperatorAssetInfo
 	// or operatorAddr->mapping(AssetID->OperatorAssetInfo) ?
 	KeyPrefixOperatorAssetInfos = []byte{prefixOperatorAssetInfo}
-
-	// KeyPrefixReStakerExoCoreAddr restakerID = clientChainAddr+'_'+ExoCoreChainIndex
-	// KeyPrefixReStakerExoCoreAddr key-value: restakerID->exoCoreAddr
-	KeyPrefixReStakerExoCoreAddr = []byte{prefixRestakerExocoreAddr}
-	// KeyPrefixReStakerExoCoreAddrReverse k->v: exocoreAddress ->
-	// map[clientChainIndex]clientChainAddress
-	// used to retrieve all user assets based on their exoCore address
-	KeyPrefixReStakerExoCoreAddrReverse = []byte{prefixRestakerExocoreAddrReverse}
 
 	// KeyPrefixParams This is a key prefix for module parameter
 	KeyPrefixParams = []byte{prefixParams}

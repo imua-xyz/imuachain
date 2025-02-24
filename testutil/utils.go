@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"time"
 
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
-	"github.com/ExocoreNetwork/exocore/cmd/config"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	"github.com/imua-xyz/imuachain/cmd/config"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
 	"cosmossdk.io/math"
 
@@ -19,18 +19,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/exp/rand"
 
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
-	exocoreapp "github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/utils"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	distributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	imuaapp "github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/utils"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	distributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	dogfoodtypes "github.com/ExocoreNetwork/exocore/x/dogfood/types"
-	operatorkeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -44,13 +40,17 @@ import (
 	evmostypes "github.com/evmos/evmos/v16/types"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	operatorkeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type BaseTestSuite struct {
 	suite.Suite
 
 	Ctx        sdk.Context
-	App        *exocoreapp.ExocoreApp
+	App        *imuaapp.ImuachainApp
 	Address    common.Address
 	AccAddress sdk.AccAddress
 	StakerAddr string
@@ -90,12 +90,12 @@ func (suite *BaseTestSuite) SetupTest() {
 	suite.DoSetupTest()
 }
 
-// SetupWithGenesisValSet initializes a new ExocoreApp with a validator set and genesis accounts
+// SetupWithGenesisValSet initializes a new ImuachainApp with a validator set and genesis accounts
 // that also act as delegators.
 func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) {
 	pruneOpts := pruningtypes.NewPruningOptionsFromString(pruningtypes.PruningOptionDefault)
-	appI, genesisState := exocoreapp.SetupTestingApp(utils.DefaultChainID, &pruneOpts, false)()
-	app, ok := appI.(*exocoreapp.ExocoreApp)
+	appI, genesisState := imuaapp.SetupTestingApp(utils.DefaultChainID, &pruneOpts, false)()
+	app, ok := appI.(*imuaapp.ImuachainApp)
 	suite.Require().True(ok)
 
 	// set genesis accounts
@@ -441,7 +441,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		Time:            suite.InitTime,
 		ChainId:         utils.DefaultChainID,
 		Validators:      []abci.ValidatorUpdate{},
-		ConsensusParams: exocoreapp.DefaultConsensusParams,
+		ConsensusParams: imuaapp.DefaultConsensusParams,
 		AppStateBytes:   stateBytes,
 	})
 	// committing the chain now is not required. doing so will skip the first block.
@@ -497,7 +497,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(utils.BaseDenom, amount)),
 	}
-	// Exocore modules genesis
+	// Imuachain modules genesis
 	// x/assets
 	suite.ClientChains = []assetstypes.ClientChainInfo{
 		{
@@ -520,7 +520,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 		},
 	}
 
-	// Initialize an ExocoreApp for test
+	// Initialize an ImuachainApp for test
 	suite.SetupWithGenesisValSet(
 		[]authtypes.GenesisAccount{acc}, append(suite.Balances, balance)...,
 	)

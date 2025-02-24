@@ -1,9 +1,9 @@
 package testutil
 
 import (
-	"github.com/ExocoreNetwork/exocore/app"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/evmos/evmos/v16/encoding"
+	"github.com/imua-xyz/imuachain/app"
 )
 
 // NextFn is a no-op function that returns the context and no error in order to mock

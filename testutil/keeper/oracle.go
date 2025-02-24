@@ -4,9 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/cmd/config"
-	"github.com/ExocoreNetwork/exocore/x/oracle/keeper"
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	tmdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -18,11 +15,14 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/imua-xyz/imuachain/cmd/config"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	dogfoodkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	"github.com/stretchr/testify/require"
 )
 

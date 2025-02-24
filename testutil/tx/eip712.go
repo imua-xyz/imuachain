@@ -13,11 +13,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 
-	"github.com/ExocoreNetwork/exocore/app"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	cryptocodec "github.com/evmos/evmos/v16/crypto/codec"
 	"github.com/evmos/evmos/v16/ethereum/eip712"
 	"github.com/evmos/evmos/v16/types"
+	"github.com/imua-xyz/imuachain/app"
 )
 
 type EIP712TxArgs struct {
@@ -50,12 +50,12 @@ type legacyWeb3ExtensionArgs struct {
 // It returns the signed transaction and an error
 func CreateEIP712CosmosTx(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	args EIP712TxArgs,
 ) (sdk.Tx, error) {
 	builder, err := PrepareEIP712CosmosTx(
 		ctx,
-		appExocore,
+		appImuachain,
 		args,
 	)
 	return builder.GetTx(), err
@@ -66,7 +66,7 @@ func CreateEIP712CosmosTx(
 // It returns the tx builder with the signed transaction and an error
 func PrepareEIP712CosmosTx(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	args EIP712TxArgs,
 ) (client.TxBuilder, error) {
 	txArgs := args.CosmosTxArgs
@@ -78,9 +78,9 @@ func PrepareEIP712CosmosTx(
 	chainIDNum := pc.Uint64()
 
 	from := sdk.AccAddress(txArgs.Priv.PubKey().Address().Bytes())
-	accNumber := appExocore.AccountKeeper.GetAccount(ctx, from).GetAccountNumber()
+	accNumber := appImuachain.AccountKeeper.GetAccount(ctx, from).GetAccountNumber()
 
-	nonce, err := appExocore.AccountKeeper.GetSequence(ctx, from)
+	nonce, err := appImuachain.AccountKeeper.GetSequence(ctx, from)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func PrepareEIP712CosmosTx(
 
 	return signCosmosEIP712Tx(
 		ctx,
-		appExocore,
+		appImuachain,
 		args,
 		builder,
 		chainIDNum,
@@ -129,7 +129,7 @@ func PrepareEIP712CosmosTx(
 // the provided private key and the typed data
 func signCosmosEIP712Tx(
 	ctx sdk.Context,
-	appExocore *app.ExocoreApp,
+	appImuachain *app.ImuachainApp,
 	args EIP712TxArgs,
 	builder authtx.ExtensionOptionsTxBuilder,
 	chainID uint64,
@@ -138,7 +138,7 @@ func signCosmosEIP712Tx(
 	priv := args.CosmosTxArgs.Priv
 
 	from := sdk.AccAddress(priv.PubKey().Address().Bytes())
-	nonce, err := appExocore.AccountKeeper.GetSequence(ctx, from)
+	nonce, err := appImuachain.AccountKeeper.GetSequence(ctx, from)
 	if err != nil {
 		return nil, err
 	}

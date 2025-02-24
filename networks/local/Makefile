@@ -1,4 +1,4 @@
 all:
-	docker build --no-cache --tag exocore/node ../.. -f exocore/Dockerfile
+	docker build --no-cache --tag imua/node ../.. -f imuachain/Dockerfile
 
 .PHONY: all

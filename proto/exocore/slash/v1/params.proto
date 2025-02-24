@@ -1,7 +1,0 @@
-syntax = "proto3";
-package exocore.slash.v1;
-
-option go_package = "github.com/ExocoreNetwork/exocore/x/slash/types";
-
-// Params defines the parameters for the module.
-message Params {}

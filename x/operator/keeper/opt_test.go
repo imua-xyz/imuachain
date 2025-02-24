@@ -4,17 +4,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 
 	sdkmath "cosmossdk.io/math"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type StateForCheck struct {
@@ -40,12 +41,9 @@ func (suite *OperatorTestSuite) registerOperator(operator string) {
 }
 
 func (suite *OperatorTestSuite) prepareOperator() {
-	operator := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
-	opAccAddr, err := sdk.AccAddressFromBech32(operator)
-	suite.operatorAddr = opAccAddr
-	suite.NoError(err)
+	suite.operatorAddr = sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
 	// register operator
-	suite.registerOperator(operator)
+	suite.registerOperator(suite.operatorAddr.String())
 }
 
 func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Address, amount sdkmath.Int) {

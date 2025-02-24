@@ -43,7 +43,7 @@ struct StakerBalance {
     uint256 totalDeposited;
 }
 
-/// @author Exocore Team
+/// @author Imuachain Team
 /// @title Assets Precompile Contract
 /// @dev The interface through which solidity contracts will interact with assets module
 /// @custom:address 0x0000000000000000000000000000000000000804
@@ -54,7 +54,7 @@ interface IAssets {
     /// that will change the state in assets module
     /// Note that this address cannot be a module account.
     /// @param clientChainID is the layerZero chainID if it is supported.
-    //  It might be allocated by Exocore when the client chain isn't supported
+    //  It might be allocated by Imuachain when the client chain isn't supported
     //  by layerZero
     /// @param assetsAddress The client chain asset address
     /// @param stakerAddress The staker address
@@ -70,7 +70,7 @@ interface IAssets {
     /// that will change the state in assets module
     /// Note that this address cannot be a module account.
     /// @param clientChainID is the layerZero chainID if it is supported.
-    //  It might be allocated by Exocore when the client chain isn't supported
+    //  It might be allocated by Imuachain when the client chain isn't supported
     //  by layerZero
     /// @param validatorID The validator's identifier (index or pubkey)
     /// @param stakerAddress The staker address
@@ -85,7 +85,7 @@ interface IAssets {
     /// @dev withdraw LST To the staker, that will change the state in assets module
     /// Note that this address cannot be a module account.
     /// @param clientChainID is the layerZero chainID if it is supported.
-    //  It might be allocated by Exocore when the client chain isn't supported
+    //  It might be allocated by Imuachain when the client chain isn't supported
     //  by layerZero
     /// @param assetsAddress The client chain asset Address
     /// @param withdrawAddress The withdraw address
@@ -100,7 +100,7 @@ interface IAssets {
     /// @dev withdraw NST To the staker, that will change the state in assets module
     /// Note that this address cannot be a module account.
     /// @param clientChainID is the layerZero chainID if it is supported.
-    //  It might be allocated by Exocore when the client chain isn't supported
+    //  It might be allocated by Imuachain when the client chain isn't supported
     //  by layerZero
     /// @param validatorID The validator's identifier (index or pubkey)
     /// @param withdrawAddress The withdraw address
@@ -115,7 +115,7 @@ interface IAssets {
     /// @dev registers or updates a client chain to allow deposits / staking, etc.
     /// from that chain.
     /// @param clientChainID is the layerZero chainID if it is supported.
-    //  It might be allocated by Exocore when the client chain isn't supported
+    //  It might be allocated by Imuachain when the client chain isn't supported
     //  by layerZero
     function registerOrUpdateClientChain(
         uint32 clientChainID,

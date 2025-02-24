@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"sort"
 
-	assetsprecompile "github.com/ExocoreNetwork/exocore/precompiles/assets"
-	avsprecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
-	bechprecompile "github.com/ExocoreNetwork/exocore/precompiles/bech32"
-	blsprecompile "github.com/ExocoreNetwork/exocore/precompiles/bls"
-	delegationprecompile "github.com/ExocoreNetwork/exocore/precompiles/delegation"
-	rewardprecompile "github.com/ExocoreNetwork/exocore/precompiles/reward"
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	avskeeper "github.com/ExocoreNetwork/exocore/x/avs/keeper"
-	delegationkeeper "github.com/ExocoreNetwork/exocore/x/delegation/keeper"
-	rewardkeeper "github.com/ExocoreNetwork/exocore/x/reward/keeper"
-	exoslashkeeper "github.com/ExocoreNetwork/exocore/x/slash/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v7/modules/core/04-channel/keeper"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	transferkeeper "github.com/evmos/evmos/v16/x/ibc/transfer/keeper"
+	assetsprecompile "github.com/imua-xyz/imuachain/precompiles/assets"
+	avsprecompile "github.com/imua-xyz/imuachain/precompiles/avs"
+	bechprecompile "github.com/imua-xyz/imuachain/precompiles/bech32"
+	blsprecompile "github.com/imua-xyz/imuachain/precompiles/bls"
+	delegationprecompile "github.com/imua-xyz/imuachain/precompiles/delegation"
+	rewardprecompile "github.com/imua-xyz/imuachain/precompiles/reward"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	avskeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	imuaslashkeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
+	rewardkeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
 	"golang.org/x/exp/maps"
 )
 
@@ -37,7 +37,7 @@ func AvailablePrecompiles(
 	_ channelkeeper.Keeper,
 	delegationKeeper delegationkeeper.Keeper,
 	assetskeeper assetskeeper.Keeper,
-	_ exoslashkeeper.Keeper,
+	_ imuaslashkeeper.Keeper,
 	rewardKeeper rewardkeeper.Keeper,
 	avsManagerKeeper avskeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {

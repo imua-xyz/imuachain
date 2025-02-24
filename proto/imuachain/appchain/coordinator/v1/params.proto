@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package imuachain.appchain.coordinator.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+import "ibc/lightclients/tendermint/v1/tendermint.proto";
+import "imuachain/epochs/v1/epochs.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/appchain/coordinator/types";
+
+// Params is the parameters for the appchain coordinator module.
+message Params {
+  // template_client is the IBC template client.
+  ibc.lightclients.tendermint.v1.ClientState template_client = 1;
+  // trusting_period_fraction is the multiplier applied on the subscriber's
+  // unbonding duration to determine the IBC trusting period.
+  string trusting_period_fraction = 2;
+  // ibc_timeout_period is the timeout period for IBC packets. While our
+  // system is largely created with epochs as a unit of time (and not
+  // standard durations), this is an exception since it is used directly
+  // by the IBC codebase.
+  google.protobuf.Duration ibc_timeout_period = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.customname) = "IBCTimeoutPeriod"
+  ];
+  // init_timeout_period is the period within which the subscriber chain
+  // must make a connection with the coordinator, after being spawned.
+  imuachain.epochs.v1.Epoch init_timeout_period = 4 [(gogoproto.nullable) = false];
+  // vsc_timeout_period is the period within which the subscriber chain
+  // must respond to a VSC request, after it is sent.
+  imuachain.epochs.v1.Epoch vsc_timeout_period = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "VSCTimeoutPeriod"
+  ];
+}

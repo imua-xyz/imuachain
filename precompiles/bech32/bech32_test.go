@@ -3,15 +3,15 @@ package bech32_test
 import (
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/cmd/config"
-	"github.com/ExocoreNetwork/exocore/precompiles/bech32"
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/cmd/config"
+	"github.com/imua-xyz/imuachain/precompiles/bech32"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 )
 
 // TestRun tests the precompile's Run method.
@@ -61,7 +61,7 @@ func (s *Bech32PrecompileSuite) TestRun() {
 			"empty bech32 prefix provided, expected a non-empty string",
 		},
 		{
-			"pass - hex to bech32 account (exo)",
+			"pass - hex to bech32 account (im)",
 			func() *vm.Contract {
 				input, err := s.precompile.Pack(
 					bech32.MethodHexToBech32, inputAddr, config.Bech32Prefix,
@@ -82,7 +82,7 @@ func (s *Bech32PrecompileSuite) TestRun() {
 			"",
 		},
 		{
-			"pass - hex to bech32 validator operator (exovaloper)",
+			"pass - hex to bech32 validator operator (imvaloper)",
 			func() *vm.Contract {
 				input, err := s.precompile.Pack(
 					bech32.MethodHexToBech32, inputAddr, config.Bech32PrefixValAddr,
@@ -103,7 +103,7 @@ func (s *Bech32PrecompileSuite) TestRun() {
 			"",
 		},
 		{
-			"pass - hex to bech32 consensus address (exovalcons)",
+			"pass - hex to bech32 consensus address (imvalcons)",
 			func() *vm.Contract {
 				input, err := s.precompile.Pack(
 					bech32.MethodHexToBech32, inputAddr, config.Bech32PrefixConsAddr,

@@ -5,19 +5,19 @@ import (
 	"strings"
 	"time"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	sdkmath "cosmossdk.io/math"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type StateForCheck struct {
@@ -89,7 +89,7 @@ func (suite *AVSManagerPrecompileSuite) prepare() {
 	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	depositAmount := sdkmath.NewInt(100)
 	delegationAmount := sdkmath.NewInt(50)
-	suite.prepareOperator("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	suite.prepareOperator("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
 	suite.prepareDeposit(usdtAddress, depositAmount)
 	suite.prepareDelegation(true, usdtAddress, delegationAmount)
 }
@@ -97,8 +97,8 @@ func (suite *AVSManagerPrecompileSuite) prepare() {
 func (suite *AVSManagerPrecompileSuite) prepareAvs(assetIDs []string, task string) {
 	avsOwnerAddresses := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
-		"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr",
-		"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2",
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 	}
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		Action:            avstypes.RegisterAction,

@@ -1,8 +1,8 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
 )
 
 // SetParams sets the appchain coordinator parameters.

@@ -6,16 +6,12 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 
 	sdkmath "cosmossdk.io/math"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/precompiles/avs"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -24,6 +20,10 @@ import (
 	utiltx "github.com/evmos/evmos/v16/testutil/tx"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/precompiles/avs"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *AVSManagerPrecompileSuite) TestIsTransaction() {
@@ -96,7 +96,7 @@ func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
-	exoWhiteListAddresses := []common.Address{
+	imWhiteListAddresses := []common.Address{
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
@@ -128,7 +128,7 @@ func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
 						SlashAddress:        common.HexToAddress(slashAddress),
 						RewardAddress:       common.HexToAddress(rewardAddress),
 						AvsOwnerAddresses:   avsOwnerAddresses,
-						WhitelistAddresses:  exoWhiteListAddresses,
+						WhitelistAddresses:  imWhiteListAddresses,
 						AssetIDs:            assetIDs,
 						AvsUnbondingPeriod:  avsUnbondingPeriod,
 						MinSelfDelegation:   minSelfDelegation,
@@ -312,7 +312,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
-	exoWhiteListAddresses := []common.Address{
+	imWhiteListAddresses := []common.Address{
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
@@ -344,7 +344,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 						SlashAddress:        common.HexToAddress(slashAddress),
 						RewardAddress:       common.HexToAddress(rewardAddress),
 						AvsOwnerAddresses:   avsOwnerAddresses,
-						WhitelistAddresses:  exoWhiteListAddresses,
+						WhitelistAddresses:  imWhiteListAddresses,
 						AssetIDs:            assetIDs,
 						AvsUnbondingPeriod:  avsUnbondingPeriod,
 						MinSelfDelegation:   minSelfDelegation,

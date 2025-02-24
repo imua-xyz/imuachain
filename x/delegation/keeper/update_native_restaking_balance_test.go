@@ -2,8 +2,9 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
-	assettypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	assettypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 func (suite *DelegationTestSuite) TestUpdateNSTBalance() {
@@ -17,15 +18,14 @@ func (suite *DelegationTestSuite) TestUpdateNSTBalance() {
 	delegateAmountToDefaultOperator := sdkmath.NewInt(20)
 	undelegateAmountFromDefaultOperator := sdkmath.NewInt(10)
 	delegateAmountToAnotherOperator := sdkmath.NewInt(20)
-	anotherOperatorAddr, err := sdk.AccAddressFromBech32("exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph")
-	suite.NoError(err)
+	anotherOperatorAddr := sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
 
 	suite.basicPrepare()
 	suite.prepareDeposit(depositAmount)
 
 	delegationEvent := suite.prepareDelegation(delegateAmountToDefaultOperator, suite.opAccAddr)
 	delegationEvent.OpAmount = undelegateAmountFromDefaultOperator
-	err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, delegationEvent)
+	err := suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, delegationEvent)
 	suite.NoError(err)
 	suite.prepareDelegation(delegateAmountToAnotherOperator, anotherOperatorAddr)
 

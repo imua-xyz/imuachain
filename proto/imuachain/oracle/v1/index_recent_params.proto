@@ -1,0 +1,10 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// index for the cached recent params
+message IndexRecentParams {
+  // index list
+  repeated uint64 index = 1;
+}

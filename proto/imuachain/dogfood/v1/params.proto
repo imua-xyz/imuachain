@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package imuachain.dogfood.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/dogfood/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+  // EpochsUntilUnbonded is the number of epochs after which an unbonding
+  // is released. Note that it starts from the beginning of the next epoch
+  // in which the unbonding request was received. At that point, the vote
+  // power is reduced by the amount of the unbonding operation.
+  uint32 epochs_until_unbonded = 1;
+  // EpochIdentifier is the identifier of the epoch (week, hour, day).
+  string epoch_identifier = 2;
+  // MaxValidators is the maximum number of validators.
+  uint32 max_validators = 3;
+  // HistoricalEntries is the number of historical entries to persist.
+  uint32 historical_entries = 4;
+  // AssetIDs is the ids of the assets which will be accepted by the module.
+  // It must be within the list of assets supported by the restaking module.
+  // The typical format of these IDs is
+  // lower(assetAddress) + _ + hex(clientChainLzID)
+  repeated string asset_ids = 5 [(gogoproto.customname) = "AssetIDs"];
+  // MinSelfDelegation is the minimum self delegation in USD required to be a validator.
+  string min_self_delegation = 6 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}

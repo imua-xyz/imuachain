@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 func (suite *KeeperTestSuite) TestEpochInfoAddition() {

@@ -7,15 +7,15 @@ import (
 	"sort"
 	"time"
 
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
 	sdkmath "cosmossdk.io/math"
 
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 var (

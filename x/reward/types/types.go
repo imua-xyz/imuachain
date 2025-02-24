@@ -21,7 +21,7 @@ func (m Pool) ValidateBasic() error {
 			return fmt.Errorf("duplicate validator %s in pool %s", validatorAddr, m.Name)
 		}
 
-		// validator, err := utils.GetExocoreAddressFromBech32(reward.Validator)
+		// validator, err := utils.GetAccountAddressFromBech32(reward.Validator)
 		// if err != nil {
 		//	 return err
 		// }

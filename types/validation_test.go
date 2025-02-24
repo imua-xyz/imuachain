@@ -3,8 +3,8 @@ package types
 import (
 	"testing"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ethereum/go-ethereum/common"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/stretchr/testify/require"
 )
 

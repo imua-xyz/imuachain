@@ -1,6 +1,6 @@
-# Exocore Contributor Guidelines
+# Imuachain Contributor Guidelines
 
-- [Exocore Contributor Guidelines](#exocore-contributor-guidelines)
+- [Imuachain Contributor Guidelines](#imuachain-contributor-guidelines)
     - [General Procedure](#general-procedure)
     - [Architecture Decision Records (ADR)](#architecture-decision-records-adr)
     - [Forking](#forking)
@@ -19,21 +19,21 @@
 
 ## General Procedure
 
-Thank you for considering making contributions to Exocore and related repositories!
+Thank you for considering making contributions to Imuachain and related repositories!
 
-Exocore uses [Tendermint’s coding repo](https://github.com/tendermint/coding)
+Imuachain uses [Tendermint’s coding repo](https://github.com/tendermint/coding)
 for overall information on repository workflow and standards.
 
-Contributing to this repo can mean many things such as participating in discussion or proposing code changes.
+Contributing to this repo can mean many things, such as participating in discussion or proposing code changes.
 To ensure a smooth workflow for all contributors,
 the following general procedure for contributing has been established:
 
-1. Either [open](https://github.com/ExocoreNetwork/exocore/issues/new/choose)
-   or [find](https://github.com/ExocoreNetwork/exocore/issues) an issue you have identified and would like to contribute
+1. Either [open](https://github.com/imua-xyz/imuachain/issues/new/choose)
+   or [find](https://github.com/imua-xyz/imuachain/issues) an issue you have identified and would like to contribute
    to resolving.
 2. Participate in thoughtful discussion on that issue.
 3. If you would like to contribute:
-    1. If the issue is a proposal, ensure that the proposal has been accepted by the Exocore team.
+    1. If the issue is a proposal, ensure that the proposal has been accepted by the Imuachain team.
     2. Ensure that nobody else has already begun working on the same issue. If someone already has, please make sure to
        contact the individual to collaborate.
     3. If nobody has been assigned the issue and you would like to work on it,
@@ -43,10 +43,10 @@ the following general procedure for contributing has been established:
        However, if you are eager and do not get a prompt response, feel free to dive on in!
     4. Follow standard Github best practices:
         1. Fork the repo
-        2. Branch from the HEAD of `development`(For core developers working within the Exocore repo, to ensure a
+        2. Branch from the HEAD of `develop` (For core developers working within the Imuachain repo, to ensure a
            clear ownership of branches, branches must be named with the convention `{moniker}/{issue#}-branch-name`).
         3. Make commits
-        4. Submit a PR to `development`
+        4. Submit a PR to `develop`
     5. Be sure to submit the PR in `Draft` mode.
        Submit your PR early, even if it's incomplete as this indicates to the community you're working on something
        and allows them to provide comments early in the development process.
@@ -56,7 +56,7 @@ the following general procedure for contributing has been established:
     8. Please make sure to run `make format` before every commit -
        the easiest way to do this is having your editor run it for you upon saving a file.
        Additionally, please ensure that your code is lint compliant by running `make lint`.
-       There are CI tests built into the Exocore repository
+       There are CI tests built into the Imuachain repository
        and all PR’s will require that these tests pass
        before they can be merged.
 
@@ -68,7 +68,7 @@ that PR runs a high likelihood of being rejected.
 
 ## Architecture Decision Records (ADR)
 
-When proposing an architecture decision for Exocore,
+When proposing an architecture decision for Imuachain,
 please create an ADR
 so further discussions can be made.
 We are following this process so all involved parties are in agreement
@@ -79,21 +79,21 @@ refer to [Tendermint ADRs](https://github.com/tendermint/tendermint/tree/master/
 ## Forking
 
 Please note that Go requires code to live under absolute paths, which complicates forking.
-While my fork lives at `https://github.com/ExocoreNetwork/exocore`,
-the code should never exist at `$GOPATH/src/github.com/ExocoreNetwork/exocore`.
-Instead, we use `git remote` to add the fork as a new remote for the original repo,`$GOPATH/src/github.com/ExocoreNetwork/exocore`,
+While my fork lives at `https://github.com/imua-xyz/imuachain`,
+the code should never exist at `$GOPATH/src/github.com/imua-xyz/imuachain`.
+Instead, we use `git remote` to add the fork as a new remote for the original repo, `$GOPATH/src/github.com/imua-xyz/imuachain`,
 and do all the work there.
 
 For instance, to create a fork and work on a branch of it, you would:
 
 1. Create the fork on github, using the fork button.
-2. Go to the original repo checked out locally. (i.e. `$GOPATH/src/github.com/ExocoreNetwork/exocore`)
+2. Go to the original repo checked out locally. (i.e. `$GOPATH/src/github.com/imua-xyz/imuachain`)
 3. `git remote rename origin upstream`
-4. `git remote add origin git@github.com:$USERNAME/Exocore.git`
+4. `git remote add origin git@github.com:$USERNAME/Imuachain.git`
 
-Now `origin` refers to my fork and `upstream` refers to the Exocore version.
+Now `origin` refers to my fork and `upstream` refers to the Imuachain version.
 So I can `git push -u origin master` to update my fork,
-and make pull requests to Exocore from there.
+and make pull requests to Imuachain from there.
 Of course, replace `$USERNAME` with your git handle.
 
 To pull in updates from the origin repo, run:
@@ -124,7 +124,7 @@ should become this after rebase:
 More about rebase [here](https://git-scm.com/docs/git-rebase) and
 [here](https://www.atlassian.com/git/tutorials/rewriting-history/git-rebase#:~:text=What%20is%20git%20rebase%3F,of%20a%20feature%20branching%20workflow.)
 
-Please **NO DOT** make Pull Requests from `development`.
+Please **NO DOT** make Pull Requests from `develop`.
 
 ## Dependencies
 
@@ -139,7 +139,7 @@ on `go mod tidy -v`.
 ## Protobuf
 
 We use [Protocol Buffers](https://developers.google.com/protocol-buffers) along
-with [gogoproto](https://github.com/cosmos/protobuf) to generate code for use in Exocore.
+with [gogoproto](https://github.com/cosmos/protobuf) to generate code for use in Imuachain.
 
 For deterministic behavior around Protobuf tooling, everything is containerized using Docker. Make sure to have Docker
 installed on your machine, or head to [Docker's website](https://docs.docker.com/get-docker/) to install it.
@@ -171,21 +171,21 @@ For example, in vscode your `.vscode/settings.json` should look like:
 
 ## Development Procedure
 
-1. The latest state of development is on `development`.
-2. `development` must never
+1. The latest state of development is on `develop`.
+2. `develop` must never
    fail `make lint, make test, make test-race, make test-rpc, make test-import`
-3. No `--force` onto `development` (except when reverting a broken commit, which should seldom happen).
-4. Create your feature branch from `development` either on `github.com/ExocoreNetwork/exocore`, or your fork (
+3. No `--force` onto `develop` (except when reverting a broken commit, which should seldom happen).
+4. Create your feature branch from `develop` either on `github.com/imua-xyz/imuachain`, or your fork (
    using `git remote add origin`).
-5. Before submitting a pull request, begin `git rebase` on top of `development`.
+5. Before submitting a pull request, begin `git rebase` on top of `develop`.
 
 ## Testing
 
-Exocore uses [GitHub Actions](https://github.com/features/actions) for automated testing.
+Imuachain uses [GitHub Actions](https://github.com/features/actions) for automated testing.
 
 ## Updating Documentation
 
-If you open a PR on the Exocore repo, it is mandatory to update the relevant documentation in `/docs`. Please refer to
+If you open a PR on the Imuachain repo, it is mandatory to update the relevant documentation in `/docs`. Please refer to
 the docs subdirectory and make changes accordingly. Prior to approval, the Code owners/approvers may request some
 updates to specific docs.
 
@@ -195,7 +195,7 @@ User-facing repos should adhere to the [trunk based development branching model]
 
 Libraries need not follow the model strictly, but would be wise to.
 
-Exocore utilizes [semantic versioning](https://semver.org/).
+Imuachain utilizes [semantic versioning](https://semver.org/).
 
 ### Commit messages
 
@@ -208,9 +208,9 @@ For example, a new change to the `bank` module might have the following message:
 
 ### PR Targeting
 
-Ensure that you base and target your PR on the `development` branch.
+Ensure that you base and target your PR on the `develop` branch.
 
-All feature additions should be targeted against `development`.
+All feature additions should be targeted against `develop`.
 Bug fixes for an outstanding release candidate should be
 targeted against the release candidate branch.
 
@@ -240,13 +240,13 @@ All PRs require two Reviews before merge. When reviewing PRs, please use the fol
 
 ### Pull Merge Procedure
 
-1. Ensure pull branch is rebased on `development`.
+1. Ensure pull branch is rebased on `develop`.
 2. Run `make test` to ensure that all tests pass.
 3. Squash merge pull request.
 
 ### Release Procedure
 
-1. Start on `development`.
+1. Start on `develop`.
 2. Create the release candidate branch `rc/v*` (going forward known as `RC`)
    and ensure it's protected against pushing from anyone except the release manager/coordinator.
    No PRs targeting this branch should be merged unless exceptional circumstances arise.
@@ -255,12 +255,12 @@ All PRs require two Reviews before merge. When reviewing PRs, please use the fol
    Copy the entries into a `RELEASE_CHANGELOG.md`.
    This is needed so the bot knows which entries to add to the release page on GitHub.
 4. Kick off a large round of simulation testing (e.g. 400 seeds for 2k blocks).
-5. If errors are found during the simulation testing, commit the fixes to `development` and create a new `RC` branch (
+5. If errors are found during the simulation testing, commit the fixes to `develop` and create a new `RC` branch (
    making sure to increment the `rcN`).
 6. After simulation has successfully completed, create the release branch (`release/vX.XX.X`) from the `RC` branch.
-7. Create a PR to `development` to incorporate the `CHANGELOG.md` updates.
+7. Create a PR to `develop` to incorporate the `CHANGELOG.md` updates.
 8. Tag the release (use `git tag -a`) and create a release in Github.
 9. Delete the `RC` branches.
 
-**Note**: The Exocore team currently cuts releases on a need to have basis.
+**Note**: The Imuachain team currently cuts releases on a need to have basis.
 We will announce a more standardized release schedule as we near production readiness.

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
-	rewardkeeper "github.com/ExocoreNetwork/exocore/x/reward/keeper"
 	"github.com/cometbft/cometbft/libs/log"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
+	rewardkeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -103,7 +103,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if err != nil {
 		// for failed cases we expect it returns bool value instead of error
 		// this is a workaround because the error returned by precompile can not be caught in EVM
-		// see https://github.com/ExocoreNetwork/exocore/issues/70
+		// see https://github.com/imua-xyz/imuachain/issues/70
 		// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 		return method.Outputs.Pack(false, new(big.Int))
 	}
@@ -132,5 +132,5 @@ func (Precompile) IsTransaction(methodID string) bool {
 
 // Logger returns a precompile-specific logger.
 func (p Precompile) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("ExoCore module", "reward")
+	return ctx.Logger().With("Imuachain module", "reward")
 }

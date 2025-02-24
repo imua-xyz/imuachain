@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"slices"
 
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type ItemV map[string]*big.Int

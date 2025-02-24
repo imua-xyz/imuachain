@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

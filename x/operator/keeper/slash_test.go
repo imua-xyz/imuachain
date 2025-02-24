@@ -6,10 +6,10 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	sdkmath "cosmossdk.io/math"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/operator/keeper"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
@@ -70,8 +70,8 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	// current height: 5 epoch: 3
 	slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
 	slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
-	exoSlashValue := suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.operatorAddr, infractionHeight, power, slashFactor, slashType)
-	suite.Equal(sdkmath.ZeroInt(), exoSlashValue)
+	imuaSlashValue := suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.operatorAddr, infractionHeight, power, slashFactor, slashType)
+	suite.Equal(sdkmath.ZeroInt(), imuaSlashValue)
 
 	// verify the state after the slash
 	slashID := keeper.GetSlashIDForDogfood(slashType, infractionHeight)

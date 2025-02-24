@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 // EpochsHooksWrapper is the wrapper structure that implements the epochs hooks for the dogfood

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package imuachain.appchain.subscriber.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/appchain/common/v1/common.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/appchain/subscriber/types";
+
+// GenesisState is the genesis state for the appchain subscriber module.
+message GenesisState {
+  // Params is the parameters for the appchain subscriber module.
+  imuachain.appchain.common.v1.SubscriberParams params = 1 [(gogoproto.nullable) = false];
+}

@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 // AppendChainToInitTimeout appends a chain to the list of chains which will timeout (if not

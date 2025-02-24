@@ -1,0 +1,213 @@
+syntax = "proto3";
+package imuachain.assets.v1;
+
+import "amino/amino.proto";
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "imuachain/assets/v1/params.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/assets/types";
+
+// ValueField is a field that holds a value of sdk.Int type.
+message ValueField {
+  // amount is the amount of the asset, as an sdk.Int.
+  string amount = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// ClientChainInfo defines the client chain information.
+message ClientChainInfo {
+  // name of the client chain, like "Ethereum".
+  string name = 1;
+  // meta_info about the client chain, like "Ethereum blockchain".
+  string meta_info = 2;
+  // chain_id of the client chain. Not necessarily the EVM chain id.
+  uint64 chain_id = 3;
+  // imua_chain_index is the index of the client chain within the imuasystem.
+  uint64 imua_chain_index = 4;
+  // finalization_blocks is the number of blocks to wait for finalization.
+  uint64 finalization_blocks = 5;
+  // layer_zero_chain_id is the chain id of the client chain, according to L0.
+  // https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids
+  uint64 layer_zero_chain_id = 6 [(gogoproto.customname) = "LayerZeroChainID"];
+  // signature_type is the type of signature used to sign the client chain address.
+  string signature_type = 7;
+  // client_chain_addr is the length of addresses on the client chain.
+  uint32 address_length = 8;
+}
+
+// AssetInfo defines the information for an asset to be used in staking.
+message AssetInfo {
+  // name of the asset, like "Tether USD"
+  string name = 1;
+  // symbol of the asset, like "USDT"
+  string symbol = 2;
+  // address of the asset on the client chain
+  string address = 3;
+  // decimals used in the asset, typically 6 or 18.
+  uint32 decimals = 4;
+  // layer_zero_chain_id is the chain id of the asset, according to L0.
+  uint64 layer_zero_chain_id = 5 [(gogoproto.customname) = "LayerZeroChainID"];
+  // imua_chain_index is the index of the client chain within the imuasystem.
+  uint64 imua_chain_index = 6;
+  // meta_info about the asset, like "Tether USD on Ethereum blockchain".
+  string meta_info = 7;
+}
+
+// StakingAssetInfo defines the information for an asset to be used in staking.
+message StakingAssetInfo {
+  // asset_basic_info is the basic information of the asset.
+  AssetInfo asset_basic_info = 1 [(gogoproto.nullable) = false];
+  // staking_total_amount is the total amount of the asset staked.
+  string staking_total_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// StakerAssetInfo defines the information for a single asset.
+// The type include three states:
+// staker's deposited, withdrawable, and currently unbonding amount.
+message StakerAssetInfo {
+  // total_deposit_amount is the total amount of the asset deposited.
+  string total_deposit_amount = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // withdrawable_amount is the amount that can be withdrawn.
+  string withdrawable_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // pending_undelegation_amount is the amount that is waiting for undelegation.
+  string pending_undelegation_amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// StakerAllAssetsInfo defines the information for all assets of a staker.
+// It is indexed by the asset_id.
+message StakerAllAssetsInfo {
+  // all_assets_state is the state of all assets of the staker.
+  map<string, StakerAssetInfo> all_assets_state = 1;
+}
+
+// OperatorAssetInfo defines the information for a single asset,
+// for an operator.
+message OperatorAssetInfo {
+  // total_amount is the total amount of the asset deposited, which excludes the
+  // pending_undelegation_amount. It represent the total delegated amount of asset pool,
+  // it will be used to calculate the asset amount of a specified staker from its
+  // delegated share.
+  string total_amount = 1 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // pending_undelegation_amount is the amount that is waiting for unbonding.
+  string pending_undelegation_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // total_share is the total share of an asset, in the formula to update the staker's share
+  // S_j = S * T_j / T, `S` represent it.
+  // So when the shares of staker and operator change, it also needs to add `S_j` to update.
+  string total_share = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // operator_share is similar to the share of the staker, the calculation and update should
+  // be same, the difference is that it represents the share of the operator itself.
+  // the field is used to mark operator's own asset share.
+  string operator_share = 4 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// // OperatorAllAssetsInfo defines the information for all assets of an operator,
+// // indexed by the asset_id.
+// message OperatorAllAssetsInfo {
+//   // all_assets_state is the state of all assets of the operator.
+//   map<string, OperatorAssetInfo> all_assets_state = 1;
+// }
+
+// RegisterClientChainReq is a request to register a client chain.
+message RegisterClientChainReq {
+  option (cosmos.msg.v1.signer) = "FromAddress";
+  option (amino.name) = "cosmos-sdk/RegisterClientChain";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // from_address is the address of the message sender.
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // info is the information of the client chain.
+  ClientChainInfo info = 2;
+}
+
+// RegisterClientChainResponse is the response to the RegisterClientChainReq message.
+message RegisterClientChainResponse {}
+
+// RegisterAssetReq is a request to register an asset on the client chain within
+// Imuachain.
+message RegisterAssetReq {
+  option (cosmos.msg.v1.signer) = "FromAddress";
+  option (amino.name) = "cosmos-sdk/RegisterAsset";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // from_address is the address of the message sender.
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // info is the information of the asset.
+  AssetInfo info = 2;
+}
+
+// RegisterAssetResponse is the response to the RegisterAssetReq message.
+message RegisterAssetResponse {}
+
+// MsgUpdateParams is the Msg/UpdateParams request type for Erc20 parameters.
+message MsgUpdateParams {
+  // todo: temporarily not update configuration through gov module
+  option (cosmos.msg.v1.signer) = "authority";
+  // authority is the address of the governance account.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the x/assets parameters to update.
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
+// Msg defines the assets Msg service
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  // UpdateParams updates the parameters of the assets module.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
+    option (google.api.http).post = "/imuachain/assets/v1/tx/MsgUpdateParams";
+  }
+  // // RegisterClientChain registers the client chain
+  // rpc RegisterClientChain(RegisterClientChainReq) returns (RegisterClientChainResponse) {
+  //   option (google.api.http).post = "/imuachain/assets/v1/tx/RegisterClientChain";
+  // }
+  // RegisterAsset registers the asset on the client chain
+  // rpc RegisterAsset(RegisterAssetReq) returns (RegisterAssetResponse);
+}

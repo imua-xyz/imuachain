@@ -1,8 +1,8 @@
-# This is the published docker image for exocore.
+# This is the published docker image for imuachain.
 
 FROM golang:1.21.12-alpine3.19 AS build-env
 
-WORKDIR /go/src/github.com/ExocoreNetwork/exocore
+WORKDIR /go/src/github.com/imua-xyz/imuachain
 
 COPY go.mod go.sum ./
 
@@ -20,7 +20,7 @@ FROM alpine:3.19
 
 WORKDIR /root
 
-COPY --from=build-env /go/src/github.com/ExocoreNetwork/exocore/build/exocored /usr/bin/exocored
+COPY --from=build-env /go/src/github.com/imua-xyz/imuachain/build/imuad /usr/bin/imuad
 COPY --from=build-env /go/bin/toml-cli /usr/bin/toml-cli
 
 RUN apk add --no-cache \
@@ -29,15 +29,15 @@ RUN apk add --no-cache \
 	jq~=1.7 \
 	curl~=8.12.1-r0 \
 	bash~=5.2 \
-    && addgroup -g 1000 exocore \
-    && adduser -S -h /home/exocore -D exocore -u 1000 -G exocore
+    && addgroup -g 1000 imua \
+    && adduser -S -h /home/imua -D imua -u 1000 -G imua
 
 USER 1000
-WORKDIR /home/exocore
+WORKDIR /home/imua
 
 EXPOSE 26656 26657 1317 9090 8545 8546
 
 # Every 30s, allow 3 retries before failing, timeout after 30s.
 HEALTHCHECK --interval=30s --timeout=30s --retries=3 CMD curl -f http://localhost:26657/health || exit 1
 
-CMD ["exocored"]
+CMD ["imuad"]

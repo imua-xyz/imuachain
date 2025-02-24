@@ -1,0 +1,45 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// n out of m required source
+message NOMSource {
+  // required source set, refer to params.sourceList, 1st set to 0 means all valid sources
+  repeated uint64 source_ids = 1 [(gogoproto.customname) = "SourceIDs"];
+  // minimum number from the required sources to be fullfiled
+  uint64 minimum = 2;
+}
+
+// specify data from which source is needed
+// rule_1: specified sources
+// rule_2: n out of total sources are required
+message RuleSource {
+  // refer to params.sourceList.ID, when length>0, ignore the other field, when 1st set to 0, means all valid sources,
+  //  length==0->check next field:minimum
+  repeated uint64 source_ids = 1 [(gogoproto.customname) = "SourceIDs"];
+  // n out of total sources are required
+  NOMSource nom = 2;
+}
+
+// Tokenfeeder represents a price oracle for one token
+message TokenFeeder {
+  // refer to params.tokenList, from 1
+  uint64 token_id = 1 [(gogoproto.customname) = "TokenID"];
+  // refer to params.ruleList, 0 means no restriction, accept any source including customer defined
+  uint64 rule_id = 2 [(gogoproto.customname) = "RuleID"];
+  // include, from 1, when some token's feeder had been stop and then restart,
+  //  the token_id will be continuous from previous one
+  uint64 start_round_id = 3 [(gogoproto.customname) = "StartRoundID"];
+  // include, first block which start_round_id can be settled is at least start_base_block+1
+  uint64 start_base_block = 4;
+  // set as count of blocks, for how many blocks interval the price will be update once
+  uint64 interval = 5;
+  // tokenfeeder is initialized with forever live, update the End parameters by voting,
+  //  and will off service by the end
+  //  this is set by updateParams, and the EndRoundID will be update by related. excluded,
+  //  will not work if current height >=EndBlock
+  uint64 end_block = 6;
+}

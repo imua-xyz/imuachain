@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package imuachain.appchain.coordinator.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/appchain/coordinator/v1/params.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/appchain/coordinator/types";
+
+// GenesisState is the genesis state for the appchain coordinator module.
+message GenesisState {
+  // Params is the parameters for the appchain coordinator module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}

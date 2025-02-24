@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/testutil"
 
 	"cosmossdk.io/math"
 
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	operatortype "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	operatortype "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (suite *OperatorTestSuite) TestOperatorInfo() {

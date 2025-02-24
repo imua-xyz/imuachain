@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/ExocoreNetwork/exocore/precompiles/avs"
-	"github.com/ExocoreNetwork/exocore/testutil"
+	"github.com/imua-xyz/imuachain/precompiles/avs"
+	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/stretchr/testify/suite"
 
 	. "github.com/onsi/ginkgo/v2"

@@ -1,10 +1,10 @@
 package keeper
 
 import (
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // OperatorHooksWrapper is the wrapper structure that implements the operator hooks for the
@@ -52,7 +52,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 		// is the oldKey already active? if not, we should not do anything.
 		// this can happen if we opt in with a key, then replace it with another key
 		// during the same epoch.
-		_, found := h.keeper.GetExocoreValidator(ctx, consAddr)
+		_, found := h.keeper.GetImuachainValidator(ctx, consAddr)
 		if found {
 			unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
 			// nb: if operator sets key, it is not "at stake" till the end of the epoch.
@@ -81,7 +81,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 	// 2. X epochs later, the removal is marked complete in the operator module.
 	consAddr := key.ToConsAddr()
 	if chainID == avstypes.ChainIDWithoutRevision(ctx.ChainID()) {
-		_, found := h.keeper.GetExocoreValidator(ctx, consAddr)
+		_, found := h.keeper.GetImuachainValidator(ctx, consAddr)
 		if found {
 			h.keeper.SetOptOutInformation(ctx, operator)
 		} else {
@@ -107,7 +107,7 @@ func (h OperatorHooksWrapper) AfterSlash(
 			}
 			// check if the key is active yet
 			isValidator := false
-			_, isValidator = h.keeper.GetExocoreValidator(
+			_, isValidator = h.keeper.GetImuachainValidator(
 				ctx, wrappedKey.ToConsAddr(),
 			)
 			if isValidator {

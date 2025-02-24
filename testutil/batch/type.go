@@ -35,18 +35,18 @@ type TestToolConfig struct {
 	AssetNumber    int `mapstructure:"asset-number" toml:"asset-number"`
 
 	// the private key of faucet
-	// and the Exo amount that should be sent to the test addresses
-	FaucetSk          string `mapstructure:"faucet-Sk" toml:"faucet-Sk"`
-	StakerExoAmount   int64  `mapstructure:"staker-exo-amount" toml:"staker-exo-amount"`
-	OperatorExoAmount int64  `mapstructure:"operator-exo-amount" toml:"operator-exo-amount"`
-	AVSExoAmount      int64  `mapstructure:"avs-exo-amount" toml:"avs-exo-amount"`
+	// and the IMUA amount that should be sent to the test addresses
+	FaucetSk           string `mapstructure:"faucet-Sk" toml:"faucet-Sk"`
+	StakerImuaAmount   int64  `mapstructure:"staker-imua-amount" toml:"staker-imua-amount"`
+	OperatorImuaAmount int64  `mapstructure:"operator-imua-amount" toml:"operator-imua-amount"`
+	AVSImuaAmount      int64  `mapstructure:"avs-imua-amount" toml:"avs-imua-amount"`
 
 	// parameters for the testnet
 	ChainValidatorNumber int    `mapstructure:"chain-validator-number" toml:"chain-validator-number"`
 	ChainID              string `mapstructure:"chain-id" toml:"chain-id"`
 	DefaultClientChainID uint32 `mapstructure:"default-client-chain-id" toml:"default-client-chain-id"`
 
-	// the RPCs of the Exocore chain nodes
+	// the RPCs of the Imuachain chain nodes
 	NodesRPC             []string `mapstructure:"nodes-rpc" toml:"nodes-rpc"`
 	NodesEVMRPCHTTP      []string `mapstructure:"nodes-evm-rpc-http" toml:"nodes-evm-rpc-http"`
 	NodesEVMRPCWebsocket []string `mapstructure:"nodes-evm-rpc-websocket" toml:"nodes-evm-rpc-websocket"`
@@ -57,7 +57,7 @@ type TestToolConfig struct {
 	// 2. delegation -> wait for transaction check
 	// 3. undelegation -> wait for transaction check(only check whether the transaction is on chain)
 	// 4. withdraw -> wait for transaction check
-	// TxNumberPerSec indicates the number of transactions sent to Exocore chain per second.
+	// TxNumberPerSec indicates the number of transactions sent to Imuachain chain per second.
 	// Currently, since we are using the `NoOpMempool`, it does not support sending transactions
 	// with different nonces from the same sender at a very high rate. Therefore, it is recommended
 	// to set this parameter to 1 for now. In the future,consider modifying this parameter configuration
@@ -92,11 +92,11 @@ var DefaultTestToolConfig = TestToolConfig{
 	AssetNumber:    5,
 	// this private key is from the local_node.sh
 	FaucetSk:                 "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE",
-	StakerExoAmount:          100,
-	OperatorExoAmount:        10,
-	AVSExoAmount:             10,
+	StakerImuaAmount:         100,
+	OperatorImuaAmount:       10,
+	AVSImuaAmount:            10,
 	ChainValidatorNumber:     1,
-	ChainID:                  "exocorelocalnet_232-1",
+	ChainID:                  "imuachainlocalnet_232-1",
 	DefaultClientChainID:     101,
 	NodesRPC:                 []string{"http://127.0.0.1:26657"},
 	NodesEVMRPCHTTP:          []string{"http://127.0.0.1:8545"},

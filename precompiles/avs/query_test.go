@@ -5,20 +5,20 @@ import (
 	"math/big"
 	"time"
 
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
-	utiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
+	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 
 	sdkmath "cosmossdk.io/math"
 
-	avsManagerPrecompile "github.com/ExocoreNetwork/exocore/precompiles/avs"
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	avstype "github.com/ExocoreNetwork/exocore/x/avs/types"
-	operatorKeeper "github.com/ExocoreNetwork/exocore/x/operator/keeper"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
+	avsManagerPrecompile "github.com/imua-xyz/imuachain/precompiles/avs"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	avstype "github.com/imua-xyz/imuachain/x/avs/types"
+	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -59,9 +59,10 @@ var baseTestCases = []avsTestCases{
 	},
 }
 
-func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddress() {
+func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptInOperators]
-	operatorAddress, avsAddress, slashContract := "exo18cggcpvwspnd5c6ny8wrqxpffj5zmhklprtnph", suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	operatorAddress, avsAddress, slashContract :=
+		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(), suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 
 	operatorOptIn := func() {
 		optedInfo := &types.OptedInfo{
@@ -84,7 +85,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddress() {
 			postCheck:   func(bz []byte) {},
 			gas:         100000,
 			expErr:      true,
-			errContains: fmt.Sprintf(exocmn.ErrContractInputParamOrType, 0, "common.Address", "0x0000000000000000000000000000000000000000"),
+			errContains: fmt.Sprintf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", "0x0000000000000000000000000000000000000000"),
 		},
 		{
 			"success - no operators",
@@ -392,7 +393,11 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 	testStartingEpoch := 1
 	setUp := func() {
 		avsName := "avsTest"
-		avsOwnerAddresses := []string{"exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj1", "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkj2"}
+		avsOwnerAddresses := []string{
+			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
+		}
 		assetID := suite.AssetIDs
 		avs := &avstype.AVSInfo{
 			Name:                avsName,
@@ -457,15 +462,15 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 
 func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodIsOperator]
-	opAccAddress, _ := sdk.AccAddressFromBech32("exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr")
+	opAccAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 
 	testCases := []avsTestCases{
 		{
 			"success - existent operator",
 			func() []interface{} {
-				suite.prepareOperator(opAccAddress.String())
+				suite.prepareOperator(opAccAddr.String())
 				return []interface{}{
-					common.BytesToAddress(opAccAddress),
+					common.BytesToAddress(opAccAddr),
 				}
 			},
 			func(bz []byte) {
@@ -627,7 +632,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetCurrentEpoch() {
 func (suite *AVSManagerPrecompileSuite) TestGetChallengeInfo() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetChallengeInfo]
 	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-	challengeAddr := "exo15zuxnywxyx9ndsw3n49za84secmqd66gk3x5zl"
+	challengeAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 	taskID := uint64(3)
 	setUp := func() {
 		suite.App.AVSManagerKeeper.SetTaskChallengedInfo(suite.Ctx, taskID, challengeAddr, common.HexToAddress(taskAddress))
@@ -677,8 +682,8 @@ func (suite *AVSManagerPrecompileSuite) TestGetChallengeInfo() {
 func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOperatorTaskResponseList]
 	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-	OperatorAddress1 := "exo15zuxnywxyx9ndsw3n49za84secmqd66gk3x5zl"
-	OperatorAddress2 := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	OperatorAddress1 := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
+	OperatorAddress2 := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 	setUp := func() {
 		info1 := &avstype.TaskResultInfo{
 			TaskContractAddress: taskAddress,
@@ -780,11 +785,11 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
 func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponse() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOperatorTaskResponse]
 	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-	OperatorAddress := "exo15zuxnywxyx9ndsw3n49za84secmqd66gk3x5zl"
+	opAccAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 	setUp := func() {
 		info := &avstype.TaskResultInfo{
 			TaskContractAddress: taskAddress,
-			OperatorAddress:     OperatorAddress,
+			OperatorAddress:     opAccAddr.String(),
 			TaskId:              uint64(3),
 			Phase:               2,
 			TaskResponseHash:    "hash",
@@ -801,7 +806,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponse() {
 				setUp()
 				return []interface{}{
 					common.HexToAddress(taskAddress),
-					common.HexToAddress(taskAddress),
+					common.Address(opAccAddr.Bytes()),
 					uint64(3),
 				}
 			},

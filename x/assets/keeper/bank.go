@@ -5,8 +5,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 type DepositWithdrawParams struct {
@@ -41,9 +41,9 @@ func (k Keeper) PerformDepositOrWithdraw(
 	}
 
 	// even though this is unlikely to be true, guard against it.
-	if assetID == assetstypes.ExocoreAssetID {
+	if assetID == assetstypes.ImuachainAssetID {
 		return sdkmath.ZeroInt(), assetstypes.ErrNoClientChainAssetKey.Wrapf(
-			"cannot deposit exo native assetID:%s", assetID,
+			"cannot deposit imua native assetID:%s", assetID,
 		)
 	}
 
@@ -78,7 +78,7 @@ func (k Keeper) PerformDepositOrWithdraw(
 	}
 
 	// TODO: consider emitting EVM event?
-	// currently such events are emitted by the ExocoreGateway so this may not be
+	// currently such events are emitted by the HomeChainGateway so this may not be
 	// necessary. however, there is no large downside in emitting equivalent EVM
 	// events here.
 

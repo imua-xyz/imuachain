@@ -3,14 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // SetClientChainInfo todo: Temporarily use LayerZeroChainID as key.
-// It provides a function to register the client chains supported by exoCore.It's called by genesis configuration now,however it will be called by the governance in the future
+// It provides a function to register the client chains supported by Imuachain.It's called by genesis configuration now,however it will be called by the governance in the future
 func (k Keeper) SetClientChainInfo(ctx sdk.Context, info *assetstype.ClientChainInfo) (bool, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixClientChainInfo)
 	key := []byte(hexutil.EncodeUint64(info.LayerZeroChainID))
@@ -30,7 +30,7 @@ func (k Keeper) SetClientChainInfo(ctx sdk.Context, info *assetstype.ClientChain
 			sdk.NewAttribute(assetstype.AttributeKeyName, info.Name),
 			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, info.MetaInfo),
 			sdk.NewAttribute(assetstype.AttributeKeyChainID, fmt.Sprintf("%d", info.ChainId)),
-			sdk.NewAttribute(assetstype.AttributeKeyExocoreChainIdx, fmt.Sprintf("%d", info.ExocoreChainIndex)),
+			sdk.NewAttribute(assetstype.AttributeKeyImuachainIndex, fmt.Sprintf("%d", info.ImuaChainIndex)),
 			sdk.NewAttribute(assetstype.AttributeKeyFinalizationBlocks, fmt.Sprintf("%d", info.FinalizationBlocks)),
 			sdk.NewAttribute(assetstype.AttributeKeyLZID, fmt.Sprintf("%d", info.LayerZeroChainID)),
 			sdk.NewAttribute(assetstype.AttributeKeySigType, info.SignatureType),

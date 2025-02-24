@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package imuachain.appchain.coordinator.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/appchain/coordinator/v1/tx.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/appchain/coordinator/types";
+
+// PendingSubscriberChainRequests is a helper structure to store a list of
+// subscriber chain requests that are pending activation.
+message PendingSubscriberChainRequests {
+  // list is the list of subscriber chain requests that are pending activation.
+  repeated .imuachain.appchain.coordinator.v1.RegisterSubscriberChainRequest list = 1 [(gogoproto.nullable) = false];
+}
+
+// ChainIDs is a helper structure to store a list of chain IDs.
+message ChainIDs {
+  // list is the list of chain IDs.
+  repeated string list = 1;
+}

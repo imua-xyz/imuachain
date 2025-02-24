@@ -72,10 +72,10 @@ type jsonPubKey struct {
 // The format used by our modules (dogfood, appchain) is SdkKey, same as x/staking.
 type wrappedConsKeyImpl struct {
 	// jsonString is the JSON string representation of the public key, used in the CLI
-	// exocored tendermint show-validator
+	// imuad tendermint show-validator
 	jsonString string
 	// bytes32String is the 32-byte string representation of the public key, used in the Bootstrap contract
-	// exocored keys consensus-pubkey-to-bytes
+	// imuad keys consensus-pubkey-to-bytes
 	bytes32String string
 	// tmProtoKey is the format used for storage by x/operator and forwarding to Tendermint
 	tmProtoKey *tmprotocrypto.PublicKey
@@ -273,7 +273,7 @@ func tmKeyFromBase64Key(pubKey string) (*tmprotocrypto.PublicKey, error) {
 // tmKeyFromHex converts a 32-byte public key (from the Ethereum side of things),
 // which is represented as a 66-byte string (with the 0x prefix) within Golang,
 // to a tendermint public key. It is, in effect, a reverse of the command
-// `exocored keys consensus-pubkey-to-bytes`
+// `imuad keys consensus-pubkey-to-bytes`
 func tmKeyFromHex(key string) (*tmprotocrypto.PublicKey, error) {
 	if len(key) != 66 {
 		return nil, fmt.Errorf("expected 66 length string, got %d", len(key))

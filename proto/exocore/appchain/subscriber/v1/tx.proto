@@ -1,8 +1,0 @@
-syntax = "proto3";
-
-package exocore.appchain.subscriber.v1;
-
-option go_package = "github.com/ExocoreNetwork/exocore/x/appchain/subscriber/types";
-
-// Msg defines the Msg service.
-service Msg {}

@@ -7,13 +7,13 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
-	exocmn "github.com/ExocoreNetwork/exocore/precompiles/common"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 const (
@@ -76,12 +76,12 @@ func (p Precompile) DeregisterAVS(
 	avsParams := &avstypes.AVSRegisterOrDeregisterParams{}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	avsParams.CallerAddress = callerAddress[:]
 	avsName, ok := args[1].(string)
 	if !ok || avsName == "" {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "string", avsName)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "string", avsName)
 	}
 	avsParams.AvsName = avsName
 	avsParams.AvsAddress = contract.CallerAddress
@@ -144,7 +144,7 @@ func (p Precompile) BindOperatorToAVS(
 	}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 
 	operatorParams := &avstypes.OperatorOptParams{}
@@ -174,7 +174,7 @@ func (p Precompile) UnbindOperatorToAVS(
 	}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	operatorParams := &avstypes.OperatorOptParams{}
 	operatorParams.OperatorAddress = callerAddress[:]
@@ -190,7 +190,7 @@ func (p Precompile) UnbindOperatorToAVS(
 	return method.Outputs.Pack(true)
 }
 
-// CreateAVSTask Middleware uses exocore's default avs task template to create tasks in avs task module.
+// CreateAVSTask Middleware uses imuachain's default avstask template to create tasks in avstask module.
 func (p Precompile) CreateAVSTask(
 	ctx sdk.Context,
 	_ common.Address,
@@ -214,7 +214,7 @@ func (p Precompile) CreateAVSTask(
 	return method.Outputs.Pack(taskID)
 }
 
-// Challenge Middleware uses exocore's default avs task template to create tasks in avs task module.
+// Challenge Middleware uses imuadefault avstask template to create tasks in avstask module.
 func (p Precompile) Challenge(
 	ctx sdk.Context,
 	_ common.Address,
@@ -230,43 +230,43 @@ func (p Precompile) Challenge(
 	challengeParams.TaskContractAddress = contract.CallerAddress
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	challengeParams.CallerAddress = callerAddress[:]
 
 	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", args[1])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "uint64", args[1])
 	}
 	challengeParams.TaskID = taskID
 
 	taskAddress, ok := args[2].(common.Address)
 	if !ok || (taskAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "common.Address", taskAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "common.Address", taskAddress)
 	}
 	challengeParams.TaskContractAddress = taskAddress
 
 	actualThreshold, ok := args[3].(uint8)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "uint8", actualThreshold)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "uint8", actualThreshold)
 	}
 	challengeParams.ActualThreshold = actualThreshold
 
 	isExpected, ok := args[4].(bool)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "bool", isExpected)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "bool", isExpected)
 	}
 	challengeParams.IsExpected = isExpected
 
 	eligibleRewardOperators, ok := args[5].([]common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 5, "[]common.Address", eligibleRewardOperators)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 5, "[]common.Address", eligibleRewardOperators)
 	}
 	challengeParams.EligibleRewardOperators = eligibleRewardOperators
 
 	eligibleSlashOperators, ok := args[6].([]common.Address)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 6, "[]common.Address", eligibleSlashOperators)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 6, "[]common.Address", eligibleSlashOperators)
 	}
 
 	challengeParams.EligibleSlashOperators = eligibleSlashOperators
@@ -295,27 +295,26 @@ func (p Precompile) RegisterBLSPublicKey(
 	blsParams := &avstypes.BlsParams{}
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	blsParams.OperatorAddress = callerAddress[:]
 	avsAddress, ok := args[1].(common.Address)
 	if !ok || (avsAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "common.Address", avsAddress)
 	}
 	blsParams.AvsAddress = avsAddress
 
 	pubKeyBz, ok := args[2].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", pubKeyBz)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", pubKeyBz)
 	}
 	blsParams.PubKey = pubKeyBz
 
 	pubKeyRegistrationSignature, ok := args[3].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", pubKeyRegistrationSignature)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", pubKeyRegistrationSignature)
 	}
 	blsParams.PubKeyRegistrationSignature = pubKeyRegistrationSignature
-
 	// validates key format by itself so we don't need to do it before this.
 	err := p.avsKeeper.RegisterBLSPublicKey(ctx, blsParams)
 	if err != nil {
@@ -344,19 +343,19 @@ func (p Precompile) OperatorSubmitTask(
 
 	callerAddress, ok := args[0].(common.Address)
 	if !ok || (callerAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
 	resultParams.CallerAddress = callerAddress[:]
 
 	taskID, ok := args[1].(uint64)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 1, "uint64", args[1])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "uint64", args[1])
 	}
 	resultParams.TaskID = taskID
 
 	taskResponse, ok := args[2].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 2, "[]byte", taskResponse)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", taskResponse)
 	}
 	resultParams.TaskResponse = taskResponse
 
@@ -366,13 +365,13 @@ func (p Precompile) OperatorSubmitTask(
 
 	blsSignature, ok := args[3].([]byte)
 	if !ok {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 3, "[]byte", blsSignature)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", blsSignature)
 	}
 	resultParams.BlsSignature = blsSignature
 
 	taskAddress, ok := args[4].(common.Address)
 	if !ok || (taskAddress == common.Address{}) {
-		return nil, fmt.Errorf(exocmn.ErrContractInputParamOrType, 4, "common.Address", taskAddress)
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "common.Address", taskAddress)
 	}
 	resultParams.TaskContractAddress = taskAddress
 

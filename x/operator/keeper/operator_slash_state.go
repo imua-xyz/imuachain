@@ -3,15 +3,15 @@ package keeper
 import (
 	"strings"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // UpdateOperatorSlashInfo This is a function to store the slash info related to an operator
@@ -140,7 +140,7 @@ func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperat
 // GetSlashAssetsState This is a function to retrieve the assets awaiting transfer to the client chain for slashing.
 // Now this function hasn't been called, it might be called by the grpc query in the future.
 // Additionally, this function might be called in the schedule function `EndBlock` to send the slash info to client chain.
-// todo: It's to be determined about how to send the slash info to client chain. If we send them in `EndBlock`, then the native code needs to call the gateway contract deployed in exocore. This seems a little bit odd.
+// todo: It's to be determined about how to send the slash info to client chain. If we send them in `EndBlock`, then the native code needs to call the gateway contract deployed in imua. This seems a little bit odd.
 func (k *Keeper) GetSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperator string, processedHeight uint64) (sdkmath.Int, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashAssetsState)
 	var key []byte

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 type Keeper struct {

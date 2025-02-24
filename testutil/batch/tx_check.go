@@ -8,11 +8,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
-	assettypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/imua-xyz/imuachain/precompiles/delegation"
+	assettypes "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"golang.org/x/xerrors"
 )
 
@@ -265,15 +265,15 @@ func (m *Manager) EvmDelegationCheck(batchID uint, msgType string) error {
 }
 
 func (m *Manager) FundingCheck() error {
-	err := CheckObjectsBalance(m, &Staker{}, m.config.StakerExoAmount)
+	err := CheckObjectsBalance(m, &Staker{}, m.config.StakerImuaAmount)
 	if err != nil {
 		return err
 	}
-	err = CheckObjectsBalance(m, &Operator{}, m.config.OperatorExoAmount)
+	err = CheckObjectsBalance(m, &Operator{}, m.config.OperatorImuaAmount)
 	if err != nil {
 		return err
 	}
-	err = CheckObjectsBalance(m, &AVS{}, m.config.AVSExoAmount)
+	err = CheckObjectsBalance(m, &AVS{}, m.config.AVSImuaAmount)
 	if err != nil {
 		return err
 	}

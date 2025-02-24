@@ -5,7 +5,7 @@ address constant AVSMANAGER_PRECOMPILE_ADDRESS = 0x00000000000000000000000000000
 
 /// @dev The avs-manager contract's instance.
 IAVSManager constant AVSMANAGER_CONTRACT = IAVSManager(AVSMANAGER_PRECOMPILE_ADDRESS);
-/// @author Exocore Team
+/// @author Imuachain Team
 /// @title AVS-Manager Precompile Contract
 /// @dev The interface through which solidity contracts will interact with AVS-Manager
 /// @custom:address 0x0000000000000000000000000000000000000901
@@ -134,15 +134,15 @@ interface IAVSManager {
         uint8 phase
     );
 
-    /// @dev Register AVS contract to EXO.
+    /// @dev Register AVS contract to Imuachain.
     /// @param params The params of AVS.
     function registerAVS(AVSParams calldata params) external returns (bool success);
 
-    /// @dev Update AVS info to EXO.
+    /// @dev Update AVS info to Imuachain.
     /// @param params The params of AVS.
     function updateAVS(AVSParams calldata params) external returns (bool success);
 
-    /// @dev Deregister avs from exo
+    /// @dev Deregister avs from Imuachain
     /// @param sender The external address for calling this method.
     /// @param avsName The name of AVS.
     function deregisterAVS(address sender, string calldata avsName) external returns (bool success);
@@ -257,7 +257,7 @@ interface IAVSManager {
     /// @param taskID The id of task.
     function getTaskInfo(address taskAddress, uint64 taskID) external view returns (TaskInfo memory taskInfo);
 
-    /// @dev isOperator checks if the given address is registered as an operator on exocore.
+    /// @dev isOperator checks if the given address is registered as an operator on imuachain.
     /// @param operatorAddress The address of the operator
     function isOperator(address operatorAddress) external view returns (bool);
 

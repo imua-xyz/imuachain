@@ -4,9 +4,9 @@ import (
 	"errors"
 	"math"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 const (

@@ -4,10 +4,6 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/utils"
-	commontypes "github.com/ExocoreNetwork/exocore/x/appchain/common/types"
-	"github.com/ExocoreNetwork/exocore/x/appchain/coordinator/types"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +11,10 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	"github.com/imua-xyz/imuachain/utils"
+	commontypes "github.com/imua-xyz/imuachain/x/appchain/common/types"
+	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 // CreateClientForSubscriberInCachedCtx is a wrapper function around CreateClientForSubscriber.
@@ -52,7 +52,7 @@ func (k Keeper) CreateClientForSubscriber(
 	}
 	subscriberUnbondingPeriod := subscriberParams.UnbondingPeriod
 	trustPeriod, err := commontypes.CalculateTrustPeriod(
-		// note that this is the client that will live on Exocore
+		// note that this is the client that will live on Imuachain
 		// and we use the counterparty's unbonding period as a base
 		subscriberUnbondingPeriod, coordinatorParams.TrustingPeriodFraction,
 	)

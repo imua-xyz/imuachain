@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package imuachain.dogfood.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "imuachain/dogfood/v1/params.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/dogfood/types";
+
+// GenesisState defines the dogfood module's genesis state. Note that, as always,
+// `genesis` is a misnomer. Ideally, this state can be exported at any point in
+// time (or height), and reimported elsewhere where it will be the new genesis
+// potentially at a non-zero height. In other words, it is the entire, current,
+// state of the module.
+message GenesisState {
+  // params refers to the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+
+  // val_set is the initial validator set. it only represents the active
+  // validators.
+  repeated GenesisValidator val_set = 2 [(gogoproto.nullable) = false];
+
+  // opt_out_expiries is a list of (future) epochs at the end of which the
+  // corresponding operators' opt-out will expire. we store this, as well as its reverse
+  // lookup.
+  repeated EpochToOperatorAddrs opt_out_expiries = 3 [(gogoproto.nullable) = false];
+
+  // epochs_consensus_addrs is a list of epochs at the end of which the corresponding
+  // consensus addresses should be pruned from the operator module.
+  repeated EpochToConsensusAddrs consensus_addrs_to_prune = 4 [(gogoproto.nullable) = false];
+
+  // undelegation_maturities is a list of epochs at the end of which the corresponding
+  // undelegations will mature. we store its reverse lookup as well.
+  repeated EpochToUndelegationRecordKeys undelegation_maturities = 5 [(gogoproto.nullable) = false];
+
+  // data against HistoricalInfoBytePrefix is not made available in the module
+  // state for import / export. this is in line with Cosmos SDK.
+
+  // the data indexed by the pending keys is created within the epochs hooks
+  // which happen in the BeginBlocker. it is applied during the EndBlocker and
+  // then immediately cleared.
+  // remember that data can be exported from a node that is stopped.
+  // a node can be stopped only if it has committed a block. if a full
+  // block is committed, data that is saved to state during BeginBlock
+  // and cleared at EndBlock will not be available. hence, we don't need
+  // to make data for any of the `pending` keys available here.
+
+  // last_total_power tracks the total voting power as of the last validator set
+  // update. such an update is most likely to be at the end of the last epoch (or the
+  // beginning of this one, to be more precise) and less likely to be at other blocks,
+  // since the validator set can otherwise only change as a result of slashing events.
+  bytes last_total_power = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+
+  // validator_updates is a list of validator updates applied at the end of the previous
+  // block. it is then cleared at the end of the next block, and hence, is available
+  // for other modules to access during that block. however, for a new chain, it does
+  // not make sense for it to exist, since all of the validators should be considered
+  // as an update. this behaviour is the same as the Cosmos SDK.
+}
+
+// GenesisValidator defines a genesis validator. It is a helper struct
+// used for serializing the genesis state. The only reason it is a different
+// structure is to support importing hex public keys from Solidity.
+message GenesisValidator {
+  // public_key is the hex consensus public key of the validator. It should
+  // be exactly 32 bytes, but this is not enforced in protobuf.
+  string public_key = 1;
+  // power is the voting power of the validator.
+  int64 power = 2;
+}
+
+// EpochToOperatorAddress is used to store a mapping from epoch to a list of
+// operator account addresses.
+message EpochToOperatorAddrs {
+  // epoch is the epoch in question.
+  int64 epoch = 1;
+  // operator_acc_addrs is the list of account addresses to expire at this epoch.
+  // It is of type string for human readability of the genesis file.
+  repeated string operator_acc_addrs = 2;
+}
+
+// EpochToConsensusAddrs is used to store a mapping from the epoch to a list of
+// consensus addresses.
+message EpochToConsensusAddrs {
+  // epoch is the epoch in question.
+  int64 epoch = 1;
+  // cons_addrs is the list of consensus addresses to prune at this epoch.
+  // It is of type string for human readability of the genesis file.
+  repeated string cons_addrs = 2;
+}
+
+// EpochToUndelegationRecordKeys is used to store a mapping from an epoch to a list of
+// undelegations which mature at that epoch.
+message EpochToUndelegationRecordKeys {
+  // epoch is the epoch in question.
+  int64 epoch = 1;
+  // undelegation_record_keys is the list of undelegations (defined by the record key)
+  // to expire at this epoch.
+  // It is of type string for human readability of the genesis file.
+  repeated string undelegation_record_keys = 2;
+}

@@ -3,10 +3,10 @@ package oracle
 import (
 	"math/big"
 
-	"github.com/ExocoreNetwork/exocore/testutil/network"
-	oracletypes "github.com/ExocoreNetwork/exocore/x/oracle/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/testutil/network"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // the test cases run with 'devmode' flag, we try to elaborate all cases to check the recovery logic works fine in each scenario

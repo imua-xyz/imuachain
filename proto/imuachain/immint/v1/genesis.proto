@@ -1,0 +1,14 @@
+syntax = "proto3";
+package imuachain.immint.v1;
+
+import "gogoproto/gogo.proto";
+import "imuachain/immint/v1/params.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/immint/types";
+
+// GenesisState defines the immint module's genesis state.
+message GenesisState {
+  // params refers to the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+  // there are no other constituents of the state.
+}

@@ -1,15 +1,15 @@
 package types
 
 import (
-	"github.com/ExocoreNetwork/exocore/utils"
 	evmtype "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/utils"
 )
 
-// ExocoreAvailableEVMExtensions defines the default active precompiles
+// ImuachainAvailableEVMExtensions defines the default active precompiles
 var (
-	// DefaultEVMDenom defines the default EVM denomination on Exocore
-	DefaultEVMDenom               = utils.BaseDenom
-	ExocoreAvailableEVMExtensions = []string{
+	// DefaultEVMDenom defines the default EVM denomination on Imuachain
+	DefaultEVMDenom                 = utils.BaseDenom
+	ImuachainAvailableEVMExtensions = []string{
 		"0x0000000000000000000000000000000000000400", // bech32 precompile
 		// "0x0000000000000000000000000000000000000802", // ICS20 transfer precompile
 		"0x0000000000000000000000000000000000000804", // assets precompile
@@ -21,9 +21,9 @@ var (
 	}
 )
 
-// ExocoreEvmDefaultParams returns default evm parameters
+// ImuachainEvmDefaultParams returns default evm parameters
 // ExtraEIPs is empty to prevent overriding the latest hard fork instruction set
-func ExocoreEvmDefaultParams() evmtype.Params {
+func ImuachainEvmDefaultParams() evmtype.Params {
 	return evmtype.Params{
 		EvmDenom:            DefaultEVMDenom,
 		EnableCreate:        evmtype.DefaultEnableCreate,
@@ -31,6 +31,6 @@ func ExocoreEvmDefaultParams() evmtype.Params {
 		ChainConfig:         evmtype.DefaultChainConfig(),
 		ExtraEIPs:           nil,
 		AllowUnprotectedTxs: evmtype.DefaultAllowUnprotectedTxs,
-		ActivePrecompiles:   ExocoreAvailableEVMExtensions,
+		ActivePrecompiles:   ImuachainAvailableEVMExtensions,
 	}
 }

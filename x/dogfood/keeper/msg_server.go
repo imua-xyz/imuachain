@@ -7,11 +7,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"cosmossdk.io/errors"
-	"github.com/ExocoreNetwork/exocore/utils"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	"github.com/ExocoreNetwork/exocore/x/dogfood/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/imua-xyz/imuachain/utils"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
 type msgServer struct {

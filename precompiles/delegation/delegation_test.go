@@ -3,23 +3,23 @@ package delegation_test
 import (
 	"math/big"
 
-	assetskeeper "github.com/ExocoreNetwork/exocore/x/assets/keeper"
+	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/app"
-	"github.com/ExocoreNetwork/exocore/precompiles/delegation"
-	"github.com/ExocoreNetwork/exocore/x/assets/types"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	"github.com/imua-xyz/imuachain/app"
+	"github.com/imua-xyz/imuachain/precompiles/delegation"
+	"github.com/imua-xyz/imuachain/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 func (s *DelegationPrecompileSuite) TestIsTransaction() {
@@ -63,9 +63,9 @@ func paddingClientChainAddress(input []byte, outputLength int) []byte {
 // TestRun tests Delegate method through calling Run function.
 func (s *DelegationPrecompileSuite) TestRunDelegate() {
 	// deposit params for test
-	exocoreLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+	imuaLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
-	opAccAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	opAccAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	clientChainLzID := 101
 	lzNonce := 0
 	delegationAmount := big.NewInt(50)
@@ -124,7 +124,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 		returnBytes []byte
 	}{
 		{
-			name: "fail - delegateToThroughClientChain transaction will fail because the exocoreLzAppAddress is mismatched",
+			name: "fail - delegateToThroughClientChain transaction will fail because the imuaLzAppAddress is mismatched",
 			malleate: func() (common.Address, []byte) {
 				return commonMalleate()
 			},
@@ -133,10 +133,10 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			returnBytes: failureRet,
 		},
 		{
-			name: "fail - delegateToThroughClientChain transaction will fail because the contract caller isn't the exoCoreLzAppAddr",
+			name: "fail - delegateToThroughClientChain transaction will fail because the contract caller isn't the imuaLzAppAddress",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
-					Gateways: []string{exocoreLzAppAddress},
+					Gateways: []string{imuaLzAppAddress},
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
@@ -274,7 +274,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			} else {
 				// for failed cases we expect it returns bool value instead of error
 				// this is a workaround because the error returned by precompile can not be caught in EVM
-				// see https://github.com/ExocoreNetwork/exocore/issues/70
+				// see https://github.com/imua-xyz/imuachain/issues/70
 				// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 				s.Require().NoError(err, "expected no error when running the precompile")
 				s.Require().Equal(tc.returnBytes, bz, "expected returned bytes to be nil")
@@ -287,7 +287,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 	// deposit params for test
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
-	operatorAddr := "exo13h6xg79g82e2g2vhjwg7j4r2z2hlncelwutkjr"
+	operatorAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	clientChainLzID := 101
 	lzNonce := uint64(0)
 	delegationAmount := big.NewInt(50)
@@ -441,7 +441,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 			} else {
 				// for failed cases we expect it returns bool value instead of error
 				// this is a workaround because the error returned by precompile can not be caught in EVM
-				// see https://github.com/ExocoreNetwork/exocore/issues/70
+				// see https://github.com/imua-xyz/imuachain/issues/70
 				// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 				s.Require().NoError(err, "expected no error when running the precompile")
 				s.Require().Equal(tc.returnBytes, bz, "expected returned bytes to be nil")

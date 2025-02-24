@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"github.com/ExocoreNetwork/exocore/x/oracle/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/spf13/cobra"
 )
 

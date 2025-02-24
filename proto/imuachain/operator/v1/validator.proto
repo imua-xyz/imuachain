@@ -1,0 +1,97 @@
+syntax = "proto3";
+package imuachain.operator.v1;
+
+import "amino/amino.proto";
+import "cosmos/staking/v1beta1/staking.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
+
+// Validator defines a validator, together with the total amount of the
+// Validator's bond shares and their exchange rate to coins. Slashing results in
+// a decrease in the exchange rate, allowing correct calculation of future
+// undelegations without iterating over delegators. When coins are delegated to
+// this validator, the validator is credited with a delegation whose number of
+// bond shares is based on the amount of coins delegated divided by the current
+// exchange rate. Voting power can be calculated as total bonded shares
+// multiplied by exchange rate
+message Validator {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // earnoperator_earnings_addrings_addr is the earnings address.
+  string operator_earnings_addr = 1;
+  // operator_approve_addr is the approve address.
+  string operator_approve_addr = 2;
+  // operator_meta_info is the operator meta info.
+  string operator_meta_info = 3;
+  // ConsAddress defines a wrapper around bytes meant to present a consensus node.
+  // When marshaled to a string or JSON, it uses Bech32.
+  string cons_address = 4;
+  // consensus_pubkey is the consensus public key of the validator, as a Protobuf Any
+  google.protobuf.Any consensus_pubkey = 5 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
+  // jailed defined whether the validator has been jailed from bonded status or not
+  bool jailed = 6;
+  // status is the validator status (bonded/unbonding/unbonded)
+  cosmos.staking.v1beta1.BondStatus status = 7;
+  // voting_power define the validator voting power
+  string voting_power = 8 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // delegator_shares defines total shares issued to a validator's delegators
+  string delegator_shares = 9 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // commission defines the commission parameters.
+  cosmos.staking.v1beta1.Commission commission = 10 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // delegator_tokens is the list of asset infos
+  repeated DelegatorInfo delegator_tokens = 11 [(gogoproto.nullable) = false];
+  // active defines whether the validator exists in the Tendermint validator set
+  bool active = 12;
+}
+
+// DelegatorInfo records the total opted-in USD value for the specified operator
+message DelegatorInfo {
+  // asset_id is the asset for which the query is made
+  string asset_id = 1 [(gogoproto.customname) = "AssetID"];
+  // symbol of the asset, like "USDT"
+  string symbol = 2;
+  // name of the asset, like "Tether USD"
+  string name = 3;
+  // self_amount is the self amount of the asset which delegation
+  string self_amount = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // total_amount is the total amount of the asset which delegation
+  string total_amount = 5 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // self_usd_value is the self delegation USD value for the validator
+  string self_usd_value = 6 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "SelfUSDValue"
+  ];
+  // total_usd_value is the total delegation USD value for the validator
+  string total_usd_value = 7 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "TotalUSDValue"
+  ];
+}

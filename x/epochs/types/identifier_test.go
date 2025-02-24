@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/ExocoreNetwork/exocore/x/epochs/types"
+	"github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
 const (
