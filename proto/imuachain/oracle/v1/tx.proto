@@ -30,7 +30,6 @@ enum AggregationPhase{
   AGGREGATION_PHASE_TWO = 2 [(gogoproto.enumvalue_customname) = "AggregationPhaseTwo"];
 }
 
-
 // MsgCreatePrice provide the price updating message
 message MsgCreatePrice {
   // creator tells which is the message sender and should sign this message

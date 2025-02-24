@@ -865,7 +865,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 	}
 
 	if r.twoPhases == msg.IsSinglePhase() {
-		// this should not happen, since message itself had been checked in 'validateMsg', when came to here it means there' something wrong with mem-round initialization, feederID:%d, r.IsTwoPhases:%t, msg.IsTwoPhases:%t", msg.FeederID, r.twoPhases, !msg.IsNotTwoPhases())
+		// this should not happen, since message itself had been checked in 'validateMsg', when came to here it means there' something wrong with mem-round initialization
 		return nil, fmt.Errorf("the 2phases status of round and message is mismatched, there's something wrong with mem-round initialization, feederID:%d, r.IsTwoPhases:%t, msg.IsTwoPhases:%t", msg.FeederID, r.twoPhases, !msg.IsSinglePhase())
 	}
 
