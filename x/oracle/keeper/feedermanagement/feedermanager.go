@@ -320,16 +320,17 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 	if r.Committable() {
 		// just set status to close, and keep aggregator for possible 'handleQuotingMisBehavior' at quotingWindowEnd
 		r.status = roundStatusClosed
+		if !f.cs.IsRuleV1(r.feederID) {
+			logger.Error("We currently only support rules under oracle V1", "feederID", r.feederID)
+			return success
+		}
+
 		finalPrice, ok := r.FinalPrice()
 		if !ok {
 			logger.Info("commit round with price from previous",
 				"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
 			// #nosec G115  // tokenID is index of slice
 			f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
-			return success
-		}
-		if !f.cs.IsRuleV1(r.feederID) {
-			logger.Error("We currently only support rules under oracle V1", "feederID", r.feederID)
 			return success
 		}
 		priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
