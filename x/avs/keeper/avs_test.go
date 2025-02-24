@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	testutiltx "github.com/ExocoreNetwork/exocore/testutil/tx"
 	"github.com/ethereum/go-ethereum/crypto"
+	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
 	errorsmod "cosmossdk.io/errors"
@@ -15,18 +15,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	operatorTypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	utiltx "github.com/evmos/evmos/v16/testutil/tx"
 	"github.com/imua-xyz/imuachain/x/avs/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	utiltx "github.com/evmos/evmos/v16/testutil/tx"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 func (suite *AVSTestSuite) TestAVS() {
@@ -161,7 +157,6 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 		suite.Equal(found, true)
 		suite.Equal(epoch.CurrentEpoch, epochEnd+1)
 	}
-
 
 	avsParams.Action = avstypes.DeRegisterAction
 	avsParams.CallerAddress, err = sdk.AccAddressFromBech32(avsOwnerAddress[0])

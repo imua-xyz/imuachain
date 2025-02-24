@@ -61,8 +61,7 @@ var baseTestCases = []avsTestCases{
 
 func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptInOperators]
-	operatorAddress, avsAddress, slashContract :=
-		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(), suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	operatorAddress, avsAddress, slashContract := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(), suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
 
 	operatorOptIn := func() {
 		optedInfo := &types.OptedInfo{
