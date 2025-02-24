@@ -18838,6 +18838,11 @@
                           "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                         }
                       }
+                    },
+                    "piece_size_byte": {
+                      "type": "integer",
+                      "format": "int64",
+                      "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                     }
                   }
                 }
@@ -19580,6 +19585,11 @@
                                 "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                               }
                             }
+                          },
+                          "piece_size_byte": {
+                            "type": "integer",
+                            "format": "int64",
+                            "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                           }
                         },
                         "description": "Params defines the parameters for the module."
@@ -19947,6 +19957,11 @@
                               "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                             }
                           }
+                        },
+                        "piece_size_byte": {
+                          "type": "integer",
+                          "format": "int64",
+                          "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                         }
                       },
                       "description": "Params defines the parameters for the module."
@@ -41690,6 +41705,11 @@
               "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
             }
           }
+        },
+        "piece_size_byte": {
+          "type": "integer",
+          "format": "int64",
+          "title": "piece_size_byte defines how many bytes one piece of raw data includes"
         }
       },
       "description": "Params defines the parameters for the module."
@@ -42183,6 +42203,11 @@
                         "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                       }
                     }
+                  },
+                  "piece_size_byte": {
+                    "type": "integer",
+                    "format": "int64",
+                    "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                   }
                 },
                 "description": "Params defines the parameters for the module."
@@ -42665,6 +42690,11 @@
                       "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                     }
                   }
+                },
+                "piece_size_byte": {
+                  "type": "integer",
+                  "format": "int64",
+                  "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                 }
               },
               "description": "Params defines the parameters for the module."
@@ -42935,6 +42965,11 @@
                   "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                 }
               }
+            },
+            "piece_size_byte": {
+              "type": "integer",
+              "format": "int64",
+              "title": "piece_size_byte defines how many bytes one piece of raw data includes"
             }
           }
         }
@@ -43484,6 +43519,11 @@
                   "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                 }
               }
+            },
+            "piece_size_byte": {
+              "type": "integer",
+              "format": "int64",
+              "title": "piece_size_byte defines how many bytes one piece of raw data includes"
             }
           },
           "description": "Params defines the parameters for the module."

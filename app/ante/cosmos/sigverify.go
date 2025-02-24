@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -21,7 +22,6 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/imua-xyz/imuachain/app/ante/utils"
-	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var (
@@ -59,7 +59,7 @@ func NewSetPubKeyDecorator(ak authante.AccountKeeper) SetPubKeyDecorator {
 
 func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// skip publickkey set for oracle create-price message
-	if utils.IsOracleCreatePriceTx(tx) {
+	if _, ok, _ := utils.OracleCreatePriceTx(tx); ok {
 		sigTx, ok := tx.(authsigning.SigVerifiableTx)
 		if !ok {
 			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -173,7 +173,7 @@ func (sgcd SigGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 		return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
 	}
 
-	if utils.IsOracleCreatePriceTx(tx) {
+	if _, isOracle, _ := utils.OracleCreatePriceTx(tx); isOracle {
 		return next(ctx, tx, simulate)
 	}
 
@@ -258,7 +258,7 @@ func OnlyLegacyAminoSigners(sigData signing.SignatureData) bool {
 }
 
 func (svd SigVerificationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if utils.IsOracleCreatePriceTx(tx) {
+	if _, ok, _ := utils.OracleCreatePriceTx(tx); ok {
 		sigTx, ok := tx.(authsigning.SigVerifiableTx)
 		if !ok {
 			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -386,9 +386,40 @@ func NewIncrementSequenceDecorator(ak authante.AccountKeeper, oracleKeeper utils
 
 func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// oracle create-price message dont need to increment sequence, check its nonce instead
-	if utils.IsOracleCreatePriceTx(tx) {
-		for _, msg := range tx.GetMsgs() {
-			msg := msg.(*oracletypes.MsgCreatePrice)
+	if msgs, isOracle, isRawData := utils.OracleCreatePriceTx(tx); isOracle {
+		msg := msgs[0]
+		if isRawData {
+			// TODO(leonz): move this to ValidateBasic
+			if len(msg.Prices) != 1 || len(msg.Prices[0].Prices) == 0 {
+				return ctx, errors.New("invalid raw data price format")
+			}
+			pieceIndexTmp, err := strconv.ParseUint(msg.Prices[0].Prices[0].DetID, 10, 32)
+			pieceIndex := uint32(pieceIndexTmp)
+			if err != nil {
+				return ctx, fmt.Errorf("invalid piece index parsed from DetID, got:%s", msg.Prices[0].Prices[0].DetID)
+			}
+			if nextPieceIndex, found := isd.oracleKeeper.NextPieceIndexByFeederID(ctx, msg.FeederID); found {
+				if pieceIndex < nextPieceIndex {
+					return ctx, fmt.Errorf("piece index must be at least %d, got:%d", nextPieceIndex, pieceIndex)
+				}
+				if (ctx.IsCheckTx() && pieceIndex >= nextPieceIndex+uint32(isd.oracleKeeper.GetMaxNonceFromCache())) ||
+					(!ctx.IsCheckTx() && pieceIndex > nextPieceIndex) {
+					return ctx, fmt.Errorf("invalid piece index, nextPieceIndex:%d, got:%d, isCheckTx:%t", nextPieceIndex, pieceIndex, ctx.IsCheckTx())
+				}
+			} else {
+				return ctx, fmt.Errorf("no valid nextPieceIndex for feederID:%d", msg.FeederID)
+			}
+
+			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+				return ctx, errors.New("invalid address")
+			} else if _, err := isd.oracleKeeper.CheckAndIncreaseNextPieceIndex(ctx, sdk.ConsAddress(accAddress).String(), msg.FeederID, pieceIndex); err != nil {
+				return ctx, err
+			}
+
+			return next(ctx, tx, simulate)
+		}
+
+		for _, msg := range msgs {
 			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
 				return ctx, errors.New("invalid address")
 				// #nosec G115  // safe conversion

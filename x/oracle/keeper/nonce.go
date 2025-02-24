@@ -26,8 +26,10 @@ func (k Keeper) RemoveNonceWithValidator(ctx sdk.Context, validator string) {
 	k.removeNonceWithValidator(store, validator)
 }
 
+// CheckAndIncreaseNonce check and increase the nonce for a specific validator and feederID
+// valid nonce starts from 1
 func (k Keeper) CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederID uint64, nonce uint32) (prevNonce uint32, err error) {
-	maxNonce := k.GetMaxNonceFromCache()
+	maxNonce := k.FeederManager.GetMaxNonceFromCache()
 	// #nosec G115  // safe conversion
 	if nonce > uint32(maxNonce) {
 		return 0, fmt.Errorf("nonce_check_failed: max_exceeded: limit=%d received=%d", maxNonce, nonce)

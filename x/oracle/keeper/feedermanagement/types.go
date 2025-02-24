@@ -221,6 +221,18 @@ type round struct {
 	cache CacheReader
 	// algo is the aggregation algorithm for current round to get final price
 	algo AggAlgorithm
+
+	// twoPhases indicates if the corresponding tokenfeeder requires 2-phase aggregation
+	twoPhases bool
+	// rawData is original data for tokenFeeder with 2-phases aggregation rule
+	// a validator can provide more than one rawData for one round
+	rawData [][]byte
+	// in 2-phases aggregation, the aggregated price is the hash root of pieces of rawData, when we received every piece to recover the whole original rawData, this flag is set to true
+	rawDataSealed bool
+
+	m *oracletypes.MerkleTree
+
+	h common.PostAggregationHandler
 }
 
 type orderedSliceInt64 []int64

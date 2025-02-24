@@ -6,8 +6,8 @@ import (
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader, algo AggAlgorithm) *round {
-	return &round{
+func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader, algo AggAlgorithm, twoPhases bool) *round {
+	ret := &round{
 		// #nosec G115
 		startBaseBlock: int64(tokenFeeder.StartBaseBlock),
 		// #nosec G115
@@ -28,7 +28,12 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 		roundBaseBlock: 0,
 		roundID:        0,
 		algo:           algo,
+		twoPhases:      twoPhases,
 	}
+	if twoPhases {
+		ret.rawData = make([][]byte, 0)
+	}
+	return ret
 }
 
 func (r *round) Equals(r2 *round) bool {
@@ -183,8 +188,8 @@ func (r *round) IsQuotingWindowOpen() bool {
 	return r.a != nil
 }
 
-func (r *round) IsQuotingWindowEnd(currentHeight int64) bool {
-	_, _, delta, _ := r.getPosition(currentHeight)
+func (r *round) IsQuotingWindowEnd(height int64) bool {
+	_, _, delta, _ := r.getPosition(height)
 	return delta == r.quoteWindowSize
 }
 
@@ -263,4 +268,23 @@ func (r *round) getPosition(currentHeight int64) (baseBlock, roundID, delta int6
 	delta -= rounds * r.interval
 	baseBlock = currentHeight - delta
 	return
+}
+
+func (r *round) baseBlockFromRoundID(roundID uint64) (uint64, bool) {
+	if roundID < uint64(r.startRoundID) {
+		return 0, false
+	}
+	ret := (roundID-uint64(r.startRoundID))*uint64(r.interval) + uint64(r.startBaseBlock)
+	if r.endBlock > 0 && ret > uint64(r.endBlock) {
+		return 0, false
+	}
+	return ret, true
+}
+
+func (r *round) PieceCount() uint32 {
+	if r.m == nil {
+		return 0
+	}
+
+	return r.m.LeafCount()
 }

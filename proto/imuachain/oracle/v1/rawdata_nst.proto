@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package imuachain.oracle.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// NSTKV key-value pair to tell staker_index and its corresponding balance change
+message NSTKV {
+  // staker index for a nst defined on imuachain side
+  uint32 staker_index = 1;
+  // balance change since last update
+  int64 balance_change = 2;
+}
+
+// RawDataNST represents balance changes of all stakers for a NST
+message RawDataNST {
+  // NSTKV use array to describe {staker_indx: balance_change} for all stakers whose balance had changed 
+  repeated NSTKV nst_balance_changes = 1;
+}

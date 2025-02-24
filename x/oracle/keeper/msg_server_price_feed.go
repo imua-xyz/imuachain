@@ -39,7 +39,19 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		return nil, types.ErrPriceProposalFormatInvalid.Wrap(err.Error())
 	}
 
-	// core logic and functionality of Price Aggregation
+	// goto rawData process which needs no 'aggragation', we just verify the provided piece with recoreded root which got consensus
+	if msg.IsPhaseTwo() {
+		err := ms.ProcessRawData(msg)
+		if err != nil {
+			return &types.MsgCreatePriceResponse{}, nil
+		}
+		logger.Error("quote of 2nd-phase for rawData failed", append(logQuote, "error", err))
+		return nil, err
+	}
+
+	// core logic and functionality of Price Aggregation for 1st phase including
+	// - price data
+	// - hash for big data
 	finalPrice, err := ms.ProcessQuote(ctx, msg, ctx.IsCheckTx())
 	if err != nil {
 		if sdkerrors.IsOf(err, types.ErrQuoteRecorded) {
