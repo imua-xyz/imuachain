@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	utils "github.com/imua-xyz/imuachain/utils"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -428,4 +429,9 @@ func getNSTVersionFromDetID(detID string) (int64, error) {
 		return 0, fmt.Errorf("failed to parse version from:%s, error:%w", parsedDetID[1], err)
 	}
 	return nstVersion, nil
+}
+
+// UpdateNSTBalanceChange serves the post handling for nst balance change
+func UpdateNSTBalanceChange(rawData []byte, ctx sdk.Context, k common.KeeperOracle) error {
+	return nil
 }

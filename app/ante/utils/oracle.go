@@ -6,17 +6,32 @@ import (
 )
 
 // TxSizeLimit limits max size of a create-price tx, this is calculated based on one nativeTokenbalance message of worst case(max size), which will need 576 bytes for balance update
-const TxSizeLimit = 1000
+// 48*1024+5*32+6*4 +... TODO(leonz): ensure the proto cost, now use a fixed 200B
+const (
+	TxSizeLimitOraclePrice   = 49600
+	TxSizeLimitOracleRawData = 200
+)
 
-func IsOracleCreatePriceTx(tx sdk.Tx) bool {
+// TODO(leonz): return additional error info
+func OracleCreatePriceTx(tx sdk.Tx) (msgsO []*oracletypes.MsgCreatePrice, validOracle, validRawData bool) {
 	msgs := tx.GetMsgs()
 	if len(msgs) == 0 {
-		return false
+		return nil, false, false
 	}
+	msgsO = make([]*oracletypes.MsgCreatePrice, 0, len(msgs))
 	for _, msg := range msgs {
-		if _, ok := msg.(*oracletypes.MsgCreatePrice); !ok {
-			return false
+		msgO, ok := msg.(*oracletypes.MsgCreatePrice)
+		if !ok {
+			return nil, false, false
 		}
+		if msgO.IsPhaseTwo() {
+			if len(msgs) > 1 {
+				return nil, false, false
+			}
+			msgsO = append(msgsO, msgO)
+			return msgsO, true, true
+		}
+		msgsO = append(msgsO, msgO)
 	}
-	return true
+	return msgsO, true, false
 }

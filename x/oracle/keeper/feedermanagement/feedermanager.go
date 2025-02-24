@@ -1,6 +1,7 @@
 package feedermanagement
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -530,7 +531,8 @@ func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 			if _, ok := existsFeederIDs[feederID]; !ok && (tokenFeeder.EndBlock == 0 || tokenFeeder.EndBlock > uint64(height)) {
 				logger.Info("[mem] add new round", "feederID", feederID, "height", height)
 				f.sortedFeederIDs = append(f.sortedFeederIDs, feederID)
-				f.rounds[feederID] = newRound(feederID, tokenFeeder, int64(params.MaxNonce), f.cs, NewAggMedian())
+				twoPhases := f.cs.IsRule2PhasesByFeederID(uint64(feederID))
+				f.rounds[feederID] = newRound(feederID, tokenFeeder, int64(params.MaxNonce), f.cs, NewAggMedian(), twoPhases)
 			}
 		}
 		f.sortedFeederIDs.sort()
@@ -603,6 +605,7 @@ func (f *FeederManager) SetForceSeal() {
 }
 
 func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
+	// TODO:(leonz) ? this validation is not suitable for validateBasic, it need state information, but maybe move them into anteHandler ?
 	// nonce, feederID, creator has been verified by anteHandler
 	// baseBlock is going to be verified by its corresponding round
 	decimal, err := f.cs.GetDecimalFromFeederID(msg.FeederID)
@@ -659,6 +662,37 @@ func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
 			}
 		}
 	}
+
+	// extra check for message as 1st phase for 2-phases aggregation
+	if msg.IsPhaseOne() {
+		if len(msg.Prices) != 1 {
+			return errors.New("2-phases aggregation should have exactly one source")
+		}
+		if len(msg.Prices[0].Prices) != 1 {
+			return errors.New("2-phases aggregation should have exactly one price")
+		}
+		lPrice := len(msg.Prices[0].Prices[0].Price)
+		if lPrice == 0 || lPrice > int(f.cs.RawDataPieceSize()) {
+			return fmt.Errorf("2-phases aggregation should have exactly one price with length between 1 and %d", f.cs.RawDataPieceSize())
+		}
+
+		// detID is used to tell how many pieces the raw data is divided into
+		leafCountStr := msg.Prices[0].Prices[0].DetID
+		if len(leafCountStr) == 0 {
+			return errors.New("2-phases aggregation should have detID to tell how many pieces the raw data is divided into")
+		}
+		leafCount, err := strconv.ParseUint(leafCountStr, 10, 32)
+		if err != nil {
+			return fmt.Errorf("2-phases aggregation detID should be a valid uint32, got:%s", leafCountStr)
+		}
+
+		// we wait one more maxNonce blocks to make sure proposer getting expected txs in their mempool
+		// #nosec G115  // maxNonce is positive
+		windowForPhaseTwo := f.cs.IntervalForFeederID(msg.FeederID) - uint64(f.cs.GetMaxNonce())*2
+		if leafCount > windowForPhaseTwo {
+			return fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d", msg.FeederID, windowForPhaseTwo)
+		}
+	}
 	return nil
 }
 
@@ -669,6 +703,7 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 	if err := f.ValidateMsg(msg); err != nil {
 		return nil, oracletypes.ErrInvalidMsg.Wrap(err.Error())
 	}
+
 	msgItem := getProtoMsgItemFromQuote(msg)
 
 	// #nosec G115  // feederID is index of slice
@@ -804,7 +839,8 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 			continue
 		}
 		tfID := int64(tfID)
-		f.rounds[tfID] = newRound(tfID, tf, int64(params.MaxNonce), f.cs, NewAggMedian())
+		twoPhases := f.cs.IsRule2PhasesByFeederID(uint64(tfID))
+		f.rounds[tfID] = newRound(tfID, tf, int64(params.MaxNonce), f.cs, NewAggMedian(), twoPhases)
 		f.sortedFeederIDs.add(tfID)
 	}
 	f.prepareRounds(ctxReplay)
@@ -843,6 +879,33 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	f.cs.SkipCommit()
 
 	return true, nil
+}
+
+func (f *FeederManager) RoundIDToBaseBlock(feederID, roundID uint64) (uint64, bool) {
+	r, ok := f.rounds[int64(feederID)]
+	if !ok {
+		return 0, false
+	}
+	return r.baseBlockFromRoundID(roundID)
+}
+
+// BaseBlockToRoundID returns the roundID which the input baseblock indicates to, it is different to the roundID of which this baseBlock BelongsTo (+1)
+func (f *FeederManager) BaseBlockToNextRoundID(feederID, baseBlock uint64) (uint64, bool) {
+	//TODO(leonz): use uint64 as f.rounds key
+	// #nosec G115
+	r, ok := f.rounds[int64(feederID)]
+	if !ok {
+		return 0, false
+	}
+	// TODO(leonz): use uint64 for getPosition
+	// #nosec G115
+	b, rID, _, _ := r.getPosition(int64(baseBlock))
+	// #nosec G115
+	if uint64(b) != baseBlock {
+		return 0, false
+	}
+	// #nosec G115
+	return uint64(rID), true
 }
 
 func (f *FeederManager) Equals(fm *FeederManager) bool {
@@ -931,4 +994,36 @@ func getProtoMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgI
 		Validator: validator,
 		PSources:  msg.Prices,
 	}
+}
+
+func (f *FeederManager) ProcessRawData(msg *oracletypes.MsgCreatePrice) error {
+	piece, ok := f.GetPieceWithProof(msg)
+	if !ok {
+		return errors.New("failed to parse rawdata piece from message")
+	}
+	// #nosec G115
+	r, ok := f.rounds[int64(msg.FeederID)]
+	if !ok {
+		// this should not happen
+		return fmt.Errorf("round for feederID:%d not exists", msg.FeederID)
+	}
+	if r.m != nil {
+		return fmt.Errorf("feederID %d is not collecting rawData", msg.FeederID)
+	}
+	// we don't check the 1st return value to see if this input proof is of the minimal, that's the duty of anteHandler, and 'verified' pieceWithProof will not fail the tx execution
+	_, ok = r.m.VerifyAndCache(piece.Index, piece.RawData, piece.Proof)
+	if !ok {
+		return fmt.Errorf("failed to verify piece of index %d provided within message for feederID:%d against root:%s", piece.Index, msg.FeederID, hex.EncodeToString(r.m.RootHash()))
+	}
+	// we don't do no state update in tx exexuting, the postHandler and all state update will be handled in EndBlock
+	//		// post handle rawData registered for the feederID
+	//		// clear all caching pieces from stateDB
+	//
+	//		// remove/reset merkleTree
+	//		// remove merkleTree
+	// persist piece for recovery (with memory-cache update into merkleTree)
+	// save this piece and proof to db for recovery, for nodes without running,
+	// this process only causes additional: two write to stateDB(piece, proof), one read from the stateDB(piece)
+
+	return nil
 }

@@ -19,19 +19,33 @@ service Msg {
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
+// AggregationPhase defines the aggregation phase of the message
+enum AggregationPhase{
+  option (gogoproto.goproto_enum_prefix) = false;
+  // MESSAGE_PHASE_NON is the default value, which means the message is not of type 2-phases aggregation
+  AGGREGATION_PHASE_UNSPECIFIED = 0[(gogoproto.enumvalue_customname) = "AggregationPhaseUnspecified"];
+  // MESSAGE_PHASE_ONE is the first phase of the 2-phases aggregation
+  AGGREGATION_PHASE_ONE = 1[(gogoproto.enumvalue_customname) = "AggregationPhaseOne"];
+  // MESSAGE_PHASE_TWO is the second phase of the 2-phases aggregation
+  AGGREGATION_PHASE_TWO = 2[(gogoproto.enumvalue_customname) = "AggregationPhaseTwo"];
+}
+
+
 // MsgCreatePrice provide the price updating message
 message MsgCreatePrice {
   // creator tells which is the message sender and should sign this message
   string creator = 1 [(cosmos_proto.scalar) = "cosmos.ValidatorAddressString"];
   // refer to id from Params.TokenFeeders, 0 is reserved, invalid to use
   uint64 feeder_id = 2 [(gogoproto.customname) = "FeederID"];
-
   // prices price with its corresponding source
   repeated PriceSource prices = 3;
   // on which block commit does this message be built on
   uint64 based_block = 4;
   // nonce represents the unique number to disginguish duplicated messages
   int32 nonce = 5;
+  // true: this message includes data of {rawdata, proof} need to be verified based on consensused root
+  // false: this message includes data need to get consensus based on voting power
+  AggregationPhase phase = 6;
 }
 
 // MsgCreatePriceResponse

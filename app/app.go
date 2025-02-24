@@ -105,7 +105,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	srvflags "github.com/evmos/evmos/v16/server/flags"
@@ -354,7 +353,7 @@ type ImuachainApp struct {
 	OperatorKeeper   operatorKeeper.Keeper
 	ImSlashKeeper    slashKeeper.Keeper
 	AVSManagerKeeper avsManagerKeeper.Keeper
-	OracleKeeper     oracleKeeper.Keeper
+	OracleKeeper     *oracleKeeper.Keeper
 	ImmintKeeper     immintkeeper.Keeper
 	DistrKeeper      distrkeeper.Keeper
 
@@ -394,10 +393,10 @@ func NewImuachainApp(
 
 	eip712.SetEncodingConfig(encodingConfig)
 
+	var oKeeper *oracleKeeper.Keeper
 	// Setup Mempool and Proposal Handlers
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
-		// NOTE: we use a NoOpMempool here, for oracle create-price, it works fine since we have set a infinitgasmeterwithlimit in the ante handler to avoid the out-of-gas error no matter what the amount/gas is set by tx builder, and we set the highest priority for oracle create-price txs to work properly with tendermint mempool to make sure oracle creat-prie tx will be included in the mempool if received. And if we want to use some other application mempool, we need to take care of the gas limit and gas price in the oracle create-price txs.(we don't need to bother this since tendermint mempool use gasMeter.limit() instead of tx.Gas())
-		mempool := mempool.NoOpMempool{}
+		mempool := NewImuaMempool(oKeeper, encodingConfig.TxConfig.TxDecoder())
 		app.SetMempool(mempool)
 		handler := baseapp.NewDefaultProposalHandler(mempool, app)
 		app.SetPrepareProposal(handler.PrepareProposalHandler())
@@ -462,6 +461,7 @@ func NewImuachainApp(
 		keys:              keys,
 		tkeys:             tkeys,
 		memKeys:           memKeys,
+		OracleKeeper:      oKeeper,
 	}
 
 	// init params keeper and subspaces
@@ -544,7 +544,7 @@ func NewImuachainApp(
 
 	// asset and client chain registry.
 	app.AssetsKeeper = assetsKeeper.NewKeeper(
-		keys[assetsTypes.StoreKey], appCodec, &app.OracleKeeper, app.AccountKeeper,
+		keys[assetsTypes.StoreKey], appCodec, app.OracleKeeper, app.AccountKeeper,
 		app.BankKeeper, &app.DelegationKeeper, authAddrString,
 	)
 
@@ -582,7 +582,7 @@ func NewImuachainApp(
 	)
 
 	// x/oracle is not fully integrated (or enabled) but allows for exchange rates to be added.
-	app.OracleKeeper = oracleKeeper.NewKeeper(
+	*app.OracleKeeper = oracleKeeper.NewKeeper(
 		appCodec, keys[oracleTypes.StoreKey], memKeys[oracleTypes.MemStoreKey],
 		app.GetSubspace(oracleTypes.ModuleName), app.StakingKeeper,
 		&app.DelegationKeeper, &app.AssetsKeeper, authAddrString,
@@ -696,7 +696,7 @@ func NewImuachainApp(
 		keys[operatorTypes.StoreKey], appCodec,
 		app.AssetsKeeper,
 		&app.DelegationKeeper, // intentionally a pointer, since not yet initialized.
-		&app.OracleKeeper,
+		app.OracleKeeper,
 		&app.AVSManagerKeeper,
 		&app.StakingKeeper,
 		delegationTypes.VirtualSlashKeeper{},
@@ -904,7 +904,7 @@ func NewImuachainApp(
 		reward.NewAppModule(appCodec, app.RewardKeeper),
 		imslash.NewAppModule(appCodec, app.ImSlashKeeper),
 		avs.NewAppModule(appCodec, app.AVSManagerKeeper),
-		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
+		oracle.NewAppModule(appCodec, *app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper),
 	)
 
@@ -1106,6 +1106,7 @@ func NewImuachainApp(
 func (app *ImuachainApp) Name() string { return app.BaseApp.Name() }
 
 func (app *ImuachainApp) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) {
+	app.OracleKeeper.GetPieceWithProof(nil)
 	options := ante.HandlerOptions{
 		Cdc:                    app.appCodec,
 		AccountKeeper:          app.AccountKeeper,

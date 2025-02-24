@@ -97,12 +97,12 @@ func (t *Test) NewAggregator(filled bool) *aggregator {
 
 func (t *Test) NewRound(cs CacheReader) *round {
 	feederID := r.Intn(len(params.TokenFeeders)-1) + 1
-	round := newRound(int64(feederID), params.TokenFeeders[feederID], int64(params.MaxNonce), cs, defaultAggMedian)
+	round := newRound(int64(feederID), params.TokenFeeders[feederID], int64(params.MaxNonce), cs, defaultAggMedian, false)
 	return round
 }
 
 func (t *Test) NewRoundWithFeederID(cs CacheReader, feederID int64) *round {
-	round := newRound(feederID, params.TokenFeeders[feederID], int64(params.MaxNonce), cs, defaultAggMedian)
+	round := newRound(feederID, params.TokenFeeders[feederID], int64(params.MaxNonce), cs, defaultAggMedian, false)
 	return round
 }
 

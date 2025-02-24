@@ -37,6 +37,9 @@ message Params {
 
   // slashing defines the slashing related params
   SlashingParams slashing = 12;
+
+  // piece_size_byte defines how many bytes one piece of raw data includes
+  uint32 piece_size_byte = 13;
 }
 
 // ConsensusMode defines the consensus mode for the prices.
