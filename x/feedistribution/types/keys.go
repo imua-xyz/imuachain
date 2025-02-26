@@ -48,26 +48,77 @@ var (
 	KeyPrefixParams          = []byte{prefixParams}
 	KeyPrefixEpochIdentifier = []byte{prefixEpochIdentifier}
 
-	// KeyPrefixFeePools avsAddr -> types.FeePool
+	// KeyPrefixFeePools : avsAddr -> types.FeePool
 	// Key for the fee pools of all AVSs; it will track multiple reward pools for different AVSs,
 	// unlike the cosmos-sdk.
 	KeyPrefixFeePools = []byte{prefixFeePools}
-	// KeyPrefixOperatorOutstandingRewards operator + '/' + AVSAddr -> OperatorOutstandingRewards
+
+	// KeyPrefixOperatorOutstandingRewards :
+	// operator + '/' + AVSAddr -> OperatorOutstandingRewards
 	// key for outstanding rewards, it will track multiple outstanding rewards from different AVSs
 	KeyPrefixOperatorOutstandingRewards = []byte{prefixOperatorOutstandingRewards}
 
+	// KeyPrefixDelegatorStartingInfo :
+	// delegationKey = restakerID +'/'+assetID+'/'+operatorAddr
+	// delegationKey + '/' + epochIdentifier -> DelegatorStartingInfo
+	// key for delegator starting info, it will be used to track the starting info for a delegator reward
+	// period.
+	// Due to different epoch configurations for different AVSs, the startingInfo for the same delegation
+	// will vary across different epochs. Therefore, it is necessary to store the startingInfo for all AVS
+	// epochs related to this delegation. Of course, since multiple AVSs in the system may share the same
+	// epoch configuration, it is sufficient to store the startingInfo for each epoch separately, rather
+	// than storing it individually for each AVS. All AVSs with the same epoch configuration can share the
+	// startingInfo for that epoch.
+	KeyPrefixDelegatorStartingInfo = []byte{prefixDelegatorStartingInfo}
+
+	// KeyPrefixOperatorHistoricalRewards :
+	// operator + '/' +assetID + '/'+ epochIdentifier + '/' + period -> OperatorHistoricalRewards
+	// key for historical operators rewards / stake
+	KeyPrefixOperatorHistoricalRewards = []byte{prefixOperatorHistoricalRewards}
+
+	// KeyPrefixOperatorCurrentRewards :
+	// operator + '/' +assetID + '/'+ epochIdentifier -> OperatorCurrentRewards
+	// key for current operator rewards
+	KeyPrefixOperatorCurrentRewards = []byte{prefixOperatorCurrentRewards}
+
+	// KeyPrefixOperatorAccumulatedCommission :
+	// operator + '/' + AVSAddr -> OperatorAccumulatedCommission
+	// key for accumulated operator commission
+	KeyPrefixOperatorAccumulatedCommission = []byte{prefixOperatorAccumulatedCommission}
+
+	// KeyPrefixOperatorSlashEvent :
+	// operator + '/' + height + '/' + epochIdentifier -> OperatorSlashEvent
+	// key for operator slash fraction, the periods of different epochs will differ when a
+	// slash event occurs, so the slash event should be recorded for all related epochs.
+	KeyPrefixOperatorSlashEvent = []byte{prefixOperatorSlashEvent}
+
+	// KeyPrefixStakerOutstandingRewards :
+	// stakerID + '/' + AVSAddr -> StakerOutstandingRewards
+	// key for outstanding rewards of staker.
+	// Unlike the F1 distribution in Cosmos SDK, the reward vault for restakers in the Imua
+	// protocol may be distributed across different client chains as well as the Imua chain
+	// itself. Therefore, when a staker claims rewards, we handle it in two steps. The first
+	// step is similar to the F1 withdraw process, which is passive and triggered when the stake
+	// changes. In this step, the reward withdrawal is first recorded under this specific key.
+	// Afterward, the staker can initiate a claim transaction on the chain where the reward vault
+	// is located. The transaction will check the validity of the claim based on the recorded reward
+	// status and execute the reward distribution accordingly.
+	KeyPrefixStakerOutstandingRewards = []byte{prefixStakerOutstandingRewards}
+
 	// KeyPrefixDelegatorWithdrawAddr
 	// key for delegator withdraw address
+	// todo: The reward claim process seems to be initiated on the Imua chain and routed through the
+	// cross-chain protocol to execute on multiple reward vaults, which appears to be the most reasonable approach.
+	// However, this process is also applicable to delegation. Since all of our current design process entry points
+	// are initiated from the client chain, this method may be considered for optimization in the future, especially
+	// when considering the transaction fees on the client chain.
+	// Additionally, with this approach, stakers whose addresses are not compatible with EVM will need to set up an
+	// EVM address on the Imua chain to execute the above operations. Of course, for such stakers, if they participate
+	// and receive rewards on the Imua chain, such as rewards provided by dogfood, they will also need such an address
+	// when claiming rewards. Therefore, we may later provide an interface for all address-incompatible stakers to
+	// configure their EVM addresses on Imua. However, the transaction to configure this address should be initiated
+	// on the client chain and authorized by the staker's native address.
 	KeyPrefixDelegatorWithdrawAddr = []byte{prefixDelegatorWithdrawAddr}
-
-	// KeyPrefixDelegatorStartingInfo
-	// key for delegator starting info,
-	KeyPrefixDelegatorStartingInfo         = []byte{prefixDelegatorStartingInfo}
-	KeyPrefixOperatorHistoricalRewards     = []byte{prefixOperatorHistoricalRewards}     // key for historical operators rewards / stake
-	KeyPrefixOperatorCurrentRewards        = []byte{prefixOperatorCurrentRewards}        // key for current operator rewards
-	KeyPrefixOperatorAccumulatedCommission = []byte{prefixOperatorAccumulatedCommission} // key for accumulated operator commission
-	KeyPrefixOperatorSlashEvent            = []byte{prefixOperatorSlashEvent}            // key for operator slash fraction
-	KeyPrefixStakerOutstandingRewards      = []byte{prefixStakerOutstandingRewards}      // key for outstanding rewards of staker
 )
 
 // GetOperatorAccumulatedCommissionKey creates the key for a validator's current commission.
