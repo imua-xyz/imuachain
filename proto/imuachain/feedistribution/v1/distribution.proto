@@ -9,8 +9,20 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 option (gogoproto.equal_all) = true;
 
+// CommonAVSRewardData is a common struct used to record the current rewards and cumulative
+// reward ratios of a specified AVS for the operator.
+message CommonAVSRewardData {
+  // avs_address is the AVS address
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
+  // rewards represents the current rewards or cumulative reward ratios
+  repeated cosmos.base.v1beta1.DecCoin rewards = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
 // OperatorHistoricalRewards represents historical rewards for an operator.
-// Height is implicit within the store key.
+// Operator, assetID, epochIdentifier and period are implicit within the store key.
 // Cumulative reward ratio is the sum from the zeroeth period
 // until this period of rewards / tokens, per the spec.
 // The reference count indicates the number of objects
@@ -21,62 +33,60 @@ option (gogoproto.equal_all) = true;
 //  + number of slashes which ended the associated period (and might need to
 //  read that record)
 //  + one per validator for the zeroeth period, set on initialization
+// In imua chain, one operator will opt into multiple AVSs, all AVS rewards will
+// be distributed by f1 distribution. For AVSs with the same epoch configuration,
+// the update in delegation stake will be exactly the same, so we can use a single
+// reference_count to handle the reward distribution for these AVSs. However, for
+// storing the accumulated reward factors of different AVSs, since different AVSs
+// may have multiple different rewards, to keep the logic clear, we will not store
+// all reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional
+// slice to store the accumulated reward factors for all AVSs separately.
 message OperatorHistoricalRewards {
-  // cumulative_reward_ratio is the  ratio defined
-  repeated cosmos.base.v1beta1.DecCoin cumulative_reward_ratio = 1 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
-  // reference_count is for F1 distribution, not enabled for current version.
+  // cumulative_reward_ratios is the reward ratios for multiple AVSs
+  repeated CommonAVSRewardData cumulative_reward_ratios = 1;
+  // reference_count is for F1 distribution.
   uint32 reference_count = 2;
 }
 
-message DelegatorStaringInfoPerEpoch {
-  uint64 previous_period = 1;
-  string stake           = 2 [
-    (cosmos_proto.scalar) = "cosmos.Int",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
-  ];
-  
-}
-
-// DelegatorStartingInfo represents the starting info for a delegator reward
-// period. It tracks the previous validator period, the delegation's amount of
-// staking token, and the creation height (to check later on if any slashes have
-// occurred). NOTE: Even though validators are slashed to whole staking tokens,
-// the delegators within the validator may be left with less than a full token,
-// thus sdk.Dec is used.
-message DelegatorStartingInfo {
-  uint64 previous_period = 1;
-  string stake           = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
-  ];
-  uint64 height = 3
-  [(gogoproto.jsontag) = "creation_height", (amino.field_name) = "creation_height", (amino.dont_omitempty) = true];
-}
-
-// OperatorCurrentRewards represents current rewards and current
-// period for an operator kept as a running counter and incremented
-// each block as long as the validator's tokens remain constant.
+// OperatorCurrentRewards represents the current rewards and the current
+// period for an operator, stored as a running counter that is incremented
+// each time the operator's token balance changes. Token changes are checked
+// on an epoch basis, rather than per block. Similar to OperatorHistoricalRewards,
+// for multiple AVSs with the same epoch configuration, the token changes for the
+// related operator are consistent. Therefore, they can share a single period.
+// However, the rewards are still stored separately for each AVS using a 2D array.
+// Operator, assetID and epochIdentifier are implicit within the store key.
 message OperatorCurrentRewards {
   // current rewards
-  repeated cosmos.base.v1beta1.DecCoin rewards = 1 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  repeated CommonAVSRewardData rewards = 1;
   // period is for a validator kept as a running counter
   uint64 period = 2;
 }
 
+// DelegatorStartingInfo represents the starting info for a delegator reward
+// period. It tracks the previous validator period, the delegation's amount of
+// staking token, and the creation epoch information (the epoch_start_height is
+// used to check later on if any slashes have occurred).
+// In imua chain, the voting power update and reward distribution are executed
+// per epoch, so when using F1 distribution for reward distribution, the smallest
+// unit of change in the delegator's stake is the epoch, not the block.
+message DelegatorStartingInfo {
+  uint64 previous_period = 1;
+  string stake = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  string epoch_identifier = 3;
+  uint64 epoch_number = 4;
+  uint64 epoch_start_height = 5;
+}
+
 // OperatorAccumulatedCommission represents accumulated commission
 // for an operator kept as a running counter, can be withdrawn at any time.
+// The AVS address is implicit within the store key.
 message OperatorAccumulatedCommission {
-  // commission is the commission for a validator
+  // commission is the commission for an operator
   repeated cosmos.base.v1beta1.DecCoin commission = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,
@@ -86,8 +96,9 @@ message OperatorAccumulatedCommission {
 
 // OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards
 // for an operator inexpensive to track, allows simple sanity checks.
+// The AVS address is implicit within the store key.
 message OperatorOutstandingRewards {
-  // rewards represents the rewards for the validator
+  // rewards represents the rewards for the operator
   repeated cosmos.base.v1beta1.DecCoin rewards = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,
@@ -106,8 +117,22 @@ message StakerOutstandingRewards {
   ];
 }
 
+// OperatorSlashEvent represents an operator slash event.
+// operator, height and epochIdentifier are implicit within the store key.
+// This is needed to calculate appropriate amount of staking tokens
+// for delegations which are withdrawn after a slash has occurred.
+message OperatorSlashEvent {
+  uint64 operator_period = 1;
+  string fraction         = 2 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
+}
+
 // FeePool is the global fee pool for distribution.
 // It holds decimal coins. Once whole those coins can be burned or distributed to the community pool.
+// The AVS address is implicit within the store key.
 message FeePool {
   // global fee pool for distribution.
   repeated cosmos.base.v1beta1.DecCoin community_pool = 1 [
