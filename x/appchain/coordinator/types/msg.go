@@ -47,7 +47,7 @@ func (msg *RegisterSubscriberChainRequest) ValidateBasic() error {
 		if _, _, err := assetstypes.ValidateID(
 			assetID,
 			true, // the caller must make them lowercase
-			true, // TODO: we support only Ethereum assets for now.
+			false,
 		); err != nil {
 			return fmt.Errorf("invalid asset id %s: %s", assetID, err)
 		}

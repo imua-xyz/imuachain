@@ -61,14 +61,17 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 				"invalid operator address %s: %s", address, err,
 			)
 		}
-		if op.OperatorInfo.EarningsAddr != "" {
-			_, err := sdk.AccAddressFromBech32(op.OperatorInfo.EarningsAddr)
-			if err != nil {
-				return nil, errorsmod.Wrapf(
-					ErrInvalidGenesisData,
-					"invalid operator earning address %s: %s", op.OperatorInfo.EarningsAddr, err,
-				)
-			}
+		if op.OperatorInfo.EarningsAddr != address {
+			return nil, errorsmod.Wrapf(
+				ErrInvalidGenesisData,
+				"operator address %s has earnings address %s", address, op.OperatorInfo.EarningsAddr,
+			)
+		}
+		if op.OperatorInfo.ApproveAddr != address {
+			return nil, errorsmod.Wrapf(
+				ErrInvalidGenesisData,
+				"operator address %s has approve address %s", address, op.OperatorInfo.ApproveAddr,
+			)
 		}
 		operators[address] = struct{}{}
 		if op.OperatorInfo.ClientChainEarningsAddr != nil {
