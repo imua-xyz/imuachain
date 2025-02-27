@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"strconv"
 	"strings"
 	"time"
@@ -32,7 +33,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	logger := ms.Logger(ctx)
 
 	validator, _ := types.ConsAddrStrFromCreator(msg.Creator)
-	logQuote := []interface{}{"feederID", msg.FeederID, "baseBlock", msg.BasedBlock, "proposer", validator, "msg-nonce", msg.Nonce, "height", ctx.BlockHeight()}
+	logQuote := []any{"feederID", msg.FeederID, "baseBlock", msg.BasedBlock, "proposer", validator, "msg-nonce", msg.Nonce, "height", ctx.BlockHeight()}
 
 	if err := checkTimestamp(ctx, msg); err != nil {
 		logger.Error("quote has invalid timestamp", append(logQuote, "error", err)...)
@@ -41,8 +42,9 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 
 	// goto rawData process which needs no 'aggragation', we just verify the provided piece with recoreded root which got consensus
 	if msg.IsPhaseTwo() {
-		err := ms.ProcessRawData(msg)
-		if err != nil {
+		cachedRawData, err := ms.ProcessRawData(msg)
+		if err == nil {
+			logger.Info("quote of 2nd-phase added rawData of hash:%s", hex.EncodeToString(cachedRawData))
 			return &types.MsgCreatePriceResponse{}, nil
 		}
 		logger.Error("quote of 2nd-phase for rawData failed", append(logQuote, "error", err))

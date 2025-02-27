@@ -3,10 +3,11 @@ package feedermanagement
 import (
 	"fmt"
 
+	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader, algo AggAlgorithm, twoPhases bool) *round {
+func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader, algo AggAlgorithm, twoPhases bool, postHandler common.PostAggregationHandler) *round {
 	ret := &round{
 		// #nosec G115
 		startBaseBlock: int64(tokenFeeder.StartBaseBlock),
@@ -21,7 +22,6 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 		// #nosec G115
 		tokenID: int64(tokenFeeder.TokenID),
 		cache:   cache,
-
 		// default value
 		status:         roundStatusClosed,
 		a:              nil,
@@ -31,7 +31,9 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 		twoPhases:      twoPhases,
 	}
 	if twoPhases {
-		ret.rawData = make([][]byte, 0)
+		if postHandler != nil {
+			ret.h = postHandler
+		}
 	}
 	return ret
 }
@@ -172,6 +174,11 @@ func (r *round) PrepareForNextBlock(currentHeight int64) (open bool) {
 		if delta == 0 && !r.IsQuoting() {
 			r.openQuotingWindow()
 			open = true
+		}
+		if r.twoPhases {
+			// wait quoteWindowSize-1 blocks for proposer to collecting pieces
+			// #nosec G115
+			r.roundPhaseTwoStartBlock = uint64(r.roundBaseBlock + 2*r.quoteWindowSize)
 		}
 	}
 	return open

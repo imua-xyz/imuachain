@@ -41,13 +41,20 @@ func (p *Proof) getHashByIndex(index uint32) []byte {
 	return nil
 }
 
-// hashNode represents a node including index and hash
-type HashNode struct {
-	Index uint32
-	Hash  []byte
+func (m *MerkleTree) SetRawDataPieces(pieces [][]byte) {
+	m.pieces = pieces
 }
 
-// func (m *MerkleTree) getPathFromLeafIndex(index uint32) []uint32 {
+func (m *MerkleTree) SetProofNodes(nodes []*HashNode) {
+	for _, node := range nodes {
+		n := m.t[node.Index]
+		if n == nil {
+			continue
+		}
+		n.hash = node.Hash
+	}
+}
+
 func (m *MerkleTree) ProofPathFromLeafIndex(index uint32) []uint32 {
 	if index >= m.leafCount {
 		return nil
@@ -211,7 +218,7 @@ func (m *MerkleTree) PieceByIndex(targetIndex uint32) ([]byte, bool) {
 // return rawData as a whole, with true/false to tell if we got the completed rawData
 // when fasel, the returned first value should be nil
 func (m *MerkleTree) CompleteRawData() ([]byte, bool) {
-	if len(m.pieces) < int(m.leafCount) {
+	if m == nil || len(m.pieces) < int(m.leafCount) || m.leafCount == 0 {
 		return nil, false
 	}
 	if len(m.rawData) > 0 {
@@ -229,7 +236,11 @@ func (m *MerkleTree) CompleteRawData() ([]byte, bool) {
 // only when MerkleTree is set to non-zero leafCount with less amount of pieces than that leafCount we got false returned
 // so when the return value is false, it also indicates that this MerkleTree is collecting pieces
 func (m *MerkleTree) Completed() bool {
-	return len(m.pieces) == int(m.leafCount)
+	return m != nil && len(m.pieces) == int(m.leafCount)
+}
+
+func (m *MerkleTree) CollectingRawData() bool {
+	return m != nil && len(m.pieces) < int(m.leafCount)
 }
 
 // (0, true) means the first leaf node is cached
@@ -268,14 +279,14 @@ func (m *MerkleTree) RootHash() []byte {
 	return m.root
 }
 
+func (m *MerkleTree) RootIndex() uint32 {
+	return m.rootIndex
+}
+
 // NewMT new a merkle tree initialized with the topology from input pieceSize and totalSize
-func NewMT(pieceSize, totalSize uint32, root []byte) *MerkleTree {
-	if totalSize == 0 {
+func NewMT(pieceSize, leafCount uint32, root []byte) *MerkleTree {
+	if leafCount < 1 {
 		return nil
-	}
-	leafCount := totalSize / pieceSize
-	if totalSize%pieceSize > 0 {
-		leafCount++
 	}
 	originalLeafCount := leafCount
 

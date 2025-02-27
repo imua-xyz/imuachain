@@ -1,0 +1,33 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// Nonce is a message that contains a nonce for a feeder
+message ValidatorIndex {
+  // FeederID is the ID of the feeder that corresponding to the nonce
+  string validator = 1;
+  // value is the nonce value
+  uint32 next_index = 2;
+}
+
+// ValidatorNonce is a message that contains the nonces for a validator
+message FeederValidatorsIndex{
+  // nonces is the list of nonces for the feeders
+  repeated ValidatorIndex validator_index_list= 2;
+}
+
+message HashNode {
+  uint32 index = 1;
+  bytes hash = 2;
+}
+
+// Proof represents all hash nodes of a Mekle tree with indexes
+message FlattenTree{
+  repeated HashNode nodes = 1;
+}
+
+message TreeInfo {
+  uint32 leaf_count = 1;
+  bytes root_hash = 2;
+}

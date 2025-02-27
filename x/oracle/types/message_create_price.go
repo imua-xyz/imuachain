@@ -49,6 +49,10 @@ func (msg *MsgCreatePrice) ValidateBasic() error {
 	return nil
 }
 
+func (msg *MsgCreatePrice) IsNotTwoPhases() bool {
+	return msg.Phase == AggregationPhaseUnspecified
+}
+
 func (msg *MsgCreatePrice) IsPhaseOne() bool {
 	return msg.Phase == AggregationPhaseOne
 }

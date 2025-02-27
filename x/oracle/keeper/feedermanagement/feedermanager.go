@@ -65,8 +65,7 @@ func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 	// if the cache is nil and we are not in recovery mode, init the caches
 	if f.cs == nil {
 		var err error
-		recovered, err = f.recovery(ctx)
-		// it's safe to panic since this will only happen when the node is starting with something wrong in the store
+		recovered, err = f.recovery(ctx) // it's safe to panic since this will only happen when the node is starting with something wrong in the store
 		if err != nil {
 			panic(err)
 		}
@@ -284,19 +283,57 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 
 					// #nosec G115  // tokenID is index of slice
 					if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit, finalPrice.DetID); !updated {
-						// failed to append price due to roundID gap, and this is a 'should-not-happen' case
-						f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
-					}
+						// this is an 'impossible' case, we should not reach here
+						latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
+						logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID", "feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit, "restul-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
+					} else {
+						fstr := strconv.FormatInt(feederID, 10)
+						successFeederIDs = append(successFeederIDs, fstr)
 
-					fstr := strconv.FormatInt(feederID, 10)
-					successFeederIDs = append(successFeederIDs, fstr) // there's no valid price for any round yet
+						// set up for 2-phases aggregation
+						if r.twoPhases {
+							// no more validation check, they've all been done by previous process
+							lc, _ := strconv.ParseUint(finalPrice.DetID, 10, 32)
+							// set up mem-round for 2nd phase aggregation
+							r.m = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(lc), []byte(finalPrice.Price))
+							// set up state for 2nd phase aggregation
+							// #nosec G115
+							f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(lc), []byte(finalPrice.Price))
+						}
+					}
 				} else {
 					logger.Error("We currently only support rules under oracle V1: only allow price from source Chainlink", "feederID", r.feederID)
 				}
 			}
 			// keep aggregator for possible 'handlQuotingMisBehavior' at quotingWindowEnd
 			r.status = roundStatusClosed
+		} else if r.twoPhases {
+			// check if r is 2-phases and rawData is completed, for 2nd-phase, the status of round must be closed
+			if r.m.CollectingRawData() {
+				if len(r.cachedProofForBlock) > 0 {
+					// #nosec G115
+					f.k.AddNodesToMerkleTree(ctx, uint64(r.feederID), r.cachedProofForBlock)
+					// reset cachedProofForBlock after commit to sate
+					r.cachedProofForBlock = nil
+				}
+				if LatestLeafIndex, ok := r.m.LatestLeafIndex(); ok {
+					// #nosec G115
+					f.k.SetNextPieceIndexForFeeder(ctx, uint64(r.feederID), LatestLeafIndex+1)
+				}
+			} else if rawData, ok := r.m.CompleteRawData(); ok {
+				// execute postHandler with rawData
+				if err := r.h(ctx, rawData, uint64(r.feederID), uint64(r.roundID), f.k); err != nil {
+					// just log the error and wait for next round to update
+					// TODO(leonz): this suites for NST, we can just wait for next round to update, but does it suites for commmon case ? should we do some other postHandling for this fail when it's not of NST case?
+					logger.Error("failed to execute postHandler for 2phases aggregation on consensus price", "feederID", r.feederID, "roundID", r.roundID, "consensus 1st-phase hash:%s", hex.EncodeToString(r.m.RootHash()))
+				}
+				// reset related cache from state
+				// #nosec G115
+				f.k.Clear2ndPhase(ctx, uint64(r.feederID), r.m.RootIndex())
+				r.m = nil
+			}
 		}
+
 		// close all quotingWindow to skip current rounds' 'handlQuotingMisBehavior'
 		if f.forceSeal {
 			r.closeQuotingWindow()
@@ -532,7 +569,8 @@ func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 				logger.Info("[mem] add new round", "feederID", feederID, "height", height)
 				f.sortedFeederIDs = append(f.sortedFeederIDs, feederID)
 				twoPhases := f.cs.IsRule2PhasesByFeederID(uint64(feederID))
-				f.rounds[feederID] = newRound(feederID, tokenFeeder, int64(params.MaxNonce), f.cs, NewAggMedian(), twoPhases)
+				ph, _ := f.k.GetPostAggregation(feederID)
+				f.rounds[feederID] = newRound(feederID, tokenFeeder, int64(params.MaxNonce), f.cs, NewAggMedian(), twoPhases, ph)
 			}
 		}
 		f.sortedFeederIDs.sort()
@@ -663,6 +701,9 @@ func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
 		}
 	}
 
+	if f.cs.IsRule2PhasesByFeederID(msg.FeederID) && msg.IsNotTwoPhases() {
+		return fmt.Errorf("feederID:%d is configured for 2-phases aggregation, but the message is not of 2-phases", msg.FeederID)
+	}
 	// extra check for message as 1st phase for 2-phases aggregation
 	if msg.IsPhaseOne() {
 		if len(msg.Prices) != 1 {
@@ -687,10 +728,11 @@ func (f *FeederManager) ValidateMsg(msg *oracletypes.MsgCreatePrice) error {
 		}
 
 		// we wait one more maxNonce blocks to make sure proposer getting expected txs in their mempool
+		// we don't use the last block of current round(which is the baseBlock of the next round), so the quotingWindow for 2nd-phase message is from [baseBlock+2*maxNonce, nextBaseBlock-1]
 		// #nosec G115  // maxNonce is positive
 		windowForPhaseTwo := f.cs.IntervalForFeederID(msg.FeederID) - uint64(f.cs.GetMaxNonce())*2
-		if leafCount > windowForPhaseTwo {
-			return fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d", msg.FeederID, windowForPhaseTwo)
+		if leafCount < 1 || leafCount > windowForPhaseTwo {
+			return fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d and be at least 1, got%d", msg.FeederID, windowForPhaseTwo, leafCount)
 		}
 	}
 	return nil
@@ -711,6 +753,26 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 	if !ok {
 		// This should not happened since we do check the nonce in anthHandle
 		return nil, fmt.Errorf("round not exists for feederID:%d, proposer:%s", msgItem.FeederID, msgItem.Validator)
+	}
+
+	// TODO(leonz): remove this ?
+	if !r.twoPhases != msg.IsNotTwoPhases() {
+		// this should not happen, since message itself had been checked in 'validateMsg', when came to here it means there' something wront in 'round' initialization
+		return nil, fmt.Errorf("the 2phases status of round and message is mismatched, there's got something wrong with mem-round initialzation, feederID:%d", msg.FeederID)
+	}
+
+	if msg.IsPhaseTwo() {
+		// either there's no consensus price from 1st phase or the 2nd phase had collected all pieces, this condition will be true and we will reject the transaction
+		// also we don't record any 'miss' count under this same condition
+		if r.m == nil || r.m.Completed() {
+			return nil, fmt.Errorf("message with 2-nd phase for feederID:%d of round_%d is reject since that round is not collecting raw data", msg.FeederID, r.roundID)
+		}
+
+		// #nosec G115
+		if uint64(ctx.BlockHeight()) < r.roundPhaseTwoStartBlock {
+			return nil, fmt.Errorf("message with 2-nd phase for feederID:%d of round_%d can only be accept at block height of at least %d", msg.FeederID, r.roundID, r.roundPhaseTwoStartBlock)
+		}
+
 	}
 
 	// #nosec G115  // baseBlock is block height which is not negative
@@ -839,8 +901,10 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 			continue
 		}
 		tfID := int64(tfID)
+		// #nosec G115  // safe conversion
 		twoPhases := f.cs.IsRule2PhasesByFeederID(uint64(tfID))
-		f.rounds[tfID] = newRound(tfID, tf, int64(params.MaxNonce), f.cs, NewAggMedian(), twoPhases)
+		postHandler, _ := f.k.GetPostAggregation(tfID)
+		f.rounds[tfID] = newRound(tfID, tf, int64(params.MaxNonce), f.cs, NewAggMedian(), twoPhases, postHandler)
 		f.sortedFeederIDs.add(tfID)
 	}
 	f.prepareRounds(ctxReplay)
@@ -878,10 +942,36 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 
 	f.cs.SkipCommit()
 
+	pieceSize := f.cs.RawDataPieceSize()
+	// recovery for 2nd-phase state
+	for _, r := range f.rounds {
+		if r.twoPhases {
+			//reset r.m from state
+			// #nosec G115
+			feederID := uint64(r.feederID)
+			leafCount, rootHash := f.k.GetFeederTreeInfo(ctx, uint64(r.feederID))
+			if leafCount == 0 {
+				continue
+			}
+			r.m = oracletypes.NewMT(pieceSize, leafCount, rootHash)
+			// rawdata
+			rawDataPieces, err := f.k.GetRawDataPieces(ctx, feederID)
+			if err != nil {
+				return false, err
+			}
+			r.m.SetRawDataPieces(rawDataPieces)
+			// proof nodes
+			// #nosec G115
+			nodes := f.k.GetNodesFromMerkleTree(ctx, uint64(r.feederID))
+			r.m.SetProofNodes(nodes)
+		}
+	}
+
 	return true, nil
 }
 
 func (f *FeederManager) RoundIDToBaseBlock(feederID, roundID uint64) (uint64, bool) {
+	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
 	if !ok {
 		return 0, false
@@ -891,7 +981,7 @@ func (f *FeederManager) RoundIDToBaseBlock(feederID, roundID uint64) (uint64, bo
 
 // BaseBlockToRoundID returns the roundID which the input baseblock indicates to, it is different to the roundID of which this baseBlock BelongsTo (+1)
 func (f *FeederManager) BaseBlockToNextRoundID(feederID, baseBlock uint64) (uint64, bool) {
-	//TODO(leonz): use uint64 as f.rounds key
+	// TODO(leonz): use uint64 as f.rounds key
 	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
 	if !ok {
@@ -996,34 +1086,42 @@ func getProtoMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgI
 	}
 }
 
-func (f *FeederManager) ProcessRawData(msg *oracletypes.MsgCreatePrice) error {
+// ProcessRawData verify the submitted piece of rawData with proof against the expected root and cached the result if it passded the verification
+// return (cached rawData piece, error)
+func (f *FeederManager) ProcessRawData(msg *oracletypes.MsgCreatePrice) ([]byte, error) {
+	if err := f.ValidateMsg(msg); err != nil {
+		return nil, oracletypes.ErrInvalidMsg.Wrap(err.Error())
+	}
 	piece, ok := f.GetPieceWithProof(msg)
 	if !ok {
-		return errors.New("failed to parse rawdata piece from message")
+		return nil, errors.New("failed to parse rawdata piece from message")
 	}
 	// #nosec G115
 	r, ok := f.rounds[int64(msg.FeederID)]
 	if !ok {
 		// this should not happen
-		return fmt.Errorf("round for feederID:%d not exists", msg.FeederID)
+		return nil, fmt.Errorf("round for feederID:%d not exists", msg.FeederID)
 	}
-	if r.m != nil {
-		return fmt.Errorf("feederID %d is not collecting rawData", msg.FeederID)
+	if r.m == nil {
+		return nil, fmt.Errorf("feederID %d is not collecting rawData", msg.FeederID)
 	}
 	// we don't check the 1st return value to see if this input proof is of the minimal, that's the duty of anteHandler, and 'verified' pieceWithProof will not fail the tx execution
-	_, ok = r.m.VerifyAndCache(piece.Index, piece.RawData, piece.Proof)
+	cachedProof, ok := r.m.VerifyAndCache(piece.Index, piece.RawData, piece.Proof)
 	if !ok {
-		return fmt.Errorf("failed to verify piece of index %d provided within message for feederID:%d against root:%s", piece.Index, msg.FeederID, hex.EncodeToString(r.m.RootHash()))
+		return nil, fmt.Errorf("failed to verify piece of index %d provided within message for feederID:%d against root:%s", piece.Index, msg.FeederID, hex.EncodeToString(r.m.RootHash()))
+	}
+	// we don't need to cache the proof for state updating if the merkle tree have collected all rawData
+	if !r.m.Completed() {
+		r.cachedProofForBlock = append(r.cachedProofForBlock, cachedProof...)
 	}
 	// we don't do no state update in tx exexuting, the postHandler and all state update will be handled in EndBlock
 	//		// post handle rawData registered for the feederID
 	//		// clear all caching pieces from stateDB
-	//
 	//		// remove/reset merkleTree
 	//		// remove merkleTree
 	// persist piece for recovery (with memory-cache update into merkleTree)
 	// save this piece and proof to db for recovery, for nodes without running,
 	// this process only causes additional: two write to stateDB(piece, proof), one read from the stateDB(piece)
 
-	return nil
+	return piece.RawData, nil
 }

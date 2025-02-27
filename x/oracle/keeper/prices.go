@@ -211,29 +211,29 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	}
 	k.IncreaseNextRoundID(ctx, tokenID)
 	// skip post processing for nil deterministic ID
-	if detID == types.NilDetID {
-		return true
-	}
-
-	// skip post processing for empty price
-	if len(priceTR.Price) == 0 {
-		return true
-	}
-
-	if nstAssetID := p.GetAssetIDForNSTFromTokenID(tokenID); len(nstAssetID) > 0 {
-		nstVersion, err := getNSTVersionFromDetID(detID)
-		if err != nil || nstVersion == 0 {
-			logger.Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err, "nstVersion", nstVersion, "tokenID", tokenID, "roundID", nextRoundID)
-			return true
-		}
-		err = k.UpdateNSTByBalanceChange(ctx, nstAssetID, priceTR, nstVersion)
-		if err != nil {
-			// we just report this error in log to notify validators
-			logger.Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err)
-		} else {
-			logger.Info("updated balance change for NST")
-		}
-	}
+	//	if detID == types.NilDetID {
+	//		return true
+	//	}
+	//
+	//	// skip post processing for empty price
+	//	if len(priceTR.Price) == 0 {
+	//		return true
+	//	}
+	//
+	//	if nstAssetID := p.GetAssetIDForNSTFromTokenID(tokenID); len(nstAssetID) > 0 {
+	//		nstVersion, err := getNSTVersionFromDetID(detID)
+	//		if err != nil || nstVersion == 0 {
+	//			logger.Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err, "nstVersion", nstVersion, "tokenID", tokenID, "roundID", nextRoundID)
+	//			return true
+	//		}
+	//		err = k.UpdateNSTByBalanceChange(ctx, nstAssetID, priceTR, nstVersion)
+	//		if err != nil {
+	//			// we just report this error in log to notify validators
+	//			logger.Error(types.ErrUpdateNativeTokenVirtualPriceFail.Error(), "error", err)
+	//		} else {
+	//			logger.Info("updated balance change for NST")
+	//		}
+	//	}
 	return true
 }
 

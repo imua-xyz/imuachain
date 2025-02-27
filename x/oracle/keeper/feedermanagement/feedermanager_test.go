@@ -26,14 +26,14 @@ func TestFeederManagement(t *testing.T) {
 			ps2 := ps1
 			fm2 := *fm
 
-			fm.rounds[1] = newRound(1, testdata.DefaultParamsForTest().TokenFeeders[1], 3, c, defaultAggMedian)
+			fm.rounds[1] = newRound(1, testdata.DefaultParamsForTest().TokenFeeders[1], 3, c, defaultAggMedian, false, nil)
 			fm.rounds[1].PrepareForNextBlock(20)
 			fm.sortedFeederIDs.add(1)
 			fm.rounds[1].a.ds.AddPriceSource(&ps1, big.NewInt(1), "v1")
 
 			fm2.rounds = make(map[int64]*round)
 			fm2.sortedFeederIDs = make([]int64, 0)
-			fm2.rounds[1] = newRound(1, testdata.DefaultParamsForTest().TokenFeeders[1], 3, c, defaultAggMedian)
+			fm2.rounds[1] = newRound(1, testdata.DefaultParamsForTest().TokenFeeders[1], 3, c, defaultAggMedian, false, nil)
 			fm2.rounds[1].PrepareForNextBlock(20)
 			fm2.sortedFeederIDs.add(1)
 			fm2.rounds[1].a.ds.AddPriceSource(&ps2, big.NewInt(1), "v1")

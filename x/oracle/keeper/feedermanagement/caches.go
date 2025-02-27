@@ -9,7 +9,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/imua-xyz/imuachain/x/oracle/types"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
@@ -127,7 +126,7 @@ func (c *caches) IsRule2PhasesByFeederID(feederID uint64) bool {
 	return c.isRule2PhasesByRule(rule)
 }
 
-func (c *caches) isRule2PhasesByRule(rule *types.RuleSource) bool {
+func (c *caches) isRule2PhasesByRule(rule *oracletypes.RuleSource) bool {
 	// just check the format and don't care the verification here, the verification should be done by 'params' not in this memory calculator(feedermanager)
 	if len(rule.SourceIDs) == 1 && rule.SourceIDs[0] == 0 &&
 		rule.Nom != nil && len(rule.Nom.SourceIDs) == 1 {

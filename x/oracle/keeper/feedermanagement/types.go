@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
@@ -211,6 +212,12 @@ type round struct {
 
 	// roundBaseBlock is the round base block of current round
 	roundBaseBlock int64
+
+	// roundPhaseTwoStartBlock defines the first block when the oracle begins accepting second-phase messages containing raw data pieces during two-phase aggregation
+	// We delay collecting raw data pieces for several blocks after first-phase consensus to give proposers time to receive and prepare messages with raw data pieces and proofs
+	// Since proposers are penalized for not including necessary raw data pieces, we provide this buffer to prevent unfair punishment due to overly strict timeouts
+	roundPhaseTwoStartBlock uint64
+
 	// roundID is the round ID of current round
 	roundID int64
 	// status indicates the status of current round
@@ -224,13 +231,12 @@ type round struct {
 
 	// twoPhases indicates if the corresponding tokenfeeder requires 2-phase aggregation
 	twoPhases bool
-	// rawData is original data for tokenFeeder with 2-phases aggregation rule
-	// a validator can provide more than one rawData for one round
-	rawData [][]byte
-	// in 2-phases aggregation, the aggregated price is the hash root of pieces of rawData, when we received every piece to recover the whole original rawData, this flag is set to true
-	rawDataSealed bool
 
 	m *oracletypes.MerkleTree
+	// cachedProofForBlock keeps added proof cache from current block, used for EndBlock to update state
+	// we don't do any state update during oracle tx executing, so we cached the information before endBlock if any
+	// this will be reset on endBlock after update state
+	cachedProofForBlock types.Proof
 
 	h common.PostAggregationHandler
 }

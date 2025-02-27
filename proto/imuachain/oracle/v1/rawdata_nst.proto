@@ -9,11 +9,12 @@ message NSTKV {
   // staker index for a nst defined on imuachain side
   uint32 staker_index = 1;
   // balance change since last update
-  int64 balance_change = 2;
+  int64 balance = 2;
 }
 
 // RawDataNST represents balance changes of all stakers for a NST
 message RawDataNST {
+  uint64 version = 1;
   // NSTKV use array to describe {staker_indx: balance_change} for all stakers whose balance had changed 
-  repeated NSTKV nst_balance_changes = 1;
+  repeated NSTKV nst_balance_changes = 2;
 }
