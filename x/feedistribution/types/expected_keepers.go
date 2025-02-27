@@ -41,6 +41,11 @@ type BankKeeper interface {
 	// IsSendEnabledDenom(ctx sdk.Context, denom string) bool
 }
 
+// OperatorKeeper represents the expected keeper interface for the operator module.
+type OperatorKeeper interface {
+	GetImpactfulEpochsForOperator(ctx sdk.Context, operatorAddr string) ([]string, error)
+}
+
 // ParamSubspace defines the expected Subspace interface for parameters.
 type ParamSubspace interface {
 	Get(context.Context, []byte, interface{})

@@ -127,7 +127,7 @@ func (k *Keeper) delegateTo(
 
 	if notGenesis {
 		// call the hooks registered by the other modules
-		k.Hooks().AfterDelegation(ctx, params.OperatorAddress)
+		k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress)
 	}
 	return nil
 }
@@ -311,7 +311,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	)
 
 	// call the hooks registered by the other modules
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, recordKey)
+	return k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress, recordKey)
 }
 
 // AssociateOperatorWithStaker marks that a staker is claiming to be associated with an operator.

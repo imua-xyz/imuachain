@@ -707,7 +707,7 @@ func NewImuachainApp(
 	)
 	// the fee distribution keeper is used to allocate reward to imualidators on epoch-basis,
 	// and it'll interact with other modules, like delegation for voting power, mint and inflation and etc.
-	// this keeper is initialized after the StakingKeeper  because it depends on the StakingKeeper
+	// this keeper is initialized after the StakingKeeper because it depends on the StakingKeeper
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec, logger,
 		authtypes.FeeCollectorName,
@@ -717,6 +717,7 @@ func NewImuachainApp(
 		app.AccountKeeper,
 		app.StakingKeeper,
 		app.EpochsKeeper,
+		app.OperatorKeeper,
 	)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(

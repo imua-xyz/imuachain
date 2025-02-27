@@ -1,13 +1,14 @@
 package keeper
 
 import (
+	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
-// EpochsHooksWrapper is the wrapper structure that implements the epochs hooks for the avs
+// EpochsHooksWrapper is the wrapper structure that implements the epochs hooks for the distribution
 // keeper.
 type EpochsHooksWrapper struct {
 	keeper *Keeper
@@ -21,7 +22,7 @@ func (k *Keeper) EpochsHooks() EpochsHooksWrapper {
 	return EpochsHooksWrapper{k}
 }
 
-// BeforeEpochStart: noop, We don't need to do anything here
+// BeforeEpochStart : noop, We don't need to do anything here
 func (wrapper EpochsHooksWrapper) BeforeEpochStart(_ sdk.Context, _ string, _ int64) {
 }
 
@@ -41,4 +42,33 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 			return
 		}
 	}
+}
+
+// DelegationHooksWrapper is the wrapper structure that implements the delegation hooks for the
+// distribution keeper.
+type DelegationHooksWrapper struct {
+	keeper *Keeper
+}
+
+// Interface guard
+var _ delegationtypes.DelegationHooks = DelegationHooksWrapper{}
+
+// DelegationHooks returns the delegation hooks wrapper. It follows the "accept interfaces,
+// return concretes" pattern.
+func (k *Keeper) DelegationHooks() DelegationHooksWrapper {
+	return DelegationHooksWrapper{k}
+}
+
+// AfterDelegation is called after a delegation is made.
+func (wrapper DelegationHooksWrapper) AfterDelegation(
+	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
+) error {
+	return wrapper.keeper.MarkStakeChangeDelegations(ctx, stakerID, assetID, operator)
+}
+
+// AfterUndelegationStarted is called after an undelegation is started.
+func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
+	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, _ []byte,
+) error {
+	return wrapper.keeper.MarkStakeChangeDelegations(ctx, stakerID, assetID, operator)
 }

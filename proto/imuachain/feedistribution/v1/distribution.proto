@@ -63,14 +63,20 @@ message OperatorCurrentRewards {
   uint64 period = 2;
 }
 
-// DelegatorStartingInfo represents the starting info for a delegator reward
+// StakeChangeDelegations represents the delegations whose stake has changed in an epoch.
+message StakeChangeDelegations {
+  // delegation_keys is a slice of keys for delegations.
+  repeated string delegation_keys =1;
+}
+
+// DelegationStartingInfo represents the starting info for a delegation reward
 // period. It tracks the previous validator period, the delegation's amount of
 // staking token, and the creation epoch information (the epoch_start_height is
 // used to check later on if any slashes have occurred).
 // In imua chain, the voting power update and reward distribution are executed
 // per epoch, so when using F1 distribution for reward distribution, the smallest
 // unit of change in the delegator's stake is the epoch, not the block.
-message DelegatorStartingInfo {
+message DelegationStartingInfo {
   uint64 previous_period = 1;
   string stake = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",

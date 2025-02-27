@@ -209,7 +209,7 @@ func (k *Keeper) ClearVotingPowerSnapshot(ctx sdk.Context, avs string) error {
 	return nil
 }
 
-// EndBlock : update the assets' share when their prices change
+// EndBlock : do nothing, because the voting power will be updated by epoch hook.
 func (k *Keeper) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }

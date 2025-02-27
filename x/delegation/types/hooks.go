@@ -12,19 +12,24 @@ func NewMultiDelegationHooks(hooks ...DelegationHooks) MultiDelegationHooks {
 	return hooks
 }
 
-func (hooks MultiDelegationHooks) AfterDelegation(ctx sdk.Context, operator sdk.AccAddress) {
+func (hooks MultiDelegationHooks) AfterDelegation(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress) error {
 	for _, hook := range hooks {
-		hook.AfterDelegation(ctx, operator)
+		err := hook.AfterDelegation(ctx, stakerID, assetID, operator)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (hooks MultiDelegationHooks) AfterUndelegationStarted(
 	ctx sdk.Context,
+	stakerID, assetID string,
 	addr sdk.AccAddress,
 	recordKey []byte,
 ) error {
 	for _, hook := range hooks {
-		err := hook.AfterUndelegationStarted(ctx, addr, recordKey)
+		err := hook.AfterUndelegationStarted(ctx, stakerID, assetID, addr, recordKey)
 		if err != nil {
 			return err
 		}

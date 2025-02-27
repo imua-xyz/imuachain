@@ -354,6 +354,45 @@ func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress)
 	return retEpochIdentifier, retEpochNumber, nil
 }
 
+// GetImpactfulEpochsForOperator gets the impactful epochs for an operator.
+// In the Imua chain, one operator can opt into multiple AVSs, and different AVSs might have different epoch
+// configurations. This function returns an epoch list for all AVSs still served by the input operator.
+func (k Keeper) GetImpactfulEpochsForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
+	epochsMap := make(map[string]interface{}, 0)
+	epochsList := make([]string, 0)
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		avsAddr := keys[1]
+		if err != nil {
+			return err
+		}
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+		if err != nil {
+			return err
+		}
+		// If the operator has opted out of an AVS, check whether the opted-out height is
+		// less than the start height of the current epoch. If yes, the voting power has been
+		// updated, and the operator no longer serves the AVS, so the epoch shouldn't be appended
+		// to the list.
+		if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+			optedInfo.OptedOutHeight < uint64(epochInfo.CurrentEpochStartHeight) {
+			// continue addressing the other AVSs
+			return nil
+		}
+		if _, ok := epochsMap[epochInfo.Identifier]; !ok {
+			epochsMap[epochInfo.Identifier] = nil
+			epochsList = append(epochsList, epochInfo.Identifier)
+		}
+		return nil
+	}
+	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return epochsList, nil
+}
+
 func (k *Keeper) SetAllOptedInfo(ctx sdk.Context, optedStates []operatortypes.OptedState) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
 	for i := range optedStates {

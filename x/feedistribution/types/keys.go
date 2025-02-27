@@ -30,13 +30,12 @@ func init() {
 }
 
 const (
-	// EpochIdentifier defines the epoch identifier for fee distribution module
 	prefixParams byte = iota + 1
-	prefixEpochIdentifier
 	prefixFeePools
 	prefixOperatorOutstandingRewards
 	prefixDelegatorWithdrawAddr
-	prefixDelegatorStartingInfo
+	prefixStakeChangeDelegations
+	prefixDelegationStartingInfo
 	prefixOperatorHistoricalRewards
 	prefixOperatorCurrentRewards
 	prefixOperatorAccumulatedCommission
@@ -45,8 +44,7 @@ const (
 )
 
 var (
-	KeyPrefixParams          = []byte{prefixParams}
-	KeyPrefixEpochIdentifier = []byte{prefixEpochIdentifier}
+	KeyPrefixParams = []byte{prefixParams}
 
 	// KeyPrefixFeePools : avsAddr -> types.FeePool
 	// Key for the fee pools of all AVSs; it will track multiple reward pools for different AVSs,
@@ -58,10 +56,20 @@ var (
 	// key for outstanding rewards, it will track multiple outstanding rewards from different AVSs
 	KeyPrefixOperatorOutstandingRewards = []byte{prefixOperatorOutstandingRewards}
 
-	// KeyPrefixDelegatorStartingInfo :
+	// KeyPrefixStakeChangeDelegations :
 	// delegationKey = restakerID +'/'+assetID+'/'+operatorAddr
-	// delegationKey + '/' + epochIdentifier -> DelegatorStartingInfo
-	// key for delegator starting info, it will be used to track the starting info for a delegator reward
+	// epochIdentifier -> StakeChangeDelegations
+	// In imua chain, the F1 distribution is integrated per epoch, so we need to track the
+	// delegations whose stake has changed each epoch. Then, we trigger the distribution lazily at
+	// the end of epoch and update their startingInfos for future distributions. The slices need to
+	// be cleared after finishing the distribution at the end of epoch, then they can be used for
+	// the next epoch.
+	KeyPrefixStakeChangeDelegations = []byte{prefixStakeChangeDelegations}
+
+	// KeyPrefixDelegationStartingInfo :
+	// delegationKey = restakerID +'/'+assetID+'/'+operatorAddr
+	// delegationKey + '/' + epochIdentifier -> DelegationStartingInfo
+	// key for delegation starting info, it will be used to track the starting info for a delegation reward
 	// period.
 	// Due to different epoch configurations for different AVSs, the startingInfo for the same delegation
 	// will vary across different epochs. Therefore, it is necessary to store the startingInfo for all AVS
@@ -69,7 +77,7 @@ var (
 	// epoch configuration, it is sufficient to store the startingInfo for each epoch separately, rather
 	// than storing it individually for each AVS. All AVSs with the same epoch configuration can share the
 	// startingInfo for that epoch.
-	KeyPrefixDelegatorStartingInfo = []byte{prefixDelegatorStartingInfo}
+	KeyPrefixDelegationStartingInfo = []byte{prefixDelegationStartingInfo}
 
 	// KeyPrefixOperatorHistoricalRewards :
 	// operator + '/' +assetID + '/'+ epochIdentifier + '/' + period -> OperatorHistoricalRewards
@@ -118,6 +126,10 @@ var (
 	// when claiming rewards. Therefore, we may later provide an interface for all address-incompatible stakers to
 	// configure their EVM addresses on Imua. However, the transaction to configure this address should be initiated
 	// on the client chain and authorized by the staker's native address.
+	// This address can actually be shared with the KeyPrefixReStakerExoCoreAddr defined under the asset module.
+	// However, if we need to separate the staker's operation address from the reward address, then they cannot be
+	// shared. This part will be decided when we actually use it in the future, and the issue only needs to be
+	// addressed when distributing Imua rewards to stakers with address incompatibility on the chain.
 	KeyPrefixDelegatorWithdrawAddr = []byte{prefixDelegatorWithdrawAddr}
 )
 

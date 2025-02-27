@@ -26,16 +26,17 @@ func (k *Keeper) DelegationHooks() DelegationHooksWrapper {
 
 // AfterDelegation is called after a delegation is made.
 func (wrapper DelegationHooksWrapper) AfterDelegation(
-	sdk.Context, sdk.AccAddress,
-) {
+	_ sdk.Context, _, _ string, _ sdk.AccAddress,
+) error {
 	// we do nothing here, since the vote power for all operators is calculated
 	// in the end separately. even if we knew the amount of the delegation, the
 	// exchange rate at the end of the epoch is unknown.
+	return nil
 }
 
 // AfterUndelegationStarted is called after an undelegation is started.
 func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
-	ctx sdk.Context, operator sdk.AccAddress, recordKey []byte,
+	ctx sdk.Context, _, _ string, operator sdk.AccAddress, recordKey []byte,
 ) error {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	var unbondingCompletionEpoch int64
