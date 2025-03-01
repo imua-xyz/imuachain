@@ -86,12 +86,12 @@ func (suite *AVSManagerPrecompileSuite) prepareDelegation(isDelegation bool, ass
 }
 
 func (suite *AVSManagerPrecompileSuite) prepare() {
-	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
+	USDTAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	depositAmount := sdkmath.NewInt(100)
 	delegationAmount := sdkmath.NewInt(50)
-	suite.prepareOperator("im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj")
-	suite.prepareDeposit(usdtAddress, depositAmount)
-	suite.prepareDelegation(true, usdtAddress, delegationAmount)
+	suite.prepareOperator(sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String())
+	suite.prepareDeposit(USDTAddress, depositAmount)
+	suite.prepareDelegation(true, USDTAddress, delegationAmount)
 }
 
 func (suite *AVSManagerPrecompileSuite) prepareAvs(assetIDs []string, task string) {

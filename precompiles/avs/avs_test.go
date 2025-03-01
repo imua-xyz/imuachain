@@ -86,13 +86,13 @@ func (suite *AVSManagerPrecompileSuite) TestIsTransaction() {
 	}
 }
 
-func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
+func (suite *AVSManagerPrecompileSuite) TestRegisterAVS() {
 	// Default variables used during tests.
 	gas := uint64(2_000)
 	senderAddress := utiltx.GenerateAddress()
-	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsName, slashAddress, rewardAddress := "avsTest", suite.Address.String(), suite.Address.String()
 	avsOwnerAddresses := []common.Address{
-		s.Address,
+		suite.Address,
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
@@ -100,11 +100,11 @@ func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
 		utiltx.GenerateAddress(),
 		utiltx.GenerateAddress(),
 	}
-	assetIDs := s.AssetIDs
-	minStakeAmount, taskAddress := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	assetIDs := suite.AssetIDs
+	minStakeAmount, taskAddress := uint64(3), suite.Address.String()
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
-	method := s.precompile.Methods[avs.MethodRegisterAVS]
+	method := suite.precompile.Methods[avs.MethodRegisterAVS]
 	testCases := []struct {
 		name        string
 		sender      common.Address
@@ -146,21 +146,21 @@ func (s *AVSManagerPrecompileSuite) TestRegisterAVS() {
 	}
 
 	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			s.SetupTest()
-			contract := vm.NewContract(vm.AccountRef(tc.sender), s.precompile, big.NewInt(0), gas)
-			_, err := s.precompile.RegisterAVS(
-				s.Ctx,
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			contract := vm.NewContract(vm.AccountRef(tc.sender), suite.precompile, big.NewInt(0), gas)
+			_, err := suite.precompile.RegisterAVS(
+				suite.Ctx,
 				tc.origin,
 				contract,
-				s.StateDB,
+				suite.StateDB,
 				&method,
 				tc.malleate(),
 			)
 			if tc.expError {
-				s.Require().ErrorContains(err, tc.errContains)
+				suite.Require().ErrorContains(err, tc.errContains)
 			} else {
-				s.Require().NoError(err)
+				suite.Require().NoError(err)
 			}
 		})
 	}
@@ -181,14 +181,14 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 	successRet, err := suite.precompile.Methods[avs.MethodDeregisterAVS].Outputs.Pack(true)
 	suite.Require().NoError(err)
 	setUp := func() {
-		slashAddress, rewardAddress := "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+		slashAddress, rewardAddress := suite.Address.String(), suite.Address.String()
 		avsOwnerAddresses := []string{
 			sdk.AccAddress(suite.Address.Bytes()).String(),
 			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 			sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		}
 		assetIDs := suite.AssetIDs
-		minStakeAmount, taskAddress := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+		minStakeAmount, taskAddress := uint64(3), suite.Address.String()
 		avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 		epochIdentifier := epochstypes.DayEpochID
 		params := []uint64{2, 3, 4, 4}
@@ -284,7 +284,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 			activePrecompiles := params.GetActivePrecompilesAddrs()
 			precompileMap := suite.App.EvmKeeper.Precompiles(activePrecompiles...)
 			err = vm.ValidatePrecompiles(precompileMap, activePrecompiles)
-			suite.Require().NoError(err, "invalid precompiles", activePrecompiles)
+			suite.Require().NoError(err, "invalid precompiled", activePrecompiles)
 			evm.WithPrecompiles(precompileMap, activePrecompiles)
 
 			// Run precompiled contract
@@ -306,7 +306,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterAVS() {
 func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 	gas := uint64(2_000)
 	senderAddress := utiltx.GenerateAddress()
-	avsName, slashAddress, rewardAddress := "avsTest-update", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsName, slashAddress, rewardAddress := "avsTest-update", suite.Address.String(), suite.Address.String()
 	avsOwnerAddresses := []common.Address{
 		s.Address,
 		utiltx.GenerateAddress(),
@@ -317,7 +317,7 @@ func (suite *AVSManagerPrecompileSuite) TestUpdateAVS() {
 		utiltx.GenerateAddress(),
 	}
 	assetIDs := s.AssetIDs
-	minStakeAmount, taskAddr := uint64(3), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	minStakeAmount, taskAddr := uint64(3), suite.Address.String()
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
 	method := s.precompile.Methods[avs.MethodUpdateAVS]
@@ -386,7 +386,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 	// from := s.Address
 	operatorAddress := sdk.AccAddress(suite.Address.Bytes())
 	assetIDs := suite.AssetIDs
-	minStakeAmount, taskAddress := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
+	minStakeAmount, taskAddress := uint64(3), suite.Address.String()
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
 	params := []uint64{2, 3, 4, 4}
@@ -411,7 +411,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 			OperatorShare: math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
 		})
 	}
-	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsName, slashAddress, rewardAddress := "avsTest", suite.Address.String(), suite.Address.String()
 	avsOwnerAddresses := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
@@ -465,7 +465,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 			malleate: func() (common.Address, []byte) {
 				registerOperator()
 				setUp()
-				avsAddress, intput := commonMalleate()
+				avsAddress, input := commonMalleate()
 				asset := suite.Assets[0]
 				_, defaultAssetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.LayerZeroChainID, "", asset.Address)
 				err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &types.AVSRegisterOrDeregisterParams{
@@ -474,7 +474,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 					AssetIDs:   []string{defaultAssetID},
 				})
 				suite.NoError(err)
-				return avsAddress, intput
+				return avsAddress, input
 			},
 			readOnly:    false,
 			expPass:     true,
@@ -552,7 +552,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 	// from := s.Address
 	operatorAddress := sdk.AccAddress(suite.Address.Bytes())
 	assetIDs := suite.AssetIDs
-	minStakeAmount, taskAddress := uint64(3), "0x3e108c058e8066DA635321Dc3018294cA82ddEdf"
+	minStakeAmount, taskAddress := uint64(3), suite.Address.String()
 	avsUnbondingPeriod, minSelfDelegation := uint64(3), uint64(3)
 	epochIdentifier := epochstypes.DayEpochID
 	params := []uint64{2, 3, 4, 4}
@@ -577,7 +577,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 			OperatorShare: math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
 		})
 	}
-	avsName, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsName, slashAddress, rewardAddress := "avsTest", suite.Address.String(), suite.Address.String()
 	avsOwnerAddresses := []string{
 		sdk.AccAddress(suite.Address.Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
@@ -843,7 +843,7 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 			activePrecompiles := params.GetActivePrecompilesAddrs()
 			precompileMap := suite.App.EvmKeeper.Precompiles(activePrecompiles...)
 			err = vm.ValidatePrecompiles(precompileMap, activePrecompiles)
-			suite.Require().NoError(err, "invalid precompiles", activePrecompiles)
+			suite.Require().NoError(err, "invalid precompiled", activePrecompiles)
 			evm.WithPrecompiles(precompileMap, activePrecompiles)
 
 			// Run precompiled contract

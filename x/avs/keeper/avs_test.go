@@ -82,7 +82,7 @@ func (suite *AVSTestSuite) TestAVS() {
 }
 
 func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
-	avsName, avsAddres, slashAddress, rewardAddress := "avsTest", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB", "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsName, avsAddress, slashAddress, rewardAddress := "avsTest", suite.avsAddress.String(), suite.avsAddress.String(), suite.avsAddress.String()
 	avsOwnerAddress := []string{
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
@@ -92,7 +92,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 
 	avsParams := &types.AVSRegisterOrDeregisterParams{
 		AvsName:               avsName,
-		AvsAddress:            common.HexToAddress(avsAddres),
+		AvsAddress:            common.HexToAddress(avsAddress),
 		Action:                types.RegisterAction,
 		RewardContractAddress: common.HexToAddress(rewardAddress),
 		AvsOwnerAddresses:     avsOwnerAddress,
@@ -106,10 +106,10 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.NoError(err)
 
-	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddres)
+	info, err := suite.App.AVSManagerKeeper.GetAVSInfo(suite.Ctx, avsAddress)
 
 	suite.NoError(err)
-	suite.Equal(strings.ToLower(avsAddres), info.GetInfo().AvsAddress)
+	suite.Equal(strings.ToLower(avsAddress), info.GetInfo().AvsAddress)
 
 	err = suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, avsParams)
 	suite.Error(err)
@@ -118,7 +118,7 @@ func (suite *AVSTestSuite) TestUpdateAVSInfo_Register() {
 
 func (suite *AVSTestSuite) TestUpdateAVSInfo_DeRegister() {
 	// Test case setup
-	avsName, avsAddress, slashAddress := "avsTest", suite.avsAddress.String(), "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	avsName, avsAddress, slashAddress := "avsTest", suite.avsAddress.String(), suite.avsAddress.String()
 	avsOwnerAddress := []string{
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
 		sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(),
@@ -212,11 +212,10 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 }
 
 func (suite *AVSTestSuite) TestAddressSwitch() {
-	addr := common.HexToAddress("0x8dF46478a83Ab2a429979391E9546A12AfF9E33f")
+	addr := utiltx.GenerateAddress()
 	var accAddress sdk.AccAddress = addr[:]
-	suite.Equal("im13h6xg79g82e2g2vhjwg7j4r2z2hlncel7zgwsx", accAddress.String())
 	commonAddress := common.Address(accAddress)
-	suite.Equal(common.HexToAddress("0x8dF46478a83Ab2a429979391E9546A12AfF9E33f"), commonAddress)
+	suite.Equal(addr, commonAddress)
 }
 
 func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {

@@ -14,7 +14,7 @@ import (
 func (suite *AVSTestSuite) TestTaskInfo() {
 	info := &types.TaskInfo{
 		TaskContractAddress: common.Address(suite.AccAddress.Bytes()).String(),
-		Name:                "test-avstask-01",
+		Name:                "test-avsTask-01",
 		TaskId:              3,
 		Hash:                []byte("active"),
 		TaskResponsePeriod:  10000,

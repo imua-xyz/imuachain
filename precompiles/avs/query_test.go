@@ -61,11 +61,11 @@ var baseTestCases = []avsTestCases{
 
 func (suite *AVSManagerPrecompileSuite) TestGetOptedInOperatorAccAddrs() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOptInOperators]
-	operatorAddress, avsAddress, slashContract := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(), suite.Address, "0xDF907c29719154eb9872f021d21CAE6E5025d7aB"
+	operatorAddress, avsAddress, slashContract := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String(), suite.Address, suite.Address
 
 	operatorOptIn := func() {
 		optedInfo := &types.OptedInfo{
-			SlashContract: slashContract,
+			SlashContract: slashContract.String(),
 			// #nosec G701
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),
 			OptedOutHeight: types.DefaultOptedOutHeight,
@@ -321,7 +321,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 	}
 }
 
-func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
+func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubKey() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetRegisteredPubKey]
 	privateKey, err := blst.RandKey()
 	suite.NoError(err)
@@ -335,7 +335,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 		blsPub := &avstype.BlsPubKeyInfo{
 			OperatorAddress: operatorAddress.String(),
 			PubKey:          publicKey.Marshal(),
-			AvsAddress:      "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+			AvsAddress:      suite.Address.String(),
 		}
 		err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 		suite.NoError(err)
@@ -347,7 +347,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 				setUp()
 				return []interface{}{
 					address,
-					common.HexToAddress("0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"),
+					common.HexToAddress(suite.Address.String()),
 				}
 			},
 			func(bz []byte) {
@@ -384,7 +384,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetRegisteredPubkey() {
 
 func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetAVSEpochIdentifier]
-	avsAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	avsAddress := suite.Address.String()
 	testAVSUnbondingPeriod := 7
 	testMinSelfDelegation := 10
 	testMinOptInOperators := 100
@@ -412,7 +412,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 			MinTotalStakeAmount: uint64(testMinTotalStakeAmount),
 			AvsSlash:            sdk.MustNewDecFromStr("0.001"),
 			AvsReward:           sdk.MustNewDecFromStr("0.002"),
-			TaskAddress:         "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+			TaskAddress:         suite.Address.String(),
 		}
 
 		err := suite.App.AVSManagerKeeper.SetAVSInfo(suite.Ctx, avs)
@@ -459,7 +459,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetAVSInfo() {
 	}
 }
 
-func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
+func (suite *AVSManagerPrecompileSuite) TestIsOperator() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodIsOperator]
 	opAccAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 
@@ -505,12 +505,12 @@ func (suite *AVSManagerPrecompileSuite) TestIsoperator() {
 
 func (suite *AVSManagerPrecompileSuite) TestGetTaskInfo() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetTaskInfo]
-	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	taskAddress := suite.Address.String()
 
 	setUp := func() {
 		info := &avstype.TaskInfo{
 			TaskContractAddress:   taskAddress,
-			Name:                  "test-avstask-01",
+			Name:                  "test-avTask-01",
 			TaskId:                uint64(3),
 			Hash:                  []byte("active"),
 			TaskResponsePeriod:    10,
@@ -630,11 +630,12 @@ func (suite *AVSManagerPrecompileSuite) TestGetCurrentEpoch() {
 
 func (suite *AVSManagerPrecompileSuite) TestGetChallengeInfo() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetChallengeInfo]
-	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	taskAddress := suite.Address.String()
 	challengeAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 	taskID := uint64(3)
 	setUp := func() {
-		suite.App.AVSManagerKeeper.SetTaskChallengedInfo(suite.Ctx, taskID, challengeAddr, common.HexToAddress(taskAddress))
+		err := suite.App.AVSManagerKeeper.SetTaskChallengedInfo(suite.Ctx, taskID, challengeAddr, common.HexToAddress(taskAddress))
+		suite.NoError(err)
 	}
 	testCases := []avsTestCases{
 		{
@@ -680,7 +681,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetChallengeInfo() {
 
 func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOperatorTaskResponseList]
-	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	taskAddress := suite.Address.String()
 	OperatorAddress1 := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 	OperatorAddress2 := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 	setUp := func() {
@@ -704,7 +705,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
 		}
 		info := &avstype.TaskInfo{
 			TaskContractAddress:   taskAddress,
-			Name:                  "test-avstask-01",
+			Name:                  "test-avsTask-01",
 			TaskId:                uint64(3),
 			Hash:                  []byte("task"),
 			TaskResponsePeriod:    10,
@@ -783,7 +784,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponseList() {
 
 func (suite *AVSManagerPrecompileSuite) TestGetOperatorTaskResponse() {
 	method := suite.precompile.Methods[avsManagerPrecompile.MethodGetOperatorTaskResponse]
-	taskAddress := "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+	taskAddress := suite.Address.String()
 	opAccAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 	setUp := func() {
 		info := &avstype.TaskResultInfo{

@@ -121,7 +121,7 @@ func (suite *AVSTestSuite) prepareMulOptIn() {
 	suite.CommitAfter(time.Hour*1 + time.Nanosecond)
 }
 
-func (suite *AVSTestSuite) prepareMulOperatorubkey() {
+func (suite *AVSTestSuite) prepareMulOperatorPubKey() {
 	suite.blsKeys = make([]blscommon.SecretKey, len(suite.operatorAddresses))
 	for index, operatorAddress := range suite.operatorAddresses {
 		privateKey, err := blst.RandKey()
@@ -161,24 +161,25 @@ func (suite *AVSTestSuite) prepareMulTaskInfo() {
 }
 
 func (suite *AVSTestSuite) prepareMul() {
-	usdtAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
+	USDTAddress := common.HexToAddress("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	depositAmount := sdkmath.NewInt(500)
-	// delegationAmount := sdkmath.NewInt(100)
 	suite.prepareOperators()
-	suite.prepareMulDeposit(usdtAddress, depositAmount)
+	suite.prepareMulDeposit(USDTAddress, depositAmount)
 	suite.prepareDelegations()
 	suite.prepareMulAvs([]string{"0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"})
 	suite.prepareMulOptIn()
-	suite.prepareMulOperatorubkey()
+	suite.prepareMulOperatorPubKey()
 	suite.prepareMulTaskInfo()
-	suite.App.OperatorKeeper.SetAVSUSDValue(suite.Ctx, suite.avsAddr, sdkmath.LegacyNewDec(500))
+	err := suite.App.OperatorKeeper.SetAVSUSDValue(suite.Ctx, suite.avsAddr, sdkmath.LegacyNewDec(500))
+	suite.Require().NoError(err)
 	for _, operatorAddress := range suite.operatorAddresses {
 		delta := operatorTypes.DeltaOperatorUSDInfo{
 			SelfUSDValue:   sdkmath.LegacyNewDec(100),
 			TotalUSDValue:  sdkmath.LegacyNewDec(100),
 			ActiveUSDValue: sdkmath.LegacyNewDec(100),
 		}
-		suite.App.OperatorKeeper.UpdateOperatorUSDValue(suite.Ctx, suite.avsAddr, operatorAddress, delta)
+		err := suite.App.OperatorKeeper.UpdateOperatorUSDValue(suite.Ctx, suite.avsAddr, operatorAddress, delta)
+		suite.Require().NoError(err)
 	}
 
 	suite.CommitAfter(time.Hour*1 + time.Nanosecond)
@@ -216,7 +217,6 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseTwo_Mul() {
 		jsonData, err := avstypes.MarshalTaskResponse(taskRes)
 		suite.NoError(err)
 		hash := crypto.Keccak256Hash(jsonData)
-		// pub, err := suite.App.AVSManagerKeeper.GetOperatorPubKey(suite.Ctx, suite.operatorAddr.String())
 		suite.NoError(err)
 		msg, _ := avstypes.GetTaskResponseDigestEncodeByjson(taskRes)
 		msgBytes := msg[:]
@@ -229,7 +229,7 @@ func (suite *AVSTestSuite) TestSubmitTask_OnlyPhaseTwo_Mul() {
 			TaskResponseHash:    hash.String(),
 			TaskResponse:        jsonData,
 			BlsSignature:        sig.Marshal(),
-			Phase:               avstypes.Phase(avstypes.PhaseDoCommit),
+			Phase:               avstypes.PhaseDoCommit,
 		}
 		err = suite.App.AVSManagerKeeper.SubmitTaskResult(suite.Ctx, operatorAddress, info)
 		suite.NoError(err)

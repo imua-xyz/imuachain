@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"encoding/hex"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	utiltx "github.com/evmos/evmos/v16/testutil/tx"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -12,7 +14,7 @@ import (
 )
 
 func (suite *AVSTestSuite) TestOperator_pubkey() {
-	operatorAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
+	operatorAddr := sdk.AccAddress(utiltx.GenerateAddress().Bytes()).String()
 
 	privateKey, err := blst.RandKey()
 	fmt.Println("privateKey:", hex.EncodeToString(privateKey.Marshal()))
@@ -23,7 +25,7 @@ func (suite *AVSTestSuite) TestOperator_pubkey() {
 		PubKey:          publicKey.Marshal(),
 		AvsAddress:      suite.avsAddress.String(),
 	}
-	fmt.Println("pubkey:", hex.EncodeToString(publicKey.Marshal()))
+	fmt.Println("pubKey:", hex.EncodeToString(publicKey.Marshal()))
 	err = suite.App.AVSManagerKeeper.SetOperatorPubKey(suite.Ctx, blsPub)
 	suite.NoError(err)
 
@@ -50,12 +52,12 @@ func (suite *AVSTestSuite) TestOperator_pubkey() {
 	suite.True(valid1)
 
 	jsonData, err := types.MarshalTaskResponse(taskRes)
-	fmt.Println("jsondata:", hex.EncodeToString(jsonData))
+	fmt.Println("jsonData:", hex.EncodeToString(jsonData))
 }
 
 func (suite *AVSTestSuite) Test_hash() {
-	taskres := types.TaskResponse{TaskID: 1, NumberSum: big.NewInt(100)}
-	jsonData, err := types.MarshalTaskResponse(taskres)
+	taskRes := types.TaskResponse{TaskID: 1, NumberSum: big.NewInt(100)}
+	jsonData, err := types.MarshalTaskResponse(taskRes)
 	suite.NoError(err)
 	hash := crypto.Keccak256Hash(jsonData)
 	taskResponseDigest := hash.Bytes()
@@ -64,8 +66,8 @@ func (suite *AVSTestSuite) Test_hash() {
 
 // For deterministic result（msg）, aggregate signatures and verify them
 func (suite *AVSTestSuite) Test_bls_agg() {
-	taskres := types.TaskResponse{TaskID: 1, NumberSum: big.NewInt(100)}
-	jsonData, _ := types.MarshalTaskResponse(taskres)
+	taskRes := types.TaskResponse{TaskID: 1, NumberSum: big.NewInt(100)}
+	jsonData, _ := types.MarshalTaskResponse(taskRes)
 	msg := crypto.Keccak256Hash(jsonData)
 	privateKeys := make([]blscommon.SecretKey, 4)
 	publicKeys := make([]blscommon.PublicKey, 4)
@@ -90,8 +92,8 @@ func (suite *AVSTestSuite) Test_bls_agg() {
 	suite.True(valid1, "Signature verification failed")
 }
 
-// For uncertain results, i.e. multiple msgs, the test aggregation signature verification fails
-func (suite *AVSTestSuite) Test_bls_agg_uncertainMsgs() {
+// For uncertain results, i.e. multiple msg, the test aggregation signature verification fails
+func (suite *AVSTestSuite) Test_bls_agg_uncertainMsg() {
 	privateKeys := make([]blscommon.SecretKey, 4)
 	publicKeys := make([]blscommon.PublicKey, 4)
 	msgs := make([][]byte, 4)
