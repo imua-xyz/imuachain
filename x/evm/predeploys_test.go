@@ -78,8 +78,9 @@ func (suite *KeeperTestSuite) TestPredeploysExist() {
 func (suite *KeeperTestSuite) TestBalanceRetention() {
 	evmParams := suite.App.EvmKeeper.GetParams(suite.Ctx)
 	evmDenom := evmParams.GetEvmDenom()
+	beforeSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, evmDenom).Amount
 	targetBalance := sdkmath.NewInt(100)
-	// set balance > 0 for all of the predeployed address
+	// set balance > 0 for all of the predeployed address, at genesis.
 	for _, predeploy := range types.DefaultPredeploys {
 		addr := predeploy.GetByteAddress()
 		suite.Balances = append(
@@ -90,6 +91,7 @@ func (suite *KeeperTestSuite) TestBalanceRetention() {
 			},
 		)
 	}
+	expectedSupply := beforeSupply.Add(sdkmath.NewInt(int64(len(types.DefaultPredeploys))).Mul(targetBalance))
 	// now redo the genesis
 	suite.SetupTest()
 	// check the state of the predeploys
@@ -118,6 +120,8 @@ func (suite *KeeperTestSuite) TestBalanceRetention() {
 		// check that code exists
 		suite.Require().NotNil(suite.App.EvmKeeper.GetCode(suite.Ctx, predeploy.GetCodeHash()))
 	}
+	afterSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, evmDenom).Amount
+	suite.Require().Equal(expectedSupply, afterSupply)
 }
 
 // Tests if create2 can be used to deploy another contract successfully.
