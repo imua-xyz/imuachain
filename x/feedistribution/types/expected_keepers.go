@@ -46,6 +46,11 @@ type OperatorKeeper interface {
 	GetImpactfulEpochsForOperator(ctx sdk.Context, operatorAddr string) ([]string, error)
 }
 
+// AVSKeeper represents the expected keeper interface for the avs module.
+type AVSKeeper interface {
+	GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) []string
+}
+
 // ParamSubspace defines the expected Subspace interface for parameters.
 type ParamSubspace interface {
 	Get(context.Context, []byte, interface{})

@@ -718,6 +718,7 @@ func NewImuachainApp(
 		app.StakingKeeper,
 		app.EpochsKeeper,
 		app.OperatorKeeper,
+		&app.AVSManagerKeeper,
 	)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(
