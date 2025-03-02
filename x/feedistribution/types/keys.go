@@ -32,6 +32,7 @@ func init() {
 const (
 	prefixParams byte = iota + 1
 	prefixFeePools
+	prefixAVSRewardDistribution
 	prefixOperatorOutstandingRewards
 	prefixDelegatorWithdrawAddr
 	prefixStakeChangeDelegations
@@ -46,10 +47,17 @@ const (
 var (
 	KeyPrefixParams = []byte{prefixParams}
 
-	// KeyPrefixFeePools : avsAddr -> types.FeePool
+	// KeyPrefixFeePools :
+	// avsAddr -> types.FeePool
 	// Key for the fee pools of all AVSs; it will track multiple reward pools for different AVSs,
 	// unlike the cosmos-sdk.
 	KeyPrefixFeePools = []byte{prefixFeePools}
+
+	// KeyPrefixAVSRewardDistribution :
+	// avsAddr -> AVSRewardDistribution
+	// key for avs rewards distribution, it will track the reward distribution information of multiple
+	// AVSs in the current epoch.
+	KeyPrefixAVSRewardDistribution = []byte{prefixAVSRewardDistribution}
 
 	// KeyPrefixOperatorOutstandingRewards :
 	// operator + '/' + AVSAddr -> OperatorOutstandingRewards
@@ -126,7 +134,7 @@ var (
 	// when claiming rewards. Therefore, we may later provide an interface for all address-incompatible stakers to
 	// configure their EVM addresses on Imua. However, the transaction to configure this address should be initiated
 	// on the client chain and authorized by the staker's native address.
-	// This address can actually be shared with the KeyPrefixReStakerExoCoreAddr defined under the asset module.
+	// This address can actually be shared with the `KeyPrefixReStakerExoCoreAddr` defined under the asset module.
 	// However, if we need to separate the staker's operation address from the reward address, then they cannot be
 	// shared. This part will be decided when we actually use it in the future, and the issue only needs to be
 	// addressed when distributing Imua rewards to stakers with address incompatibility on the chain.

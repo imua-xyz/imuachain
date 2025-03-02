@@ -9,6 +9,34 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 option (gogoproto.equal_all) = true;
 
+// OperatorRewardProportion is the reward proportion of an operator for one epoch
+message OperatorRewardProportion {
+  // operator_addr is the operator address,its type should be a sdk.AccAddress
+  string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // reward_proportion is the reward proportion of this operator
+  string reward_proportion = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// AVSRewardDistribution represents the reward distribution information of an AVS in
+// the current epoch. It serves as the basis for executing the distribution process.
+// It is determined by the inflation and allocation mechanism configured by the AVS
+// or customized through the AVS reward contract.
+message AVSRewardDistribution {
+  // rewards represents the rewards for one epoch
+  repeated cosmos.base.v1beta1.DecCoin rewards = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // operator_reward_proportions represents the reward proportions of all operators
+  // that are eligible to be allocated rewards in the current epoch.
+  repeated OperatorRewardProportion operator_reward_proportions =2;
+}
+
 // CommonAVSRewardData is a common struct used to record the current rewards and cumulative
 // reward ratios of a specified AVS for the operator.
 message CommonAVSRewardData {
