@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
+	"github.com/ExocoreNetwork/exocore/types/keys"
+	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -28,6 +31,18 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 	}
 	bz := k.cdc.MustMarshal(&distribution)
 	store.Set(common.HexToAddress(avsAddr).Bytes(), bz)
+
+	// emit event for indexers
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			feedistributiontypes.EventTypeAVSRewardDistributionSet,
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avsAddr),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochRewards, distribution.Rewards.String()),
+			sdk.NewAttribute(
+				feedistributiontypes.AttributeKeyRewardPoolBalance,
+				feedistributiontypes.OperatorRewardProportions(distribution.OperatorRewardProportions).String()),
+		),
+	)
 	return nil
 }
 
@@ -61,6 +76,37 @@ func (k Keeper) DeleteRewardDistributionsByEpoch(ctx sdk.Context, epochIdentifie
 	return nil
 }
 
-func (k Keeper) SetRewardDistributionForDogfood(ctx sdk.Context) error {
+func (k Keeper) RewardDistributionForDogfood(ctx sdk.Context) (*feedistributiontypes.AVSRewardDistribution, error) {
+	feeCollector := k.authKeeper.GetModuleAccount(ctx, k.feeCollectorName)
+	feesCollectedInt := k.bankKeeper.GetAllBalances(ctx, feeCollector.GetAddress())
+	feesCollected := sdk.NewDecCoinsFromCoins(feesCollectedInt...)
+	allValidators := k.StakingKeeper.GetAllExocoreValidators(ctx)
+	previousTotalPower := k.StakingKeeper.GetLastTotalPower(ctx).Int64()
+	ret := &feedistributiontypes.AVSRewardDistribution{
+		Rewards:                   feesCollected,
+		OperatorRewardProportions: make([]*feedistributiontypes.OperatorRewardProportion, 0),
+	}
+	for _, val := range allValidators {
+		consensusKey, err := val.ConsPubKey()
+		if err != nil {
+			return nil, err
+		}
+		wrappedKey := keys.NewWrappedConsKeyFromSdkKey(consensusKey)
+		found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+			ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
+		)
+		if !found {
+			return nil, feedistributiontypes.ErrOperatorNotFound
+		}
+		rewardProportion := math.LegacyNewDec(val.Power).QuoTruncate(math.LegacyNewDec(previousTotalPower))
+		ret.OperatorRewardProportions = append(ret.OperatorRewardProportions, &feedistributiontypes.OperatorRewardProportion{
+			OperatorAddr:     accAddress.String(),
+			RewardProportion: rewardProportion,
+		})
+	}
+	return ret, nil
+}
+
+func (k Keeper) DefaultRewardDistributionForAVSs(ctx sdk.Context) (*feedistributiontypes.AVSRewardDistribution, error) {
 
 }

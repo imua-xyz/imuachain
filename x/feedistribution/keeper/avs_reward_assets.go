@@ -1,0 +1,191 @@
+package keeper
+
+import (
+	sdkmath "cosmossdk.io/math"
+	"fmt"
+	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+// UpdateAVSRewardAssetState updates the reward asset state of a specified AVS.
+// This function is called when the AVS funds the reward pool, when the reward distribution is executed,
+// and when stakers or operators claim rewards.
+// There will be a precompiled contract interface regarding it.
+func (k Keeper) UpdateAVSRewardAssetState(ctx sdk.Context, avsAddr, assetID string, delta *types.DeltaAVSRewardAssetState) (err error) {
+	if delta == nil {
+		return types.ErrInvalidRewardAssetParameter.Wrapf("UpdateAVSRewardAssetState: the input delta is nil,avsAddr:%s,assetID:%s", avsAddr, assetID)
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	value := store.Get(key)
+	if value == nil {
+		return types.ErrAVSRewardAssetNotFound
+	}
+
+	ret := types.AVSRewardAsset{}
+	k.cdc.MustUnmarshal(value, &ret)
+
+	// update all states of the reward asset
+	err = assetstype.UpdateAssetDecValue(&ret.RewardAssetState.RewardPoolBalance, &delta.RewardPoolBalance)
+	if err != nil {
+		return err
+	}
+	err = assetstype.UpdateAssetDecValue(&ret.RewardAssetState.RewardPoolTotal, &delta.RewardPoolTotal)
+	if err != nil {
+		return err
+	}
+	err = assetstype.UpdateAssetDecValue(&ret.RewardAssetState.RewardAllocationTotal, &delta.RewardAllocationTotal)
+	if err != nil {
+		return err
+	}
+	bz := k.cdc.MustMarshal(&ret)
+	store.Set(key, bz)
+
+	// emit event for indexers
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUpdatedAVSRewardAsset,
+			sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+			sdk.NewAttribute(types.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(types.AttributeKeyRewardPoolBalance, ret.RewardAssetState.RewardPoolBalance.String()),
+			sdk.NewAttribute(types.AttributeKeyRewardPoolTotal, ret.RewardAssetState.RewardPoolTotal.String()),
+			sdk.NewAttribute(types.AttributeKeyRewardAllocationTotal, ret.RewardAssetState.RewardAllocationTotal.String()),
+		),
+	)
+	return nil
+}
+
+// SetAVSRewardAssets
+// It provides a function to register the reward assets by AVS. It will be provided to the AVS by the precompile
+// interface. If an asset with the provided assetID already exists, it will return an error.
+func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []assetstype.AssetInfo) (err error) {
+	assetStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
+	symbolMap := make(map[string]interface{}, 0)
+	// check that the AVS is registered
+	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
+		return types.ErrInvalidRewardAssetParameter.Wrapf("AVS not found %s", avsAddr)
+	}
+	for _, assetInfo := range assets {
+		if assetInfo.Decimals > assetstype.MaxDecimal {
+			return types.ErrInvalidRewardAssetParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", assetInfo.Decimals, assetstype.MaxDecimal)
+		}
+		// check for symbol duplication
+		if _, ok := symbolMap[assetInfo.Symbol]; ok {
+			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated symbol: %s", assetInfo.Symbol)
+		} else {
+			symbolMap[assetInfo.Symbol] = nil
+		}
+		_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(assetInfo.LayerZeroChainID, "", assetInfo.Address)
+		assetKey := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+		symbolKey := assetstype.GetJoinedStoreKey(avsAddr, assetInfo.Symbol)
+		if assetStore.Has(assetKey) {
+			return types.ErrInvalidRewardAssetParameter.Wrapf("the reward asset is already stored,avsAddr:%s,assetID:%s", avsAddr, assetID)
+		}
+		if symbolStore.Has(assetKey) {
+			return types.ErrInvalidRewardAssetParameter.Wrapf("the symbol key of reward asset is already stored,avsAddr:%s,assetID:%s", avsAddr, assetID)
+		}
+		// set the reward asset info
+		avsRewardAsset := &types.AVSRewardAsset{
+			AssetBasicInfo: assetInfo,
+			RewardAssetState: types.AVSRewardAssetState{
+				RewardPoolBalance:     sdkmath.LegacyZeroDec(),
+				RewardPoolTotal:       sdkmath.LegacyZeroDec(),
+				RewardAllocationTotal: sdkmath.LegacyZeroDec(),
+			},
+		}
+		bz := k.cdc.MustMarshal(avsRewardAsset)
+		assetStore.Set(assetKey, bz)
+		symbolStore.Set(symbolKey, []byte(assetID))
+		// emit event for indexers
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeNewAVSRewardAsset,
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+				sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+				sdk.NewAttribute(assetstype.AttributeKeyName, assetInfo.Name),
+				sdk.NewAttribute(assetstype.AttributeKeySymbol, assetInfo.Symbol),
+				sdk.NewAttribute(assetstype.AttributeKeyAddress, assetInfo.Address),
+				sdk.NewAttribute(assetstype.AttributeKeyDecimals, fmt.Sprintf("%d", assetInfo.Decimals)),
+				sdk.NewAttribute(assetstype.AttributeKeyLZID, fmt.Sprintf("%d", assetInfo.LayerZeroChainID)),
+				sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, assetInfo.MetaInfo),
+				sdk.NewAttribute(assetstype.AttributeKeyExocoreChainIdx, fmt.Sprintf("%d", assetInfo.ImuaChainIndex)),
+			),
+		)
+	}
+	return nil
+}
+
+// IsAVSRewardAsset checks if the assetID is a reward asset of specified AVS.
+func (k Keeper) IsAVSRewardAsset(ctx sdk.Context, avsAddr, assetID string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	return store.Has(key)
+}
+
+// GetAVSRewardAssetInfo returns the avs reward asset information stored against the  provided avsAddr and assetID.
+func (k Keeper) GetAVSRewardAssetInfo(ctx sdk.Context, avsAddr, assetID string) (info *types.AVSRewardAsset, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	value := store.Get(key)
+	if value == nil {
+		return nil, types.ErrAVSRewardAssetNotFound
+	}
+
+	ret := types.AVSRewardAsset{}
+	k.cdc.MustUnmarshal(value, &ret)
+	return &ret, nil
+}
+
+// GetAVSRewardAssetBySymbol returns the avs reward asset information stored against the  provided avsAddr and symbol.
+func (k Keeper) GetAVSRewardAssetBySymbol(ctx sdk.Context, avsAddr, symbol string) (info *types.AVSRewardAsset, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
+	key := assetstype.GetJoinedStoreKey(avsAddr, symbol)
+	value := store.Get(key)
+	if value == nil {
+		return nil, types.ErrAVSRewardAssetNotFound
+	}
+	assetID := string(value)
+	return k.GetAVSRewardAssetInfo(ctx, avsAddr, assetID)
+}
+
+// UpdateAVSRewardAssetMetaInfo updates the meta information stored against the avsAddr and assetID.
+// If the key does not exist, it returns an error.
+func (k Keeper) UpdateAVSRewardAssetMetaInfo(ctx sdk.Context, avsAddr, assetID string, metainfo string) error {
+	info, err := k.GetAVSRewardAssetInfo(ctx, avsAddr, assetID)
+	if err != nil {
+		return err
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	info.AssetBasicInfo.MetaInfo = metainfo
+	bz := k.cdc.MustMarshal(info)
+	store.Set(key, bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUpdatedRewardAsset,
+			sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, metainfo),
+		),
+	)
+	return nil
+}
+
+func (k Keeper) GetAllAVSRewardAssets(ctx sdk.Context, avsAddr string) (allRewardAssets types.AVSRewardAssets, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(avsAddr))
+	defer iterator.Close()
+
+	ret := make([]*types.AVSRewardAsset, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		var avsRewardAsset types.AVSRewardAsset
+		k.cdc.MustUnmarshal(iterator.Value(), &avsRewardAsset)
+		ret = append(ret, &avsRewardAsset)
+	}
+	return types.AVSRewardAssets{
+		AvsRewardAssets: ret,
+	}, nil
+}

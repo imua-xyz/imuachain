@@ -17,4 +17,19 @@ var (
 		ModuleName, 3,
 		"Error: avs reward distribution information not found",
 	)
+
+	ErrOperatorNotFound = sdkerrors.Register(
+		ModuleName, 4,
+		"Error: the operator not found by the validator consensus key",
+	)
+
+	ErrInvalidRewardAssetParameter = sdkerrors.Register(
+		ModuleName, 5,
+		"invalid parameter of reward asset",
+	)
+
+	ErrAVSRewardAssetNotFound = sdkerrors.Register(
+		ModuleName, 6,
+		"Error: the avs reward asset not found",
+	)
 )
