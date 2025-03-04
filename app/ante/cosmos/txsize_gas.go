@@ -1,6 +1,8 @@
 package cosmos
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/codec/legacy"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -39,8 +41,12 @@ func (cgts ConsumeTxSizeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 
 	// Skip gas consumption if tx is an OracleCreatePriceTx
 	if _, isOracle, isRawData := anteutils.OracleCreatePriceTx(tx); isOracle {
-		if isRawData && len(ctx.TxBytes()) > anteutils.TxSizeLimitOracleRawData {
-			return ctx, sdkerrors.ErrTxTooLarge.Wrapf("oracle create-price tx exceeds size limit, limit:%d, got:%d", anteutils.TxSizeLimitOracleRawData, len(ctx.TxBytes()))
+		fmt.Printf("debug(leonz)--->oTxSize:%d, isRawData:%t\r\n", len(ctx.TxBytes()), isRawData)
+		if isRawData {
+			if len(ctx.TxBytes()) > anteutils.TxSizeLimitOracleRawData {
+				return ctx, sdkerrors.ErrTxTooLarge.Wrapf("oracle create-price tx exceeds size limit, limit:%d, got:%d", anteutils.TxSizeLimitOracleRawData, len(ctx.TxBytes()))
+			}
+			return next(ctx, tx, simulate)
 		}
 		if len(ctx.TxBytes()) > anteutils.TxSizeLimitOraclePrice {
 			return ctx, sdkerrors.ErrTxTooLarge.Wrapf("oracle create-price tx with rawdata exceeds size limit, limit:%d, got:%d", anteutils.TxSizeLimitOraclePrice, len(ctx.TxBytes()))

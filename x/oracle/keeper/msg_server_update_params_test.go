@@ -23,11 +23,6 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 		ks.Reset()
 	})
 	BeforeEach(func() {
-		ks.Reset()
-		Expect(ks.ms).ToNot(BeNil())
-		defaultParams = testdata.DefaultParamsForTest()
-		ks.k.SetParams(ks.ctx, defaultParams)
-
 		privVal1 := mock.NewPV()
 		pubKey1, _ := privVal1.GetPubKey()
 
@@ -53,6 +48,37 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 				},
 			}
 		})
+
+		ks.Reset()
+		Expect(ks.ms).ToNot(BeNil())
+		defaultParams = testdata.DefaultParamsForTest()
+		ks.k.SetParams(ks.ctx, defaultParams)
+
+		//		privVal1 := mock.NewPV()
+		//		pubKey1, _ := privVal1.GetPubKey()
+		//
+		//		privVal2 := mock.NewPV()
+		//		pubKey2, _ := privVal2.GetPubKey()
+		//
+		//		privVal3 := mock.NewPV()
+		//		pubKey3, _ := privVal3.GetPubKey()
+		//
+		//		patcher = ApplyMethod(reflect.TypeOf(dogfoodkeeper.Keeper{}), "GetAllImuachainValidators", func(k dogfoodkeeper.Keeper, ctx sdk.Context) []dogfoodtypes.ImuachainValidator {
+		//			return []dogfoodtypes.ImuachainValidator{
+		//				{
+		//					Address: pubKey1.Address(),
+		//					Power:   1,
+		//				},
+		//				{
+		//					Address: pubKey2.Address(),
+		//					Power:   1,
+		//				},
+		//				{
+		//					Address: pubKey3.Address(),
+		//					Power:   1,
+		//				},
+		//			}
+		//		})
 	})
 
 	Context("Update Chains", func() {

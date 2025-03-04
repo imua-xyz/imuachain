@@ -3,6 +3,13 @@ package types
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
+	"errors"
+	"fmt"
+	"math"
+	"strconv"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // node represents leaf-node
@@ -17,6 +24,14 @@ type Node struct {
 	// right sibling
 	right *Node
 }
+
+func (n *Node) HashNode() *HashNode {
+	return &HashNode{
+		Index: n.index,
+		Hash:  n.hash,
+	}
+}
+
 type MerkleTree struct {
 	root      []byte
 	rootIndex uint32
@@ -32,15 +47,48 @@ type MerkleTree struct {
 // ordered bottom up
 type Proof []*HashNode
 
-func (p *Proof) getHashByIndex(index uint32) []byte {
+func (p *Proof) getHashNodeByIndex(index uint32) *HashNode {
 	for _, hn := range *p {
 		if hn.Index == index {
-			return hn.Hash
+			return hn
 		}
 	}
 	return nil
 }
 
+func (p *Proof) GetCopy() Proof {
+	if p == nil {
+		return nil
+	}
+	tmp := *p
+	ret := make([]*HashNode, 0, len(tmp))
+	for _, hn := range tmp {
+		hash := make([]byte, len(hn.Hash))
+		copy(hash, hn.Hash)
+		ret = append(ret, &HashNode{
+			Index: hn.Index,
+			Hash:  hash,
+		})
+	}
+	return ret
+}
+
+func (p *Proof) FlattenString() (string, string) {
+	tmp := *p
+	if len(tmp) == 0 {
+		return "", ""
+	}
+	idxStr := strconv.Itoa(int(tmp[0].Index))
+	hashStr := base64.StdEncoding.EncodeToString(tmp[0].Hash)
+
+	for i := 1; i < len(tmp); i++ {
+		idxStr += DelimiterForBase64
+		idxStr += strconv.Itoa(int(tmp[i].Index))
+		hashStr += DelimiterForBase64
+		hashStr += base64.StdEncoding.EncodeToString(tmp[i].Hash)
+	}
+	return idxStr, hashStr
+}
 func (m *MerkleTree) SetRawDataPieces(pieces [][]byte) {
 	m.pieces = pieces
 }
@@ -55,7 +103,7 @@ func (m *MerkleTree) SetProofNodes(nodes []*HashNode) {
 	}
 }
 
-func (m *MerkleTree) ProofPathFromLeafIndex(index uint32) []uint32 {
+func (m *MerkleTree) ProofPathFromLeafIndex(index uint32, withCalculatedNodes bool) []uint32 {
 	if index >= m.leafCount {
 		return nil
 	}
@@ -65,6 +113,9 @@ func (m *MerkleTree) ProofPathFromLeafIndex(index uint32) []uint32 {
 	}
 	path := make([]uint32, 0)
 	for node != nil {
+		if withCalculatedNodes {
+			path = append(path, node.index)
+		}
 		if node.left == nil && node.right == nil {
 			break
 		}
@@ -105,96 +156,71 @@ func (m *MerkleTree) UncachedProofPathFromLeafIndex(index uint32) []uint32 {
 	return path
 }
 
-func (m *MerkleTree) VerifyAndCache(targetIndex uint32, targetPiece []byte, proof Proof) (cachedProof Proof, verified bool) {
-	if targetIndex >= m.leafCount {
+// VerifyAndCacheOrdered verifies the target piece with provided proof, and it requires the targetPiece is exactly the next piece against cachec pieces
+func (m *MerkleTree) VerifyAndCacheOrdered(targetIndex uint32, targetPiece []byte, proof Proof) (cachedProof Proof, verified bool) {
+	// as an 'ordered' method, we require the targetIndex to be the next index against cached pieces
+	// #nosec G115 - len(m.pieces) is limited by m.leafCount
+	if targetIndex >= m.leafCount || targetIndex != uint32(len(m.pieces)) {
 		return nil, false
 	}
-	tmpHash := sha256.Sum256(targetPiece)
-	hash := tmpHash[:]
+	hash := leafHash(targetPiece)
 	// get hashed-leafnode
 	node := m.t[targetIndex]
 	if node.hash != nil {
-		return nil, bytes.Equal(node.hash, hash)
-	}
-	ret := make([]*HashNode, 0, len(proof))
-	ret = append(ret, &HashNode{Index: node.index, Hash: hash})
-	newNode := &Node{
-		// tmp cache the unverified hash in a new node
-		hash:   hash,
-		index:  node.index,
-		parent: node.parent,
-		// left sibling
-		left: node.left,
-		// right sibling
-		right: node.right,
-	}
-	tmpNode := newNode
-	// only root have no sibling, and root must have hash
-	for tmpNode.right != nil || tmpNode.left != nil {
-		var parentHash []byte
-		var pairHash []byte
-		var pairNode *Node
-		var combinednodes []byte
-
-		if tmpNode.right != nil {
-			pairNode = tmpNode.right
-		} else {
-			pairNode = tmpNode.left
+		verified = bytes.Equal(node.hash, hash)
+		if verified {
+			m.pieces = append(m.pieces, targetPiece)
 		}
-
-		if pairHash = pairNode.hash; pairHash == nil {
-			pairHash = proof.getHashByIndex(pairNode.index)
-			if len(pairHash) == 0 {
+		return nil, verified
+	}
+	cachedHashes := make(map[uint32][]byte)
+	cachedProof = make([]*HashNode, 0, len(proof))
+	cachedHashes[targetIndex] = hash
+	cachedProof = append(cachedProof, &HashNode{Index: targetIndex, Hash: hash})
+	for node.parent != nil {
+		var pairNode *Node
+		if node.left != nil {
+			pairNode = node.left
+		} else {
+			pairNode = node.right
+		}
+		var pairHash []byte
+		if pairNode.hash == nil {
+			//			pairHash = proof.getHashByIndex(pairNode.index)
+			hashNode := proof.getHashNodeByIndex(pairNode.index)
+			if hashNode == nil || len(hashNode.Hash) == 0 {
 				return nil, false
 			}
-			ret = append(ret, &HashNode{Index: pairNode.index, Hash: pairHash})
-			pairNode = &Node{
-				index:  pairNode.index,
-				hash:   pairHash,
-				right:  pairNode.right,
-				left:   pairNode.left,
-				parent: pairNode.parent,
-			}
-		}
-		if tmpNode.right != nil {
-			tmpNode.right = pairNode
-			combinednodes = append(tmpNode.hash, pairHash...)
+			pairHash = hashNode.Hash
+			cachedHashes[pairNode.index] = pairHash
+			cachedProof = append(cachedProof, hashNode)
 		} else {
-			tmpNode.left = pairNode
-			combinednodes = append(pairHash, tmpNode.hash...)
+			pairHash = pairNode.hash
 		}
-
-		tmpHash = sha256.Sum256(combinednodes)
-		parentHash = tmpHash[:]
-
-		if tmpNode.parent == nil {
-			// this should not happen
-			return nil, false
+		//		var calculatedParentHash []byte
+		if node.left != nil {
+			//			calculatedParentHash = innerHash(pairHash, hash)
+			hash = innerHash(pairHash, hash)
+		} else {
+			//			calculatedParentHash = innerHash(hash, pairHash)
+			hash = innerHash(hash, pairHash)
 		}
-
-		parentNode := tmpNode.parent
-		if parentNode.hash != nil {
-			if bytes.Equal(parentNode.hash, parentHash) {
-				// update cache
-				m.t[targetIndex] = newNode
-				return ret, true
+		if node.parent.hash != nil {
+			// verified := bytes.Equal(node.parent.hash, calculatedParentHash)
+			verified := bytes.Equal(node.parent.hash, hash)
+			if verified {
+				// copy cached into merkletree
+				for idx, cachedHash := range cachedHashes {
+					m.t[idx].hash = cachedHash
+				}
+				m.pieces = append(m.pieces, targetPiece)
+				return cachedProof, true
 			}
 			return nil, false
 		}
+		cachedHashes[node.parent.index] = hash
 
-		// parent.hash == nil, new a cache node
-		parentNode = &Node{
-			index:  parentNode.index,
-			hash:   parentHash,
-			left:   parentNode.left,
-			right:  parentNode.right,
-			parent: parentNode.parent,
-		}
-
-		tmpNode.parent = parentNode
-		pairNode.parent = parentNode
-
-		tmpNode = parentNode
+		node = node.parent
 	}
 	return nil, false
 }
@@ -261,6 +287,15 @@ func (m *MerkleTree) MinimalProofPathByIndex(index uint32) []uint32 {
 	return proofPath
 }
 
+func (m *MerkleTree) MinimalProofByIndex(index uint32) Proof {
+	path := m.MinimalProofPathByIndex(index)
+	ret := make([]*HashNode, 0, len(path))
+	for _, idx := range path {
+		ret = append(ret, m.t[idx].HashNode())
+	}
+	return ret
+}
+
 func (m *MerkleTree) LeafCount() uint32 {
 	return m.leafCount
 }
@@ -283,35 +318,107 @@ func (m *MerkleTree) RootIndex() uint32 {
 	return m.rootIndex
 }
 
-// NewMT new a merkle tree initialized with the topology from input pieceSize and totalSize
-func NewMT(pieceSize, leafCount uint32, root []byte) *MerkleTree {
-	if leafCount < 1 {
+func (m *MerkleTree) GetCopy() *MerkleTree {
+	if m == nil {
 		return nil
 	}
-	originalLeafCount := leafCount
-
-	ret := &MerkleTree{
-		pieces:           make([][]byte, 0, leafCount),
-		leafCount:        leafCount,
-		pieceSize:        pieceSize,
-		minimalProofPath: make(map[uint32][]uint32),
+	ret, _ := NewMT(m.pieceSize, m.leafCount, m.root)
+	for pIdx, p := range m.t {
+		if p.hash != nil {
+			ret.t[pIdx].hash = make([]byte, len(p.hash))
+			copy(ret.t[pIdx].hash, p.hash)
+		}
 	}
+	if len(m.pieces) > 0 {
+		ret.pieces = make([][]byte, len(m.pieces))
+		copy(ret.pieces, m.pieces)
+	}
+	if len(m.rawData) > 0 {
+		ret.rawData = make([]byte, len(m.rawData))
+		copy(ret.rawData, m.rawData)
+	}
+	if len(m.minimalProofPath) > 0 {
+		ret.minimalProofPath = make(map[uint32][]uint32)
+		for pIdx, path := range m.minimalProofPath {
+			ret.minimalProofPath[pIdx] = path
+		}
+	}
+	return ret
+}
 
+// fromRawData
+//   - true: bytes represents the rawData itself
+//   - false: bytes represents the rootHash
+func merkleTreeFromBytes(pieceSize uint32, leafCount uint32, bytes []byte, fromRawData bool) (*MerkleTree, error) {
+	if pieceSize == 0 {
+		return nil, errors.New("pieceSize can't be zero")
+	}
+	size := uint32(0)
+	if fromRawData {
+		tmp := len(bytes)
+		if tmp == 0 || tmp > math.MaxUint32 {
+			return nil, fmt.Errorf("rawData size is invalid, size=%d", tmp)
+		}
+		size = uint32(tmp)
+		calculatedLeafCount := size / pieceSize
+		if size%pieceSize > 0 {
+			calculatedLeafCount++
+		}
+		if leafCount > 0 && calculatedLeafCount != leafCount {
+			return nil, fmt.Errorf("input leafCount doesn't equals to the result calculated from rawData and pieceSize, leafCount%d, calculatedLeafCount:%d", leafCount, calculatedLeafCount)
+		}
+		if leafCount == 0 {
+			leafCount = calculatedLeafCount
+		}
+	} else if len(bytes) != common.HashLength {
+		return nil, fmt.Errorf("rootHash must have length of %d, got:%d", common.HashLength, len(bytes))
+	}
 	if leafCount == 1 {
-		ret.t = map[uint32]*Node{0: {index: 1}}
-		return ret
+		node := &Node{
+			index: 0,
+		}
+		ret := &MerkleTree{
+			rootIndex: 0,
+			t:         map[uint32]*Node{0: node},
+			pieceSize: pieceSize,
+			leafCount: leafCount,
+		}
+		if fromRawData {
+			hash := leafHash(bytes)
+			node.hash = hash
+			ret.pieces = [][]byte{bytes}
+			ret.rawData = bytes
+			ret.root = hash
+		} else {
+			ret.root = bytes
+			node.hash = bytes
+		}
+		return ret, nil
 	}
 
-	t := make(map[uint32]*Node)
+	originalLeafCount := leafCount
 	prevLayersCount := uint32(0)
-
+	t := make(map[uint32]*Node)
+	pSize := uint32(0)
+	if fromRawData {
+		pSize = leafCount
+	}
+	pieces := make([][]byte, 0, pSize)
 	for leafCount > 1 {
 		for i := uint32(0); i < leafCount; i += 2 {
 			idx := i + prevLayersCount
-
 			lNode := t[idx]
 			if lNode == nil {
-				lNode = &Node{index: idx}
+				lNode = &Node{
+					index: idx,
+				}
+				// this only happens in the botoom layer which consists from all hash nodes of leaves
+				if fromRawData {
+					endIdx := min((i+1)*pieceSize, size)
+					piece := bytes[i*pieceSize : endIdx]
+					pieces = append(pieces, piece)
+					lNode.hash = leafHash(piece)
+				}
 				t[idx] = lNode
 			}
 
@@ -319,6 +426,12 @@ func NewMT(pieceSize, leafCount uint32, root []byte) *MerkleTree {
 				rNode := t[idx+1]
 				if rNode == nil {
 					rNode = &Node{index: idx + 1}
+					if fromRawData {
+						endIdx := min((i+2)*pieceSize, size)
+						piece := bytes[(i+1)*pieceSize : endIdx]
+						pieces = append(pieces, piece)
+						rNode.hash = leafHash(piece)
+					}
 					t[idx+1] = rNode
 				}
 
@@ -334,6 +447,9 @@ func NewMT(pieceSize, leafCount uint32, root []byte) *MerkleTree {
 				parentNode := t[parentIdx]
 				if parentNode == nil {
 					parentNode = &Node{index: parentIdx}
+					if fromRawData {
+						parentNode.hash = innerHash(lNode.hash, rNode.hash)
+					}
 					t[parentIdx] = parentNode
 				}
 				if lNode.parent == nil {
@@ -366,30 +482,65 @@ func NewMT(pieceSize, leafCount uint32, root []byte) *MerkleTree {
 			leafCount /= 2
 		}
 	}
-	t[prevLayersCount] = &Node{
-		index: prevLayersCount,
-		hash:  root,
-		// root node, got no parent or siblings
+
+	ret := &MerkleTree{
+		rootIndex:        prevLayersCount,
+		t:                t,
+		leafCount:        originalLeafCount,
+		pieceSize:        pieceSize,
+		minimalProofPath: make(map[uint32][]uint32),
 	}
 
-	ret.t = t
-	ret.root = root
-	ret.rootIndex = prevLayersCount
-
-	tmpIndex := make(map[uint32]struct{})
+	seenIndex := make(map[uint32]struct{})
 	for i := uint32(0); i < ret.leafCount; i++ {
-		path := ret.ProofPathFromLeafIndex(i)
+		seenIndex[i] = struct{}{}
+		path := ret.ProofPathFromLeafIndex(i, false)
 		minimalPath := make([]uint32, 0, len(path))
 		for _, pIndex := range path {
-			if _, ok := tmpIndex[pIndex]; !ok {
-				tmpIndex[pIndex] = struct{}{}
+			if _, ok := seenIndex[pIndex]; !ok {
+				seenIndex[pIndex] = struct{}{}
 				minimalPath = append(minimalPath, pIndex)
 			}
 		}
 		if len(minimalPath) > 0 {
 			ret.minimalProofPath[i] = minimalPath
 		}
+		pathWithCalculatedNodes := ret.ProofPathFromLeafIndex(i, true)
+		for _, pIndx := range pathWithCalculatedNodes {
+			if _, ok := seenIndex[pIndx]; !ok {
+				seenIndex[pIndx] = struct{}{}
+			}
+		}
 	}
+	if fromRawData {
+		ret.root = t[prevLayersCount].hash
+		ret.rawData = bytes
+		ret.pieces = pieces
+	} else {
+		ret.root = bytes
+		ret.t[prevLayersCount].hash = bytes
+	}
+	return ret, nil
+}
 
-	return ret
+func leafHash(node []byte) []byte {
+	ret := sha256.Sum256(node)
+	return ret[:]
+}
+
+func innerHash(lNode, rNode []byte) []byte {
+	combined := make([]byte, 0, len(lNode)+len(rNode))
+	combined = append(combined, lNode...)
+	combined = append(combined, rNode...)
+	ret := sha256.Sum256(combined)
+	return ret[:]
+}
+
+// NewMT new a merkle tree initialized with the topology from input pieceSize and totalSize
+func NewMT(pieceSize, leafCount uint32, root []byte) (*MerkleTree, error) {
+	return merkleTreeFromBytes(pieceSize, leafCount, root, false)
+}
+
+func DeriveMT(pieceSize uint32, rawData []byte) (*MerkleTree, error) {
+	return merkleTreeFromBytes(pieceSize, 0, rawData, true)
 }

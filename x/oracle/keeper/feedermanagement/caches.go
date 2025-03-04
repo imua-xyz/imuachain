@@ -95,18 +95,23 @@ func (c *caches) IsRuleV1(feederID int64) bool {
 	// #nosec - G115 ruleID is assigned with slice index
 	ruleID := int(p.TokenFeeders[feederID].RuleID)
 	if ruleID == 0 || ruleID >= len(p.Rules) {
+		fmt.Println("debug(leonz):invalid rulID", ruleID)
 		return false
 	}
 
 	rule := p.Rules[ruleID]
+	// for v1, only single deterministic source is supported
 	if len(rule.SourceIDs) == 1 {
 		// #nosec G115 - sourceID is assigned with slice index
 		sID := int(rule.SourceIDs[0])
-		if sID == 0 || sID >= len(p.Sources) {
-			return false
-		}
-		if s := p.Sources[sID]; s.Deterministic {
-			return true
+		if sID > 0 {
+			if sID >= len(p.Sources) {
+				fmt.Println("debug(leonz):invalid sID", sID)
+				return false
+			}
+			if s := p.Sources[sID]; s.Deterministic {
+				return true
+			}
 		}
 	}
 
@@ -133,6 +138,7 @@ func (c *caches) isRule2PhasesByRule(rule *oracletypes.RuleSource) bool {
 		// #nosec G115 - ruleID is set from index of slice which is actually type of int
 		sID := int(rule.Nom.SourceIDs[0])
 		if sID == 0 || sID >= len(c.params.params.Sources) {
+			fmt.Println("debug(leonz):invalid sID 2phase", sID)
 			return false
 		}
 		if s := c.params.params.Sources[sID]; s.Deterministic && rule.Nom.Minimum == 1 {

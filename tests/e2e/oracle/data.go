@@ -1,6 +1,9 @@
 package oracle
 
 import (
+	"math/rand"
+
+	"github.com/cosmos/gogoproto/proto"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
@@ -47,13 +50,70 @@ func (p priceTime) generateRealTimeStructs(detID string, sourceID uint64) (price
 	}
 }
 
+// generateNSTPriceTime generates a priceTime with price assigned with rawdata
 func generateNSTPriceTime(sc [][]int) priceTime {
 	rawBytes := convertBalanceChangeToBytes(sc)
+
 	return priceTime{
 		Price:     string(rawBytes),
 		Decimal:   0,
 		Timestamp: now,
 	}
+}
+
+func getNstRootAndPieces() ([]byte, [][]byte) {
+	nstbc := oracletypes.RawDataNST{
+		Version: 1,
+		NstBalanceChanges: []*oracletypes.NSTKV{
+			{StakerIndex: 0,
+				Balance: 99,
+			},
+		},
+	}
+	bz, err := proto.Marshal(&nstbc)
+	if err != nil {
+		panic(err)
+	}
+
+	mt, err := oracletypes.DeriveMT(480000, bz)
+	if err != nil {
+		panic(err)
+	}
+	pieces, ok := mt.CollectedPieces()
+	if !ok {
+		panic("derived mt is incorrect")
+	}
+	return mt.RootHash(), pieces
+}
+
+// func getNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32) ([]byte, [][]byte, []*oracletypes.NSTKV) {
+func getNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32) (*oracletypes.MerkleTree, []*oracletypes.NSTKV) {
+	nstbc := oracletypes.RawDataNST{
+		Version: uint64(version),
+	}
+	changes := make([]*oracletypes.NSTKV, 0, stakerCount)
+	for i := uint32(0); i < stakerCount; i++ {
+		changes = append(changes, &oracletypes.NSTKV{
+			StakerIndex: i,
+			Balance:     int64(rand.Int63n(99999999) + 1),
+		})
+	}
+	nstbc.NstBalanceChanges = changes
+	bz, err := proto.Marshal(&nstbc)
+	if err != nil {
+		panic(err)
+	}
+
+	mt, err := oracletypes.DeriveMT(pieceSize, bz)
+	if err != nil {
+		panic(err)
+	}
+	_, ok := mt.CollectedPieces()
+	if !ok {
+		panic("derived mt is incorrect")
+	}
+	//	return mt.RootHash(), pieces, changes
+	return mt, changes
 }
 
 var (

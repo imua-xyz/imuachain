@@ -213,10 +213,10 @@ type round struct {
 	// roundBaseBlock is the round base block of current round
 	roundBaseBlock int64
 
-	// roundPhaseTwoStartBlock defines the first block when the oracle begins accepting second-phase messages containing raw data pieces during two-phase aggregation
-	// We delay collecting raw data pieces for several blocks after first-phase consensus to give proposers time to receive and prepare messages with raw data pieces and proofs
+	// roundPhaseTwoCheckingBlock defines the first block when the slashing mechnism require proposer must contain collecting rawdata
+	// We delay the block height for several blocks after first-phase consensus to give proposers time to receive and prepare messages with raw data pieces and proofs
 	// Since proposers are penalized for not including necessary raw data pieces, we provide this buffer to prevent unfair punishment due to overly strict timeouts
-	roundPhaseTwoStartBlock uint64
+	roundPhaseTwoCheckingBlock uint64
 
 	// roundID is the round ID of current round
 	roundID int64

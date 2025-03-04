@@ -68,6 +68,8 @@ func (r *round) CopyForCheckTx() *round {
 	// cache does not need to be copied since it's a readonly interface,
 	// and there's no race condition since abci requests are not executing concurrntly
 	ret.a = ret.a.CopyForCheckTx()
+	ret.m = r.m.GetCopy()
+	ret.cachedProofForBlock = r.cachedProofForBlock.GetCopy()
 	return &ret
 }
 
@@ -93,8 +95,11 @@ func (r *round) getMsgItemFromProto(msg *oracletypes.MsgItem) (*MsgItem, error) 
 	}, nil
 }
 
-func (r *round) ValidQuotingBaseBlock(height int64) bool {
-	return r.IsQuotingWindowOpen() && r.roundBaseBlock == height
+func (r *round) ValidQuotingBaseBlock(height int64, notTwoPhase bool) bool {
+	if notTwoPhase {
+		return r.IsQuotingWindowOpen() && r.roundBaseBlock == height
+	}
+	return r.roundBaseBlock == height
 }
 
 // Tally process information to get the final price
@@ -178,7 +183,7 @@ func (r *round) PrepareForNextBlock(currentHeight int64) (open bool) {
 		if r.twoPhases {
 			// wait quoteWindowSize-1 blocks for proposer to collecting pieces
 			// #nosec G115
-			r.roundPhaseTwoStartBlock = uint64(r.roundBaseBlock + 2*r.quoteWindowSize)
+			r.roundPhaseTwoCheckingBlock = uint64(r.roundBaseBlock + 2*r.quoteWindowSize)
 		}
 	}
 	return open

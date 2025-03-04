@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,8 +24,9 @@ type ImuaMempool struct {
 	txDecoder sdk.TxDecoder
 }
 
-// Insert inserts a tx into mempool, currently only used for rawData from tx related to 2-phases aggregation of oracle module
+// Insert inserts a tx into mempool, currently only used for rawData from tx related to 2-phases aggregation of oracle modulps -ef | grep e
 func (em *ImuaMempool) Insert(ctx context.Context, tx sdk.Tx) error {
+	debugCtx := sdk.UnwrapSDKContext(ctx)
 	// we don't filter tx not with message of rawData type, those tx will just be added into tendermint's txpool
 	if !em.includesMsgOracle(tx) {
 		return nil
@@ -56,6 +58,7 @@ func (em *ImuaMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 	}
 	for _, pieceCached := range piecesIndexCached {
 		if pieceCached.EqualsTo(piece) {
+			fmt.Printf("debug(leonz)--->piece exists, blockHeight:%d, pieceIndex:%d, feederID:%d, creator:%s\r\n", debugCtx.BlockHeight(), piece.Index, fID, msgOracle.Creator)
 			return errors.New("piece exists in mempool")
 		}
 	}
@@ -65,11 +68,13 @@ func (em *ImuaMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 }
 
 func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iterator {
+	fmt.Printf("debug(leonz)--->mempool.Select, len(txList):%d, countTx:%d, app-len-fID:%d\r\n", len(txList), em.count, len(em.cachedPieces))
 	// remove all expired tx, when Select for block 100, all txs belongs to 99 or before should be removed
 
 	// feederIDS:[]uint64, which are expecting rawData
 	// []Tx, each feederID must have one tx
 	collectingFeederIDs := em.k.FeederManager.FeederIDsCollectingRawData()
+	fmt.Println("debug(leonz)--->mempool.2")
 	if len(collectingFeederIDs) == 0 {
 		// remove all cached pieces since no collectingFeederIDs available
 		em.reset()
@@ -84,9 +89,14 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 			}
 			txDecodedList = append(txDecodedList, tx)
 		}
-		return IteratorFromSlice(txDecodedList)
+		fmt.Println("debug(leonz)--->mempool_2.2")
+		if len(txDecodedList) > 0 {
+			return IteratorFromSlice(txDecodedList)
+		}
+		return nil
 	}
 
+	fmt.Println("debug(leonz)--->mempool.3")
 	em.clearExpiredFeederIDcache(collectingFeederIDs)
 
 	seenFeederIDs := make(map[uint64]struct{})
@@ -121,6 +131,7 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 		keep = append(keep, tx)
 		seenFeederIDs[msgOracle.FeederID] = struct{}{}
 	}
+	fmt.Println("debug(leonz)--->mempool.5")
 	// fill txs from imua-mempool for missed txs which is required by 'collectinFeederIDs'
 	if len(seenFeederIDs) < len(collectingFeederIDs) {
 		for _, expectedFeederID := range collectingFeederIDs {
@@ -139,10 +150,13 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 			}
 		}
 	}
+
+	fmt.Println("debug(leonz)--->mempool.6")
 	if len(keep) > 0 {
 		return IteratorFromSlice(keep)
 	}
 
+	fmt.Println("debug(leonz)--->mempool.7")
 	return nil
 }
 
@@ -245,9 +259,7 @@ func (em *ImuaMempool) clearExpiredFeederIDcache(collectingFeederIDs []uint64) {
 }
 
 func IteratorFromSlice(txList []sdk.Tx) *ImuaMemIterator {
-	// TODO:(leonz) implement me
 	return &ImuaMemIterator{txList: txList}
-	return nil
 }
 
 type ImuaMemIterator struct {
@@ -260,7 +272,7 @@ func (ii *ImuaMemIterator) Next() mempool.Iterator {
 		return nil
 	}
 	ii.cursor++
-	return nil
+	return ii
 }
 
 func (ii *ImuaMemIterator) Tx() sdk.Tx {
@@ -270,6 +282,7 @@ func (ii *ImuaMemIterator) Tx() sdk.Tx {
 	return nil
 }
 
+// func NewImuaMempool(oKeeper *oraclekeeper.Keeper, decoder sdk.TxDecoder) *ImuaMempool {
 func NewImuaMempool(oKeeper *oraclekeeper.Keeper, decoder sdk.TxDecoder) *ImuaMempool {
 	return &ImuaMempool{
 		cachedPieces: make(map[uint64]map[uint32][]*oracletypes.PieceWithProof),

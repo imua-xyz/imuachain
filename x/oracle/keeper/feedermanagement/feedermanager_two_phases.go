@@ -40,7 +40,7 @@ func (f *FeederManager) VerifyPieceProofsForTokenFeederID(feederID uint64, targe
 		return r.m.RootHash(), false
 	}
 	// the proof has been verified to be minimal in anteHandler so we dont need to check the first returned value
-	_, verified := r.m.VerifyAndCache(targetPiece.Index, targetPiece.RawData, targetPiece.Proof)
+	_, verified := r.m.VerifyAndCacheOrdered(targetPiece.Index, targetPiece.RawData, targetPiece.Proof)
 	return r.m.RootHash(), verified
 }
 
@@ -70,7 +70,7 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 
 	tmp, err := strconv.ParseUint(msg.Prices[0].Prices[0].DetID, 10, 32)
 	pieceIndex := uint32(tmp)
-	if err != nil || pieceIndex > pieceCount || pieceIndex < 1 {
+	if err != nil || pieceIndex >= pieceCount { // || pieceIndex < 1 {
 		return nil, false
 	}
 
@@ -94,6 +94,7 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 		}
 
 		proof := make([]*oracletypes.HashNode, 0, len(hashesBase64))
+		rootIndex := r.m.RootIndex()
 		for i, hashBase64 := range hashesBase64 {
 			hashBytes, err := base64.StdEncoding.DecodeString(hashBase64)
 			if err != nil || len(hashBytes) != common.HashLength {
@@ -101,7 +102,7 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 			}
 			tmp, err := strconv.ParseUint(indexes[i], 10, 32)
 			index := uint32(tmp)
-			if err != nil || index < 1 || index > pieceCount {
+			if err != nil || index > rootIndex {
 				return nil, false
 			}
 			proof = append(proof, &oracletypes.HashNode{Index: index, Hash: hashBytes})

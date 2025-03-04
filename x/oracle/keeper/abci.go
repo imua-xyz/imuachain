@@ -3,12 +3,10 @@ package keeper
 import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
 )
 
 func (k Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
-	if k.postHandlers == nil {
-		k.postHandlers = make(map[int64]common.PostAggregationHandler)
+	if len(k.postHandlers) == 0 {
 		// bond handlers for custom pre defined token feeders
 		k.RegisterPostAggregation()
 		// bond handlers for nst token feeders

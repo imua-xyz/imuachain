@@ -63,6 +63,7 @@ func NewKeeper(
 		authority:        authority,
 		SlashingKeeper:   slashingKeeper,
 		FeederManager:    feedermanagement.NewFeederManager(nil),
+		postHandlers:     make(map[int64]common.PostAggregationHandler),
 	}
 	ret.FeederManager.SetKeeper(&ret)
 	return ret

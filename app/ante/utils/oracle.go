@@ -8,8 +8,8 @@ import (
 // TxSizeLimit limits max size of a create-price tx, this is calculated based on one nativeTokenbalance message of worst case(max size), which will need 576 bytes for balance update
 // 48*1024+5*32+6*4 +... TODO(leonz): ensure the proto cost, now use a fixed 200B
 const (
-	TxSizeLimitOraclePrice   = 49600
-	TxSizeLimitOracleRawData = 200
+	TxSizeLimitOraclePrice   = 400
+	TxSizeLimitOracleRawData = 49600
 )
 
 // TODO(leonz): return additional error info

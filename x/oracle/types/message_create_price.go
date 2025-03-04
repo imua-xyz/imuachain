@@ -20,6 +20,28 @@ func NewMsgCreatePrice(creator string, feederID uint64, prices []*PriceSource, b
 	}
 }
 
+func NewMsgCreatePrice2Phase(creator string, feederID uint64, prices []*PriceSource, basedBlock uint64, nonce int32) *MsgCreatePrice {
+	return &MsgCreatePrice{
+		Creator:    creator,
+		FeederID:   feederID,
+		Prices:     prices,
+		BasedBlock: basedBlock,
+		Nonce:      nonce,
+		Phase:      AggregationPhaseOne,
+	}
+}
+
+func NewMsgCreatePrice2Phase2(creator string, feederID uint64, prices []*PriceSource, basedBlock uint64, nonce int32) *MsgCreatePrice {
+	return &MsgCreatePrice{
+		Creator:    creator,
+		FeederID:   feederID,
+		Prices:     prices,
+		BasedBlock: basedBlock,
+		Nonce:      nonce,
+		Phase:      AggregationPhaseTwo,
+	}
+}
+
 func (msg *MsgCreatePrice) Route() string {
 	return RouterKey
 }

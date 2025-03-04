@@ -34,6 +34,9 @@ func (k Keeper) SetStakerInfos(ctx sdk.Context, assetID string, stakerInfos []*t
 	}
 }
 
+var tmpCount int
+var tmpCount2 int
+
 // GetStakerInfo returns details about staker for native-restaking under asset of assetID
 func (k Keeper) GetStakerInfo(ctx sdk.Context, assetID, stakerAddr string) types.StakerInfo {
 	store := ctx.KVStore(k.storeKey)
@@ -142,6 +145,7 @@ func (k Keeper) GetAllStakerListAssets(ctx sdk.Context) (ret []types.StakerListA
 }
 
 func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, stakerAddr, validatorPubkey string, amount sdkmath.Int) error {
+	tmpCount++
 	_, decimalInt, err := k.getDecimal(ctx, assetID)
 	if err != nil {
 		return err
@@ -175,6 +179,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	}
 	// #nosec G115
 	newBalance.Block = uint64(ctx.BlockHeight())
+
 	if amountInt64 > 0 {
 		newBalance.Change = types.Action_ACTION_DEPOSIT
 	} else {
@@ -213,6 +218,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 			break
 		}
 	}
+
 	if !exists {
 		if amountInt64 <= 0 {
 			return errors.New("remove unexist validator")
@@ -233,6 +239,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 
 	// valid veriosn start from 1
 	version := k.IncreaseNSTVersion(ctx, assetID)
+	tmpCount2++
 	// we use index to sync with client about status of stakerInfo.ValidatorPubkeyList
 	eventValue := fmt.Sprintf("%d_%s_%d", stakerInfo.StakerIndex, validatorPubkey, version)
 	if newBalance.Change == types.Action_ACTION_DEPOSIT {
@@ -317,15 +324,15 @@ func getNSTVersionFromDetID(detID string) (int64, error) {
 func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID uint64, kInf common.KeeperOracle) error {
 	balanceChanges := &types.RawDataNST{}
 	kInf.MustUnmarshal(rawData, balanceChanges)
-
-	k, ok := kInf.(Keeper)
+	k, ok := kInf.(*Keeper)
 	if !ok {
 		return errors.New("input keeper interface type error")
 	}
 	assetID := k.GetParamsFromCache().GetAssetIDForNSTFromFeederID(feederID)
 	// TODO(leonz): use uint64 for version state
-	if balanceChanges.Version != uint64(k.GetNSTVersion(ctx, assetID)) {
-		return errors.New("version not match")
+	v := uint64(k.GetNSTVersion(ctx, assetID))
+	if balanceChanges.Version != v {
+		return fmt.Errorf("version not match, expected%d, got%d", v, balanceChanges.Version)
 	}
 	_, chainID, _ := assetstypes.ParseID(assetID)
 	sl := k.GetStakerList(ctx, assetID)

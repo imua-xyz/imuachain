@@ -407,8 +407,9 @@ func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 					return ctx, fmt.Errorf("invalid piece index, nextPieceIndex:%d, got:%d, isCheckTx:%t", nextPieceIndex, pieceIndex, ctx.IsCheckTx())
 				}
 			} else {
-				return ctx, fmt.Errorf("no valid nextPieceIndex for feederID:%d", msg.FeederID)
+				return ctx, fmt.Errorf("no valid nextPieceIndex for feederID:%d, height:%d, isCheckTx:%t", msg.FeederID, ctx.BlockHeight(), ctx.IsCheckTx())
 			}
+			fmt.Println("debug(leonz)--->passIncrementForRawData, isCheckTx:", ctx.IsCheckTx())
 
 			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
 				return ctx, errors.New("invalid address")

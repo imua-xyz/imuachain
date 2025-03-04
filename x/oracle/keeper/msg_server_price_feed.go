@@ -42,12 +42,12 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 
 	// goto rawData process which needs no 'aggragation', we just verify the provided piece with recoreded root which got consensus
 	if msg.IsPhaseTwo() {
-		cachedRawData, err := ms.ProcessRawData(msg)
+		cachedRawData, err := ms.ProcessRawData(ctx, msg, ctx.IsCheckTx())
 		if err == nil {
-			logger.Info("quote of 2nd-phase added rawData of hash:%s", hex.EncodeToString(cachedRawData))
+			logger.Info("quote of 2nd-phase added rawData", "rootHash", hex.EncodeToString(cachedRawData))
 			return &types.MsgCreatePriceResponse{}, nil
 		}
-		logger.Error("quote of 2nd-phase for rawData failed", append(logQuote, "error", err))
+		logger.Error("quote of 2nd-phase for rawData failed", append(logQuote, "error", err)...)
 		return nil, err
 	}
 

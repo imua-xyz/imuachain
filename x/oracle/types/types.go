@@ -18,6 +18,7 @@ type PieceWithProof struct {
 }
 
 func (p *PieceWithProof) ProofSize() uint32 {
+	// #nosec G115
 	return uint32(len(p.Proof))
 }
 

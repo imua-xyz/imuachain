@@ -50,9 +50,12 @@ func (s *E2ETestSuite) TestCreatePrice() {
 	// we combine all test cases into one big case to avoid reset the network multiple times, the order can't be changed
 
 	option := os.Getenv("TEST_OPTION")
-	if option == "local" {
+	switch option {
+	case "local":
 		s.testRecoveryCases(10)
-	} else {
+	case "nst":
+		s.testTwoPhaseNST(0)
+	default:
 		s.testRegisterTokenThroughPrecompile()
 		s.testCreatePriceNST()
 		s.testCreatePriceLST()
@@ -295,10 +298,12 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 
 	// slashing_{miss_v3:1, window:1} [1]
 	s.moveToAndCheck(7)
-	_, ps := priceNST1.generateRealTimeStructs("100_1", 1)
-	msg0 := oracletypes.NewMsgCreatePrice(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
-	msg1 := oracletypes.NewMsgCreatePrice(creator1.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
-	msg2 := oracletypes.NewMsgCreatePrice(creator2.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	_, ps := priceNST1.generateRealTimeStructs("1", 1)
+	root, pieces := getNstRootAndPieces()
+	ps.Prices[0].Price = string(root)
+	msg0 := oracletypes.NewMsgCreatePrice2Phase(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	msg1 := oracletypes.NewMsgCreatePrice2Phase(creator1.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	msg2 := oracletypes.NewMsgCreatePrice2Phase(creator2.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
 	s.Require().NoError(err)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
@@ -340,8 +345,22 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 		},
 	}, *resStakerInfo.StakerInfo)
 
-	// new block - 9, state of 8 is committed
-	s.moveToAndCheck(9)
+	// new block - 12, send message with rawData piece to complete nst 2nd phase aggregation
+	s.moveToAndCheck(12)
+	ps.Prices[0].Price = string(pieces[0])
+	ps.Prices[0].DetID = "0"
+	msg0 = oracletypes.NewMsgCreatePrice2Phase2(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	msg1 = oracletypes.NewMsgCreatePrice2Phase2(creator1.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	msg2 = oracletypes.NewMsgCreatePrice2Phase2(creator2.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
+	s.Require().NoError(err)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
+	s.Require().NoError(err)
+	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg2}, "valconskey2", kr2)
+	s.Require().NoError(err)
+
+	// new block - 14, state of 13 is committed
+	s.moveToAndCheck(14)
 	resStakerInfo, err = s.network.QueryOracle().StakerInfo(ctx, &oracletypes.QueryStakerInfoRequest{AssetId: network.NativeAssetID, StakerAddr: stakerAddrStr})
 	s.Require().NoError(err)
 	s.Require().Equal(2, len(resStakerInfo.StakerInfo.BalanceList))
@@ -355,8 +374,8 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 		{
 			RoundID: 1,
 			Index:   1,
-			Block:   8,
-			Balance: 28,
+			Block:   13,
+			Balance: 99,
 			Change:  oracletypes.Action_ACTION_SLASH_REFUND,
 		},
 	}, resStakerInfo.StakerInfo.BalanceList)
