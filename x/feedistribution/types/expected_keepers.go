@@ -44,11 +44,13 @@ type BankKeeper interface {
 // OperatorKeeper represents the expected keeper interface for the operator module.
 type OperatorKeeper interface {
 	GetImpactfulEpochsForOperator(ctx sdk.Context, operatorAddr string) ([]string, error)
+	GetOperatorAddressForChainIDAndConsAddr(ctx sdk.Context, chainID string, consAddr sdk.ConsAddress) (bool, sdk.AccAddress)
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.
 type AVSKeeper interface {
 	GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) []string
+	IsAVS(ctx sdk.Context, addr string) (bool, error)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

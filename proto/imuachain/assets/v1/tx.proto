@@ -41,7 +41,8 @@ message ClientChainInfo {
   uint32 address_length = 8;
 }
 
-// AssetInfo defines the information for an asset to be used in staking.
+// AssetInfo defines the information for an asset to be used as the staking asset or
+// reward asset.
 message AssetInfo {
   // name of the asset, like "Tether USD"
   string name = 1;

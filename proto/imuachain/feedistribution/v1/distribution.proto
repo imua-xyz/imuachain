@@ -4,6 +4,7 @@ package imuachain.feedistribution.v1;
 import "amino/amino.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
+import "exocore/assets/v1/tx.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
@@ -34,7 +35,7 @@ message AVSRewardDistribution {
   ];
   // operator_reward_proportions represents the reward proportions of all operators
   // that are eligible to be allocated rewards in the current epoch.
-  repeated OperatorRewardProportion operator_reward_proportions =2;
+  repeated OperatorRewardProportion operator_reward_proportions = 2;
 }
 
 // CommonAVSRewardData is a common struct used to record the current rewards and cumulative
@@ -94,7 +95,7 @@ message OperatorCurrentRewards {
 // StakeChangeDelegations represents the delegations whose stake has changed in an epoch.
 message StakeChangeDelegations {
   // delegation_keys is a slice of keys for delegations.
-  repeated string delegation_keys =1;
+  repeated string delegation_keys = 1;
 }
 
 // DelegationStartingInfo represents the starting info for a delegation reward
@@ -157,10 +158,10 @@ message StakerOutstandingRewards {
 // for delegations which are withdrawn after a slash has occurred.
 message OperatorSlashEvent {
   uint64 operator_period = 1;
-  string fraction         = 2 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+  string fraction = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
 }
 
@@ -174,4 +175,51 @@ message FeePool {
     (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins"
   ];
+}
+
+// AVSRewardAssetState defines the state of an asset to be used as a reward for an AVS
+message AVSRewardAssetState {
+  // reward_pool_balance is the asset balance of reward pool. It gets updated each time
+  // an AVS deposits funds into the treasury or stakers/operators withdraw from it.
+  // We use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,
+  // and we also use it when handling the distribution with F1.
+  string reward_pool_balance = 2  [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
+  // each time an AVS deposits funds into the treasury. The difference between it and reward_pool_balance
+  // represents the total amount claimed by stakers and operators.
+  string reward_pool_total = 3  [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`
+  // because AVS is allowed to accumulate debt and repay it by funding the reward pool later.
+  // The claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains
+  // in deficit for an extended period, preventing stakers and operators from claiming their rewards,
+  // they may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility
+  // to ensure its reward pool remains sufficiently funded.
+  string reward_allocation_total = 4  [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// AVSRewardAsset defines the information for an asset to be used as a reward for an AVS
+message AVSRewardAsset {
+  // asset_basic_info is the basic information of the asset.
+  // The symbol field will be used as the `denom` field of `DecCoin`.
+  exocore.assets.v1.AssetInfo asset_basic_info = 1 [(gogoproto.nullable) = false];
+  // reward_asset_state is the state of reward asset
+  AVSRewardAssetState reward_asset_state = 2 [(gogoproto.nullable) = false];
+}
+
+// AVSRewardAssets represents all reward assets of an AVS
+message AVSRewardAssets {
+  // avs_reward_assets is a list of all reward asset for an AVS
+  repeated AVSRewardAsset avs_reward_assets = 1;
 }
