@@ -39,6 +39,7 @@ var tmpCount2 int
 
 // GetStakerInfo returns details about staker for native-restaking under asset of assetID
 func (k Keeper) GetStakerInfo(ctx sdk.Context, assetID, stakerAddr string) types.StakerInfo {
+	stakerAddr = strings.ToLower(stakerAddr)
 	store := ctx.KVStore(k.storeKey)
 	stakerInfo := types.StakerInfo{}
 	value := store.Get(types.NativeTokenStakerKey(assetID, stakerAddr))
@@ -145,6 +146,7 @@ func (k Keeper) GetAllStakerListAssets(ctx sdk.Context) (ret []types.StakerListA
 }
 
 func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, stakerAddr, validatorPubkey string, amount sdkmath.Int) error {
+	stakerAddr = strings.ToLower(stakerAddr)
 	tmpCount++
 	_, decimalInt, err := k.getDecimal(ctx, assetID)
 	if err != nil {

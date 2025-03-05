@@ -301,4 +301,8 @@ type FeederManager struct {
 	// restSlashing indicates whether it's satisfied to reset slashing
 	// when the slashing params is changed in current block, this will be set to true.
 	resetSlashing bool
+
+	phaseTwoCollectingFeederIDs map[uint64]struct{}
+	// feederID->msg.creator
+	phaseTwoMaliciousTx map[uint64]string
 }
