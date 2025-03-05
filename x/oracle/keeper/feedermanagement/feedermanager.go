@@ -14,15 +14,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
+
+	"github.com/cometbft/cometbft/libs/log"
 )
 
 func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	return &FeederManager{
-		k:               k,
-		sortedFeederIDs: make([]int64, 0),
-		rounds:          make(map[int64]*round),
-		cs:              nil,
+		k:                           k,
+		sortedFeederIDs:             make([]int64, 0),
+		rounds:                      make(map[int64]*round),
+		cs:                          nil,
+		phaseTwoCollectingFeederIDs: make(map[uint64]struct{}),
 	}
 }
 
@@ -77,6 +81,7 @@ func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 		}
 		f.initBehaviorRecords(ctx, ctx.BlockHeight())
 		// in recovery mode, snapshot of feederManager is set in the beginblock instead of in the process of replaying endblockInrecovery
+		// TODO: remove this into recovery, and call separately for init mode, that would lead to write updateCheckTx twice, but more cleaar
 		f.updateCheckTx()
 	}
 	return
@@ -90,7 +95,7 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	f.updateBehaviorRecordsForNextBlock(ctx, addedValidators)
 
 	// update rounds including create new rounds based on params change, remove expired rounds
-	// handleQuoteBehavior for ending quotes of rounds
+	// handleQuotingBehavior for ending quotes of rounds
 	// commit state of mature rounds
 	f.updateAndCommitRounds(ctx)
 
@@ -100,6 +105,10 @@ func (f *FeederManager) EndBlock(ctx sdk.Context) {
 	f.setupNonces(ctx, feederIDs)
 
 	f.ResetFlags()
+
+	f.resetPhaseTwoCollectingFeederIDs()
+
+	f.resetPhaseTwoMaliciousTx()
 
 	f.updateCheckTx()
 }
@@ -112,6 +121,8 @@ func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.
 	f.updateAndCommitRoundsInRecovery(ctx)
 	f.prepareRounds(ctx)
 	f.ResetFlags()
+	f.resetPhaseTwoCollectingFeederIDs()
+	// updateCheckTx() is invoked in BeginBlock either in recovery or init mode, so we skip that in EndBlockRecovery
 }
 
 func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
@@ -376,6 +387,156 @@ func (f *FeederManager) handleQuotingMisBehaviorInRecovery(ctx sdk.Context) {
 	}
 }
 
+func (f *FeederManager) handleMalicious(ctx sdk.Context, logger log.Logger, validator string, logInfo []any, rawData bool) {
+	height := ctx.BlockHeight()
+	logger.Info(
+		"confirmed malicious",
+		append(
+			logInfo,
+			"validator", validator,
+			"infraction_height", height,
+			"infraction_time", ctx.BlockTime(),
+		)...,
+	)
+	consAddr, err := sdk.ConsAddressFromBech32(validator)
+	if err != nil {
+		logger.Error("when do orale_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
+	}
+	operator := f.k.ValidatorByConsAddr(ctx, consAddr)
+	if operator != nil && !operator.IsJailed() {
+		reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
+		if !found {
+			logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
+			return
+		}
+		power, _ := f.cs.GetPowerForValidator(validator)
+		coinsBurned := f.k.SlashWithInfractionReason(ctx, consAddr, height, power.Int64(), f.k.GetSlashFractionMalicious(ctx), stakingtypes.Infraction_INFRACTION_UNSPECIFIED)
+		var reason string
+		if rawData {
+			reason = types.AttributeValueMaliciousReportPiece
+		} else {
+			reason = types.AttributeValueMaliciousReportPrice
+		}
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				oracletypes.EventTypeOracleSlash,
+				sdk.NewAttribute(oracletypes.AttributeKeyValidatorKey, validator),
+				sdk.NewAttribute(oracletypes.AttributeKeyPower, fmt.Sprintf("%d", power)),
+				sdk.NewAttribute(oracletypes.AttributeKeyReason, reason),
+				sdk.NewAttribute(oracletypes.AttributeKeyJailed, validator),
+				sdk.NewAttribute(oracletypes.AttributeKeyBurnedCoins, coinsBurned.String()),
+			),
+		)
+		f.k.Jail(ctx, consAddr)
+		jailUntil := ctx.BlockHeader().Time.Add(f.k.GetMaliciousJailDuration(ctx))
+		f.k.JailUntil(ctx, consAddr, jailUntil)
+
+		reportedInfo.MissedRoundsCounter = 0
+		reportedInfo.IndexOffset = 0
+		f.k.ClearValidatorMissedRoundBitArray(ctx, validator)
+		f.k.SetValidatorReportInfo(ctx, validator, reportedInfo)
+	}
+}
+
+func (f *FeederManager) handleMissCount(ctx sdk.Context, logger log.Logger, validator string, minReportedPerWindow, reportedRoundsWindow int64, logInfo []any, miss, rawData bool) {
+	height := ctx.BlockHeight()
+
+	reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
+	if !found {
+		logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
+		return
+	}
+
+	index := uint64(reportedInfo.IndexOffset % reportedRoundsWindow)
+	reportedInfo.IndexOffset++
+	// Update reported round bit array & counter
+	// This counter just tracks the sum of the bit array
+	// That way we avoid needing to read/write the whole array each time
+	previous := f.k.GetValidatorMissedRoundBitArray(ctx, validator, index)
+	switch {
+	case !previous && miss:
+		// Array value has changed from not missed to missed, increment counter
+		f.k.SetValidatorMissedRoundBitArray(ctx, validator, index, true)
+		reportedInfo.MissedRoundsCounter++
+	case previous && !miss:
+		// Array value has changed from missed to not missed, decrement counter
+		f.k.SetValidatorMissedRoundBitArray(ctx, validator, index, false)
+		reportedInfo.MissedRoundsCounter--
+	default:
+		// Array value at this index has not changed, no need to update counter
+	}
+
+	if miss {
+		proposer := ""
+		if rawData {
+			proposer = validator
+		}
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				oracletypes.EventTypeOracleLiveness,
+				sdk.NewAttribute(oracletypes.AttributeKeyValidatorKey, validator),
+				sdk.NewAttribute(oracletypes.AttributeKeyMissedRounds, fmt.Sprintf("%d", reportedInfo.MissedRoundsCounter)),
+				sdk.NewAttribute(oracletypes.AttributeKeyHeight, fmt.Sprintf("%d", height)),
+				sdk.NewAttribute(oracletypes.AttributeKeyProposer, proposer),
+			),
+		)
+
+		logger.Info(
+			"oracle_absent validator",
+			append(
+				logInfo,
+				"height", height,
+				"validator", validator,
+				"missed", reportedInfo.MissedRoundsCounter,
+				"threshold", minReportedPerWindow,
+			)...,
+		)
+	}
+
+	minHeight := reportedInfo.StartHeight + reportedRoundsWindow
+	maxMissed := reportedRoundsWindow - minReportedPerWindow
+	// if we are past the minimum height and the validator has missed too many rounds reporting prices, punish them
+	if height > minHeight && reportedInfo.MissedRoundsCounter > maxMissed {
+		consAddr, err := sdk.ConsAddressFromBech32(validator)
+		if err != nil {
+			f.k.Logger(ctx).Error("when do orale_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
+			return
+		}
+		operator := f.k.ValidatorByConsAddr(ctx, consAddr)
+		if operator != nil && !operator.IsJailed() {
+			// missing rounds confirmed: just jail the validator
+			f.k.Jail(ctx, consAddr)
+			jailUntil := ctx.BlockHeader().Time.Add(f.k.GetMissJailDuration(ctx))
+			f.k.JailUntil(ctx, consAddr, jailUntil)
+
+			// We need to reset the counter & array so that the validator won't be immediately slashed for miss report info upon rebonding.
+			reportedInfo.MissedRoundsCounter = 0
+			reportedInfo.IndexOffset = 0
+			f.k.ClearValidatorMissedRoundBitArray(ctx, validator)
+
+			logger.Info(
+				"jailing validator due to oracle_liveness fault",
+				append(
+					logInfo,
+					"height", height,
+					"validator", consAddr.String(),
+					"min_height", minHeight,
+					"threshold", minReportedPerWindow,
+					"jailed_until", jailUntil,
+				)...,
+			)
+		} else {
+			// validator was (a) not found or (b) already jailed so we do not slash
+			logger.Info(
+				"validator would have been jailed for too many missed reporting price, but was either not found in store or already jailed",
+				"validator", validator,
+			)
+		}
+	}
+	// Set the updated reportInfo
+	f.k.SetValidatorReportInfo(ctx, validator, reportedInfo)
+}
+
 func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	logger := f.k.Logger(ctx)
@@ -384,7 +545,28 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	// state to be updated: {validatorReportInfo, validatorMissedRoundBitArray, signInfo, assets} of individual validator
 	// we use sortedFeederIDs to keep the order of logs
 	// this can be replaced by map iteration directly when better performance is needed
+	minReportedPerWindow := f.k.GetMinReportedPerWindow(ctx)
+	reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
+	for fID, validator := range f.phaseTwoMaliciousTx {
+		// #nosec G115
+		logInfo := []any{"validator submit malicious piece of rawData", validator, "feederID", fID, "roundID", f.rounds[int64(fID)].roundID}
+		f.handleMalicious(ctx, logger, validator, logInfo, true)
+	}
 	for _, feederID := range f.sortedFeederIDs {
+		// #nosec G115
+		if _, ok := f.phaseTwoCollectingFeederIDs[uint64(feederID)]; ok {
+			if ctx.BlockHeight() < int64(f.rounds[feederID].roundPhaseTwoCheckingBlock) {
+				continue
+			}
+			if _, ok := f.phaseTwoCollectingFeederIDs[uint64(feederID)]; ok {
+				r := f.rounds[feederID]
+				consAddrStr := sdk.ConsAddress(ctx.BlockHeader().ProposerAddress).String()
+				logInfo := []any{"proposer", consAddrStr, "missed_rawData_feederID", feederID, "roundID", r.roundID}
+				f.handleMissCount(ctx, logger, consAddrStr, minReportedPerWindow, reportedRoundsWindow, logInfo, true, true)
+			}
+			// this feederID is collecting piece and there's no tx included by the proposer for current block
+			continue
+		}
 		r := f.rounds[feederID]
 		if r.IsQuotingWindowEnd(height) {
 			if _, found := r.FinalPrice(); !found {
@@ -392,137 +574,22 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 				continue
 			}
 			validators := f.cs.GetValidators()
+			//			reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
 			for _, validator := range validators {
-				reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
-				if !found {
-					logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
-					continue
-				}
+				// reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
+				// if !found {
+				// 	logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
+				// 	continue
+				// }
 				miss, malicious := r.PerformanceReview(validator)
 				if malicious {
-					detID := r.getFinalDetIDForSourceID(oracletypes.SourceChainlinkID)
 					finalPrice, _ := r.FinalPrice()
-					logger.Info(
-						"confirmed malicious price",
-						"validator", validator,
-						"infraction_height", height,
-						"infraction_time", ctx.BlockTime(),
-						"feederID", r.feederID,
-						"detID", detID,
-						"sourceID", oracletypes.SourceChainlinkID,
-						"finalPrice", finalPrice,
-					)
-					consAddr, err := sdk.ConsAddressFromBech32(validator)
-					if err != nil {
-						f.k.Logger(ctx).Error("when do orale_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
-						continue
-					}
-
-					operator := f.k.ValidatorByConsAddr(ctx, consAddr)
-					if operator != nil && !operator.IsJailed() {
-						power, _ := f.cs.GetPowerForValidator(validator)
-						coinsBurned := f.k.SlashWithInfractionReason(ctx, consAddr, height, power.Int64(), f.k.GetSlashFractionMalicious(ctx), stakingtypes.Infraction_INFRACTION_UNSPECIFIED)
-						ctx.EventManager().EmitEvent(
-							sdk.NewEvent(
-								oracletypes.EventTypeOracleSlash,
-								sdk.NewAttribute(oracletypes.AttributeKeyValidatorKey, validator),
-								sdk.NewAttribute(oracletypes.AttributeKeyPower, fmt.Sprintf("%d", power)),
-								sdk.NewAttribute(oracletypes.AttributeKeyReason, oracletypes.AttributeValueMaliciousReportPrice),
-								sdk.NewAttribute(oracletypes.AttributeKeyJailed, validator),
-								sdk.NewAttribute(oracletypes.AttributeKeyBurnedCoins, coinsBurned.String()),
-							),
-						)
-						f.k.Jail(ctx, consAddr)
-						jailUntil := ctx.BlockHeader().Time.Add(f.k.GetMaliciousJailDuration(ctx))
-						f.k.JailUntil(ctx, consAddr, jailUntil)
-
-						reportedInfo.MissedRoundsCounter = 0
-						reportedInfo.IndexOffset = 0
-						f.k.ClearValidatorMissedRoundBitArray(ctx, validator)
-					}
+					logInfo := []any{"feederID", feederID, "detID", r.getFinalDetIDForSourceID(oracletypes.SourceChainlinkID), "roundID", r.roundID, "finalPrice", finalPrice}
+					f.handleMalicious(ctx, logger, validator, logInfo, false)
 					continue
 				}
-				reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
-				// #nosec G115
-				index := uint64(reportedInfo.IndexOffset % reportedRoundsWindow)
-				reportedInfo.IndexOffset++
-				// Update reported round bit array & counter
-				// This counter just tracks the sum of the bit array
-				// That way we avoid needing to read/write the whole array each time
-				previous := f.k.GetValidatorMissedRoundBitArray(ctx, validator, index)
-				switch {
-				case !previous && miss:
-					// Array value has changed from not missed to missed, increment counter
-					f.k.SetValidatorMissedRoundBitArray(ctx, validator, index, true)
-					reportedInfo.MissedRoundsCounter++
-				case previous && !miss:
-					// Array value has changed from missed to not missed, decrement counter
-					f.k.SetValidatorMissedRoundBitArray(ctx, validator, index, false)
-					reportedInfo.MissedRoundsCounter--
-				default:
-					// Array value at this index has not changed, no need to update counter
-				}
-
-				minReportedPerWindow := f.k.GetMinReportedPerWindow(ctx)
-
-				if miss {
-					ctx.EventManager().EmitEvent(
-						sdk.NewEvent(
-							oracletypes.EventTypeOracleLiveness,
-							sdk.NewAttribute(oracletypes.AttributeKeyValidatorKey, validator),
-							sdk.NewAttribute(oracletypes.AttributeKeyMissedRounds, fmt.Sprintf("%d", reportedInfo.MissedRoundsCounter)),
-							sdk.NewAttribute(oracletypes.AttributeKeyHeight, fmt.Sprintf("%d", height)),
-						),
-					)
-
-					logger.Info(
-						"oracle_absent validator",
-						"height", ctx.BlockHeight(),
-						"validator", validator,
-						"missed", reportedInfo.MissedRoundsCounter,
-						"threshold", minReportedPerWindow,
-					)
-				}
-
-				minHeight := reportedInfo.StartHeight + reportedRoundsWindow
-				maxMissed := reportedRoundsWindow - minReportedPerWindow
-				// if we are past the minimum height and the validator has missed too many rounds reporting prices, punish them
-				if height > minHeight && reportedInfo.MissedRoundsCounter > maxMissed {
-					consAddr, err := sdk.ConsAddressFromBech32(validator)
-					if err != nil {
-						f.k.Logger(ctx).Error("when do orale_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
-						continue
-					}
-					operator := f.k.ValidatorByConsAddr(ctx, consAddr)
-					if operator != nil && !operator.IsJailed() {
-						// missing rounds confirmed: just jail the validator
-						f.k.Jail(ctx, consAddr)
-						jailUntil := ctx.BlockHeader().Time.Add(f.k.GetMissJailDuration(ctx))
-						f.k.JailUntil(ctx, consAddr, jailUntil)
-
-						// We need to reset the counter & array so that the validator won't be immediately slashed for miss report info upon rebonding.
-						reportedInfo.MissedRoundsCounter = 0
-						reportedInfo.IndexOffset = 0
-						f.k.ClearValidatorMissedRoundBitArray(ctx, validator)
-
-						logger.Info(
-							"jailing validator due to oracle_liveness fault",
-							"height", height,
-							"validator", consAddr.String(),
-							"min_height", minHeight,
-							"threshold", minReportedPerWindow,
-							"jailed_until", jailUntil,
-						)
-					} else {
-						// validator was (a) not found or (b) already jailed so we do not slash
-						logger.Info(
-							"validator would have been slashed for too many missed reporting price, but was either not found in store or already jailed",
-							"validator", validator,
-						)
-					}
-				}
-				// Set the updated reportInfo
-				f.k.SetValidatorReportInfo(ctx, validator, reportedInfo)
+				logInfo := []any{}
+				f.handleMissCount(ctx, logger, validator, minReportedPerWindow, reportedRoundsWindow, logInfo, miss, false)
 			}
 			r.closeQuotingWindow()
 		}
@@ -812,6 +879,14 @@ func (f *FeederManager) getCheckTx() *FeederManager {
 	}
 	ret.rounds = rounds
 
+	ret.phaseTwoCollectingFeederIDs = make(map[uint64]struct{})
+	for feederID := range fCheckTx.phaseTwoCollectingFeederIDs {
+		ret.phaseTwoCollectingFeederIDs[feederID] = struct{}{}
+	}
+
+	// this remains empty all the process during checkTx
+	ret.phaseTwoMaliciousTx = make(map[uint64]string)
+
 	return &ret
 }
 
@@ -832,6 +907,16 @@ func (f *FeederManager) updateCheckTx() {
 		rounds[id] = r.CopyForCheckTx()
 	}
 	ret.rounds = rounds
+
+	ret.phaseTwoCollectingFeederIDs = make(map[uint64]struct{})
+	for feederID := range f.phaseTwoCollectingFeederIDs {
+		ret.phaseTwoCollectingFeederIDs[feederID] = struct{}{}
+	}
+
+	// phaseTwoMaliciousTx must be empty
+	// the verification for simulation is skipped, so it's safe to ignore this, however we new a map for possible future update
+	ret.phaseTwoMaliciousTx = make(map[uint64]string)
+
 	f.fCheckTx = &ret
 }
 
@@ -1082,44 +1167,4 @@ func getProtoMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgI
 		Validator: validator,
 		PSources:  msg.Prices,
 	}
-}
-
-// ProcessRawData verify the submitted piece of rawData with proof against the expected root and cached the result if it passded the verification
-// return (cached rawData piece, error)
-func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) ([]byte, error) {
-	if isCheckTx {
-		f = f.getCheckTx()
-	}
-	var r *round
-	var err error
-	if r, err = f.validateMsg(ctx, msg); err != nil {
-		return nil, oracletypes.ErrInvalidMsg.Wrap(err.Error())
-	}
-	if isCheckTx {
-		return nil, nil
-	}
-
-	piece, ok := f.GetPieceWithProof(msg)
-	if !ok {
-		return nil, errors.New("failed to parse rawdata piece from message")
-	}
-	// we don't check the 1st return value to see if this input proof is of the minimal, that's the duty of anteHandler, and 'verified' pieceWithProof will not fail the tx execution
-	cachedProof, ok := r.m.VerifyAndCacheOrdered(piece.Index, piece.RawData, piece.Proof)
-	if !ok {
-		return nil, fmt.Errorf("failed to verify piece of index %d provided within message for feederID:%d against root:%s", piece.Index, msg.FeederID, hex.EncodeToString(r.m.RootHash()))
-	}
-	// we don't need to cache the proof for state updating if the merkle tree have collected all rawData
-	if !r.m.Completed() {
-		r.cachedProofForBlock = append(r.cachedProofForBlock, cachedProof...)
-	}
-	// we don't do no state update in tx exexuting, the postHandler and all state update will be handled in EndBlock
-	//		// post handle rawData registered for the feederID
-	//		// clear all caching pieces from stateDB
-	//		// remove/reset merkleTree
-	//		// remove merkleTree
-	// persist piece for recovery (with memory-cache update into merkleTree)
-	// save this piece and proof to db for recovery, for nodes without running,
-	// this process only causes additional: two write to stateDB(piece, proof), one read from the stateDB(piece)
-
-	return piece.RawData, nil
 }

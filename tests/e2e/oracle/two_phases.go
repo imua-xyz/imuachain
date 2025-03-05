@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"math/rand"
 	"strconv"
@@ -41,6 +42,7 @@ func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
 			}
 		}
 	}
+	fmt.Println("debug(leonz)--->duplicatedStakers:", duplicatedCount)
 
 	mt, changes := getNstRootAndPiecesWithParams(30, 31, 32)
 	s.moveToAndCheck(27)
@@ -84,6 +86,7 @@ func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
 		//		s.Require().NoError(err)
 	}
 
+	//	resStakerInfos, _ := s.network.QueryOracle().StakerInfos(ctx, &oracletypes.QueryStakerInfosRequest{AssetId: network.NativeAssetID})
 	// pick 10 random stakers to check its balance is updated as expected
 	for i := 0; i < 10; i++ {
 		idx := rand.Int63n(30) + 1
@@ -92,5 +95,6 @@ func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
 		bl := resStakerInfo.StakerInfo.BalanceList
 		l := len(bl) - 1
 		s.Require().Equal(changes[idx].Balance, bl[l].Balance)
+		fmt.Println("debug(leonz)--->bl[l].Balance", bl[l])
 	}
 }

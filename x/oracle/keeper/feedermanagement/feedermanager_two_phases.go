@@ -2,10 +2,12 @@ package feedermanagement
 
 import (
 	"encoding/base64"
-	"sort"
+	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
@@ -126,16 +128,67 @@ func (f *FeederManager) MinimalProofPathByIndex(feederID uint64, index uint32) [
 
 // FeederIDsCollectingRawData returns the list of feederIDs that are currently collecting raw data
 // the list is sorted in ascending order
-func (f *FeederManager) FeederIDsCollectingRawData() []uint64 {
-	// TODO(leonz): implement me
-	ret := make([]uint64, 0)
-	for feederID, r := range f.rounds {
+func (f *FeederManager) FeederIDsCollectingRawData() map[uint64]struct{} {
+	return f.phaseTwoCollectingFeederIDs
+}
+
+func (f *FeederManager) phaseTwoCollected(feederID uint64) {
+	delete(f.phaseTwoCollectingFeederIDs, feederID)
+}
+
+func (f *FeederManager) resetPhaseTwoCollectingFeederIDs() {
+	f.phaseTwoCollectingFeederIDs = make(map[uint64]struct{})
+	for _, feederID := range f.sortedFeederIDs {
+		r := f.rounds[feederID]
 		if r.m != nil && !r.m.Completed() {
-			ret = append(ret, uint64(feederID))
+			// #nosec G115
+			f.phaseTwoCollectingFeederIDs[uint64(feederID)] = struct{}{}
 		}
 	}
-	sort.Slice(ret, func(i, j int) bool {
-		return ret[i] < ret[j]
-	})
-	return ret
+}
+
+func (f *FeederManager) resetPhaseTwoMaliciousTx() {
+	f.phaseTwoMaliciousTx = make(map[uint64]string)
+}
+
+// ProcessRawData verify the submitted piece of rawData with proof against the expected root and cached the result if it passded the verification
+// return (cached rawData piece, error)
+func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) ([]byte, error) {
+	if isCheckTx {
+		f = f.getCheckTx()
+	}
+	var r *round
+	var err error
+	if r, err = f.validateMsg(ctx, msg); err != nil {
+		return nil, oracletypes.ErrInvalidMsg.Wrap(err.Error())
+	}
+	// we skip the verification in simulation mode, this is necessary for caching future pieces in mempool which hlep proposer to ensure including necessary piece to get avoid of missing count
+	if isCheckTx {
+		return nil, nil
+	}
+	// #nosec G115
+	f.phaseTwoCollected(uint64(msg.FeederID))
+	// this is ensured to get an non nil piece by anteHandler
+	piece, _ := f.GetPieceWithProof(msg)
+	// we don't check the 1st return value to see if this input proof is of the minimal, that's the duty of anteHandler, and 'verified' pieceWithProof will not fail the tx execution
+	cachedProof, ok := r.m.VerifyAndCacheOrdered(piece.Index, piece.RawData, piece.Proof)
+	if !ok {
+		validator, _ := oracletypes.ConsAddrStrFromCreator(msg.Creator)
+		f.phaseTwoMaliciousTx[msg.FeederID] = validator
+		return nil, fmt.Errorf("failed to verify piece of index %d provided within message for feederID:%d against root:%s", piece.Index, msg.FeederID, hex.EncodeToString(r.m.RootHash()))
+	}
+	// we don't need to cache the proof for state updating if the merkle tree have collected all rawData
+	if !r.m.Completed() {
+		r.cachedProofForBlock = append(r.cachedProofForBlock, cachedProof...)
+	}
+	// we don't do no state update in tx exexuting, the postHandler and all state update will be handled in EndBlock
+	//		// post handle rawData registered for the feederID
+	//		// clear all caching pieces from stateDB
+	//		// remove/reset merkleTree
+	//		// remove merkleTree
+	// persist piece for recovery (with memory-cache update into merkleTree)
+	// save this piece and proof to db for recovery, for nodes without running,
+	// this process only causes additional: two write to stateDB(piece, proof), one read from the stateDB(piece)
+
+	return piece.RawData, nil
 }
