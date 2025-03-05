@@ -37,7 +37,8 @@ const (
 	AttributeKeyTotalUSDValue       = "total_usd_value"
 	AttributeKeyActiveUSDValue      = "active_usd_value"
 
-	EventTypeDeleteOperatorUSDValue = "delete_operator_usd_value"
+	EventTypeDeleteOperatorUSDValues = "delete_operator_usd_values"
+	AttributeKeyOperators            = "operators"
 
 	EventTypeUpdateAVSUSDValue = "update_avs_usd_value"
 

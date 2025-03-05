@@ -207,14 +207,48 @@ func (k *Keeper) IsOptedIn(ctx sdk.Context, operatorAddr, avsAddr string) bool {
 	return optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight
 }
 
-func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr sdk.AccAddress, avsAddr string) bool {
-	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr.String(), avsAddr)
+func (k *Keeper) IsJailed(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
+	if err != nil {
+		return false
+	}
+	return optedInfo.Jailed
+}
+
+func (k *Keeper) IsOptedOutButNotEffective(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
+	if err != nil {
+		return false
+	}
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return false
+	}
+	// The operator will remain active even if it has opted out of the AVS until the voting power
+	// is updated at the end of the epoch.
+	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+		optedInfo.OptedOutHeight >= uint64(epochInfo.CurrentEpochStartHeight) {
+		// opted out and the voting power has been updated at the end of epoch
+		return true
+	}
+	return false
+}
+
+func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
 	if err != nil {
 		// not opted in
 		return false
 	}
-	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight {
-		// opted out
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return false
+	}
+	// The operator will remain active even if it has opted out of the AVS until the voting power
+	// is updated at the end of the epoch.
+	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+		optedInfo.OptedOutHeight < uint64(epochInfo.CurrentEpochStartHeight) {
+		// opted out and the voting power has been updated at the end of epoch
 		return false
 	}
 	if optedInfo.Jailed {
