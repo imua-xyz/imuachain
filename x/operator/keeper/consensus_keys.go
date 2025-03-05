@@ -412,7 +412,7 @@ func (k Keeper) GetActiveOperatorsForChainID(
 	activePks := make([]keytypes.WrappedConsKey, 0)
 	// check if the operator is active
 	for i, operator := range operatorsAddr {
-		if k.IsActive(ctx, operator, avsAddrString) {
+		if k.IsActive(ctx, operator.String(), avsAddrString) {
 			activeOperator = append(activeOperator, operator)
 			activePks = append(activePks, pks[i])
 		} else {

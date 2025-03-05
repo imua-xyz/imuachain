@@ -203,14 +203,6 @@ func (k *Keeper) UpdateSnapshotHelper(ctx sdk.Context, avsAddr string, opFunc fu
 	return nil
 }
 
-func (k *Keeper) SetOptOutFlag(ctx sdk.Context, avsAddr string, hasOptOut bool) error {
-	opFunc := func(helper *types.SnapshotHelper) error {
-		helper.HasOptOut = hasOptOut
-		return nil // Reserve for future error handling
-	}
-	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
-}
-
 func (k *Keeper) SetLastChangedHeight(ctx sdk.Context, avsAddr string, lastChangeHeight int64) error {
 	opFunc := func(helper *types.SnapshotHelper) error {
 		helper.LastChangedHeight = lastChangeHeight

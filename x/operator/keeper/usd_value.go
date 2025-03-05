@@ -90,23 +90,28 @@ func (k *Keeper) InitOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr str
 	return nil
 }
 
-// DeleteOperatorUSDValue is a function to delete the USD share related to specified operator and Avs,
+// DeleteOperatorUSDValues is a function to delete the USD share related to some operators and Avs,
 // The key and value that will be deleted is:
 // AVSAddr + '/' + operatorAddr -> types.OperatorOptedUSDValue (the total USD share of specified operator and Avs)
-// This function will be called when the operator opts out of the AVS, because the USD share
-// doesn't need to be stored.
-func (k *Keeper) DeleteOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) error {
+// This function is called when handling opted-out operators during the voting power update, as the USD share
+// does not need to be stored.
+func (k *Keeper) DeleteOperatorUSDValues(ctx sdk.Context, avsAddr string, operators []string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForOperator)
 	var key []byte
-	if operatorAddr == "" {
-		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "DeleteOperatorUSDValue the operatorAddr is empty")
+	operatorEvents := ""
+	for _, operatorAddr := range operators {
+		if operatorAddr == "" {
+			return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "DeleteOperatorUSDValue the operatorAddr is empty")
+		}
+		key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
+		store.Delete(key)
+		operatorEvents += fmt.Sprintf("%v,", operatorAddr)
 	}
-	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
-	store.Delete(key)
+
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			operatortypes.EventTypeDeleteOperatorUSDValue,
-			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operatorAddr),
+			operatortypes.EventTypeDeleteOperatorUSDValues,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperators, operatorEvents[:len(operatorEvents)-1]),
 			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
 		),
 	)
@@ -118,20 +123,22 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
 
+	operatorEvents := ""
 	for ; iterator.Valid(); iterator.Next() {
 		parsed, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return err
 		}
 		store.Delete(iterator.Key())
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				operatortypes.EventTypeDeleteOperatorUSDValue,
-				sdk.NewAttribute(operatortypes.AttributeKeyOperator, parsed[1]),
-				sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
-			),
-		)
+		operatorEvents += fmt.Sprintf("%v,", parsed[1])
 	}
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeDeleteOperatorUSDValues,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperators, operatorEvents[:len(operatorEvents)-1]),
+			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+		),
+	)
 	return nil
 }
 
@@ -531,7 +538,7 @@ func (k Keeper) GetOrCalculateOperatorUSDValues(
 }
 
 func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr string, operator sdk.AccAddress) (sdkmath.LegacyDec, error) {
-	if !k.IsActive(ctx, operator, avsAddr) {
+	if !k.IsActive(ctx, operator.String(), avsAddr) {
 		return sdkmath.LegacyZeroDec(), nil
 	}
 	optedUSDValues, err := k.GetOperatorOptedUSDValue(ctx, avsAddr, operator.String())

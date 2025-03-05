@@ -210,9 +210,6 @@ func (suite *OperatorTestSuite) TestSnapshotWithOptOut() {
 	index := 0
 	err := suite.App.OperatorKeeper.OptOut(suite.Ctx, testHelper.operators[index], suite.avsAddr)
 	suite.NoError(err)
-	snapshotHelper, err := suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, suite.avsAddr)
-	suite.NoError(err)
-	suite.True(snapshotHelper.HasOptOut)
 
 	suite.runToEpochEnd()
 	_, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
@@ -220,10 +217,6 @@ func (suite *OperatorTestSuite) TestSnapshotWithOptOut() {
 	suite.Equal(operatorNumber-1, len(snapshot.OperatorVotingPowers))
 	votingPower := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshot.OperatorVotingPowers)
 	suite.Nil(votingPower)
-
-	snapshotHelper, err = suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, suite.avsAddr)
-	suite.NoError(err)
-	suite.False(snapshotHelper.HasOptOut)
 
 	// opt all operators out of the AVS.
 	for i := index + 1; i < operatorNumber; i++ {

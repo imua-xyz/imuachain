@@ -118,8 +118,8 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 	return nil
 }
 
-// IsAVSRewardAsset checks if the assetID is a reward asset of specified AVS.
-func (k Keeper) IsAVSRewardAsset(ctx sdk.Context, avsAddr, assetID string) bool {
+// IsAVSRewardAssetByAssetID checks if the assetID is a reward asset of specified AVS.
+func (k Keeper) IsAVSRewardAssetByAssetID(ctx sdk.Context, avsAddr, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
 	return store.Has(key)
@@ -137,6 +137,13 @@ func (k Keeper) GetAVSRewardAssetInfo(ctx sdk.Context, avsAddr, assetID string) 
 	ret := types.AVSRewardAsset{}
 	k.cdc.MustUnmarshal(value, &ret)
 	return &ret, nil
+}
+
+// IsAVSRewardAssetBySymbol checks if the symbol is a reward asset of specified AVS.
+func (k Keeper) IsAVSRewardAssetBySymbol(ctx sdk.Context, avsAddr, symbol string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
+	key := assetstype.GetJoinedStoreKey(avsAddr, symbol)
+	return store.Has(key)
 }
 
 // GetAVSRewardAssetBySymbol returns the avs reward asset information stored against the  provided avsAddr and symbol.
@@ -188,4 +195,18 @@ func (k Keeper) GetAllAVSRewardAssets(ctx sdk.Context, avsAddr string) (allRewar
 	return types.AVSRewardAssets{
 		AvsRewardAssets: ret,
 	}, nil
+}
+
+func (k Keeper) GetAllAVSRewardAssetSymbols(ctx sdk.Context, avsAddr string) (symbols []string, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(avsAddr))
+	defer iterator.Close()
+
+	ret := make([]string, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		var avsRewardAsset types.AVSRewardAsset
+		k.cdc.MustUnmarshal(iterator.Value(), &avsRewardAsset)
+		ret = append(ret, avsRewardAsset.AssetBasicInfo.Symbol)
+	}
+	return ret, nil
 }

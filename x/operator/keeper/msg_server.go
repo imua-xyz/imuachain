@@ -90,8 +90,9 @@ func (msgServer *MsgServerImpl) SetConsKey(goCtx context.Context, req *types.Set
 	}
 	// #nosec G703 // already validated
 	accAddr, _ := sdk.AccAddressFromBech32(req.Address)
-	if !msgServer.keeper.IsActive(ctx, accAddr, req.AvsAddress) {
-		return nil, errorsmod.Wrap(types.ErrNotOptedIn, "operator is not active")
+	if !msgServer.keeper.IsOptedIn(ctx, accAddr.String(), req.AvsAddress) ||
+		msgServer.keeper.IsJailed(ctx, accAddr.String(), req.AvsAddress) {
+		return nil, errorsmod.Wrap(types.ErrNotOptedIn, "operator is not opted in or jailed")
 	}
 	wrappedKey := keytypes.NewWrappedConsKeyFromJSON(req.PublicKeyJSON)
 	if wrappedKey == nil {

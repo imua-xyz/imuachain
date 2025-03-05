@@ -90,18 +90,6 @@ message SnapshotHelper {
   // last_changed_height indicates the height of the most recent change.
   // It is used to set the `last_changed_height` field in `VotingPowerSnapshot`.
   int64 last_changed_height = 1;
-
-  // has_opt_out is used to indicate whether there has been any opt-out operation from
-  // the most recently saved snapshot to the current height. This is because,
-  // when an opt-out operation occurs, the related AVS validator information changes,
-  // and the snapshot needs to be updated.
-  // Currently, a boolean variable is used instead of an operator list
-  // because the snapshot is set by default to store all operator information related to AVS.
-  // Therefore, as long as any operator has opted out, the snapshot needs to be updated.
-  // If we later introduce a limit on the maximum number of validators in AVS,
-  // similar to the MaxValidatorNumber in Dogfood, this may need to be changed to an operator list
-  // to track all operators that have opted out, thereby assisting with the correct snapshot update.
-  bool has_opt_out = 2;
 }
 
 // ClientChainEarningAddrList is the list of client chain earning addresses.

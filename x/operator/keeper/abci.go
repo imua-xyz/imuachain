@@ -60,7 +60,19 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	votingPowerSet := make([]*operatortypes.OperatorVotingPower, 0)
 	avsVotingPower := sdkmath.LegacyZeroDec()
 	hasOptedOperator := false
+	deletedOperators := make([]string, 0)
 	opFunc := func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error {
+		// check if the operator is opted out but not effective, the usd value of these operators
+		// should be deleted when updating the voting power
+		if k.IsOptedOutButNotEffective(ctx, operator, avsAddr) {
+			deletedOperators = append(deletedOperators, operator)
+			// mark the snapshotChanged flag
+			if !isSnapshotChanged {
+				isSnapshotChanged = true
+			}
+			// continue handle the other operators
+			return nil
+		}
 		if !hasOptedOperator {
 			hasOptedOperator = true
 		}
@@ -104,6 +116,12 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	if err != nil {
 		return err
 	}
+	// Delete the USD values for the operators that have opted out in the current epoch.
+	err = k.DeleteOperatorUSDValues(cc, avsAddr, deletedOperators)
+	if err != nil {
+		return err
+	}
+
 	// set the voting power for AVS
 	err = k.SetAVSUSDValue(cc, avsAddr, avsVotingPower)
 	if err != nil {
@@ -148,22 +166,18 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		votingPowerSnapshot.EpochNumber++
 	}
 	isSetSnapshot := true
-	// Since we delete the operator's USD value information for the relevant AVS during the opt-out
-	// process to facilitate voting power updates in the next epoch, the `isSnapshotChanged` check in
-	// the above IterateOperatorsForAVS call cannot capture the changes in the voting power snapshot
-	// caused by the opt-out. Therefore, it is necessary to handle all scenarios where voting power
-	// snapshots need to be saved by referencing the opt-out records in helperRecord.
 	// For cases where there is no opt-out operation, IterateOperatorsForAVS does not detect any voting
-	// power changes, and no operator has opted into the AVS, no snapshot needs to be created. This is
-	// equivalent to the AVS no longer having any operators serving it at the end of the previous epoch.
-	// As a result, when querying the historical voting power using snapshots, the system will fall back
-	// to the last snapshot where the voting power was updated to zero.
-	if snapshotHelper.HasOptOut || isSnapshotChanged {
+	// power changes, and no operator has opted into the AVS, the voting power information doesn't need
+	// to be saved in the snapshot. Because it can be fetched through falling back to the last snapshot
+	// where the voting power was changed.
+	// In the case where the AVS no longer has any operators serving it, meaning the `hasOptedOperator`
+	// flag is false, the system won't store a snapshot, even if it is a snapshot without voting power
+	// information. As a result, when querying the historical voting power using snapshots, the system
+	// will fall back to the last snapshot where the voting power was updated to zero.
+	if isSnapshotChanged {
 		votingPowerSnapshot.TotalVotingPower = avsVotingPower
 		votingPowerSnapshot.OperatorVotingPowers = votingPowerSet
 		snapshotHelper.LastChangedHeight = snapshotHeight
-		// clear the hasOptOut flag if it's certain that the snapshot will be updated
-		snapshotHelper.HasOptOut = false
 	} else if !hasOptedOperator {
 		// don’t set the snapshot if no operator has opted into the AVS,
 		// except for the first epoch after all operators have opted out of this AVS.

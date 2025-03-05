@@ -29,6 +29,16 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 		// don't set if the rewards are null
 		return nil
 	}
+	// check if the reward asset has been registered by the AVS
+	for _, rewardCoin := range distribution.Rewards {
+		if !k.IsAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Denom) {
+			feedistributiontypes.ErrAVSRewardAssetNotFound.Wrapf("the reward coin isn't registered, avsAddr:%s denomination:%s", avsAddr, rewardCoin.Denom)
+		}
+	}
+	// Check if the operator has opted into the AVS or just opted out of it before the end of the current epoch.
+	for _, operator := range distribution.OperatorRewardProportions {
+
+	}
 	bz := k.cdc.MustMarshal(&distribution)
 	store.Set(common.HexToAddress(avsAddr).Bytes(), bz)
 
@@ -107,6 +117,12 @@ func (k Keeper) RewardDistributionForDogfood(ctx sdk.Context) (*feedistributiont
 	return ret, nil
 }
 
-func (k Keeper) DefaultRewardDistributionForAVSs(ctx sdk.Context) (*feedistributiontypes.AVSRewardDistribution, error) {
+func (k Keeper) DefaultRewardDistributionForAVSs(ctx sdk.Context, avsAddr string) (*feedistributiontypes.AVSRewardDistribution, error) {
+	avsRewardAssets, err := k.GetAllAVSRewardAssetSymbols(ctx, avsAddr)
+	if err != nil {
+		return nil, err
+	}
+	if len(avsRewardAssets) == 0 {
 
+	}
 }
