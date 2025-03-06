@@ -29,7 +29,7 @@ type StakingKeeper interface {
 type OracleKeeper interface {
 	CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederID uint64, nonce uint32) (prevNonce uint32, err error)
 	NextPieceIndexByFeederID(ctx sdk.Context, feederID uint64) (uint32, bool)
-	CheckAndIncreaseNextPieceIndex(ctx sdk.Context, validator string, feederID uint64, NextPieceIndex uint32) (nextPieceIndex uint32, err error)
+	CheckAndIncreaseToNextPieceIndex(ctx sdk.Context, validator string, feederID uint64, NextPieceIndex uint32) (nextPieceIndex uint32, err error)
 	GetMaxNonceFromCache() int32
 	GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*oracletypes.PieceWithProof, bool)
 	MinimalProofPathByIndex(feederID uint64, index uint32) []uint32

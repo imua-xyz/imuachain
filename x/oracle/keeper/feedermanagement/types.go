@@ -302,7 +302,9 @@ type FeederManager struct {
 	// when the slashing params is changed in current block, this will be set to true.
 	resetSlashing bool
 
-	phaseTwoCollectingFeederIDs map[uint64]struct{}
+	// phaseTwoCollectingFeederIDs map[uint64]struct{}
+	// feederID -> roundID
+	phaseTwoCollectingFeederIDs map[uint64]uint64
 	// feederID->msg.creator
 	phaseTwoMaliciousTx map[uint64]string
 }

@@ -78,7 +78,7 @@ func (k Keeper) NextPieceIndexByFeederID(ctx sdk.Context, feederID uint64) (uint
 // CheckAndIncreasePieceIndex checks and increase the 'nextPieceIndex' of a specific validator and feederID
 // valid pieceIndex starts from 0
 // returns (nextPieceIndexAfterIncreased, error)
-func (k Keeper) CheckAndIncreaseNextPieceIndex(ctx sdk.Context, validator string, feederID uint64, nextPieceIndex uint32) (uint32, error) {
+func (k Keeper) CheckAndIncreaseToNextPieceIndex(ctx sdk.Context, validator string, feederID uint64, nextPieceIndex uint32) (uint32, error) {
 	maxPieceIndex, ok := k.FeederManager.MaxPieceIndexForTokenFeederID(feederID)
 	if !ok {
 		return 0, fmt.Errorf("max piece index not found for feederID: %d", feederID)
@@ -97,13 +97,13 @@ func (k Keeper) CheckAndIncreaseNextPieceIndex(ctx sdk.Context, validator string
 	k.cdc.MustUnmarshal(bz, feederValidatorsIndex)
 	for _, validatorIndex := range feederValidatorsIndex.ValidatorIndexList {
 		if validatorIndex.Validator == validator {
-			if validatorIndex.NextIndex == nextPieceIndex {
-				validatorIndex.NextIndex++
+			if validatorIndex.NextIndex <= nextPieceIndex {
+				validatorIndex.NextIndex = nextPieceIndex + 1
 				bz = k.cdc.MustMarshal(feederValidatorsIndex)
 				store.Set(key, bz)
 				return nextPieceIndex + 1, nil
 			}
-			return 0, fmt.Errorf("piece_index_check_failed: non_conseecutive: expected:%d, recived:%d", validatorIndex.NextIndex, nextPieceIndex)
+			return 0, fmt.Errorf("piece_index_check_failed: non_conseecutive: expected bigger than :%d, recived:%d", validatorIndex.NextIndex, nextPieceIndex)
 		}
 	}
 	return 0, fmt.Errorf("piece_index_check_failed: next_piece_index not found for valdiator:%s", validator)

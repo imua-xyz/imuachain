@@ -351,6 +351,11 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 		// close all quotingWindow to skip current rounds' 'handlQuotingMisBehavior'
 		if f.forceSeal {
 			r.closeQuotingWindow()
+			if r.twoPhases && r.m != nil {
+				// #nosec G115
+				f.k.Clear2ndPhase(ctx, uint64(feederID), r.m.RootIndex())
+				r.m = nil
+			}
 		}
 	}
 	if len(successFeederIDs) > 0 {

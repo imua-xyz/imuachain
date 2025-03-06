@@ -14,6 +14,8 @@ import (
 )
 
 type ImuaMempool struct {
+	// feederID -> roundStartBaseBlock
+	cachedFeederIDs map[uint64]uint64
 	// feederID -> []PieceWithProof, cached peiceWithProof for feederID
 	cachedPieces map[uint64]map[uint32][]*oracletypes.PieceWithProof
 	k            *oraclekeeper.Keeper

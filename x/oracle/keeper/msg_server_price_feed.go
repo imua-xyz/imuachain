@@ -44,10 +44,10 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	if msg.IsPhaseTwo() {
 		cachedRawData, err := ms.ProcessRawData(ctx, msg, ctx.IsCheckTx())
 		if err == nil {
-			logger.Info("quote of 2nd-phase added rawData", "rootHash", hex.EncodeToString(cachedRawData))
+			logger.Info("quote of 2nd-phase added rawData piece", append(logQuote, "rootHash", hex.EncodeToString(cachedRawData), "piece-index", msg.Prices[0].Prices[0].DetID)...)
 			return &types.MsgCreatePriceResponse{}, nil
 		}
-		logger.Error("quote of 2nd-phase for rawData failed", append(logQuote, "error", err)...)
+		logger.Error("quote of 2nd-phase for rawData piece failed", append(logQuote, "error", err)...)
 		return nil, err
 	}
 
@@ -66,7 +66,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		return nil, err
 	}
 
-	logger.Info("added quote for aggregation", append(logQuote, "msg", msg)...)
+	logger.Info("added quote for aggregation", append(logQuote, "msg", msg, "isChekcTx", ctx.IsCheckTx())...)
 	// TODO: use another type
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,

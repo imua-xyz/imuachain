@@ -55,6 +55,8 @@ func (s *E2ETestSuite) TestCreatePrice() {
 		s.testRecoveryCases(10)
 	case "nst":
 		s.testTwoPhaseNST(0)
+	case "nst-malicious":
+		s.testTwoPhaseNSTMalicious(0)
 	default:
 		s.testRegisterTokenThroughPrecompile()
 		s.testCreatePriceNST()

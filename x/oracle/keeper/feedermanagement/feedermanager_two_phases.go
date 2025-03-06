@@ -128,7 +128,7 @@ func (f *FeederManager) MinimalProofPathByIndex(feederID uint64, index uint32) [
 
 // FeederIDsCollectingRawData returns the list of feederIDs that are currently collecting raw data
 // the list is sorted in ascending order
-func (f *FeederManager) FeederIDsCollectingRawData() map[uint64]struct{} {
+func (f *FeederManager) FeederIDsCollectingRawData() map[uint64]uint64 {
 	return f.phaseTwoCollectingFeederIDs
 }
 
@@ -137,12 +137,12 @@ func (f *FeederManager) phaseTwoCollected(feederID uint64) {
 }
 
 func (f *FeederManager) resetPhaseTwoCollectingFeederIDs() {
-	f.phaseTwoCollectingFeederIDs = make(map[uint64]struct{})
+	f.phaseTwoCollectingFeederIDs = make(map[uint64]uint64)
 	for _, feederID := range f.sortedFeederIDs {
 		r := f.rounds[feederID]
 		if r.m != nil && !r.m.Completed() {
 			// #nosec G115
-			f.phaseTwoCollectingFeederIDs[uint64(feederID)] = struct{}{}
+			f.phaseTwoCollectingFeederIDs[uint64(feederID)] = uint64(r.roundID)
 		}
 	}
 }

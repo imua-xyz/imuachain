@@ -114,10 +114,18 @@ func init() {
 	DefaultGenStateOracle.Params.Slashing.ReportedRoundsWindow = 4
 	// set jailduration of oracle report downtime to 15 seconds for test
 	DefaultGenStateOracle.Params.Slashing.OracleMissJailDuration = 15 * time.Second
-	if os.Getenv("TEST_OPTION") == "nst" {
+	switch os.Getenv("TEST_OPTION") {
+	case "nst-malicious":
+		fallthrough
+	case "nst":
 		DefaultGenStateOracle.Params.PieceSizeByte = 32
 		DefaultGenStateOracle.Params.TokenFeeders[2].Interval = 25
+	default:
 	}
+	//	if os.Getenv("TEST_OPTION") == "nst" {
+	//		DefaultGenStateOracle.Params.PieceSizeByte = 32
+	//		DefaultGenStateOracle.Params.TokenFeeders[2].Interval = 25
+	//	}
 }
 
 func NewTestToken(name, metaInfo, address string, chainID uint64, decimal uint32, amount int64) assetstypes.StakingAssetInfo {

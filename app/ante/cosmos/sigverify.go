@@ -412,7 +412,8 @@ func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 
 			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
 				return ctx, errors.New("invalid address")
-			} else if _, err := isd.oracleKeeper.CheckAndIncreaseNextPieceIndex(ctx, sdk.ConsAddress(accAddress).String(), msg.FeederID, pieceIndex); err != nil {
+				// this must be called after feeder.nextPieceID checked
+			} else if _, err := isd.oracleKeeper.CheckAndIncreaseToNextPieceIndex(ctx, sdk.ConsAddress(accAddress).String(), msg.FeederID, pieceIndex); err != nil {
 				return ctx, err
 			}
 
