@@ -116,7 +116,7 @@ func init() {
 	DefaultGenStateOracle.Params.Slashing.OracleMissJailDuration = 15 * time.Second
 	if os.Getenv("TEST_OPTION") == "nst" {
 		DefaultGenStateOracle.Params.PieceSizeByte = 32
-		DefaultGenStateOracle.Params.TokenFeeders[2].Interval = 20
+		DefaultGenStateOracle.Params.TokenFeeders[2].Interval = 25
 	}
 }
 

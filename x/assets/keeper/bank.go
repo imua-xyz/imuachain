@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"sync/atomic"
 
 	errorsmod "cosmossdk.io/errors"
@@ -29,7 +28,6 @@ var tmpCount atomic.Int64
 func (k Keeper) PerformDepositOrWithdraw(
 	ctx sdk.Context, params *DepositWithdrawParams,
 ) (sdkmath.Int, error) {
-	gas1 := ctx.GasMeter().GasRemaining()
 	// check params parameter before executing operation
 	if !params.OpAmount.IsPositive() {
 		return sdkmath.ZeroInt(), assetstypes.ErrInvalidAmount.Wrapf(
@@ -90,6 +88,5 @@ func (k Keeper) PerformDepositOrWithdraw(
 
 	// return the final deposit amount
 	tmpCount.Add(1)
-	fmt.Println("debug--->assetes.Precompile->PerformDepositOrWithdraw.tmpCount:", tmpCount.Load(), gas1-ctx.GasMeter().GasRemaining())
 	return info.TotalDepositAmount, nil
 }
