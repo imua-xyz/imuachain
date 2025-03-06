@@ -87,7 +87,7 @@ func getNstRootAndPieces() ([]byte, [][]byte) {
 }
 
 // func getNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32) ([]byte, [][]byte, []*oracletypes.NSTKV) {
-func getNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32) (*oracletypes.MerkleTree, []*oracletypes.NSTKV) {
+func getNstRootAndPiecesWithParams(version uint64, stakerCount, pieceSize uint32) (*oracletypes.MerkleTree, []*oracletypes.NSTKV) {
 	nstbc := oracletypes.RawDataNST{
 		Version: uint64(version),
 	}
