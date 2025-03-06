@@ -12,7 +12,8 @@ type PieceWithProof struct {
 	Index   uint32
 	RawData []byte
 	//	Proof   []*HashNode
-	Proof Proof
+	Proof     Proof
+	BaseBlock uint64
 	// reference to the tx including this piece
 	Tx sdk.Tx
 }

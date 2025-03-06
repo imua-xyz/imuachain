@@ -26,7 +26,7 @@ func NewFeederManager(k common.KeeperOracle) *FeederManager {
 		sortedFeederIDs:             make([]int64, 0),
 		rounds:                      make(map[int64]*round),
 		cs:                          nil,
-		phaseTwoCollectingFeederIDs: make(map[uint64]struct{}),
+		phaseTwoCollectingFeederIDs: make(map[uint64]uint64),
 	}
 }
 
@@ -884,9 +884,9 @@ func (f *FeederManager) getCheckTx() *FeederManager {
 	}
 	ret.rounds = rounds
 
-	ret.phaseTwoCollectingFeederIDs = make(map[uint64]struct{})
-	for feederID := range fCheckTx.phaseTwoCollectingFeederIDs {
-		ret.phaseTwoCollectingFeederIDs[feederID] = struct{}{}
+	ret.phaseTwoCollectingFeederIDs = make(map[uint64]uint64)
+	for feederID, startBaseBlock := range fCheckTx.phaseTwoCollectingFeederIDs {
+		ret.phaseTwoCollectingFeederIDs[feederID] = startBaseBlock
 	}
 
 	// this remains empty all the process during checkTx
@@ -913,9 +913,9 @@ func (f *FeederManager) updateCheckTx() {
 	}
 	ret.rounds = rounds
 
-	ret.phaseTwoCollectingFeederIDs = make(map[uint64]struct{})
-	for feederID := range f.phaseTwoCollectingFeederIDs {
-		ret.phaseTwoCollectingFeederIDs[feederID] = struct{}{}
+	ret.phaseTwoCollectingFeederIDs = make(map[uint64]uint64)
+	for feederID, startBaseBlock := range f.phaseTwoCollectingFeederIDs {
+		ret.phaseTwoCollectingFeederIDs[feederID] = startBaseBlock
 	}
 
 	// phaseTwoMaliciousTx must be empty
