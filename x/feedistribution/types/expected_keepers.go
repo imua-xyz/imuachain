@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
@@ -45,12 +46,15 @@ type BankKeeper interface {
 type OperatorKeeper interface {
 	GetImpactfulEpochsForOperator(ctx sdk.Context, operatorAddr string) ([]string, error)
 	GetOperatorAddressForChainIDAndConsAddr(ctx sdk.Context, chainID string, consAddr sdk.ConsAddress) (bool, sdk.AccAddress)
+	IsOptedOutAndEffective(ctx sdk.Context, operatorAddr, avsAddr string) bool
+	GetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string) (info *operatortypes.OptedInfo, err error)
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.
 type AVSKeeper interface {
 	GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) []string
 	IsAVS(ctx sdk.Context, addr string) (bool, error)
+	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochsTypes.EpochInfo, error)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

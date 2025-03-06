@@ -149,8 +149,8 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 // of Avs should decrease the USD share of the opted-out operator
 // This function can also serve as an RPC in the future.
 func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error) {
-	// return zero if the operator has opted-out of the AVS
-	if !k.IsOptedIn(ctx, operatorAddr, avsAddr) {
+	// return zero if the operator has opted-out of the AVS effectively
+	if k.IsOptedOutAndEffective(ctx, operatorAddr, avsAddr) {
 		return operatortypes.OperatorOptedUSDValue{
 			SelfUSDValue:   sdkmath.LegacyZeroDec(),
 			TotalUSDValue:  sdkmath.LegacyZeroDec(),
@@ -502,9 +502,9 @@ func (k Keeper) GetOrCalculateOperatorUSDValues(
 	operator sdk.AccAddress,
 	avsAddr string,
 ) (optedUSDValues operatortypes.OperatorOptedUSDValue, err error) {
-	// the usd values will be deleted if the operator opts out, so recalculate the
+	// the usd values will be deleted if the operator opts out effectively, so recalculate the
 	// voting power to set the tokens and shares for this case.
-	if !k.IsOptedIn(ctx, operator.String(), avsAddr) {
+	if k.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 		// get assets supported by the AVS
 		assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
 		if err != nil {

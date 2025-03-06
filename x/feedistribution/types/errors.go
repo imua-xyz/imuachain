@@ -32,4 +32,14 @@ var (
 		ModuleName, 6,
 		"Error: the avs reward asset not found",
 	)
+
+	ErrInvalidRewardDistribution = sdkerrors.Register(
+		ModuleName, 7,
+		"invalid parameter of reward distribution information",
+	)
+
+	ErrInvalidJailOrUnJailHeight = sdkerrors.Register(
+		ModuleName, 8,
+		"invalid height of jail or unJail",
+	)
 )

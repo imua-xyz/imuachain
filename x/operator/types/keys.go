@@ -28,6 +28,10 @@ const (
 
 	DefaultOptedOutHeight = uint64(math.MaxUint64)
 
+	DefaultJailedHeight = uint64(0)
+
+	DefaultUnJailedHeight = uint64(0)
+
 	SlashVetoDuration = int64(1000)
 )
 

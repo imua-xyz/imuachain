@@ -215,6 +215,25 @@ func (k *Keeper) IsJailed(ctx sdk.Context, operatorAddr, avsAddr string) bool {
 	return optedInfo.Jailed
 }
 
+func (k *Keeper) IsOptedOutAndEffective(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
+	if err != nil {
+		return true
+	}
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return true
+	}
+	// The operator will remain active even if it has opted out of the AVS until the voting power
+	// is updated at the end of the epoch.
+	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+		optedInfo.OptedOutHeight < uint64(epochInfo.CurrentEpochStartHeight) {
+		// opted out and the voting power has been updated at the end of epoch
+		return true
+	}
+	return false
+}
+
 func (k *Keeper) IsOptedOutButNotEffective(ctx sdk.Context, operatorAddr, avsAddr string) bool {
 	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
 	if err != nil {
@@ -228,34 +247,14 @@ func (k *Keeper) IsOptedOutButNotEffective(ctx sdk.Context, operatorAddr, avsAdd
 	// is updated at the end of the epoch.
 	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
 		optedInfo.OptedOutHeight >= uint64(epochInfo.CurrentEpochStartHeight) {
-		// opted out and the voting power has been updated at the end of epoch
+		// opted out and the voting power hasn't been updated at the end of epoch
 		return true
 	}
 	return false
 }
 
 func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr, avsAddr string) bool {
-	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
-	if err != nil {
-		// not opted in
-		return false
-	}
-	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
-	if err != nil {
-		return false
-	}
-	// The operator will remain active even if it has opted out of the AVS until the voting power
-	// is updated at the end of the epoch.
-	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
-		optedInfo.OptedOutHeight < uint64(epochInfo.CurrentEpochStartHeight) {
-		// opted out and the voting power has been updated at the end of epoch
-		return false
-	}
-	if optedInfo.Jailed {
-		// frozen - either temporarily or permanently
-		return false
-	}
-	return true
+	return !k.IsOptedOutAndEffective(ctx, operatorAddr, avsAddr) && !k.IsJailed(ctx, operatorAddr, avsAddr)
 }
 
 func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) error) error {

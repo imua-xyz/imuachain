@@ -29,6 +29,8 @@ const (
 
 	// EventTypeAVSRewardDistributionSet : set the avs reward distribution
 	EventTypeAVSRewardDistributionSet = "avs_reward_distribution_set"
+	EventTypeAVSEpochRewardSet        = "avs_epoch_reward_set"
+	EventTypeAVSRewardProportionsSet  = "avs_reward_proportions_set"
 	AttributeKeyEpochRewards          = "epoch_rewards"
 	AttributeKeyOperatorProportions   = "operator_reward_proportions"
 )
