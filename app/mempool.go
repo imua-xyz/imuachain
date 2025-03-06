@@ -14,9 +14,7 @@ import (
 )
 
 type ImuaMempool struct {
-	// feederID -> roundStartBaseBlock
-	cachedFeederIDs map[uint64]uint64
-	// feederID -> []PieceWithProof, cached peiceWithProof for feederID
+	// feederID -> pieceIndex->[]PieceWithProof, cached peiceWithProof for feederID
 	cachedPieces map[uint64]map[uint32][]*oracletypes.PieceWithProof
 	k            *oraclekeeper.Keeper
 	count        int
@@ -241,12 +239,34 @@ func (em *ImuaMempool) reset() {
 	em.count = 0
 }
 
-// func (em *ImuaMempool) clearExpiredFeederIDcache(collectingFeederIDs []uint64) {
-func (em *ImuaMempool) clearExpiredFeederIDcache(collectingFeederIDs map[uint64]struct{}) {
+func (em *ImuaMempool) clearExpiredFeederIDcache(collectingFeederIDs map[uint64]uint64) {
+	newCachedPieces := make(map[uint64]map[uint32][]*oracletypes.PieceWithProof)
 	for feederID := range em.cachedPieces {
-		if _, ok := collectingFeederIDs[feederID]; !ok {
-			delete(em.cachedPieces, feederID)
+		startBaseBlock, ok := collectingFeederIDs[feederID]
+		if !ok {
+			continue
 		}
+		pieceMap, ok := em.cachedPieces[feederID]
+		if !ok {
+			continue
+		}
+		for pieceIdx, pwpList := range pieceMap {
+			newPwpList := make([]*oracletypes.PieceWithProof, 0, len(pwpList))
+			for _, pwp := range pwpList {
+				if pwp.BaseBlock == startBaseBlock {
+					newPwpList = append(newPwpList, pwp)
+				}
+			}
+			if len(newPwpList) > 0 {
+				if len(newCachedPieces[feederID]) == 0 {
+					newCachedPieces[feederID] = make(map[uint32][]*oracletypes.PieceWithProof)
+				}
+				newCachedPieces[feederID][pieceIdx] = newPwpList
+			}
+		}
+	}
+	if len(newCachedPieces) > 0 {
+		em.cachedPieces = newCachedPieces
 	}
 }
 

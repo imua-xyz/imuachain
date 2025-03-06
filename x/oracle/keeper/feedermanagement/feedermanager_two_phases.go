@@ -77,8 +77,9 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 	}
 
 	ret := &oracletypes.PieceWithProof{
-		Index:   pieceIndex,
-		RawData: []byte(pieceStr),
+		Index:     pieceIndex,
+		RawData:   []byte(pieceStr),
+		BaseBlock: msg.BasedBlock,
 	}
 
 	if len(msg.Prices[0].Prices) == 2 {
