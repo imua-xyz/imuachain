@@ -42,6 +42,10 @@ func (k *Keeper) OptIn(
 	if k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrAlreadyOptedIn
 	}
+	// check if the operator is jailed
+	if k.IsJailed(ctx, operatorAddress.String(), avsAddr) {
+		return types.ErrIsJailed
+	}
 	// Check if the USD value of the operator is greater than or equal to the self-delegation
 	// configured by the AVS. This is used to prevent a DDOS attack from zero-USD value opting in.
 	var err error
@@ -133,10 +137,8 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
-	// check if the operator is active. It's not allowed to opt-out if the operator
-	// isn't opted-in or is jailed.
-	if !k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) ||
-		k.IsJailed(ctx, operatorAddress.String(), avsAddr) {
+	// It's not allowed to opt-out if the operator isn't opted-in.
+	if !k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrNotOptedIn
 	}
 	// do not allow frozen operators to do anything meaningful

@@ -136,6 +136,12 @@ message OptedInfo {
   uint64 opted_out_height = 3;
   // jailed defined whether the operator has been jailed from bonded status or not.
   bool jailed = 4;
+  // jailed_height is the height at which the operator was jailed.
+  // It can be used to handle the impact of jailing on rewards. The default value is 0.
+  uint64 jailed_height = 5;
+  // un_jailed_height is the height at which the jailed operator was unJailed.
+  // It can be used to handle the impact of unJailing on rewards. The default value is 0.
+  uint64 un_jailed_height = 6;
 }
 
 // OptedInAssetState is the state of opted-in asset
