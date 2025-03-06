@@ -33,4 +33,5 @@ type OracleKeeper interface {
 	GetMaxNonceFromCache() int32
 	GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*oracletypes.PieceWithProof, bool)
 	MinimalProofPathByIndex(feederID uint64, index uint32) []uint32
+	LatestStartBaseBlock(feederID uint64) (uint64, bool)
 }

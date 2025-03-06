@@ -1125,6 +1125,17 @@ func (f *FeederManager) Equals(fm *FeederManager) bool {
 	return true
 }
 
+func (f *FeederManager) LatestStartBaseBlock(feederID uint64) (uint64, bool) {
+	// #nosec G115
+	r, ok := f.rounds[int64(feederID)]
+	if !ok {
+		return 0, false
+	}
+
+	// #nosec G115
+	return uint64(r.startBaseBlock), true
+}
+
 // recoveryStartPoint returns the height to start the recovery process
 func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.RecentParams, prevRecentParams, latestRecentParams *oracletypes.RecentParams, validatorUpdateHeight int64) (height int64, replayRecentParamsList []*oracletypes.RecentParams) {
 	if currentHeight > int64(latestRecentParams.Params.MaxNonce) {

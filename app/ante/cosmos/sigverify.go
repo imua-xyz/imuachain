@@ -388,6 +388,11 @@ func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 	// oracle create-price message dont need to increment sequence, check its nonce instead
 	if msgs, isOracle, isRawData := utils.OracleCreatePriceTx(tx); isOracle {
 		msg := msgs[0]
+		// NOTE: we must check startBaseBlock first to prevent ddos by replay history tx
+		expectStartBaseBlock, found := isd.oracleKeeper.LatestStartBaseBlock(msg.FeederID)
+		if !found || msg.BasedBlock != expectStartBaseBlock {
+			return ctx, fmt.Errorf("invalid startBaseBlock, expect:%d, got:%d", expectStartBaseBlock, msg.BasedBlock)
+		}
 		if isRawData {
 			// TODO(leonz): move this to ValidateBasic
 			if len(msg.Prices) != 1 || len(msg.Prices[0].Prices) == 0 {
