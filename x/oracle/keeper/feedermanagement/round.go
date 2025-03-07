@@ -283,9 +283,11 @@ func (r *round) getPosition(currentHeight int64) (baseBlock, roundID, delta int6
 }
 
 func (r *round) baseBlockFromRoundID(roundID uint64) (uint64, bool) {
+	// #nosec G115  - startRoundID is non-negative
 	if roundID < uint64(r.startRoundID) {
 		return 0, false
 	}
+	// #nosec G115
 	ret := (roundID-uint64(r.startRoundID))*uint64(r.interval) + uint64(r.startBaseBlock)
 	if r.endBlock > 0 && ret > uint64(r.endBlock) {
 		return 0, false

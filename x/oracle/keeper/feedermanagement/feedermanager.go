@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -14,7 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
-	"github.com/imua-xyz/imuachain/x/oracle/types"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -293,7 +293,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
 
 					// #nosec G115  // tokenID is index of slice
-					if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit, finalPrice.DetID); !updated {
+					if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit); !updated {
 						// this is an 'impossible' case, we should not reach here
 						latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
 						logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID", "feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit, "restul-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
@@ -418,9 +418,9 @@ func (f *FeederManager) handleMalicious(ctx sdk.Context, logger log.Logger, vali
 		coinsBurned := f.k.SlashWithInfractionReason(ctx, consAddr, height, power.Int64(), f.k.GetSlashFractionMalicious(ctx), stakingtypes.Infraction_INFRACTION_UNSPECIFIED)
 		var reason string
 		if rawData {
-			reason = types.AttributeValueMaliciousReportPiece
+			reason = oracletypes.AttributeValueMaliciousReportPiece
 		} else {
-			reason = types.AttributeValueMaliciousReportPrice
+			reason = oracletypes.AttributeValueMaliciousReportPrice
 		}
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -452,6 +452,7 @@ func (f *FeederManager) handleMissCount(ctx sdk.Context, logger log.Logger, vali
 		return
 	}
 
+	// #nosec G115
 	index := uint64(reportedInfo.IndexOffset % reportedRoundsWindow)
 	reportedInfo.IndexOffset++
 	// Update reported round bit array & counter
@@ -552,11 +553,23 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	// this can be replaced by map iteration directly when better performance is needed
 	minReportedPerWindow := f.k.GetMinReportedPerWindow(ctx)
 	reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
-	for fID, validator := range f.phaseTwoMaliciousTx {
-		// #nosec G115
-		logInfo := []any{"validator submit malicious piece of rawData", validator, "feederID", fID, "roundID", f.rounds[int64(fID)].roundID}
-		f.handleMalicious(ctx, logger, validator, logInfo, true)
+
+	// handle malicious tx for phase-2 of 2-phases aggregation
+	if len(f.phaseTwoMaliciousTx) > 0 {
+		keysMaliciousTx := make([]uint64, 0, len(f.phaseTwoMaliciousTx))
+		for fID := range f.phaseTwoMaliciousTx {
+			keysMaliciousTx = append(keysMaliciousTx, fID)
+		}
+		slices.Sort(keysMaliciousTx)
+		// we use sorted keys to handle the malicious slash&jail though we don't see any dependency on the order
+		for _, fID := range keysMaliciousTx {
+			validator := f.phaseTwoMaliciousTx[fID]
+			// #nosec G115
+			logInfo := []any{"validator submit malicious piece of rawData", validator, "feederID", fID, "roundID", f.rounds[int64(fID)].roundID}
+			f.handleMalicious(ctx, logger, validator, logInfo, true)
+		}
 	}
+
 	for _, feederID := range f.sortedFeederIDs {
 		// #nosec G115
 		if _, ok := f.phaseTwoCollectingFeederIDs[uint64(feederID)]; ok {
@@ -809,6 +822,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		if !found {
 			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, interval not found", msg.FeederID)
 		}
+		// #nosec G115  // maxNonce is positive
 		windowForPhaseTwo := interval - uint64(f.cs.GetMaxNonce())*2
 		if leafCount < 1 || leafCount > windowForPhaseTwo {
 			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d and be at least 1, got%d", msg.FeederID, windowForPhaseTwo, leafCount)

@@ -65,8 +65,9 @@ func getNstRootAndPieces() ([]byte, [][]byte) {
 	nstbc := oracletypes.RawDataNST{
 		Version: 1,
 		NstBalanceChanges: []*oracletypes.NSTKV{
-			{StakerIndex: 0,
-				Balance: 99,
+			{
+				StakerIndex: 0,
+				Balance:     99,
 			},
 		},
 	}
@@ -89,13 +90,14 @@ func getNstRootAndPieces() ([]byte, [][]byte) {
 // func getNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32) ([]byte, [][]byte, []*oracletypes.NSTKV) {
 func getNstRootAndPiecesWithParams(version uint64, stakerCount, pieceSize uint32) (*oracletypes.MerkleTree, []*oracletypes.NSTKV) {
 	nstbc := oracletypes.RawDataNST{
-		Version: uint64(version),
+		Version: version,
 	}
 	changes := make([]*oracletypes.NSTKV, 0, stakerCount)
 	for i := uint32(0); i < stakerCount; i++ {
 		changes = append(changes, &oracletypes.NSTKV{
 			StakerIndex: i,
-			Balance:     int64(rand.Int63n(99999999) + 1),
+			// #nosec G404 - v2 is not supported in current golang version, and it's safe to use v1 in test
+			Balance: rand.Int63n(99999999) + 1,
 		})
 	}
 	nstbc.NstBalanceChanges = changes

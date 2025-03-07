@@ -407,6 +407,7 @@ func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 				if pieceIndex < nextPieceIndex {
 					return ctx, fmt.Errorf("piece index must be at least %d, got:%d", nextPieceIndex, pieceIndex)
 				}
+				// #nosec G115  // safe conversion
 				if (ctx.IsCheckTx() && pieceIndex >= nextPieceIndex+uint32(isd.oracleKeeper.GetMaxNonceFromCache())) ||
 					(!ctx.IsCheckTx() && pieceIndex > nextPieceIndex) {
 					return ctx, fmt.Errorf("invalid piece index, nextPieceIndex:%d, got:%d, isCheckTx:%t", nextPieceIndex, pieceIndex, ctx.IsCheckTx())

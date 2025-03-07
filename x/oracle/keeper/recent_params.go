@@ -7,6 +7,7 @@ import (
 )
 
 func (k Keeper) SetParamsForCache(ctx sdk.Context, params types.RecentParams) {
+	// #nosec G115 - block height will never be neagtive
 	block := uint64(ctx.BlockHeight())
 	index, found := k.GetIndexRecentParams(ctx)
 	if found {

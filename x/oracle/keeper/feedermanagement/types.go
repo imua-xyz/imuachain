@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
-	"github.com/imua-xyz/imuachain/x/oracle/types"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
@@ -236,7 +235,7 @@ type round struct {
 	// cachedProofForBlock keeps added proof cache from current block, used for EndBlock to update state
 	// we don't do any state update during oracle tx executing, so we cached the information before endBlock if any
 	// this will be reset on endBlock after update state
-	cachedProofForBlock types.Proof
+	cachedProofForBlock oracletypes.Proof
 
 	h common.PostAggregationHandler
 }

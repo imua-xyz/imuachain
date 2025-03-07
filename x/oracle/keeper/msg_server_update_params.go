@@ -32,6 +32,7 @@ func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdatePara
 			ms.Logger(ctx).Error("UpdateParams failed", "error", err)
 		}
 	}()
+	// #nosec G115 - blockHeight will never be negative
 	height := uint64(ctx.BlockHeight())
 	// add sources
 	if p, err = p.AddSources(msg.Params.Sources...); err != nil {

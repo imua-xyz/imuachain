@@ -26,7 +26,7 @@ func (otpd OracleTwoPhasesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		if !ok {
 			return ctx, errors.New("failed to valid and get pieceWithProof with a tx with oracle rawData")
 		}
-		proofPath := otpd.ok.MinimalProofPathByIndex(msgs[0].FeederID, uint32(pieceWithProof.Index))
+		proofPath := otpd.ok.MinimalProofPathByIndex(msgs[0].FeederID, pieceWithProof.Index)
 		if len(proofPath) != int(pieceWithProof.ProofSize()) {
 			return ctx, fmt.Errorf("rawData proofPath size not match, expected:%d, got:%d", len(proofPath), pieceWithProof.ProofSize())
 		}
