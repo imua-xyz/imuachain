@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"sync/atomic"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -19,8 +17,6 @@ type DepositWithdrawParams struct {
 	OpAmount        sdkmath.Int
 	ValidatorID     []byte
 }
-
-var tmpCount atomic.Int64
 
 // PerformDepositOrWithdraw the assets precompile contract will call this function to update asset state
 // when there is a deposit or withdraw. It returns the final deposit amount, post completion of the deposit
@@ -87,6 +83,5 @@ func (k Keeper) PerformDepositOrWithdraw(
 	// events here.
 
 	// return the final deposit amount
-	tmpCount.Add(1)
 	return info.TotalDepositAmount, nil
 }
