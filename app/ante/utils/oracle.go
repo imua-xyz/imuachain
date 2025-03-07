@@ -5,14 +5,14 @@ import (
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-// TxSizeLimit limits max size of a create-price tx, this is calculated based on one nativeTokenbalance message of worst case(max size), which will need 576 bytes for balance update
-// 48*1024+5*32+6*4 +... TODO(leonz): ensure the proto cost, now use a fixed 200B
 const (
-	TxSizeLimitOraclePrice   = 400
+	// TxSizeLimitOraclePrice is the max size of oracle price tx without raw data piece
+	TxSizeLimitOraclePrice = 400
+	// TxSizeLimitOracleRawData is the max size of oracle price tx with raw data piece
 	TxSizeLimitOracleRawData = 49600
 )
 
-// TODO(leonz): return additional error info
+// OracleCreatePriceTx returns the oracle create price txs in the given tx, and whether the tx is valid oracle tx and valid raw data tx
 func OracleCreatePriceTx(tx sdk.Tx) (msgsO []*oracletypes.MsgCreatePrice, validOracle, validRawData bool) {
 	msgs := tx.GetMsgs()
 	if len(msgs) == 0 {

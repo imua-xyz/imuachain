@@ -9,13 +9,7 @@ import (
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-// SetNextPieceIndex sets the next-piece-index of feederID for 'node-recovery'
-// func (k Keeper) SetNextPieceIndexForFeeder(ctx sdk.Context, feederID uint64, pieceIndex uint32) {
-// 	store := ctx.KVStore(k.storeKey)
-// 	key := types.TwoPhasesFeederKey(feederID)
-// 	store.Set(key, types.Uint32Bytes(pieceIndex))
-// }
-
+// Setup2ndPhase sets up the 2nd phase index for the input feederID and validators, and also sets the leaf count and root hash of the merkle tree
 func (k Keeper) Setup2ndPhase(ctx sdk.Context, feederID uint64, validators []string, leafCount uint32, rootHash []byte) {
 	k.Setup2ndPhaseNextPieceIndex(ctx, feederID, validators)
 	k.SetFeederTreeInfo(ctx, feederID, leafCount, rootHash)
@@ -46,6 +40,7 @@ func (k Keeper) Setup2ndPhaseNextPieceIndex(ctx sdk.Context, feederID uint64, va
 	store.Set(key, types.Uint32Bytes(0))
 }
 
+// Clear2ndPhaseNextPieceIndex clears the nextPieceIndex for the input feederID and all validators under the feederID
 func (k Keeper) Clear2ndPhaseNextPieceIndex(ctx sdk.Context, feederID uint64) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhasesFeederKey(feederID)
@@ -56,21 +51,15 @@ func (k Keeper) Clear2ndPhaseNextPieceIndex(ctx sdk.Context, feederID uint64) {
 	store.Delete(key)
 }
 
+// SetNextPieceIndexForFeeder sets the expected next-piece-index of input feederID
 func (k Keeper) SetNextPieceIndexForFeeder(ctx sdk.Context, feederID uint64, nextPieceIndex uint32) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhasesFeederKey(feederID)
 	store.Set(key, types.Uint32Bytes(nextPieceIndex))
 }
 
-// func (k Keeper) ClearNextPieceIndexForFeeder(ctx sdk.Context, feederID uint64) {
-// 	store := ctx.KVStore(k.storeKey)
-// 	key := types.TwoPhasesFeederKey(feederID)
-// 	store.Delete(key)
-// }
-
-// TODO: remove this
 // NextPieceIndexByFeederID read directly from memory and return the next-piece-index of input feederID
-func (k Keeper) NextPieceIndexByFeederID(ctx sdk.Context, feederID uint64) (uint32, bool) {
+func (k Keeper) NextPieceIndexByFeederID(_ sdk.Context, feederID uint64) (uint32, bool) {
 	// query from mem-cache
 	return k.FeederManager.NextPieceIndexByFeederID(feederID)
 }
@@ -103,19 +92,20 @@ func (k Keeper) CheckAndIncreaseToNextPieceIndex(ctx sdk.Context, validator stri
 				store.Set(key, bz)
 				return nextPieceIndex + 1, nil
 			}
-			return 0, fmt.Errorf("piece_index_check_failed: non_conseecutive: expected bigger than :%d, recived:%d", validatorIndex.NextIndex, nextPieceIndex)
+			return 0, fmt.Errorf("piece_index_check_failed: non_conseecutive: expected bigger than :%d, received:%d", validatorIndex.NextIndex, nextPieceIndex)
 		}
 	}
 	return 0, fmt.Errorf("piece_index_check_failed: next_piece_index not found for valdiator:%s", validator)
 }
 
-// used for recovery, otherwise mem-cache are used directly for reading
+// SetRawDataPiece is used for recovery, otherwise mem-cache are used directly for reading
 func (k Keeper) SetRawDataPiece(ctx sdk.Context, feederID uint64, pieceIndex uint32, rawData []byte) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhasesFeederRawDataKey(feederID, pieceIndex)
 	store.Set(key, rawData)
 }
 
+// GetRawDataPieces returns all rawData pieces for the input feederID
 func (k Keeper) GetRawDataPieces(ctx sdk.Context, feederID uint64) ([][]byte, error) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhasesFeederKey(feederID)
@@ -140,6 +130,7 @@ func (k Keeper) GetRawDataPieces(ctx sdk.Context, feederID uint64) ([][]byte, er
 	return ret, nil
 }
 
+// SetFeederTreeInfo sets the leaf count and root hash of the merkle tree for the input feederID
 func (k Keeper) SetFeederTreeInfo(ctx sdk.Context, feederID uint64, count uint32, rootHash []byte) {
 	if count == 0 || len(rootHash) != common.HashLength {
 		return
@@ -154,6 +145,7 @@ func (k Keeper) SetFeederTreeInfo(ctx sdk.Context, feederID uint64, count uint32
 	store.Set(key, bz)
 }
 
+// GetFeederTreeInfo returns the leaf count and root hash of the merkle tree for the input feederID
 func (k Keeper) GetFeederTreeInfo(ctx sdk.Context, feederID uint64) (uint32, []byte) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhaseFeederTreeInfoKey(feederID)
@@ -166,7 +158,7 @@ func (k Keeper) GetFeederTreeInfo(ctx sdk.Context, feederID uint64) (uint32, []b
 	return treeInfo.LeafCount, treeInfo.RootHash
 }
 
-// used for recovery, otherwise, mem-cache are used directly for reading
+// AddNodeToMerkle used for recovery, otherwise, mem-cache are used directly for reading
 func (k Keeper) AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*types.HashNode) {
 	if len(proof) == 0 {
 		return
@@ -213,6 +205,7 @@ func (k Keeper) AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*
 	store.Set(key, bz)
 }
 
+// GetNodesFromMerkleTree returns the nodes of the merkle tree for the input feederID as a flatten tree
 func (k Keeper) GetNodesFromMerkleTree(ctx sdk.Context, feederID uint64) []*types.HashNode {
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhasesFeederProofKey(feederID)
@@ -225,9 +218,11 @@ func (k Keeper) GetNodesFromMerkleTree(ctx sdk.Context, feederID uint64) []*type
 	return mt.Nodes
 }
 
-// clear feederID/, clear:
+// clear feederID/ :
 // 1. rawData
 // 2. proof
+// 3. nextPieceIndex for the feederID, valdiators
+// Clear2ndPhases clears all rawData and proof for a specific feederID, and also clears the nextPieceIndex for the feederID, validators
 func (k Keeper) Clear2ndPhase(ctx sdk.Context, feederID uint64, rootIndex uint32) {
 	store := ctx.KVStore(k.storeKey)
 	// clear rawData

@@ -11,6 +11,7 @@ func (k Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 		k.RegisterPostAggregation()
 		// bond handlers for nst token feeders
 		p := k.GetParams(ctx)
+		// it's safe to iterate over the map, the order of the elements is not important
 		for tfID, tf := range p.TokenFeeders {
 			// #nosec G115 - safe conversion since tokenId is set from slice index
 			if p.IsNST(int(tf.TokenID)) {

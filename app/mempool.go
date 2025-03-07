@@ -13,18 +13,22 @@ import (
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
+// ImuaMempool is a mempool for oracle module, it caches rawData txs and provides a way to select txs for block proposal
+// we only take care of rawData txs with rawData message which is used for 2-phases aggregation of oracle module
+// rawData txs are txs with MsgCreatePrice message which inlude raw data piece and proof used to submit oracle data to chain
+// rawData pieces is required to be submitted in order, and the piece index is verified in anteHandler
+// in ImuaMempool, we pre cache rawData pieces for each feederID(the proposer would have more chance to include a valid rawData piece in block to get avoid of being punished by miss-count)
 type ImuaMempool struct {
 	// feederID -> pieceIndex->[]PieceWithProof, cached peiceWithProof for feederID
 	cachedPieces map[uint64]map[uint32][]*oracletypes.PieceWithProof
 	k            *oraclekeeper.Keeper
 	count        int
 	// load from config file as a config for mempool
-	//cacheWindow int
 	txDecoder sdk.TxDecoder
 }
 
-// Insert inserts a tx into mempool, currently only used for rawData from tx related to 2-phases aggregation of oracle modulps -ef | grep e
-func (em *ImuaMempool) Insert(ctx context.Context, tx sdk.Tx) error {
+// Insert inserts a tx into mempool, currently only used for rawData from tx related to 2-phases aggregation of oracle modul
+func (em *ImuaMempool) Insert(_ context.Context, tx sdk.Tx) error {
 	// we don't filter tx not with message of rawData type, those tx will just be added into tendermint's txpool
 	if !em.includesMsgOracle(tx) {
 		return nil
@@ -64,6 +68,8 @@ func (em *ImuaMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 	return nil
 }
 
+// Select selects txs for block proposal, we only select rawData txs with rawData message which is used for 2-phases aggregation of oracle module, for other txs we just return them
+// we only keep one tx for each feederID, and we only keep the tx with the piece index expected by the feederID
 func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iterator {
 	// remove all expired tx, when Select for block 100, all txs belongs to 99 or before should be removed
 
@@ -91,6 +97,7 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 		return nil
 	}
 
+	// remove all expired txs from cache
 	em.clearExpiredFeederIDcache(collectingFeederIDs)
 
 	seenFeederIDs := make(map[uint64]struct{})
@@ -154,13 +161,13 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 	return nil
 }
 
+// CountTx returns the number of txs in mempool
 func (em *ImuaMempool) CountTx() int {
 	return em.count
 }
 
 // Remove removes tx from mempool
 func (em *ImuaMempool) Remove(tx sdk.Tx) error {
-	// TODO(leonz): clear history sealed round on block change
 	// remove all pieces with indexes <= piece index of input msg
 	piece, msgOracle, _, isRawData := em.GetPieceWithProof(tx)
 	// we don't process tx not with rawdata
@@ -172,6 +179,7 @@ func (em *ImuaMempool) Remove(tx sdk.Tx) error {
 		return nil
 	}
 	newPiecesCached := make(map[uint32][]*oracletypes.PieceWithProof)
+	// it's safe to range over piecesCached since we keep the same piece slice for each piece index
 	for index, piecesIndexCached := range piecesCached {
 		if index > piece.Index {
 			newPiecesCached[index] = piecesIndexCached
@@ -214,6 +222,7 @@ func (em *ImuaMempool) GetPieceWithProof(tx sdk.Tx) (pieceWithProof *oracletypes
 	return
 }
 
+// getTxByFeederIDPieceIndex returns the tx with the piece index and feederID
 func (em *ImuaMempool) getTxByFeederIDPieceIndex(feederID uint64, pieceIndex uint32) sdk.Tx {
 	pwf, ok := em.cachedPieces[feederID]
 	if !ok {
@@ -234,11 +243,15 @@ func (em *ImuaMempool) getTxByFeederIDPieceIndex(feederID uint64, pieceIndex uin
 	return piecesCached[len(piecesCached)-1].Tx
 }
 
+// reset resets the mempool
 func (em *ImuaMempool) reset() {
 	em.cachedPieces = make(map[uint64]map[uint32][]*oracletypes.PieceWithProof)
 	em.count = 0
 }
 
+// clearExpiredFeederIDcache clears the expired feederID cache
+// if a feederID is not in 'collectingFeederIDs', we remove all pieces with that feederID from cache
+// or if a feederID is in 'collectingFeederIDs', we remove all pieces with that feederID and piece index <= startBaseBlock
 func (em *ImuaMempool) clearExpiredFeederIDcache(collectingFeederIDs map[uint64]uint64) {
 	newCachedPieces := make(map[uint64]map[uint32][]*oracletypes.PieceWithProof)
 	for feederID := range em.cachedPieces {
@@ -270,6 +283,7 @@ func (em *ImuaMempool) clearExpiredFeederIDcache(collectingFeederIDs map[uint64]
 	}
 }
 
+// IteratorFromSlice returns an iterator from a slice of txs
 func IteratorFromSlice(txList []sdk.Tx) *ImuaMemIterator {
 	return &ImuaMemIterator{txList: txList}
 }
@@ -301,5 +315,4 @@ func NewImuaMempool(oKeeper *oraclekeeper.Keeper, decoder sdk.TxDecoder) *ImuaMe
 		k:            oKeeper,
 		txDecoder:    decoder,
 	}
-
 }
