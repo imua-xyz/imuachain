@@ -89,6 +89,7 @@ func (p *Proof) FlattenString() (string, string) {
 	}
 	return idxStr, hashStr
 }
+
 func (m *MerkleTree) SetRawDataPieces(pieces [][]byte) {
 	m.pieces = pieces
 }
@@ -109,7 +110,7 @@ func (m *MerkleTree) ProofPathFromLeafIndex(index uint32, withCalculatedNodes bo
 	}
 	node, ok := m.t[index]
 	if !ok {
-		panic("merkle is not initialized correctly")
+		return nil
 	}
 	path := make([]uint32, 0)
 	for node != nil {
@@ -135,7 +136,7 @@ func (m *MerkleTree) UncachedProofPathFromLeafIndex(index uint32) []uint32 {
 	}
 	node, ok := m.t[index]
 	if !ok {
-		panic("merkle is not initialized correctly")
+		return nil
 	}
 	path := make([]uint32, 0)
 	for node != nil {
@@ -469,7 +470,8 @@ func merkleTreeFromBytes(pieceSize uint32, leafCount uint32, bytes []byte, fromR
 					}
 					t[liftedNodeIndex] = lNode
 				} else {
-					panic("liftedNode must be nil when do lifting")
+					// this should never happen
+					return nil, errors.New("liftedNode must be nil when do lifting")
 				}
 				// #nosec G115
 				break

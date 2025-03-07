@@ -13,6 +13,7 @@ import (
 )
 
 func (f *FeederManager) NextPieceIndexByFeederID(feederID uint64) (uint32, bool) {
+	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
 	if !ok || r.m == nil {
 		return 0, false
@@ -21,6 +22,7 @@ func (f *FeederManager) NextPieceIndexByFeederID(feederID uint64) (uint32, bool)
 }
 
 func (f *FeederManager) MaxPieceIndexForTokenFeederID(feederID uint64) (uint32, bool) {
+	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
 	if !ok {
 		return 0, false
@@ -33,12 +35,14 @@ func (f *FeederManager) MaxPieceIndexForTokenFeederID(feederID uint64) (uint32, 
 
 // VerifyPieceProofsForTokenFeederID verifies targetPiece against feederID's corresponding merkle root, it might need proof nodes from pieces
 // return (rootHash, verified)
+// if the merkle tree for the feederID had been completed, the rootHash will be returned, and verified will be false
 func (f *FeederManager) VerifyPieceProofsForTokenFeederID(feederID uint64, targetPiece *oracletypes.PieceWithProof) ([]byte, bool) {
+	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
-	if !ok {
-		return r.m.RootHash(), false
+	if !ok || r.m == nil {
+		return nil, false
 	}
-	if r.m != nil || r.m.Completed() {
+	if r.m.Completed() {
 		return r.m.RootHash(), false
 	}
 	// the proof has been verified to be minimal in anteHandler so we dont need to check the first returned value
@@ -55,6 +59,7 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 		return nil, false
 	}
 
+	// #nosec G115
 	r := f.rounds[int64(msg.FeederID)]
 	if r == nil {
 		return nil, false
@@ -71,8 +76,12 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 	}
 
 	tmp, err := strconv.ParseUint(msg.Prices[0].Prices[0].DetID, 10, 32)
+	if err != nil {
+		return nil, false
+	}
+
 	pieceIndex := uint32(tmp)
-	if err != nil || pieceIndex >= pieceCount { // || pieceIndex < 1 {
+	if pieceIndex >= pieceCount {
 		return nil, false
 	}
 
@@ -104,10 +113,15 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 				return nil, false
 			}
 			tmp, err := strconv.ParseUint(indexes[i], 10, 32)
-			index := uint32(tmp)
-			if err != nil || index > rootIndex {
+			if err != nil {
 				return nil, false
 			}
+
+			index := uint32(tmp)
+			if index > rootIndex {
+				return nil, false
+			}
+
 			proof = append(proof, &oracletypes.HashNode{Index: index, Hash: hashBytes})
 		}
 		ret.Proof = proof
@@ -117,6 +131,7 @@ func (f *FeederManager) GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*ora
 
 // GetTidyProofPathByIndex return the proof path with unseen nodes that under condition pieces comes as index from 0 to n, and cached all seen proof nodes
 func (f *FeederManager) MinimalProofPathByIndex(feederID uint64, index uint32) []uint32 {
+	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
 	if !ok {
 		return nil

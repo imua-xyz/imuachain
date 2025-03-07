@@ -89,7 +89,7 @@ func (c *caches) IsDeterministic(sourceID int64) (bool, error) {
 // 1. single deterministic source (like chainlink)
 // 2. 2-phase aggregation with single deterministic source
 // we don't verify the source-name to be 'chainlink' or 'beaconchain', it is satisefied as long as
-// all validators aggreed on the same source
+// all validators agreed on the same source
 func (c *caches) IsRuleV1(feederID int64) bool {
 	p := c.params.params
 	// #nosec - G115 ruleID is assigned with slice index
@@ -424,9 +424,12 @@ func (c *caches) RawDataPieceSize() uint32 {
 	return c.params.params.PieceSizeByte
 }
 
-func (c *caches) IntervalForFeederID(feederID uint64) uint64 {
+func (c *caches) IntervalForFeederID(feederID uint64) (uint64, bool) {
 	// TODO: change type of interval to uint32
-	return c.params.params.TokenFeeders[feederID].Interval
+	if feederID >= uint64(len(c.params.params.TokenFeeders)) {
+		return 0, false
+	}
+	return c.params.params.TokenFeeders[feederID].Interval, true
 }
 
 func (c *caches) ResetCaches() {

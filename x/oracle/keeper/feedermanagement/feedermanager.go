@@ -805,7 +805,11 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		// we wait one more maxNonce blocks to make sure proposer getting expected txs in their mempool
 		// we don't use the last block of current round(which is the baseBlock of the next round), so the quotingWindow for 2nd-phase message is from [baseBlock+2*maxNonce, nextBaseBlock-1]
 		// #nosec G115  // maxNonce is positive
-		windowForPhaseTwo := f.cs.IntervalForFeederID(msg.FeederID) - uint64(f.cs.GetMaxNonce())*2
+		interval, found := f.cs.IntervalForFeederID(msg.FeederID)
+		if !found {
+			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, interval not found", msg.FeederID)
+		}
+		windowForPhaseTwo := interval - uint64(f.cs.GetMaxNonce())*2
 		if leafCount < 1 || leafCount > windowForPhaseTwo {
 			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d and be at least 1, got%d", msg.FeederID, windowForPhaseTwo, leafCount)
 		}
