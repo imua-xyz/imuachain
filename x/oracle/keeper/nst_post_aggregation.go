@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
@@ -33,9 +32,6 @@ func (k Keeper) SetStakerInfos(ctx sdk.Context, assetID string, stakerInfos []*t
 		store.Set(types.NativeTokenStakerKey(assetID, stakerInfo.StakerAddr), bz)
 	}
 }
-
-var tmpCount int
-var tmpCount2 int
 
 // GetStakerInfo returns details about staker for native-restaking under asset of assetID
 func (k Keeper) GetStakerInfo(ctx sdk.Context, assetID, stakerAddr string) types.StakerInfo {
@@ -147,7 +143,6 @@ func (k Keeper) GetAllStakerListAssets(ctx sdk.Context) (ret []types.StakerListA
 
 func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, stakerAddr, validatorPubkey string, amount sdkmath.Int) error {
 	stakerAddr = strings.ToLower(stakerAddr)
-	tmpCount++
 	_, decimalInt, err := k.getDecimal(ctx, assetID)
 	if err != nil {
 		return err
@@ -241,7 +236,6 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 
 	// valid veriosn start from 1
 	version := k.IncreaseNSTVersion(ctx, assetID)
-	tmpCount2++
 	// we use index to sync with client about status of stakerInfo.ValidatorPubkeyList
 	eventValue := fmt.Sprintf("%d_%s_%d", stakerInfo.StakerIndex, validatorPubkey, version)
 	if newBalance.Change == types.Action_ACTION_DEPOSIT {
@@ -297,7 +291,7 @@ func (k Keeper) GetNSTVersion(ctx sdk.Context, assetID string) int64 {
 }
 
 func (k Keeper) getDecimal(ctx sdk.Context, assetID string) (int, sdkmath.Int, error) {
-	decimalMap, err := k.assetsKeeper.GetAssetsDecimal(ctx, map[string]interface{}{assetID: nil})
+	decimalMap, err := k.assetsKeeper.GetAssetsDecimal(ctx, map[string]any{assetID: nil})
 	if err != nil {
 		return 0, sdkmath.ZeroInt(), err
 	}
@@ -310,18 +304,6 @@ func getStakerID(stakerAddr string, chainID uint64) string {
 	return strings.Join([]string{strings.ToLower(stakerAddr), hexutil.EncodeUint64(chainID)}, utils.DelimiterForID)
 }
 
-func getNSTVersionFromDetID(detID string) (int64, error) {
-	parsedDetID := strings.Split(detID, "_")
-	if len(parsedDetID) != 2 {
-		return 0, fmt.Errorf("invalid detID for nst, should be in format of detID_version, got:%s", detID)
-	}
-	nstVersion, err := strconv.ParseInt(parsedDetID[1], 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("failed to parse version from:%s, error:%w", parsedDetID[1], err)
-	}
-	return nstVersion, nil
-}
-
 // UpdateNSTBalanceChange serves the post handling for nst balance change
 func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID uint64, kInf common.KeeperOracle) error {
 	balanceChanges := &types.RawDataNST{}
@@ -332,6 +314,7 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 	}
 	assetID := k.GetParamsFromCache().GetAssetIDForNSTFromFeederID(feederID)
 	// TODO(leonz): use uint64 for version state
+	// #nosec G115
 	v := uint64(k.GetNSTVersion(ctx, assetID))
 	if balanceChanges.Version != v {
 		return fmt.Errorf("version not match, expected%d, got%d", v, balanceChanges.Version)
@@ -357,6 +340,7 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 		if length := len(stakerInfo.BalanceList); length > 0 {
 			newBalance = *(stakerInfo.BalanceList[length-1])
 		}
+		// #nosec G115 - block height will never be negative
 		newBalance.Block = uint64(ctx.BlockHeight())
 		// we set index as a global reference used through all rounds
 		newBalance.Index++
@@ -364,7 +348,7 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 		newBalance.RoundID = roundID
 		balance := changeKV.Balance
 
-		if delta := int64(balance) - newBalance.Balance; delta != 0 {
+		if delta := balance - newBalance.Balance; delta != 0 {
 			decimal, _, err := k.getDecimal(ctx, assetID)
 			if err != nil {
 				return err
@@ -372,7 +356,7 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 			if err := k.delegationKeeper.UpdateNSTBalance(ctx, getStakerID(stakerAddr, chainID), assetID, sdkmath.NewIntWithDecimal(delta, decimal)); err != nil {
 				return err
 			}
-			newBalance.Balance = int64(balance)
+			newBalance.Balance = balance
 		}
 		stakerInfo.Append(&newBalance)
 		bz := k.cdc.MustMarshal(stakerInfo)

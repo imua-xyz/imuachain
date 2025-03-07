@@ -185,6 +185,7 @@ func (s *E2ETestSuite) updateNSTBalance(start uint64, version uint64, stakerCoun
 
 	ctx := context.Background()
 	for i := 0; i < maxSize-1; i++ {
+		// #nosec G404 - v2 is not supported in current golang version, it's safe to use v1 in test
 		idx := rand.Int63n(int64(maxSize)) + 1
 		resStakerInfo, err3 := s.network.QueryOracle().StakerInfo(ctx, &oracletypes.QueryStakerInfoRequest{AssetId: network.NativeAssetID, StakerAddr: stakerAddrStrs[idx]})
 		s.Require().NoError(err3)

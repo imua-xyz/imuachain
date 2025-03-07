@@ -245,7 +245,8 @@ func (m *MerkleTree) PieceByIndex(targetIndex uint32) ([]byte, bool) {
 // return rawData as a whole, with true/false to tell if we got the completed rawData
 // when fasel, the returned first value should be nil
 func (m *MerkleTree) CompleteRawData() ([]byte, bool) {
-	if m == nil || len(m.pieces) < int(m.leafCount) || m.leafCount == 0 {
+	// #nosec G115 - the size of m.pieces is limited
+	if m == nil || uint32(len(m.pieces)) < m.leafCount || m.leafCount == 0 {
 		return nil, false
 	}
 	if len(m.rawData) > 0 {
@@ -267,7 +268,8 @@ func (m *MerkleTree) Completed() bool {
 }
 
 func (m *MerkleTree) CollectingRawData() bool {
-	return m != nil && len(m.pieces) < int(m.leafCount)
+	// #nosec G115 - the length of m.pieces is limited, its size won't exceed m.leafCount
+	return m != nil && uint32(len(m.pieces)) < m.leafCount
 }
 
 // (0, true) means the first leaf node is cached

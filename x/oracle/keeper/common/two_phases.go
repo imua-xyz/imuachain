@@ -4,6 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// the input data could be either rawData bytes of data with big size for non-price senarios or 'price' info
+// the input data could be either rawData bytes of data with big size for non-price scenarios or 'price' info
 // type PostAggregationHandler func(data []byte, ctx sdk.Context, k KeeperOracle) error
 type PostAggregationHandler func(ctx sdk.Context, data []byte, feederID, roundID uint64, k KeeperOracle) error

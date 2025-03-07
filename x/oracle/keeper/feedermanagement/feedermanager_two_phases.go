@@ -183,7 +183,7 @@ func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCrea
 		return nil, nil
 	}
 	// #nosec G115
-	f.phaseTwoCollected(uint64(msg.FeederID))
+	f.phaseTwoCollected(msg.FeederID)
 	// this is ensured to get an non nil piece by anteHandler
 	piece, _ := f.GetPieceWithProof(msg)
 	// we don't check the 1st return value to see if this input proof is of the minimal, that's the duty of anteHandler, and 'verified' pieceWithProof will not fail the tx execution

@@ -119,6 +119,7 @@ func (n Network) SendPrecompileTx(preCompileName precompile, methodName string, 
 
 	return nil
 }
+
 func (n Network) SendPrecompileTxWithNonce(preCompileName precompile, methodName string, nonce uint64, args ...interface{}) (uint64, error) {
 	ctx := context.Background()
 

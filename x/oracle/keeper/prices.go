@@ -192,7 +192,7 @@ func (k Keeper) GetAllPrices(ctx sdk.Context) (list []types.Prices) {
 }
 
 // AppenPriceTR append a new round of price for specific token, return false if the roundID not match
-func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound, detID string) bool {
+func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound) bool {
 	nextRoundID := k.GetNextRoundID(ctx, tokenID)
 	logger := k.Logger(ctx)
 	// This should not happen
@@ -236,7 +236,7 @@ func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price
 	}
 	roundID = nextRoundID
 	pTR.RoundID = nextRoundID
-	k.AppendPriceTR(ctx, tokenID, pTR, types.NilDetID)
+	k.AppendPriceTR(ctx, tokenID, pTR)
 	return
 }
 

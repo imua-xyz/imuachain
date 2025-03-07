@@ -9,6 +9,7 @@ import (
 // SetMsgItemsForCache set a specific recentMsg with its height as index in the store
 func (k Keeper) SetMsgItemsForCache(ctx sdk.Context, recentMsg types.RecentMsg) {
 	index, found := k.GetIndexRecentMsg(ctx)
+	// #nosec G115 - block height will never be negative
 	block := uint64(ctx.BlockHeight())
 	if found {
 		i := 0
