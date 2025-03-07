@@ -123,9 +123,12 @@ func (m *FeederValidatorsIndex) GetValidatorIndexList() []*ValidatorIndex {
 	return nil
 }
 
+// HashNode represents a node in a Merkle tree
 type HashNode struct {
+	// index is the index of the node in the tree
 	Index uint32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
-	Hash  []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
+	// hash is the hash of the node
+	Hash []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
 func (m *HashNode) Reset()         { *m = HashNode{} }
@@ -177,6 +180,7 @@ func (m *HashNode) GetHash() []byte {
 
 // Proof represents all hash nodes of a Mekle tree with indexes
 type FlattenTree struct {
+	// nodes is the list of all nodes in the tree
 	Nodes []*HashNode `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
 }
 
@@ -220,9 +224,12 @@ func (m *FlattenTree) GetNodes() []*HashNode {
 	return nil
 }
 
+// TreeInfo represents the root hash and leaf count of a Merkle tree
 type TreeInfo struct {
+	// leaf_count is the number of leaves in the tree
 	LeafCount uint32 `protobuf:"varint,1,opt,name=leaf_count,json=leafCount,proto3" json:"leaf_count,omitempty"`
-	RootHash  []byte `protobuf:"bytes,2,opt,name=root_hash,json=rootHash,proto3" json:"root_hash,omitempty"`
+	// root_hash is the root hash of the tree
+	RootHash []byte `protobuf:"bytes,2,opt,name=root_hash,json=rootHash,proto3" json:"root_hash,omitempty"`
 }
 
 func (m *TreeInfo) Reset()         { *m = TreeInfo{} }
