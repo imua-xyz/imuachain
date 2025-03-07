@@ -165,9 +165,11 @@ func (k Keeper) AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*
 	}
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhasesFeederProofKey(feederID)
-	bz := store.Get(key)
 	merkle := &types.FlattenTree{}
-	k.cdc.MustUnmarshal(bz, merkle)
+	bz := store.Get(key)
+	if bz != nil {
+		k.cdc.MustUnmarshal(bz, merkle)
+	}
 	nodes := merkle.Nodes
 	sort.Slice(proof, func(i, j int) bool { return proof[i].Index < proof[j].Index })
 	uniqueOrderedProof := make([]*types.HashNode, 0, len(proof))
