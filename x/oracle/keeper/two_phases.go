@@ -193,7 +193,7 @@ func (k Keeper) AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*
 			newList = append(newList, nodes[i])
 			i++
 		case nodes[i].Index > uniqueOrderedProof[j].Index:
-			newList = append(newList, proof[j])
+			newList = append(newList, uniqueOrderedProof[j])
 			j++
 		}
 	}
