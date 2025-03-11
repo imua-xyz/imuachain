@@ -2,10 +2,11 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
+	"fmt"
 	"github.com/ExocoreNetwork/exocore/types/keys"
 	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
-	"github.com/ExocoreNetwork/exocore/x/operator/types"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -169,11 +170,45 @@ func (k Keeper) DeleteAVSRewardDistribution(ctx sdk.Context, avsAddr string) err
 	return nil
 }
 
+func (k Keeper) SetAVSRewardParam(ctx sdk.Context, avsAddr string, param *feedistributiontypes.AVSRewardParam) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardParam)
+	bz := k.cdc.MustMarshal(param)
+	store.Set(common.HexToAddress(avsAddr).Bytes(), bz)
+
+	// emit event for indexers
+	paramEvent := fmt.Sprintf("CustomRewardInflation:%v,CustomOperatorRatio:%v", param.CustomRewardInflation, param.CustomOperatorRatio)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			feedistributiontypes.EventTypeAVSRewardParamSet,
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avsAddr),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyAVSRewardParam, paramEvent),
+		),
+	)
+	return nil
+}
+
+func (k Keeper) GetAVSRewardParam(ctx sdk.Context, avsAddr string) (*feedistributiontypes.AVSRewardParam, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardParam)
+	value := store.Get(common.HexToAddress(avsAddr).Bytes())
+	if value == nil {
+		return nil, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetAVSRewardParam, avsAddr:%s", avsAddr)
+	}
+
+	ret := feedistributiontypes.AVSRewardParam{}
+	k.cdc.MustUnmarshal(value, &ret)
+	return &ret, nil
+}
+
 func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 	return func(ctx sdk.Context, avsAddr string) (sdk.DecCoins, error) {
 		feeCollector := k.authKeeper.GetModuleAccount(ctx, k.feeCollectorName)
 		feesCollectedInt := k.bankKeeper.GetAllBalances(ctx, feeCollector.GetAddress())
 		feesCollected := sdk.NewDecCoinsFromCoins(feesCollectedInt...)
+		// transfer collected fees to the distribution module account
+		err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, feedistributiontypes.ModuleName, feesCollectedInt)
+		if err != nil {
+			return nil, err
+		}
 		return feesCollected, nil
 	}
 }
@@ -209,7 +244,7 @@ func (k Keeper) VotingPowerRatioAfterJail(ctx sdk.Context, operator, avsAddr str
 	}
 	var effectiveBlockNumber uint64
 	if !optedInfo.Jailed {
-		if optedInfo.UnJailedHeight == types.DefaultUnJailedHeight ||
+		if optedInfo.UnJailedHeight == operatortypes.DefaultUnJailedHeight ||
 			optedInfo.JailedHeight < currentEpochStartHeight {
 			// The jail and unjail events occurred before the current epoch,
 			// so they won't affect the reward calculation for the current epoch.
@@ -239,43 +274,117 @@ func (k Keeper) VotingPowerRatioAfterJail(ctx sdk.Context, operator, avsAddr str
 	return ratio, nil
 }
 
-func (k Keeper) RewardProportionsFnForDogfood() OperatorRewardProportionsFn {
-	return func(ctx sdk.Context, avsAddr string) ([]*feedistributiontypes.OperatorRewardProportion, error) {
-		allValidators := k.StakingKeeper.GetAllExocoreValidators(ctx)
-		previousTotalPower := k.StakingKeeper.GetLastTotalPower(ctx).Int64()
-		operatorRewardProportions := make([]*feedistributiontypes.OperatorRewardProportion, 0)
-		operatorVotingPowerAfterJail := make([]math.LegacyDec, 0)
-		totalPowerAfterJail := previousTotalPower
-		isHandleJail := false
-		for _, val := range allValidators {
-			consensusKey, err := val.ConsPubKey()
-			if err != nil {
-				return nil, err
-			}
-			wrappedKey := keys.NewWrappedConsKeyFromSdkKey(consensusKey)
-			found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-				ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
-			)
-			if !found {
-				return nil, feedistributiontypes.ErrOperatorNotFound
-			}
+type operatorVotingPowerCallback func(operatorAddr string, votingPower math.LegacyDec) bool
 
-			votingPowerDec := math.LegacyNewDec(val.Power)
-			rewardProportion := votingPowerDec.QuoTruncate(math.LegacyNewDec(previousTotalPower))
+// CommonRewardProportion : Abstracts the common logic for calculating operator reward distribution
+// for Dogfood and other AVSs. The logic differences will be handled in the caller function.
+// The main difference is that Dogfood retrieves the voting power from the Dogfood module,
+// whereas other AVSs retrieve the voting power from the Operator module.
+func (k Keeper) CommonRewardProportion(
+	ctx sdk.Context,
+	avsAddr string,
+	totalVotingPower math.LegacyDec,
+	IterateOperators func(operatorVotingPowerCallback) error,
+) ([]*feedistributiontypes.OperatorRewardProportion, error) {
+	operatorRewardProportions := make([]*feedistributiontypes.OperatorRewardProportion, 0)
+	operatorVotingPowersAfterJail := make([]operatortypes.OperatorVotingPower, 0)
+	totalPowerAfterJail := totalVotingPower
+	isHandleJail := false
+
+	if !totalVotingPower.IsPositive() {
+		// return null reward proportions, because the rewards should be allocated to
+		// the community pool.
+		return operatorRewardProportions, nil
+	}
+
+	callBackFn := func(operatorAddr string, votingPowerDec math.LegacyDec) bool {
+		effectiveRatio, err := k.VotingPowerRatioAfterJail(ctx, operatorAddr, avsAddr)
+		if err != nil {
+			ctx.Logger().Error("err when getting the effective voting power ratio after jail; skipping", "operator", operatorAddr, "err", err)
+			// return false to continue handling the other operators
+			return false
+		}
+		if !isHandleJail {
+			rewardProportion := votingPowerDec.QuoTruncate(totalVotingPower)
 			operatorRewardProportions = append(operatorRewardProportions,
 				&feedistributiontypes.OperatorRewardProportion{
-					OperatorAddr:     accAddress.String(),
+					OperatorAddr:     operatorAddr,
 					RewardProportion: rewardProportion,
 				})
-			operatorVotingPowers = append(operatorVotingPowers, votingPowerDec)
+		}
+		if effectiveRatio.LT(math.LegacyNewDec(1)) {
+			// handle the exceptional case where the effective ratio is less than zero.
+			if effectiveRatio.LT(math.LegacyZeroDec()) {
+				effectiveRatio = math.LegacyZeroDec()
+			}
+			totalPowerAfterJail.SubMut(votingPowerDec.Mul(math.LegacyNewDec(1).SubMut(effectiveRatio)))
+			votingPowerDec.MulMut(effectiveRatio)
+			if !isHandleJail {
+				// set the flag when any operator needs to handle a jail event.
+				isHandleJail = true
+			}
+		}
+		// It will be used to recalculate the reward proportion when the jail or unjail
+		// events need to be handled.
+		if votingPowerDec.IsPositive() {
+			operatorVotingPowersAfterJail = append(
+				operatorVotingPowersAfterJail,
+				operatortypes.OperatorVotingPower{
+					OperatorAddr: operatorAddr,
+					VotingPower:  votingPowerDec})
+		}
+		return false
+	}
+
+	err := IterateOperators(callBackFn)
+	if err != nil {
+		return nil, err
+	}
+	if isHandleJail {
+		// recalculate the reward proportion
+		operatorRewardProportions = make([]*feedistributiontypes.OperatorRewardProportion, 0)
+		for _, operatorVotingPower := range operatorVotingPowersAfterJail {
+			effectiveProportion := operatorVotingPower.VotingPower.QuoTruncate(totalPowerAfterJail)
+			operatorRewardProportions = append(operatorRewardProportions,
+				&feedistributiontypes.OperatorRewardProportion{
+					OperatorAddr:     operatorVotingPower.OperatorAddr,
+					RewardProportion: effectiveProportion,
+				})
+		}
+	}
+	return operatorRewardProportions, nil
+}
+
+func (k Keeper) RewardProportionsFnForDogfood() OperatorRewardProportionsFn {
+	return func(ctx sdk.Context, avsAddr string) ([]*feedistributiontypes.OperatorRewardProportion, error) {
+		previousTotalPower := k.StakingKeeper.GetLastTotalPower(ctx).Int64()
+		totalVotingPower := math.LegacyNewDec(previousTotalPower)
+
+		iterateOperators := func(callback operatorVotingPowerCallback) error {
+			allValidators := k.StakingKeeper.GetAllExocoreValidators(ctx)
+			for i, val := range allValidators {
+				consensusKey, err := val.ConsPubKey()
+				if err != nil {
+					ctx.Logger().Error("Failed to deserialize public key; skipping", "error", err, "i", i)
+					continue
+				}
+				wrappedKey := keys.NewWrappedConsKeyFromSdkKey(consensusKey)
+				found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+					ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
+				)
+				if !found {
+					ctx.Logger().Error("Operator address not found; skipping", "consAddress", wrappedKey.ToConsAddr(), "i", i)
+					continue
+				}
+				isBreak := callback(accAddress.String(), math.LegacyNewDec(val.Power))
+				if isBreak {
+					break
+				}
+			}
+			return nil
 		}
 
-		if !isHandleJail {
-			return operatorRewardProportions, nil
-		} else {
-
-		}
-		return operatorRewardProportions, nil
+		return k.CommonRewardProportion(ctx, avsAddr, totalVotingPower, iterateOperators)
 	}
 }
 
@@ -316,17 +425,61 @@ func (k Keeper) DefaultEpochRewardFnForAVSs() AVSEpochRewardFn {
 
 func (k Keeper) DefaultRewardProportionsFnForAVSs() OperatorRewardProportionsFn {
 	return func(ctx sdk.Context, avsAddr string) ([]*feedistributiontypes.OperatorRewardProportion, error) {
-
-		return nil, nil
+		totalVotingPower, err := k.operatorKeeper.GetAVSUSDValue(ctx, avsAddr)
+		if err != nil {
+			return nil, err
+		}
+		iterateOperators := func(callback operatorVotingPowerCallback) error {
+			opFunc := func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error {
+				if optedUSDValues.ActiveUSDValue.IsPositive() {
+					callback(operator, optedUSDValues.ActiveUSDValue)
+				}
+				return nil
+			}
+			return k.operatorKeeper.IterateOperatorUSDValuesForAVS(ctx, avsAddr, false, opFunc)
+		}
+		return k.CommonRewardProportion(ctx, avsAddr, totalVotingPower, iterateOperators)
 	}
 }
 
-func (k Keeper) DefaultRewardDistributionForAVSs(ctx sdk.Context, avsAddr string) (*feedistributiontypes.AVSRewardDistribution, error) {
-	avsRewardAssets, err := k.GetAllAVSRewardAssetSymbols(ctx, avsAddr)
+func (k Keeper) AVSRewardDistributionByParam(ctx sdk.Context, avsAddr string) (bool, *feedistributiontypes.AVSRewardDistribution, error) {
+	param, err := k.GetAVSRewardParam(ctx, avsAddr)
 	if err != nil {
-		return nil, err
+		return false, nil, err
 	}
-	if len(avsRewardAssets) == 0 {
-
+	var avsEpochRewardFn AVSEpochRewardFn
+	var operatorRewardProportionsFn OperatorRewardProportionsFn
+	var isDogfood bool
+	// check if the avs is dogfood
+	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+	if dogfoodAVSAddr == avsAddr {
+		isDogfood = true
+		avsEpochRewardFn = k.EpochRewardFnForDogfood()
+		operatorRewardProportionsFn = k.RewardProportionsFnForDogfood()
+	} else {
+		// check the reward parameter of AVS
+		if param.CustomRewardInflation {
+			avsEpochRewardFn = k.CustomizedEpochRewardFnForAVSs()
+		} else {
+			avsEpochRewardFn = k.DefaultEpochRewardFnForAVSs()
+		}
+		if param.CustomOperatorRatio {
+			operatorRewardProportionsFn = k.CustomizedRewardProportionsFnForAVSs()
+		} else {
+			operatorRewardProportionsFn = k.DefaultRewardProportionsFnForAVSs()
+		}
 	}
+	avsEpochReward, err := avsEpochRewardFn(ctx, avsAddr)
+	if err != nil {
+		return isDogfood, nil, err
+	}
+	operatorRewardProportions, err := operatorRewardProportionsFn(ctx, avsAddr)
+	if err != nil {
+		return isDogfood, nil, err
+	}
+	return isDogfood, &feedistributiontypes.AVSRewardDistribution{
+		Rewards:                   avsEpochReward,
+		OperatorRewardProportions: operatorRewardProportions,
+	}, nil
 }

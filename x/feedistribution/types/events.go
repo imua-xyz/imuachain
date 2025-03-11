@@ -10,7 +10,7 @@ const (
 	EventTypeProposerReward     = "proposer_reward"
 
 	AttributeKeyWithdrawAddress = "withdraw_address"
-	AttributeKeyValidator       = "validator"
+	AttributeKeyOperator        = "operator"
 	AttributeKeyDelegator       = "delegator"
 
 	// EventTypeUpdatedAVSRewardAsset : avs reward asset state updated
@@ -33,4 +33,8 @@ const (
 	EventTypeAVSRewardProportionsSet  = "avs_reward_proportions_set"
 	AttributeKeyEpochRewards          = "epoch_rewards"
 	AttributeKeyOperatorProportions   = "operator_reward_proportions"
+
+	// EventTypeAVSRewardParamSet : set the avs reward parameter
+	EventTypeAVSRewardParamSet = "avs_reward_param_set"
+	AttributeKeyAVSRewardParam = "avs_reward_param"
 )

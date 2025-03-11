@@ -5,6 +5,8 @@ import (
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/distribution/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress) error {
@@ -32,5 +34,116 @@ func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID st
 func (k Keeper) DeleteStakeChangeDelegations(ctx sdk.Context, epochIdentifier string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	store.Delete([]byte(epochIdentifier))
+	return nil
+}
+
+// SetAVSFeePool : set the fee pool distribution info for AVS
+func (k Keeper) SetAVSFeePool(ctx sdk.Context, avsAddr string, feePool types.FeePool) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixFeePools)
+	b := k.cdc.MustMarshal(&feePool)
+	store.Set(common.HexToAddress(avsAddr).Bytes(), b)
+	return nil
+}
+
+// GetAVSFeePool : get the global fee pool distribution info
+func (k Keeper) GetAVSFeePool(ctx sdk.Context, avsAddr string) (feePool types.FeePool, err error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixFeePools)
+	b := store.Get(common.HexToAddress(avsAddr).Bytes())
+	if b == nil {
+		return types.FeePool{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetAVSFeePool, avsAddr:%s", avsAddr)
+	}
+	fp := types.FeePool{}
+	k.cdc.MustUnmarshal(b, &fp)
+	return fp, nil
+}
+
+// AddRewardsToCommunityPool : add the rewards to community pool
+func (k Keeper) AddRewardsToCommunityPool(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) error {
+	feePool, err := k.GetAVSFeePool(ctx, avsAddr)
+	if err != nil {
+		return err
+	}
+	feePool.CommunityPool = feePool.CommunityPool.Add(rewards...)
+	err = k.SetAVSFeePool(ctx, avsAddr, feePool)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateAVSCommunityPool : increase or decrease the rewards of AVS community pool
+// the isIncrease flag is used to indicate whether the update is an increase or a decrease
+func (k Keeper) UpdateAVSCommunityPool(ctx sdk.Context, avsAddr string, isIncrease bool, rewards sdk.DecCoins) error {
+	feePool, err := k.GetAVSFeePool(ctx, avsAddr)
+	if err != nil {
+		return err
+	}
+	if isIncrease {
+		feePool.CommunityPool = feePool.CommunityPool.Add(rewards...)
+	} else {
+		var negative bool
+		feePool.CommunityPool, negative = feePool.CommunityPool.SafeSub(rewards)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("UpdateAVSCommunityPool,avsAddr:%s", avsAddr)
+		}
+	}
+
+	err = k.SetAVSFeePool(ctx, avsAddr, feePool)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetOperatorAccumulatedCommission : set accumulated commission for the avs and operator
+func (k Keeper) SetOperatorAccumulatedCommission(ctx sdk.Context, operator, avsAddr string, commission feedistributiontypes.OperatorAccumulatedCommission) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorAccumulatedCommission)
+	var bz []byte
+
+	if commission.Commission.IsZero() {
+		bz = k.cdc.MustMarshal(&feedistributiontypes.OperatorAccumulatedCommission{})
+	} else {
+		bz = k.cdc.MustMarshal(&commission)
+	}
+
+	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	store.Set(key, bz)
+	return nil
+}
+
+// GetOperatorAccumulatedCommission : get the accumulated commission for the avs and operator
+func (k Keeper) GetOperatorAccumulatedCommission(ctx sdk.Context, operator, avsAddr string) (feedistributiontypes.OperatorAccumulatedCommission, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorAccumulatedCommission)
+	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.OperatorAccumulatedCommission{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorAccumulatedCommission, operator:%s,avsAddr:%s", operator, avsAddr)
+	}
+	commission := feedistributiontypes.OperatorAccumulatedCommission{}
+	k.cdc.MustUnmarshal(b, &commission)
+	return commission, nil
+}
+
+// UpdateOperatorAccumulatedCommission : increase or decrease the commission for the avs and operator
+// the isIncrease flag is used to indicate whether the update is an increase or a decrease
+func (k Keeper) UpdateOperatorAccumulatedCommission(ctx sdk.Context, operator, avsAddr string, isIncrease bool, rewards sdk.DecCoins) error {
+	commission, err := k.GetOperatorAccumulatedCommission(ctx, operator, avsAddr)
+	if err != nil {
+		return err
+	}
+	if isIncrease {
+		commission.Commission = commission.Commission.Add(rewards...)
+	} else {
+		var negative bool
+		commission.Commission, negative = commission.Commission.SafeSub(rewards)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("UpdateOperatorAccumulatedCommission,operator:%s,avsAddr:%s", operator, avsAddr)
+		}
+	}
+
+	err = k.SetOperatorAccumulatedCommission(ctx, operator, avsAddr, commission)
+	if err != nil {
+		return err
+	}
 	return nil
 }

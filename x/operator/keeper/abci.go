@@ -112,7 +112,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	cc, writeFunc := ctx.CacheContext()
 	// iterate all operators of the AVS to update their voting power
 	// and calculate the voting power for AVS
-	err = k.IterateOperatorsForAVS(cc, avsAddr, true, opFunc)
+	err = k.IterateOperatorUSDValuesForAVS(cc, avsAddr, true, opFunc)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		votingPowerSnapshot.EpochNumber++
 	}
 	isSetSnapshot := true
-	// For cases where there is no opt-out operation, IterateOperatorsForAVS does not detect any voting
+	// For cases where there is no opt-out operation, IterateOperatorUSDValuesForAVS does not detect any voting
 	// power changes, and no operator has opted into the AVS, the voting power information doesn't need
 	// to be saved in the snapshot. Because it can be fetched through falling back to the last snapshot
 	// where the voting power was changed.

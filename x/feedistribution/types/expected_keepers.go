@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
@@ -48,6 +49,8 @@ type OperatorKeeper interface {
 	GetOperatorAddressForChainIDAndConsAddr(ctx sdk.Context, chainID string, consAddr sdk.ConsAddress) (bool, sdk.AccAddress)
 	IsOptedOutAndEffective(ctx sdk.Context, operatorAddr, avsAddr string) bool
 	GetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string) (info *operatortypes.OptedInfo, err error)
+	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
+	IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.

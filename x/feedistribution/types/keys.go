@@ -33,6 +33,7 @@ const (
 	prefixParams byte = iota + 1
 	prefixAVSRewardAssets
 	prefixAVSRewardAssetBySymbol
+	prefixAVSRewardParam
 	prefixFeePools
 	prefixAVSRewardDistribution
 	prefixOperatorOutstandingRewards
@@ -61,6 +62,11 @@ var (
 	// Therefore, we don't allow an AVS to use the same reward token from different chains,
 	// as they would have the same symbol.
 	KeyPrefixAVSRewardAssetBySymbol = []byte{prefixAVSRewardAssetBySymbol}
+
+	// KeyPrefixAVSRewardParam :
+	// avsAddr -> types.AVSRewardParam
+	// Key for the reward parameters of all AVSs, the avs can choose the distribution strategy by it.
+	KeyPrefixAVSRewardParam = []byte{prefixAVSRewardParam}
 
 	// KeyPrefixFeePools :
 	// avsAddr -> types.FeePool

@@ -10,6 +10,20 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 option (gogoproto.equal_all) = true;
 
+// AVSRewardParam represents the reward distribution parameter for all AVSs, The
+// AVS can choose different strategies by it. Now it only provides two flags to
+// indicate whether using the customized reward inflation and operator reward proportion.
+// In the future the parameters regarding reward inflation might be added here when we
+// upgrade the implementation of default reward inflation.
+message AVSRewardParam {
+  // custom_reward_inflation is the flag to determine whether customizing the reward inflation
+  // by the precompile contract
+  bool custom_reward_inflation = 1;
+  // custom_reward_inflation is the flag to determine whether customizing the operator reward
+  // proportions by the precompile contract
+  bool custom_operator_ratio = 2;
+}
+
 // OperatorRewardProportion is the reward proportion of an operator for one epoch
 message OperatorRewardProportion {
   // operator_addr is the operator address,its type should be a sdk.AccAddress
