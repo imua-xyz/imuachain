@@ -251,7 +251,7 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 			}
 			return nil
 		}
-		err := k.IterateOperatorsForAVS(ctx, avsAddr, false, opFunc)
+		err := k.IterateOperatorUSDValuesForAVS(ctx, avsAddr, false, opFunc)
 		if err != nil {
 			return err
 		}
@@ -277,7 +277,6 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 
 		bz = k.cdc.MustMarshal(&types.SnapshotHelper{
 			LastChangedHeight: genesisSnapshotHeight,
-			HasOptOut:         false,
 		})
 		snapshotHelperStore.Set([]byte(avsAddr), bz)
 		return nil

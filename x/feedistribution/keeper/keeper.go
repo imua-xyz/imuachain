@@ -81,40 +81,6 @@ func (k Keeper) Logger() log.Logger {
 	return k.logger.With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// set the global fee pool distribution info
-func (k Keeper) SetFeePool(ctx sdk.Context, feePool *types.FeePool) {
-	store := ctx.KVStore(k.storeKey)
-	b := k.cdc.MustMarshal(feePool)
-	store.Set(types.KeyPrefixFeePools, b)
-}
-
-// get the global fee pool distribution info
-func (k Keeper) GetFeePool(ctx sdk.Context) (feePool *types.FeePool) {
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.KeyPrefixFeePools)
-	if b == nil {
-		feePool := &types.FeePool{}
-		store := ctx.KVStore(k.storeKey)
-		b := k.cdc.MustMarshal(feePool)
-		store.Set(types.KeyPrefixFeePools, b)
-		return feePool
-	}
-	fp := &types.FeePool{}
-	k.cdc.MustUnmarshal(b, fp)
-	return fp
-}
-
-// get accumulated commission for a validator
-func (k Keeper) GetValidatorAccumulatedCommission(ctx sdk.Context, val sdk.ValAddress) (commission types.ValidatorAccumulatedCommission) {
-	store := ctx.KVStore(k.storeKey)
-	b := store.Get(types.GetOperatorAccumulatedCommissionKey(val))
-	if b == nil {
-		return types.ValidatorAccumulatedCommission{}
-	}
-	k.cdc.MustUnmarshal(b, &commission)
-	return
-}
-
 // GetAllValidatorData returns a slice containing all accumulated commissions for validators.
 func (k Keeper) GetAllValidatorData(ctx sdk.Context) (map[string]interface{}, error) {
 	store := ctx.KVStore(k.storeKey)
@@ -223,20 +189,6 @@ func (k Keeper) processStakerOutstandingRewards(key, value []byte, stakerList *[
 		StakerOutstandingRewards: &stakerRewards,
 	})
 	return nil
-}
-
-// set accumulated commission for a validator
-func (k Keeper) SetValidatorAccumulatedCommission(ctx sdk.Context, val sdk.ValAddress, commission types.ValidatorAccumulatedCommission) {
-	var bz []byte
-
-	store := ctx.KVStore(k.storeKey)
-	if commission.Commission.IsZero() {
-		bz = k.cdc.MustMarshal(&types.ValidatorAccumulatedCommission{})
-	} else {
-		bz = k.cdc.MustMarshal(&commission)
-	}
-
-	store.Set(types.GetOperatorAccumulatedCommissionKey(val), bz)
 }
 
 // get current rewards for a validator

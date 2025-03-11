@@ -261,9 +261,10 @@ func (k *Keeper) GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.Legacy
 	return ret.Amount, nil
 }
 
-// IterateOperatorsForAVS is used to iterate the operators of a specified AVS and do some external operations
+// IterateOperatorUSDValuesForAVS is used to iterate the operator USD values of a specified AVS and
+// do some external operations.
 // `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
-func (k *Keeper) IterateOperatorsForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error {
+func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForOperator)
 	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()

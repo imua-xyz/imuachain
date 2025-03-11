@@ -3,43 +3,48 @@ package types
 // DONTCOVER
 
 import (
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 )
 
 // x/feedistribution module sentinel errors
 var (
-	ErrEpochNotFound = sdkerrors.Register(
+	ErrEpochNotFound = errorsmod.Register(
 		ModuleName, 2,
 		"Error: epoch info not found",
 	)
 
-	ErrNotAVSRewardDistribution = sdkerrors.Register(
+	ErrNoKeyInTheStore = errorsmod.Register(
 		ModuleName, 3,
+		"there is no such key in the store",
+	)
+
+	ErrNotAVSRewardDistribution = errorsmod.Register(
+		ModuleName, 4,
 		"Error: avs reward distribution information not found",
 	)
 
-	ErrOperatorNotFound = sdkerrors.Register(
-		ModuleName, 4,
-		"Error: the operator not found by the validator consensus key",
-	)
-
-	ErrInvalidRewardAssetParameter = sdkerrors.Register(
+	ErrInvalidRewardAssetParameter = errorsmod.Register(
 		ModuleName, 5,
 		"invalid parameter of reward asset",
 	)
 
-	ErrAVSRewardAssetNotFound = sdkerrors.Register(
+	ErrAVSRewardAssetNotFound = errorsmod.Register(
 		ModuleName, 6,
 		"Error: the avs reward asset not found",
 	)
 
-	ErrInvalidRewardDistribution = sdkerrors.Register(
+	ErrInvalidRewardDistribution = errorsmod.Register(
 		ModuleName, 7,
 		"invalid parameter of reward distribution information",
 	)
 
-	ErrInvalidJailOrUnJailHeight = sdkerrors.Register(
+	ErrInvalidJailOrUnJailHeight = errorsmod.Register(
 		ModuleName, 8,
 		"invalid height of jail or unJail",
+	)
+
+	ErrNegativeCoinAmount = errorsmod.Register(
+		ModuleName, 9,
+		"negative coin amount",
 	)
 )
