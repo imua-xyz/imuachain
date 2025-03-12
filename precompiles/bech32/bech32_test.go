@@ -5,10 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
-	"github.com/imua-xyz/imuachain/app"
 	"github.com/imua-xyz/imuachain/cmd/config"
 	"github.com/imua-xyz/imuachain/precompiles/bech32"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
@@ -192,8 +189,7 @@ func (s *Bech32PrecompileSuite) TestRun() {
 		s.Run(tc.name, func() {
 			s.SetupTest()
 			contract := tc.malleate()
-			evm := s.getEvm(contract)
-			bz, err := s.precompile.Run(evm, contract, true)
+			bz, err := s.precompile.Run(nil, contract, true)
 			// Check results
 			if tc.expPass {
 				// check test validity
@@ -211,39 +207,4 @@ func (s *Bech32PrecompileSuite) TestRun() {
 			}
 		})
 	}
-}
-
-func (s *Bech32PrecompileSuite) getEvm(contract *vm.Contract) *vm.EVM {
-	baseFee := s.App.FeeMarketKeeper.GetBaseFee(s.Ctx)
-	contractAddr := contract.Address()
-	txArgs := evmtypes.EvmTxArgs{
-		ChainID:   s.App.EvmKeeper.ChainID(),
-		Nonce:     0,
-		To:        &contractAddr,
-		Amount:    nil,
-		GasLimit:  100000,
-		GasPrice:  app.MainnetMinGasPrices.BigInt(),
-		GasFeeCap: baseFee,
-		GasTipCap: big.NewInt(1),
-		Accesses:  &ethtypes.AccessList{},
-	}
-	msgEthereumTx := evmtypes.NewTx(&txArgs)
-
-	msgEthereumTx.From = s.Address.String()
-	err := msgEthereumTx.Sign(s.EthSigner, s.Signer)
-	s.Require().NoError(err, "failed to sign Ethereum message")
-
-	// Instantiate config
-	proposerAddress := s.Ctx.BlockHeader().ProposerAddress
-	cfg, err := s.App.EvmKeeper.EVMConfig(s.Ctx, proposerAddress, s.App.EvmKeeper.ChainID())
-	s.Require().NoError(err, "failed to instantiate EVM config")
-
-	msg, err := msgEthereumTx.AsMessage(s.EthSigner, baseFee)
-	s.Require().NoError(err, "failed to instantiate Ethereum message")
-
-	// Instantiate EVM
-	evm := s.App.EvmKeeper.NewEVM(
-		s.Ctx, msg, cfg, nil, s.StateDB,
-	)
-	return evm
 }

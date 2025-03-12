@@ -45,7 +45,7 @@ func NewPrecompile(baseGas uint64) (*Precompile, error) {
 		return nil, fmt.Errorf(cmn.ErrInvalidABI, err)
 	}
 
-	p := &Precompile{
+	return &Precompile{
 		Precompile: cmn.Precompile{
 			ABI:                  newABI,
 			KvGasConfig:          storetypes.KVGasConfig(),
@@ -54,9 +54,7 @@ func NewPrecompile(baseGas uint64) (*Precompile, error) {
 			Addr:                 common.HexToAddress("0x0000000000000000000000000000000000000809"),
 		},
 		baseGas: baseGas,
-	}
-
-	return p, nil
+	}, nil
 }
 
 // RequiredGas calculates the precompiled contract's base gas rate.
@@ -66,15 +64,23 @@ func (p Precompile) RequiredGas(_ []byte) uint64 {
 }
 
 // Run executes the precompiled contract deposit methods defined in the ABI.
-func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	ctx, stateDB, snapshot, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, err error) {
+	// do not call RunSetup because this precompile is stateless
+	if len(contract.Input) < 4 {
+		return nil, vm.ErrExecutionReverted
+	}
+
+	methodID := contract.Input[:4]
+	method, err := p.MethodById(methodID)
 	if err != nil {
 		return nil, err
 	}
 
-	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
-	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
-	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
+	argsBz := contract.Input[4:]
+	args, err := method.Inputs.Unpack(argsBz)
+	if err != nil {
+		return nil, err
+	}
 
 	switch method.Name {
 	case MethodVerify:
@@ -93,13 +99,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 
 	if err != nil {
 		return nil, err
-	}
-
-	if p.IsTransaction(method.Name) {
-		// only add journal entries for non-query methods
-		if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
-			return nil, err
-		}
 	}
 
 	return bz, nil

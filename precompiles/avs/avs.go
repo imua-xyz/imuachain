@@ -43,7 +43,7 @@ func NewPrecompile(
 		return nil, fmt.Errorf(cmn.ErrInvalidABI, err)
 	}
 
-	p := &Precompile{
+	return &Precompile{
 		Precompile: cmn.Precompile{
 			ABI:                  newAbi,
 			AuthzKeeper:          authzKeeper,
@@ -53,9 +53,7 @@ func NewPrecompile(
 			Addr:                 common.HexToAddress("0x0000000000000000000000000000000000000901"),
 		},
 		avsKeeper: avsKeeper,
-	}
-
-	return p, nil
+	}, nil
 }
 
 // RequiredGas calculates the precompiled contract's base gas rate.

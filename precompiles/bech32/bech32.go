@@ -42,7 +42,7 @@ func NewPrecompile(authzKeeper authzkeeper.Keeper) (*Precompile, error) {
 		return nil, fmt.Errorf(cmn.ErrInvalidABI, err)
 	}
 
-	p := &Precompile{
+	return &Precompile{
 		Precompile: cmn.Precompile{
 			ABI:                  newAbi,
 			AuthzKeeper:          authzKeeper,
@@ -52,9 +52,7 @@ func NewPrecompile(authzKeeper authzkeeper.Keeper) (*Precompile, error) {
 			ApprovalExpiration: cmn.DefaultExpirationDuration,
 			Addr:               common.HexToAddress("0x0000000000000000000000000000000000000400"),
 		},
-	}
-
-	return p, nil
+	}, nil
 }
 
 // RequiredGas returns the gas required to execute the bech32 precompile.
@@ -63,33 +61,36 @@ func (p Precompile) RequiredGas([]byte) uint64 {
 }
 
 // Run performs the bech32 precompile.
-func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	ctx, stateDB, snapshot, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, err error) {
+	// do not call RunSetup because this precompile is stateless
+	if len(contract.Input) < 4 {
+		return nil, vm.ErrExecutionReverted
+	}
+
+	methodID := contract.Input[:4]
+	method, err := p.MethodById(methodID)
 	if err != nil {
 		return nil, err
 	}
-	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
+
+	argsBz := contract.Input[4:]
+	args, err := method.Inputs.Unpack(argsBz)
+	if err != nil {
+		return nil, err
+	}
 
 	switch method.Name {
 	case MethodHexToBech32:
-		return p.HexToBech32(method, args)
+		bz, err = p.HexToBech32(method, args)
 	case MethodBech32ToHex:
-		return p.Bech32ToHex(method, args)
+		bz, err = p.Bech32ToHex(method, args)
 	}
 
-	cost := ctx.GasMeter().GasConsumed() - initialGas
-	if !contract.UseGas(cost) {
-		return nil, vm.ErrOutOfGas
+	if err != nil {
+		return nil, err
 	}
 
-	if p.IsTransaction(method.Name) {
-		// only add journal entries for non-query methods
-		if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
-			return nil, err
-		}
-	}
-
-	return nil, nil
+	return bz, nil
 }
 
 // IsTransaction reports whether a precompile is write (true) or read-only (false).
