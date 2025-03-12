@@ -82,20 +82,18 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		return nil, vm.ErrOutOfGas
 	}
 
-	if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
-		return nil, err
+	if p.IsTransaction(method.Name) {
+		// only add journal entries for non-query methods
+		if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
 }
 
 // IsTransaction reports whether a precompile is write (true) or read-only (false).
-func (Precompile) IsTransaction(methodID string) bool {
-	switch methodID {
-	// explicitly mark read-only for these
-	case MethodBech32ToHex, MethodHexToBech32:
-		return false
-	default:
-		return false
-	}
+func (Precompile) IsTransaction(_ string) bool {
+	// bech32 precompile is read-only and/or stateless
+	return false
 }

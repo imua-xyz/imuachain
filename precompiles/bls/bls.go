@@ -30,6 +30,7 @@ type Precompile struct {
 // NewPrecompile creates a new BLS Precompile instance as a
 // PrecompiledContract interface.
 func NewPrecompile(baseGas uint64) (*Precompile, error) {
+	// short-circuit if baseGas is zero
 	if baseGas == 0 {
 		return nil, fmt.Errorf("baseGas cannot be zero")
 	}
@@ -61,6 +62,7 @@ func NewPrecompile(baseGas uint64) (*Precompile, error) {
 
 // RequiredGas calculates the precompiled contract's base gas rate.
 func (p Precompile) RequiredGas(_ []byte) uint64 {
+	// TODO: @devin: add gas calculation depending on the method
 	return p.baseGas
 }
 
@@ -94,8 +96,11 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		return nil, err
 	}
 
-	if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
-		return nil, err
+	if p.IsTransaction(method.Name) {
+		// only add journal entries for non-query methods
+		if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
+			return nil, err
+		}
 	}
 
 	return bz, nil

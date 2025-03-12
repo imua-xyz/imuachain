@@ -60,6 +60,10 @@ func NewPrecompile(
 
 // RequiredGas calculates the precompiled contract's base gas rate.
 func (p Precompile) RequiredGas(input []byte) uint64 {
+	if len(input) < 4 {
+		// no payable or fallback functions here, so this is invalid
+		return 0
+	}
 	methodID := input[:4]
 
 	method, err := p.MethodById(methodID)
@@ -239,8 +243,11 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		return nil, vm.ErrOutOfGas
 	}
 
-	if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
-		return nil, err
+	if p.IsTransaction(method.Name) {
+		// only add journal entries for non-query methods
+		if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
+			return nil, err
+		}
 	}
 
 	return bz, nil
