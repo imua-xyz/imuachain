@@ -52,10 +52,10 @@ func NewPrecompile(
 			KvGasConfig:          storetypes.KVGasConfig(),
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
 			ApprovalExpiration:   cmn.DefaultExpirationDuration, // should be configurable in the future.
+			Addr:                 common.HexToAddress("0x0000000000000000000000000000000000000804"),
 		},
 		assetsKeeper: assetsKeeper,
 	}
-	p.SetAddress(common.HexToAddress("0x0000000000000000000000000000000000000804"))
 
 	return p, nil
 }
@@ -87,6 +87,9 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
+	// we cache the context because we consume the failure, if any, in this function.
+	// cascading it to statedb is possible but we will lose foundry compatibility
+	// see https://github.com/imua-xyz/imuachain/issues/70
 	cc, writeFunc := ctx.CacheContext()
 	switch method.Name {
 	// transactions
@@ -95,10 +98,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.DepositOrWithdraw(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
 			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
-			// for failed cases we expect it returns bool value instead of error
-			// this is a workaround because the error returned by precompile can not be caught in EVM
-			// see https://github.com/imua-xyz/imuachain/issues/70
-			// TODO: we should figure out root cause and fix this issue to make precompiles work normally
 			bz, err = method.Outputs.Pack(false, new(big.Int))
 		} else {
 			writeFunc()

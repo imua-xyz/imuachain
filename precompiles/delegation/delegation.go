@@ -53,11 +53,11 @@ func NewPrecompile(
 			KvGasConfig:          storetypes.KVGasConfig(),
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
 			ApprovalExpiration:   cmn.DefaultExpirationDuration, // should be configurable in the future.
+			Addr:                 common.HexToAddress("0x0000000000000000000000000000000000000805"),
 		},
 		delegationKeeper: delegationKeeper,
 		assetsKeeper:     stakingStateKeeper,
 	}
-	p.SetAddress(common.HexToAddress("0x0000000000000000000000000000000000000805"))
 
 	return p, nil
 }

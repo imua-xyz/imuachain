@@ -51,11 +51,10 @@ func NewPrecompile(baseGas uint64) (*Precompile, error) {
 			KvGasConfig:          storetypes.KVGasConfig(),
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
 			ApprovalExpiration:   cmn.DefaultExpirationDuration,
+			Addr:                 common.HexToAddress("0x0000000000000000000000000000000000000809"),
 		},
 		baseGas: baseGas,
 	}
-
-	p.SetAddress(common.HexToAddress("0x0000000000000000000000000000000000000809"))
 
 	return p, nil
 }

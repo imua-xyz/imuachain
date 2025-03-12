@@ -50,9 +50,9 @@ func NewPrecompile(authzKeeper authzkeeper.Keeper) (*Precompile, error) {
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
 			// should be configurable in the future.
 			ApprovalExpiration: cmn.DefaultExpirationDuration,
+			Addr:               common.HexToAddress("0x0000000000000000000000000000000000000400"),
 		},
 	}
-	p.SetAddress(common.HexToAddress("0x0000000000000000000000000000000000000400"))
 
 	return p, nil
 }
