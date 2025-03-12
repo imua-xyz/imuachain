@@ -43,7 +43,7 @@ func NewPrecompile(
 		return nil, fmt.Errorf(cmn.ErrInvalidABI, err)
 	}
 
-	return &Precompile{
+	p := &Precompile{
 		Precompile: cmn.Precompile{
 			ABI:                  newAbi,
 			AuthzKeeper:          authzKeeper,
@@ -52,13 +52,10 @@ func NewPrecompile(
 			ApprovalExpiration:   cmn.DefaultExpirationDuration,
 		},
 		avsKeeper: avsKeeper,
-	}, nil
-}
+	}
+	p.SetAddress(common.HexToAddress("0x0000000000000000000000000000000000000901"))
 
-// Address defines the address of the avs compile contract.
-// address: 0x0000000000000000000000000000000000000901
-func (p Precompile) Address() common.Address {
-	return common.HexToAddress("0x0000000000000000000000000000000000000901")
+	return p, nil
 }
 
 // RequiredGas calculates the precompiled contract's base gas rate.
@@ -75,7 +72,7 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 
 // Run executes the precompiled contract RegisterOrDeregisterAVSInfo methods defined in the ABI.
 func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	ctx, stateDB, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+	ctx, stateDB, snapshot, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +81,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
-	if err := stateDB.Commit(); err != nil {
-		return nil, err
-	}
 	cc, writeFunc := ctx.CacheContext()
 	switch method.Name {
 	// transactions
@@ -244,6 +238,11 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if !contract.UseGas(cost) {
 		return nil, vm.ErrOutOfGas
 	}
+
+	if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
+		return nil, err
+	}
+
 	return bz, nil
 }
 

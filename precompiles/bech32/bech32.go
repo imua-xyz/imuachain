@@ -42,7 +42,7 @@ func NewPrecompile(authzKeeper authzkeeper.Keeper) (*Precompile, error) {
 		return nil, fmt.Errorf(cmn.ErrInvalidABI, err)
 	}
 
-	return &Precompile{
+	p := &Precompile{
 		Precompile: cmn.Precompile{
 			ABI:                  newAbi,
 			AuthzKeeper:          authzKeeper,
@@ -51,12 +51,10 @@ func NewPrecompile(authzKeeper authzkeeper.Keeper) (*Precompile, error) {
 			// should be configurable in the future.
 			ApprovalExpiration: cmn.DefaultExpirationDuration,
 		},
-	}, nil
-}
+	}
+	p.SetAddress(common.HexToAddress("0x0000000000000000000000000000000000000400"))
 
-// Address returns the address of the bech32 precompile.
-func (p Precompile) Address() common.Address {
-	return common.HexToAddress("0x0000000000000000000000000000000000000400")
+	return p, nil
 }
 
 // RequiredGas returns the gas required to execute the bech32 precompile.
@@ -66,15 +64,11 @@ func (p Precompile) RequiredGas([]byte) uint64 {
 
 // Run performs the bech32 precompile.
 func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	ctx, stateDB, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+	ctx, stateDB, snapshot, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
 	if err != nil {
 		return nil, err
 	}
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
-	// bug fix to commit dirty objects
-	if err := stateDB.Commit(); err != nil {
-		return nil, err
-	}
 
 	switch method.Name {
 	case MethodHexToBech32:
@@ -87,6 +81,11 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if !contract.UseGas(cost) {
 		return nil, vm.ErrOutOfGas
 	}
+
+	if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }
 

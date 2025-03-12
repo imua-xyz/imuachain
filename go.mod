@@ -268,14 +268,14 @@ replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// use Cosmos-SDK fork to enable Ledger functionality
-	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.5-evmos.2
+	github.com/cosmos/cosmos-sdk => /home/user/go/src/github.com/ExocoreNetwork/cosmos-sdk
 
 	//fix cosmos-sdk error
 	github.com/cosmos/gogoproto => github.com/cosmos/gogoproto v1.4.10
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
 	// use imua fork of evmos
-	github.com/evmos/evmos/v16 => github.com/imua-xyz/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812
+	github.com/evmos/evmos/v16 => /home/user/go/src/github.com/ExocoreNetwork/evmos
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 	// replace broken goleveldb
