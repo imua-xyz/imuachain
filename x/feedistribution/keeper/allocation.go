@@ -1,13 +1,9 @@
 package keeper
 
 import (
-	"sort"
-
 	"cosmossdk.io/math"
+	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
-	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 // AllocateRewardsByEpoch performs reward and fee distribution to all operators for the AVS with same epoch
@@ -35,7 +31,7 @@ func (k Keeper) AllocateRewardsByEpoch(ctx sdk.Context, epochIdentifier string, 
 			// continue distributing the rewards for the other AVSs
 			continue
 		}
-		remaining, err := k.AllocateRewardsToOperators(ctx, avs, rewardDistribution)
+		remaining, err := k.AllocateRewardsToOperators(ctx, avs, epochIdentifier, rewardDistribution)
 		if err != nil {
 			ctx.Logger().Error("AllocateTokensByEpoch: failed to distribute the rewards to operators, skipping the avs", "avs", avs, "err", err)
 			// continue handling the remaining and the other AVSs
@@ -54,7 +50,7 @@ func (k Keeper) AllocateRewardsByEpoch(ctx sdk.Context, epochIdentifier string, 
 
 // AllocateRewardsToOperators allocate the rewards to the related operators for an AVS
 // the remaining rewards will be returned.
-func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr string, rewardDistribution *types.AVSRewardDistribution) (sdk.DecCoins, error) {
+func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdentifier string, rewardDistribution *types.AVSRewardDistribution) (sdk.DecCoins, error) {
 	// calculate the community tax, then allocate the remaining rewards to the operators.
 	// use a same community tax for all AVS
 	// todo: consider setting different tax rates for different AVSs.
@@ -79,7 +75,7 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr string, rewa
 		commission := reward.MulDecTruncate(ops.GetCommission().Rate)
 		err = k.UpdateOperatorAccumulatedCommission(ctx, operatorProportion.OperatorAddr, avsAddr, true, commission)
 		if err != nil {
-			ctx.Logger().Error("AllocateRewardsToOperators: Failed to distribute the commission to the operator, skipping the operator", "error", err, "operator", operatorProportion.OperatorAddr)
+			ctx.Logger().Error("AllocateRewardsToOperators: Failed to distribute the commission to the operator, skipping the operator", "error", err, "operator", operatorProportion.OperatorAddr, "avs", avsAddr)
 			// distribute the commission to stakers if adding the commission to the operator fails.
 		} else {
 			rewardsForStakers = rewardsForStakers.Sub(commission)
@@ -93,164 +89,27 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr string, rewa
 				),
 			)
 		}
+		// distribute rewards to stakers whose staking has changed through F1 distribution,
+		// and update the current reward and period for the operator.
+		leftover, err := k.AllocateRewardsToStakers(ctx, operatorProportion.OperatorAddr, avsAddr, epochIdentifier, rewardsForStakers)
+		if err != nil {
+			ctx.Logger().Error("AllocateRewardsToOperators: Failed to allocate rewards to the stakers", "error", err, "operator", operatorProportion.OperatorAddr, "avs", avsAddr)
+		}
 		// update the outstanding rewards for the operator
-
-		// distribute rewards to stakers through f1 distribution.
-		remaining = remaining.Sub(reward)
+		err = k.UpdateOperatorOutstandingRewards(ctx, operatorProportion.OperatorAddr, avsAddr, true, reward)
+		if err != nil {
+			ctx.Logger().Error("AllocateRewardsToOperators: Failed to update the operator outstanding rewards", "error", err, "operator", operatorProportion.OperatorAddr, "avs", avsAddr)
+		}
+		// calculate the remaining  rewards, it will be distributed to the community pool.
+		remaining = remaining.Sub(reward).Add(leftover...)
 	}
 	return remaining, err
 }
 
-// Based on the epoch, AllocateTokens performs reward and fee distribution to all validators.
-func (k Keeper) AllocateTokens(ctx sdk.Context, totalPreviousPower int64) error {
-	logger := k.Logger()
-	feeCollector := k.authKeeper.GetModuleAccount(ctx, k.feeCollectorName)
-	feesCollectedInt := k.bankKeeper.GetAllBalances(ctx, feeCollector.GetAddress())
-	feesCollected := sdk.NewDecCoinsFromCoins(feesCollectedInt...)
+// AllocateRewardsToStakers : allocate the rewards to the stakers whose staking has changed through F1 distribution.
+// After distribution, the remaining leftover rewards will be returned to be accounted for in the community pool.
+func (k Keeper) AllocateRewardsToStakers(ctx sdk.Context, operator, avsAddr, epochIdentifier string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
 
-	// transfer collected fees to the distribution module account
-	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, feesCollectedInt); err != nil {
-		return err
-	}
-
-	feePool := k.GetFeePool(ctx)
-	if totalPreviousPower == 0 {
-		feePool.CommunityPool = feePool.CommunityPool.Add(feesCollected...)
-		k.SetFeePool(ctx, feePool)
-		return nil
-	}
-	logger.Info("Allocate tokens to all validators", "feesCollected amount is ", feesCollected)
-	// calculate fraction allocated to imua validators
-	remaining := feesCollected
-	communityTax, err := k.GetCommunityTax(ctx)
-	if err != nil {
-		return err
-	}
-	feeMultiplier := feesCollected.MulDecTruncate(math.LegacyOneDec().Sub(communityTax))
-
-	// allocate tokens proportionally to voting power of different validators
-	// TODO: Consider parallelizing later
-	allValidators := k.StakingKeeper.GetAllImuachainValidators(ctx) // GetAllValidators(suite.Ctx)
-	for i, val := range allValidators {
-		pk, err := val.ConsPubKey()
-		if err != nil {
-			logger.Error("Failed to deserialize public key; skipping", "error", err, "i", i)
-			continue
-		}
-		validatorDetail, found := k.StakingKeeper.ValidatorByConsAddrForChainID(
-			ctx, sdk.GetConsAddress(pk), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
-		)
-		if !found {
-			logger.Error("Operator address not found; skipping", "consAddress", sdk.GetConsAddress(pk), "i", i)
-			continue
-		}
-		if totalPreviousPower == 0 {
-			return nil
-		}
-		powerFraction := math.LegacyNewDec(val.Power).QuoTruncate(math.LegacyNewDec(totalPreviousPower))
-		reward := feeMultiplier.MulDecTruncate(powerFraction)
-
-		k.AllocateTokensToValidator(ctx, validatorDetail, reward, feePool)
-		remaining = remaining.Sub(reward)
-	}
-
-	// allocate community funding
-	feePool.CommunityPool = feePool.CommunityPool.Add(remaining...)
-	k.SetFeePool(ctx, feePool)
-
-	return nil
-}
-
-// AllocateTokensToValidator allocate tokens to a particular validator,
-// splitting according to commission.
-func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val stakingtypes.ValidatorI, tokens sdk.DecCoins, feePool *types.FeePool) {
-	logger := k.Logger()
-	valBz := val.GetOperator()
-	accAddr := sdk.AccAddress(valBz)
-	ops, err := k.StakingKeeper.OperatorInfo(ctx, accAddr.String())
-	if err != nil {
-		ctx.Logger().Error("Failed to get operator info", "error", err)
-	}
-	commission := tokens.MulDec(ops.GetCommission().Rate)
-	shared := tokens.Sub(commission)
-	// update current commission
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCommission,
-		sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
-		sdk.NewAttribute(types.AttributeKeyValidator, val.GetOperator().String()),
-	))
-	currentCommission := k.GetValidatorAccumulatedCommission(ctx, valBz)
-	currentCommission.Commission = currentCommission.Commission.Add(commission...)
-	k.SetValidatorAccumulatedCommission(ctx, valBz, currentCommission)
-	// update current rewards, i.e. the rewards to stakers
-	// if the rewards do not exist it's fine, we will just add to zero.
-	// allocate share tokens to all stakers of this operator.
-	operatorAccAddress := sdk.AccAddress(valBz)
-	k.AllocateTokensToStakers(ctx, operatorAccAddress, shared, feePool)
-
-	// update outstanding rewards
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeRewards,
-		sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
-		sdk.NewAttribute(types.AttributeKeyValidator, val.GetOperator().String()),
-	))
-
-	// ValidatorOutstandingRewards is the rewards of a validator address.
-	outstanding := k.GetValidatorOutstandingRewards(ctx, valBz)
-	outstanding.Rewards = outstanding.Rewards.Add(tokens...)
-	k.SetValidatorOutstandingRewards(ctx, valBz, outstanding)
-	logger.Info("Allocate tokens to validator successfully", "allocated amount is", outstanding.Rewards.String())
-}
-
-func (k Keeper) AllocateTokensToStakers(ctx sdk.Context, operatorAddress sdk.AccAddress, rewardToAllStakers sdk.DecCoins, feePool *types.FeePool) {
-	logger := k.Logger()
-	logger.Info("AllocateTokensToStakers", "operatorAddress", operatorAddress.String())
-	avsList, err := k.StakingKeeper.GetOptedInAVSForOperator(ctx, operatorAddress.String())
-	if err != nil {
-		logger.Debug("avs address lists not found; skipping")
-		return
-	}
-	stakersPowerMap, curTotalStakersPowers := make(map[string]math.LegacyDec), math.LegacyNewDec(0)
-	globalStakerAddressList := make([]string, 0)
-	for _, avsAddress := range avsList {
-		avsAssets, err := k.StakingKeeper.GetAVSSupportedAssets(ctx, avsAddress)
-		if err != nil {
-			logger.Debug("avs address lists not found; skipping")
-			continue
-		}
-		for assetID := range avsAssets {
-			stakerList, err := k.StakingKeeper.GetStakersByOperator(ctx, operatorAddress.String(), assetID)
-			if err != nil {
-				logger.Debug("staker lists not found; skipping")
-				continue
-			}
-			for _, staker := range stakerList.Stakers {
-				if curStakerPower, err := k.StakingKeeper.CalculateUSDValueForStaker(ctx, staker, avsAddress, operatorAddress.Bytes()); err != nil {
-					logger.Error("curStakerPower error", "error", err)
-				} else {
-					stakersPowerMap[staker] = curStakerPower
-					globalStakerAddressList = append(globalStakerAddressList, staker)
-					curTotalStakersPowers = curTotalStakersPowers.Add(curStakerPower)
-				}
-			}
-		}
-	}
-	sort.Slice(globalStakerAddressList, func(i, j int) bool {
-		return stakersPowerMap[globalStakerAddressList[i]].GT(stakersPowerMap[globalStakerAddressList[j]])
-	})
-	remaining := rewardToAllStakers
-	// allocate to stakers in voting power descending order if the curTotalStakersPower is positive
-	if curTotalStakersPowers.IsPositive() {
-		for _, staker := range globalStakerAddressList {
-			stakerPower := stakersPowerMap[staker]
-			powerFraction := stakerPower.QuoTruncate(curTotalStakersPowers)
-			rewardToSingleStaker := rewardToAllStakers.MulDecTruncate(powerFraction)
-			k.AllocateTokensToSingleStaker(ctx, staker, rewardToSingleStaker)
-			remaining = remaining.Sub(rewardToSingleStaker)
-		}
-	}
-	feePool.CommunityPool = feePool.CommunityPool.Add(remaining...)
-	logger.Info("allocate tokens to stakers successfully", "allocated amount is", rewardToAllStakers.Sub(remaining).String())
 }
 
 func (k Keeper) AllocateTokensToSingleStaker(ctx sdk.Context, stakerAddress string, reward sdk.DecCoins) {

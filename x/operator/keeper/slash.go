@@ -225,9 +225,13 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	}
 
 	// update the voting power and save the snapshot for all affected AVSs
-	affectedAVSList, err := k.GetImpactfulAVSForOperator(ctx, parameter.Operator.String())
+	affectedAVSList, affectedEpochList, err := k.GetImpactfulEpochsAndAVSsForOperator(ctx, parameter.Operator.String())
 	if err != nil {
 		return err
+	}
+	// update the operator asset USD value first
+	for _, epoch := range affectedEpochList {
+		err = k.UpdateAssetUSDValuesForAllOperators(ctx, epoch)
 	}
 	for i := range affectedAVSList {
 		avs := affectedAVSList[i].AVSAddr

@@ -85,10 +85,10 @@ func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Addre
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	key := assetstype.GetJoinedStoreKey(operatorAddr.String(), assetID)
 	assetState := assetstype.OperatorAssetInfo{
-		TotalAmount:               math.NewInt(0),
-		PendingUndelegationAmount: math.NewInt(0),
-		TotalShare:                math.LegacyNewDec(0),
-		OperatorShare:             math.LegacyNewDec(0),
+		TotalAmount:               math.ZeroInt(),
+		PendingUndelegationAmount: math.ZeroInt(),
+		TotalShare:                math.LegacyZeroDec(),
+		OperatorShare:             math.LegacyZeroDec(),
 	}
 	value := store.Get(key)
 	if value != nil {
