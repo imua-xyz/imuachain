@@ -79,7 +79,6 @@ func init() {
 			SourceIDs: []uint64{1},
 		},
 		&oracletypes.RuleSource{
-			// all sources math
 			SourceIDs: []uint64{0},
 			Nom: &oracletypes.NOMSource{
 				SourceIDs: []uint64{1},

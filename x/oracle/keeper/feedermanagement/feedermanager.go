@@ -1,6 +1,7 @@
 package feedermanagement
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -333,7 +334,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 					f.k.SetNextPieceIndexForFeeder(ctx, uint64(r.feederID), LatestLeafIndex+1)
 				}
 			} else if rawData, ok := r.m.CompleteRawData(); ok {
-				logger.Info("execute postHandler after 2ndPhase completed collecting rawData", "feederID", r.feederID, "rootHash", r.m.RootHash(), "leafCount", r.m.LeafCount())
+				logger.Info("execute postHandler after 2ndPhase completed collecting rawData", "feederID", r.feederID, "rootHash", base64.StdEncoding.EncodeToString(r.m.RootHash()), "leafCount", r.m.LeafCount())
 				// execute postHandler with rawData
 				// #nosec G115
 				if err := r.h(ctx, rawData, uint64(r.feederID), uint64(r.roundID), f.k); err != nil {
