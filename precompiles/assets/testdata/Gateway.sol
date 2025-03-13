@@ -1,0 +1,65 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.17;
+
+import "../IAssets.sol";
+
+contract Gateway {
+    // Deposit LST
+    function depositLST(
+        uint32 clientChainID,
+        bytes calldata assetsAddress,
+        bytes calldata stakerAddress,
+        uint256 opAmount
+    ) public returns (bool success, uint256 latestAssetState) {
+        // Call the precompile
+        (success, latestAssetState) = ASSETS_CONTRACT.depositLST(
+            clientChainID,
+            assetsAddress,
+            stakerAddress,
+            opAmount
+        );
+
+        return (success, latestAssetState);
+    }
+
+    // Withdraw LST
+    function withdrawLST(
+        uint32 clientChainID,
+        bytes calldata assetsAddress,
+        bytes calldata withdrawAddress,
+        uint256 opAmount
+    ) public returns (bool success, uint256 latestAssetState) {
+        // Call the precompile
+        (success, latestAssetState) = ASSETS_CONTRACT.withdrawLST(
+            clientChainID,
+            assetsAddress,
+            withdrawAddress,
+            opAmount
+        );
+
+        return (success, latestAssetState);
+    }
+
+    function withdrawLSTAndThenRevert(
+        uint32 clientChainID,
+        bytes calldata assetsAddress,
+        bytes calldata withdrawAddress,
+        uint256 opAmount
+    ) public returns (bool success, uint256 latestAssetState) {
+        (success, latestAssetState) = withdrawLST(clientChainID, assetsAddress, withdrawAddress, opAmount);
+        revert("Intentional revert after withdraw");
+    }
+
+    // Query staker balance
+    function getStakerBalance(
+        uint32 clientChainID,
+        bytes calldata stakerAddress,
+        bytes calldata tokenID
+    ) public view returns (bool success, StakerBalance memory stakerBalance) {
+        return ASSETS_CONTRACT.getStakerBalanceByToken(
+            clientChainID,
+            stakerAddress,
+            tokenID
+        );
+    }
+}
