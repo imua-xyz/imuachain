@@ -28,12 +28,39 @@ contract GatewayCaller {
         return Gateway(gateway).withdrawLST(clientChainID, assetsAddress, withdrawAddress, opAmount);
     }
 
-    function withdrawLSTAndThenRevert(
+    function withdrawLSTXTimes(
         uint32 clientChainID,
         bytes calldata assetsAddress,
         bytes calldata withdrawAddress,
         uint256 opAmount,
-        // see if we can exceed 7 and then what happens
+        uint256 count
+    ) public {
+        for (uint256 i = 0; i < count; i++) {
+            Gateway(gateway).withdrawLST(clientChainID, assetsAddress, withdrawAddress, opAmount);
+        }
+    }
+
+    function withdrawLSTXTimesInTryCatch(
+        uint32 clientChainID,
+        bytes calldata assetsAddress,
+        bytes calldata withdrawAddress,
+        uint256 opAmount,
+        uint256 count
+    ) public {
+        for (uint256 i = 0; i < count; i++) {
+            try Gateway(gateway).withdrawLST(clientChainID, assetsAddress, withdrawAddress, opAmount) {
+                // do nothing
+            } catch {
+                // do nothing
+            }
+        }
+    }
+
+    function withdrawLSTAndThenRevertXTimes(
+        uint32 clientChainID,
+        bytes calldata assetsAddress,
+        bytes calldata withdrawAddress,
+        uint256 opAmount,
         uint256 count
     ) public {
         for (uint256 i = 0; i < count; i++) {

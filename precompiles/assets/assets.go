@@ -181,6 +181,9 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if p.IsTransaction(method.Name) {
 		// only add journal entries for non-query methods
 		if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
+			// if we have exceeded the limit of precompile calls, it will add the entry to the
+			// journal and return an error. then, we will revert that latest entry and hence
+			// the impact of this precompile call will be reverted.
 			return nil, err
 		}
 	}

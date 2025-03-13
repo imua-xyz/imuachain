@@ -1,6 +1,7 @@
 package assets_test
 
 import (
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -24,6 +25,9 @@ type ContractDeploymentData struct {
 // try catch block and prevented from bubbling to the Cosmos level. In this situation, the
 // revert of asset state should take effect while the transaction should still succeed.
 func (s *AssetsPrecompileSuite) TestWrappedRevert() {
+	// set the base fee to 1; the lowest possible
+	s.App.FeeMarketKeeper.SetBaseFee(s.Ctx, big.NewInt(1))
+
 	// deploy the gateway contract
 	gatewayAddr, err := s.DeployContract(testdata.GatewayContract)
 	s.Require().NoError(err)
@@ -65,7 +69,7 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	checkBalance := func(expectedAmount *big.Int) {
 		stakerAssetInfo, err := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(s.Ctx, stakerID, assetID)
 		s.Require().NoError(err)
-		s.Equal(stakerAssetInfo.TotalDepositAmount.BigInt(), expectedAmount)
+		s.Equal(expectedAmount, stakerAssetInfo.TotalDepositAmount.BigInt())
 	}
 
 	// deposit using the gateway caller contract
@@ -76,6 +80,7 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		paddedStakerAddress,
 		opAmount,
 	)
+	// call the depositLST function
 	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 	s.Require().NoError(err)
 	checkBalance(opAmount)
@@ -88,30 +93,36 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		paddedStakerAddress,
 		withdrawAmount,
 	)
+	// call the withdrawLST function
 	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 	s.Require().NoError(err)
 
 	// Update expected amount and check balance
 	opAmount = new(big.Int).Sub(opAmount, withdrawAmount)
 	checkBalance(opAmount)
+	// change block to reset count of precompile calls
+	s.Commit()
 
 	// Test withdraw with revert scenarios
 	testCases := []struct {
 		name        string
 		revertCount *big.Int
+		gasLimit    uint64
 	}{
-		{"Single revert", big.NewInt(1)},
-		{"Exceeding max reverts", big.NewInt(int64(evmtypes.MaxPrecompileCalls) + 2)},
+		{"Single revert", big.NewInt(1), 0},
+		{"Exceeding max reverts", big.NewInt(int64(evmtypes.MaxPrecompileCalls) + 2), math.MaxInt64 - 1},
 	}
 
 	for _, tc := range testCases {
-		args = callArgs.WithMethodName("withdrawLSTAndThenRevert").WithArgs(
+		err = testutil.FundAccountWithBaseDenom(s.Ctx, s.App.BankKeeper, s.Address[:], math.MaxInt64)
+		s.Require().NoError(err)
+		args = callArgs.WithMethodName("withdrawLSTAndThenRevertXTimes").WithArgs(
 			clientChainLzID,
 			paddedUsdtAddress,
 			paddedStakerAddress,
 			withdrawAmount,
 			tc.revertCount,
-		)
+		).WithGasLimit(tc.gasLimit)
 		_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 		s.Require().NoError(err)
 		// do not commit the block, so that we can check within it
@@ -119,6 +130,30 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		// Balance should remain unchanged after reverts
 		checkBalance(opAmount)
 	}
+
+	// reset block gas limit
+	s.Commit()
+	// reset base fee to 1 in case it changed in the previous block
+	s.App.FeeMarketKeeper.SetBaseFee(s.Ctx, big.NewInt(1))
+	// then fund the address
+	err = testutil.FundAccountWithBaseDenom(s.Ctx, s.App.BankKeeper, s.Address[:], math.MaxInt64)
+	s.Require().NoError(err)
+	args = callArgs.WithMethodName("withdrawLSTXTimesInTryCatch").WithArgs(
+		clientChainLzID,
+		paddedUsdtAddress,
+		paddedStakerAddress,
+		withdrawAmount,
+		// the eighth call will fail during AddJournalEntries
+		// it will be caught by the try catch block in Solidity
+		big.NewInt(int64(evmtypes.MaxPrecompileCalls)+2),
+	).WithGasLimit(math.MaxInt64 - 1)
+	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
+	s.Require().NoError(err)
+	// update the expected amount such that the +2 is not counted
+	opAmount = new(big.Int).Sub(opAmount, new(big.Int).Mul(withdrawAmount, big.NewInt(int64(evmtypes.MaxPrecompileCalls))))
+
+	// Balance should remain unchanged after reverts
+	checkBalance(opAmount)
 }
 
 func (s *AssetsPrecompileSuite) DeployContractWithArgs(
