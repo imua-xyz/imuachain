@@ -103,20 +103,72 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	// change block to reset count of precompile calls
 	s.Commit()
 
+	/*
+	**** BASE TESTS FINISHED ****
+	 */
+
 	// Test withdraw with revert scenarios
 	testCases := []struct {
-		name        string
-		revertCount *big.Int
-		gasLimit    uint64
+		name           string
+		revertCount    *big.Int
+		gasLimit       uint64
+		methodName     string
+		expectedAmount *big.Int
+		commitBefore   bool
 	}{
-		{"Single revert", big.NewInt(1), 0},
-		{"Exceeding max reverts", big.NewInt(int64(evmtypes.MaxPrecompileCalls) + 2), math.MaxInt64 - 1},
+		{
+			// case 1: try { withdraw; revert; } catch { } one time does not
+			// cause deposited amount to change
+			name:           "Verify that a wrapped revert undoes the state change",
+			revertCount:    big.NewInt(1),
+			gasLimit:       0,
+			methodName:     "withdrawLSTAndThenRevertXTimes",
+			expectedAmount: opAmount,
+			// reset everything before the test
+			commitBefore: true,
+		},
+		{
+			// case 2: check that loop > N times with try { withdraw; revert; } catch { }
+			// will not cause deposited amount to change
+			name:        "Verify that more than N wrapped reverts undo the state change",
+			revertCount: big.NewInt(int64(evmtypes.MaxPrecompileCalls) + 2),
+			// maximum possible gas limit to ensure that it's not the limiting factor
+			gasLimit:       math.MaxInt64 - 1,
+			methodName:     "withdrawLSTAndThenRevertXTimes",
+			expectedAmount: opAmount,
+			// do not commit the block, so that the number of precompile calls is not reset
+			commitBefore: false,
+		},
+		{
+			// case 3: check that try { withdraw; } catch {} for > N times is only
+			// effective for N times
+			name: "Verify that more than N successful withdrawals are capped at N",
+			// we can go higher than 9 but this number is sufficient to prove the point
+			// plus, gas limit concerns will come into play at some point
+			revertCount: big.NewInt(int64(evmtypes.MaxPrecompileCalls) + 2),
+			// maximum possible gas limit to ensure that it's not the limiting factor
+			gasLimit: math.MaxInt64 - 1,
+			// we will withdraw 9 times in a try/catch
+			// the eighth and ninth calls will fail during AddJournalEntries and
+			// be caught by the try/catch block; however, they will still revert
+			// the state but save the transaction failure from bubbling up to the
+			// Cosmos level
+			methodName: "withdrawLSTXTimesInTryCatch",
+			// hence, the expected amount is only 7 withdrawal amounts lower
+			// than the initial amount and not 9
+			expectedAmount: new(big.Int).Sub(opAmount, new(big.Int).Mul(withdrawAmount, big.NewInt(int64(evmtypes.MaxPrecompileCalls)))),
+			// reset everything before the test
+			commitBefore: true,
+		},
 	}
 
 	for _, tc := range testCases {
+		if tc.commitBefore {
+			s.Commit()
+		}
 		err = testutil.FundAccountWithBaseDenom(s.Ctx, s.App.BankKeeper, s.Address[:], math.MaxInt64)
 		s.Require().NoError(err)
-		args = callArgs.WithMethodName("withdrawLSTAndThenRevertXTimes").WithArgs(
+		args = callArgs.WithMethodName(tc.methodName).WithArgs(
 			clientChainLzID,
 			paddedUsdtAddress,
 			paddedStakerAddress,
@@ -125,35 +177,10 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		).WithGasLimit(tc.gasLimit)
 		_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 		s.Require().NoError(err)
-		// do not commit the block, so that we can check within it
 
 		// Balance should remain unchanged after reverts
-		checkBalance(opAmount)
+		checkBalance(tc.expectedAmount)
 	}
-
-	// reset block gas limit
-	s.Commit()
-	// reset base fee to 1 in case it changed in the previous block
-	s.App.FeeMarketKeeper.SetBaseFee(s.Ctx, big.NewInt(1))
-	// then fund the address
-	err = testutil.FundAccountWithBaseDenom(s.Ctx, s.App.BankKeeper, s.Address[:], math.MaxInt64)
-	s.Require().NoError(err)
-	args = callArgs.WithMethodName("withdrawLSTXTimesInTryCatch").WithArgs(
-		clientChainLzID,
-		paddedUsdtAddress,
-		paddedStakerAddress,
-		withdrawAmount,
-		// the eighth call will fail during AddJournalEntries
-		// it will be caught by the try catch block in Solidity
-		big.NewInt(int64(evmtypes.MaxPrecompileCalls)+2),
-	).WithGasLimit(math.MaxInt64 - 1)
-	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
-	s.Require().NoError(err)
-	// update the expected amount such that the +2 is not counted
-	opAmount = new(big.Int).Sub(opAmount, new(big.Int).Mul(withdrawAmount, big.NewInt(int64(evmtypes.MaxPrecompileCalls))))
-
-	// Balance should remain unchanged after reverts
-	checkBalance(opAmount)
 }
 
 func (s *AssetsPrecompileSuite) DeployContractWithArgs(
