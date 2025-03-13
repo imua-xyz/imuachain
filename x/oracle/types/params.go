@@ -645,3 +645,32 @@ func (p Params) IsNST(tokenID int) bool {
 	token := p.Tokens[tokenID]
 	return strings.HasPrefix(strings.ToLower(token.AssetID), NSTIDPrefix)
 }
+
+func (p Params) IsRule2PhasesByFeederID(feederID uint64) bool {
+	if feederID >= uint64(len(p.TokenFeeders)) {
+		return false
+	}
+	// #nosec G115 - ruleID is set from index of slice which is actually type of int
+	ruleID := int(p.TokenFeeders[feederID].RuleID)
+	if ruleID == 0 || ruleID >= len(p.Rules) {
+		return false
+	}
+	rule := p.Rules[ruleID]
+	return p.IsRule2PhasesByRule(rule)
+}
+
+func (p Params) IsRule2PhasesByRule(rule *RuleSource) bool {
+	// just check the format and don't care the verification here, the verification should be done by 'params' not in this memory calculator(feedermanager)
+	if len(rule.SourceIDs) == 1 && rule.SourceIDs[0] == 0 &&
+		rule.Nom != nil && len(rule.Nom.SourceIDs) == 1 {
+		// #nosec G115 - ruleID is set from index of slice which is actually type of int
+		sID := int(rule.Nom.SourceIDs[0])
+		if sID == 0 || sID >= len(p.Sources) {
+			return false
+		}
+		if s := p.Sources[sID]; s.Deterministic && rule.Nom.Minimum == 1 {
+			return true
+		}
+	}
+	return false
+}

@@ -115,40 +115,13 @@ func (c *caches) IsRuleV1(feederID int64) bool {
 			}
 		}
 	}
-
-	return c.isRule2PhasesByRule(rule)
+	return c.params.params.IsRule2PhasesByRule(rule)
 }
 
 // TODO: forward this to cacheParams
 // IsRule2Phases returns whether a tokenfeeder is restricted by 2-phases rule
 func (c *caches) IsRule2PhasesByFeederID(feederID uint64) bool {
-	if feederID >= uint64(len(c.params.params.TokenFeeders)) {
-		return false
-	}
-	p := c.params.params
-	// #nosec G115 - ruleID is set from index of slice which is actually type of int
-	ruleID := int(p.TokenFeeders[feederID].RuleID)
-	if ruleID == 0 || ruleID >= len(p.Rules) {
-		return false
-	}
-	rule := p.Rules[ruleID]
-	return c.isRule2PhasesByRule(rule)
-}
-
-func (c *caches) isRule2PhasesByRule(rule *oracletypes.RuleSource) bool {
-	// just check the format and don't care the verification here, the verification should be done by 'params' not in this memory calculator(feedermanager)
-	if len(rule.SourceIDs) == 1 && rule.SourceIDs[0] == 0 &&
-		rule.Nom != nil && len(rule.Nom.SourceIDs) == 1 {
-		// #nosec G115 - ruleID is set from index of slice which is actually type of int
-		sID := int(rule.Nom.SourceIDs[0])
-		if sID == 0 || sID >= len(c.params.params.Sources) {
-			return false
-		}
-		if s := c.params.params.Sources[sID]; s.Deterministic && rule.Nom.Minimum == 1 {
-			return true
-		}
-	}
-	return false
+	return c.params.params.IsRule2PhasesByFeederID(feederID)
 }
 
 func (c *caches) GetTokenIDForFeederID(feederID int64) (int64, bool) {
