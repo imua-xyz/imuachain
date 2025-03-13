@@ -107,7 +107,7 @@ func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, o
 		// We don't save the voting power snapshots for the AVSs that don't have any opted-in operators.
 		// Therefore, for these AVSs, the `findKey` might not exist in the store if the operator opts in and out
 		// within the same epoch. In this case, we return `NullEpochNumber` as the virtual epoch number, so that
-		// the caller `GetImpactfulAVSForOperator` can skip this AVS. This is acceptable because opt-in and opt-out
+		// the caller `GetUnbondingRelatedAVS` can skip this AVS. This is acceptable because opt-in and opt-out
 		// actions submitted within the same epoch won't influence the AVS, and the AVS doesn't have any operators
 		// opted in.
 		// Additionally, since expired voting power snapshots are deleted, it will also be impossible to retrieve

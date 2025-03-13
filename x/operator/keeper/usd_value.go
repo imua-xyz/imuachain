@@ -600,3 +600,119 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 	}
 	return totalUSDValue, nil
 }
+
+// SetOperatorAssetUSDValue is a function to set the operator asset USD value,
+func (k *Keeper) SetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string, amount sdkmath.LegacyDec) error {
+	if amount.IsNil() {
+		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("SetOperatorAssetUSDValue the amount is:%v", amount))
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
+	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	setValue := operatortypes.DecValueField{Amount: amount}
+	bz := k.cdc.MustMarshal(&setValue)
+	store.Set(key, bz)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeUpdateOperatorAssetUSDValue,
+			sdk.NewAttribute(operatortypes.AttributeKeyEpochIdentifier, epochIdentifier),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operator),
+			sdk.NewAttribute(operatortypes.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, amount.String()),
+		),
+	)
+	return nil
+}
+
+func (k *Keeper) DeleteOperatorAssetUSDValueByEpoch(ctx sdk.Context, epochIdentifier, operator string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
+	prefix := assetstype.GetJoinedStoreKey(epochIdentifier, operator)
+	iterator := sdk.KVStorePrefixIterator(store, prefix)
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeDeleteOperatorAssetUSDValueByEpoch,
+			sdk.NewAttribute(operatortypes.AttributeKeyEpochIdentifier, epochIdentifier),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operator),
+		),
+	)
+	return nil
+}
+
+// GetOperatorAssetUSDValue is a function to retrieve the USD value of operator asset,
+func (k *Keeper) GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) (sdkmath.LegacyDec, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
+	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	var ret operatortypes.DecValueField
+	value := store.Get(key)
+	if value == nil {
+		return sdkmath.LegacyDec{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorAssetUSDValue: key is %s", key))
+	}
+	k.cdc.MustUnmarshal(value, &ret)
+
+	return ret.Amount, nil
+}
+
+// UpdateOperatorAssetUSDValue update the operator asset USD value by epoch.
+func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator string) error {
+	// check if the epoch is impactful
+	if !k.IsImpactfulEpochForOperator(ctx, epochIdentifier, operator) {
+		// delete the operator asset USD Value
+		return k.DeleteOperatorAssetUSDValueByEpoch(ctx, epochIdentifier, operator)
+	}
+	// calculate and update the asset usd value
+	// iterate all assets owned by the operator to calculate its voting power
+	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
+		var price oracletype.Price
+		var decimal uint32
+		price, err := k.oracleKeeper.GetSpecifiedAssetsPrice(ctx, assetID)
+		if err != nil {
+			// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
+			if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
+				ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to get the asset price", "assetID", assetID, "err", err)
+				// don't return error to continue handling the other assets.
+				return nil
+			}
+			// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
+		}
+		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
+		if err != nil {
+			ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to get the asset info", "assetID", assetID, "err", err)
+			// don't return error to continue handling the other assets.
+			return nil
+		}
+		decimal = assetInfo.AssetBasicInfo.Decimals
+		usdValue := CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
+		err = k.SetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID, usdValue)
+		if err != nil {
+			ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to set the operator asset USD value", "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID, "err", err)
+			// don't return error to continue handling the other assets.
+			return nil
+		}
+		return nil
+	}
+	err := k.assetsKeeper.IterateAssetsForOperator(ctx, false, operator, nil, opFuncToIterateAssets)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateAssetUSDValuesForAllOperators update the asset USD values for all operators.
+func (k *Keeper) UpdateAssetUSDValuesForAllOperators(ctx sdk.Context, epochIdentifier string) error {
+	opFunc := func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
+		err := k.UpdateOperatorAssetUSDValue(ctx, epochIdentifier, operatorAddr.String())
+		if err != nil {
+			ctx.Logger().Error("UpdateAssetUSDValuesForAllOperators: error when updating the specific operator USD value", "err", err, "operator", operatorAddr.String())
+			// Don't return an error to continue handling the other operators.
+		}
+		return false, nil
+	}
+	err := k.IterateOperators(ctx, false, opFunc)
+	if err != nil {
+		return err
+	}
+	return nil
+}

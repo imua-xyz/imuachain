@@ -63,7 +63,6 @@ var (
 	KeyPrefixReStakerAssetInfos = []byte{prefixRestakerAssetInfo}
 
 	// KeyPrefixOperatorAssetInfos key->value: operatorAddr+'/'+AssetID-> OperatorAssetInfo
-	// or operatorAddr->mapping(AssetID->OperatorAssetInfo) ?
 	KeyPrefixOperatorAssetInfos = []byte{prefixOperatorAssetInfo}
 
 	// KeyPrefixParams This is a key prefix for module parameter

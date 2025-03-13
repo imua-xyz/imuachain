@@ -11,7 +11,7 @@ import (
 
 func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	impactfulEpochs, err := k.operatorKeeper.GetImpactfulEpochsForOperator(ctx, operator.String())
+	_, impactfulEpochs, err := k.operatorKeeper.GetImpactfulEpochsAndAVSsForOperator(ctx, operator.String())
 	if err != nil {
 		return err
 	}
@@ -126,22 +126,75 @@ func (k Keeper) GetOperatorAccumulatedCommission(ctx sdk.Context, operator, avsA
 
 // UpdateOperatorAccumulatedCommission : increase or decrease the commission for the avs and operator
 // the isIncrease flag is used to indicate whether the update is an increase or a decrease
-func (k Keeper) UpdateOperatorAccumulatedCommission(ctx sdk.Context, operator, avsAddr string, isIncrease bool, rewards sdk.DecCoins) error {
+func (k Keeper) UpdateOperatorAccumulatedCommission(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaCommission sdk.DecCoins) error {
 	commission, err := k.GetOperatorAccumulatedCommission(ctx, operator, avsAddr)
 	if err != nil {
 		return err
 	}
 	if isIncrease {
-		commission.Commission = commission.Commission.Add(rewards...)
+		commission.Commission = commission.Commission.Add(deltaCommission...)
 	} else {
 		var negative bool
-		commission.Commission, negative = commission.Commission.SafeSub(rewards)
+		commission.Commission, negative = commission.Commission.SafeSub(deltaCommission)
 		if negative {
 			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("UpdateOperatorAccumulatedCommission,operator:%s,avsAddr:%s", operator, avsAddr)
 		}
 	}
 
 	err = k.SetOperatorAccumulatedCommission(ctx, operator, avsAddr, commission)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetOperatorOutstandingRewards : set outstanding rewards for the avs and operator
+func (k Keeper) SetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, rewards feedistributiontypes.OperatorOutstandingRewards) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
+	var bz []byte
+
+	if rewards.Rewards.IsZero() {
+		bz = k.cdc.MustMarshal(&feedistributiontypes.OperatorOutstandingRewards{})
+	} else {
+		bz = k.cdc.MustMarshal(&rewards)
+	}
+
+	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	store.Set(key, bz)
+	return nil
+}
+
+// GetOperatorOutstandingRewards : get the outstanding rewards for the avs and operator
+func (k Keeper) GetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string) (feedistributiontypes.OperatorOutstandingRewards, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
+	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.OperatorOutstandingRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorOutstandingRewards, operator:%s,avsAddr:%s", operator, avsAddr)
+	}
+	rewards := feedistributiontypes.OperatorOutstandingRewards{}
+	k.cdc.MustUnmarshal(b, &rewards)
+	return rewards, nil
+}
+
+// UpdateOperatorOutstandingRewards : increase or decrease the outstanding rewards for the avs and operator
+// the isIncrease flag is used to indicate whether the update is an increase or a decrease
+func (k Keeper) UpdateOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaRewards sdk.DecCoins) error {
+	rewards, err := k.GetOperatorOutstandingRewards(ctx, operator, avsAddr)
+	if err != nil {
+		return err
+	}
+	if isIncrease {
+		rewards.Rewards = rewards.Rewards.Add(deltaRewards...)
+	} else {
+		var negative bool
+		rewards.Rewards, negative = rewards.Rewards.SafeSub(deltaRewards)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("UpdateOperatorOutstandingRewards,operator:%s,avsAddr:%s", operator, avsAddr)
+		}
+	}
+
+	err = k.SetOperatorOutstandingRewards(ctx, operator, avsAddr, rewards)
 	if err != nil {
 		return err
 	}
