@@ -157,7 +157,7 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 
 		// If avs DeRegisterAction check UnbondingPeriod
 		// #nosec G115
-		if epoch.CurrentEpoch-int64(avsInfo.GetInfo().StartingEpoch) <= int64(avsInfo.Info.AvsUnbondingPeriod) {
+		if k.operatorKeeper.IsUnbondingRelatedAVS(ctx, params.AvsAddress.String()) {
 			return errorsmod.Wrap(types.ErrUnbondingPeriod, fmt.Sprintf("not qualified to deregister %s", avsInfo))
 		}
 
@@ -205,6 +205,14 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			avs.AssetIDs = params.AssetIDs
 			if err := k.ValidateAssetIDs(ctx, params.AssetIDs); err != nil {
 				return err
+			}
+			// Save the asset list at the time of the last voting power update
+			// if the asset list has changed, it will be used in the reward distribution.
+			if !k.operatorKeeper.HasAVSAssetsPerEpoch(ctx, params.AvsAddress.String()) {
+				err := k.operatorKeeper.SetAVSAssetsPerEpoch(ctx, params.AvsAddress.String(), params.AssetID)
+				if err != nil {
+					return err
+				}
 			}
 		}
 

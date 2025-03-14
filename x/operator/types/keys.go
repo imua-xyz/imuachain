@@ -76,6 +76,9 @@ const (
 
 	// prefixOperatorAssetUSDValue is the prefix used to store the USD value of operator asset
 	prefixOperatorAssetUSDValue
+
+	// prefixAVSAssetListPerEpoch is the prefix used to store the AVS asset list per epoch.
+	prefixAVSAssetListPerEpoch
 )
 
 var (
@@ -128,6 +131,18 @@ var (
 	// The epochIdentifier is included in the key because AVSs with the same epoch configuration
 	// can use the same state updated per epoch.
 	KeyPrefixOperatorAssetUSDValue = []byte{prefixOperatorAssetUSDValue}
+
+	// KeyPrefixAVSAssetListPerEpoch key-value:
+	// avsAddr -> AVSAssetsPerEpoch
+	// Since the real-time asset list is already stored in AVS information, we only record
+	// the asset list here when the AVS asset list is updated.
+	// If there is no change, we can directly use the asset list from AVS information.
+	// However, if a change occurs, we need to record the asset list before the update,
+	// because the voting power update uses the asset list from the end of the previous epoch,
+	// while the AVS info asset list is updated in real time per block.
+	// This ensures that we obtain the correct asset list at the last voting power update,
+	// which is necessary for reward distribution.
+	KeyPrefixAVSAssetListPerEpoch = []byte{prefixAVSAssetListPerEpoch}
 )
 
 // ModuleAddress is the native module address for EVM

@@ -709,11 +709,11 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 	opFunc := func(assetID string, state *assetstypes.OperatorAssetInfo) error {
 		price, ok := prices[assetID]
 		if !ok {
-			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: prices, key: assetID")
+			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateRealTimeOperatorUSDValue map: prices, key: assetID")
 		}
 		decimal, ok := decimals[assetID]
 		if !ok {
-			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: decimals, key: assetID")
+			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateRealTimeOperatorUSDValue map: decimals, key: assetID")
 		}
 		currentAssetTotalUSD := CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
 		ret.Staking = ret.Staking.Add(currentAssetTotalUSD)

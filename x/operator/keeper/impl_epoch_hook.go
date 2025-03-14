@@ -26,7 +26,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 ) {
 	// update the USD values for all operators, it will be used to calculate
 	// the voting power. It should be executed before updating voting power.
-	err := wrapper.keeper.UpdateAssetUSDValuesForAllOperators(ctx, epochIdentifier)
+	err := wrapper.keeper.UpdatAllOperatorAssetUSDValues(ctx, []string{epochIdentifier})
 	if err != nil {
 		ctx.Logger().Error("AfterEpochEnd: Failed to update the asset USD values for all operators", "epochIdentifier", epochIdentifier, "error", err)
 		return

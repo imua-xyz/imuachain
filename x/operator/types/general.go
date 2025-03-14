@@ -31,6 +31,5 @@ type SlashInputInfo struct {
 
 type ImpactfulAVSInfo struct {
 	AVSAddr                  string
-	HasOptedOut              bool
 	OptOutUnbondingRemaining uint64
 }

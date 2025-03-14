@@ -418,12 +418,12 @@ func (k *Keeper) GetAllAVSUSDValues(ctx sdk.Context) ([]operatortypes.AVSUSDValu
 	return ret, nil
 }
 
-// CalculateUSDValueForOperator calculates the total and self usd value for the
+// CalculateRealTimeOperatorUSDValue calculates the total and self usd value for the
 // operator according to the input assets filter and prices.
-// This function will be used in slashing calculations and voting power updates per epoch.
+// This function will be used in slashing calculations and real time USD value calculation.
 // The inputs/outputs and calculation logic for these two cases are different,
 // so an `isForSlash` flag is used to distinguish between them.
-// When it's called by the voting power update, the needed outputs are the current total
+// When it's called for real time USD value calculation, the needed outputs are the current total
 // staking amount and the self-staking amount of the operator. The current total
 // staking amount excludes the pending unbonding amount, so it's used to calculate the voting power.
 // The self-staking amount is also needed to check if the operator's self-staking is sufficient.
@@ -432,7 +432,7 @@ func (k *Keeper) GetAllAVSUSDValues(ctx sdk.Context) ([]operatortypes.AVSUSDValu
 // When it's called by the slash execution, the needed output is the sum of the current total amount and
 // the pending unbonding amount, because the undelegation also needs to be slashed. And the prices of
 // all assets haven't been prepared by the caller, so the prices should be retrieved in this function.
-func (k *Keeper) CalculateUSDValueForOperator(
+func (k *Keeper) CalculateRealTimeOperatorUSDValue(
 	ctx sdk.Context,
 	isForSlash bool,
 	operator string,
@@ -467,19 +467,19 @@ func (k *Keeper) CalculateUSDValueForOperator(
 			}
 			decimal = assetInfo.AssetBasicInfo.Decimals
 			usdValue := CalculateUSDValue(state.TotalAmount.Add(state.PendingUndelegationAmount), price.Value, decimal, price.Decimal)
-			ctx.Logger().Info("CalculateUSDValueForOperator: get price for slash", "assetID", assetID, "assetDecimal", decimal, "price", price, "totalAmount", state.TotalAmount, "pendingUndelegationAmount", state.PendingUndelegationAmount, "StakingAndWaitUnbonding", ret.StakingAndWaitUnbonding, "addUSDValue", usdValue)
+			ctx.Logger().Info("CalculateRealTimeOperatorUSDValue: get price for slash", "assetID", assetID, "assetDecimal", decimal, "price", price, "totalAmount", state.TotalAmount, "pendingUndelegationAmount", state.PendingUndelegationAmount, "StakingAndWaitUnbonding", ret.StakingAndWaitUnbonding, "addUSDValue", usdValue)
 			ret.StakingAndWaitUnbonding.AddMut(usdValue)
 		} else {
 			if prices == nil {
-				return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, "CalculateUSDValueForOperator prices map is nil")
+				return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, "CalculateRealTimeOperatorUSDValue prices map is nil")
 			}
 			price, ok := prices[assetID]
 			if !ok {
-				return errorsmod.Wrap(operatortypes.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: prices, key: assetID")
+				return errorsmod.Wrap(operatortypes.ErrKeyNotExistInMap, "CalculateRealTimeOperatorUSDValue map: prices, key: assetID")
 			}
 			decimal, ok := decimals[assetID]
 			if !ok {
-				return errorsmod.Wrap(operatortypes.ErrKeyNotExistInMap, "CalculateUSDValueForOperator map: decimals, key: assetID")
+				return errorsmod.Wrap(operatortypes.ErrKeyNotExistInMap, "CalculateRealTimeOperatorUSDValue map: decimals, key: assetID")
 			}
 			ret.Staking.AddMut(CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
 			// calculate the token amount from the share for the operator
@@ -494,6 +494,47 @@ func (k *Keeper) CalculateUSDValueForOperator(
 	err = k.assetsKeeper.IterateAssetsForOperator(ctx, false, operator, assetsFilter, opFuncToIterateAssets)
 	if err != nil {
 		return ret, err
+	}
+	return ret, nil
+}
+
+// AggregateOperatorUSDValue computes the total USD value by summing the USD values of all assets.
+// Unlike `CalculateRealTimeOperatorUSDValue`, this function may not reflect real-time values,
+// as asset USD values are updated only at the end of an epoch or when a slash event occurs.
+// It will be used for the voting power update.
+func (k *Keeper) AggregateOperatorUSDValue(
+	ctx sdk.Context,
+	epochIdentifier, operator string,
+	assetsList []string,
+) (operatortypes.OperatorStakingInfo, error) {
+	operatorAccAddr, err := sdk.AccAddressFromBech32(operator)
+	if err != nil {
+		return operatortypes.OperatorStakingInfo{}, delegationtype.ErrOperatorAddrIsNotAccAddr
+	}
+	ret := operatortypes.OperatorStakingInfo{}
+	for _, assetID := range assetsList {
+		// get the total USD value of asset
+		totalUSDValue, err := k.GetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID)
+		if err != nil {
+			ctx.Logger().Error("AggregateOperatorUSDValue: failed to get the operator asset USD value", "err", err, "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
+			// continue handling the other assets
+			continue
+		}
+		// calculate the self staking USD value for the operator
+		operatorAssetInfo, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operatorAccAddr, assetID)
+		if err != nil {
+			ctx.Logger().Error("AggregateOperatorUSDValue: failed to get the operator asset info", "err", err, "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
+			// continue handling the other assets
+			continue
+		}
+		ret.Staking.AddMut(totalUSDValue)
+		selfAmount, err := delegationkeeper.TokenUSDValueFromShares(operatorAssetInfo.OperatorShare, operatorAssetInfo.TotalShare, totalUSDValue)
+		if err != nil {
+			ctx.Logger().Error("AggregateOperatorUSDValue: failed to calculate the self staking USD value for operator", "err", err, "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
+			// continue handling the other assets
+			continue
+		}
+		ret.SelfStaking.AddMut(selfAmount)
 	}
 	return ret, nil
 }
@@ -523,7 +564,7 @@ func (k Keeper) GetOrCalculateOperatorUSDValues(
 		if err != nil {
 			return operatortypes.OperatorOptedUSDValue{}, err
 		}
-		stakingInfo, err := k.CalculateUSDValueForOperator(ctx, false, operator.String(), assets, decimals, prices)
+		stakingInfo, err := k.CalculateRealTimeOperatorUSDValue(ctx, false, operator.String(), assets, decimals, prices)
 		if err != nil {
 			return operatortypes.OperatorOptedUSDValue{}, err
 		}
@@ -656,12 +697,26 @@ func (k *Keeper) GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 }
 
 // UpdateOperatorAssetUSDValue update the operator asset USD value by epoch.
-func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator string) error {
+func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers []string, operator string) error {
 	// check if the epoch is impactful
-	if !k.IsImpactfulEpochForOperator(ctx, epochIdentifier, operator) {
-		// delete the operator asset USD Value
-		return k.DeleteOperatorAssetUSDValueByEpoch(ctx, epochIdentifier, operator)
+	impactfulEpochIdentifiers := make([]string, 0)
+	for _, epochIdentifier := range epochIdentifiers {
+		if !k.IsImpactfulEpochForOperator(ctx, epochIdentifier, operator) {
+			// delete the operator asset USD Value
+			err := k.DeleteOperatorAssetUSDValueByEpoch(ctx, epochIdentifier, operator)
+			if err != nil {
+				ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to delete the asset USD value", "epochIdentifier", epochIdentifier, "operator", operator, "err", err)
+			}
+			// don't handle the error, because failing to delete shouldn't influence the delete and update
+			// for other epoch identifiers
+		} else {
+			impactfulEpochIdentifiers = append(impactfulEpochIdentifiers, epochIdentifier)
+		}
 	}
+	if len(impactfulEpochIdentifiers) == 0 {
+		return nil
+	}
+
 	// calculate and update the asset usd value
 	// iterate all assets owned by the operator to calculate its voting power
 	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
@@ -685,11 +740,12 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, o
 		}
 		decimal = assetInfo.AssetBasicInfo.Decimals
 		usdValue := CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
-		err = k.SetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID, usdValue)
-		if err != nil {
-			ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to set the operator asset USD value", "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID, "err", err)
-			// don't return error to continue handling the other assets.
-			return nil
+		for _, epochIdentifier := range impactfulEpochIdentifiers {
+			err = k.SetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID, usdValue)
+			if err != nil {
+				ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to set the operator asset USD value", "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID, "err", err)
+				// don't return error to continue handling the other assets.
+			}
 		}
 		return nil
 	}
@@ -700,12 +756,15 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, o
 	return nil
 }
 
-// UpdateAssetUSDValuesForAllOperators update the asset USD values for all operators.
-func (k *Keeper) UpdateAssetUSDValuesForAllOperators(ctx sdk.Context, epochIdentifier string) error {
+// UpdatAllOperatorAssetUSDValues update all operator asset USD values for the input epoch list.
+// This function will be used for the voting power update. When the voting power update is caused
+// by slash, it might not be called at the end of epoch. And all assets USD values of an operator
+// should be same for the multiple epoch identifiers.
+func (k *Keeper) UpdatAllOperatorAssetUSDValues(ctx sdk.Context, epochIdentifiers []string) error {
 	opFunc := func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
-		err := k.UpdateOperatorAssetUSDValue(ctx, epochIdentifier, operatorAddr.String())
+		err := k.UpdateOperatorAssetUSDValue(ctx, epochIdentifiers, operatorAddr.String())
 		if err != nil {
-			ctx.Logger().Error("UpdateAssetUSDValuesForAllOperators: error when updating the specific operator USD value", "err", err, "operator", operatorAddr.String())
+			ctx.Logger().Error("UpdatAllOperatorAssetUSDValues: error when updating the specific operator USD value", "err", err, "operator", operatorAddr.String())
 			// Don't return an error to continue handling the other operators.
 		}
 		return false, nil
@@ -715,4 +774,62 @@ func (k *Keeper) UpdateAssetUSDValuesForAllOperators(ctx sdk.Context, epochIdent
 		return err
 	}
 	return nil
+}
+
+func (k *Keeper) SetAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string, assets []string) error {
+	if len(assets) == 0 {
+		return nil
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixAVSAssetListPerEpoch)
+	key := []byte(strings.ToLower(avsAddr))
+	bz := k.cdc.MustMarshal(&operatortypes.AVSAssetsPerEpoch{AssetIDs: assets})
+	store.Set(key, bz)
+	return nil
+}
+
+func (k *Keeper) DeleteAllAVSAssetsPerEpoch(ctx sdk.Context) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixAVSAssetListPerEpoch)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
+	return nil
+}
+
+func (k *Keeper) GetAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string) ([]string, error) {
+	store := prefix.NewStore(
+		ctx.KVStore(k.storeKey),
+		operatortypes.KeyPrefixAVSAssetListPerEpoch,
+	)
+	var assets operatortypes.AVSAssetsPerEpoch
+	key := []byte(strings.ToLower(avsAddr))
+	value := store.Get(key)
+	if value == nil {
+		return nil, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetAVSAssetsPerEpoch: key is %s", key))
+	}
+	k.cdc.MustUnmarshal(value, &assets)
+	return assets.AssetIDs, nil
+}
+
+func (k *Keeper) HasAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string) bool {
+	store := prefix.NewStore(
+		ctx.KVStore(k.storeKey),
+		operatortypes.KeyPrefixAVSAssetListPerEpoch,
+	)
+	key := []byte(strings.ToLower(avsAddr))
+	return store.Has(key)
+}
+
+func (k *Keeper) GetLastVotingPowerAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error) {
+	if k.HasAVSAssetsPerEpoch(ctx, avsAddr) {
+		return k.GetAVSAssetsPerEpoch(ctx, avsAddr)
+	} else {
+		avsInfo, err := k.avsKeeper.GetAVSInfo(ctx, avsAddr)
+		if err != nil {
+			return nil, err
+		}
+		return avsInfo.Info.AssetIDs, nil
+	}
 }

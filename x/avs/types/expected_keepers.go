@@ -45,6 +45,9 @@ type OperatorKeeper interface {
 	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
 	SetOperatorInfo(ctx sdk.Context, addr string, info *operatortypes.OperatorInfo) (err error)
 	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
+	IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool
+	SetAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string, assets []string) error
+	HasAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string) bool
 }
 
 // AssetsKeeper represents the expected keeper interface for the assets module.
