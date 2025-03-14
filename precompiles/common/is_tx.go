@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"sort"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
@@ -24,18 +25,27 @@ func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 		return fmt.Errorf("error parsing the ABI %s", err)
 	}
 
+	// sort for determinism
+	// although this method is only used during `init()` currently,
+	// this is a form of future-proofing.
+	methods := make([]string, 0, len(abi.Methods))
 	for _, method := range abi.Methods {
+		methods = append(methods, method.Name)
+	}
+	sort.Strings(methods)
+
+	for _, method := range methods {
 		var localErr error
 		func() {
 			defer func() {
 				if r := recover(); r != nil {
 					localErr = fmt.Errorf(
 						"panic occurred while checking method %s: %v",
-						method.Name, r,
+						method, r,
 					)
 				}
 			}()
-			_ = isTx(method.Name)
+			_ = isTx(method)
 		}()
 		if localErr != nil {
 			return localErr
