@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 	avsKeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
 )
 
@@ -261,9 +262,18 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodDeregisterOperatorFromAVS, MethodCreateAVSTask, MethodRegisterBLSPublicKey, MethodChallenge, MethodOperatorSubmitTask:
 		return true
 	case MethodGetRegisteredPubKey, MethodGetOptInOperators, MethodGetAVSUSDValue, MethodGetOperatorOptedUSDValue,
-		MethodGetAVSEpochIdentifier, MethodGetTaskInfo, MethodIsOperator, MethodGetCurrentEpoch:
+		MethodGetAVSEpochIdentifier, MethodGetTaskInfo, MethodIsOperator, MethodGetCurrentEpoch, MethodGetOperatorTaskResponseList,
+		MethodGetOperatorTaskResponse, MethodGetChallengeInfo:
 		return false
 	default:
-		return false
+		panic(fmt.Sprintf("unknown method: %s", methodID))
+	}
+}
+
+func init() {
+	// dummy instance
+	var p Precompile
+	if err := imuacmn.ValidateIsTx(f, p.IsTransaction); err != nil {
+		panic(err)
 	}
 }

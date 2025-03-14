@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 const (
@@ -94,7 +95,19 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 }
 
 // IsTransaction reports whether a precompile is write (true) or read-only (false).
-func (Precompile) IsTransaction(_ string) bool {
-	// bech32 precompile is read-only and/or stateless
-	return false
+func (Precompile) IsTransaction(methodID string) bool {
+	switch methodID {
+	case MethodHexToBech32, MethodBech32ToHex:
+		return true
+	default:
+		panic(fmt.Sprintf("unknown method: %s", methodID))
+	}
+}
+
+func init() {
+	// dummy instance
+	var p Precompile
+	if err := imuacmn.ValidateIsTx(f, p.IsTransaction); err != nil {
+		panic(err)
+	}
 }

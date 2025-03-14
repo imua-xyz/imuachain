@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -23,13 +24,13 @@ var _ vm.PrecompiledContract = &Precompile{}
 //go:embed abi.json
 var f embed.FS
 
-// Precompile defines the precompiled contract for deposit.
+// Precompile defines the precompiled contract for assets.
 type Precompile struct {
 	cmn.Precompile
 	assetsKeeper assetskeeper.Keeper
 }
 
-// NewPrecompile creates a new deposit Precompile instance as a
+// NewPrecompile creates a new assets Precompile instance as a
 // PrecompiledContract interface.
 func NewPrecompile(
 	assetsKeeper assetskeeper.Keeper,
@@ -86,7 +87,8 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
 	// we cache the context because we consume the failure, if any, in this function.
-	// cascading it to statedb is possible but we will lose foundry compatibility
+	// cascading it to statedb is possible and will be performed in another PR.
+	// when that is done, the cacheContext can be skipped.
 	// see https://github.com/imua-xyz/imuachain/issues/70
 	cc, writeFunc := ctx.CacheContext()
 	switch method.Name {
@@ -204,6 +206,14 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodGetStakerBalanceByToken:
 		return false
 	default:
-		return false
+		panic(fmt.Sprintf("unknown method: %s", methodID))
+	}
+}
+
+func init() {
+	// dummy instance
+	var p Precompile
+	if err := imuacmn.ValidateIsTx(f, p.IsTransaction); err != nil {
+		panic(err)
 	}
 }

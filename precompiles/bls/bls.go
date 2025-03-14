@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -105,9 +106,6 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 }
 
 // IsTransaction checks if the given methodID corresponds to a transaction or query.
-//
-// Available bls transactions are:
-//   - MethodVerify
 func (Precompile) IsTransaction(methodID string) bool {
 	switch methodID {
 	case MethodVerify,
@@ -115,10 +113,17 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodAggregatePubkeys,
 		MethodAggregateSignatures,
 		MethodAddTwoPubkeys:
-		// TODO: @devin: shouldn't this be false?
-		return true
-	default:
 		return false
+	default:
+		panic(fmt.Sprintf("unknown method: %s", methodID))
+	}
+}
+
+func init() {
+	// dummy instance
+	var p Precompile
+	if err := imuacmn.ValidateIsTx(f, p.IsTransaction); err != nil {
+		panic(err)
 	}
 }
 

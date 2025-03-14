@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	delegationKeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 )
@@ -148,6 +149,14 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodDissociateOperatorFromStaker:
 		return true
 	default:
-		return false
+		panic(fmt.Sprintf("unknown method: %s", methodID))
+	}
+}
+
+func init() {
+	// dummy instance
+	var p Precompile
+	if err := imuacmn.ValidateIsTx(f, p.IsTransaction); err != nil {
+		panic(err)
 	}
 }
