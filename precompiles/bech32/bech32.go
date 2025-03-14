@@ -95,12 +95,12 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 }
 
 // IsTransaction reports whether a precompile is write (true) or read-only (false).
-func (Precompile) IsTransaction(methodID string) bool {
-	switch methodID {
+func (Precompile) IsTransaction(methodName string) bool {
+	switch methodName {
 	case MethodHexToBech32, MethodBech32ToHex:
-		return true
+		return false
 	default:
-		panic(fmt.Sprintf("unknown method: %s", methodID))
+		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }
 

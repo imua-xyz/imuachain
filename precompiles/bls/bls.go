@@ -105,9 +105,9 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 	return bz, nil
 }
 
-// IsTransaction checks if the given methodID corresponds to a transaction or query.
-func (Precompile) IsTransaction(methodID string) bool {
-	switch methodID {
+// IsTransaction checks if the given methodName corresponds to a transaction or query.
+func (Precompile) IsTransaction(methodName string) bool {
+	switch methodName {
 	case MethodVerify,
 		MethodFastAggregateVerify,
 		MethodAggregatePubkeys,
@@ -115,7 +115,7 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodAddTwoPubkeys:
 		return false
 	default:
-		panic(fmt.Sprintf("unknown method: %s", methodID))
+		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }
 

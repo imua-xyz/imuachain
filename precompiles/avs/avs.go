@@ -252,12 +252,9 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	return bz, nil
 }
 
-// IsTransaction checks if the given methodID corresponds to a transaction or query.
-//
-// Available avs transactions are:
-//   - AVSRegister
-func (Precompile) IsTransaction(methodID string) bool {
-	switch methodID {
+// IsTransaction checks if the given methodName corresponds to a transaction or query.
+func (Precompile) IsTransaction(methodName string) bool {
+	switch methodName {
 	case MethodRegisterAVS, MethodDeregisterAVS, MethodUpdateAVS, MethodRegisterOperatorToAVS,
 		MethodDeregisterOperatorFromAVS, MethodCreateAVSTask, MethodRegisterBLSPublicKey, MethodChallenge, MethodOperatorSubmitTask:
 		return true
@@ -266,7 +263,7 @@ func (Precompile) IsTransaction(methodID string) bool {
 		MethodGetOperatorTaskResponse, MethodGetChallengeInfo:
 		return false
 	default:
-		panic(fmt.Sprintf("unknown method: %s", methodID))
+		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }
 

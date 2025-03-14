@@ -8,6 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
+// ValidateIsTx loads the ABI from the given embed.FS and checks that the given
+// isTx function
+// (1) does not panic for known methods, and
+// (2) panics for unknown methods.
+// Ideally, it should be called in the init() for each precompile.
 func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 	abiBz, err := fs.ReadFile("abi.json")
 	if err != nil {
@@ -37,5 +42,16 @@ func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 		}
 	}
 
-	return nil
+	// lastly, check that unknown methods _do_ panic.
+	err = fmt.Errorf("IsTx did not panic for unknown method")
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				err = nil
+			}
+		}()
+		_ = isTx("unknownMethod")
+	}()
+
+	return err
 }

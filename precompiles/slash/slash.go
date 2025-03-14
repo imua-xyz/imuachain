@@ -115,16 +115,13 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	return bz, nil
 }
 
-// IsTransaction checks if the given methodID corresponds to a transaction or query.
-//
-// Available slash transactions are:
-//   - slash
-func (Precompile) IsTransaction(methodID string) bool {
-	switch methodID {
+// IsTransaction checks if the given methodName corresponds to a transaction or query.
+func (Precompile) IsTransaction(methodName string) bool {
+	switch methodName {
 	case MethodSlash:
 		return true
 	default:
-		panic(fmt.Sprintf("unknown method: %s", methodID))
+		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }
 
