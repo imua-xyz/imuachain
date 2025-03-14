@@ -3,7 +3,15 @@ pragma solidity ^0.8.17;
 
 import "../IAssets.sol";
 
+import "./GatewayCallee.sol";
+
 contract Gateway {
+    address public callee;
+
+    constructor(address callee_) {
+        callee = callee_;
+    }
+
     // Deposit LST
     function depositLST(
         uint32 clientChainID,
@@ -47,7 +55,7 @@ contract Gateway {
         uint256 opAmount
     ) public returns (bool success, uint256 latestAssetState) {
         (success, latestAssetState) = withdrawLST(clientChainID, assetsAddress, withdrawAddress, opAmount);
-        revert("Intentional revert after withdraw");
+        GatewayCallee(callee).reverter(true);
     }
 
     // Query staker balance

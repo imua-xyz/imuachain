@@ -28,8 +28,18 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	// set the base fee to 1; the lowest possible
 	s.App.FeeMarketKeeper.SetBaseFee(s.Ctx, big.NewInt(1))
 
+	// deploy the gateway callee contract
+	gatewayCalleeAddr, err := s.DeployContract(testdata.GatewayCalleeContract)
+	s.Require().NoError(err)
+
 	// deploy the gateway contract
-	gatewayAddr, err := s.DeployContract(testdata.GatewayContract)
+	constructorArgs := []interface{}{gatewayCalleeAddr}
+	gatewayAddr, err := s.DeployContractWithArgs(
+		ContractDeploymentData{
+			Contract:        testdata.GatewayContract,
+			ConstructorArgs: constructorArgs,
+		},
+	)
 	s.Require().NoError(err)
 	// add it as an authorized gateway
 	authorizedGateways, err := s.App.AssetsKeeper.GetParams(s.Ctx)
@@ -39,7 +49,7 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	s.Require().NoError(err)
 
 	// deploy the gateway caller contract
-	constructorArgs := []interface{}{gatewayAddr}
+	constructorArgs = []interface{}{gatewayAddr}
 	gatewayCallerAddr, err := s.DeployContractWithArgs(
 		ContractDeploymentData{
 			Contract:        testdata.GatewayCallerContract,
