@@ -180,3 +180,9 @@ message AssetDetails {
     (gogoproto.nullable) = false
   ];
 }
+
+// AVSAssetsPerEpoch is used to store the AVS asset list per epoch.
+message AVSAssetsPerEpoch {
+  // asset_ids is the assets list supported by the AVS.
+  repeated string asset_ids = 1 [(gogoproto.customname) = "AssetIDs"];
+}

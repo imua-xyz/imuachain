@@ -73,7 +73,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	// calculate the new slash proportion according to the historical power and current assets state
 	slashUSDValue := sdkmath.LegacyNewDec(parameter.Power).Mul(parameter.SlashProportion)
 	// calculate the current usd value of all assets pool for the operator
-	stakingInfo, err := k.CalculateUSDValueForOperator(ctx, true, parameter.Operator.String(), nil, nil, nil)
+	stakingInfo, err := k.CalculateRealTimeOperatorUSDValue(ctx, true, parameter.Operator.String(), nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -230,11 +230,11 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		return err
 	}
 	// update the operator asset USD value first
-	for _, epoch := range affectedEpochList {
-		err = k.UpdateAssetUSDValuesForAllOperators(ctx, epoch)
+	err = k.UpdatAllOperatorAssetUSDValues(ctx, affectedEpochList)
+	if err != nil {
+		return err
 	}
-	for i := range affectedAVSList {
-		avs := affectedAVSList[i].AVSAddr
+	for _, avs := range affectedAVSList {
 		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
 		if err != nil {
 			return err

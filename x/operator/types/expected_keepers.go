@@ -114,6 +114,7 @@ type AVSKeeper interface {
 	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error)
 	GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error)
 	IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (bool, error)
+	GetAVSInfo(ctx sdk.Context, addr string) (*types.QueryAVSInfoResponse, error)
 }
 
 type SlashKeeper interface {
@@ -138,7 +139,7 @@ type OperatorHooks interface {
 	)
 	// AfterSlash This hook is called when an operator is slashed
 	AfterSlash(
-		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []string,
 	)
 	// AfterJail This hook is called when an operator is jailed
 	AfterJail(

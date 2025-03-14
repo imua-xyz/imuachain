@@ -51,6 +51,7 @@ type OperatorKeeper interface {
 	GetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string) (info *operatortypes.OptedInfo, err error)
 	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
 	IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error
+	GetLastVotingPowerAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error)
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.

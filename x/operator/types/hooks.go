@@ -45,7 +45,7 @@ func (hooks MultiOperatorHooks) AfterOperatorKeyRemovalInitiated(
 }
 
 func (hooks MultiOperatorHooks) AfterSlash(
-	ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+	ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []string,
 ) {
 	for _, hook := range hooks {
 		hook.AfterSlash(ctx, addr, affectedAVSList)

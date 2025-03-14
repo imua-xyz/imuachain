@@ -1,15 +1,12 @@
 package keeper
 
 import (
-	"errors"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	sdkmath "cosmossdk.io/math"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
-	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // UpdateVotingPower update the voting power of the specified AVS and its operators at
@@ -17,13 +14,13 @@ import (
 func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier string, epochNumber int64, isForSlash bool) error {
 	// get assets supported by the AVS
 	// the mock keeper returns all registered assets.
-	assets, getAssetsErr := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
+	avsInfo, getAVSInfoErr := k.avsKeeper.GetAVSInfo(ctx, avsAddr)
 	// check if self USD value is more than the minimum self delegation.
 	minimumSelfDelegation, getSelfDelegationErr := k.avsKeeper.GetAVSMinimumSelfDelegation(ctx, avsAddr)
 	// set the voting power to zero if an error is returned, which may prevent malicious behavior
 	// where errors are intentionally triggered to avoid updating the voting power.
-	if getAssetsErr != nil || assets == nil || getSelfDelegationErr != nil {
-		ctx.Logger().Error("UpdateVotingPower the assets list supported by AVS is nil or can't get AVS info", "getAssetsErr", getAssetsErr, "getSelfDelegationErr", getSelfDelegationErr)
+	if getAVSInfoErr != nil || len(avsInfo.Info.AssetIDs) == 0 || getSelfDelegationErr != nil {
+		ctx.Logger().Error("UpdateVotingPower the assets list supported by AVS is nil or can't get AVS info", "getAVSInfoErr", getAVSInfoErr, "getSelfDelegationErr", getSelfDelegationErr)
 		// using cache context to ensure the atomicity of the operation.
 		cc, writeFunc := ctx.CacheContext()
 		// clear the voting power regarding this AVS if there isn't any assets supported by it.
@@ -37,22 +34,6 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		}
 		writeFunc()
 		return nil
-	}
-
-	// get the prices and decimals of assets
-	decimals, err := k.assetsKeeper.GetAssetsDecimal(ctx, assets)
-	if err != nil {
-		return err
-	}
-	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
-	// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
-	if err != nil {
-		// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
-		if !errors.Is(err, oracletypes.ErrGetPriceRoundNotFound) {
-			ctx.Logger().Error("fail to get price from oracle, since current assetID is not bonded with oracle token", "details:", err)
-			return err
-		}
-		// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
 	}
 
 	// update the voting power of operators and AVS
@@ -83,7 +64,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 			SelfUSDValue:   sdkmath.LegacyZeroDec(),
 			ActiveUSDValue: sdkmath.LegacyZeroDec(),
 		}
-		stakingInfo, err := k.CalculateUSDValueForOperator(ctx, false, operator, assets, decimals, prices)
+		stakingInfo, err := k.AggregateOperatorUSDValue(ctx, epochIdentifier, operator, avsInfo.Info.AssetIDs)
 		if err != nil {
 			return err
 		}
@@ -112,7 +93,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	cc, writeFunc := ctx.CacheContext()
 	// iterate all operators of the AVS to update their voting power
 	// and calculate the voting power for AVS
-	err = k.IterateOperatorUSDValuesForAVS(cc, avsAddr, true, opFunc)
+	err := k.IterateOperatorUSDValuesForAVS(cc, avsAddr, true, opFunc)
 	if err != nil {
 		return err
 	}
@@ -124,6 +105,12 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 
 	// set the voting power for AVS
 	err = k.SetAVSUSDValue(cc, avsAddr, avsVotingPower)
+	if err != nil {
+		return err
+	}
+
+	// clear the AVS asset list at the time of the last voting power update
+	err = k.DeleteAllAVSAssetsPerEpoch(cc)
 	if err != nil {
 		return err
 	}
