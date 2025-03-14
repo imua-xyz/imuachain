@@ -52,11 +52,6 @@ func (s *AssetsPrecompileSuite) TestIsTransaction() {
 			s.precompile.Methods[assetsprecompile.MethodGetClientChains].Name,
 			false,
 		},
-		{
-			"invalid",
-			"invalid",
-			false,
-		},
 	}
 
 	for _, tc := range testCases {

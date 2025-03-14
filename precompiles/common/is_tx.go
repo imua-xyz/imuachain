@@ -8,15 +8,15 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-func ValidateIsTx(fs embed.FS, isTx func(methodID string) bool) error {
+func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 	abiBz, err := fs.ReadFile("abi.json")
 	if err != nil {
-		return fmt.Errorf("error loading the deposit ABI %s", err)
+		return fmt.Errorf("error loading the ABI %s", err)
 	}
 
 	abi, err := abi.JSON(bytes.NewReader(abiBz))
 	if err != nil {
-		return fmt.Errorf("error parsing the deposit ABI %s", err)
+		return fmt.Errorf("error parsing the ABI %s", err)
 	}
 
 	for _, method := range abi.Methods {

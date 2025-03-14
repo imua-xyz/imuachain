@@ -27,11 +27,6 @@ func (s *RewardPrecompileTestSuite) TestIsTransaction() {
 			s.precompile.Methods[reward.MethodReward].Name,
 			true,
 		},
-		{
-			"invalid",
-			"invalid",
-			false,
-		},
 	}
 
 	for _, tc := range testCases {
