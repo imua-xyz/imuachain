@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package imuachain.avs.v1;
+
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/avs/types";
+
+// AVSPaymentInfo is avs payment records
+message AVSPaymentInfo {
+  // avs_address is the address of avs as a hex string
+  string avs_address = 1;
+  // fee is Base fee (e.g., 1000 IMUA)
+  cosmos.base.v1beta1.Coin fee = 2;
+  // start_time is the start time of the avs payment
+  int64 start_time = 3;
+  // is_paid is whether the avs payment is paid or not
+  bool is_paid = 4;
+}

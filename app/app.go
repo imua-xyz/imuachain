@@ -287,6 +287,7 @@ var (
 		erc20types.ModuleName:             {authtypes.Minter, authtypes.Burner},
 		delegationTypes.DelegatedPoolName: {authtypes.Burner, authtypes.Staking},
 		distrtypes.ModuleName:             nil,
+		avsManagerTypes.ModuleName:        nil,
 	}
 
 	// module accounts that are allowed to receive tokens
@@ -684,10 +685,13 @@ func NewImuachainApp(
 	// at genesis.
 	app.AVSManagerKeeper = avsManagerKeeper.NewKeeper(
 		appCodec, keys[avsManagerTypes.StoreKey],
+		app.AccountKeeper, app.BankKeeper,
 		&app.OperatorKeeper,
 		app.AssetsKeeper,
 		app.EpochsKeeper,
 		app.EvmKeeper,
+		authtypes.FeeCollectorName,
+		authAddrString,
 	)
 	// operator registry, which handles vote power (and this requires delegation keeper).
 	// this keeper is initialized after the avs keeper because it depends on the avs keeper

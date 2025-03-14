@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
@@ -12,6 +13,14 @@ import (
 // InitGenesis initializes the module's state from a provided genesis state.
 // Since this action typically occurs on chain starts, this function is allowed to panic.
 func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
+	k.SetParams(ctx, &state.Params)
+	epochID := state.Params.EpochIdentifier
+	_, found := k.epochsKeeper.GetEpochInfo(ctx, epochID)
+	if !found {
+		// the panic is suitable here because it is being done at genesis, when the node
+		// is not running. it means that the genesis file is malformed.
+		panic(fmt.Sprintf("epoch info not found %s", epochID))
+	}
 	// Store a lookup from codeHash to code. Since these are static parameters,
 	// such a lookup is stored at genesis and never updated.
 	k.evmKeeper.SetCode(ctx, types.ChainIDCodeHash.Bytes(), types.ChainIDCode)
@@ -61,6 +70,14 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) {
 		elem.AvsAddress = strings.ToLower(elem.AvsAddress)
 		k.SetAVSAddrToChainID(ctx, common.HexToAddress(elem.AvsAddress), elem.ChainId)
 	}
+	// Set all the payment infos
+	for _, info := range state.PayInfos {
+		info.AvsAddress = strings.ToLower(info.AvsAddress)
+		err := k.SetAVSPaymentInfo(ctx, &info) //nolint:gosec
+		if err != nil {
+			panic(errorsmod.Wrap(err, "failed to set all payment info"))
+		}
+	}
 }
 
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
@@ -100,5 +117,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		panic(errorsmod.Wrap(err, "failed to get all ChainIdInfos").Error())
 	}
 
+	res.PayInfos, err = k.GetAllAVSPaymentInfos(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all payment infos"))
+	}
+
+	res.Params = *k.GetParams(ctx)
 	return &res
 }

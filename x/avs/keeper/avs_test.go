@@ -2,16 +2,20 @@ package keeper_test
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/imua-xyz/imuachain/testutil"
+	"github.com/imua-xyz/imuachain/utils"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 
@@ -202,9 +206,9 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	selfDelegateAmount := big.NewInt(10)
 	minPrecisionSelfDelegateAmount := big.NewInt(0).Mul(selfDelegateAmount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(int64(asset.Decimals)), nil))
 	err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, operatorAddress, assetID, assetstypes.DeltaOperatorSingleAsset{
-		TotalAmount:   math.NewIntFromBigInt(minPrecisionSelfDelegateAmount),
-		TotalShare:    math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
-		OperatorShare: math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
+		TotalAmount:   sdkmath.NewIntFromBigInt(minPrecisionSelfDelegateAmount),
+		TotalShare:    sdkmath.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
+		OperatorShare: sdkmath.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
 	})
 	suite.NoError(err)
 	err = suite.App.AVSManagerKeeper.OperatorOptAction(suite.Ctx, operatorParams)
@@ -433,4 +437,37 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 			}
 		})
 	}
+}
+
+func (suite *AVSTestSuite) TestPayRestakingFee() {
+	err := suite.App.AVSManagerKeeper.PayRestakingFee(suite.Ctx, suite.avsAddress)
+	suite.Error(err)
+	suite.Contains(err.Error(), "insufficient funds")
+
+	// deposit imua-native-token
+	err = testutil.FundAccountWithBaseDenom(
+		suite.Ctx, suite.App.BankKeeper, suite.avsAddress[:], math.MaxInt64,
+	)
+
+	err = suite.App.AVSManagerKeeper.PayRestakingFee(suite.Ctx, suite.avsAddress)
+	suite.NoError(err)
+	// check state
+	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, suite.avsAddress[:], utils.BaseDenom)
+
+	discount, err := sdk.NewDecFromStr(types.DefaultDiscountedRateStr)
+	suite.NoError(err)
+	// Convert DefaultAmount to sdkmath.Int first
+	defaultAmountInt := sdkmath.NewInt(int64(types.DefaultAmount))
+	amount := sdkmath.LegacyNewDecFromInt(defaultAmountInt).Mul(sdk.OneDec().Sub(discount)).TruncateInt()
+
+	// Convert math.MaxInt64 to sdkmath.Int for proper subtraction
+	maxInt64 := sdkmath.NewInt(math.MaxInt64)
+	expectedAmount := maxInt64.Sub(amount)
+
+	suite.Equal(expectedAmount.Int64(), balance.Amount.Int64())
+
+	fmt.Println(balance)
+	info, err := suite.App.AVSManagerKeeper.GetAVSPaymentInfo(suite.Ctx, suite.avsAddress.String())
+	suite.NoError(err)
+	suite.Equal(info.AvsAddress, suite.avsAddress.String())
 }

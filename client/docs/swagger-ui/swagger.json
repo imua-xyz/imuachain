@@ -21953,6 +21953,95 @@
         ]
       }
     },
+    "/imuachain/avs/v1/params": {
+      "get": {
+        "summary": "Parameters queries the parameters of the module.",
+        "operationId": "Params",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "params": {
+                  "description": "params holds all the parameters of this module.",
+                  "type": "object",
+                  "properties": {
+                    "discounted_rate": {
+                      "type": "string",
+                      "title": "discounted_rate is IMUA discount rate (e.g., 0.1 for 10%)"
+                    },
+                    "penalty_rate": {
+                      "type": "string",
+                      "title": "penalty_rate is Instant Unbonding penalty (e.g., 0.25 for 25%)"
+                    },
+                    "base_restaking_fee": {
+                      "title": "base_restaking_fee is Base fee (e.g., 1000 IMUA)",
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "Coin defines a token with a denomination and an amount.\n\nNOTE: The amount field is an Int which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "withdrawal_period": {
+                      "type": "integer",
+                      "format": "int64",
+                      "title": "withdrawal_period is In epochs"
+                    },
+                    "epoch_identifier": {
+                      "type": "string",
+                      "title": "epoch_identifier for avs restaking fee"
+                    }
+                  }
+                }
+              },
+              "description": "QueryParamsResponse is response type for the Query/Params RPC method."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/avs/v1/submit_task_result/{task_address}/{task_id}/{operator_address}": {
       "get": {
         "summary": "Submit task result for the specified task and operator",
@@ -44297,6 +44386,42 @@
       },
       "title": "OperatorActivePowerList is the power list of operators opt-in to the current task.\nBecause power is always changing, record the power of all operators\nwho have completed tasks and submitted results by the task deadline"
     },
+    "imuachain.avs.v1.Params": {
+      "type": "object",
+      "properties": {
+        "discounted_rate": {
+          "type": "string",
+          "title": "discounted_rate is IMUA discount rate (e.g., 0.1 for 10%)"
+        },
+        "penalty_rate": {
+          "type": "string",
+          "title": "penalty_rate is Instant Unbonding penalty (e.g., 0.25 for 25%)"
+        },
+        "base_restaking_fee": {
+          "title": "base_restaking_fee is Base fee (e.g., 1000 IMUA)",
+          "type": "object",
+          "properties": {
+            "denom": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "string"
+            }
+          },
+          "description": "Coin defines a token with a denomination and an amount.\n\nNOTE: The amount field is an Int which implements the custom method\nsignatures required by gogoproto."
+        },
+        "withdrawal_period": {
+          "type": "integer",
+          "format": "int64",
+          "title": "withdrawal_period is In epochs"
+        },
+        "epoch_identifier": {
+          "type": "string",
+          "title": "epoch_identifier for avs restaking fee"
+        }
+      },
+      "description": "Params defines the parameters for the module."
+    },
     "imuachain.avs.v1.Phase": {
       "type": "string",
       "enum": [
@@ -44458,6 +44583,48 @@
         }
       },
       "title": "QueryChallengeInfoResponse is the response of avs related information"
+    },
+    "imuachain.avs.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "description": "params holds all the parameters of this module.",
+          "type": "object",
+          "properties": {
+            "discounted_rate": {
+              "type": "string",
+              "title": "discounted_rate is IMUA discount rate (e.g., 0.1 for 10%)"
+            },
+            "penalty_rate": {
+              "type": "string",
+              "title": "penalty_rate is Instant Unbonding penalty (e.g., 0.25 for 25%)"
+            },
+            "base_restaking_fee": {
+              "title": "base_restaking_fee is Base fee (e.g., 1000 IMUA)",
+              "type": "object",
+              "properties": {
+                "denom": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "string"
+                }
+              },
+              "description": "Coin defines a token with a denomination and an amount.\n\nNOTE: The amount field is an Int which implements the custom method\nsignatures required by gogoproto."
+            },
+            "withdrawal_period": {
+              "type": "integer",
+              "format": "int64",
+              "title": "withdrawal_period is In epochs"
+            },
+            "epoch_identifier": {
+              "type": "string",
+              "title": "epoch_identifier for avs restaking fee"
+            }
+          }
+        }
+      },
+      "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
     "imuachain.avs.v1.QuerySubmitTaskResultResponse": {
       "type": "object",

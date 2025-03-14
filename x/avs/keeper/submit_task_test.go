@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
-	utiltx "github.com/evmos/evmos/v16/testutil/tx"
 	"math/big"
 	"strconv"
 	"time"
+
+	utiltx "github.com/evmos/evmos/v16/testutil/tx"
 
 	"github.com/ethereum/go-ethereum/common/math"
 

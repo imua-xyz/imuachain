@@ -8,8 +8,7 @@ import (
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-type Test struct {
-}
+type Test struct{}
 
 var (
 	tData     *Test

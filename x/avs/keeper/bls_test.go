@@ -3,9 +3,10 @@ package keeper_test
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	utiltx "github.com/evmos/evmos/v16/testutil/tx"
-	"math/big"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/imua-xyz/imuachain/x/avs/types"

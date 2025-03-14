@@ -32,29 +32,49 @@ type (
 	Keeper struct {
 		cdc            codec.BinaryCodec
 		storeKey       storetypes.StoreKey
+		bankKeeper     types.BankKeeper
 		operatorKeeper types.OperatorKeeper
 		// other keepers
-		assetsKeeper types.AssetsKeeper
-		epochsKeeper types.EpochsKeeper
-		evmKeeper    types.EVMKeeper
+		assetsKeeper     types.AssetsKeeper
+		epochsKeeper     types.EpochsKeeper
+		evmKeeper        types.EVMKeeper
+		feeCollectorName string
+		// the address capable of executing a MsgUpdateParams message, typically x/gov.
+		authority string
 	}
 )
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
+	ak types.AccountKeeper,
+	bk types.BankKeeper,
 	operatorKeeper types.OperatorKeeper,
 	assetKeeper types.AssetsKeeper,
 	epochsKeeper types.EpochsKeeper,
 	evmKeeper types.EVMKeeper,
+	feeCollectorName string,
+	authority string,
 ) Keeper {
+	// ensure avs module account is set
+	if addr := ak.GetModuleAddress(types.ModuleName); addr == nil {
+		panic(fmt.Sprintf("the x/%s module account has not been set", types.ModuleName))
+	}
+	// ensure authority is a valid bech32 address
+	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
+		panic(fmt.Sprintf("authority address %s is invalid: %s", authority, err))
+	}
+
 	return Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		operatorKeeper: operatorKeeper,
-		assetsKeeper:   assetKeeper,
-		epochsKeeper:   epochsKeeper,
-		evmKeeper:      evmKeeper,
+		cdc:              cdc,
+		storeKey:         storeKey,
+		bankKeeper:       bk,
+		operatorKeeper:   operatorKeeper,
+		assetsKeeper:     assetKeeper,
+		epochsKeeper:     epochsKeeper,
+		evmKeeper:        evmKeeper,
+		feeCollectorName: feeCollectorName,
+		authority:        authority,
 	}
 }
 

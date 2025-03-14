@@ -7,6 +7,7 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/avs/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/avs/types";
 
@@ -148,6 +149,7 @@ message RewardAssetList {
   // reward_asset_list is a collection of asset bundles rewarded of the task.
   repeated RewardAssetInfo reward_asset_list = 1;
 }
+
 // RewardAssetInfo is an asset bundle for task rewards
 message RewardAssetInfo {
   // asset_id is a asset that the AVS support
@@ -183,7 +185,7 @@ message OperatorActivePowerInfo {
 
 // BlsPubKeyInfo is the task info.
 message BlsPubKeyInfo {
-  // operator_address is the acc address of operator 
+  // operator_address is the acc address of operator
   string operator_address = 1;
   // avs_address is the address of avs as a hex string
   string avs_address = 2;
@@ -292,6 +294,23 @@ message SubmitTaskResultReq {
 // SubmitTaskResultResponse is the response to submit task results.
 message SubmitTaskResultResponse {}
 
+// MsgUpdateParams is the Msg/UpdateParams request type for the parameters of
+// this module..
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  // authority is the address of the account, which must sign this request.
+  // typically, it is the address of the governance module.
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+  // if a parameter is not supplied, the previously set value is used.
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateParamsResponse defines the response structure for executing a
+// MsgUpdateParams message.
+message MsgUpdateParamsResponse {}
+
 // Msg defines the AVS related Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
@@ -310,5 +329,9 @@ service Msg {
   // SubmitTaskResult operator submit task results .
   rpc SubmitTaskResult(SubmitTaskResultReq) returns (SubmitTaskResultResponse) {
     option (google.api.http).post = "/imuachain/avs/v1/tx/SubmitTaskResult";
+  }
+  // UpdateParams updates the parameters of the module.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
+    option (google.api.http).post = "/imuachain/avs/v1/tx/MsgUpdateParams";
   }
 }

@@ -4,8 +4,11 @@ import (
 	"context"
 	"strconv"
 
+	"google.golang.org/grpc/codes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/avs/types"
+	"google.golang.org/grpc/status"
 )
 
 var _ types.QueryServer = &Keeper{}
@@ -54,4 +57,13 @@ func (k Keeper) QueryChallengeInfo(ctx context.Context, req *types.QueryChalleng
 	return &types.QueryChallengeInfoResponse{
 		ChallengeAddress: addr,
 	}, err
+}
+
+func (k Keeper) Params(goCtx context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	return &types.QueryParamsResponse{Params: *k.GetParams(ctx)}, nil
 }

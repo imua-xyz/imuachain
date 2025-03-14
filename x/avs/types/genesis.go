@@ -16,6 +16,7 @@ import (
 const DefaultIndex uint64 = 1
 
 func NewGenesisState(
+	params Params,
 	avsInfos []AVSInfo,
 	taskInfos []TaskInfo,
 	blsPubKeys []BlsPubKeyInfo,
@@ -23,6 +24,7 @@ func NewGenesisState(
 	challengeInfos []ChallengeInfo,
 	taskNums []TaskID,
 	chainIDInfos []ChainIDInfo,
+	paymentInfos []AVSPaymentInfo,
 ) *GenesisState {
 	// Ensure slices are never nil
 	if avsInfos == nil {
@@ -46,7 +48,11 @@ func NewGenesisState(
 	if chainIDInfos == nil {
 		chainIDInfos = []ChainIDInfo{}
 	}
+	if paymentInfos == nil {
+		paymentInfos = []AVSPaymentInfo{}
+	}
 	return &GenesisState{
+		Params:          params,
 		AvsInfos:        avsInfos,
 		TaskInfos:       taskInfos,
 		BlsPubKeys:      blsPubKeys,
@@ -54,18 +60,22 @@ func NewGenesisState(
 		ChallengeInfos:  challengeInfos,
 		TaskNums:        taskNums,
 		ChainIdInfos:    chainIDInfos,
+		PayInfos:        paymentInfos,
 	}
 }
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	return NewGenesisState(nil, nil, nil, nil, nil, nil, nil)
+	return NewGenesisState(DefaultParams(), nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 // Explanation: The existence of the operator was not checked as it depends on the operator module that needs to be loaded first
 func (gs GenesisState) Validate() error {
+	if err := gs.Params.Validate(); err != nil {
+		return fmt.Errorf("params check fail: %s", err)
+	}
 	// Check for duplicated avs address
 	avsAddresses := make(map[string]bool)
 	for _, info := range gs.AvsInfos {
@@ -161,6 +171,18 @@ func (gs GenesisState) Validate() error {
 			return fmt.Errorf("duplicate chainId %v", result)
 		}
 		chainIDMap[result.AvsAddress] = true
+	}
+
+	// Check for duplicated avs address
+	payments := make(map[string]bool)
+	for _, info := range gs.PayInfos {
+		if !common.IsHexAddress(info.AvsAddress) {
+			return fmt.Errorf("invalid AVS address: %s", info.AvsAddress)
+		}
+		if payments[info.AvsAddress] {
+			return fmt.Errorf("duplicate AVS address: %s", info.AvsAddress)
+		}
+		payments[info.AvsAddress] = true
 	}
 	return nil
 }
