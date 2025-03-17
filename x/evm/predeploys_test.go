@@ -6,6 +6,7 @@ package evm_test
 // 3. CREATE2 can be used to deploy CREATE3 successfully.
 
 import (
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -14,12 +15,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	evmostypes "github.com/evmos/evmos/v16/types"
+	evmosevmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	"github.com/imua-xyz/imuachain/x/evm/testdata"
 	"github.com/imua-xyz/imuachain/x/evm/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -133,13 +138,13 @@ func (suite *KeeperTestSuite) TestCreate2Deployment() {
 	// runCode is the code fetched via eth_getCode.
 	// it can be used directly in a predeploy but not to create a new contract, because
 	// it does not have the constructor.
-	runCode := "6080604052348015600f57600080fd5b506004361060285760003560e01c806301ffc9a714602d575b600080fd5b604e60383660046062565b6001600160e01b0319166301ffc9a760e01b1490565b604051901515815260200160405180910390f35b600060208284031215607357600080fd5b81356001600160e01b031981168114608a57600080fd5b939250505056fea2646970667358221220a2767d05726e53026a408e98af9d44da774b561ee9ba08de62018a7745fb373564736f6c63430008170033"
-	runCodeBytes := common.Hex2Bytes(runCode)
+	runCode := testdata.DeployedContract.BinRuntime
+	runCodeBytes := runCode[:]
 	// initCode includes constructor + some handling / prep + runCode
-	initCode := "608060405234801561001057600080fd5b5060c78061001f6000396000f3fe" + runCode
-	initCodeBytes := common.Hex2Bytes(initCode)
+	initCode := testdata.DeployedContract.Bin
+	initCodeBytes := initCode[:]
 	// destination
-	destination := common.HexToAddress("0x5c4A7c0B21C8D4166d891A9372Ce016401980Ae0")
+	destination := common.HexToAddress("0xd26FCa167a00946c9D8eeCA081f6D0466fd5c7C7")
 	// check that this matches the derived create3 destination
 	derived := crypto.CreateAddress2(create2, salt, crypto.Keccak256Hash(initCodeBytes).Bytes())
 	suite.Require().Equal(destination.String(), derived.String())
@@ -170,8 +175,99 @@ func (suite *KeeperTestSuite) TestCreate2Deployment() {
 	suite.Require().Equal(crypto.Keccak256Hash(runCodeBytes), ethAcc.GetCodeHash())
 	suite.Require().Equal(
 		suite.App.EvmKeeper.GetCode(suite.Ctx, ethAcc.GetCodeHash()),
-		runCodeBytes,
+		[]byte(runCode),
 	)
 	// no funds are generated
 	suite.Require().Equal(beforeBalance, suite.App.EvmKeeper.GetBalance(suite.Ctx, destination))
+}
+
+// the predeploys are blocked from receiving funds in app/app.go.
+// however, this block should not deter them from forwarding funds
+// to the contracts they deploy.
+func (suite *KeeperTestSuite) TestBalanceForwarding() {
+	// we will call Create3 predeploy with a random contract init code
+	// and a msg.value > 0. we will then check the deployed contract
+	// has received the value.
+	create3Addr := common.HexToAddress("0x9fBB3DF7C40Da2e5A0dE984fFE2CCB7C47cd0ABf")
+	// destination address
+	txSalt := common.Hash{}
+	unhashedSalt := append(suite.Address[:], txSalt[:]...)
+	salt := crypto.Keccak256Hash(unhashedSalt)
+	proxyRuntimeBytecode := common.FromHex("363d3d37363d34f0")
+	proxyRuntimeBytecodeHash := crypto.Keccak256Hash(proxyRuntimeBytecode)
+	proxyBytecode := common.FromHex("67363d3d37363d34f03d5260086018f3")
+	proxyBytecodeHash := crypto.Keccak256Hash(proxyBytecode)
+	proxyAddress := crypto.CreateAddress2(create3Addr, salt, proxyBytecodeHash.Bytes())
+	destination := crypto.CreateAddress(proxyAddress, 1)
+	// calculate the destination using ethCall
+	method := testdata.Create3FactoryContract.ABI.Methods["getDeployed"]
+	args, err := method.Inputs.Pack(suite.Address, txSalt)
+	suite.Require().NoError(err)
+	args = append(method.ID, args...)
+	packedArgs := hexutil.Bytes(args)
+	txArgs := evmosevmtypes.TransactionArgs{
+		To:   &create3Addr,
+		Data: &packedArgs,
+	}
+	marshalledArgs, err := json.Marshal(txArgs)
+	suite.Require().NoError(err)
+	ret, err := suite.QueryClientEVM.EthCall(sdk.WrapSDKContext(suite.Ctx), &evmosevmtypes.EthCallRequest{
+		Args: marshalledArgs,
+	})
+	suite.Require().NoError(err)
+	derivedDest := common.BytesToAddress(ret.Ret)
+	suite.Require().Equal(destination.String(), derivedDest.String())
+	// at t = 0, the contracts will not exist
+	acc := suite.App.AccountKeeper.GetAccount(suite.Ctx, destination[:])
+	suite.Require().Nil(acc)
+	acc = suite.App.AccountKeeper.GetAccount(suite.Ctx, proxyAddress[:])
+	suite.Require().Nil(acc)
+	// we need the create3 interface to make the callArgs
+	callArgs := testutilcontracts.CallArgs{
+		ContractAddr: create3Addr,
+		ContractABI:  testdata.Create3FactoryContract.ABI,
+		PrivKey:      s.PrivKey,
+	}
+	callArgs = callArgs.
+		WithMethodName("deploy").
+		WithArgs(txSalt, []byte(testdata.DeployedContract.Bin[:])).
+		WithAmount(common.Big1)
+	_, _, err = testutilcontracts.Call(suite.Ctx, suite.App, callArgs)
+	suite.Require().NoError(err)
+	// post deployment, the 2 accounts should exist
+	tests := []struct {
+		Name     string
+		Address  common.Address
+		Balance  *big.Int
+		CodeHash common.Hash
+		Nonce    uint64
+	}{
+		{
+			Name:     "destination",
+			Address:  destination,
+			Balance:  common.Big1,
+			CodeHash: crypto.Keccak256Hash(testdata.DeployedContract.BinRuntime),
+			Nonce:    suite.App.EvmKeeper.GetNewContractNonce(suite.Ctx),
+		},
+		{
+			Name:     "proxy",
+			Address:  proxyAddress,
+			Balance:  common.Big0,
+			CodeHash: proxyRuntimeBytecodeHash,
+			// since the proxy deploys the destination contract,
+			// the nonce of the proxy increases by 1
+			Nonce: suite.App.EvmKeeper.GetNewContractNonce(suite.Ctx) + 1,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.Name, func() {
+			acc = suite.App.AccountKeeper.GetAccount(suite.Ctx, tc.Address[:])
+			suite.Require().NotNil(acc)
+			ethAcc, ok := acc.(evmostypes.EthAccountI)
+			suite.Require().True(ok)
+			suite.Require().Equal(tc.Balance, suite.App.EvmKeeper.GetBalance(suite.Ctx, tc.Address))
+			suite.Require().Equal(tc.CodeHash, ethAcc.GetCodeHash())
+			suite.Require().Equal(tc.Nonce, ethAcc.GetSequence())
+		})
+	}
 }
