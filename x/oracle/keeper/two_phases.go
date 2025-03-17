@@ -10,9 +10,9 @@ import (
 )
 
 // Setup2ndPhase sets up the 2nd phase index for the input feederID and validators, and also sets the leaf count and root hash of the merkle tree
-func (k Keeper) Setup2ndPhase(ctx sdk.Context, feederID uint64, validators []string, leafCount uint32, rootHash []byte) {
+func (k Keeper) Setup2ndPhase(ctx sdk.Context, feederID uint64, validators []string, leafCount uint32, rootHash []byte) error {
 	k.Setup2ndPhaseNextPieceIndex(ctx, feederID, validators)
-	k.SetFeederTreeInfo(ctx, feederID, leafCount, rootHash)
+	return k.SetFeederTreeInfo(ctx, feederID, leafCount, rootHash)
 }
 
 // we group the validators by feederID instead of the opposite way because when we set up or clear,
@@ -134,9 +134,9 @@ func (k Keeper) GetRawDataPieces(ctx sdk.Context, feederID uint64) ([][]byte, er
 }
 
 // SetFeederTreeInfo sets the leaf count and root hash of the merkle tree for the input feederID
-func (k Keeper) SetFeederTreeInfo(ctx sdk.Context, feederID uint64, count uint32, rootHash []byte) {
+func (k Keeper) SetFeederTreeInfo(ctx sdk.Context, feederID uint64, count uint32, rootHash []byte) error {
 	if count == 0 || len(rootHash) != common.HashLength {
-		return
+		return fmt.Errorf("invalid input: count:%d, rootHash:%v", count, rootHash)
 	}
 	store := ctx.KVStore(k.storeKey)
 	key := types.TwoPhaseFeederTreeInfoKey(feederID)
@@ -146,6 +146,7 @@ func (k Keeper) SetFeederTreeInfo(ctx sdk.Context, feederID uint64, count uint32
 	}
 	bz := k.cdc.MustMarshal(treeInfo)
 	store.Set(key, bz)
+	return nil
 }
 
 // GetFeederTreeInfo returns the leaf count and root hash of the merkle tree for the input feederID

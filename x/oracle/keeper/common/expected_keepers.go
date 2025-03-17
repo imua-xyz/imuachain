@@ -73,7 +73,7 @@ type KeeperOracle interface {
 	GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.Price, error)
 	GetMultipleAssetsPrices(ctx sdk.Context, assetIDs map[string]interface{}) (map[string]types.Price, error)
 
-	Setup2ndPhase(ctx sdk.Context, feederID uint64, validators []string, leafCount uint32, rootHash []byte)
+	Setup2ndPhase(ctx sdk.Context, feederID uint64, validators []string, leafCount uint32, rootHash []byte) error
 	Clear2ndPhase(ctx sdk.Context, feederID uint64, rootIndex uint32)
 	AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*types.HashNode)
 	SetNextPieceIndexForFeeder(ctx sdk.Context, feederID uint64, pieceIndex uint32)
