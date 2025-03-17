@@ -3,9 +3,11 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type PieceWithProof struct {
@@ -129,6 +131,25 @@ const (
 	NilDetID = ""
 
 	DelimiterForBase64 = "|"
+
+	// 8192 pieces with 48,000 bytes piece size can support for 48000*8192 = 393,216,000 bytes = 393.216 MB rawData
+	// we limit the pieceCount to 8192 results to max deepth of merkle tree to be 13 excluding the root, which
+	// means the max proofPath length is 13 with size of 13*(32+4)= 468 bytes which is acceptable compared to the default pieceSize 48,000 bytes
+	// however, 8192 pieces means we need the corresponding tokenfeeder to have a interval of more than 8192 which equals to about 7 hours
+	// the bigger the rawData, the longer the interval would be
+	MaxPieceCount = 8192
+	MaxPieceSize  = 48000
+	// as for default limitation, one nst is able to take up to 2.4% capablity of one block, 10 NST would at most take up to 24% of one block
+	// 24% means: we got 200000*20*10=40,000,000 validators have their balance changed information at the same block
+	MaxNSTCount = 10
+	// we limit the max stakers per NST to 200,000 to avoid the rawData of balance change being too large
+	// 200,000 stakers with 20 validators per staker could be 4,000,000 validators in total, which is large enough for NST scenario
+	// 200,000 stakers roughly would use at most 200,000 * (4+8) = 2,400,000 bytes = 2.4 MB rawData
+	// with default 48,000 bytes piece size, it would be 50 pieces results to a tokeFeeder with about 50 intervals which equals to 2.5 minutes frequency of updating
+	MaxStakersPerNST = 200_000
+	// we limit the max validators per staker to 20 to avoid the validatorList being too large for a staker
+	// and the nst balance could be quite big for 20 validators, if a user wants to staker more, they should create another staker
+	MaxValidatorsPerStaker = 20
 )
 
 var (
@@ -172,4 +193,14 @@ func ConsAddrStrFromCreator(creator string) (string, error) {
 		return "", err
 	}
 	return sdk.ConsAddress(accAddress).String(), nil
+}
+
+func GetClientChainIDFromNSTAssetID(assetID string) (uint64, bool) {
+	if ccIDStr, ok := strings.CutPrefix(assetID, NSTIDPrefix); ok {
+		ccID, err := hexutil.DecodeUint64(ccIDStr)
+		if err == nil {
+			return ccID, true
+		}
+	}
+	return 0, false
 }

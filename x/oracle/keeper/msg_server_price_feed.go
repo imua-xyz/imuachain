@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -41,9 +42,15 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 
 	// goto rawData process which needs no 'aggragation', we just verify the provided piece with recoreded root which got consensus
 	if msg.IsPhaseTwo() {
-		cachedRawData, err := ms.ProcessRawData(ctx, msg, ctx.IsCheckTx())
+		cachedIndex, cachedRawData, err := ms.ProcessRawData(ctx, msg, ctx.IsCheckTx())
 		if err == nil {
 			logger.Info("quote of 2nd-phase added rawData piece", append(logQuote, "rootHash", hex.EncodeToString(cachedRawData), "piece-index", msg.Prices[0].Prices[0].DetID)...)
+			ctx.EventManager().EmitEvent(sdk.NewEvent(
+				types.EventTypeCreatePrice,
+				sdk.NewAttribute(types.AttributeKeyRawDataPieceUpdate, types.AttributeValueRawDataPieceUpdated),
+				sdk.NewAttribute(types.AttributeKeyRawDataPieceChange, fmt.Sprintf("%d_%d", msg.FeederID, cachedIndex)),
+				//				sdk.NewAttribute(types.AttributeKeyFeederID, strconv.FormatUint(msg.FeederID, 10)),
+			))
 			return &types.MsgCreatePriceResponse{}, nil
 		}
 		logger.Error("quote of 2nd-phase for rawData piece failed", append(logQuote, "error", err)...)

@@ -147,7 +147,19 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	if err != nil {
 		return err
 	}
+
+	_, chainID, _ := assetstypes.ParseID(assetID)
+	feederID, ok := k.GetNSTFeederIDFromClientChainID(chainID)
+	if !ok {
+		return errors.New("failed to get corresponding feederID from clientChainID")
+	}
+
 	amountInt64 := amount.Quo(decimalInt).Int64()
+	var withdraw bool
+	if amountInt64 < 0 {
+		withdraw = true
+		amountInt64 = -amountInt64
+	}
 	// emit an event to tell that a staker's validator list has changed
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,
@@ -161,7 +173,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		stakerInfo = types.NewStakerInfo(stakerAddr, validatorPubkey)
 	} else {
 		k.cdc.MustUnmarshal(value, stakerInfo)
-		if amountInt64 > 0 {
+		if !withdraw {
 			// deposit add a new validator into staker's validatorList
 			// one validator can only deposit once before it completed withdraw which remove its pubkey form this list. So there's no need to check duplication
 			stakerInfo.ValidatorPubkeyList = append(stakerInfo.ValidatorPubkeyList, validatorPubkey)
@@ -177,11 +189,11 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	// #nosec G115
 	newBalance.Block = uint64(ctx.BlockHeight())
 
-	if amountInt64 > 0 {
+	if !withdraw {
 		newBalance.Change = types.Action_ACTION_DEPOSIT
 	} else {
 		// TODO: check if this validator has withdraw all its asset and then we can move it out from the staker's validatorList
-		// currently when withdraw happened we assume this validator has left the staker's validatorList (deposit/withdraw all of that validator's staking ETH(<=32))
+		// currently when withdraw happened we assume this validator has left the staker's validatorList (deposit/withdraw all of that validator's staking ETH)
 		newBalance.Change = types.Action_ACTION_WITHDRAW
 		for i, vPubkey := range stakerInfo.ValidatorPubkeyList {
 			if vPubkey == validatorPubkey {
@@ -192,7 +204,14 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		}
 	}
 
-	newBalance.Balance += amountInt64
+	if withdraw {
+		if newBalance.Balance < uint64(amountInt64) {
+			return errors.New("withdraw more than deposit")
+		}
+		newBalance.Balance -= uint64(amountInt64)
+	} else {
+		newBalance.Balance += uint64(amountInt64)
+	}
 
 	keyStakerList := types.NativeTokenStakerListKey(assetID)
 	valueStakerList := store.Get(keyStakerList)
@@ -217,7 +236,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	}
 
 	if !exists {
-		if amountInt64 <= 0 {
+		if withdraw {
 			return errors.New("remove unexist validator")
 		}
 		stakerList.StakerAddrs = append(stakerList.StakerAddrs, stakerAddr)
@@ -237,7 +256,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	// valid veriosn start from 1
 	version := k.IncreaseNSTVersion(ctx, assetID)
 	// we use index to sync with client about status of stakerInfo.ValidatorPubkeyList
-	eventValue := fmt.Sprintf("%d_%s_%d", stakerInfo.StakerIndex, validatorPubkey, version)
+	eventValue := fmt.Sprintf("%d_%s_%d_%d_%d", stakerInfo.StakerIndex, validatorPubkey, version, amountInt64, feederID)
 	if newBalance.Change == types.Action_ACTION_DEPOSIT {
 		eventValue = fmt.Sprintf("%s_%s", types.AttributeValueNativeTokenDeposit, eventValue)
 	} else {
@@ -353,7 +372,11 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 			if err != nil {
 				return err
 			}
-			if err := k.delegationKeeper.UpdateNSTBalance(ctx, getStakerID(stakerAddr, chainID), assetID, sdkmath.NewIntWithDecimal(delta, decimal)); err != nil {
+			amountChange := sdkmath.NewIntFromUint64(delta)
+			amountChange = amountChange.Mul(sdkmath.NewIntWithDecimal(1, decimal))
+
+			// if err := k.delegationKeeper.UpdateNSTBalance(ctx, getStakerID(stakerAddr, chainID), assetID, sdkmath.NewIntWithDecimal(delta, decimal)); err != nil {
+			if err := k.delegationKeeper.UpdateNSTBalance(ctx, getStakerID(stakerAddr, chainID), assetID, amountChange); err != nil {
 				return err
 			}
 			newBalance.Balance = balance

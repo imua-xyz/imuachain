@@ -371,6 +371,15 @@ func (c *caches) GetTokenFeederForFeederID(feederID int64) (tokenFeeder *oraclet
 	return
 }
 
+func (c *caches) GetNSTFeederIDFromClientChainID(clientChainID uint64) (uint64, bool) {
+	for fID, tokenFeeder := range c.params.params.TokenFeeders {
+		if ccID, ok := oracletypes.GetClientChainIDFromNSTAssetID(c.params.params.Tokens[tokenFeeder.TokenID].AssetID); ok && ccID == clientChainID {
+			return uint64(fID), true
+		}
+	}
+	return 0, false
+}
+
 // SkipCommit skip real commit by setting the update flag to false
 func (c *caches) SkipCommit() {
 	c.validators.update = false

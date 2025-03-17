@@ -256,6 +256,12 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators
 	_, vUpdated, pUpdated := f.cs.Commit(ctx, false)
 	if vUpdated || pUpdated {
 		f.k.Logger(ctx).Info("update caches", "validatorUpdated", vUpdated, "paramsUpdated", pUpdated)
+		if pUpdated {
+			ctx.EventManager().EmitEvent(sdk.NewEvent(
+				oracletypes.EventTypeCreatePrice,
+				sdk.NewAttribute(oracletypes.AttributeKeyParamsUpdated, oracletypes.AttributeValueParamsUpdatedSuccess),
+			))
+		}
 	}
 	return activeValidators
 }
@@ -304,14 +310,21 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 
 						// set up for 2-phases aggregation
 						if r.twoPhases {
+
+							rootHash := []byte(finalPrice.Price[:32])
+							tmp := finalPrice.Price[32:]
+							// no need to check err, the format is guarded by anteHandler
+							leafCount, _ := strconv.ParseUint(tmp, 10, 32)
 							// no more validation check, they've all been done by previous process
-							lc, _ := strconv.ParseUint(finalPrice.DetID, 10, 32)
+							//							lc, _ := strconv.ParseUint(finalPrice.DetID, 10, 32)
 							// set up mem-round for 2nd phase aggregation
-							r.m, _ = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(lc), []byte(finalPrice.Price))
+							//							r.m, _ = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(lc), []byte(finalPrice.Price))
+							r.m, _ = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(leafCount), rootHash)
 							// set up state for 2nd phase aggregation
 							// #nosec G115
 							logger.Info("set up 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
-							f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(lc), []byte(finalPrice.Price))
+							// f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(lc), []byte(finalPrice.Price))
+							f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(leafCount), rootHash)
 						}
 					}
 				} else {
@@ -747,27 +760,16 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		}
 		l := len(ps.Prices)
 		if deterministic {
-			if l == 0 {
-				return nil, fmt.Errorf("source:id_%d has no valid price, empty list", ps.SourceID)
-			}
 			if l > int(f.cs.GetMaxNonce()) {
 				return nil, fmt.Errorf("deterministic source:id_%d must provide no more than %d prices from different DetIDs, got:%d", ps.SourceID, f.cs.GetMaxNonce(), l)
 			}
-			seenDetIDs := make(map[string]struct{})
 			for _, p := range ps.Prices {
-				if _, ok := seenDetIDs[p.DetID]; ok {
-					return nil, errors.New("duplicated detIDs")
-				}
-				if len(p.Price) == 0 {
-					return nil, errors.New("price must not be empty")
-				}
 				if len(p.DetID) == 0 {
 					return nil, errors.New("detID of deteministic price must not be empty")
 				}
 				if p.Decimal != decimal {
 					return nil, fmt.Errorf("decimal not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
 				}
-				seenDetIDs[p.DetID] = struct{}{}
 			}
 		} else {
 			// NOTE: v1 does not actually have this type of sources
@@ -775,17 +777,11 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 				return nil, fmt.Errorf("non-deteministic sources should provide exactly one valid price, got:%d", len(ps.Prices))
 			}
 			p := ps.Prices[0]
-			if len(p.Price) == 0 {
-				return nil, errors.New("price must not be empty")
-			}
 			if p.Decimal != decimal {
 				return nil, fmt.Errorf("decimal not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
 			}
 			if len(p.DetID) > 0 {
 				return nil, errors.New("price from non-deterministic should not have detID")
-			}
-			if len(p.Timestamp) == 0 {
-				return nil, errors.New("price from non-deterministic must have timestamp")
 			}
 		}
 	}
@@ -794,27 +790,16 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		return nil, fmt.Errorf("feederID:%d is configured for 2-phases aggregation, but the message is not of 2-phases", msg.FeederID)
 	}
 	// extra check for message as 1st phase for 2-phases aggregation
-	if msg.IsPhaseOne() {
-		if len(msg.Prices) != 1 {
-			return nil, errors.New("2-phases aggregation should have exactly one source")
-		}
-		if len(msg.Prices[0].Prices) != 1 {
-			return nil, errors.New("2-phases aggregation should have exactly one price")
-		}
+	if msg.IsPhaseTwo() {
 		lPrice := len(msg.Prices[0].Prices[0].Price)
-		if lPrice == 0 || lPrice > int(f.cs.RawDataPieceSize()) {
-			return nil, fmt.Errorf("2-phases aggregation should have exactly one price with length between 1 and %d", f.cs.RawDataPieceSize())
+		if lPrice > int(f.cs.RawDataPieceSize()) {
+			return nil, fmt.Errorf("message for 2nd-phase aggregation should have exactly one price with length between 1 and %d", f.cs.RawDataPieceSize())
 		}
+	}
 
-		// detID is used to tell how many pieces the raw data is divided into
-		leafCountStr := msg.Prices[0].Prices[0].DetID
-		if len(leafCountStr) == 0 {
-			return nil, errors.New("2-phases aggregation should have detID to tell how many pieces the raw data is divided into")
-		}
-		leafCount, err := strconv.ParseUint(leafCountStr, 10, 32)
-		if err != nil {
-			return nil, fmt.Errorf("2-phases aggregation detID should be a valid uint32, got:%s", leafCountStr)
-		}
+	if msg.IsPhaseOne() {
+		// validation had been done by msg.ValidateBasic
+		leafCount, _ := strconv.ParseUint(msg.Prices[0].Prices[0].Price[32:], 10, 32)
 
 		// we wait one more maxNonce blocks to make sure proposer getting expected txs in their mempool
 		// we don't use the last block of current round(which is the baseBlock of the next round), so the quotingWindow for 2nd-phase message is from [baseBlock+2*maxNonce, nextBaseBlock-1]
@@ -825,7 +810,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		}
 		// #nosec G115  // maxNonce is positive
 		windowForPhaseTwo := interval - uint64(f.cs.GetMaxNonce())*2
-		if leafCount < 1 || leafCount > windowForPhaseTwo {
+		if leafCount > windowForPhaseTwo {
 			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d and be at least 1, got%d", msg.FeederID, windowForPhaseTwo, leafCount)
 		}
 	}
@@ -1153,6 +1138,10 @@ func (f *FeederManager) LatestRoundBaseBlock(feederID uint64) (uint64, bool) {
 
 	// #nosec G115
 	return uint64(r.roundBaseBlock), true
+}
+
+func (f *FeederManager) GetNSTFeederIDFromClientChainID(clientChainID uint64) (uint64, bool) {
+	return f.cs.GetNSTFeederIDFromClientChainID(clientChainID)
 }
 
 // recoveryStartPoint returns the height to start the recovery process
