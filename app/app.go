@@ -1394,6 +1394,8 @@ func (app *ImuachainApp) BlockedAddrs() map[string]bool {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
 	}
 
+	// EVM blocked addrs are not fetched via evmkeeper because that is not yet initialized.
+
 	// prevent all precompile addresses from receiving or sending tokens
 	// we don't add the Ethereum-inherited Berlin precompiles, since they are
 	// allowed to receive tokens on Eth mainnet.
@@ -1403,6 +1405,10 @@ func (app *ImuachainApp) BlockedAddrs() map[string]bool {
 	}
 
 	// now do the predeploys
+	// TODO: check if the predeploys can forward tokens to deployments made through them
+	// by `msg.value` even if the predeploys are themselves blocked from receiving funds.
+	// ideally, this should be permitted because the balance is only saved when committing
+	// the state.
 	for _, hexAddr := range imuaevmtypes.DefaultPredeploys {
 		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr.Address).Bytes()).String()
 		blockedAddrs[bech32Addr] = true
