@@ -41,7 +41,7 @@ func (sud SetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate
 
 	// If the transaction is an OracleCreatePriceTx, we set the gas meter to infinite
 	// NOTE: this works fine with cosmossdk-noopmempool+tendermint-mempool, since tenderminit used gasMeter.Limit() to check the gaswanted of tx insteand of tx.GetGas(), but if works with application mempool, we need to be caution of the tx.GetGas() since oracle create-price tx doesn't really pay.
-	if _, ok, _ := anteutils.OracleCreatePriceTx(tx); ok {
+	if _, ok, _, _ := anteutils.OracleCreatePriceTx(tx); ok {
 		newCtx = ctx.WithGasMeter(evmostypes.NewInfiniteGasMeterWithLimit(0))
 		return next(newCtx, tx, simulate)
 	}

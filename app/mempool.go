@@ -85,7 +85,7 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 			if err != nil {
 				continue
 			}
-			if _, _, isRawData := utils.OracleCreatePriceTx(tx); isRawData {
+			if _, _, isRawData, _ := utils.OracleCreatePriceTx(tx); isRawData {
 				// remove rawData from request txList if there's no feederID collecting rawData pieces
 				continue
 			}
@@ -108,12 +108,7 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 			keep = append(keep, tx)
 			continue
 		}
-		// TODO:(leonz) remove this
-		if !em.includesMsgOracle(tx) {
-			keep = append(keep, tx)
-			continue
-		}
-		msgs, _, isRawData := utils.OracleCreatePriceTx(tx)
+		msgs, _, isRawData, _ := utils.OracleCreatePriceTx(tx)
 		if !isRawData {
 			// we don't need to check isOracle, it's already checked in anteHandler, and if some proposer filled in any invalid message it will be reject by anteHandler again in runTx
 			keep = append(keep, tx)
@@ -209,7 +204,7 @@ func (em *ImuaMempool) includesMsgOracle(tx sdk.Tx) bool {
 // GetPieceWithProof returns pieceWithProof and msgCreatePrice from tx
 func (em *ImuaMempool) GetPieceWithProof(tx sdk.Tx) (pieceWithProof *oracletypes.PieceWithProof, msgO *oracletypes.MsgCreatePrice, isOracle, isRawData bool) {
 	var msgs []*oracletypes.MsgCreatePrice
-	msgs, isOracle, isRawData = utils.OracleCreatePriceTx(tx)
+	msgs, isOracle, isRawData, _ = utils.OracleCreatePriceTx(tx)
 	if !isRawData {
 		return
 	}

@@ -19,7 +19,7 @@ func NewOracleTwoPhasesDecorator(oracleKeeper utils.OracleKeeper) OracleTwoPhase
 }
 
 func (otpd OracleTwoPhasesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	msgs, _, isRawData := utils.OracleCreatePriceTx(tx)
+	msgs, _, isRawData, _ := utils.OracleCreatePriceTx(tx)
 	if isRawData {
 		pieceWithProof, ok := otpd.ok.GetPieceWithProof(msgs[0])
 		// valid failed when getting pieceWithProof

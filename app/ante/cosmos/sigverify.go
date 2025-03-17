@@ -59,7 +59,12 @@ func NewSetPubKeyDecorator(ak authante.AccountKeeper) SetPubKeyDecorator {
 
 func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// skip publickkey set for oracle create-price message
-	if _, ok, _ := utils.OracleCreatePriceTx(tx); ok {
+	_, ok, _, mixed := utils.OracleCreatePriceTx(tx)
+	// tx shhould not be mixed with oracle create-price message and other messages
+	if mixed {
+		return ctx, errors.New("mixed tx with oracle create-price message")
+	}
+	if ok {
 		sigTx, ok := tx.(authsigning.SigVerifiableTx)
 		if !ok {
 			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -173,7 +178,7 @@ func (sgcd SigGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 		return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
 	}
 
-	if _, isOracle, _ := utils.OracleCreatePriceTx(tx); isOracle {
+	if _, isOracle, _, _ := utils.OracleCreatePriceTx(tx); isOracle {
 		return next(ctx, tx, simulate)
 	}
 
@@ -258,7 +263,7 @@ func OnlyLegacyAminoSigners(sigData signing.SignatureData) bool {
 }
 
 func (svd SigVerificationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if _, ok, _ := utils.OracleCreatePriceTx(tx); ok {
+	if _, ok, _, _ := utils.OracleCreatePriceTx(tx); ok {
 		sigTx, ok := tx.(authsigning.SigVerifiableTx)
 		if !ok {
 			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -386,7 +391,7 @@ func NewIncrementSequenceDecorator(ak authante.AccountKeeper, oracleKeeper utils
 
 func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// oracle create-price message dont need to increment sequence, check its nonce instead
-	if msgs, isOracle, isRawData := utils.OracleCreatePriceTx(tx); isOracle {
+	if msgs, isOracle, isRawData, _ := utils.OracleCreatePriceTx(tx); isOracle {
 		msg := msgs[0]
 		// NOTE: we must check startBaseBlock first to prevent ddos by replay history tx
 		expectStartBaseBlock, found := isd.oracleKeeper.LatestRoundBaseBlock(msg.FeederID)
