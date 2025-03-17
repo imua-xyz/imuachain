@@ -16,9 +16,9 @@ const (
 	MethodFastAggregateVerify = "fastAggregateVerify"
 	// MethodVerify defines the ABI method name to verify aggregated signature and aggregated public key.
 	MethodVerify              = "verify"
-	MethodAggregatePubkeys    = "aggregatePubkeys"
+	MethodAggregatePubKeys    = "aggregatePubKeys"
 	MethodAggregateSignatures = "aggregateSignatures"
-	MethodAddTwoPubkeys       = "addTwoPubkeys"
+	MethodAddTwoPubKeys       = "addTwoPubKeys"
 )
 
 // Verify checks the validity of an aggregated signature against msg and aggregated public keys.
@@ -38,11 +38,11 @@ func (p Precompile) Verify(
 		return nil, ErrInvalidArg
 	}
 
-	pubkeyBz, ok := args[2].([]byte)
+	pubKeyBz, ok := args[2].([]byte)
 	if !ok {
 		return nil, ErrInvalidArg
 	}
-	pubkey, err := bls.PublicKeyFromBytes(pubkeyBz)
+	pubKey, err := bls.PublicKeyFromBytes(pubKeyBz)
 	if err != nil {
 		return nil, ErrInvalidArg
 	}
@@ -52,7 +52,7 @@ func (p Precompile) Verify(
 		return nil, ErrInvalidArg
 	}
 
-	return method.Outputs.Pack(sig.Verify(pubkey, msg[:]))
+	return method.Outputs.Pack(sig.Verify(pubKey, msg[:]))
 }
 
 // Verify checks the validity of an aggregated signature against msg and aggregated public keys.
@@ -73,17 +73,17 @@ func (p Precompile) FastAggregateVerify(
 		return nil, ErrInvalidArg
 	}
 
-	pubkeysBz, ok := args[2].([][]byte)
+	pubKeysBz, ok := args[2].([][]byte)
 	if !ok {
 		return nil, ErrInvalidArg
 	}
-	pubkeys := make([]common.PublicKey, len(pubkeysBz))
-	for i, pubkeyBz := range pubkeysBz {
-		pubkey, err := bls.PublicKeyFromBytes(pubkeyBz)
+	pubKeys := make([]common.PublicKey, len(pubKeysBz))
+	for i, pubKeyBz := range pubKeysBz {
+		pubKey, err := bls.PublicKeyFromBytes(pubKeyBz)
 		if err != nil {
 			return nil, ErrInvalidArg
 		}
-		pubkeys[i] = pubkey
+		pubKeys[i] = pubKey
 	}
 
 	msg, ok := args[0].([32]byte)
@@ -91,28 +91,28 @@ func (p Precompile) FastAggregateVerify(
 		return nil, ErrInvalidArg
 	}
 
-	return method.Outputs.Pack(sig.FastAggregateVerify(pubkeys, msg))
+	return method.Outputs.Pack(sig.FastAggregateVerify(pubKeys, msg))
 }
 
-func (p Precompile) AggregatePubkeys(
+func (p Precompile) AggregatePubKeys(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	if len(args) != len(p.ABI.Methods[MethodAggregatePubkeys].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodAggregatePubkeys].Inputs), len(args))
+	if len(args) != len(p.ABI.Methods[MethodAggregatePubKeys].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodAggregatePubKeys].Inputs), len(args))
 	}
 
-	pubkeysBz, ok := args[0].([][]byte)
+	pubKeysBz, ok := args[0].([][]byte)
 	if !ok {
 		return nil, ErrInvalidArg
 	}
 
-	aggregatedPubkey, err := blst.AggregatePublicKeys(pubkeysBz)
+	aggregatedPubKey, err := blst.AggregatePublicKeys(pubKeysBz)
 	if err != nil {
 		return nil, fmt.Errorf("failed to aggregate public keys")
 	}
 
-	return method.Outputs.Pack(aggregatedPubkey.Marshal())
+	return method.Outputs.Pack(aggregatedPubKey.Marshal())
 }
 
 func (p Precompile) AggregateSignatures(
@@ -135,31 +135,31 @@ func (p Precompile) AggregateSignatures(
 	return method.Outputs.Pack(aggregatedSig.Marshal())
 }
 
-func (p Precompile) AddTwoPubkeys(
+func (p Precompile) AddTwoPubKeys(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	if len(args) != len(p.ABI.Methods[MethodAddTwoPubkeys].Inputs) {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodAddTwoPubkeys].Inputs), len(args))
+	if len(args) != len(p.ABI.Methods[MethodAddTwoPubKeys].Inputs) {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, len(p.ABI.Methods[MethodAddTwoPubKeys].Inputs), len(args))
 	}
-	pubkeyOneBz, ok := args[0].([]byte)
+	pubKeyOneBz, ok := args[0].([]byte)
 	if !ok {
 		return nil, ErrInvalidArg
 	}
-	pubkeyTwoBz, ok := args[1].([]byte)
+	pubKeyTwoBz, ok := args[1].([]byte)
 	if !ok {
 		return nil, ErrInvalidArg
 	}
 
-	pubkeyOne, err := blst.PublicKeyFromBytes(pubkeyOneBz)
+	pubKeyOne, err := blst.PublicKeyFromBytes(pubKeyOneBz)
 	if err != nil {
 		return nil, ErrInvalidArg
 	}
-	pubkeyTwo, err := blst.PublicKeyFromBytes(pubkeyTwoBz)
+	pubKeyTwo, err := blst.PublicKeyFromBytes(pubKeyTwoBz)
 	if err != nil {
 		return nil, ErrInvalidArg
 	}
-	newPubkey := pubkeyOne.Aggregate(pubkeyTwo)
+	newPubKey := pubKeyOne.Aggregate(pubKeyTwo)
 
-	return method.Outputs.Pack(newPubkey.Marshal())
+	return method.Outputs.Pack(newPubKey.Marshal())
 }
