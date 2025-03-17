@@ -13,25 +13,25 @@ const (
 )
 
 // OracleCreatePriceTx returns the oracle create price txs in the given tx, and whether the tx is valid oracle tx and valid raw data tx
-func OracleCreatePriceTx(tx sdk.Tx) (msgsO []*oracletypes.MsgCreatePrice, validOracle, validRawData bool) {
+func OracleCreatePriceTx(tx sdk.Tx) (msgsOracle []*oracletypes.MsgCreatePrice, validOracle, validRawData bool) {
 	msgs := tx.GetMsgs()
 	if len(msgs) == 0 {
 		return nil, false, false
 	}
-	msgsO = make([]*oracletypes.MsgCreatePrice, 0, len(msgs))
+	msgsOracle = make([]*oracletypes.MsgCreatePrice, 0, len(msgs))
 	for _, msg := range msgs {
-		msgO, ok := msg.(*oracletypes.MsgCreatePrice)
+		msgOracle, ok := msg.(*oracletypes.MsgCreatePrice)
 		if !ok {
 			return nil, false, false
 		}
-		if msgO.IsPhaseTwo() {
+		if msgOracle.IsPhaseTwo() {
 			if len(msgs) > 1 {
 				return nil, false, false
 			}
-			msgsO = append(msgsO, msgO)
-			return msgsO, true, true
+			msgsOracle = append(msgsOracle, msgOracle)
+			return msgsOracle, true, true
 		}
-		msgsO = append(msgsO, msgO)
+		msgsOracle = append(msgsOracle, msgOracle)
 	}
-	return msgsO, true, false
+	return msgsOracle, true, false
 }
