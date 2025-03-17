@@ -19,7 +19,7 @@ import (
 // rawData pieces is required to be submitted in order, and the piece index is verified in anteHandler
 // in ImuaMempool, we pre cache rawData pieces for each feederID(the proposer would have more chance to include a valid rawData piece in block to get avoid of being punished by miss-count)
 type ImuaMempool struct {
-	// feederID -> pieceIndex->[]PieceWithProof, cached peiceWithProof for feederID
+	// feederID -> pieceIndex->[]PieceWithProof, cached pieceWithProof for feederID
 	cachedPieces map[uint64]map[uint32][]*oracletypes.PieceWithProof
 	k            *oraclekeeper.Keeper
 	count        int
@@ -310,7 +310,6 @@ func (ii *ImuaMemIterator) Tx() sdk.Tx {
 	return nil
 }
 
-// func NewImuaMempool(oKeeper *oraclekeeper.Keeper, decoder sdk.TxDecoder) *ImuaMempool {
 func NewImuaMempool(oKeeper *oraclekeeper.Keeper, decoder sdk.TxDecoder) *ImuaMempool {
 	return &ImuaMempool{
 		cachedPieces: make(map[uint64]map[uint32][]*oracletypes.PieceWithProof),
