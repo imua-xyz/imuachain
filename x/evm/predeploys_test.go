@@ -144,7 +144,7 @@ func (suite *KeeperTestSuite) TestCreate2Deployment() {
 	initCode := testdata.DeployedContract.Bin
 	initCodeBytes := initCode[:]
 	// destination
-	destination := common.HexToAddress("0xd26FCa167a00946c9D8eeCA081f6D0466fd5c7C7")
+	destination := common.HexToAddress("0xb087e311DbEc3dcE4aDB110FE6ef74F81B78c6DF")
 	// check that this matches the derived create3 destination
 	derived := crypto.CreateAddress2(create2, salt, crypto.Keccak256Hash(initCodeBytes).Bytes())
 	suite.Require().Equal(destination.String(), derived.String())
