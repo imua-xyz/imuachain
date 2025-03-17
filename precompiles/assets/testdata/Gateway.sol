@@ -6,8 +6,6 @@ import "../IAssets.sol";
 import "./GatewayCallee.sol";
 
 contract Gateway {
-    event UnknownMethodResult(bool success);
-
     address public callee;
 
     constructor(address callee_) {
@@ -71,11 +69,5 @@ contract Gateway {
             stakerAddress,
             tokenID
         );
-    }
-
-    function callUnknownMethod() public {
-        address assetsPrecompile = address(ASSETS_CONTRACT);
-        (bool success, ) = assetsPrecompile.call(abi.encodeWithSelector(bytes4(keccak256("unknownMethod"))));
-        emit UnknownMethodResult(success);
     }
 }

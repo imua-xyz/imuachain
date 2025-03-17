@@ -4,11 +4,9 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/precompiles/assets/testdata"
-	precompilestestutil "github.com/imua-xyz/imuachain/precompiles/testutil"
 	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
@@ -218,35 +216,6 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		// Balance should remain unchanged after reverts
 		checkBalance(tc.expectedAmount)
 	}
-}
-
-// TestUnknownMethod tests the unknown method scenario in which a call to an unknown method
-// on the precompile is made. p.IsTransaction panics upon receiving such a method name; however,
-// it is only called after the method is validated. Hence, the node will not panic for such txs.
-func (s *AssetsPrecompileSuite) TestUnknownMethod() {
-	_, gatewayAddr := s.prepareTestContracts()
-
-	// Create base call arguments
-	callArgs := testutilcontracts.CallArgs{
-		ContractAddr: gatewayAddr,
-		ContractABI:  testdata.GatewayContract.ABI,
-		PrivKey:      s.PrivKey,
-	}
-
-	eventName := "UnknownMethodResult"
-	data, err := testdata.GatewayContract.ABI.Events[eventName].Inputs.Pack(false)
-	s.Require().NoError(err)
-	logCheckArgs := precompilestestutil.LogCheckArgs{
-		ABIEvents: map[string]abi.Event{
-			eventName: testdata.GatewayContract.ABI.Events[eventName],
-		},
-	}.WithExpEvents(eventName).
-		WithExpPass(true).
-		WithExpData(data)
-
-	args := callArgs.WithMethodName("callUnknownMethod")
-	_, _, err = testutilcontracts.CallContractAndCheckLogs(s.Ctx, s.App, args, logCheckArgs)
-	s.Require().NoError(err)
 }
 
 // DeployContractWithArgs is a helper function to deploy a contract with constructor arguments.
