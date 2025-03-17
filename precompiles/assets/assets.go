@@ -69,7 +69,7 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 
 	method, err := p.MethodById(methodID)
 	if err != nil {
-		// This should never happen since this method is going to fail during Run
+		// Since the method fails during Run, it is safe to return 0 here.
 		return 0
 	}
 	return p.Precompile.RequiredGas(input, p.IsTransaction(method.Name))

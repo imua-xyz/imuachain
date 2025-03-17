@@ -4,9 +4,11 @@ import (
 	"math"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/precompiles/assets/testdata"
+	precompilestestutil "github.com/imua-xyz/imuachain/precompiles/testutil"
 	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
@@ -21,10 +23,9 @@ type ContractDeploymentData struct {
 	ConstructorArgs []interface{}
 }
 
-// TestWrappedRevert tests the wrapped revert scenario in which a failed call is wrapped in a
-// try catch block and prevented from bubbling to the Cosmos level. In this situation, the
-// revert of asset state should take effect while the transaction should still succeed.
-func (s *AssetsPrecompileSuite) TestWrappedRevert() {
+// prepareTestContracts prepares the test contracts for the tests in this file.
+// It returns the gateway caller and callee addresses.
+func (s *AssetsPrecompileSuite) prepareTestContracts() (common.Address, common.Address) {
 	// set the base fee to 1; the lowest possible
 	s.App.FeeMarketKeeper.SetBaseFee(s.Ctx, big.NewInt(1))
 
@@ -58,15 +59,30 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	)
 	s.Require().NoError(err)
 
+	return gatewayCallerAddr, gatewayAddr
+}
+
+// TestWrappedRevert tests the wrapped revert scenario in which a failed call is wrapped in a
+// try catch block and prevented from bubbling to the Cosmos level. In this situation, the
+// revert of asset state should take effect while the transaction should still succeed.
+func (s *AssetsPrecompileSuite) TestWrappedRevert() {
+	gatewayCallerAddr, _ := s.prepareTestContracts()
+
 	// Setup common test parameters
 	clientChainLzID := uint32(101)
 	usdtAddress := common.FromHex(s.Assets[0].Address)
 	decimals := s.Assets[0].Decimals
 	factor := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil)
-	paddedUsdtAddress := paddingClientChainAddress(usdtAddress, assetstypes.GeneralClientChainAddrLength)
+	paddedUsdtAddress := paddingClientChainAddress(
+		usdtAddress, assetstypes.GeneralClientChainAddrLength,
+	)
 	stakerAddress := testutiltx.GenerateAddress()
-	paddedStakerAddress := paddingClientChainAddress(stakerAddress[:], assetstypes.GeneralClientChainAddrLength)
-	stakerID, assetID := assetstypes.GetStakerIDAndAssetID(uint64(clientChainLzID), stakerAddress[:], usdtAddress[:])
+	paddedStakerAddress := paddingClientChainAddress(
+		stakerAddress[:], assetstypes.GeneralClientChainAddrLength,
+	)
+	stakerID, assetID := assetstypes.GetStakerIDAndAssetID(
+		uint64(clientChainLzID), stakerAddress[:], usdtAddress[:],
+	)
 
 	// Create base call arguments
 	callArgs := testutilcontracts.CallArgs{
@@ -77,7 +93,9 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 
 	// Helper function to check balance
 	checkBalance := func(expectedAmount *big.Int) {
-		stakerAssetInfo, err := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(s.Ctx, stakerID, assetID)
+		stakerAssetInfo, err := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(
+			s.Ctx, stakerID, assetID,
+		)
 		s.Require().NoError(err)
 		s.Equal(expectedAmount, stakerAssetInfo.TotalDepositAmount.BigInt())
 	}
@@ -91,7 +109,7 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		opAmount,
 	)
 	// call the depositLST function
-	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
+	_, _, err := testutilcontracts.Call(s.Ctx, s.App, args)
 	s.Require().NoError(err)
 	checkBalance(opAmount)
 
@@ -166,7 +184,13 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 			methodName: "withdrawLSTXTimesInTryCatch",
 			// hence, the expected amount is only 7 withdrawal amounts lower
 			// than the initial amount and not 9
-			expectedAmount: new(big.Int).Sub(opAmount, new(big.Int).Mul(withdrawAmount, big.NewInt(int64(evmtypes.MaxPrecompileCalls)))),
+			expectedAmount: new(big.Int).Sub(
+				opAmount,
+				new(big.Int).Mul(
+					withdrawAmount,
+					big.NewInt(int64(evmtypes.MaxPrecompileCalls)),
+				),
+			),
 			// reset everything before the test
 			commitBefore: true,
 		},
@@ -176,7 +200,10 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		if tc.commitBefore {
 			s.Commit()
 		}
-		err = testutil.FundAccountWithBaseDenom(s.Ctx, s.App.BankKeeper, s.Address[:], math.MaxInt64)
+		// ensure that gas is not the blocker
+		err = testutil.FundAccountWithBaseDenom(
+			s.Ctx, s.App.BankKeeper, s.Address[:], math.MaxInt64,
+		)
 		s.Require().NoError(err)
 		args = callArgs.WithMethodName(tc.methodName).WithArgs(
 			clientChainLzID,
@@ -193,6 +220,36 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	}
 }
 
+// TestUnknownMethod tests the unknown method scenario in which a call to an unknown method
+// on the precompile is made. p.IsTransaction panics upon receiving such a method name; however,
+// it is only called after the method is validated. Hence, the node will not panic for such txs.
+func (s *AssetsPrecompileSuite) TestUnknownMethod() {
+	_, gatewayAddr := s.prepareTestContracts()
+
+	// Create base call arguments
+	callArgs := testutilcontracts.CallArgs{
+		ContractAddr: gatewayAddr,
+		ContractABI:  testdata.GatewayContract.ABI,
+		PrivKey:      s.PrivKey,
+	}
+
+	eventName := "UnknownMethodResult"
+	data, err := testdata.GatewayContract.ABI.Events[eventName].Inputs.Pack(false)
+	s.Require().NoError(err)
+	logCheckArgs := precompilestestutil.LogCheckArgs{
+		ABIEvents: map[string]abi.Event{
+			eventName: testdata.GatewayContract.ABI.Events[eventName],
+		},
+	}.WithExpEvents(eventName).
+		WithExpPass(true).
+		WithExpData(data)
+
+	args := callArgs.WithMethodName("callUnknownMethod")
+	_, _, err = testutilcontracts.CallContractAndCheckLogs(s.Ctx, s.App, args, logCheckArgs)
+	s.Require().NoError(err)
+}
+
+// DeployContractWithArgs is a helper function to deploy a contract with constructor arguments.
 func (s *AssetsPrecompileSuite) DeployContractWithArgs(
 	deploymentData ContractDeploymentData,
 ) (common.Address, error) {

@@ -45,6 +45,8 @@ func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 					)
 				}
 			}()
+			// the result is not relevant, we are only checking that the
+			// function does not panic for each known method.
 			_ = isTx(method)
 		}()
 		if localErr != nil {
@@ -60,6 +62,8 @@ func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 				err = nil
 			}
 		}()
+		// the result is not relevant, we are only checking that the
+		// function panics for an unknown method.
 		_ = isTx("unknownMethod")
 	}()
 
