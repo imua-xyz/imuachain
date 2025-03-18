@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"golang.org/x/crypto/sha3"
-
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -53,36 +51,30 @@ func (p Precompile) Address() common.Address {
 	return common.HexToAddress("0x0000000000000000000000000000000000000809")
 }
 
-// Function Selectors
-var (
-	verifySelector              = generateSelector("verify(bytes32,bytes,bytes)")                // verify(bytes32,bytes,bytes)
-	fastAggregateVerifySelector = generateSelector("fastAggregateVerify(bytes32,bytes,bytes[])") // fastAggregateVerify(bytes32,bytes,bytes[])
-	aggregatePubKeysSelector    = generateSelector("aggregatePubKeys(bytes[])")                  // aggregatePubKeys(bytes[])
-	aggregateSignaturesSelector = generateSelector("aggregateSignatures(bytes[])")               // aggregateSignatures(bytes[])
-	addTwoPubKeysSelector       = generateSelector("addTwoPubKeys(bytes,bytes)")                 // addTwoPubKeys(bytes,bytes)
-)
-
 // RequiredGas calculates the precompiled contract's base gas rate.
 func (p Precompile) RequiredGas(input []byte) uint64 {
 	if len(input) < 4 {
 		return 0
 	}
-
-	selector := input[:4]
-	switch {
-	case bytes.Equal(selector, verifySelector):
+	method, err := p.MethodById(input)
+	if err != nil {
+		return 0
+	}
+	switch method.Name {
+	case MethodVerify:
 		return Bls12381PairingBaseGas + Bls12381PairingPerPairGas
 
-	case bytes.Equal(selector, fastAggregateVerifySelector):
+	case MethodFastAggregateVerify:
+
 		return p.calculateFastAggregateVerifyGas(input)
 
-	case bytes.Equal(selector, aggregatePubKeysSelector):
+	case MethodAggregatePubKeys:
 		return p.calculateAggregationGas(input, Bls12381G1AddGas)
 
-	case bytes.Equal(selector, aggregateSignaturesSelector):
+	case MethodAggregateSignatures:
 		return p.calculateAggregationGas(input, Bls12381G2AddGas)
 
-	case bytes.Equal(selector, addTwoPubKeysSelector):
+	case MethodAddTwoPubKeys:
 		return Bls12381G1AddGas
 
 	default:
@@ -126,12 +118,6 @@ func (p Precompile) calculateAggregationGas(input []byte, gasPerOp uint64) uint6
 	}
 
 	return (n - 1) * gasPerOp
-}
-
-func generateSelector(funcSig string) []byte {
-	hash := sha3.NewLegacyKeccak256()
-	hash.Write([]byte(funcSig))
-	return hash.Sum(nil)[:4]
 }
 
 // Run executes the precompiled contract deposit methods defined in the ABI.
