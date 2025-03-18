@@ -11,22 +11,28 @@ import (
 
 func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	_, impactfulEpochs, err := k.operatorKeeper.GetImpactfulEpochsAndAVSsForOperator(ctx, operator.String())
-	if err != nil {
-		return err
-	}
 	delegationKey := assetstype.GetJoinedStoreKey(stakerID, assetID, operator.String())
 	delegationKeys := &feedistributiontypes.StakeChangeDelegations{
 		DelegationKeys: make([]string, 0),
 	}
-	for _, epochIdentifier := range impactfulEpochs {
-		value := store.Get([]byte(epochIdentifier))
+	// The reason for marking delegations with stake changes for all epochs instead of only the impactful
+	// epochs is that we need to update the operator’s period whenever the delegated stake changes,
+	// regardless of whether the operator is serving any AVSs.
+	// This is because the reward distribution for a restaker might not occur during the opting-in period.
+	// For example, the staker might delegate additional stake, triggering the reward distribution lazily
+	// after the operator has opted out.
+	// If we don’t update the period for operators who have opted out of an AVS, the reward calculation
+	// cannot correctly determine the stake and reward ratio for a staker. This is because the staker might
+	// have delegated or undelegated tokens, altering the delegated stake during the opting-out period.
+	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
+	for _, epochInfo := range allEpochs {
+		value := store.Get([]byte(epochInfo.Identifier))
 		if value != nil {
 			k.cdc.MustUnmarshal(value, delegationKeys)
 		}
 		delegationKeys.AppendUniqueDelegationKey(string(delegationKey))
 		bz := k.cdc.MustMarshal(delegationKeys)
-		store.Set([]byte(epochIdentifier), bz)
+		store.Set([]byte(epochInfo.Identifier), bz)
 	}
 	return nil
 }
@@ -57,26 +63,28 @@ func (k Keeper) GetAVSFeePool(ctx sdk.Context, avsAddr string) (feePool types.Fe
 	return fp, nil
 }
 
-// AddRewardsToCommunityPool : add the rewards to community pool
-func (k Keeper) AddRewardsToCommunityPool(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) error {
-	feePool, err := k.GetAVSFeePool(ctx, avsAddr)
-	if err != nil {
-		return err
-	}
-	feePool.CommunityPool = feePool.CommunityPool.Add(rewards...)
-	err = k.SetAVSFeePool(ctx, avsAddr, feePool)
-	if err != nil {
-		return err
-	}
-	return nil
+// HasAVSFeePool : check whether the avs fee pool exists.
+func (k Keeper) HasAVSFeePool(ctx sdk.Context, avsAddr string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixFeePools)
+	return store.Has(common.HexToAddress(avsAddr).Bytes())
 }
 
 // UpdateAVSCommunityPool : increase or decrease the rewards of AVS community pool
 // the isIncrease flag is used to indicate whether the update is an increase or a decrease
 func (k Keeper) UpdateAVSCommunityPool(ctx sdk.Context, avsAddr string, isIncrease bool, rewards sdk.DecCoins) error {
-	feePool, err := k.GetAVSFeePool(ctx, avsAddr)
-	if err != nil {
-		return err
+	if len(rewards) == 0 {
+		return nil
+	}
+	// set the initialized value
+	feePool := types.FeePool{
+		CommunityPool: make([]sdk.DecCoin, 0),
+	}
+	var err error
+	if k.HasAVSFeePool(ctx, avsAddr) {
+		feePool, err = k.GetAVSFeePool(ctx, avsAddr)
+		if err != nil {
+			return err
+		}
 	}
 	if isIncrease {
 		feePool.CommunityPool = feePool.CommunityPool.Add(rewards...)
@@ -124,13 +132,31 @@ func (k Keeper) GetOperatorAccumulatedCommission(ctx sdk.Context, operator, avsA
 	return commission, nil
 }
 
+// HasOperatorAccumulatedCommission : check whether the accumulated commission for the avs and operator exists
+func (k Keeper) HasOperatorAccumulatedCommission(ctx sdk.Context, operator, avsAddr string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorAccumulatedCommission)
+	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	return store.Has(key)
+}
+
 // UpdateOperatorAccumulatedCommission : increase or decrease the commission for the avs and operator
 // the isIncrease flag is used to indicate whether the update is an increase or a decrease
 func (k Keeper) UpdateOperatorAccumulatedCommission(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaCommission sdk.DecCoins) error {
-	commission, err := k.GetOperatorAccumulatedCommission(ctx, operator, avsAddr)
-	if err != nil {
-		return err
+	if len(deltaCommission) == 0 {
+		return nil
 	}
+	// set the initialized value
+	commission := feedistributiontypes.OperatorAccumulatedCommission{
+		Commission: make([]sdk.DecCoin, 0),
+	}
+	var err error
+	if k.HasOperatorAccumulatedCommission(ctx, operator, avsAddr) {
+		commission, err = k.GetOperatorAccumulatedCommission(ctx, operator, avsAddr)
+		if err != nil {
+			return err
+		}
+	}
+
 	if isIncrease {
 		commission.Commission = commission.Commission.Add(deltaCommission...)
 	} else {
@@ -177,13 +203,31 @@ func (k Keeper) GetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr
 	return rewards, nil
 }
 
+// HasOperatorOutstandingRewards : check whether the outstanding rewards for the avs and operator exists
+func (k Keeper) HasOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
+	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	return store.Has(key)
+}
+
 // UpdateOperatorOutstandingRewards : increase or decrease the outstanding rewards for the avs and operator
 // the isIncrease flag is used to indicate whether the update is an increase or a decrease
 func (k Keeper) UpdateOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaRewards sdk.DecCoins) error {
-	rewards, err := k.GetOperatorOutstandingRewards(ctx, operator, avsAddr)
-	if err != nil {
-		return err
+	if len(deltaRewards) == 0 {
+		return nil
 	}
+	// set the initialized value
+	rewards := feedistributiontypes.OperatorOutstandingRewards{
+		Rewards: make([]sdk.DecCoin, 0),
+	}
+	var err error
+	if k.HasOperatorOutstandingRewards(ctx, operator, avsAddr) {
+		rewards, err = k.GetOperatorOutstandingRewards(ctx, operator, avsAddr)
+		if err != nil {
+			return err
+		}
+	}
+
 	if isIncrease {
 		rewards.Rewards = rewards.Rewards.Add(deltaRewards...)
 	} else {
@@ -199,4 +243,77 @@ func (k Keeper) UpdateOperatorOutstandingRewards(ctx sdk.Context, operator, avsA
 		return err
 	}
 	return nil
+}
+
+// SetOperatorCurrentRewards : set current rewards for the specific operator, epochIdentifier and assetID
+func (k Keeper) SetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string, rewards feedistributiontypes.OperatorCurrentRewards) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
+	var bz []byte
+	bz = k.cdc.MustMarshal(&rewards)
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier)
+	store.Set(key, bz)
+	return nil
+}
+
+// GetOperatorCurrentRewards : get the current rewards for the specific operator, epochIdentifier and assetID
+func (k Keeper) GetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string) (feedistributiontypes.OperatorCurrentRewards, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.OperatorCurrentRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorCurrentRewards, operator:%s,assetID:%s,epochIdentifier:%s", operator, assetID, epochIdentifier)
+	}
+	rewards := feedistributiontypes.OperatorCurrentRewards{}
+	k.cdc.MustUnmarshal(b, &rewards)
+	return rewards, nil
+}
+
+// HasOperatorCurrentRewards : check whether the current rewards for the specific operator, epochIdentifier
+// and assetID exists.
+func (k Keeper) HasOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier)
+	return store.Has(key)
+}
+
+// UpdateOperatorCurrentRewards : increase or decrease the current rewards for the specific operator,
+// epochIdentifier and assetID. The isIncrease flag is used to indicate whether the update is an
+// increase or a decrease
+func (k Keeper) UpdateOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string, isIncrease bool, deltaRewards feedistributiontypes.CommonAVSRewardData) error {
+	if len(deltaRewards.Rewards) == 0 {
+		return nil
+	}
+	// set the initialized value
+	rewards := feedistributiontypes.OperatorCurrentRewards{
+		Rewards: make([]*feedistributiontypes.CommonAVSRewardData, 0),
+		// period starts from 1.
+		Period: 1,
+	}
+	var err error
+	if k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier) {
+		rewards, err = k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
+		if err != nil {
+			return err
+		}
+	}
+	err = rewards.UpdateReward(isIncrease, deltaRewards)
+	if err != nil {
+		return err
+	}
+
+	err = k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier, rewards)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// IncreasePeriodForOperator : increase the period for the specific operator, assetID and epoch identifier
+func (k Keeper) IncreasePeriodForOperator(ctx sdk.Context, operator, assetID, epochIdentifier string) error {
+	rewards, err := k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
+	if err != nil {
+		return err
+	}
+	rewards.Period += 1
+	return k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier, rewards)
 }

@@ -47,4 +47,9 @@ var (
 		ModuleName, 9,
 		"negative coin amount",
 	)
+
+	ErrInvalidAssetUSDValue = errorsmod.Register(
+		ModuleName, 10,
+		"invalid USD value of asset",
+	)
 )

@@ -35,3 +35,32 @@ func (s *StakeChangeDelegations) AppendUniqueDelegationKey(newKey string) {
 	// Append the newKey if it's not already present
 	s.DelegationKeys = append(s.DelegationKeys, newKey)
 }
+
+// HasAVSReward checks whether the avs reward exists, return the index if it exists
+func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) (int, bool) {
+	for index, avsReward := range o.Rewards {
+		if avsAddr == avsReward.AVSAddress {
+			return index, true
+		}
+	}
+	return 0, false
+}
+func (o *OperatorCurrentRewards) UpdateReward(isIncrease bool, deltaRewards CommonAVSRewardData) error {
+	index, exist := o.HasAVSReward(deltaRewards.AVSAddress)
+	if exist {
+		avsRewards := o.Rewards[index].Rewards
+		if isIncrease {
+			avsRewards = avsRewards.Add(deltaRewards.Rewards...)
+		} else {
+			var negative bool
+			avsRewards, negative = avsRewards.SafeSub(deltaRewards.Rewards)
+			if negative {
+				return ErrNegativeCoinAmount.Wrapf("failed to update the current reward for specific AVS,avsAddr:%s", deltaRewards.AVSAddress)
+			}
+		}
+		o.Rewards[index].Rewards = avsRewards
+	} else {
+		o.Rewards = append(o.Rewards, &deltaRewards)
+	}
+	return nil
+}

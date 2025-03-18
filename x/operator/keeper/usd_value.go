@@ -696,6 +696,13 @@ func (k *Keeper) GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 	return ret.Amount, nil
 }
 
+// HasOperatorAssetUSDValue check whether the USD value of operator asset exists
+func (k *Keeper) HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
+	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	return store.Has(key)
+}
+
 // UpdateOperatorAssetUSDValue update the operator asset USD value by epoch.
 func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers []string, operator string) error {
 	// check if the epoch is impactful
