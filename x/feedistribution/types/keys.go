@@ -167,11 +167,6 @@ func GetOperatorAccumulatedCommissionKey(v sdk.ValAddress) []byte {
 	return append(KeyPrefixOperatorAccumulatedCommission, address.MustLengthPrefix(v.Bytes())...)
 }
 
-// GetOperatorCurrentRewardsKey creates the key for a validator's current rewards.
-func GetOperatorCurrentRewardsKey(v sdk.ValAddress) []byte {
-	return append(KeyPrefixOperatorCurrentRewards, address.MustLengthPrefix(v.Bytes())...)
-}
-
 // GetOperatorOutstandingRewardsKey creates the outstanding rewards key for a validator.
 func GetOperatorOutstandingRewardsKey(valAddr sdk.ValAddress) []byte {
 	return append(KeyPrefixOperatorOutstandingRewards, address.MustLengthPrefix(valAddr.Bytes())...)

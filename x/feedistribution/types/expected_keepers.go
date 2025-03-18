@@ -14,6 +14,7 @@ import (
 // EpochsKeeper represents the expected keeper interface for the epochs module.
 type EpochsKeeper interface {
 	GetEpochInfo(ctx sdk.Context, identifier string) (epochsTypes.EpochInfo, bool)
+	AllEpochInfos(ctx sdk.Context) []epochsTypes.EpochInfo
 }
 
 type FeeDistributionHooks interface{}
@@ -52,6 +53,9 @@ type OperatorKeeper interface {
 	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
 	IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error
 	GetLastVotingPowerAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error)
+	GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error)
+	HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) bool
+	GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) (sdkmath.LegacyDec, error)
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.

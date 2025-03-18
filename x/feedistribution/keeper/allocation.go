@@ -89,9 +89,8 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 				),
 			)
 		}
-		// distribute rewards to stakers whose staking has changed through F1 distribution,
-		// and update the current reward and period for the operator.
-		leftover, err := k.AllocateRewardsToStakers(ctx, operatorProportion.OperatorAddr, avsAddr, epochIdentifier, rewardsForStakers)
+		// split the reward to multiple assets pool
+		leftover, err := k.SplitRewardsToAssetsPool(ctx, operatorProportion.OperatorAddr, avsAddr, epochIdentifier, rewardsForStakers)
 		if err != nil {
 			ctx.Logger().Error("AllocateRewardsToOperators: Failed to allocate rewards to the stakers", "error", err, "operator", operatorProportion.OperatorAddr, "avs", avsAddr)
 		}
@@ -106,10 +105,53 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 	return remaining, err
 }
 
-// AllocateRewardsToStakers : allocate the rewards to the stakers whose staking has changed through F1 distribution.
+// SplitRewardsToAssetsPool : split the rewards to multiple assets pool, then the reward of each
+// asset pool can be allocated to the stakers whose staking has changed through F1 distribution.
 // After distribution, the remaining leftover rewards will be returned to be accounted for in the community pool.
-func (k Keeper) AllocateRewardsToStakers(ctx sdk.Context, operator, avsAddr, epochIdentifier string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
-
+func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epochIdentifier string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
+	// split the rewards by multiple assets
+	// get the list of assets supported by the AVS at the time of the last voting power update.
+	assets, err := k.operatorKeeper.GetLastVotingPowerAVSAssets(ctx, avsAddr)
+	if err != nil {
+		return nil, err
+	}
+	// get the operator opted USD value
+	optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator)
+	if err != nil {
+		return nil, err
+	}
+	remaining := rewards
+	// calculate and set the rewards for each asset.
+	for _, assetID := range assets {
+		if !k.operatorKeeper.HasOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID) {
+			// no rewards for assets that are not owned by the operator.
+			continue
+		}
+		// get the USD value for asset
+		assetUSDValue, err := k.operatorKeeper.GetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID)
+		if err != nil {
+			return nil, err
+		}
+		if assetUSDValue.IsZero() {
+			// no rewards for assets with a zero USD value.
+			continue
+		} else if assetUSDValue.GT(optedUSDValue.ActiveUSDValue) ||
+			assetUSDValue.IsNegative() {
+			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool", "assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
+		}
+		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
+		err = k.UpdateOperatorCurrentRewards(
+			ctx, operator, assetID, epochIdentifier,
+			true, types.CommonAVSRewardData{
+				Rewards:    assetRewards,
+				AVSAddress: avsAddr,
+			})
+		if err != nil {
+			return nil, err
+		}
+		remaining = remaining.Sub(assetRewards)
+	}
+	return remaining, nil
 }
 
 func (k Keeper) AllocateTokensToSingleStaker(ctx sdk.Context, stakerAddress string, reward sdk.DecCoins) {
