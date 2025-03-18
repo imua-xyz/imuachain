@@ -9,8 +9,6 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	"github.com/cometbft/cometbft/libs/log"
-	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -29,12 +27,11 @@ var f embed.FS
 // Precompile defines the precompiled contract for deposit.
 type Precompile struct {
 	abi.ABI
-	baseGas uint64
 }
 
 // NewPrecompile creates a new BLS Precompile instance as a
 // PrecompiledContract interface.
-func NewPrecompile(baseGas uint64) (*Precompile, error) {
+func NewPrecompile() (*Precompile, error) {
 	abiBz, err := f.ReadFile("abi.json")
 	if err != nil {
 		return nil, fmt.Errorf("error loading the deposit ABI %s", err)
@@ -45,13 +42,8 @@ func NewPrecompile(baseGas uint64) (*Precompile, error) {
 		return nil, fmt.Errorf(cmn.ErrInvalidABI, err)
 	}
 
-	if baseGas == 0 {
-		return nil, fmt.Errorf("baseGas cannot be zero")
-	}
-
 	return &Precompile{
-		ABI:     newABI,
-		baseGas: baseGas,
+		ABI: newABI,
 	}, nil
 }
 
@@ -75,22 +67,23 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 	if len(input) < 4 {
 		return 0
 	}
+
 	selector := input[:4]
 	switch {
 	case bytes.Equal(selector, verifySelector):
-		return imuacmn.Bls12381PairingBaseGas + imuacmn.Bls12381PairingPerPairGas
+		return Bls12381PairingBaseGas + Bls12381PairingPerPairGas
 
 	case bytes.Equal(selector, fastAggregateVerifySelector):
 		return p.calculateFastAggregateVerifyGas(input)
 
 	case bytes.Equal(selector, aggregatePubKeysSelector):
-		return p.calculateAggregationGas(input, imuacmn.Bls12381G1AddGas)
+		return p.calculateAggregationGas(input, Bls12381G1AddGas)
 
 	case bytes.Equal(selector, aggregateSignaturesSelector):
-		return p.calculateAggregationGas(input, imuacmn.Bls12381G2AddGas)
+		return p.calculateAggregationGas(input, Bls12381G2AddGas)
 
 	case bytes.Equal(selector, addTwoPubKeysSelector):
-		return imuacmn.Bls12381G1AddGas
+		return Bls12381G1AddGas
 
 	default:
 		return 0
@@ -113,7 +106,7 @@ func (p Precompile) calculateFastAggregateVerifyGas(input []byte) uint64 {
 		return 0
 	}
 
-	return (m-1)*imuacmn.Bls12381G1AddGas + (imuacmn.Bls12381PairingBaseGas + imuacmn.Bls12381PairingPerPairGas)
+	return (m-1)*Bls12381G1AddGas + (Bls12381PairingBaseGas + Bls12381PairingPerPairGas)
 }
 
 // Generic aggregation gas calculation
@@ -183,7 +176,7 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 //
 // Available bls transactions are:
 //   - MethodVerify
-func (Precompile) IsTransaction(methodID string) bool {
+func (Precompile) IsTransaction() bool {
 	return false
 }
 
