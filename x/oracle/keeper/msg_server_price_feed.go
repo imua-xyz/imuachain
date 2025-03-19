@@ -49,7 +49,6 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 				types.EventTypeCreatePrice,
 				sdk.NewAttribute(types.AttributeKeyRawDataPieceUpdate, types.AttributeValueRawDataPieceUpdated),
 				sdk.NewAttribute(types.AttributeKeyRawDataPieceChange, fmt.Sprintf("%d_%d", msg.FeederID, cachedIndex)),
-				//				sdk.NewAttribute(types.AttributeKeyFeederID, strconv.FormatUint(msg.FeederID, 10)),
 			))
 			return &types.MsgCreatePriceResponse{}, nil
 		}

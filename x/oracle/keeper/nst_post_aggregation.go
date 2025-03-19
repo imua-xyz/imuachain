@@ -230,7 +230,8 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 				store.Set(keyStakerList, valueStakerList)
 			}
 			exists = true
-			stakerInfo.StakerIndex = int64(idx)
+			// #nosec G115
+			stakerInfo.StakerIndex = uint32(idx)
 			break
 		}
 	}
@@ -242,7 +243,8 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		stakerList.StakerAddrs = append(stakerList.StakerAddrs, stakerAddr)
 		valueStakerList = k.cdc.MustMarshal(&stakerList)
 		store.Set(keyStakerList, valueStakerList)
-		stakerInfo.StakerIndex = int64(len(stakerList.StakerAddrs) - 1)
+		// #nosec G115
+		stakerInfo.StakerIndex = uint32(len(stakerList.StakerAddrs) - 1)
 	}
 
 	if newBalance.Balance <= 0 {
