@@ -67,7 +67,6 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	opAccAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	clientChainLzID := 101
-	lzNonce := 0
 	delegationAmount := big.NewInt(50)
 	depositAmount := big.NewInt(100)
 	smallDepositAmount := big.NewInt(20)
@@ -100,7 +99,6 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 		input, err := s.precompile.Pack(
 			delegation.MethodDelegate,
 			uint32(clientChainLzID),
-			uint64(lzNonce),
 			assetAddr,
 			paddingClientChainAddress(s.Address.Bytes(), types.GeneralClientChainAddrLength),
 			[]byte(opAccAddr),
@@ -289,7 +287,6 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
 	operatorAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	clientChainLzID := 101
-	lzNonce := uint64(0)
 	delegationAmount := big.NewInt(50)
 	depositAmount := big.NewInt(100)
 	assetAddr := paddingClientChainAddress(usdtAddress, types.GeneralClientChainAddrLength)
@@ -337,7 +334,6 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		input, err := s.precompile.Pack(
 			delegation.MethodUndelegate,
 			uint32(clientChainLzID),
-			lzNonce+1,
 			assetAddr,
 			paddingClientChainAddress(s.Address.Bytes(), types.GeneralClientChainAddrLength),
 			[]byte(operatorAddr),

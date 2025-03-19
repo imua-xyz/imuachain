@@ -148,6 +148,7 @@ message RewardAssetList {
   // reward_asset_list is a collection of asset bundles rewarded of the task.
   repeated RewardAssetInfo reward_asset_list = 1;
 }
+
 // RewardAssetInfo is an asset bundle for task rewards
 message RewardAssetInfo {
   // asset_id is a asset that the AVS support
@@ -183,7 +184,7 @@ message OperatorActivePowerInfo {
 
 // BlsPubKeyInfo is the task info.
 message BlsPubKeyInfo {
-  // operator_address is the acc address of operator 
+  // operator_address is the acc address of operator
   string operator_address = 1;
   // avs_address is the address of avs as a hex string
   string avs_address = 2;

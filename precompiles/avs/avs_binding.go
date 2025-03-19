@@ -206,7 +206,6 @@ func (_Avs *AvsTransactorRaw) Transact(opts *bind.TransactOpts, method string, p
 func (_Avs *AvsCaller) GetAVSEpochIdentifier(opts *bind.CallOpts, avsAddress common.Address) (string, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "getAVSEpochIdentifier", avsAddress)
-
 	if err != nil {
 		return *new(string), err
 	}
@@ -214,7 +213,6 @@ func (_Avs *AvsCaller) GetAVSEpochIdentifier(opts *bind.CallOpts, avsAddress com
 	out0 := *abi.ConvertType(out[0], new(string)).(*string)
 
 	return out0, err
-
 }
 
 // GetAVSEpochIdentifier is a free data retrieval call binding the contract method 0xe0938414.
@@ -237,7 +235,6 @@ func (_Avs *AvsCallerSession) GetAVSEpochIdentifier(avsAddress common.Address) (
 func (_Avs *AvsCaller) GetAVSUSDValue(opts *bind.CallOpts, avsAddress common.Address) (*big.Int, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "getAVSUSDValue", avsAddress)
-
 	if err != nil {
 		return *new(*big.Int), err
 	}
@@ -245,7 +242,6 @@ func (_Avs *AvsCaller) GetAVSUSDValue(opts *bind.CallOpts, avsAddress common.Add
 	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
-
 }
 
 // GetAVSUSDValue is a free data retrieval call binding the contract method 0xdcf61b2c.
@@ -268,7 +264,6 @@ func (_Avs *AvsCallerSession) GetAVSUSDValue(avsAddress common.Address) (*big.In
 func (_Avs *AvsCaller) GetCurrentEpoch(opts *bind.CallOpts, epochIdentifier string) (int64, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "getCurrentEpoch", epochIdentifier)
-
 	if err != nil {
 		return *new(int64), err
 	}
@@ -276,7 +271,6 @@ func (_Avs *AvsCaller) GetCurrentEpoch(opts *bind.CallOpts, epochIdentifier stri
 	out0 := *abi.ConvertType(out[0], new(int64)).(*int64)
 
 	return out0, err
-
 }
 
 // GetCurrentEpoch is a free data retrieval call binding the contract method 0x992907fb.
@@ -299,7 +293,6 @@ func (_Avs *AvsCallerSession) GetCurrentEpoch(epochIdentifier string) (int64, er
 func (_Avs *AvsCaller) GetOperatorOptedUSDValue(opts *bind.CallOpts, avsAddress common.Address, operatorAddress common.Address) (*big.Int, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "getOperatorOptedUSDValue", avsAddress, operatorAddress)
-
 	if err != nil {
 		return *new(*big.Int), err
 	}
@@ -307,7 +300,6 @@ func (_Avs *AvsCaller) GetOperatorOptedUSDValue(opts *bind.CallOpts, avsAddress 
 	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
-
 }
 
 // GetOperatorOptedUSDValue is a free data retrieval call binding the contract method 0x4d568f24.
@@ -330,7 +322,6 @@ func (_Avs *AvsCallerSession) GetOperatorOptedUSDValue(avsAddress common.Address
 func (_Avs *AvsCaller) GetOptInOperators(opts *bind.CallOpts, avsAddress common.Address) ([]string, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "getOptInOperators", avsAddress)
-
 	if err != nil {
 		return *new([]string), err
 	}
@@ -338,7 +329,6 @@ func (_Avs *AvsCaller) GetOptInOperators(opts *bind.CallOpts, avsAddress common.
 	out0 := *abi.ConvertType(out[0], new([]string)).(*[]string)
 
 	return out0, err
-
 }
 
 // GetOptInOperators is a free data retrieval call binding the contract method 0x1d4c8007.
@@ -361,7 +351,6 @@ func (_Avs *AvsCallerSession) GetOptInOperators(avsAddress common.Address) ([]st
 func (_Avs *AvsCaller) GetRegisteredPubkey(opts *bind.CallOpts, operatorAddress common.Address, avsAddress common.Address) ([]byte, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "getRegisteredPubkey", operatorAddress, avsAddress)
-
 	if err != nil {
 		return *new([]byte), err
 	}
@@ -369,7 +358,6 @@ func (_Avs *AvsCaller) GetRegisteredPubkey(opts *bind.CallOpts, operatorAddress 
 	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
 
 	return out0, err
-
 }
 
 // GetRegisteredPubkey is a free data retrieval call binding the contract method 0x9943aa27.
@@ -392,7 +380,6 @@ func (_Avs *AvsCallerSession) GetRegisteredPubkey(operatorAddress common.Address
 func (_Avs *AvsCaller) GetTaskInfo(opts *bind.CallOpts, taskAddress common.Address, taskID uint64) ([]uint64, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "getTaskInfo", taskAddress, taskID)
-
 	if err != nil {
 		return *new([]uint64), err
 	}
@@ -400,7 +387,6 @@ func (_Avs *AvsCaller) GetTaskInfo(opts *bind.CallOpts, taskAddress common.Addre
 	out0 := *abi.ConvertType(out[0], new([]uint64)).(*[]uint64)
 
 	return out0, err
-
 }
 
 // GetTaskInfo is a free data retrieval call binding the contract method 0xe2906f3d.
@@ -423,7 +409,6 @@ func (_Avs *AvsCallerSession) GetTaskInfo(taskAddress common.Address, taskID uin
 func (_Avs *AvsCaller) IsOperator(opts *bind.CallOpts, operatorAddress common.Address) (bool, error) {
 	var out []interface{}
 	err := _Avs.contract.Call(opts, &out, "isOperator", operatorAddress)
-
 	if err != nil {
 		return *new(bool), err
 	}
@@ -431,7 +416,6 @@ func (_Avs *AvsCaller) IsOperator(opts *bind.CallOpts, operatorAddress common.Ad
 	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
 
 	return out0, err
-
 }
 
 // IsOperator is a free data retrieval call binding the contract method 0x6d70f7ae.
@@ -716,7 +700,6 @@ type AvsAVSDeregistered struct {
 //
 // Solidity: event AVSDeregistered(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) FilterAVSDeregistered(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsAVSDeregisteredIterator, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -733,7 +716,6 @@ func (_Avs *AvsFilterer) FilterAVSDeregistered(opts *bind.FilterOpts, avsAddress
 //
 // Solidity: event AVSDeregistered(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) WatchAVSDeregistered(opts *bind.WatchOpts, sink chan<- *AvsAVSDeregistered, avsAddress []common.Address) (event.Subscription, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -862,7 +844,6 @@ type AvsAVSRegistered struct {
 //
 // Solidity: event AVSRegistered(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) FilterAVSRegistered(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsAVSRegisteredIterator, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -879,7 +860,6 @@ func (_Avs *AvsFilterer) FilterAVSRegistered(opts *bind.FilterOpts, avsAddress [
 //
 // Solidity: event AVSRegistered(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) WatchAVSRegistered(opts *bind.WatchOpts, sink chan<- *AvsAVSRegistered, avsAddress []common.Address) (event.Subscription, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -1008,7 +988,6 @@ type AvsAVSUpdated struct {
 //
 // Solidity: event AVSUpdated(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) FilterAVSUpdated(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsAVSUpdatedIterator, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -1025,7 +1004,6 @@ func (_Avs *AvsFilterer) FilterAVSUpdated(opts *bind.FilterOpts, avsAddress []co
 //
 // Solidity: event AVSUpdated(address indexed avsAddress, string sender, string avsName)
 func (_Avs *AvsFilterer) WatchAVSUpdated(opts *bind.WatchOpts, sink chan<- *AvsAVSUpdated, avsAddress []common.Address) (event.Subscription, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -1156,7 +1134,6 @@ type AvsChallengeInitiated struct {
 //
 // Solidity: event ChallengeInitiated(string sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress)
 func (_Avs *AvsFilterer) FilterChallengeInitiated(opts *bind.FilterOpts) (*AvsChallengeInitiatedIterator, error) {
-
 	logs, sub, err := _Avs.contract.FilterLogs(opts, "ChallengeInitiated")
 	if err != nil {
 		return nil, err
@@ -1168,7 +1145,6 @@ func (_Avs *AvsFilterer) FilterChallengeInitiated(opts *bind.FilterOpts) (*AvsCh
 //
 // Solidity: event ChallengeInitiated(string sender, bytes taskHash, uint64 taskID, bytes taskResponseHash, string operatorAddress)
 func (_Avs *AvsFilterer) WatchChallengeInitiated(opts *bind.WatchOpts, sink chan<- *AvsChallengeInitiated) (event.Subscription, error) {
-
 	logs, sub, err := _Avs.contract.WatchLogs(opts, "ChallengeInitiated")
 	if err != nil {
 		return nil, err
@@ -1291,7 +1267,6 @@ type AvsOperatorJoined struct {
 //
 // Solidity: event OperatorJoined(address indexed avsAddress, string sender)
 func (_Avs *AvsFilterer) FilterOperatorJoined(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsOperatorJoinedIterator, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -1308,7 +1283,6 @@ func (_Avs *AvsFilterer) FilterOperatorJoined(opts *bind.FilterOpts, avsAddress 
 //
 // Solidity: event OperatorJoined(address indexed avsAddress, string sender)
 func (_Avs *AvsFilterer) WatchOperatorJoined(opts *bind.WatchOpts, sink chan<- *AvsOperatorJoined, avsAddress []common.Address) (event.Subscription, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -1436,7 +1410,6 @@ type AvsOperatorLeft struct {
 //
 // Solidity: event OperatorLeft(address indexed avsAddress, string sender)
 func (_Avs *AvsFilterer) FilterOperatorLeft(opts *bind.FilterOpts, avsAddress []common.Address) (*AvsOperatorLeftIterator, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -1453,7 +1426,6 @@ func (_Avs *AvsFilterer) FilterOperatorLeft(opts *bind.FilterOpts, avsAddress []
 //
 // Solidity: event OperatorLeft(address indexed avsAddress, string sender)
 func (_Avs *AvsFilterer) WatchOperatorLeft(opts *bind.WatchOpts, sink chan<- *AvsOperatorLeft, avsAddress []common.Address) (event.Subscription, error) {
-
 	var avsAddressRule []interface{}
 	for _, avsAddressItem := range avsAddress {
 		avsAddressRule = append(avsAddressRule, avsAddressItem)
@@ -1581,7 +1553,6 @@ type AvsPublicKeyRegistered struct {
 //
 // Solidity: event PublicKeyRegistered(string sender, address avsAddress)
 func (_Avs *AvsFilterer) FilterPublicKeyRegistered(opts *bind.FilterOpts) (*AvsPublicKeyRegisteredIterator, error) {
-
 	logs, sub, err := _Avs.contract.FilterLogs(opts, "PublicKeyRegistered")
 	if err != nil {
 		return nil, err
@@ -1593,7 +1564,6 @@ func (_Avs *AvsFilterer) FilterPublicKeyRegistered(opts *bind.FilterOpts) (*AvsP
 //
 // Solidity: event PublicKeyRegistered(string sender, address avsAddress)
 func (_Avs *AvsFilterer) WatchPublicKeyRegistered(opts *bind.WatchOpts, sink chan<- *AvsPublicKeyRegistered) (event.Subscription, error) {
-
 	logs, sub, err := _Avs.contract.WatchLogs(opts, "PublicKeyRegistered")
 	if err != nil {
 		return nil, err
@@ -1723,7 +1693,6 @@ type AvsTaskCreated struct {
 //
 // Solidity: event TaskCreated(address indexed taskContractAddress, uint64 indexed taskId, string sender, string name, bytes hash, uint64 taskResponsePeriod, uint64 taskChallengePeriod, uint64 thresholdPercentage, uint64 taskStatisticalPeriod)
 func (_Avs *AvsFilterer) FilterTaskCreated(opts *bind.FilterOpts, taskContractAddress []common.Address, taskId []uint64) (*AvsTaskCreatedIterator, error) {
-
 	var taskContractAddressRule []interface{}
 	for _, taskContractAddressItem := range taskContractAddress {
 		taskContractAddressRule = append(taskContractAddressRule, taskContractAddressItem)
@@ -1744,7 +1713,6 @@ func (_Avs *AvsFilterer) FilterTaskCreated(opts *bind.FilterOpts, taskContractAd
 //
 // Solidity: event TaskCreated(address indexed taskContractAddress, uint64 indexed taskId, string sender, string name, bytes hash, uint64 taskResponsePeriod, uint64 taskChallengePeriod, uint64 thresholdPercentage, uint64 taskStatisticalPeriod)
 func (_Avs *AvsFilterer) WatchTaskCreated(opts *bind.WatchOpts, sink chan<- *AvsTaskCreated, taskContractAddress []common.Address, taskId []uint64) (event.Subscription, error) {
-
 	var taskContractAddressRule []interface{}
 	for _, taskContractAddressItem := range taskContractAddress {
 		taskContractAddressRule = append(taskContractAddressRule, taskContractAddressItem)
@@ -1880,7 +1848,6 @@ type AvsTaskSubmittedByOperator struct {
 //
 // Solidity: event TaskSubmittedByOperator(address indexed taskContractAddress, uint64 indexed taskId, string sender, bytes taskResponse, bytes blsSignature, uint8 phase)
 func (_Avs *AvsFilterer) FilterTaskSubmittedByOperator(opts *bind.FilterOpts, taskContractAddress []common.Address, taskId []uint64) (*AvsTaskSubmittedByOperatorIterator, error) {
-
 	var taskContractAddressRule []interface{}
 	for _, taskContractAddressItem := range taskContractAddress {
 		taskContractAddressRule = append(taskContractAddressRule, taskContractAddressItem)
@@ -1901,7 +1868,6 @@ func (_Avs *AvsFilterer) FilterTaskSubmittedByOperator(opts *bind.FilterOpts, ta
 //
 // Solidity: event TaskSubmittedByOperator(address indexed taskContractAddress, uint64 indexed taskId, string sender, bytes taskResponse, bytes blsSignature, uint8 phase)
 func (_Avs *AvsFilterer) WatchTaskSubmittedByOperator(opts *bind.WatchOpts, sink chan<- *AvsTaskSubmittedByOperator, taskContractAddress []common.Address, taskId []uint64) (event.Subscription, error) {
-
 	var taskContractAddressRule []interface{}
 	for _, taskContractAddressItem := range taskContractAddress {
 		taskContractAddressRule = append(taskContractAddressRule, taskContractAddressItem)

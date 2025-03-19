@@ -36,11 +36,14 @@ func newPrice(prices []*oracletypes.PriceTimeDetID) *price {
 	}
 }
 
-type validatorSet []*price
-type powers struct {
-	validators map[string]struct{}
-	p          int
-}
+type (
+	validatorSet []*price
+	powers       struct {
+		validators map[string]struct{}
+		p          int
+	}
+)
+
 type blocks struct {
 	msgItemsInBlocks [][]*price
 	idx              int
@@ -78,6 +81,7 @@ func NewBlocks(t int) *Blocks {
 func (b *Blocks) AddPrices(ps []*price) {
 	b.MsgItemsInBlocks = append(b.MsgItemsInBlocks, ps)
 }
+
 func (b *Blocks) Next() (ps []*price, result *oracletypes.PriceTimeDetID) {
 	if b.Idx >= len(b.MsgItemsInBlocks) {
 		return nil, nil
@@ -293,39 +297,37 @@ func generateAllBlocks(validatorSets []validatorSet, quotingWindow int, sizeVali
 	return ret
 }
 
-var (
-	// only consider about combination
-	// TODO: add cases as Permutation ?
-	prices []*price = []*price{
-		newPrice([]*oracletypes.PriceTimeDetID{
-			{Price: "12100000000", Decimal: 8, DetID: "1"},
-		}),
-		newPrice([]*oracletypes.PriceTimeDetID{
-			{Price: "12700000000", Decimal: 8, DetID: "2"},
-		}),
-		newPrice([]*oracletypes.PriceTimeDetID{
-			{Price: "12900000000", Decimal: 8, DetID: "3"},
-		}),
+// only consider about combination
+// TODO: add cases as Permutation ?
+var prices []*price = []*price{
+	newPrice([]*oracletypes.PriceTimeDetID{
+		{Price: "12100000000", Decimal: 8, DetID: "1"},
+	}),
+	newPrice([]*oracletypes.PriceTimeDetID{
+		{Price: "12700000000", Decimal: 8, DetID: "2"},
+	}),
+	newPrice([]*oracletypes.PriceTimeDetID{
+		{Price: "12900000000", Decimal: 8, DetID: "3"},
+	}),
 
-		newPrice([]*oracletypes.PriceTimeDetID{
-			{Price: "12100000000", Decimal: 8, DetID: "1"},
-			{Price: "12700000000", Decimal: 8, DetID: "2"},
-		}),
-		newPrice([]*oracletypes.PriceTimeDetID{
-			{Price: "12100000000", Decimal: 8, DetID: "1"},
-			{Price: "12900000000", Decimal: 8, DetID: "3"},
-		}),
-		newPrice([]*oracletypes.PriceTimeDetID{
-			{Price: "12700000000", Decimal: 8, DetID: "2"},
-			{Price: "12900000000", Decimal: 8, DetID: "3"},
-		}),
+	newPrice([]*oracletypes.PriceTimeDetID{
+		{Price: "12100000000", Decimal: 8, DetID: "1"},
+		{Price: "12700000000", Decimal: 8, DetID: "2"},
+	}),
+	newPrice([]*oracletypes.PriceTimeDetID{
+		{Price: "12100000000", Decimal: 8, DetID: "1"},
+		{Price: "12900000000", Decimal: 8, DetID: "3"},
+	}),
+	newPrice([]*oracletypes.PriceTimeDetID{
+		{Price: "12700000000", Decimal: 8, DetID: "2"},
+		{Price: "12900000000", Decimal: 8, DetID: "3"},
+	}),
 
-		newPrice([]*oracletypes.PriceTimeDetID{
-			{Price: "12100000000", Decimal: 8, DetID: "1"},
-			{Price: "12700000000", Decimal: 8, DetID: "2"},
-			{Price: "12900000000", Decimal: 8, DetID: "3"},
-		}),
-		// 0 price should be considered
-		nil,
-	}
-)
+	newPrice([]*oracletypes.PriceTimeDetID{
+		{Price: "12100000000", Decimal: 8, DetID: "1"},
+		{Price: "12700000000", Decimal: 8, DetID: "2"},
+		{Price: "12900000000", Decimal: 8, DetID: "3"},
+	}),
+	// 0 price should be considered
+	nil,
+}
