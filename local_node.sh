@@ -214,8 +214,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	oracle_env_chainlink_content=$(
 		cat <<EOF
 urls:
-  mainnet: !!str https://eth-mainnet.g.alchemy.com/v2/GnF5oGDBAH0p7OQhkdE7AQKQ_bfYsSyZ
-  sepolia: !!str https://eth-sepolia.g.alchemy.com/v2/Ru0n0aw_MVLJ9RUhgnIl036n4IM_mHCB
+  mainnet: !!str https://rpc.ankr.com/eth
+  sepolia: !!str https://rpc.ankr.com/eth_sepolia
 tokens:
   ETHUSDT: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419_mainnet
   AAVEUSDT: 0x547a514d5e3769680Ce22B2361c10Ea13619e8a9_mainnet
