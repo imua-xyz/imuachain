@@ -52,4 +52,9 @@ var (
 		ModuleName, 10,
 		"invalid USD value of asset",
 	)
+
+	ErrInvalidInputParameter = errorsmod.Register(
+		ModuleName, 11,
+		"invalid input parameter",
+	)
 )

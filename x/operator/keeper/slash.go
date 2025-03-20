@@ -16,8 +16,9 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-// GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID, because /* the slash  */event occurs in
-// dogfood doesn't have a TxID. It isn't submitted through an external transaction.
+// GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID,
+// because the slash event occurs in dogfood doesn't have a TxID. It isn't submitted
+// through an external transaction.
 func GetSlashIDForDogfood(infraction stakingtypes.Infraction, infractionHeight int64) string {
 	slashIDBytes := utils.AppendMany(
 		utils.Uint32ToBigEndian(uint32(infraction)),

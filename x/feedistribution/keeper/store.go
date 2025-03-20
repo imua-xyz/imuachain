@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 func (k Keeper) SetStakeChangeDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string,
@@ -362,4 +363,35 @@ func (k Keeper) IncreasePeriodForOperator(ctx sdk.Context, operator, assetID, ep
 	}
 	rewards.Period += 1
 	return k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier, rewards)
+}
+
+// SetOperatorHistoricalRewards : set the historical rewards for the specific operator, epochIdentifier, assetID
+// and period
+func (k Keeper) SetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
+	period uint64, historicalRewards feedistributiontypes.OperatorHistoricalRewards) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
+	var bz []byte
+	bz = k.cdc.MustMarshal(&historicalRewards)
+	// this encoding ensures the key is ordered by period.
+	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
+	store.Set(key, bz)
+	return nil
+}
+
+// GetOperatorHistoricalRewards : get the historical rewards for the specific operator, epochIdentifier, assetID
+// and period.
+func (k Keeper) GetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
+	period uint64) (feedistributiontypes.OperatorHistoricalRewards, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
+	// this encoding ensures the key is ordered by period.
+	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.OperatorHistoricalRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorHistoricalRewards, operator:%s,assetID:%s,epochIdentifier:%s,period:%d", operator, assetID, epochIdentifier, period)
+	}
+	historicalRewards := feedistributiontypes.OperatorHistoricalRewards{}
+	k.cdc.MustUnmarshal(b, &historicalRewards)
+	return historicalRewards, nil
 }
