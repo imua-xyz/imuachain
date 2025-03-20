@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"cosmossdk.io/math"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -108,7 +109,7 @@ func (k *Keeper) delegateTo(
 		deltaOperatorAsset.OperatorShare = share
 	}
 
-	err = k.assetsKeeper.UpdateOperatorAssetState(ctx, params.OperatorAddress, assetID, deltaOperatorAsset)
+	prevAssetState, err := k.assetsKeeper.UpdateOperatorAssetState(ctx, params.OperatorAddress, assetID, deltaOperatorAsset)
 	if err != nil {
 		return err
 	}
@@ -127,7 +128,7 @@ func (k *Keeper) delegateTo(
 
 	if notGenesis {
 		// call the hooks registered by the other modules
-		k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress)
+		k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, prevAssetState)
 	}
 	return nil
 }
@@ -248,6 +249,21 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		return err
 	}
 
+	// get the previous operator asset state before update
+	var prevAssetState *assetstype.OperatorAssetInfo
+	if k.assetsKeeper.IsOperatorAssetExist(ctx, params.OperatorAddress, assetID) {
+		prevAssetState, err = k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, params.OperatorAddress, assetID)
+		if err != nil {
+			return err
+		}
+	} else {
+		prevAssetState = &assetstype.OperatorAssetInfo{
+			TotalAmount:               math.ZeroInt(),
+			PendingUndelegationAmount: math.ZeroInt(),
+			TotalShare:                math.LegacyZeroDec(),
+			OperatorShare:             math.LegacyZeroDec(),
+		}
+	}
 	// remove share
 	removeToken, err := k.RemoveShare(ctx, true, params.OperatorAddress, stakerID, assetID, share)
 	if err != nil {
@@ -311,7 +327,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	)
 
 	// call the hooks registered by the other modules
-	return k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress, recordKey)
+	return k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress, recordKey, *prevAssetState)
 }
 
 // AssociateOperatorWithStaker marks that a staker is claiming to be associated with an operator.
@@ -353,7 +369,7 @@ func (k *Keeper) AssociateOperatorWithStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// increase the share of new marked operator
 		if keys.OperatorAddr == operatorAddress.String() {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
+			_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare,
 			})
 		}
@@ -400,7 +416,7 @@ func (k *Keeper) DissociateOperatorFromStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// decrease the share of old operator
 		if keys.OperatorAddr == associatedOperator {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
+			_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare.Neg(),
 			})
 		}

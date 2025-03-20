@@ -14,21 +14,10 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 	if err != nil {
 		return rewards.Period, err
 	}
-	if !k.operatorKeeper.HasOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID) {
-		ctx.Logger().Info("IncrementOperatorPeriod, operator asset USD value doesn't exist", "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
-		//
-		return rewards.Period, nil
-	}
-	// get the USD value for asset
-	assetUSDValue, err := k.operatorKeeper.GetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID)
-	if err != nil {
-		return rewards.Period, err
-	}
-	// calculate current ratio
+
+	// calculate current reward ratio
 	var current sdk.DecCoins
-	if assetUSDValue.IsZero() {
-		return rewards.Period, nil
-	}
+	// get the
 	// note: necessary to truncate so we don't allow withdrawing more rewards than owed
 	current = rewards.Rewards.QuoDecTruncate(sdk.NewDecFromInt(val.GetTokens()))
 

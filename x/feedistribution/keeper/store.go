@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -9,12 +10,46 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress) error {
+func (k Keeper) SetStakeChangeDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string,
+	delegationChangeInfo feedistributiontypes.DelegationChangeInfo) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	delegationKey := assetstype.GetJoinedStoreKey(stakerID, assetID, operator.String())
-	delegationKeys := &feedistributiontypes.StakeChangeDelegations{
-		DelegationKeys: make([]string, 0),
+	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	b := k.cdc.MustMarshal(&delegationChangeInfo)
+	store.Set(key, b)
+	return nil
+}
+
+func (k Keeper) GetStakeChangeDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) (feedistributiontypes.DelegationChangeInfo, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
+	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.DelegationChangeInfo{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
+			"GetStakeChangeDelegations, epochIdentifier:%s,operator:%s,assetID:%s", epochIdentifier, operator, assetID)
 	}
+	delegationChangeInfo := feedistributiontypes.DelegationChangeInfo{}
+	k.cdc.MustUnmarshal(b, &delegationChangeInfo)
+	return delegationChangeInfo, nil
+}
+
+func (k Keeper) HasStakeChangeDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
+	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	return store.Has(key)
+}
+
+func (k Keeper) DeleteStakeChangeDelegationsByEpoch(ctx sdk.Context, epochIdentifier string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(epochIdentifier))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
+	return nil
+}
+
+func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error {
 	// The reason for marking delegations with stake changes for all epochs instead of only the impactful
 	// epochs is that we need to update the operator’s period whenever the delegated stake changes,
 	// regardless of whether the operator is serving any AVSs.
@@ -25,21 +60,35 @@ func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID st
 	// cannot correctly determine the stake and reward ratio for a staker. This is because the staker might
 	// have delegated or undelegated tokens, altering the delegated stake during the opting-out period.
 	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
+	var err error
 	for _, epochInfo := range allEpochs {
-		value := store.Get([]byte(epochInfo.Identifier))
-		if value != nil {
-			k.cdc.MustUnmarshal(value, delegationKeys)
+		delegationChangeInfo := feedistributiontypes.DelegationChangeInfo{
+			StakerIds: make([]string, 0),
 		}
-		delegationKeys.AppendUniqueDelegationKey(string(delegationKey))
-		bz := k.cdc.MustMarshal(delegationKeys)
-		store.Set([]byte(epochInfo.Identifier), bz)
-	}
-	return nil
-}
+		if k.HasStakeChangeDelegations(ctx, epochInfo.Identifier, operator.String(), assetID) {
+			delegationChangeInfo, err = k.GetStakeChangeDelegations(ctx, epochInfo.Identifier, operator.String(), assetID)
+			if err != nil {
+				return err
+			}
+		} else {
+			// This is the first delegation/undelegation that changes the delegated amount.
+			// The total delegation amount of the operator at the end of the previous epoch needs to be saved.
+			// get the current total delegation amount from the operator assets information
+			// store it as a decimal type.
+			assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
+			if err != nil {
+				return err
+			}
+			divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
+			delegationChangeInfo.TotalAmount = sdk.NewDecFromInt(prevAssetState.TotalAmount).QuoInt(divisor)
+		}
 
-func (k Keeper) DeleteStakeChangeDelegations(ctx sdk.Context, epochIdentifier string) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	store.Delete([]byte(epochIdentifier))
+		delegationChangeInfo.AppendUniqueStakerID(stakerID)
+		err = k.SetStakeChangeDelegations(ctx, epochInfo.Identifier, operator.String(), assetID, delegationChangeInfo)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -283,18 +332,15 @@ func (k Keeper) UpdateOperatorCurrentRewards(ctx sdk.Context, operator, assetID,
 	if len(deltaRewards.Rewards) == 0 {
 		return nil
 	}
-	// set the initialized value
-	rewards := feedistributiontypes.OperatorCurrentRewards{
-		Rewards: make([]*feedistributiontypes.CommonAVSRewardData, 0),
-		// period starts from 1.
-		Period: 1,
-	}
-	var err error
-	if k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier) {
-		rewards, err = k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
-		if err != nil {
-			return err
-		}
+	// We don't need to handle the initialization case here because this state
+	// should have been initialized when processing delegation change events at
+	// the end of the previous epoch.
+	// It sets 1 as the start period and initializes the rewards slice as null.
+	// Then, at the end of the current epoch, the operator will receive rewards.
+	// Therefore, an error will be returned if the state cannot be retrieved here.
+	rewards, err := k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
+	if err != nil {
+		return err
 	}
 	err = rewards.UpdateReward(isIncrease, deltaRewards)
 	if err != nil {

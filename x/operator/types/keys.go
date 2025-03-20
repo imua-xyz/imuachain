@@ -135,7 +135,7 @@ var (
 	// KeyPrefixAVSAssetListPerEpoch key-value:
 	// avsAddr -> AVSAssetsPerEpoch
 	// Since the real-time asset list is already stored in AVS information, we only record
-	// the asset list here when the AVS asset list is updated.
+	// the asset list here when the AVS asset list is changed.
 	// If there is no change, we can directly use the asset list from AVS information.
 	// However, if a change occurs, we need to record the asset list before the update,
 	// because the voting power update uses the asset list from the end of the previous epoch,

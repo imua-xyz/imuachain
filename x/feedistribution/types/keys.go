@@ -86,8 +86,7 @@ var (
 	KeyPrefixOperatorOutstandingRewards = []byte{prefixOperatorOutstandingRewards}
 
 	// KeyPrefixStakeChangeDelegations :
-	// delegationKey = restakerID +'/'+assetID+'/'+operatorAddr
-	// epochIdentifier -> StakeChangeDelegations
+	// epochIdentifier + '/' + operatorAddr + '/' + assetID -> DelegationChangeInfo
 	// In imua chain, the F1 distribution is integrated per epoch, so we need to track the
 	// delegations whose stake has changed each epoch. Then, we trigger the distribution lazily at
 	// the end of epoch and update their startingInfos for future distributions. The slices need to

@@ -206,7 +206,7 @@ func (k Keeper) RemoveShareFromOperator(
 	if isUndelegation {
 		delta.PendingUndelegationAmount = removedToken
 	}
-	err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operator, assetID, delta)
+	_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operator, assetID, delta)
 	if err != nil {
 		return token, err
 	}

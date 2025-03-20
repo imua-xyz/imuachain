@@ -829,10 +829,13 @@ func (k *Keeper) HasAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string) bool {
 	return store.Has(key)
 }
 
-func (k *Keeper) GetLastVotingPowerAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error) {
+func (k *Keeper) GetRecentEndedEpochAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error) {
 	if k.HasAVSAssetsPerEpoch(ctx, avsAddr) {
+		// the avs assets have been changed, use a dedicated assets list.
 		return k.GetAVSAssetsPerEpoch(ctx, avsAddr)
 	} else {
+		// the avs assets haven't been changed, so use the real-time assets list in
+		// the avs information.
 		avsInfo, err := k.avsKeeper.GetAVSInfo(ctx, avsAddr)
 		if err != nil {
 			return nil, err

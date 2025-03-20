@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	sdkmath "cosmossdk.io/math"
+	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
@@ -52,7 +53,7 @@ type OperatorKeeper interface {
 	GetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string) (info *operatortypes.OptedInfo, err error)
 	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
 	IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error
-	GetLastVotingPowerAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error)
+	GetRecentEndedEpochAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error)
 	GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error)
 	HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) bool
 	GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) (sdkmath.LegacyDec, error)
@@ -63,6 +64,12 @@ type AVSKeeper interface {
 	GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) []string
 	IsAVS(ctx sdk.Context, addr string) (bool, error)
 	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochsTypes.EpochInfo, error)
+}
+
+// AssetsKeeper represents the expected keeper interface for the assets module.
+type AssetsKeeper interface {
+	GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *assetstype.StakingAssetInfo, err error)
+	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

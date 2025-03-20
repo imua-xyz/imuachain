@@ -94,7 +94,7 @@ func (k *Keeper) EndBlock(
 		}
 
 		// update the operator state
-		err = k.assetsKeeper.UpdateOperatorAssetState(cc, operatorAccAddress, record.AssetId, assetstypes.DeltaOperatorSingleAsset{
+		_, err = k.assetsKeeper.UpdateOperatorAssetState(cc, operatorAccAddress, record.AssetId, assetstypes.DeltaOperatorSingleAsset{
 			PendingUndelegationAmount: recordAmountNeg,
 		})
 		if err != nil {

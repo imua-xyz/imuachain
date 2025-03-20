@@ -22,18 +22,18 @@ func (ps OperatorRewardProportions) String() string {
 	return out[:len(out)-1]
 }
 
-// AppendUniqueDelegationKey appends a new delegation key to StakeChangeDelegations
+// AppendUniqueStakerID appends a new stakerID to the staker list in DelegationChangeInfo
 // only if it's not already present.
-func (s *StakeChangeDelegations) AppendUniqueDelegationKey(newKey string) {
+func (s *DelegationChangeInfo) AppendUniqueStakerID(newStaker string) {
 	// Check if the newKey already exists in the slice
-	for _, key := range s.DelegationKeys {
-		if key == newKey {
-			// If the key already exists, do not append it
+	for _, stakerID := range s.StakerIds {
+		if stakerID == newStaker {
+			// If the staker already exists, do not append it
 			return
 		}
 	}
 	// Append the newKey if it's not already present
-	s.DelegationKeys = append(s.DelegationKeys, newKey)
+	s.StakerIds = append(s.StakerIds, newStaker)
 }
 
 // HasAVSReward checks whether the avs reward exists, return the index if it exists

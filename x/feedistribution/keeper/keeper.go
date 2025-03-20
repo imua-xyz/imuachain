@@ -26,6 +26,7 @@ type (
 		epochsKeeper   types.EpochsKeeper
 		operatorKeeper types.OperatorKeeper
 		avsKeeper      types.AVSKeeper
+		assetsKeeper   types.AssetsKeeper
 
 		feeCollectorName string
 
@@ -44,6 +45,7 @@ func NewKeeper(
 	epochKeeper types.EpochsKeeper,
 	operatorKeeper types.OperatorKeeper,
 	avsKeeper types.AVSKeeper,
+	assetsKeeper types.AssetsKeeper,
 ) Keeper {
 	// ensure distribution module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -66,6 +68,7 @@ func NewKeeper(
 		StakingKeeper:    stakingkeeper,
 		operatorKeeper:   operatorKeeper,
 		avsKeeper:        avsKeeper,
+		assetsKeeper:     assetsKeeper,
 	}
 
 	return *k
