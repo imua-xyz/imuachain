@@ -28,10 +28,10 @@ func (VirtualSlashKeeper) OperatorAssetSlashedProportion(_ sdk.Context, _ sdk.Ac
 // DelegationHooks are event hooks triggered by the delegation module
 type DelegationHooks interface {
 	// AfterDelegation :
-	AfterDelegation(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress) error
+	AfterDelegation(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error
 	// AfterUndelegationStarted for undelegation, we use the address of the operator to figure out the list of impacted
 	// chains for that operator. and we need the identifier to hold it until confirmed by subscriber
-	AfterUndelegationStarted(ctx sdk.Context, stakerID, assetID string, addr sdk.AccAddress, recordKey []byte) error
+	AfterUndelegationStarted(ctx sdk.Context, stakerID, assetID string, addr sdk.AccAddress, recordKey []byte, prevAssetState assetstype.OperatorAssetInfo) error
 }
 
 type OperatorKeeper interface {
@@ -43,7 +43,7 @@ type AssetsKeeper interface {
 	UpdateStakerAssetState(
 		ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset,
 	) (info *assetstype.StakerAssetInfo, err error)
-	UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Address, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (err error)
+	UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Address, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (stateBeforeUpdate assetstype.OperatorAssetInfo, err error)
 	GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, assetID string) (info *assetstype.StakerAssetInfo, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 	IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.Address, assetID string) bool

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
@@ -26,7 +27,7 @@ func (k *Keeper) DelegationHooks() DelegationHooksWrapper {
 
 // AfterDelegation is called after a delegation is made.
 func (wrapper DelegationHooksWrapper) AfterDelegation(
-	_ sdk.Context, _, _ string, _ sdk.AccAddress,
+	_ sdk.Context, _, _ string, _ sdk.AccAddress, _ assetstype.OperatorAssetInfo,
 ) error {
 	// we do nothing here, since the vote power for all operators is calculated
 	// in the end separately. even if we knew the amount of the delegation, the
@@ -37,6 +38,7 @@ func (wrapper DelegationHooksWrapper) AfterDelegation(
 // AfterUndelegationStarted is called after an undelegation is started.
 func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 	ctx sdk.Context, _, _ string, operator sdk.AccAddress, recordKey []byte,
+	_ assetstype.OperatorAssetInfo,
 ) error {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	var unbondingCompletionEpoch int64

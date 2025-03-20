@@ -110,8 +110,9 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 // After distribution, the remaining leftover rewards will be returned to be accounted for in the community pool.
 func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epochIdentifier string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
 	// split the rewards by multiple assets
-	// get the list of assets supported by the AVS at the time of the last voting power update.
-	assets, err := k.operatorKeeper.GetLastVotingPowerAVSAssets(ctx, avsAddr)
+	// get the list of assets supported by the AVS at the time of the recent ended epoch.
+	// because the voting power update is per epoch.
+	assets, err := k.operatorKeeper.GetRecentEndedEpochAVSAssets(ctx, avsAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -152,12 +153,4 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 		remaining = remaining.Sub(assetRewards)
 	}
 	return remaining, nil
-}
-
-func (k Keeper) AllocateTokensToSingleStaker(ctx sdk.Context, stakerAddress string, reward sdk.DecCoins) {
-	logger := k.Logger()
-	currentStakerRewards := k.GetStakerRewards(ctx, stakerAddress)
-	currentStakerRewards.Rewards = currentStakerRewards.Rewards.Add(reward...)
-	k.SetStakerRewards(ctx, stakerAddress, currentStakerRewards)
-	logger.Info("allocate tokens to single staker successfully", "allocated amount is", currentStakerRewards.Rewards.String())
 }
