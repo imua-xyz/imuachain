@@ -86,7 +86,7 @@ message CommonAVSRewardData {
 // slice to store the accumulated reward factors for all AVSs separately.
 message OperatorHistoricalRewards {
   // cumulative_reward_ratios is the reward ratios for multiple AVSs
-  repeated CommonAVSRewardData cumulative_reward_ratios = 1;
+  repeated CommonAVSRewardData cumulative_reward_ratios = 1 [(gogoproto.nullable) = false];
   // reference_count is for F1 distribution.
   uint32 reference_count = 2;
 }
@@ -101,7 +101,7 @@ message OperatorHistoricalRewards {
 // Operator, assetID and epochIdentifier are implicit within the store key.
 message OperatorCurrentRewards {
   // current rewards
-  repeated CommonAVSRewardData rewards = 1;
+  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
   // period is for a validator kept as a running counter
   uint64 period = 2;
 }
