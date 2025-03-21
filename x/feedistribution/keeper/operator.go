@@ -3,7 +3,6 @@ package keeper
 import (
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 )
 
 func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epochIdentifier string) error {
@@ -11,7 +10,7 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 	// the period in the historical rewards starts from 0
 	err := k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, 0,
 		feedistributiontypes.OperatorHistoricalRewards{
-			CumulativeRewardRatios: make([]*feedistributiontypes.CommonAVSRewardData, 0),
+			CumulativeRewardRatios: make([]feedistributiontypes.CommonAVSRewardData, 0),
 			// set the reference count to 1 because it will be referenced by the current reward.
 			ReferenceCount: 1,
 		})
@@ -21,7 +20,7 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 	// initialize the current rewards
 	err = k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier,
 		feedistributiontypes.OperatorCurrentRewards{
-			Rewards: make([]*feedistributiontypes.CommonAVSRewardData, 0),
+			Rewards: make([]feedistributiontypes.CommonAVSRewardData, 0),
 			// the period in current rewards starts from 1.
 			Period: 1,
 		})
@@ -35,41 +34,133 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 // The operator’s period needs to be incremented whenever the delegated stake changes,
 // regardless of whether the operator is serving any AVSs.
 func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	totalDelegationAmount sdk.Dec) (uint64, error) {
+	preDelegationAmount sdk.Dec) (uint64, error) {
 	if !k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier) {
-		// Initialize the current rewards and period of the operator.
-		// This case occurs when the operator did not have any delegations of this asset at the end
-		// of the previous epoch, which means all delegations happened in the current epoch.
+		// Initialize the currentRewardRatio currentRewards and period of the operator.
+		// This case occurs when processing an operator's delegation changes for the first time.
+		// At this point, the operator's previous delegation amount should be zero,
+		// and no currentRewardRatio currentRewards state has been recorded.
 		return 0, k.initializeOperatorPeriod(ctx, operator, assetID, epochIdentifier)
 	}
-	// fetch current rewards
-	rewards, err := k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
+	// fetch currentRewardRatio currentRewards
+	currentRewards, err := k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
 	if err != nil {
-		return rewards.Period, err
+		return currentRewards.Period, err
 	}
 
-	if !totalDelegationAmount.IsPositive() {
+	// calculate currentRewardRatio reward ratio
+	var currentRewardRatio []feedistributiontypes.CommonAVSRewardData
+
+	if preDelegationAmount.IsNegative() {
 		return 0, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
-			"IncrementOperatorPeriod, the total delegation amount isn't positive, amount:%s", totalDelegationAmount)
+			"IncrementOperatorPeriod, the total delegation amount is negative, amount:%s", preDelegationAmount)
+	} else if preDelegationAmount.IsZero() {
+		if len(currentRewards.Rewards) != 0 {
+			// This case shouldn't exist; if this exception occurs, we distribute these currentRewards to the community pool
+			// because we can't calculate the ratio for zero-token operators.
+			ctx.Logger().Info("IncrementOperatorPeriod, the previous total delegation amount is zero but the currentRewards isn't null")
+			err = k.RedirectOperatorRewardsToCommunityPool(ctx, operator, currentRewards.Rewards)
+			if err != nil {
+				ctx.Logger().Error("IncrementOperatorPeriod: Failed to redirect the operator currentRewards to the community pool", "error", err, "operator", operator)
+				// don't return the error to continue the period update.
+			}
+		}
+		// currentRewardRatio reward ratio should be null
+		currentRewardRatio = make([]feedistributiontypes.CommonAVSRewardData, 0)
+	} else {
+		currentRewardRatio, err = feedistributiontypes.CommonAVSRewards(currentRewards.Rewards).CalculateRewardRatio(preDelegationAmount)
+		if err != nil {
+			return 0, err
+		}
 	}
 
-	// calculate current reward ratio
-	var current sdk.DecCoins
-	// get the
-	// note: necessary to truncate so we don't allow withdrawing more rewards than owed
-	current = rewards.Rewards.QuoDecTruncate(sdk.NewDecFromInt(val.GetTokens()))
-
-	// fetch historical rewards for last period
-	historical := k.GetValidatorHistoricalRewards(ctx, val.GetOperator(), rewards.Period-1).CumulativeRewardRatio
-
+	// fetch historical currentRewards for last period
+	historicalReward, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, currentRewards.Period-1)
+	if err != nil {
+		return 0, err
+	}
 	// decrement reference count
-	k.decrementReferenceCount(ctx, val.GetOperator(), rewards.Period-1)
+	err = k.decrementReferenceCount(ctx, operator, assetID, epochIdentifier, currentRewards.Period-1)
+	if err != nil {
+		return 0, err
+	}
 
-	// set new historical rewards with reference count of 1
-	k.SetValidatorHistoricalRewards(ctx, val.GetOperator(), rewards.Period, types.NewValidatorHistoricalRewards(historical.Add(current...), 1))
+	// set new historical currentRewards with reference count of 1
+	// because it will be referenced by the current period
+	currentCumulativeRatios := feedistributiontypes.CommonAVSRewards(currentRewardRatio).Add(historicalReward.CumulativeRewardRatios...)
+	err = k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, currentRewards.Period,
+		feedistributiontypes.OperatorHistoricalRewards{
+			CumulativeRewardRatios: currentCumulativeRatios,
+			ReferenceCount:         1,
+		})
+	if err != nil {
+		return 0, err
+	}
 
-	// set current rewards, incrementing period by 1
-	k.SetValidatorCurrentRewards(ctx, val.GetOperator(), types.NewValidatorCurrentRewards(sdk.DecCoins{}, rewards.Period+1))
+	// set currentRewards for the operator, incrementing period by 1
+	err = k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier,
+		feedistributiontypes.OperatorCurrentRewards{
+			Rewards: make([]feedistributiontypes.CommonAVSRewardData, 0),
+			Period:  currentRewards.Period + 1})
+	if err != nil {
+		return 0, err
+	}
 
-	return rewards.Period
+	return currentRewards.Period, nil
+}
+
+// decrement the reference count for a historical rewards value, and delete if zero references remain
+func (k Keeper) decrementReferenceCount(ctx sdk.Context, operator, assetID, epochIdentifier string,
+	period uint64) error {
+	historical, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period)
+	if err != nil {
+		return err
+	}
+	if historical.ReferenceCount == 0 {
+		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("decrementReferenceCount, cannot set negative reference count")
+	}
+	historical.ReferenceCount--
+	if historical.ReferenceCount == 0 {
+		err = k.DeleteOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period)
+	} else {
+		err = k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period, historical)
+	}
+	return err
+}
+
+// increment the reference count for a historical rewards value
+func (k Keeper) incrementReferenceCount(ctx sdk.Context, operator, assetID, epochIdentifier string,
+	period uint64) error {
+	historical, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period)
+	if err != nil {
+		return err
+	}
+	// In the implementation of cosmos-sdk, it checks whether the reference count is greater than 2
+	// before increasing it. In cosmos-sdk, reward distribution is handled per block, so each delegation
+	// changes the operator's total delegation amount, which results in a new period being created.
+	// This ensures that a period is referenced by at most one delegation and the current rewards,
+	// meaning the count must be less than or equal to 2.
+	// In the Imua protocol, rewards are distributed per epoch, so a period may be referenced
+	// by multiple delegations. Therefore, we do not check the upper limit of the reference count here.
+	historical.ReferenceCount++
+	return k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period, historical)
+}
+
+func (k Keeper) RedirectOperatorRewardsToCommunityPool(ctx sdk.Context, operator string,
+	rewards []feedistributiontypes.CommonAVSRewardData) error {
+	for _, avsReward := range rewards {
+		if len(avsReward.Rewards) != 0 {
+			// distribute the rewards to the community pool
+			err := k.UpdateAVSCommunityPool(ctx, avsReward.AVSAddress, true, avsReward.Rewards)
+			if err != nil {
+				return err
+			}
+			// update the outstanding rewards for the operator
+			err = k.UpdateOperatorOutstandingRewards(ctx, operator, avsReward.AVSAddress, false, avsReward.Rewards)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

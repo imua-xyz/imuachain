@@ -141,16 +141,20 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool", "assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
 		}
 		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
-		err = k.UpdateOperatorCurrentRewards(
-			ctx, operator, assetID, epochIdentifier,
-			true, types.CommonAVSRewardData{
-				Rewards:    assetRewards,
-				AVSAddress: avsAddr,
-			})
-		if err != nil {
-			return nil, err
+		if assetRewards.IsAllPositive() {
+			err = k.UpdateOperatorCurrentRewards(
+				ctx, operator, assetID, epochIdentifier,
+				true, types.CommonAVSRewardData{
+					Rewards:    assetRewards,
+					AVSAddress: avsAddr,
+				})
+			if err != nil {
+				return nil, err
+			}
+			remaining = remaining.Sub(assetRewards)
+		} else {
+			ctx.Logger().Error("SplitRewardsToAssetsPool: assetRewards isn't all positive")
 		}
-		remaining = remaining.Sub(assetRewards)
 	}
 	return remaining, nil
 }

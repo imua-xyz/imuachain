@@ -379,6 +379,18 @@ func (k Keeper) SetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 	return nil
 }
 
+// DeleteOperatorHistoricalRewards : delete the historical rewards for the specific operator, epochIdentifier, assetID
+// and period.
+func (k Keeper) DeleteOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
+	period uint64) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
+	// this encoding ensures the key is ordered by period.
+	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
+	store.Delete(key)
+	return nil
+}
+
 // GetOperatorHistoricalRewards : get the historical rewards for the specific operator, epochIdentifier, assetID
 // and period.
 func (k Keeper) GetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
