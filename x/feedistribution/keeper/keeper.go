@@ -20,13 +20,14 @@ type (
 		logger   log.Logger
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
-		authority      string
-		authKeeper     types.AccountKeeper
-		bankKeeper     types.BankKeeper
-		epochsKeeper   types.EpochsKeeper
-		operatorKeeper types.OperatorKeeper
-		avsKeeper      types.AVSKeeper
-		assetsKeeper   types.AssetsKeeper
+		authority        string
+		authKeeper       types.AccountKeeper
+		bankKeeper       types.BankKeeper
+		epochsKeeper     types.EpochsKeeper
+		operatorKeeper   types.OperatorKeeper
+		avsKeeper        types.AVSKeeper
+		assetsKeeper     types.AssetsKeeper
+		delegationKeeper types.DelegationKeeper
 
 		feeCollectorName string
 
@@ -46,6 +47,7 @@ func NewKeeper(
 	operatorKeeper types.OperatorKeeper,
 	avsKeeper types.AVSKeeper,
 	assetsKeeper types.AssetsKeeper,
+	delegationKeeper types.DelegationKeeper,
 ) Keeper {
 	// ensure distribution module account is set
 	if addr := accountKeeper.GetModuleAddress(types.ModuleName); addr == nil {
@@ -69,6 +71,7 @@ func NewKeeper(
 		operatorKeeper:   operatorKeeper,
 		avsKeeper:        avsKeeper,
 		assetsKeeper:     assetsKeeper,
+		delegationKeeper: delegationKeeper,
 	}
 
 	return *k
