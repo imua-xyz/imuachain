@@ -38,6 +38,11 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 			return
 		}
 		// handle delegations whose stake has changed.
+		err = wrapper.keeper.HandleChangedDelegations(ctx, epochIdentifier)
+		if err != nil {
+			ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+			return
+		}
 	}
 }
 
@@ -60,12 +65,12 @@ func (k *Keeper) DelegationHooks() DelegationHooksWrapper {
 func (wrapper DelegationHooksWrapper) AfterDelegation(
 	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo,
 ) error {
-	return wrapper.keeper.MarkStakeChangeDelegations(ctx, stakerID, assetID, operator, prevAssetState)
+	return wrapper.keeper.MarkStakeChangedDelegations(ctx, stakerID, assetID, operator, prevAssetState)
 }
 
 // AfterUndelegationStarted is called after an undelegation is started.
 func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, _ []byte, prevAssetState assetstype.OperatorAssetInfo,
 ) error {
-	return wrapper.keeper.MarkStakeChangeDelegations(ctx, stakerID, assetID, operator, prevAssetState)
+	return wrapper.keeper.MarkStakeChangedDelegations(ctx, stakerID, assetID, operator, prevAssetState)
 }

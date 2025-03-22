@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-func (k Keeper) SetStakeChangeDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string,
+func (k Keeper) SetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string,
 	delegationChangeInfo feedistributiontypes.DelegationChangeInfo) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
@@ -20,26 +20,26 @@ func (k Keeper) SetStakeChangeDelegations(ctx sdk.Context, epochIdentifier, oper
 	return nil
 }
 
-func (k Keeper) GetStakeChangeDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) (feedistributiontypes.DelegationChangeInfo, error) {
+func (k Keeper) GetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) (feedistributiontypes.DelegationChangeInfo, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.DelegationChangeInfo{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
-			"GetStakeChangeDelegations, epochIdentifier:%s,operator:%s,assetID:%s", epochIdentifier, operator, assetID)
+			"GetStakeChangedDelegations, epochIdentifier:%s,operator:%s,assetID:%s", epochIdentifier, operator, assetID)
 	}
 	delegationChangeInfo := feedistributiontypes.DelegationChangeInfo{}
 	k.cdc.MustUnmarshal(b, &delegationChangeInfo)
 	return delegationChangeInfo, nil
 }
 
-func (k Keeper) HasStakeChangeDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) bool {
+func (k Keeper) HasStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	return store.Has(key)
 }
 
-func (k Keeper) DeleteStakeChangeDelegationsByEpoch(ctx sdk.Context, epochIdentifier string) error {
+func (k Keeper) DeleteStakeChangedDelegationsByEpoch(ctx sdk.Context, epochIdentifier string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(epochIdentifier))
 	defer iterator.Close()
@@ -50,7 +50,7 @@ func (k Keeper) DeleteStakeChangeDelegationsByEpoch(ctx sdk.Context, epochIdenti
 	return nil
 }
 
-func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error {
+func (k Keeper) MarkStakeChangedDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error {
 	// The reason for marking delegations with stake changes for all epochs instead of only the impactful
 	// epochs is that we need to update the operator’s period whenever the delegated stake changes,
 	// regardless of whether the operator is serving any AVSs.
@@ -66,8 +66,8 @@ func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID st
 		delegationChangeInfo := feedistributiontypes.DelegationChangeInfo{
 			StakerIds: make([]string, 0),
 		}
-		if k.HasStakeChangeDelegations(ctx, epochInfo.Identifier, operator.String(), assetID) {
-			delegationChangeInfo, err = k.GetStakeChangeDelegations(ctx, epochInfo.Identifier, operator.String(), assetID)
+		if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID) {
+			delegationChangeInfo, err = k.GetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID)
 			if err != nil {
 				return err
 			}
@@ -85,9 +85,39 @@ func (k Keeper) MarkStakeChangeDelegations(ctx sdk.Context, stakerID, assetID st
 		}
 
 		delegationChangeInfo.AppendUniqueStakerID(stakerID)
-		err = k.SetStakeChangeDelegations(ctx, epochInfo.Identifier, operator.String(), assetID, delegationChangeInfo)
+		err = k.SetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID, delegationChangeInfo)
 		if err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+// IterateStakeChangedDelegations iterates over all delegations with changed stakes.
+func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, iteratePrefix []byte,
+	opFunc func(epochIdentifier, operator, assetID string, delegationChangeInfo *feedistributiontypes.DelegationChangeInfo,
+	) (bool, error)) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
+	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var DelegationChangeInfo feedistributiontypes.DelegationChangeInfo
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
+		if err != nil {
+			return err
+		}
+		k.cdc.MustUnmarshal(iterator.Value(), &DelegationChangeInfo)
+		isBreak, err := opFunc(keys[0], keys[1], keys[2], &DelegationChangeInfo)
+		if err != nil {
+			return err
+		}
+		if isBreak {
+			break
+		}
+		if isUpdate {
+			bz := k.cdc.MustMarshal(&DelegationChangeInfo)
+			store.Set(iterator.Key(), bz)
 		}
 	}
 	return nil
@@ -406,4 +436,34 @@ func (k Keeper) GetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 	historicalRewards := feedistributiontypes.OperatorHistoricalRewards{}
 	k.cdc.MustUnmarshal(b, &historicalRewards)
 	return historicalRewards, nil
+}
+
+// SetDelegationStartingInfo : set the starting information for the delegation
+func (k Keeper) SetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string, startingInfo feedistributiontypes.DelegationStartingInfo) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
+	var bz []byte
+	bz = k.cdc.MustMarshal(&startingInfo)
+	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	store.Set(key, bz)
+	return nil
+}
+
+// GetDelegationStartingInfo : get the starting information for the delegation
+func (k Keeper) GetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) (feedistributiontypes.DelegationStartingInfo, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
+	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.DelegationStartingInfo{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetDelegationStartingInfo, delegationKey:%s,epochIdentifier:%s", delegationKey, epochIdentifier)
+	}
+	startingInfo := feedistributiontypes.DelegationStartingInfo{}
+	k.cdc.MustUnmarshal(b, &startingInfo)
+	return startingInfo, nil
+}
+
+// HasDelegationStartingInfo : check whether the starting information for the delegation exists.
+func (k Keeper) HasDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
+	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	return store.Has(key)
 }

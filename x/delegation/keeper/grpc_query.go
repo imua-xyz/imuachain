@@ -14,19 +14,14 @@ var _ delegationtype.QueryServer = &Keeper{}
 
 func (k *Keeper) QuerySingleDelegationInfo(ctx context.Context, req *delegationtype.SingleDelegationInfoReq) (*delegationtype.SingleDelegationInfoResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	delegationAmounts, err := k.GetSingleDelegationInfo(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.OperatorAddr)
-	if err != nil {
-		return nil, err
-	}
-	// calculate the maximum undelegatable amount
-	singleAmount, err := k.UndelegatableAmount(c, strings.ToLower(req.AssetId), req.OperatorAddr, delegationAmounts)
+	delegationInfo, delegatedAmount, err := k.GetDelegationInfoWithAmount(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.OperatorAddr)
 	if err != nil {
 		return nil, err
 	}
 	return &delegationtype.SingleDelegationInfoResponse{
 		SingleDelegationInfo: &delegationtype.SingleDelegationInfo{
-			DelegationAmounts:      delegationAmounts,
-			MaxUndelegatableAmount: singleAmount,
+			DelegationAmounts:      delegationInfo,
+			MaxUndelegatableAmount: delegatedAmount,
 		},
 	}, nil
 }

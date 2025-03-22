@@ -4,6 +4,7 @@ import (
 	"context"
 	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
@@ -70,6 +71,11 @@ type AVSKeeper interface {
 type AssetsKeeper interface {
 	GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *assetstype.StakingAssetInfo, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
+}
+
+// DelegationKeeper represents the expected keeper interface for the delegation module.
+type DelegationKeeper interface {
+	GetDelegationInfoWithAmount(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, error)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

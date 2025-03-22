@@ -1,11 +1,10 @@
 package keeper
 
 import (
-	"fmt"
-	"slices"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"fmt"
+	"slices"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -200,7 +199,7 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 	return shareIsZero, nil
 }
 
-// GetSingleDelegationInfo query the staker's asset amount that has been delegated to the specified operator.
+// GetSingleDelegationInfo query the staker's asset information that has been delegated to the specified operator.
 func (k *Keeper) GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
 	singleStateKey := assetstype.GetJoinedStoreKey(stakerID, assetID, operatorAddr)
@@ -211,6 +210,21 @@ func (k *Keeper) GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, ope
 	}
 	k.cdc.MustUnmarshal(value, &delegationState)
 	return &delegationState, nil
+}
+
+// GetDelegationInfoWithAmount returns not only the staker's asset information delegated to the
+// specified operator but also the delegated amount calculated from shares.
+func (k *Keeper) GetDelegationInfoWithAmount(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, error) {
+	delegationAmounts, err := k.GetSingleDelegationInfo(ctx, stakerID, assetID, operatorAddr)
+	if err != nil {
+		return nil, sdkmath.Int{}, err
+	}
+	// calculate the maximum undelegatable amount
+	singleAmount, err := k.UndelegatableAmount(ctx, assetID, operatorAddr, delegationAmounts)
+	if err != nil {
+		return nil, sdkmath.Int{}, err
+	}
+	return delegationAmounts, singleAmount, nil
 }
 
 // GetDelegationInfo query the staker's asset info that has been delegated.

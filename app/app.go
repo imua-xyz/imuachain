@@ -720,6 +720,7 @@ func NewImuachainApp(
 		&app.OperatorKeeper,
 		&app.AVSManagerKeeper,
 		app.AssetsKeeper,
+		&app.DelegationKeeper,
 	)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(

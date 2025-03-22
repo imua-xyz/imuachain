@@ -131,6 +131,7 @@ message DelegationChangeInfo {
 // In imua chain, the voting power update and reward distribution are executed
 // per epoch, so when using F1 distribution for reward distribution, the smallest
 // unit of change in the delegator's stake is the epoch, not the block.
+// the epoch identifier is within the key.
 message DelegationStartingInfo {
   uint64 previous_period = 1;
   string stake = 2 [
@@ -138,9 +139,8 @@ message DelegationStartingInfo {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
-  string epoch_identifier = 3;
-  uint64 epoch_number = 4;
-  uint64 epoch_start_height = 5;
+  uint64 epoch_number = 3;
+  uint64 epoch_start_height = 4;
 }
 
 // OperatorAccumulatedCommission represents accumulated commission
