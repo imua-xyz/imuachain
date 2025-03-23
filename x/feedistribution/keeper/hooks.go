@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -73,4 +75,49 @@ func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, _ []byte, prevAssetState assetstype.OperatorAssetInfo,
 ) error {
 	return wrapper.keeper.MarkStakeChangedDelegations(ctx, stakerID, assetID, operator, prevAssetState)
+}
+
+// OperatorHooksWrapper is the wrapper structure that implements the operator hooks for the
+// distribution keeper.
+type OperatorHooksWrapper struct {
+	keeper *Keeper
+}
+
+// Interface guards
+var _ operatortypes.OperatorHooks = OperatorHooksWrapper{}
+
+func (k *Keeper) OperatorHooks() OperatorHooksWrapper {
+	return OperatorHooksWrapper{k}
+}
+
+// AfterOperatorKeySet is the implementation of the operator hooks.
+func (h OperatorHooksWrapper) AfterOperatorKeySet(
+	sdk.Context, sdk.AccAddress, string, keytypes.WrappedConsKey,
+) {
+	// No operation needed here.
+}
+
+// AfterOperatorKeyReplaced is the implementation of the operator hooks.
+func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
+	sdk.Context, sdk.AccAddress, keytypes.WrappedConsKey,
+	keytypes.WrappedConsKey, string,
+) {
+	// No operation needed here.
+}
+
+// AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.
+func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
+	ctx sdk.Context, operator sdk.AccAddress, chainID string, key keytypes.WrappedConsKey,
+) {
+
+}
+
+// AfterSlash is the implementation of the operator hooks.
+func (h OperatorHooksWrapper) AfterSlash(
+	ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec, affectedAVSList []string,
+	slashAssetsPool []operatortypes.SlashFromAssetsPool,
+) {
+	// increase the periods for the slashed operator and assets.
+	// because the total asset amount is changed.
+
 }
