@@ -57,4 +57,9 @@ var (
 		ModuleName, 11,
 		"invalid input parameter",
 	)
+
+	ErrNegativeAVSRewards = errorsmod.Register(
+		ModuleName, 12,
+		"negative avs rewards",
+	)
 )
