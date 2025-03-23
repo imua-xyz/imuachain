@@ -786,11 +786,17 @@ func NewImuachainApp(
 
 	// set the hooks at the end, after all modules are instantiated.
 	(&app.OperatorKeeper).SetHooks(
-		app.StakingKeeper.OperatorHooks(),
+		operatorTypes.NewMultiOperatorHooks(
+			app.StakingKeeper.OperatorHooks(),
+			app.DistrKeeper.OperatorHooks(), // it's fine to be before or after the dogfood hook
+		),
 	)
 
 	(&app.DelegationKeeper).SetHooks(
-		app.StakingKeeper.DelegationHooks(),
+		delegationTypes.NewMultiDelegationHooks(
+			app.StakingKeeper.DelegationHooks(),
+			app.DistrKeeper.DelegationHooks(), // it's fine to be before or after the dogfood hook
+		),
 	)
 
 	(&app.EpochsKeeper).SetHooks(

@@ -123,9 +123,9 @@ var (
 	KeyPrefixOperatorAccumulatedCommission = []byte{prefixOperatorAccumulatedCommission}
 
 	// KeyPrefixOperatorSlashEvent :
-	// operator + '/' + height + '/' + epochIdentifier -> OperatorSlashEvent
+	// operator + '/' + epochIdentifier + '/' + epochNumber -> OperatorSlashEvent
 	// key for operator slash fraction, the periods of different epochs will differ when a
-	// slash event occurs, so the slash event should be recorded for all related epochs.
+	// slash event occurs, so the slash event should be recorded for all epochs.
 	KeyPrefixOperatorSlashEvent = []byte{prefixOperatorSlashEvent}
 
 	// KeyPrefixStakerOutstandingRewards :

@@ -245,7 +245,8 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 			return err
 		}
 	}
-	k.hooks.AfterSlash(ctx, parameter.Operator, affectedAVSList)
+	k.hooks.AfterSlash(ctx, parameter.Operator, executionInfo.SlashProportion, affectedAVSList,
+		executionInfo.SlashAssetsPool)
 	return nil
 }
 

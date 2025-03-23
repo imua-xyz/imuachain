@@ -482,3 +482,34 @@ func (k Keeper) HasDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
 	return store.Has(key)
 }
+
+// SetOperatorSlashEvent : set the operator slash event in distribution module
+func (k Keeper) SetOperatorSlashEvent(ctx sdk.Context, operator, epochIdentifier string,
+	epochNumber uint64, slashEvent feedistributiontypes.OperatorSlashEvent) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
+	var bz []byte
+	bz = k.cdc.MustMarshal(&slashEvent)
+	// this encoding ensures the key is ordered by epoch number.
+	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
+	key := assetstype.GetJoinedStoreKey(operator, epochIdentifier, epochNumberHexStr)
+	store.Set(key, bz)
+	return nil
+}
+
+// GetOperatorSlashEvent : get the operator slash event in distribution module
+func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, epochIdentifier string,
+	epochNumber uint64) (feedistributiontypes.OperatorSlashEvent, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
+	// this encoding ensures the key is ordered by epoch number.
+	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
+	key := assetstype.GetJoinedStoreKey(operator, epochIdentifier, epochNumberHexStr)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.OperatorSlashEvent{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
+			"GetOperatorSlashEvent, operator:%s,epochIdentifier:%s,epochNumber:%d", operator,
+			epochIdentifier, epochNumber)
+	}
+	slashEvent := feedistributiontypes.OperatorSlashEvent{}
+	k.cdc.MustUnmarshal(b, &slashEvent)
+	return slashEvent, nil
+}
