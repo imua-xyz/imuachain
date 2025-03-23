@@ -266,7 +266,7 @@ func (k Keeper) GetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr
 	return rewards, nil
 }
 
-// HasOperatorOutstandingRewards : checkDelegationStates whether the outstanding avs rewards exists for the operator
+// HasOperatorOutstandingRewards : check whether the outstanding rewards for the avs and operator exists
 func (k Keeper) HasOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
 	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
@@ -330,7 +330,7 @@ func (k Keeper) GetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, ep
 	return rewards, nil
 }
 
-// HasOperatorCurrentRewards : checkDelegationStates whether the current rewards for the specific operator, EpochIdentifier
+// HasOperatorCurrentRewards : check whether the current rewards for the specific operator, epochIdentifier
 // and assetID exists.
 func (k Keeper) HasOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
@@ -339,7 +339,7 @@ func (k Keeper) HasOperatorCurrentRewards(ctx sdk.Context, operator, assetID, ep
 }
 
 // UpdateOperatorCurrentRewards : increase or decrease the current rewards for the specific operator,
-// EpochIdentifier and assetID. The isIncrease flag is used to indicate whether the update is an
+// epochIdentifier and assetID. The isIncrease flag is used to indicate whether the update is an
 // increase or a decrease
 func (k Keeper) UpdateOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string, isIncrease bool, deltaRewards feedistributiontypes.CommonAVSRewardData) error {
 	if len(deltaRewards.Rewards) == 0 {
