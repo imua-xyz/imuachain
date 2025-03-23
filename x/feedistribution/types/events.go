@@ -37,4 +37,13 @@ const (
 	// EventTypeAVSRewardParamSet : set the avs reward parameter
 	EventTypeAVSRewardParamSet = "avs_reward_param_set"
 	AttributeKeyAVSRewardParam = "avs_reward_param"
+
+	// EventTypeStakeChangedDelegationsSet : set the delegations with changed stake
+	EventTypeStakeChangedDelegationsSet = "stake_change_delegations_set"
+	AttributeKeyStakers                 = "stakers"
+	AttributeKeyPreDelegatedTotalAmount = "pre_delegated_total_amount"
+
+	// EventTypeStakeChangedDelegationsDelete : delete the delegations with changed stake by epoch
+	EventTypeStakeChangedDelegationsDelete = "stake_change_delegations_delete"
+	AttributeKeyEpochIdentifier            = "epoch_identifier"
 )

@@ -43,6 +43,19 @@ func (d *DelegationChangeInfo) AppendUniqueStakerID(newStaker string) {
 	d.StakerIds = append(d.StakerIds, newStaker)
 }
 
+func (d *DelegationChangeInfo) StakersAsString() string {
+	if len(d.StakerIds) == 0 {
+		return ""
+	}
+
+	out := ""
+	for _, stakerId := range d.StakerIds {
+		out += fmt.Sprintf("%v,", stakerId)
+	}
+
+	return out[:len(out)-1]
+}
+
 // HasAVSReward checks whether the avs reward exists, return the index if it exists
 func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) (int, bool) {
 	for index, avsReward := range o.Rewards {
@@ -304,7 +317,7 @@ func (crs CommonAVSRewards) SafeSub(avsRewardsB CommonAVSRewards) (CommonAVSRewa
 	return diff, diff.IsAnyNegative()
 }
 
-// CalculateRewardRatio calculates the reward ratio， the receiver should be the total rewards here.
+// CalculateRewardRatio calculates the rewards ratio， the receiver of this function should be the total rewards.
 func (crs CommonAVSRewards) CalculateRewardRatio(totalDelegatedAmount sdk.Dec) (CommonAVSRewards, error) {
 	if !totalDelegatedAmount.IsPositive() {
 		return nil, ErrInvalidInputParameter.Wrapf("CalculateRewardRatio, total delegated amount isn't positive, value:%s", totalDelegatedAmount)
@@ -316,6 +329,26 @@ func (crs CommonAVSRewards) CalculateRewardRatio(totalDelegatedAmount sdk.Dec) (
 		ret = append(ret, CommonAVSRewardData{
 			AVSAddress: avsRewards.AVSAddress,
 			Rewards:    rewardRito,
+		})
+	}
+	return ret, nil
+}
+
+// CalculateRewards calculates the rewards, the receiver of this function should be the rewards ratio.
+func (crs CommonAVSRewards) CalculateRewards(delegatedAmount sdk.Dec) (CommonAVSRewards, error) {
+	if !delegatedAmount.IsNegative() {
+		return nil, ErrInvalidInputParameter.Wrapf("CalculateRewards, the delegated amount is negative, value:%s", delegatedAmount)
+	}
+	ret := make([]CommonAVSRewardData, 0)
+	if delegatedAmount.IsZero() {
+		return ret, nil
+	}
+	for _, avsRewardRatio := range crs {
+		// note: necessary to truncate so we don't allow withdrawing more rewards than owed
+		rewards := avsRewardRatio.Rewards.MulDecTruncate(delegatedAmount)
+		ret = append(ret, CommonAVSRewardData{
+			AVSAddress: avsRewardRatio.AVSAddress,
+			Rewards:    rewards,
 		})
 	}
 	return ret, nil

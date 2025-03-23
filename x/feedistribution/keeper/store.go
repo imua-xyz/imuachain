@@ -17,6 +17,14 @@ func (k Keeper) SetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, ope
 	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	b := k.cdc.MustMarshal(&delegationChangeInfo)
 	store.Set(key, b)
+	// emit event for indexers
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			feedistributiontypes.EventTypeStakeChangedDelegationsSet,
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakers, delegationChangeInfo.StakersAsString()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyPreDelegatedTotalAmount, delegationChangeInfo.TotalAmount.String()),
+		),
+	)
 	return nil
 }
 
@@ -47,6 +55,13 @@ func (k Keeper) DeleteStakeChangedDelegationsByEpoch(ctx sdk.Context, epochIdent
 	for ; iterator.Valid(); iterator.Next() {
 		store.Delete(iterator.Key())
 	}
+	// emit event for indexers
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			feedistributiontypes.EventTypeStakeChangedDelegationsDelete,
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochIdentifier, epochIdentifier),
+		),
+	)
 	return nil
 }
 
