@@ -76,7 +76,6 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 	// feederIDS:[]uint64, which are expecting rawData
 	// []Tx, each feederID must have one tx
 	collectingFeederIDs := em.k.FeederManager.FeederIDsCollectingRawData()
-	tmpCtx := sdk.UnwrapSDKContext(ctx)
 	if len(collectingFeederIDs) == 0 {
 		// remove all cached pieces since no collectingFeederIDs available
 		em.reset()
