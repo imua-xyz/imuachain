@@ -14,4 +14,4 @@ import (
 //   - k: the oracle keeper interface providing access to the module state
 //
 // Returns an error if the post-aggregation processing fails
-type PostAggregationHandler func(ctx sdk.Context, data []byte, feederID, roundID uint64, k KeeperOracle) error
+type PostAggregationHandler func(ctx sdk.Context, rootHash []byte, data []byte, feederID, roundID uint64, k KeeperOracle) error

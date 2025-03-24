@@ -47,8 +47,8 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 			logger.Info("quote of 2nd-phase added rawData piece", append(logQuote, "rootHash", hex.EncodeToString(cachedRawData), "piece-index", msg.Prices[0].Prices[0].DetID)...)
 			ctx.EventManager().EmitEvent(sdk.NewEvent(
 				types.EventTypeCreatePrice,
-				sdk.NewAttribute(types.AttributeKeyRawDataPieceUpdate, types.AttributeValueRawDataPieceUpdated),
-				sdk.NewAttribute(types.AttributeKeyRawDataPieceChange, fmt.Sprintf("%d_%d", msg.FeederID, cachedIndex)),
+				sdk.NewAttribute(types.AttributeKeyNSTPieceUpdate, types.AttributeValueTrue),
+				sdk.NewAttribute(types.AttributeKeyNSTPieceChange, fmt.Sprintf("%d_%d", msg.FeederID, cachedIndex)),
 			))
 			return &types.MsgCreatePriceResponse{}, nil
 		}
@@ -99,7 +99,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 			types.EventTypeCreatePrice,
 			sdk.NewAttribute(types.AttributeKeyRoundID, roundIDStr),
 			sdk.NewAttribute(types.AttributeKeyFinalPrice, strings.Join([]string{tokenIDStr, roundIDStr, priceStr, decimalStr}, "_")),
-			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess)),
+			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValueTrue)),
 		)
 	}
 

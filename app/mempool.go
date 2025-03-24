@@ -60,6 +60,7 @@ func (em *ImuaMempool) Insert(_ context.Context, tx sdk.Tx) error {
 	}
 	for _, pieceCached := range piecesIndexCached {
 		if pieceCached.EqualsTo(piece) {
+			// we don't allow the same piece to be included in mempool
 			return errors.New("piece exists in mempool")
 		}
 	}
@@ -72,10 +73,10 @@ func (em *ImuaMempool) Insert(_ context.Context, tx sdk.Tx) error {
 // we only keep one tx for each feederID, and we only keep the tx with the piece index expected by the feederID
 func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iterator {
 	// remove all expired tx, when Select for block 100, all txs belongs to 99 or before should be removed
-
 	// feederIDS:[]uint64, which are expecting rawData
 	// []Tx, each feederID must have one tx
 	collectingFeederIDs := em.k.FeederManager.FeederIDsCollectingRawData()
+	tmpCtx := sdk.UnwrapSDKContext(ctx)
 	if len(collectingFeederIDs) == 0 {
 		// remove all cached pieces since no collectingFeederIDs available
 		em.reset()
@@ -105,7 +106,7 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 	for _, txBytes := range txList {
 		tx, err := em.txDecoder(txBytes)
 		if err != nil {
-			keep = append(keep, tx)
+			//			keep = append(keep, tx)
 			continue
 		}
 		msgs, _, isRawData, _ := utils.OracleCreatePriceTx(tx)

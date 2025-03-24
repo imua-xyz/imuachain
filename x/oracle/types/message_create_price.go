@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strconv"
@@ -151,8 +152,9 @@ func (msg *MsgCreatePrice) ValidateBasic() error {
 					}
 				}
 				for _, hash := range hashList {
-					if len(hash) != 32 {
-						return fmt.Errorf("invalid proofHash: %s", hash)
+					decodedHash, err := base64.StdEncoding.DecodeString(hash)
+					if err != nil || len(decodedHash) != 32 {
+						return fmt.Errorf("invalid proofHash: hash_base64:%s, error:%s", hash, err)
 					}
 				}
 			}
