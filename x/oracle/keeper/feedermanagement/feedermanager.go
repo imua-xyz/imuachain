@@ -351,10 +351,11 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 					f.k.SetNextPieceIndexForFeeder(ctx, uint64(r.feederID), LatestLeafIndex+1)
 				}
 			} else if rawData, ok := r.m.CompleteRawData(); ok {
-				logger.Info("execute postHandler after 2ndPhase completed collecting rawData", "feederID", r.feederID, "rootHash", base64.StdEncoding.EncodeToString(r.m.RootHash()), "leafCount", r.m.LeafCount())
-				// execute postHandler with rawData
+				rootHash := r.m.RootHash()
+				logger.Info("execute postHandler after 2ndPhase completed collecting rawData", "feederID", r.feederID, "rootHash", base64.StdEncoding.EncodeToString(rootHash), "leafCount", r.m.LeafCount())
+				// execute pootHandler with rawData
 				// #nosec G115
-				if err := r.h(ctx, rawData, uint64(r.feederID), uint64(r.roundID), f.k); err != nil {
+				if err := r.h(ctx, rootHash, rawData, uint64(r.feederID), uint64(r.roundID), f.k); err != nil {
 					// just log the error and wait for next round to update
 					// TODO(leonz): this suites for NST, we can just wait for next round to update, but does it suites for commmon case ? should we do some other postHandling for this fail when it's not of NST case?
 					logger.Error("failed to execute postHandler for 2phases aggregation on consensus price", "feederID", r.feederID, "roundID", r.roundID, "consensus_1st-phase-hash", hex.EncodeToString(r.m.RootHash()), "error", err)
@@ -380,7 +381,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 		feederIDsStr := strings.Join(successFeederIDs, "_")
 		ctx.EventManager().EmitEvent(sdk.NewEvent(
 			oracletypes.EventTypeCreatePrice,
-			sdk.NewAttribute(oracletypes.AttributeKeyPriceUpdated, oracletypes.AttributeValuePriceUpdatedSuccess),
+			sdk.NewAttribute(oracletypes.AttributeKeyPriceUpdated, oracletypes.AttributeValueTrue),
 			sdk.NewAttribute(oracletypes.AttributeKeyFeederIDs, feederIDsStr),
 		))
 	}

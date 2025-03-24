@@ -26,7 +26,8 @@ type (
 		assetsKeeper     types.AssetsKeeper
 		types.SlashingKeeper
 		*feedermanagement.FeederManager
-		postHandlers map[int64]common.PostAggregationHandler
+		postHandlers               map[int64]common.PostAggregationHandler
+		cachedNSTStakersEventValue *string
 	}
 )
 
@@ -53,17 +54,18 @@ func NewKeeper(
 	}
 
 	ret := Keeper{
-		cdc:              cdc,
-		storeKey:         storeKey,
-		memKey:           memKey,
-		paramstore:       ps,
-		KeeperDogfood:    sKeeper,
-		delegationKeeper: delegationKeeper,
-		assetsKeeper:     assetsKeeper,
-		authority:        authority,
-		SlashingKeeper:   slashingKeeper,
-		FeederManager:    feedermanagement.NewFeederManager(nil),
-		postHandlers:     make(map[int64]common.PostAggregationHandler),
+		cdc:                        cdc,
+		storeKey:                   storeKey,
+		memKey:                     memKey,
+		paramstore:                 ps,
+		KeeperDogfood:              sKeeper,
+		delegationKeeper:           delegationKeeper,
+		assetsKeeper:               assetsKeeper,
+		authority:                  authority,
+		SlashingKeeper:             slashingKeeper,
+		FeederManager:              feedermanagement.NewFeederManager(nil),
+		postHandlers:               make(map[int64]common.PostAggregationHandler),
+		cachedNSTStakersEventValue: new(string),
 	}
 	ret.FeederManager.SetKeeper(&ret)
 	return ret
@@ -71,4 +73,14 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+func (k Keeper) FlushCachedNSTStakersEvent(ctx sdk.Context) {
+	if len(*k.cachedNSTStakersEventValue) > 0 {
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeCreatePrice,
+			sdk.NewAttribute(types.AttributeKeyNSTStakersChange, *k.cachedNSTStakersEventValue),
+		))
+		*k.cachedNSTStakersEventValue = ""
+	}
 }
