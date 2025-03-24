@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
+	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -160,6 +162,75 @@ func (k Keeper) RedirectOperatorRewardsToCommunityPool(ctx sdk.Context, operator
 			if err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+// HandleOperatorSlashEvent handles the slash event for an operator.
+// It increases the period and reference count, then stores the slash event
+// for future reward calculations.
+func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec,
+	slashAssetsPool []operatortypes.SlashFromAssetsPool) error {
+	if slashProportion.GT(math.LegacyOneDec()) || slashProportion.IsNegative() {
+		return feedistributiontypes.ErrInvalidInputParameter.Wrapf(
+			"HandleOperatorSlashEvent: fraction must be >=0 and <=1, current fraction: %s", slashProportion)
+	}
+	// the slash event will influence all epochs
+	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
+
+	for _, slashAsset := range slashAssetsPool {
+		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, slashAsset.AssetID)
+		if err != nil {
+			return err
+		}
+		operatorAssetInfo, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operator, slashAsset.AssetID)
+		if err != nil {
+			return err
+		}
+		divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
+		curDelegationAmount := sdk.NewDecFromInt(operatorAssetInfo.TotalAmount).QuoInt(divisor)
+
+		preDelegationAmount := sdk.ZeroDec()
+		for _, epochInfo := range allEpochs {
+			// get the delegation amount at the end of the previous epoch.
+			if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID) {
+				delegationChangeInfo, err := k.GetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID)
+				if err != nil {
+					return err
+				}
+				preDelegationAmount = delegationChangeInfo.TotalAmount
+			} else {
+				// the delegation amount doesn't have any change.
+				preDelegationAmount = curDelegationAmount
+			}
+			// increase the periods for the slashed operator and assets.
+			// because the total asset amount is changed.
+			newPeriod, err := k.IncrementOperatorPeriod(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, preDelegationAmount)
+			if err != nil {
+				return err
+			}
+			// increment reference count on period we need to track
+			err = k.incrementReferenceCount(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, newPeriod)
+			if err != nil {
+				return err
+			}
+			err = k.SetOperatorSlashEvent(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, uint64(epochInfo.CurrentEpoch),
+				feedistributiontypes.OperatorSlashEvent{
+					OperatorPeriod: newPeriod,
+					Fraction:       slashProportion,
+				})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	// clear the delegation changes for all epochs
+	for _, epochInfo := range allEpochs {
+		err := k.DeleteStakeChangedDelegationsByEpoch(ctx, epochInfo.Identifier)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
