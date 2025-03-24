@@ -81,7 +81,6 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 	// all transactions belonging to block 99 or earlier should be removed since they're
 	// no longer relevant for the current selection round.
 	collectingFeederIDs := em.k.FeederManager.FeederIDsCollectingRawData()
-	tmpCtx := sdk.UnwrapSDKContext(ctx)
 	if len(collectingFeederIDs) == 0 {
 		// remove all cached pieces since no collectingFeederIDs available
 		em.reset()
