@@ -148,9 +148,6 @@ message DelegationStartingInfo {
   // epoch_number is the epoch when the delegation starts.
   // It is used to handle the impact of slash events on rewards.
   uint64 epoch_number = 3;
-  // epoch_start_height is the start height of epoch when the delegation starts.
-  // It is used to handle the impact of slash events on rewards.
-  uint64 epoch_start_height = 4;
 }
 
 // OperatorAccumulatedCommission represents accumulated commission

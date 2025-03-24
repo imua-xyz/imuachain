@@ -45,6 +45,12 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 			ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 			return
 		}
+		// clear the delegation change information
+		err = wrapper.keeper.DeleteStakeChangedDelegationsByEpoch(ctx, epochIdentifier)
+		if err != nil {
+			ctx.Logger().Error("failed to delete the delegation change information by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+			return
+		}
 	}
 }
 
@@ -114,10 +120,13 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 
 // AfterSlash is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterSlash(
-	ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec, affectedAVSList []string,
+	ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec, _ []string,
 	slashAssetsPool []operatortypes.SlashFromAssetsPool,
 ) {
-	// increase the periods for the slashed operator and assets.
-	// because the total asset amount is changed.
-
+	err := h.keeper.HandleOperatorSlashEvent(ctx, operator, slashProportion, slashAssetsPool)
+	if err != nil {
+		ctx.Logger().Error("AfterSlash: failed to handle the slash event", "err", err,
+			"operator", operator, "slashProportion", slashProportion, "slashAssetsPool", slashAssetsPool)
+		return
+	}
 }

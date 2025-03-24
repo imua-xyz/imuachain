@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"cosmossdk.io/math"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -62,49 +61,6 @@ func (k Keeper) DeleteStakeChangedDelegationsByEpoch(ctx sdk.Context, epochIdent
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochIdentifier, epochIdentifier),
 		),
 	)
-	return nil
-}
-
-func (k Keeper) MarkStakeChangedDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error {
-	// The reason for marking delegations with stake changes for all epochs instead of only the impactful
-	// epochs is that we need to update the operator’s period whenever the delegated stake changes,
-	// regardless of whether the operator is serving any AVSs.
-	// This is because the reward distribution for a restaker might not occur during the opting-in period.
-	// For example, the staker might delegate additional stake, triggering the reward distribution lazily
-	// after the operator has opted out.
-	// If we don’t update the period for operators who have opted out of an AVS, the reward calculation
-	// cannot correctly determine the stake and reward ratio for a staker. This is because the staker might
-	// have delegated or undelegated tokens, altering the delegated stake during the opting-out period.
-	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
-	var err error
-	for _, epochInfo := range allEpochs {
-		delegationChangeInfo := feedistributiontypes.DelegationChangeInfo{
-			StakerIds: make([]string, 0),
-		}
-		if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID) {
-			delegationChangeInfo, err = k.GetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID)
-			if err != nil {
-				return err
-			}
-		} else {
-			// This is the first delegation/undelegation that changes the delegated amount.
-			// The total delegation amount of the operator at the end of the previous epoch needs to be saved.
-			// get the current total delegation amount from the operator assets information
-			// store it as a decimal type.
-			assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
-			if err != nil {
-				return err
-			}
-			divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
-			delegationChangeInfo.TotalAmount = sdk.NewDecFromInt(prevAssetState.TotalAmount).QuoInt(divisor)
-		}
-
-		delegationChangeInfo.AppendUniqueStakerID(stakerID)
-		err = k.SetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID, delegationChangeInfo)
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -269,7 +225,7 @@ func (k Keeper) UpdateOperatorAccumulatedCommission(ctx sdk.Context, operator, a
 	return nil
 }
 
-// SetOperatorOutstandingRewards : set outstanding rewards for the avs and operator
+// SetOperatorOutstandingRewards : set outstanding avs rewards for the operator
 func (k Keeper) SetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, rewards feedistributiontypes.OperatorOutstandingRewards) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
 	var bz []byte
@@ -285,7 +241,7 @@ func (k Keeper) SetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr
 	return nil
 }
 
-// GetOperatorOutstandingRewards : get the outstanding rewards for the avs and operator
+// GetOperatorOutstandingRewards : get the outstanding avs rewards for the operator
 func (k Keeper) GetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string) (feedistributiontypes.OperatorOutstandingRewards, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
 	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
@@ -298,14 +254,14 @@ func (k Keeper) GetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr
 	return rewards, nil
 }
 
-// HasOperatorOutstandingRewards : check whether the outstanding rewards for the avs and operator exists
+// HasOperatorOutstandingRewards : check whether the outstanding avs rewards exists for the operator
 func (k Keeper) HasOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
 	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
 	return store.Has(key)
 }
 
-// UpdateOperatorOutstandingRewards : increase or decrease the outstanding rewards for the avs and operator
+// UpdateOperatorOutstandingRewards : increase or decrease the outstanding avs rewards for the operator
 // the isIncrease flag is used to indicate whether the update is an increase or a decrease
 func (k Keeper) UpdateOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaRewards sdk.DecCoins) error {
 	if len(deltaRewards) == 0 {
@@ -476,6 +432,14 @@ func (k Keeper) GetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 	return startingInfo, nil
 }
 
+// DeleteDelegationStartingInfo : delete the starting information for the delegation
+func (k Keeper) DeleteDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
+	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	store.Delete(key)
+	return nil
+}
+
 // HasDelegationStartingInfo : check whether the starting information for the delegation exists.
 func (k Keeper) HasDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
@@ -484,25 +448,25 @@ func (k Keeper) HasDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 }
 
 // SetOperatorSlashEvent : set the operator slash event in distribution module
-func (k Keeper) SetOperatorSlashEvent(ctx sdk.Context, operator, epochIdentifier string,
+func (k Keeper) SetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochIdentifier string,
 	epochNumber uint64, slashEvent feedistributiontypes.OperatorSlashEvent) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	var bz []byte
 	bz = k.cdc.MustMarshal(&slashEvent)
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
-	key := assetstype.GetJoinedStoreKey(operator, epochIdentifier, epochNumberHexStr)
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
 	store.Set(key, bz)
 	return nil
 }
 
 // GetOperatorSlashEvent : get the operator slash event in distribution module
-func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, epochIdentifier string,
+func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochIdentifier string,
 	epochNumber uint64) (feedistributiontypes.OperatorSlashEvent, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
-	key := assetstype.GetJoinedStoreKey(operator, epochIdentifier, epochNumberHexStr)
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorSlashEvent{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
@@ -512,4 +476,116 @@ func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, epochIdentifier
 	slashEvent := feedistributiontypes.OperatorSlashEvent{}
 	k.cdc.MustUnmarshal(b, &slashEvent)
 	return slashEvent, nil
+}
+
+// IterateOperatorSlashEventsBetween iterates over slash events between epoch numbers, inclusive
+func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, assetID, epochIdentifier string,
+	startingEpochNumber uint64, endingEpochNumber uint64,
+	handler func(epochNumber uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error),
+) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
+	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(startingEpochNumber))
+	startKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
+	epochNumberHexStr = hexutil.Encode(sdk.Uint64ToBigEndian(endingEpochNumber))
+	endKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
+
+	iter := store.Iterator(
+		startKey,
+		endKey,
+	)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var event feedistributiontypes.OperatorSlashEvent
+		k.cdc.MustUnmarshal(iter.Value(), &event)
+		keys, err := assetstype.ParseJoinedStoreKey(iter.Key(), 3)
+		if err != nil {
+			return err
+		}
+		epochNumberBigEndian, err := hexutil.Decode(keys[2])
+		if err != nil {
+			return err
+		}
+		epochNumber := sdk.BigEndianToUint64(epochNumberBigEndian)
+		isStop, err := handler(epochNumber, event)
+		if err != nil {
+			return err
+		}
+		if isStop {
+			break
+		}
+	}
+	return nil
+}
+
+// SetStakerOutstandingRewards : set the outstanding avs rewards for the staker
+func (k Keeper) SetStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr string,
+	rewards feedistributiontypes.StakerOutstandingRewards) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerOutstandingRewards)
+	var bz []byte
+
+	if rewards.Rewards.IsZero() {
+		bz = k.cdc.MustMarshal(&feedistributiontypes.StakerOutstandingRewards{})
+	} else {
+		bz = k.cdc.MustMarshal(&rewards)
+	}
+
+	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
+	store.Set(key, bz)
+	return nil
+}
+
+// GetStakerOutstandingRewards : get the outstanding avs rewards for the staker
+func (k Keeper) GetStakerOutstandingRewards(ctx sdk.Context, stakerID,
+	avsAddr string) (feedistributiontypes.StakerOutstandingRewards, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerOutstandingRewards)
+	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
+	b := store.Get(key)
+	if b == nil {
+		return feedistributiontypes.StakerOutstandingRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorOutstandingRewards, stakerID:%s,avsAddr:%s", stakerID, avsAddr)
+	}
+	rewards := feedistributiontypes.StakerOutstandingRewards{}
+	k.cdc.MustUnmarshal(b, &rewards)
+	return rewards, nil
+}
+
+// HasStakerOutstandingRewards : check whether the outstanding avs rewards exists for the operator
+func (k Keeper) HasStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerOutstandingRewards)
+	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
+	return store.Has(key)
+}
+
+// UpdateStakerOutstandingRewards : increase or decrease the outstanding avs rewards for the staker.
+// the isIncrease flag is used to indicate whether the update is an increase or a decrease
+func (k Keeper) UpdateStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr string, isIncrease bool, deltaRewards sdk.DecCoins) error {
+	if len(deltaRewards) == 0 {
+		return nil
+	}
+	// set the initialized value
+	rewards := feedistributiontypes.StakerOutstandingRewards{
+		Rewards: make([]sdk.DecCoin, 0),
+	}
+	var err error
+	if k.HasStakerOutstandingRewards(ctx, stakerID, avsAddr) {
+		rewards, err = k.GetStakerOutstandingRewards(ctx, stakerID, avsAddr)
+		if err != nil {
+			return err
+		}
+	}
+
+	if isIncrease {
+		rewards.Rewards = rewards.Rewards.Add(deltaRewards...)
+	} else {
+		var negative bool
+		rewards.Rewards, negative = rewards.Rewards.SafeSub(deltaRewards)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("UpdateStakerOutstandingRewards,staker:%s,avsAddr:%s", stakerID, avsAddr)
+		}
+	}
+
+	err = k.SetStakerOutstandingRewards(ctx, stakerID, avsAddr, rewards)
+	if err != nil {
+		return err
+	}
+	return nil
 }
