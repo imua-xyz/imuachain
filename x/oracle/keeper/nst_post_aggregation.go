@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
@@ -160,11 +162,6 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		withdraw = true
 		amountInt64 = -amountInt64
 	}
-	// emit an event to tell that a staker's validator list has changed
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCreatePrice,
-		sdk.NewAttribute(types.AttributeKeyNativeTokenUpdate, types.AttributeValueNativeTokenUpdate),
-	))
 	store := ctx.KVStore(k.storeKey)
 	key := types.NativeTokenStakerKey(assetID, stakerAddr)
 	stakerInfo := &types.StakerInfo{}
@@ -198,18 +195,21 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		for i, vPubkey := range stakerInfo.ValidatorPubkeyList {
 			if vPubkey == validatorPubkey {
 				// TODO: len(stkaerInfo.ValidatorPubkeyList)==0 should equal to newBalance.Balance<=0
-				stakerInfo.ValidatorPubkeyList = append(stakerInfo.ValidatorPubkeyList[:i], stakerInfo.ValidatorPubkeyList[i+1:]...)
+				stakerInfo.ValidatorPubkeyList = slices.Delete(stakerInfo.ValidatorPubkeyList, i, i+1)
 				break
 			}
 		}
 	}
 
 	if withdraw {
+		// #nosec G115 - checked in previous step
 		if newBalance.Balance < uint64(amountInt64) {
 			return errors.New("withdraw more than deposit")
 		}
+		// #nosec G115 - checked in previous step
 		newBalance.Balance -= uint64(amountInt64)
 	} else {
+		// #nosec G115 - checked in previous step
 		newBalance.Balance += uint64(amountInt64)
 	}
 
@@ -225,7 +225,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		// this should noly happen when do withdraw
 		if stakerExists == stakerAddr {
 			if newBalance.Balance <= 0 {
-				stakerList.StakerAddrs = append(stakerList.StakerAddrs[:idx], stakerList.StakerAddrs[idx+1:]...)
+				stakerList.StakerAddrs = slices.Delete(stakerList.StakerAddrs, idx, idx+1)
 				valueStakerList = k.cdc.MustMarshal(&stakerList)
 				store.Set(keyStakerList, valueStakerList)
 			}
@@ -264,17 +264,18 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	} else {
 		eventValue = fmt.Sprintf("%s_%s", types.AttributeValueNativeTokenWithdraw, eventValue)
 	}
-	// emit an event to tell the details that a new valdiator added/or a validator is removed for the staker
-	// deposit_stakerID_validatorKey
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCreatePrice,
-		sdk.NewAttribute(types.AttributeKeyNativeTokenChange, eventValue),
-	))
+	if len(*k.cachedNSTStakersEventValue) > 0 {
+		*k.cachedNSTStakersEventValue += types.DelimiterForBase64
+	}
 
+	if !ctx.IsCheckTx() {
+		*k.cachedNSTStakersEventValue += eventValue
+	}
 	return nil
 }
 
 // IncreaseNSTVersion increases the version of native token for assetID
+// return increased value
 func (k Keeper) IncreaseNSTVersion(ctx sdk.Context, assetID string) int64 {
 	store := ctx.KVStore(k.storeKey)
 	key := types.NativeTokenVersionKey(assetID)
@@ -325,8 +326,9 @@ func getStakerID(stakerAddr string, chainID uint64) string {
 	return strings.Join([]string{strings.ToLower(stakerAddr), hexutil.EncodeUint64(chainID)}, utils.DelimiterForID)
 }
 
+// this is called in EndBlock not as a part of transaction, so the 'error' will not revert process
 // UpdateNSTBalanceChange serves the post handling for nst balance change
-func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID uint64, kInf common.KeeperOracle) error {
+func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, feederID, roundID uint64, kInf common.KeeperOracle) error {
 	balanceChanges := &types.RawDataNST{}
 	kInf.MustUnmarshal(rawData, balanceChanges)
 	k, ok := kInf.(*Keeper)
@@ -345,9 +347,13 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 	if len(sl.StakerAddrs) == 0 {
 		return errors.New("staker list is empty")
 	}
+	decimal, _, err := k.getDecimal(ctx, assetID)
+	if err != nil {
+		return err
+	}
 
 	store := ctx.KVStore(k.storeKey)
-
+	cc, writeCache := ctx.CacheContext()
 	for _, changeKV := range balanceChanges.NstBalanceChanges {
 		stakerAddr := sl.StakerAddrs[changeKV.StakerIndex]
 		key := types.NativeTokenStakerKey(assetID, stakerAddr)
@@ -362,23 +368,19 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 			newBalance = *(stakerInfo.BalanceList[length-1])
 		}
 		// #nosec G115 - block height will never be negative
-		newBalance.Block = uint64(ctx.BlockHeight())
+		newBalance.Block = uint64(cc.BlockHeight())
 		// we set index as a global reference used through all rounds
 		newBalance.Index++
 		newBalance.Change = types.Action_ACTION_SLASH_REFUND
 		newBalance.RoundID = roundID
 		balance := changeKV.Balance
 
+		// we expect price-feeder send only changed balance, so this should always be true if validators follow that rule
 		if delta := balance - newBalance.Balance; delta != 0 {
-			decimal, _, err := k.getDecimal(ctx, assetID)
-			if err != nil {
-				return err
-			}
 			amountChange := sdkmath.NewIntFromUint64(delta)
 			amountChange = amountChange.Mul(sdkmath.NewIntWithDecimal(1, decimal))
 
-			// if err := k.delegationKeeper.UpdateNSTBalance(ctx, getStakerID(stakerAddr, chainID), assetID, sdkmath.NewIntWithDecimal(delta, decimal)); err != nil {
-			if err := k.delegationKeeper.UpdateNSTBalance(ctx, getStakerID(stakerAddr, chainID), assetID, amountChange); err != nil {
+			if err := k.delegationKeeper.UpdateNSTBalance(cc, getStakerID(stakerAddr, chainID), assetID, amountChange); err != nil {
 				return err
 			}
 			newBalance.Balance = balance
@@ -387,5 +389,13 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rawData []byte, feederID, roundID u
 		bz := k.cdc.MustMarshal(stakerInfo)
 		store.Set(key, bz)
 	}
+	writeCache()
+	version := k.IncreaseNSTVersion(ctx, assetID)
+	base64.StdEncoding.EncodeToString(rootHash)
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeCreatePrice,
+		sdk.NewAttribute(types.AttributeKeyNSTBalanceUpdate, types.AttributeValueTrue),
+		sdk.NewAttribute(types.AttributeKeyNSTBalanceChange, fmt.Sprintf("%s|%d|%d", base64.StdEncoding.EncodeToString(rootHash), version, feederID)),
+	))
 	return nil
 }
