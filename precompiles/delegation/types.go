@@ -32,15 +32,8 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	}
 	clientChainAddrLength := info.AddressLength
 
-	// TODO: Remove this once the layerzero nonce is removed as an input parameter. This can be addressed
-	// when we adjust the precompile interface.
-	_, ok = args[1].(uint64)
-	if !ok {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "uint64", args[1])
-	}
-
 	// the length of client chain address inputted by caller is 32, so we need to check the length and remove the padding according to the actual length.
-	assetAddr, ok := args[2].([]byte)
+	assetAddr, ok := args[1].([]byte)
 	if !ok || assetAddr == nil {
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", args[2])
 	}
@@ -50,7 +43,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	}
 	delegationParams.AssetsAddress = assetAddr[:clientChainAddrLength]
 
-	stakerAddr, ok := args[3].([]byte)
+	stakerAddr, ok := args[2].([]byte)
 	if !ok || stakerAddr == nil {
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", args[3])
 	}
@@ -61,7 +54,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	delegationParams.StakerAddress = stakerAddr[:clientChainAddrLength]
 
 	// the input operator address is cosmos accAddress type,so we need to check the length and decode it through Bench32
-	operatorAddr, ok := args[4].([]byte)
+	operatorAddr, ok := args[3].([]byte)
 	if !ok || operatorAddr == nil {
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "[]byte", args[4])
 	}
@@ -75,7 +68,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	}
 	delegationParams.OperatorAddress = opAccAddr
 
-	opAmount, ok := args[5].(*big.Int)
+	opAmount, ok := args[4].(*big.Int)
 	if !ok || opAmount == nil || !(opAmount.Cmp(big.NewInt(0)) == 1) {
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 5, "*big.Int", args[5])
 	}

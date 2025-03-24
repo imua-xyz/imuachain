@@ -1,151 +1,133 @@
 [
   {
-    "inputs":
-    [
-      {
-        "internalType": "uint32",
-        "name": "clientChainID",
-        "type": "uint32"
-      },
-      {
-        "internalType": "bytes",
-        "name": "staker",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bytes",
-        "name": "operator",
-        "type": "bytes"
-      }
-    ],
+    "type": "function",
     "name": "associateOperatorWithStaker",
-    "outputs":
-    [
+    "inputs": [
       {
-        "internalType": "bool",
-        "name": "success",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs":
-    [
-      {
-        "internalType": "uint32",
         "name": "clientChainID",
-        "type": "uint32"
+        "type": "uint32",
+        "internalType": "uint32"
       },
       {
-        "internalType": "uint64",
-        "name": "lzNonce",
-        "type": "uint64"
-      },
-      {
-        "internalType": "bytes",
-        "name": "assetsAddress",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bytes",
-        "name": "stakerAddress",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bytes",
-        "name": "operatorAddr",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "opAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "delegate",
-    "outputs":
-    [
-      {
-        "internalType": "bool",
-        "name": "success",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs":
-    [
-      {
-        "internalType": "uint32",
-        "name": "clientChainID",
-        "type": "uint32"
-      },
-      {
-        "internalType": "bytes",
         "name": "staker",
-        "type": "bytes"
-      }
-    ],
-    "name": "dissociateOperatorFromStaker",
-    "outputs":
-    [
+        "type": "bytes",
+        "internalType": "bytes"
+      },
       {
-        "internalType": "bool",
-        "name": "success",
-        "type": "bool"
+        "name": "operator",
+        "type": "bytes",
+        "internalType": "bytes"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "outputs": [
+      {
+        "name": "success",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
   },
   {
-    "inputs":
-    [
+    "type": "function",
+    "name": "delegate",
+    "inputs": [
       {
-        "internalType": "uint32",
         "name": "clientChainID",
-        "type": "uint32"
+        "type": "uint32",
+        "internalType": "uint32"
       },
       {
-        "internalType": "uint64",
-        "name": "lzNonce",
-        "type": "uint64"
-      },
-      {
-        "internalType": "bytes",
         "name": "assetsAddress",
-        "type": "bytes"
+        "type": "bytes",
+        "internalType": "bytes"
       },
       {
-        "internalType": "bytes",
         "name": "stakerAddress",
-        "type": "bytes"
+        "type": "bytes",
+        "internalType": "bytes"
       },
       {
-        "internalType": "bytes",
         "name": "operatorAddr",
-        "type": "bytes"
+        "type": "bytes",
+        "internalType": "bytes"
       },
       {
-        "internalType": "uint256",
         "name": "opAmount",
-        "type": "uint256"
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
-    "name": "undelegate",
-    "outputs":
-    [
+    "outputs": [
       {
-        "internalType": "bool",
         "name": "success",
-        "type": "bool"
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "dissociateOperatorFromStaker",
+    "inputs": [
+      {
+        "name": "clientChainID",
+        "type": "uint32",
+        "internalType": "uint32"
+      },
+      {
+        "name": "staker",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "success",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "undelegate",
+    "inputs": [
+      {
+        "name": "clientChainID",
+        "type": "uint32",
+        "internalType": "uint32"
+      },
+      {
+        "name": "assetsAddress",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "stakerAddress",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "operatorAddr",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "opAmount",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "success",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable"
   }
 ]
