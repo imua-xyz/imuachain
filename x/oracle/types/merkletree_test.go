@@ -15,13 +15,10 @@ var (
 )
 
 func TestMerkleTreePath(t *testing.T) {
-	fmt.Println("test on 6 pieces")
-	test6pieces()
+	test6pieces(t)
 
-	fmt.Println("test on 5 pieces")
 	test5pieces()
 
-	fmt.Println("get proofPath from 6 pieces")
 	m, _ := NewMT(20, 6, emptyHash)
 	require.ElementsMatch(t, m.ProofPathFromLeafIndex(0, false), []uint32{1, 7, 10})
 	require.ElementsMatch(t, m.ProofPathFromLeafIndex(1, false), []uint32{0, 7, 10})
@@ -30,7 +27,6 @@ func TestMerkleTreePath(t *testing.T) {
 	require.ElementsMatch(t, m.ProofPathFromLeafIndex(4, false), []uint32{5, 9})
 	require.ElementsMatch(t, m.ProofPathFromLeafIndex(5, false), []uint32{4, 9})
 
-	fmt.Println("get proofPath from 5 pieces")
 	m, _ = NewMT(20, 5, emptyHash)
 	// if limit the provider to upload pieces ordered, then with cache, we only need proof:
 	// (1,6,4), (-), (3), (2)
@@ -126,7 +122,7 @@ func GetNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32
 	for i := uint32(0); i < stakerCount; i++ {
 		changes = append(changes, &NSTKV{
 			StakerIndex: i,
-			Balance:     int64(rand.Int63n(99999999) + 1),
+			Balance:     uint64(rand.Int63n(99999999) + 1),
 		})
 	}
 	nstbc.NstBalanceChanges = changes
@@ -147,7 +143,7 @@ func GetNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32
 	return mt, changes
 }
 
-func test6pieces() {
+func test6pieces(t *testing.T) {
 	m, _ := NewMT(20, 6, emptyHash)
 	fmt.Println(len(m.t))
 
@@ -167,25 +163,25 @@ func test6pieces() {
 		fmt.Println("this is root node")
 		break
 	}
-	fmt.Println(m.t[8] == nil)
-	fmt.Println(m.t[10].index == 10)
-	fmt.Println(m.t[4].parent == m.t[5].parent)
-	fmt.Println(m.t[4].parent.index == 10)
+	require.Nil(t, m.t[8])
+	//	fmt.Println(m.t[8] == nil)
+	require.Equal(t, uint32(10), m.t[10].index)
+	//	fmt.Println(m.t[10].index == 10)
+	require.Equal(t, m.t[5].parent, m.t[4].parent)
+	//	fmt.Println(m.t[4].parent == m.t[5].parent)
+	require.Equal(t, uint32(10), m.t[4].parent.index)
+	// fmt.Println(m.t[4].parent.index == 10)
 }
 
 func test5pieces() {
 	m, _ := NewMT(20, 5, emptyHash)
-	fmt.Println(len(m.t))
 	n := m.t[0]
 	for n != nil {
-		fmt.Println("node_index:", n.index)
 		if n.left != nil {
-			fmt.Println("  left sibling:", n.left.index)
 			n = n.parent
 			continue
 		}
 		if n.right != nil {
-			fmt.Println("  right sibling:", n.right.index)
 			n = n.parent
 			continue
 		}

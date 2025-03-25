@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strconv"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -302,7 +303,8 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	s.moveToAndCheck(7)
 	_, ps := priceNST1.generateRealTimeStructs("1", 1)
 	root, pieces := getNstRootAndPieces()
-	ps.Prices[0].Price = string(root)
+	lc := strconv.Itoa(len(pieces))
+	ps.Prices[0].Price = string(append(root, lc...))
 	msg0 := oracletypes.NewMsgCreatePrice2Phase(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
 	msg1 := oracletypes.NewMsgCreatePrice2Phase(creator1.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
 	msg2 := oracletypes.NewMsgCreatePrice2Phase(creator2.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)

@@ -203,7 +203,7 @@ func ConsAddrStrFromCreator(creator string) (string, error) {
 }
 
 func GetClientChainIDFromNSTAssetID(assetID string) (uint64, bool) {
-	if ccIDStr, ok := strings.CutPrefix(assetID, NSTIDPrefix); ok {
+	if ccIDStr, ok := strings.CutPrefix(strings.ToLower(assetID), NSTIDPrefix); ok {
 		ccID, err := hexutil.DecodeUint64(ccIDStr)
 		if err == nil {
 			return ccID, true

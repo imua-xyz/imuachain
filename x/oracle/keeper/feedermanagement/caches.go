@@ -373,6 +373,9 @@ func (c *caches) GetTokenFeederForFeederID(feederID int64) (tokenFeeder *oraclet
 
 func (c *caches) GetNSTFeederIDFromClientChainID(clientChainID uint64) (uint64, bool) {
 	for fID, tokenFeeder := range c.params.params.TokenFeeders {
+		if fID == 0 {
+			continue
+		}
 		if ccID, ok := oracletypes.GetClientChainIDFromNSTAssetID(c.params.params.Tokens[tokenFeeder.TokenID].AssetID); ok && ccID == clientChainID {
 			// #nosec G115 - fID is index of slice
 			return uint64(fID), true
