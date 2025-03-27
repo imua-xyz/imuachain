@@ -167,6 +167,36 @@ func (k Keeper) RedirectOperatorRewardsToCommunityPool(ctx sdk.Context, operator
 	return nil
 }
 
+func (k Keeper) getOpeartorCurrentDelegatedAmount(ctx sdk.Context, operator sdk.AccAddress, assetID string) (sdk.Dec, error) {
+	// the delegation amount doesn't have any change.
+	assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+	operatorAssetInfo, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operator, assetID)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+	divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
+	return sdk.NewDecFromInt(operatorAssetInfo.TotalAmount).QuoInt(divisor), nil
+}
+func (k Keeper) getDelegatedAmountAtPreEpochEnd(ctx sdk.Context, operator, assetID, epochIdentifier string) (sdk.Dec, error) {
+	// get the delegation amount at the end of the previous epoch.
+	if k.HasStakeChangedDelegations(ctx, epochIdentifier, operator, assetID) {
+		delegationChangeInfo, err := k.GetStakeChangedDelegations(ctx, epochIdentifier, operator, assetID)
+		if err != nil {
+			return sdk.ZeroDec(), err
+		}
+		return delegationChangeInfo.TotalAmount, nil
+	} else {
+		operatorAccAddr, err := sdk.AccAddressFromBech32(operator)
+		if err != nil {
+			return sdk.ZeroDec(), nil
+		}
+		return k.getOpeartorCurrentDelegatedAmount(ctx, operatorAccAddr, assetID)
+	}
+}
+
 // HandleOperatorSlashEvent handles the slash event for an operator.
 // It increases the period and reference count, then stores the slash event
 // for future reward calculations.
@@ -180,17 +210,10 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
 
 	for _, slashAsset := range slashAssetsPool {
-		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, slashAsset.AssetID)
+		curDelegationAmount, err := k.getOpeartorCurrentDelegatedAmount(ctx, operator, slashAsset.AssetID)
 		if err != nil {
 			return err
 		}
-		operatorAssetInfo, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operator, slashAsset.AssetID)
-		if err != nil {
-			return err
-		}
-		divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
-		curDelegationAmount := sdk.NewDecFromInt(operatorAssetInfo.TotalAmount).QuoInt(divisor)
-
 		preDelegationAmount := sdk.ZeroDec()
 		for _, epochInfo := range allEpochs {
 			// get the delegation amount at the end of the previous epoch.

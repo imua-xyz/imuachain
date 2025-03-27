@@ -336,7 +336,7 @@ func (crs CommonAVSRewards) CalculateRewardRatio(totalDelegatedAmount sdk.Dec) (
 
 // CalculateRewards calculates the rewards, the receiver of this function should be the rewards ratio.
 func (crs CommonAVSRewards) CalculateRewards(delegatedAmount sdk.Dec) (CommonAVSRewards, error) {
-	if !delegatedAmount.IsNegative() {
+	if delegatedAmount.IsNegative() {
 		return nil, ErrInvalidInputParameter.Wrapf("CalculateRewards, the delegated amount is negative, value:%s", delegatedAmount)
 	}
 	ret := make([]CommonAVSRewardData, 0)

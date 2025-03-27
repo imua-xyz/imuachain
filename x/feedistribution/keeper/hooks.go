@@ -37,7 +37,10 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 		err := wrapper.keeper.AllocateRewardsByEpoch(ctx, epochIdentifier, epochNumber)
 		if err != nil {
 			ctx.Logger().Error("failed to allocate the rewards by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
-			return
+			// Do not return, as the reward distribution for stakers should not be affected
+			// by the AVS rewards distribution of the current epoch.
+			// If the function returns here, the cumulative rewards for the staker will not be
+			// distributed correctly.
 		}
 		// handle delegations whose stake has changed.
 		err = wrapper.keeper.HandleChangedDelegations(ctx, epochIdentifier)

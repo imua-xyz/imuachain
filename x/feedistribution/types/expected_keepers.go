@@ -76,6 +76,7 @@ type AssetsKeeper interface {
 // DelegationKeeper represents the expected keeper interface for the delegation module.
 type DelegationKeeper interface {
 	GetDelegationInfoWithAmount(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, error)
+	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.
