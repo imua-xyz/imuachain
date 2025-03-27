@@ -216,7 +216,7 @@ message AVSRewardAssetState {
   // an AVS deposits funds into the treasury or stakers/operators withdraw from it.
   // We use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,
   // and we also use it when handling the distribution with F1.
-  string reward_pool_balance = 2  [
+  string reward_pool_balance = 1  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -224,7 +224,7 @@ message AVSRewardAssetState {
   // reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
   // each time an AVS deposits funds into the treasury. The difference between it and reward_pool_balance
   // represents the total amount claimed by stakers and operators.
-  string reward_pool_total = 3  [
+  string reward_pool_total = 2  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -235,7 +235,7 @@ message AVSRewardAssetState {
   // in deficit for an extended period, preventing stakers and operators from claiming their rewards,
   // they may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility
   // to ensure its reward pool remains sufficiently funded.
-  string reward_allocation_total = 4  [
+  string reward_allocation_total = 3  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

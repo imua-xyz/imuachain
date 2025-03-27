@@ -13,7 +13,8 @@ import (
 // This function is called when the AVS funds the reward pool, when the reward distribution is executed,
 // and when stakers or operators claim rewards.
 // There will be a precompiled contract interface regarding it.
-func (k Keeper) UpdateAVSRewardAssetState(ctx sdk.Context, avsAddr, assetID string, delta *types.DeltaAVSRewardAssetState) (err error) {
+func (k Keeper) UpdateAVSRewardAssetState(ctx sdk.Context, avsAddr, assetID string,
+	delta *types.DeltaAVSRewardAssetState) (err error) {
 	if delta == nil {
 		return types.ErrInvalidRewardAssetParameter.Wrapf("UpdateAVSRewardAssetState: the input delta is nil,avsAddr:%s,assetID:%s", avsAddr, assetID)
 	}
@@ -146,16 +147,29 @@ func (k Keeper) IsAVSRewardAssetBySymbol(ctx sdk.Context, avsAddr, symbol string
 	return store.Has(key)
 }
 
-// GetAVSRewardAssetBySymbol returns the avs reward asset information stored against the  provided avsAddr and symbol.
-func (k Keeper) GetAVSRewardAssetBySymbol(ctx sdk.Context, avsAddr, symbol string) (info *types.AVSRewardAsset, err error) {
+// GetAVSRewardAssetIDBySymbol returns the avs reward assetID stored against the  provided avsAddr and symbol.
+func (k Keeper) GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
 	key := assetstype.GetJoinedStoreKey(avsAddr, symbol)
 	value := store.Get(key)
 	if value == nil {
-		return nil, types.ErrAVSRewardAssetNotFound
+		return assetID, types.ErrAVSRewardAssetNotFound
 	}
-	assetID := string(value)
-	return k.GetAVSRewardAssetInfo(ctx, avsAddr, assetID)
+	return string(value), nil
+}
+
+// GetAVSRewardAssetBySymbol returns the avs reward asset information stored against the  provided avsAddr and symbol.
+func (k Keeper) GetAVSRewardAssetBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string,
+	info *types.AVSRewardAsset, err error) {
+	assetID, err = k.GetAVSRewardAssetIDBySymbol(ctx, avsAddr, symbol)
+	if err != nil {
+		return "", nil, err
+	}
+	assetInfo, err := k.GetAVSRewardAssetInfo(ctx, avsAddr, assetID)
+	if err != nil {
+		return assetID, nil, err
+	}
+	return assetID, assetInfo, nil
 }
 
 // UpdateAVSRewardAssetMetaInfo updates the meta information stored against the avsAddr and assetID.

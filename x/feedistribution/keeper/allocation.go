@@ -11,39 +11,57 @@ import (
 func (k Keeper) AllocateRewardsByEpoch(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) error {
 	avsList := k.avsKeeper.GetEpochEndAVSs(ctx, epochIdentifier, endingEpochNumber)
 	for _, avs := range avsList {
-		_, rewardDistribution, err := k.AVSRewardDistributionByParam(ctx, avs)
+		err := k.AllocateRewardsByAVS(ctx, avs, epochIdentifier)
 		if err != nil {
-			ctx.Logger().Error("AllocateTokensByEpoch: failed to reward distribution by params, skipping the avs", "avs", avs, "err", err)
-			continue
-		}
-		if len(rewardDistribution.Rewards) == 0 {
-			ctx.Logger().Info("AllocateTokensByEpoch: there isn't any rewards to distribute, skipping the avs", "avs", avs)
-			continue
-		}
-		if len(rewardDistribution.OperatorRewardProportions) == 0 {
-			// distribute the rewards to the community pool
-			err := k.UpdateAVSCommunityPool(ctx, avs, true, rewardDistribution.Rewards)
-			if err != nil {
-				ctx.Logger().Error("AllocateTokensByEpoch: failed to add rewards to the avs fee pool, skipping the avs", "avs", avs, "err", err)
-			} else {
-				ctx.Logger().Info("AllocateTokensByEpoch: add all rewards to the avs fee pool because of the zero or negative total voting power", "avs", avs, "err", err)
-			}
-			// continue distributing the rewards for the other AVSs
-			continue
-		}
-		remaining, err := k.AllocateRewardsToOperators(ctx, avs, epochIdentifier, rewardDistribution)
-		if err != nil {
-			ctx.Logger().Error("AllocateTokensByEpoch: failed to distribute the rewards to operators, skipping the avs", "avs", avs, "err", err)
-			// continue handling the remaining and the other AVSs
-		}
-		if len(remaining) != 0 {
-			// add the remaining rewards to the community pool
-			err := k.UpdateAVSCommunityPool(ctx, avs, true, rewardDistribution.Rewards)
-			if err != nil {
-				ctx.Logger().Error("AllocateTokensByEpoch: failed to add the remaining rewards to the avs fee pool, skipping the avs", "avs", avs, "err", err)
-			}
+			ctx.Logger().Error("AllocateTokensByEpoch: failed to allocate rewards by avs, skipping the avs",
+				"err", err, "avs", avs)
 		}
 		// continue handling the other AVSs
+	}
+	return nil
+}
+
+func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier string) error {
+	_, rewardDistribution, err := k.AVSRewardDistributionByParam(ctx, avs)
+	if err != nil {
+		return err
+	}
+	if len(rewardDistribution.Rewards) == 0 {
+		ctx.Logger().Info("AllocateTokensByEpoch: there isn't any rewards to distribute, skipping the avs", "avs", avs)
+		return nil
+	}
+	// update the reward asset state
+	for _, token := range rewardDistribution.Rewards {
+		assetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, avs, token.Denom)
+		if err != nil {
+			return err
+		}
+		err = k.UpdateAVSRewardAssetState(ctx, avs, assetID, &types.DeltaAVSRewardAssetState{
+			RewardAllocationTotal: token.Amount,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if len(rewardDistribution.OperatorRewardProportions) == 0 {
+		// distribute the rewards to the community pool
+		err := k.UpdateAVSCommunityPool(ctx, avs, true, rewardDistribution.Rewards)
+		if err != nil {
+			return err
+		}
+		ctx.Logger().Info("AllocateTokensByEpoch: add all rewards to the avs fee pool when the operator rewards proportion hasn't been configured", "avs", avs, "err", err)
+		return nil
+	}
+	remaining, err := k.AllocateRewardsToOperators(ctx, avs, epochIdentifier, rewardDistribution)
+	if err != nil {
+		return err
+	}
+	if len(remaining) != 0 {
+		// add the remaining rewards to the community pool
+		err = k.UpdateAVSCommunityPool(ctx, avs, true, rewardDistribution.Rewards)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

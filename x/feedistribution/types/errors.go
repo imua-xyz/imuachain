@@ -62,4 +62,9 @@ var (
 		ModuleName, 12,
 		"negative avs rewards",
 	)
+
+	ErrInvalidStartingInfo = errorsmod.Register(
+		ModuleName, 13,
+		"invalid stating information for a delegation",
+	)
 )
