@@ -3,20 +3,20 @@
     "inputs": [
       {
         "internalType": "bytes",
-        "name": "pubkey1",
+        "name": "pubKey1",
         "type": "bytes"
       },
       {
         "internalType": "bytes",
-        "name": "pubkey2",
+        "name": "pubKey2",
         "type": "bytes"
       }
     ],
-    "name": "addTwoPubkeys",
+    "name": "addTwoPubKeys",
     "outputs": [
       {
         "internalType": "bytes",
-        "name": "newPubkey",
+        "name": "newPubKey",
         "type": "bytes"
       }
     ],
@@ -27,15 +27,15 @@
     "inputs": [
       {
         "internalType": "bytes[]",
-        "name": "pubkeys",
+        "name": "pubKeys",
         "type": "bytes[]"
       }
     ],
-    "name": "aggregatePubkeys",
+    "name": "aggregatePubKeys",
     "outputs": [
       {
         "internalType": "bytes",
-        "name": "pubkey",
+        "name": "pubKey",
         "type": "bytes"
       }
     ],
@@ -75,7 +75,7 @@
       },
       {
         "internalType": "bytes[]",
-        "name": "pubkeys",
+        "name": "pubKeys",
         "type": "bytes[]"
       }
     ],
@@ -104,7 +104,7 @@
       },
       {
         "internalType": "bytes",
-        "name": "pubkey",
+        "name": "pubKey",
         "type": "bytes"
       }
     ],

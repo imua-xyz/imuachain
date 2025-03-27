@@ -25,10 +25,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-const (
-	BaseGas uint64 = 6000
-)
-
 // AvailablePrecompiles returns the list of all available precompiled contracts.
 // NOTE: this should only be used during initialization of the Keeper.
 func AvailablePrecompiles(
@@ -92,7 +88,7 @@ func AvailablePrecompiles(
 	if err != nil {
 		panic(fmt.Errorf("failed to load avsManager precompile: %w", err))
 	}
-	blsPrecompile, err := blsprecompile.NewPrecompile(BaseGas)
+	blsPrecompile, err := blsprecompile.NewPrecompile()
 	if err != nil {
 		panic(fmt.Errorf("failed to load bls precompile: %v", err))
 	}
