@@ -7,6 +7,7 @@ import (
 	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"strings"
 )
 
 // UpdateAVSRewardAssetState updates the reward asset state of a specified AVS.
@@ -195,7 +196,7 @@ func (k Keeper) UpdateAVSRewardAssetMetaInfo(ctx sdk.Context, avsAddr, assetID s
 	return nil
 }
 
-func (k Keeper) GetAllAVSRewardAssets(ctx sdk.Context, avsAddr string) (allRewardAssets types.AVSRewardAssets, err error) {
+func (k Keeper) GetAllRewardAssetsByAVS(ctx sdk.Context, avsAddr string) (allRewardAssets types.AVSRewardAssets, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(avsAddr))
 	defer iterator.Close()
@@ -221,6 +222,54 @@ func (k Keeper) GetAllAVSRewardAssetSymbols(ctx sdk.Context, avsAddr string) (sy
 		var avsRewardAsset types.AVSRewardAsset
 		k.cdc.MustUnmarshal(iterator.Value(), &avsRewardAsset)
 		ret = append(ret, avsRewardAsset.AssetBasicInfo.Symbol)
+	}
+	return ret, nil
+}
+
+func (k Keeper) SetAllAVSRewardAssets(ctx sdk.Context, allAVSRewardAssets []types.AVSAddrAndRewardAssets) error {
+	assetStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	assetSymbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
+
+	for _, avsRewardAsset := range allAVSRewardAssets {
+		for _, rewardAsset := range avsRewardAsset.AvsRewardAssets {
+			bz := k.cdc.MustMarshal(&rewardAsset)
+			_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(rewardAsset.AssetBasicInfo.LayerZeroChainID,
+				"", rewardAsset.AssetBasicInfo.Address)
+			assetKey := assetstype.GetJoinedStoreKey(strings.ToLower(avsRewardAsset.Avs), assetID)
+			assetStore.Set(assetKey, bz)
+			symbolKey := assetstype.GetJoinedStoreKey(strings.ToLower(avsRewardAsset.Avs),
+				rewardAsset.AssetBasicInfo.Symbol)
+			assetSymbolStore.Set(symbolKey, []byte(assetID))
+		}
+	}
+	return nil
+}
+
+func (k Keeper) GetAllAVSRewardAssets(ctx sdk.Context) ([]types.AVSAddrAndRewardAssets, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+
+	ret := make([]types.AVSAddrAndRewardAssets, 0)
+	avs := ""
+	for ; iterator.Valid(); iterator.Next() {
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		if err != nil {
+			return nil, err
+		}
+		// the iterator is ordered, allowing all assets of the same AVS to be processed together.
+		// initialize the slice when meeting the new avs.
+		if avs != keys[0] {
+			ret = append(ret, types.AVSAddrAndRewardAssets{
+				Avs:             keys[0],
+				AvsRewardAssets: make([]types.AVSRewardAsset, 0),
+			})
+			avs = keys[0]
+		}
+		var rewardAsset types.AVSRewardAsset
+		k.cdc.MustUnmarshal(iterator.Value(), &rewardAsset)
+		avsNumber := len(ret)
+		ret[avsNumber-1].AvsRewardAssets = append(ret[avsNumber-1].AvsRewardAssets, rewardAsset)
 	}
 	return ret, nil
 }

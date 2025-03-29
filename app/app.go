@@ -1010,7 +1010,7 @@ func NewImuachainApp(
 		authz.ModuleName,
 		feemarkettypes.ModuleName,
 		genutiltypes.ModuleName, // after feemarket
-		epochstypes.ModuleName,  // must be before dogfood and immint
+		epochstypes.ModuleName,  // must be before dogfood, immint and distribution
 		evmtypes.ModuleName,     // must be before avs, since dogfood calls avs which calls this
 		imminttypes.ModuleName,
 		assetsTypes.ModuleName,
@@ -1034,7 +1034,7 @@ func NewImuachainApp(
 		upgradetypes.ModuleName, // no-op since we don't call SetInitVersionMap
 		rewardTypes.ModuleName,  // not fully implemented yet
 		imslashtypes.ModuleName, // not fully implemented yet
-		distrtypes.ModuleName,
+		distrtypes.ModuleName,   // must be after the epoch
 		// must be the last module after others have been set up, so that it can check
 		// the invariants (if configured to do so).
 		crisistypes.ModuleName,

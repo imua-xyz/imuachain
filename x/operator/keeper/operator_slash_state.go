@@ -164,7 +164,7 @@ func (k *Keeper) SetAllSlashStates(ctx sdk.Context, slashStates []operatortypes.
 	for i := range slashStates {
 		state := slashStates[i]
 		bz := k.cdc.MustMarshal(&state.Info)
-		store.Set([]byte(state.Key), bz)
+		store.Set([]byte(strings.ToLower(state.Key)), bz)
 	}
 	return nil
 }
