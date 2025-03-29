@@ -1,17 +1,15 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
-
+	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.
-func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
-	k.SetParams(ctx, genState.Params)
+func (k Keeper) InitGenesis(ctx sdk.Context, genState feedistributiontypes.GenesisState) {
 	epochID := genState.Params.EpochIdentifier
 	_, found := k.epochsKeeper.GetEpochInfo(ctx, epochID)
 	if !found {
@@ -19,69 +17,111 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 		// is not running. it means that the genesis file is malformed.
 		panic(fmt.Sprintf("epoch info not found %s", epochID))
 	}
-	// Set fee pool
-	k.SetFeePool(ctx, &genState.FeePool)
-
-	// Set all the validatorAccumulatedCommission
-	for _, elem := range genState.ValidatorAccumulatedCommissions {
-		validatorAddr, _ := sdk.AccAddressFromBech32(elem.ValAddr)
-		k.SetValidatorAccumulatedCommission(ctx, sdk.ValAddress(validatorAddr), *elem.Commission)
+	// init the state from the general exporting genesis file
+	k.SetParams(ctx, genState.Params)
+	err := k.SetAllAVSRewardAssets(ctx, genState.AllAvsRewardAssets)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all avs reward assets"))
 	}
-
-	// Set all the validatorCurrentRewards
-	for _, elem := range genState.ValidatorCurrentRewardsList {
-		validatorAddr, _ := sdk.AccAddressFromBech32(elem.ValAddr)
-		k.SetValidatorCurrentRewards(ctx, sdk.ValAddress(validatorAddr), *elem.CurrentRewards)
+	err = k.SetAllAVSRewardParams(ctx, genState.AllAvsRewardParams)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all avs reward params"))
 	}
-
-	// Set all the validatorOutstandingRewards
-	for _, elem := range genState.ValidatorOutstandingRewardsList {
-		validatorAddr, _ := sdk.AccAddressFromBech32(elem.ValAddr)
-		k.SetValidatorOutstandingRewards(ctx, sdk.ValAddress(validatorAddr), *elem.OutstandingRewards)
+	err = k.SetAllAVSFeePools(ctx, genState.AllAvsFeePools)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all avs fee pools"))
 	}
-
-	// Set all the stakerRewards
-	for _, elem := range genState.StakerOutstandingRewardsList {
-		k.SetStakerRewards(ctx, elem.StakerAddr, *elem.StakerOutstandingRewards)
+	err = k.SetAllAVSRewardDistributions(ctx, genState.AllAvsRewardDistributions)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all avs reward distributions"))
+	}
+	err = k.SetAllOperatorOutstandingRewards(ctx, genState.AllOperatorOutstandingRewards)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all operator outstanding rewards"))
+	}
+	err = k.SetAllDelegationChangeInfo(ctx, genState.AllDelegationChangeInfos)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all delegation change info"))
+	}
+	err = k.SetAllDelegationStartingInfo(ctx, genState.AllDelegationStartingInfos)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all delegation starting info"))
+	}
+	err = k.SetAllOperatorHistoricalRewards(ctx, genState.AllOperatorHistoricalRewards)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all operator historical rewards"))
+	}
+	err = k.SetAllOperatorCurrentRewards(ctx, genState.AllOperatorCurrentRewards)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all operator current rewards"))
+	}
+	err = k.SetAllOperatorAccumulatedCommission(ctx, genState.AllOperatorAccumulatedCommission)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all operator accumulated commissions"))
+	}
+	err = k.SetAllOperatorSlashEvent(ctx, genState.AllOperatorSlashEvents)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all operator slash events"))
+	}
+	err = k.SetAllStakerOutstandingRewards(ctx, genState.AllStakerOutstandingRewards)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all staker outstanding rewards"))
 	}
 }
 
 // ExportGenesis returns the module's exported genesis
-func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	genesis := types.GenesisState{}
+func (k Keeper) ExportGenesis(ctx sdk.Context) *feedistributiontypes.GenesisState {
+	genesis := feedistributiontypes.GenesisState{}
 	genesis.Params = k.GetParams(ctx)
-	feePool := k.GetFeePool(ctx)
-	if feePool == nil {
-		panic("fee pool cannot be nil in genesis export")
-	}
-	genesis.FeePool = *feePool
-	validatorData, err := k.GetAllValidatorData(ctx)
+
+	var err error
+	genesis.AllAvsRewardAssets, err = k.GetAllAVSRewardAssets(ctx)
 	if err != nil {
-		panic(errorsmod.Wrap(err, "Error getting validator data").Error())
+		panic(errorsmod.Wrap(err, "failed to get all avs reward assets"))
 	}
-
-	if accumulatedCommissions, ok := validatorData["ValidatorAccumulatedCommissions"].([]types.ValidatorAccumulatedCommissions); ok {
-		genesis.ValidatorAccumulatedCommissions = accumulatedCommissions
-	} else {
-		panic("Failed to assert ValidatorAccumulatedCommissions type")
+	genesis.AllAvsRewardParams, err = k.GetAllAVSRewardParams(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all avs reward params"))
 	}
-
-	if currentRewardsList, ok := validatorData["ValidatorCurrentRewardsList"].([]types.ValidatorCurrentRewardsList); ok {
-		genesis.ValidatorCurrentRewardsList = currentRewardsList
-	} else {
-		panic("Failed to assert ValidatorCurrentRewardsList type")
+	genesis.AllAvsFeePools, err = k.GetAllAVSFeePools(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all avs fee pools"))
 	}
-
-	if outstandingRewardsList, ok := validatorData["ValidatorOutstandingRewardsList"].([]types.ValidatorOutstandingRewardsList); ok {
-		genesis.ValidatorOutstandingRewardsList = outstandingRewardsList
-	} else {
-		panic("Failed to assert ValidatorOutstandingRewardsList type")
+	genesis.AllAvsRewardDistributions, err = k.GetAllAVSRewardDistributions(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all avs reward distributions"))
 	}
-
-	if stakerRewardsList, ok := validatorData["StakerOutstandingRewardsList"].([]types.StakerOutstandingRewardsList); ok {
-		genesis.StakerOutstandingRewardsList = stakerRewardsList
-	} else {
-		panic("Failed to assert StakerOutstandingRewardsList type")
+	genesis.AllOperatorOutstandingRewards, err = k.GetAllOperatorOutstandingRewards(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all operator outstanding rewards"))
+	}
+	genesis.AllDelegationChangeInfos, err = k.GetAllDelegationChangeInfo(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all delegation change info"))
+	}
+	genesis.AllDelegationStartingInfos, err = k.GetAllDelegationStartingInfo(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all delegation starting info"))
+	}
+	genesis.AllOperatorHistoricalRewards, err = k.GetAllOperatorHistoricalRewards(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all operator historical rewards"))
+	}
+	genesis.AllOperatorCurrentRewards, err = k.GetAllOperatorCurrentRewards(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all operator current rewards"))
+	}
+	genesis.AllOperatorAccumulatedCommission, err = k.GetAllOperatorAccumulatedCommission(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all operator accumulated commissions"))
+	}
+	genesis.AllOperatorSlashEvents, err = k.GetAllOperatorSlashEvent(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all operator slash events"))
+	}
+	genesis.AllStakerOutstandingRewards, err = k.GetAllStakerOutstandingRewards(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all staker outstanding rewards"))
 	}
 	return &genesis
 }

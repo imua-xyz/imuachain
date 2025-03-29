@@ -366,7 +366,7 @@ func (k *Keeper) SetAllAVSUSDValues(ctx sdk.Context, usdValues []operatortypes.A
 	for i := range usdValues {
 		usdValue := usdValues[i]
 		bz := k.cdc.MustMarshal(&usdValue.Value)
-		store.Set([]byte(usdValue.AVSAddr), bz)
+		store.Set([]byte(strings.ToLower(usdValue.AVSAddr)), bz)
 	}
 	return nil
 }
