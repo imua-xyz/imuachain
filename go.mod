@@ -283,8 +283,7 @@ replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	// use Cosmos-SDK fork to enable Ledger functionality
-	// github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.5-evmos.2
-	github.com/cosmos/cosmos-sdk => /Users/linqing/workplace/github.com/leonz/evmos/evmos-cosmossdk/cosmos-sdk
+	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.5-evmos.2
 
 	//fix cosmos-sdk error
 	github.com/cosmos/gogoproto => github.com/cosmos/gogoproto v1.4.10
@@ -295,8 +294,7 @@ replace (
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 
-	// github.com/imua-xyz/price-feeder v0.2.4 => github.com/leonz789/price-feeder v0.0.0-20250324080635-8013c8814e71
-	github.com/imua-xyz/price-feeder v0.2.4 => /Users/linqing/workplace/github.com/leonz/imua-xyz/price-feeder
+	github.com/imua-xyz/price-feeder v0.2.4 => github.com/leonz789/price-feeder v0.0.0-20250330161053-36e0e914b596
 
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
