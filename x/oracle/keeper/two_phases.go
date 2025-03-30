@@ -162,6 +162,12 @@ func (k Keeper) GetFeederTreeInfo(ctx sdk.Context, feederID uint64) (uint32, []b
 	return treeInfo.LeafCount, treeInfo.RootHash
 }
 
+func (k Keeper) ClearFeederTreeInfo(ctx sdk.Context, feederID uint64) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.TwoPhaseFeederTreeInfoKey(feederID)
+	store.Delete(key)
+}
+
 // AddNodeToMerkle used for recovery, otherwise, mem-cache are used directly for reading
 func (k Keeper) AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*types.HashNode) {
 	if len(proof) == 0 {
@@ -237,6 +243,8 @@ func (k Keeper) Clear2ndPhase(ctx sdk.Context, feederID uint64, rootIndex uint32
 	}
 	// clear proof
 	store.Delete(types.TwoPhasesFeederProofKey(feederID))
-	// clear indexex
+	// clear indexes
 	k.Clear2ndPhaseNextPieceIndex(ctx, feederID)
+	// clear tree info
+	k.ClearFeederTreeInfo(ctx, feederID)
 }

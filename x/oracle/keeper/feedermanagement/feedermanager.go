@@ -123,6 +123,7 @@ func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.
 	f.prepareRounds(ctx)
 	f.ResetFlags()
 	f.resetPhaseTwoCollectingFeederIDs()
+	f.resetPhaseTwoMaliciousTx()
 	// updateCheckTx() is invoked in BeginBlock either in recovery or init mode, so we skip that in EndBlockRecovery
 }
 
@@ -375,7 +376,7 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 			rootHash := r.m.RootHash()
 			logger.Info("execute postHandler after 2ndPhase completed collecting rawData",
 				"feederID", r.feederID, "rootHash", base64.StdEncoding.EncodeToString(rootHash), "leafCount", r.m.LeafCount())
-			// execute pootHandler with rawData
+			// execute postHandler with rawData
 			// #nosec G115
 			if err := r.h(ctx, rootHash, rawData, uint64(r.feederID), uint64(r.roundID), f.k); err != nil {
 				// just log the error and wait for next round to update
@@ -384,6 +385,12 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 					"feederID", r.feederID, "roundID", r.roundID, "consensus_1st-phase-hash", hex.EncodeToString(r.m.RootHash()), "error", err)
 			}
 			// reset related cache from state
+			// #nosec G115
+			f.k.Clear2ndPhase(ctx, uint64(r.feederID), r.m.RootIndex())
+			r.m = nil
+			return success
+		}
+		if r.IsRoundEnd(height) && r.m != nil {
 			// #nosec G115
 			f.k.Clear2ndPhase(ctx, uint64(r.feederID), r.m.RootIndex())
 			r.m = nil

@@ -255,7 +255,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		store.Set(key, bz)
 	}
 
-	// valid veriosn start from 1
+	// valid version start from 1
 	version := k.IncreaseNSTVersion(ctx, assetID)
 	// we use index to sync with client about status of stakerInfo.ValidatorPubkeyList
 	eventValue := fmt.Sprintf("%d_%s_%d_%d_%d", stakerInfo.StakerIndex, validatorPubkey, version, amountInt64, feederID)
@@ -340,7 +340,7 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 	// #nosec G115
 	v := uint64(k.GetNSTVersion(ctx, assetID))
 	if balanceChanges.Version != v {
-		return fmt.Errorf("version not match, expected %d, got %d", v, balanceChanges.Version)
+		return fmt.Errorf("version not match, expected %d, got %d, assetID:%s", v, balanceChanges.Version, assetID)
 	}
 	_, chainID, _ := assetstypes.ParseID(assetID)
 	sl := k.GetStakerList(ctx, assetID)
