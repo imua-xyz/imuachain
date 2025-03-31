@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -534,16 +535,17 @@ func (f TokenFeeder) validate() error {
 func (p Params) GetTokenIDFromAssetID(assetID string) int {
 	for id, token := range p.Tokens {
 		assetIDs := strings.Split(token.AssetID, ",")
-		for _, aID := range assetIDs {
-			if aID == assetID {
-				return id
-			}
+		if slices.Contains(assetIDs, assetID) {
+			return id
 		}
 	}
 	return 0
 }
 
 func (p Params) GetAssetIDForNSTFromFeederID(feederID uint64) string {
+	if feederID >= uint64(len(p.TokenFeeders)) {
+		return ""
+	}
 	tokenID := p.TokenFeeders[feederID].TokenID
 
 	if tokenID >= uint64(len(p.Tokens)) {

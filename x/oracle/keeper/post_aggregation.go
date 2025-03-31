@@ -8,7 +8,7 @@ import (
 // RegisterPostAggregation registers handler for tokenfeeder set with deterministic source which need to do some process with the deterministic aggregated result
 // this is used to register the post handlers served for some customer defined deterministic source oracle requirement
 func (k Keeper) RegisterPostAggregation() {
-	// k.BondPostAggregation(1, UpdateNSTBalanceChange)
+	// TODO: Add custom defined post-aggregation handler except for NST
 }
 
 func (k Keeper) BondPostAggregation(feederID int64, postHandler common.PostAggregationHandler) {

@@ -30,6 +30,7 @@ const (
 	AttributeKeyBurnedCoins      = "burned_coins"
 
 	AttributeValueTrue                 = "true"
+	AttributeValueSuccess              = "success"
 	AttributeValueFalse                = "false"
 	AttributeValueNativeTokenDeposit   = "deposit"
 	AttributeValueNativeTokenWithdraw  = "withdraw"

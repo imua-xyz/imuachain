@@ -258,7 +258,7 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators
 		if pUpdated {
 			ctx.EventManager().EmitEvent(sdk.NewEvent(
 				oracletypes.EventTypeOracleUpdateParams,
-				sdk.NewAttribute(oracletypes.AttributeKeyParamsUpdated, oracletypes.AttributeValueParamsUpdatedSuccess),
+				sdk.NewAttribute(oracletypes.AttributeKeyParamsUpdated, oracletypes.AttributeValueSuccess),
 			))
 		}
 	}
@@ -611,13 +611,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 				continue
 			}
 			validators := f.cs.GetValidators()
-			//			reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
 			for _, validator := range validators {
-				// reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
-				// if !found {
-				// 	logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
-				// 	continue
-				// }
 				miss, malicious := r.PerformanceReview(validator)
 				if malicious {
 					finalPrice, _ := r.FinalPrice()

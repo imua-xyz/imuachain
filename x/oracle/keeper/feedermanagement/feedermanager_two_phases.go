@@ -205,6 +205,5 @@ func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCrea
 	// persist piece for recovery (with memory-cache update into merkleTree)
 	// save this piece and proof to db for recovery, for nodes without running,
 	// this process only causes additional: two write to stateDB(piece, proof), one read from the stateDB(piece)
-
 	return piece.Index, piece.RawData, nil
 }

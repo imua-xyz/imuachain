@@ -391,7 +391,6 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 	}
 	writeCache()
 	version := k.IncreaseNSTVersion(ctx, assetID)
-	base64.StdEncoding.EncodeToString(rootHash)
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,
 		sdk.NewAttribute(types.AttributeKeyNSTBalanceUpdate, types.AttributeValueTrue),
