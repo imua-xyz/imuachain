@@ -310,7 +310,6 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 
 						// set up for 2-phases aggregation
 						if r.twoPhases {
-
 							rootHash := []byte(finalPrice.Price[:32])
 							tmp := finalPrice.Price[32:]
 							// no need to check err, the format is guarded by anteHandler
@@ -323,8 +322,9 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 							// set up state for 2nd phase aggregation
 							// #nosec G115
 							logger.Info("set up 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
-							// f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(lc), []byte(finalPrice.Price))
-							f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(leafCount), rootHash)
+							if err := f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(leafCount), rootHash); err != nil {
+								logger.Error("failed to setup 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "error", err)
+							}
 						}
 					}
 				} else {
@@ -607,13 +607,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 				continue
 			}
 			validators := f.cs.GetValidators()
-			//			reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
 			for _, validator := range validators {
-				// reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
-				// if !found {
-				// 	logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
-				// 	continue
-				// }
 				miss, malicious := r.PerformanceReview(validator)
 				if malicious {
 					finalPrice, _ := r.FinalPrice()
