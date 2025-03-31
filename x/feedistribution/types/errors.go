@@ -67,4 +67,9 @@ var (
 		ModuleName, 13,
 		"invalid stating information for a delegation",
 	)
+
+	ErrInvalidGenesisData = errorsmod.Register(
+		ModuleName, 14,
+		"the genesis data supplied is invalid",
+	)
 )

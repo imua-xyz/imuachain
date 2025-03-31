@@ -339,7 +339,7 @@ func (k *Keeper) SetAllOperatorUSDValues(ctx sdk.Context, usdValues []operatorty
 	for i := range usdValues {
 		usdValue := usdValues[i]
 		bz := k.cdc.MustMarshal(&usdValue.OptedUSDValue)
-		store.Set([]byte(strings.ToLower(usdValue.Key)), bz)
+		store.Set([]byte(usdValue.Key), bz)
 	}
 	return nil
 }

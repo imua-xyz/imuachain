@@ -92,7 +92,7 @@ message KeyAndOperatorOutstandingRewards {
 // It stores the delegation changes for the current epoch.
 // The key, which is a combination of the epochIdentifier, operator and assetID, is included within it.
 message KeyAndDelegationChangeInfo{
-  // key is is a combination of the operator and AVS
+  // key is is a combination of the epochIdentifier, operator and assetID
   string key = 1;
   // delegation_change_info represents the delegation changes for the current epoch.
   DelegationChangeInfo delegation_change_info = 2 [(gogoproto.nullable) = false];

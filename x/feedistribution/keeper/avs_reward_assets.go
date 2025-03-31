@@ -7,7 +7,6 @@ import (
 	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"strings"
 )
 
 // UpdateAVSRewardAssetState updates the reward asset state of a specified AVS.
@@ -235,9 +234,9 @@ func (k Keeper) SetAllAVSRewardAssets(ctx sdk.Context, allAVSRewardAssets []type
 			bz := k.cdc.MustMarshal(&rewardAsset)
 			_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(rewardAsset.AssetBasicInfo.LayerZeroChainID,
 				"", rewardAsset.AssetBasicInfo.Address)
-			assetKey := assetstype.GetJoinedStoreKey(strings.ToLower(avsRewardAsset.Avs), assetID)
+			assetKey := assetstype.GetJoinedStoreKey(avsRewardAsset.Avs, assetID)
 			assetStore.Set(assetKey, bz)
-			symbolKey := assetstype.GetJoinedStoreKey(strings.ToLower(avsRewardAsset.Avs),
+			symbolKey := assetstype.GetJoinedStoreKey(avsRewardAsset.Avs,
 				rewardAsset.AssetBasicInfo.Symbol)
 			assetSymbolStore.Set(symbolKey, []byte(assetID))
 		}
