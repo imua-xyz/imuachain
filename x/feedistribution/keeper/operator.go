@@ -229,18 +229,18 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			}
 			// increase the periods for the slashed operator and assets.
 			// because the total asset amount is changed.
-			newPeriod, err := k.IncrementOperatorPeriod(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, preDelegationAmount)
+			endingPeriod, err := k.IncrementOperatorPeriod(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, preDelegationAmount)
 			if err != nil {
 				return err
 			}
 			// increment reference count on period we need to track
-			err = k.incrementReferenceCount(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, newPeriod)
+			err = k.incrementReferenceCount(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, endingPeriod)
 			if err != nil {
 				return err
 			}
 			err = k.SetOperatorSlashEvent(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, uint64(epochInfo.CurrentEpoch),
 				feedistributiontypes.OperatorSlashEvent{
-					OperatorPeriod: newPeriod,
+					OperatorPeriod: endingPeriod,
 					Fraction:       slashProportion,
 				})
 			if err != nil {

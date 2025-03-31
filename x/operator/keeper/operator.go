@@ -503,7 +503,7 @@ func (k *Keeper) SetAllOptedInfo(ctx sdk.Context, optedStates []operatortypes.Op
 	for i := range optedStates {
 		state := optedStates[i]
 		bz := k.cdc.MustMarshal(&state.OptInfo)
-		store.Set([]byte(strings.ToLower(state.Key)), bz)
+		store.Set([]byte(state.Key), bz)
 	}
 	return nil
 }

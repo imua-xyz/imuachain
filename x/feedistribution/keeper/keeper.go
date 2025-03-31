@@ -209,7 +209,7 @@ func (k Keeper) SetAllOperatorOutstandingRewards(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorOutstandingRewards, allOperatorOutstandingRewards,
 		func(item feedistributiontypes.KeyAndOperatorOutstandingRewards) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndOperatorOutstandingRewards) codec.ProtoMarshaler {
 			return &item.OperatorOutstandingRewards
@@ -236,7 +236,7 @@ func (k Keeper) SetAllDelegationChangeInfo(
 		ctx, k,
 		feedistributiontypes.KeyPrefixStakeChangeDelegations, allDelegationChangeInfos,
 		func(item feedistributiontypes.KeyAndDelegationChangeInfo) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndDelegationChangeInfo) codec.ProtoMarshaler {
 			return &item.DelegationChangeInfo
@@ -263,7 +263,7 @@ func (k Keeper) SetAllDelegationStartingInfo(
 		ctx, k,
 		feedistributiontypes.KeyPrefixDelegationStartingInfo, allDelegationStartingInfos,
 		func(item feedistributiontypes.KeyAndDelegationStartingInfo) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndDelegationStartingInfo) codec.ProtoMarshaler {
 			return &item.DelegationStartingInfo
@@ -290,7 +290,7 @@ func (k Keeper) SetAllOperatorHistoricalRewards(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorHistoricalRewards, allOperatorHistoricalRewards,
 		func(item feedistributiontypes.KeyAndOperatorHistoricalRewards) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndOperatorHistoricalRewards) codec.ProtoMarshaler {
 			return &item.OperatorHistoricalRewards
@@ -317,7 +317,7 @@ func (k Keeper) SetAllOperatorCurrentRewards(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorCurrentRewards, allOperatorCurrentRewards,
 		func(item feedistributiontypes.KeyAndOperatorCurrentRewards) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndOperatorCurrentRewards) codec.ProtoMarshaler {
 			return &item.OperatorCurrentRewards
@@ -344,7 +344,7 @@ func (k Keeper) SetAllOperatorAccumulatedCommission(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorAccumulatedCommission, allOperatorAccumulatedCommission,
 		func(item feedistributiontypes.KeyAndOperatorAccumulatedCommission) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndOperatorAccumulatedCommission) codec.ProtoMarshaler {
 			return &item.OperatorAccumulatedCommission
@@ -371,7 +371,7 @@ func (k Keeper) SetAllOperatorSlashEvent(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorSlashEvent, allOperatorSlashEvent,
 		func(item feedistributiontypes.KeyAndOperatorSlashEvent) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndOperatorSlashEvent) codec.ProtoMarshaler {
 			return &item.OperatorSlashEvent
@@ -398,7 +398,7 @@ func (k Keeper) SetAllStakerOutstandingRewards(
 		ctx, k,
 		feedistributiontypes.KeyPrefixStakerOutstandingRewards, allOperatorSlashEvent,
 		func(item feedistributiontypes.KeyAndStakerOutstandingRewards) []byte {
-			return []byte(strings.ToLower(item.Key))
+			return []byte(item.Key)
 		},
 		func(item feedistributiontypes.KeyAndStakerOutstandingRewards) codec.ProtoMarshaler {
 			return &item.StakerOutstandingRewards
