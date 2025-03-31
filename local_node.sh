@@ -132,7 +132,6 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["assets"]["tokens"][2]["asset_basic_info"]["layer_zero_chain_id"]="291"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["tokens"][2]["staking_total_amount"]="5000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
-
 	jq '.app_state["assets"]["deposits"][0]["staker"]="'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][0]["deposits"][0]["asset_id"]="0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][0]["deposits"][0]["info"]["total_deposit_amount"]="5000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -225,7 +224,6 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["oracle"]["params"]["tokens"][3]["active"]=true' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["tokens"][3]["asset_id"]="nst_0x123"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
-
 	# sources
 	jq '.app_state["oracle"]["params"]["sources"][1]["name"]="Chainlink"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["sources"][1]["entry"]["offchain"]["0"]=""' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -263,7 +261,6 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["oracle"]["params"]["token_feeders"][3]["interval"]="10"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["token_feeders"][3]["end_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["piece_size_byte"]="32"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
 
 	# custom epoch definitions can be added here, if required.
 	# see https://github.com/imua-xyz/imuachain/blob/82b2509ad33ab7679592dcb1aa56a7a811128410/local_node.sh#L123 as an example
