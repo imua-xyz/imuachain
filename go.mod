@@ -294,7 +294,7 @@ replace (
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 
-	github.com/imua-xyz/price-feeder v0.2.4 => github.com/leonz789/price-feeder v0.0.0-20250331020717-34e9eff42468
+	github.com/imua-xyz/price-feeder v0.2.4 => github.com/leonz789/price-feeder v0.0.0-20250331055452-2481849f9b15
 
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7

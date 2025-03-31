@@ -1252,8 +1252,8 @@ github.com/ledgerwatch/erigon-lib v0.0.0-20230210071639-db0e7ed11263 h1:LGEzZvf3
 github.com/ledgerwatch/erigon-lib v0.0.0-20230210071639-db0e7ed11263/go.mod h1:OXgMDuUo2lZ3NpH29ZvMYbk+LxFd5ffDl2Z2mGMuY/I=
 github.com/leodido/go-urn v1.2.4 h1:XlAE/cm/ms7TE/VMVoduSpNBoyc2dOxHs5MZSwAN63Q=
 github.com/leodido/go-urn v1.2.4/go.mod h1:7ZrI8mTSeBSHl/UaRyKQW1qZeMgak41ANeCNaVckg+4=
-github.com/leonz789/price-feeder v0.0.0-20250331020717-34e9eff42468 h1:xwgpGZhzR49R8gClVM/92Tifu7gF90p1ikcTebJWPks=
-github.com/leonz789/price-feeder v0.0.0-20250331020717-34e9eff42468/go.mod h1:ijBAT3b6AcHW/6ILYM9+5CuyW4T2pIHE8UYNGtwrLLY=
+github.com/leonz789/price-feeder v0.0.0-20250331055452-2481849f9b15 h1:3mYD6QXMmj71w7XIO+sWuJjF2TsLHS3n3VXs/pHhtHQ=
+github.com/leonz789/price-feeder v0.0.0-20250331055452-2481849f9b15/go.mod h1:ijBAT3b6AcHW/6ILYM9+5CuyW4T2pIHE8UYNGtwrLLY=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/libp2p/go-buffer-pool v0.1.0 h1:oK4mSFcQz7cTQIfqbe4MIj9gLW+mnanjyFtc6cdF0Y8=
