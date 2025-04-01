@@ -40,6 +40,9 @@ func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[str
 
 // GetAVSAssetsList returns a list of assets supported by the AVS. The avsAddr supplied must be hex.
 func (k *Keeper) GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error) {
+	if !common.IsHexAddress(avsAddr) {
+		return nil, errorsmod.Wrap(types.ErrInvalidAddr, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+	}
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
