@@ -4,7 +4,7 @@ package imuachain.feedistribution.v1;
 import "amino/amino.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
-import "exocore/assets/v1/tx.proto";
+import "imuachain/assets/v1/tx.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
@@ -246,7 +246,7 @@ message AVSRewardAssetState {
 message AVSRewardAsset {
   // asset_basic_info is the basic information of the asset.
   // The symbol field will be used as the `denom` field of `DecCoin`.
-  exocore.assets.v1.AssetInfo asset_basic_info = 1 [(gogoproto.nullable) = false];
+  imuachain.assets.v1.AssetInfo asset_basic_info = 1 [(gogoproto.nullable) = false];
   // reward_asset_state is the state of reward asset
   AVSRewardAssetState reward_asset_state = 2 [(gogoproto.nullable) = false];
 }

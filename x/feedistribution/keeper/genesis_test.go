@@ -10,7 +10,7 @@ func (suite *KeeperTestSuite) TestExportGenesis() {
 		epsilon := time.Nanosecond // negligible amount of buffer duration
 		suite.Commit()
 		suite.CommitAfter(time.Hour*24 + epsilon - time.Minute)
-		allValidators := suite.App.StakingKeeper.GetAllExocoreValidators(suite.Ctx) // GetAllValidators(suite.Ctx)
+		allValidators := suite.App.StakingKeeper.GetAllImuachainValidators(suite.Ctx) // GetAllValidators(suite.Ctx)
 		for i, val := range allValidators {
 			pk, err := val.ConsPubKey()
 			if err != nil {

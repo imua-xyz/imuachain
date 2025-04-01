@@ -12,7 +12,7 @@ import (
 	"sort"
 	"strings"
 
-	imuatestutil "github.com/ExocoreNetwork/exocore/testutil"
+	imuatestutil "github.com/imua-xyz/imuachain/testutil"
 
 	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"

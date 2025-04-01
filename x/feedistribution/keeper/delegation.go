@@ -2,12 +2,12 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/avs/types"
-	delegationtype "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	epochsTypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
-	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/avs/types"
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 func (k Keeper) MarkStakeChangedDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error {

@@ -5,10 +5,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 // UpdateAVSRewardAssetState updates the reward asset state of a specified AVS.
@@ -114,7 +114,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 				sdk.NewAttribute(assetstype.AttributeKeyDecimals, fmt.Sprintf("%d", assetInfo.Decimals)),
 				sdk.NewAttribute(assetstype.AttributeKeyLZID, fmt.Sprintf("%d", assetInfo.LayerZeroChainID)),
 				sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, assetInfo.MetaInfo),
-				sdk.NewAttribute(assetstype.AttributeKeyExocoreChainIdx, fmt.Sprintf("%d", assetInfo.ImuaChainIndex)),
+				sdk.NewAttribute(assetstype.AttributeKeyImuachainIndex, fmt.Sprintf("%d", assetInfo.ImuaChainIndex)),
 			),
 		)
 	}

@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"

@@ -5,12 +5,12 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/utils"
-	assetstypes "github.com/ExocoreNetwork/exocore/x/assets/types"
-	epochstypes "github.com/ExocoreNetwork/exocore/x/epochs/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/utils"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"golang.org/x/xerrors"
 )
 

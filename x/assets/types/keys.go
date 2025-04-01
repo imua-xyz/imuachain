@@ -40,7 +40,7 @@ const (
 	prefixOperatorOptedInMiddlewareAssetInfo
 
 	// unused prefixes for backward compatibility
-	// originally: KeyPrefixReStakerImuachainAddr and Reverse
+	// originally: KeyPrefixReStakerImuaAddr and Reverse
 	_
 	_
 

@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
-	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
 // AllocateRewardsByEpoch performs reward and fee distribution to all operators for the AVS with same epoch
