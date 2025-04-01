@@ -109,7 +109,7 @@ func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.A
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	for i := range affectedAVSList {
-		if affectedAVSList[i].AVSAddr == dogfoodAVSAddr {
+		if affectedAVSList[i] == dogfoodAVSAddr {
 			// check if the operator is in the current validator set.
 			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)
 			if !found || err != nil {

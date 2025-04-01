@@ -209,7 +209,7 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			// Save the asset list at the time of the last voting power update
 			// if the asset list has changed, it will be used in the reward distribution.
 			if !k.operatorKeeper.HasAVSAssetsPerEpoch(ctx, params.AvsAddress.String()) {
-				err := k.operatorKeeper.SetAVSAssetsPerEpoch(ctx, params.AvsAddress.String(), params.AssetID)
+				err := k.operatorKeeper.SetAVSAssetsPerEpoch(ctx, params.AvsAddress.String(), params.AssetIDs)
 				if err != nil {
 					return err
 				}

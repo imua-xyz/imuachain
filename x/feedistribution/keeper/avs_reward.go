@@ -5,13 +5,13 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/ExocoreNetwork/exocore/types/keys"
-	avstypes "github.com/ExocoreNetwork/exocore/x/avs/types"
-	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/imua-xyz/imuachain/types/keys"
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type (
@@ -362,7 +362,7 @@ func (k Keeper) RewardProportionsFnForDogfood() OperatorRewardProportionsFn {
 		totalVotingPower := math.LegacyNewDec(previousTotalPower)
 
 		iterateOperators := func(callback operatorVotingPowerCallback) error {
-			allValidators := k.StakingKeeper.GetAllExocoreValidators(ctx)
+			allValidators := k.StakingKeeper.GetAllImuachainValidators(ctx)
 			for i, val := range allValidators {
 				consensusKey, err := val.ConsPubKey()
 				if err != nil {
@@ -453,7 +453,7 @@ func (k Keeper) AVSRewardDistributionByParam(ctx sdk.Context, avsAddr string) (b
 	var isDogfood bool
 	// check if the avs is dogfood
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddr(chainIDWithoutRevision)
+	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	if dogfoodAVSAddr == avsAddr {
 		isDogfood = true
 		avsEpochRewardFn = k.EpochRewardFnForDogfood()

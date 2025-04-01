@@ -3,10 +3,10 @@ package keeper
 import (
 	"strings"
 
-	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
-	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
-	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"

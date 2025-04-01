@@ -4,9 +4,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	sdkmath "cosmossdk.io/math"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // UpdateVotingPower update the voting power of the specified AVS and its operators at

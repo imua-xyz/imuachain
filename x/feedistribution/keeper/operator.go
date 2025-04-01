@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
-	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
-	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epochIdentifier string) error {
