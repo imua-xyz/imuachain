@@ -11,7 +11,8 @@ import (
 )
 
 func (k Keeper) SetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string,
-	delegationChangeInfo feedistributiontypes.DelegationChangeInfo) error {
+	delegationChangeInfo feedistributiontypes.DelegationChangeInfo,
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	b := k.cdc.MustMarshal(&delegationChangeInfo)
@@ -67,7 +68,8 @@ func (k Keeper) DeleteStakeChangedDelegationsByEpoch(ctx sdk.Context, epochIdent
 // IterateStakeChangedDelegations iterates over all delegations with changed stakes.
 func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, iteratePrefix []byte,
 	opFunc func(epochIdentifier, operator, assetID string, delegationChangeInfo *feedistributiontypes.DelegationChangeInfo,
-	) (bool, error)) error {
+	) (bool, error),
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
@@ -299,8 +301,7 @@ func (k Keeper) UpdateOperatorOutstandingRewards(ctx sdk.Context, operator, avsA
 // SetOperatorCurrentRewards : set current rewards for the specific operator, epochIdentifier and assetID
 func (k Keeper) SetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string, rewards feedistributiontypes.OperatorCurrentRewards) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
-	var bz []byte
-	bz = k.cdc.MustMarshal(&rewards)
+	bz := k.cdc.MustMarshal(&rewards)
 	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier)
 	store.Set(key, bz)
 	return nil
@@ -362,17 +363,17 @@ func (k Keeper) IncreasePeriodForOperator(ctx sdk.Context, operator, assetID, ep
 	if err != nil {
 		return err
 	}
-	rewards.Period += 1
+	rewards.Period++
 	return k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier, rewards)
 }
 
 // SetOperatorHistoricalRewards : set the historical rewards for the specific operator, epochIdentifier, assetID
 // and period
 func (k Keeper) SetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	period uint64, historicalRewards feedistributiontypes.OperatorHistoricalRewards) error {
+	period uint64, historicalRewards feedistributiontypes.OperatorHistoricalRewards,
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
-	var bz []byte
-	bz = k.cdc.MustMarshal(&historicalRewards)
+	bz := k.cdc.MustMarshal(&historicalRewards)
 	// this encoding ensures the key is ordered by period.
 	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
 	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
@@ -383,7 +384,8 @@ func (k Keeper) SetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 // DeleteOperatorHistoricalRewards : delete the historical rewards for the specific operator, epochIdentifier, assetID
 // and period.
 func (k Keeper) DeleteOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	period uint64) error {
+	period uint64,
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
 	// this encoding ensures the key is ordered by period.
 	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
@@ -395,7 +397,8 @@ func (k Keeper) DeleteOperatorHistoricalRewards(ctx sdk.Context, operator, asset
 // GetOperatorHistoricalRewards : get the historical rewards for the specific operator, epochIdentifier, assetID
 // and period.
 func (k Keeper) GetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	period uint64) (feedistributiontypes.OperatorHistoricalRewards, error) {
+	period uint64,
+) (feedistributiontypes.OperatorHistoricalRewards, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
 	// this encoding ensures the key is ordered by period.
 	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
@@ -412,8 +415,7 @@ func (k Keeper) GetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 // SetDelegationStartingInfo : set the starting information for the delegation
 func (k Keeper) SetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string, startingInfo feedistributiontypes.DelegationStartingInfo) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
-	var bz []byte
-	bz = k.cdc.MustMarshal(&startingInfo)
+	bz := k.cdc.MustMarshal(&startingInfo)
 	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
 	store.Set(key, bz)
 	return nil
@@ -449,10 +451,10 @@ func (k Keeper) HasDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 
 // SetOperatorSlashEvent : set the operator slash event in distribution module
 func (k Keeper) SetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	epochNumber uint64, slashEvent feedistributiontypes.OperatorSlashEvent) error {
+	epochNumber uint64, slashEvent feedistributiontypes.OperatorSlashEvent,
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
-	var bz []byte
-	bz = k.cdc.MustMarshal(&slashEvent)
+	bz := k.cdc.MustMarshal(&slashEvent)
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
 	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
@@ -462,7 +464,8 @@ func (k Keeper) SetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochI
 
 // GetOperatorSlashEvent : get the operator slash event in distribution module
 func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	epochNumber uint64) (feedistributiontypes.OperatorSlashEvent, error) {
+	epochNumber uint64,
+) (feedistributiontypes.OperatorSlashEvent, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
@@ -519,7 +522,8 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 
 // SetStakerOutstandingRewards : set the outstanding avs rewards for the staker
 func (k Keeper) SetStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr string,
-	rewards feedistributiontypes.StakerOutstandingRewards) error {
+	rewards feedistributiontypes.StakerOutstandingRewards,
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerOutstandingRewards)
 	var bz []byte
 
@@ -536,7 +540,8 @@ func (k Keeper) SetStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr s
 
 // GetStakerOutstandingRewards : get the outstanding avs rewards for the staker
 func (k Keeper) GetStakerOutstandingRewards(ctx sdk.Context, stakerID,
-	avsAddr string) (feedistributiontypes.StakerOutstandingRewards, error) {
+	avsAddr string,
+) (feedistributiontypes.StakerOutstandingRewards, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerOutstandingRewards)
 	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
 	b := store.Get(key)

@@ -327,7 +327,7 @@ func (k *Keeper) SetJailedState(ctx sdk.Context, consAddr sdk.ConsAddress, chain
 	handleFunc := func(info *types.OptedInfo) {
 		info.Jailed = jailed
 		height := ctx.BlockHeight()
-		if jailed == true {
+		if jailed {
 			// set the jailed height
 			info.JailedHeight = uint64(height)
 			// clear the height of the last unjailing.

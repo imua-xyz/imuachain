@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/ExocoreNetwork/exocore/utils"
@@ -10,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"golang.org/x/xerrors"
-	"strings"
 )
 
 type KeyTypeForJoinedKey int
@@ -128,38 +129,38 @@ func (gs GenesisState) ValidateAVSRewardAssets() error {
 			address := rewardAssetInfo.AssetBasicInfo.Address
 			if strings.ToLower(address) != address {
 				return ErrInvalidGenesisData.Wrapf(
-					"ValidateAVSRewardAssets: contains uppercase characters for reward token %s, address: %s,avsAddr:%s", rewardAssetInfo.AssetBasicInfo.Name, rewardAssetInfo.AssetBasicInfo, info.Avs,
+					"ValidateAVSRewardAssets: contains uppercase characters for reward token %s, address: %s,avsAddr:%s", rewardAssetInfo.AssetBasicInfo.Name, rewardAssetInfo.AssetBasicInfo.Address, info.Avs,
 				)
 			}
 			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNil() ||
 				rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
-					"ValidateAVSRewardAssets: nil or negative reward pool balance ,avs:%s,rewardAsset:%d",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Address,
+					"ValidateAVSRewardAssets: nil or negative reward pool balance ,avs:%s,rewardAssetName:%s",
+					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
 				)
 			}
 			if rewardAssetInfo.RewardAssetState.RewardPoolTotal.IsNil() ||
 				rewardAssetInfo.RewardAssetState.RewardPoolTotal.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
-					"ValidateAVSRewardAssets: nil or negative reward pool total amount ,avs:%s,rewardAsset:%d",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Address,
+					"ValidateAVSRewardAssets: nil or negative reward pool total amount ,avs:%s,rewardAssetName:%s",
+					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
 				)
 			}
 			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.GT(rewardAssetInfo.RewardAssetState.RewardPoolTotal) {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
-					"ValidateAVSRewardAssets: reward pool balance is great than the reward pool total amount ,avs:%s,rewardAsset:%d",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Address,
+					"ValidateAVSRewardAssets: reward pool balance is great than the reward pool total amount ,avs:%s,rewardAssetName:%s",
+					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
 				)
 			}
 			if rewardAssetInfo.RewardAssetState.RewardAllocationTotal.IsNil() ||
 				rewardAssetInfo.RewardAssetState.RewardAllocationTotal.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
-					"ValidateAVSRewardAssets: nil or negative reward allocation total amount ,avs:%s,rewardAsset:%d",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Address,
+					"ValidateAVSRewardAssets: nil or negative reward allocation total amount ,avs:%s,rewardAssetName:%s",
+					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
 				)
 			}
 			return nil

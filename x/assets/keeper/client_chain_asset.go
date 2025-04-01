@@ -20,7 +20,7 @@ func (k Keeper) UpdateStakingAssetTotalAmount(ctx sdk.Context, assetID string, c
 	key := []byte(assetID)
 	value := store.Get(key)
 	if value == nil {
-		return assetstype.ErrNoClientChainAssetKey
+		return assetstype.ErrNoClientChainAssetKey.Wrapf("assetID:%s", assetID)
 	}
 
 	ret := assetstype.StakingAssetInfo{}
@@ -116,7 +116,7 @@ func (k Keeper) GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *asse
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakingAssetInfo)
 	value := store.Get([]byte(assetID))
 	if value == nil {
-		return nil, assetstype.ErrNoClientChainAssetKey
+		return nil, assetstype.ErrNoClientChainAssetKey.Wrapf("assetID:%s", assetID)
 	}
 
 	ret := assetstype.StakingAssetInfo{}
@@ -134,7 +134,7 @@ func (k Keeper) GetAssetsDecimal(ctx sdk.Context, assets map[string]interface{})
 	for assetID := range assets {
 		value := store.Get([]byte(assetID))
 		if value == nil {
-			return nil, assetstype.ErrNoClientChainAssetKey
+			return nil, assetstype.ErrNoClientChainAssetKey.Wrapf("assetID:%s", assetID)
 		}
 		ret := assetstype.StakingAssetInfo{}
 		k.cdc.MustUnmarshal(value, &ret)

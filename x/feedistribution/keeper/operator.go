@@ -36,7 +36,8 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 // The operator’s period needs to be incremented whenever the delegated stake changes,
 // regardless of whether the operator is serving any AVSs.
 func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	preDelegationAmount sdk.Dec) (uint64, error) {
+	preDelegationAmount sdk.Dec,
+) (uint64, error) {
 	if !k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier) {
 		// Initialize the currentRewardRatio currentRewards and period of the operator.
 		// This case occurs when processing an operator's delegation changes for the first time.
@@ -56,7 +57,8 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 	if preDelegationAmount.IsNegative() {
 		return 0, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
 			"IncrementOperatorPeriod, the total delegation amount is negative, amount:%s", preDelegationAmount)
-	} else if preDelegationAmount.IsZero() {
+	}
+	if preDelegationAmount.IsZero() {
 		if len(currentRewards.Rewards) != 0 {
 			// This case shouldn't exist; if this exception occurs, we distribute these currentRewards to the community pool
 			// because we can't calculate the ratio for zero-token operators.
@@ -103,7 +105,8 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 	err = k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier,
 		feedistributiontypes.OperatorCurrentRewards{
 			Rewards: make([]feedistributiontypes.CommonAVSRewardData, 0),
-			Period:  currentRewards.Period + 1})
+			Period:  currentRewards.Period + 1,
+		})
 	if err != nil {
 		return 0, err
 	}
@@ -113,7 +116,8 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 
 // decrement the reference count for a historical rewards value, and delete if zero references remain
 func (k Keeper) decrementReferenceCount(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	period uint64) error {
+	period uint64,
+) error {
 	historical, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period)
 	if err != nil {
 		return err
@@ -132,7 +136,8 @@ func (k Keeper) decrementReferenceCount(ctx sdk.Context, operator, assetID, epoc
 
 // increment the reference count for a historical rewards value
 func (k Keeper) incrementReferenceCount(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	period uint64) error {
+	period uint64,
+) error {
 	historical, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period)
 	if err != nil {
 		return err
@@ -149,7 +154,8 @@ func (k Keeper) incrementReferenceCount(ctx sdk.Context, operator, assetID, epoc
 }
 
 func (k Keeper) RedirectOperatorRewardsToCommunityPool(ctx sdk.Context, operator string,
-	rewards []feedistributiontypes.CommonAVSRewardData) error {
+	rewards []feedistributiontypes.CommonAVSRewardData,
+) error {
 	for _, avsReward := range rewards {
 		if len(avsReward.Rewards) != 0 {
 			// distribute the rewards to the community pool
@@ -180,6 +186,7 @@ func (k Keeper) getOpeartorCurrentDelegatedAmount(ctx sdk.Context, operator sdk.
 	divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
 	return sdk.NewDecFromInt(operatorAssetInfo.TotalAmount).QuoInt(divisor), nil
 }
+
 func (k Keeper) getDelegatedAmountAtPreEpochEnd(ctx sdk.Context, operator, assetID, epochIdentifier string) (sdk.Dec, error) {
 	// get the delegation amount at the end of the previous epoch.
 	if k.HasStakeChangedDelegations(ctx, epochIdentifier, operator, assetID) {
@@ -188,20 +195,20 @@ func (k Keeper) getDelegatedAmountAtPreEpochEnd(ctx sdk.Context, operator, asset
 			return sdk.ZeroDec(), err
 		}
 		return delegationChangeInfo.TotalAmount, nil
-	} else {
-		operatorAccAddr, err := sdk.AccAddressFromBech32(operator)
-		if err != nil {
-			return sdk.ZeroDec(), nil
-		}
-		return k.getOpeartorCurrentDelegatedAmount(ctx, operatorAccAddr, assetID)
 	}
+	operatorAccAddr, err := sdk.AccAddressFromBech32(operator)
+	if err != nil {
+		return sdk.ZeroDec(), nil
+	}
+	return k.getOpeartorCurrentDelegatedAmount(ctx, operatorAccAddr, assetID)
 }
 
 // HandleOperatorSlashEvent handles the slash event for an operator.
 // It increases the period and reference count, then stores the slash event
 // for future reward calculations.
 func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec,
-	slashAssetsPool []operatortypes.SlashFromAssetsPool) error {
+	slashAssetsPool []operatortypes.SlashFromAssetsPool,
+) error {
 	if slashProportion.GT(math.LegacyOneDec()) || slashProportion.IsNegative() {
 		return feedistributiontypes.ErrInvalidInputParameter.Wrapf(
 			"HandleOperatorSlashEvent: fraction must be >=0 and <=1, current fraction: %s", slashProportion)
@@ -214,7 +221,7 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 		if err != nil {
 			return err
 		}
-		preDelegationAmount := sdk.ZeroDec()
+		var preDelegationAmount sdk.Dec
 		for _, epochInfo := range allEpochs {
 			// get the delegation amount at the end of the previous epoch.
 			if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID) {

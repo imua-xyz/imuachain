@@ -2,6 +2,8 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
+
 	stakingkeeper "github.com/ExocoreNetwork/exocore/x/dogfood/keeper"
 	feedistributiontypes "github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -10,7 +12,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	"strings"
 )
 
 type (
@@ -93,7 +94,8 @@ func GenericSetAllItems[T any](
 	ctx sdk.Context, keeper Keeper,
 	keyPrefix []byte, items []T,
 	getKey func(T) []byte,
-	getValue func(T) codec.ProtoMarshaler) error {
+	getValue func(T) codec.ProtoMarshaler,
+) error {
 	store := prefix.NewStore(ctx.KVStore(keeper.storeKey), keyPrefix)
 
 	for _, item := range items {
@@ -110,7 +112,8 @@ func GenericGetAllItems[T any](
 	ctx sdk.Context,
 	keeper Keeper, keyPrefix []byte,
 	newValue func() codec.ProtoMarshaler,
-	createItem func(key []byte, value codec.ProtoMarshaler) T) ([]T, error) {
+	createItem func(key []byte, value codec.ProtoMarshaler) T,
+) ([]T, error) {
 	store := prefix.NewStore(ctx.KVStore(keeper.storeKey), keyPrefix)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
@@ -204,7 +207,8 @@ func (k Keeper) GetAllAVSRewardDistributions(ctx sdk.Context) ([]feedistribution
 }
 
 func (k Keeper) SetAllOperatorOutstandingRewards(
-	ctx sdk.Context, allOperatorOutstandingRewards []feedistributiontypes.KeyAndOperatorOutstandingRewards) error {
+	ctx sdk.Context, allOperatorOutstandingRewards []feedistributiontypes.KeyAndOperatorOutstandingRewards,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorOutstandingRewards, allOperatorOutstandingRewards,
@@ -231,7 +235,8 @@ func (k Keeper) GetAllOperatorOutstandingRewards(ctx sdk.Context) ([]feedistribu
 }
 
 func (k Keeper) SetAllDelegationChangeInfo(
-	ctx sdk.Context, allDelegationChangeInfos []feedistributiontypes.KeyAndDelegationChangeInfo) error {
+	ctx sdk.Context, allDelegationChangeInfos []feedistributiontypes.KeyAndDelegationChangeInfo,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixStakeChangeDelegations, allDelegationChangeInfos,
@@ -258,7 +263,8 @@ func (k Keeper) GetAllDelegationChangeInfo(ctx sdk.Context) ([]feedistributionty
 }
 
 func (k Keeper) SetAllDelegationStartingInfo(
-	ctx sdk.Context, allDelegationStartingInfos []feedistributiontypes.KeyAndDelegationStartingInfo) error {
+	ctx sdk.Context, allDelegationStartingInfos []feedistributiontypes.KeyAndDelegationStartingInfo,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixDelegationStartingInfo, allDelegationStartingInfos,
@@ -285,7 +291,8 @@ func (k Keeper) GetAllDelegationStartingInfo(ctx sdk.Context) ([]feedistribution
 }
 
 func (k Keeper) SetAllOperatorHistoricalRewards(
-	ctx sdk.Context, allOperatorHistoricalRewards []feedistributiontypes.KeyAndOperatorHistoricalRewards) error {
+	ctx sdk.Context, allOperatorHistoricalRewards []feedistributiontypes.KeyAndOperatorHistoricalRewards,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorHistoricalRewards, allOperatorHistoricalRewards,
@@ -312,7 +319,8 @@ func (k Keeper) GetAllOperatorHistoricalRewards(ctx sdk.Context) ([]feedistribut
 }
 
 func (k Keeper) SetAllOperatorCurrentRewards(
-	ctx sdk.Context, allOperatorCurrentRewards []feedistributiontypes.KeyAndOperatorCurrentRewards) error {
+	ctx sdk.Context, allOperatorCurrentRewards []feedistributiontypes.KeyAndOperatorCurrentRewards,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorCurrentRewards, allOperatorCurrentRewards,
@@ -339,7 +347,8 @@ func (k Keeper) GetAllOperatorCurrentRewards(ctx sdk.Context) ([]feedistribution
 }
 
 func (k Keeper) SetAllOperatorAccumulatedCommission(
-	ctx sdk.Context, allOperatorAccumulatedCommission []feedistributiontypes.KeyAndOperatorAccumulatedCommission) error {
+	ctx sdk.Context, allOperatorAccumulatedCommission []feedistributiontypes.KeyAndOperatorAccumulatedCommission,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorAccumulatedCommission, allOperatorAccumulatedCommission,
@@ -366,7 +375,8 @@ func (k Keeper) GetAllOperatorAccumulatedCommission(ctx sdk.Context) ([]feedistr
 }
 
 func (k Keeper) SetAllOperatorSlashEvent(
-	ctx sdk.Context, allOperatorSlashEvent []feedistributiontypes.KeyAndOperatorSlashEvent) error {
+	ctx sdk.Context, allOperatorSlashEvent []feedistributiontypes.KeyAndOperatorSlashEvent,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixOperatorSlashEvent, allOperatorSlashEvent,
@@ -393,7 +403,8 @@ func (k Keeper) GetAllOperatorSlashEvent(ctx sdk.Context) ([]feedistributiontype
 }
 
 func (k Keeper) SetAllStakerOutstandingRewards(
-	ctx sdk.Context, allOperatorSlashEvent []feedistributiontypes.KeyAndStakerOutstandingRewards) error {
+	ctx sdk.Context, allOperatorSlashEvent []feedistributiontypes.KeyAndStakerOutstandingRewards,
+) error {
 	return GenericSetAllItems(
 		ctx, k,
 		feedistributiontypes.KeyPrefixStakerOutstandingRewards, allOperatorSlashEvent,

@@ -1,11 +1,12 @@
 package keeper
 
 import (
+	"strings"
+
 	keytypes "github.com/ExocoreNetwork/exocore/types/keys"
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	delegationtypes "github.com/ExocoreNetwork/exocore/x/delegation/types"
 	operatortypes "github.com/ExocoreNetwork/exocore/x/operator/types"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
@@ -116,9 +117,8 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
-	ctx sdk.Context, operator sdk.AccAddress, chainID string, key keytypes.WrappedConsKey,
+	_ sdk.Context, _ sdk.AccAddress, _ string, _ keytypes.WrappedConsKey,
 ) {
-
 }
 
 // AfterSlash is the implementation of the operator hooks.

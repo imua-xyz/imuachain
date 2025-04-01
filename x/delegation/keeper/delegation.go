@@ -128,7 +128,10 @@ func (k *Keeper) delegateTo(
 
 	if notGenesis {
 		// call the hooks registered by the other modules
-		k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, prevAssetState)
+		err = k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, prevAssetState)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -229,7 +232,7 @@ func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.D
 }
 
 // UndelegateFrom handles normal undelegation with a waiting period.
-// UndelegateFrom: The undelegation needs to consider whether the operator's opted-in assets can exit from the AVS.
+// The undelegation needs to consider whether the operator's opted-in assets can exit from the AVS.
 // Because only after the operator has served the AVS can the staking asset be undelegated.
 // So we use two steps to handle the undelegation. Fist,record the undelegation request and the corresponding exit time which needs to be obtained from the operator opt-in module. Then,we handle the record when the exit time has expired.
 func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) error {
@@ -306,6 +309,12 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 
 	recordKey := r.GetKey()
+	// call the hooks registered by the other modules
+	err = k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress, recordKey, *prevAssetState)
+	if err != nil {
+		return err
+	}
+
 	// emit an event to track the undelegation record identifiers.
 	// for the ImuachainAssetID undelegation, this event is used to track asset state as well.
 	// for other undelegations, it is instead tracked from the staker asset state.
@@ -325,9 +334,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 			sdk.NewAttribute(delegationtype.AttributeKeyBlockNumber, fmt.Sprintf("%d", r.BlockNumber)),
 		),
 	)
-
-	// call the hooks registered by the other modules
-	return k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress, recordKey, *prevAssetState)
+	return nil
 }
 
 // AssociateOperatorWithStaker marks that a staker is claiming to be associated with an operator.

@@ -41,6 +41,18 @@ func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[str
 	return ret, nil
 }
 
+// GetAVSAssetsList returns a list of assets supported by the AVS. The avsAddr supplied must be hex.
+func (k *Keeper) GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error) {
+	if !common.IsHexAddress(avsAddr) {
+		return nil, errorsmod.Wrap(types.ErrInvalidAddr, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+	}
+	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+	}
+	return avsInfo.Info.AssetIDs, nil
+}
+
 // GetAVSSlashContract returns the address of the contract that will be used to slash the AVS.
 // The avsAddr supplied must be hex.
 func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, error) {

@@ -86,7 +86,8 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 func (k Keeper) initializeDelegationStartingInfo(
 	ctx sdk.Context, isEndEpoch bool,
 	preStake sdk.Dec, delegationKey, operator, stakerID,
-	assetID string, epochInfo *epochsTypes.EpochInfo, previousPeriod uint64) error {
+	assetID string, epochInfo *epochsTypes.EpochInfo, previousPeriod uint64,
+) error {
 	var stake sdk.Dec
 	if isEndEpoch {
 		// get the current stake of the delegation
@@ -142,7 +143,8 @@ func (k Keeper) initializeDelegationStartingInfo(
 
 // calculate the rewards accrued by a delegation between two periods
 func (k Keeper) calculateDelegationRewardsBetween(ctx sdk.Context, startingPeriod, endingPeriod uint64, operator, assetID,
-	epochIdentifier string, stake sdk.Dec) (feedistributiontypes.CommonAVSRewards, error) {
+	epochIdentifier string, stake sdk.Dec,
+) (feedistributiontypes.CommonAVSRewards, error) {
 	// sanity check
 	if startingPeriod > endingPeriod {
 		return nil, feedistributiontypes.ErrInvalidInputParameter.Wrapf("startingPeriod cannot be greater than endingPeriod, start:%d,end:%d", startingPeriod, endingPeriod)
@@ -177,7 +179,8 @@ func (k Keeper) calculateDelegationRewardsBetween(ctx sdk.Context, startingPerio
 
 // calculateDelegationRewards calculates the rewards accrued by a delegation
 func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64, operator, assetID,
-	epochIdentifier string, startingInfo feedistributiontypes.DelegationStartingInfo) (feedistributiontypes.CommonAVSRewards, sdk.Dec, error) {
+	epochIdentifier string, startingInfo feedistributiontypes.DelegationStartingInfo,
+) (feedistributiontypes.CommonAVSRewards, sdk.Dec, error) {
 	currentEpochInfo, isExist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
 	if !isExist {
 		return nil, sdk.Dec{}, feedistributiontypes.ErrEpochNotFound
@@ -198,10 +201,10 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 			startingPeriod, endingPeriod)
 	}
 
-	opFunc := func(epochNumber uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error) {
-		endingPeriod := event.OperatorPeriod
-		if endingPeriod > startingPeriod {
-			rewardsBetweenPeriod, err := k.calculateDelegationRewardsBetween(ctx, startingPeriod, endingPeriod, operator, assetID, epochIdentifier, stake)
+	opFunc := func(_ uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error) {
+		slashEndingPeriod := event.OperatorPeriod
+		if slashEndingPeriod > startingPeriod {
+			rewardsBetweenPeriod, err := k.calculateDelegationRewardsBetween(ctx, startingPeriod, slashEndingPeriod, operator, assetID, epochIdentifier, stake)
 			if err != nil {
 				return false, err
 			}
@@ -209,7 +212,7 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 			// Note: It is necessary to truncate so we don't allow withdrawing
 			// more rewards than owed.
 			stake = stake.MulTruncate(math.LegacyOneDec().Sub(event.Fraction))
-			startingPeriod = endingPeriod
+			startingPeriod = slashEndingPeriod
 		}
 		return false, nil
 	}
@@ -246,7 +249,8 @@ func (k Keeper) distributeRewardsToDelegation(
 	ctx sdk.Context,
 	isEndEpoch bool, endingPeriod uint64,
 	operator, stakerID, assetID string,
-	epochInfo *epochsTypes.EpochInfo, startingInfo feedistributiontypes.DelegationStartingInfo) error {
+	epochInfo *epochsTypes.EpochInfo, startingInfo feedistributiontypes.DelegationStartingInfo,
+) error {
 	allAVSRewardsRaw, lastStake, err := k.calculateDelegationRewards(ctx, endingPeriod, operator, assetID, epochInfo.Identifier, startingInfo)
 	if err != nil {
 		return err
@@ -301,7 +305,8 @@ func (k Keeper) distributeRewardsToDelegation(
 // DistributeRewardsToDelegations is used to distribute the rewards to the delegations with changed stake lazily.
 // It will be used at the end of epoch.
 func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uint64, epochInfo *epochsTypes.EpochInfo,
-	operator, assetID string, delegationChangeInfo feedistributiontypes.DelegationChangeInfo) error {
+	operator, assetID string, delegationChangeInfo feedistributiontypes.DelegationChangeInfo,
+) error {
 	var err error
 	for _, stakerID := range delegationChangeInfo.StakerIds {
 		// initialize the delegation without the starting information.
@@ -343,8 +348,9 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 // handled during the epoch.
 func (k Keeper) StakerClaimDelegationRewards(ctx sdk.Context, stakerID string) error {
 	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
-	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
-		for _, epochInfo := range allEpochs {
+	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
+		for i := range allEpochs {
+			epochInfo := allEpochs[i]
 			// get the starting info
 			delegationKey := string(assetstype.GetJoinedStoreKey(stakerID, keys.AssetId, keys.OperatorAddr))
 			if !k.HasDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier) {
