@@ -1,8 +1,10 @@
 package keeper
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
+
+	sdkmath "cosmossdk.io/math"
+
 	assetstype "github.com/ExocoreNetwork/exocore/x/assets/types"
 	"github.com/ExocoreNetwork/exocore/x/feedistribution/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -14,7 +16,8 @@ import (
 // and when stakers or operators claim rewards.
 // There will be a precompiled contract interface regarding it.
 func (k Keeper) UpdateAVSRewardAssetState(ctx sdk.Context, avsAddr, assetID string,
-	delta *types.DeltaAVSRewardAssetState) (err error) {
+	delta *types.DeltaAVSRewardAssetState,
+) (err error) {
 	if delta == nil {
 		return types.ErrInvalidRewardAssetParameter.Wrapf("UpdateAVSRewardAssetState: the input delta is nil,avsAddr:%s,assetID:%s", avsAddr, assetID)
 	}
@@ -76,9 +79,8 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 		// check for symbol duplication
 		if _, ok := symbolMap[assetInfo.Symbol]; ok {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated symbol: %s", assetInfo.Symbol)
-		} else {
-			symbolMap[assetInfo.Symbol] = nil
 		}
+		symbolMap[assetInfo.Symbol] = nil
 		_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(assetInfo.LayerZeroChainID, "", assetInfo.Address)
 		assetKey := assetstype.GetJoinedStoreKey(avsAddr, assetID)
 		symbolKey := assetstype.GetJoinedStoreKey(avsAddr, assetInfo.Symbol)
@@ -160,7 +162,8 @@ func (k Keeper) GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol str
 
 // GetAVSRewardAssetBySymbol returns the avs reward asset information stored against the  provided avsAddr and symbol.
 func (k Keeper) GetAVSRewardAssetBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string,
-	info *types.AVSRewardAsset, err error) {
+	info *types.AVSRewardAsset, err error,
+) {
 	assetID, err = k.GetAVSRewardAssetIDBySymbol(ctx, avsAddr, symbol)
 	if err != nil {
 		return "", nil, err
@@ -230,7 +233,8 @@ func (k Keeper) SetAllAVSRewardAssets(ctx sdk.Context, allAVSRewardAssets []type
 	assetSymbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
 
 	for _, avsRewardAsset := range allAVSRewardAssets {
-		for _, rewardAsset := range avsRewardAsset.AvsRewardAssets {
+		for i := range avsRewardAsset.AvsRewardAssets {
+			rewardAsset := avsRewardAsset.AvsRewardAssets[i]
 			bz := k.cdc.MustMarshal(&rewardAsset)
 			_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(rewardAsset.AssetBasicInfo.LayerZeroChainID,
 				"", rewardAsset.AssetBasicInfo.Address)

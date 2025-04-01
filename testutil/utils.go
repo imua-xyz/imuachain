@@ -86,6 +86,46 @@ var EpochsForTest = []string{
 	epochstypes.WeekEpochID,
 }
 
+var DefaultTestClientChain = []assetstypes.ClientChainInfo{
+	{
+		Name:               "ethereum",
+		MetaInfo:           "ethereum blockchain",
+		ChainId:            1,
+		FinalizationBlocks: 10,
+		LayerZeroChainID:   101,
+		AddressLength:      20,
+	},
+	// add the imua chain
+	{
+		Name:               "Imua",
+		MetaInfo:           "The (native) Imua chain",
+		ChainId:            0,
+		FinalizationBlocks: 10,
+		LayerZeroChainID:   0,
+		AddressLength:      20,
+	},
+}
+
+var DefaultTestStakingAssets = []assetstypes.AssetInfo{
+	{
+		Name:             "Tether USD",
+		Symbol:           "USDT",
+		Address:          "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+		Decimals:         6,
+		LayerZeroChainID: 101,
+		MetaInfo:         "Tether USD token",
+	},
+	// add the imua token
+	{
+		Name:             "Native IM token",
+		Symbol:           "IM",
+		Address:          "0x0000000000000000000000000000000000000000",
+		Decimals:         18,
+		LayerZeroChainID: 0,
+		MetaInfo:         "IM native to the Imua chain",
+	},
+}
+
 func (suite *BaseTestSuite) SetupTest() {
 	suite.DoSetupTest()
 }
@@ -524,28 +564,8 @@ func (suite *BaseTestSuite) DoSetupTest() {
 	}
 	// Imuachain modules genesis
 	// x/assets
-	suite.ClientChains = []assetstypes.ClientChainInfo{
-		{
-			Name:               "ethereum",
-			MetaInfo:           "ethereum blockchain",
-			ChainId:            1,
-			FinalizationBlocks: 10,
-			LayerZeroChainID:   101,
-			AddressLength:      20,
-		},
-		assetstypes.IMUAChain,
-	}
-	suite.Assets = []assetstypes.AssetInfo{
-		{
-			Name:             "Tether USD",
-			Symbol:           "USDT",
-			Address:          "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-			Decimals:         6,
-			LayerZeroChainID: suite.ClientChains[0].LayerZeroChainID,
-			MetaInfo:         "Tether USD token",
-		},
-		assetstypes.IMUAToken.AssetBasicInfo,
-	}
+	suite.ClientChains = DefaultTestClientChain
+	suite.Assets = DefaultTestStakingAssets
 
 	// Initialize an ImuachainApp for test
 	suite.SetupWithGenesisValSet(

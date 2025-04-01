@@ -2,14 +2,15 @@ package types
 
 import (
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"sort"
 	"strings"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type DeltaAVSRewardAssetState AVSRewardAssetState
 
-type OperatorRewardProportions []*OperatorRewardProportion
+type OperatorRewardProportions []OperatorRewardProportion
 
 type CommonAVSRewards []CommonAVSRewardData
 
@@ -26,7 +27,10 @@ func (op OperatorRewardProportions) String() string {
 		out += fmt.Sprintf("%v,", proportionStr)
 	}
 
-	return out[:len(out)-1]
+	if out != "" {
+		out = out[:len(out)-1]
+	}
+	return out
 }
 
 // AppendUniqueStakerID appends a new stakerID to the staker list in DelegationChangeInfo
@@ -49,11 +53,13 @@ func (d *DelegationChangeInfo) StakersAsString() string {
 	}
 
 	out := ""
-	for _, stakerId := range d.StakerIds {
-		out += fmt.Sprintf("%v,", stakerId)
+	for _, stakerID := range d.StakerIds {
+		out += fmt.Sprintf("%v,", stakerID)
 	}
-
-	return out[:len(out)-1]
+	if out != "" {
+		out = out[:len(out)-1]
+	}
+	return out
 }
 
 // HasAVSReward checks whether the avs reward exists, return the index if it exists
@@ -65,6 +71,7 @@ func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) (int, bool) {
 	}
 	return 0, false
 }
+
 func (o *OperatorCurrentRewards) UpdateReward(isIncrease bool, deltaRewards CommonAVSRewardData) error {
 	var isAnyNegative bool
 	if isIncrease {

@@ -68,7 +68,7 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 
 // AllocateRewardsToOperators allocate the rewards to the related operators for an AVS
 // the remaining rewards will be returned.
-func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdentifier string, rewardDistribution *types.AVSRewardDistribution) (sdk.DecCoins, error) {
+func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdentifier string, rewardDistribution types.AVSRewardDistribution) (sdk.DecCoins, error) {
 	// calculate the community tax, then allocate the remaining rewards to the operators.
 	// use a same community tax for all AVS
 	// todo: consider setting different tax rates for different AVSs.
@@ -156,7 +156,7 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			continue
 		} else if assetUSDValue.GT(optedUSDValue.ActiveUSDValue) ||
 			assetUSDValue.IsNegative() {
-			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool", "assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
+			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool,assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
 		}
 		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
 		if assetRewards.IsAllPositive() {

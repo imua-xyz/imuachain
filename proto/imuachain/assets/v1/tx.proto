@@ -44,6 +44,7 @@ message ClientChainInfo {
 // AssetInfo defines the information for an asset to be used as the staking asset or
 // reward asset.
 message AssetInfo {
+  option (gogoproto.equal) = true;
   // name of the asset, like "Tether USD"
   string name = 1;
   // symbol of the asset, like "USDT"

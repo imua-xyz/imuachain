@@ -77,7 +77,9 @@ func (k *Keeper) InitOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr str
 	}
 	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	if store.Has(key) {
-		return errorsmod.Wrap(operatortypes.ErrKeyAlreadyExist, fmt.Sprintf("avsAddr operatorAddr is: %s, %s", avsAddr, operatorAddr))
+		// The operator's USD value won’t be deleted immediately when opting out,
+		// so just return nil if it has already been initialized.
+		return nil
 	}
 	initValue := operatortypes.OperatorOptedUSDValue{
 		SelfUSDValue:   sdkmath.LegacyZeroDec(),
@@ -96,6 +98,9 @@ func (k *Keeper) InitOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr str
 // This function is called when handling opted-out operators during the voting power update, as the USD share
 // does not need to be stored.
 func (k *Keeper) DeleteOperatorUSDValues(ctx sdk.Context, avsAddr string, operators []string) error {
+	if len(operators) == 0 {
+		return nil
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForOperator)
 	var key []byte
 	operatorEvents := ""
@@ -107,11 +112,13 @@ func (k *Keeper) DeleteOperatorUSDValues(ctx sdk.Context, avsAddr string, operat
 		store.Delete(key)
 		operatorEvents += fmt.Sprintf("%v,", operatorAddr)
 	}
-
+	if operatorEvents != "" {
+		operatorEvents = operatorEvents[:len(operatorEvents)-1]
+	}
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			operatortypes.EventTypeDeleteOperatorUSDValues,
-			sdk.NewAttribute(operatortypes.AttributeKeyOperators, operatorEvents[:len(operatorEvents)-1]),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperators, operatorEvents),
 			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
 		),
 	)
@@ -123,6 +130,7 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
 
+	hasOperator := false
 	operatorEvents := ""
 	for ; iterator.Valid(); iterator.Next() {
 		parsed, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
@@ -131,11 +139,18 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 		}
 		store.Delete(iterator.Key())
 		operatorEvents += fmt.Sprintf("%v,", parsed[1])
+		hasOperator = true
+	}
+	if !hasOperator {
+		return nil
+	}
+	if operatorEvents != "" {
+		operatorEvents = operatorEvents[:len(operatorEvents)-1]
 	}
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			operatortypes.EventTypeDeleteOperatorUSDValues,
-			sdk.NewAttribute(operatortypes.AttributeKeyOperators, operatorEvents[:len(operatorEvents)-1]),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperators, operatorEvents),
 			sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
 		),
 	)
@@ -511,7 +526,11 @@ func (k *Keeper) AggregateOperatorUSDValue(
 	if err != nil {
 		return operatortypes.OperatorStakingInfo{}, delegationtype.ErrOperatorAddrIsNotAccAddr
 	}
-	ret := operatortypes.OperatorStakingInfo{}
+	ret := operatortypes.OperatorStakingInfo{
+		Staking:                 sdkmath.LegacyZeroDec(),
+		SelfStaking:             sdkmath.LegacyZeroDec(),
+		StakingAndWaitUnbonding: sdkmath.LegacyZeroDec(),
+	}
 	for _, assetID := range assetsList {
 		// get the total USD value of asset
 		totalUSDValue, err := k.GetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID)
@@ -768,7 +787,7 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers [
 // by slash, it might not be called at the end of epoch. And all assets USD values of an operator
 // should be same for the multiple epoch identifiers.
 func (k *Keeper) UpdatAllOperatorAssetUSDValues(ctx sdk.Context, epochIdentifiers []string) error {
-	opFunc := func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
+	opFunc := func(operatorAddr sdk.AccAddress, _ *operatortypes.OperatorInfo) (bool, error) {
 		err := k.UpdateOperatorAssetUSDValue(ctx, epochIdentifiers, operatorAddr.String())
 		if err != nil {
 			ctx.Logger().Error("UpdatAllOperatorAssetUSDValues: error when updating the specific operator USD value", "err", err, "operator", operatorAddr.String())
@@ -833,13 +852,12 @@ func (k *Keeper) GetRecentEndedEpochAVSAssets(ctx sdk.Context, avsAddr string) (
 	if k.HasAVSAssetsPerEpoch(ctx, avsAddr) {
 		// the avs assets have been changed, use a dedicated assets list.
 		return k.GetAVSAssetsPerEpoch(ctx, avsAddr)
-	} else {
-		// the avs assets haven't been changed, so use the real-time assets list in
-		// the avs information.
-		avsInfo, err := k.avsKeeper.GetAVSInfo(ctx, avsAddr)
-		if err != nil {
-			return nil, err
-		}
-		return avsInfo.Info.AssetIDs, nil
 	}
+	// the avs assets haven't been changed, so use the real-time assets list in
+	// the avs information.
+	avsAssetsList, err := k.avsKeeper.GetAVSAssetsList(ctx, avsAddr)
+	if err != nil {
+		return nil, err
+	}
+	return avsAssetsList, nil
 }

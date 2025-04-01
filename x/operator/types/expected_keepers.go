@@ -114,7 +114,7 @@ type AVSKeeper interface {
 	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error)
 	GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error)
 	IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (bool, error)
-	GetAVSInfo(ctx sdk.Context, addr string) (*types.QueryAVSInfoResponse, error)
+	GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error)
 }
 
 type SlashKeeper interface {

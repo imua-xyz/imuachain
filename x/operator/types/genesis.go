@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -68,8 +70,7 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 			}
 		}
 		if op.OperatorInfo.ApproveAddr != address {
-			return nil, errorsmod.Wrapf(
-				ErrInvalidGenesisData,
+			return nil, ErrInvalidGenesisData.Wrapf(
 				"operator address %s has approve address %s", address, op.OperatorInfo.ApproveAddr,
 			)
 		}

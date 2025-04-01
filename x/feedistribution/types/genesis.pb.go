@@ -464,7 +464,7 @@ func (m *KeyAndOperatorOutstandingRewards) GetOperatorOutstandingRewards() Opera
 // It stores the delegation changes for the current epoch.
 // The key, which is a combination of the epochIdentifier, operator and assetID, is included within it.
 type KeyAndDelegationChangeInfo struct {
-	// key is is a combination of the operator and AVS
+	// key is is a combination of the epochIdentifier, operator and assetID
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// delegation_change_info represents the delegation changes for the current epoch.
 	DelegationChangeInfo DelegationChangeInfo `protobuf:"bytes,2,opt,name=delegation_change_info,json=delegationChangeInfo,proto3" json:"delegation_change_info"`
