@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/imua-xyz/imuachain/testutil"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
