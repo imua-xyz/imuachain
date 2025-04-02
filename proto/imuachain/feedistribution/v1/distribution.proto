@@ -4,8 +4,8 @@ package imuachain.feedistribution.v1;
 import "amino/amino.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
-import "imuachain/assets/v1/tx.proto";
 import "gogoproto/gogo.proto";
+import "imuachain/assets/v1/tx.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 option (gogoproto.equal_all) = true;
@@ -190,7 +190,9 @@ message StakerOutstandingRewards {
 // This is needed to calculate appropriate amount of staking tokens
 // for delegations which are withdrawn after a slash has occurred.
 message OperatorSlashEvent {
+  // operator_period is the period referenced by the slash event
   uint64 operator_period = 1;
+  // fraction is the slash fraction.
   string fraction = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

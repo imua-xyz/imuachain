@@ -23747,6 +23747,16 @@
                 "jailed": {
                   "type": "boolean",
                   "description": "jailed defined whether the operator has been jailed from bonded status or not."
+                },
+                "jailed_height": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "jailed_height is the height at which the operator was jailed.\nIt can be used to handle the impact of jailing on rewards. The default value is 0."
+                },
+                "un_jailed_height": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "un_jailed_height is the height at which the jailed operator was unJailed.\nIt can be used to handle the impact of unJailing on rewards. The default value is 0."
                 }
               },
               "title": "OptedInfo is the opted information about operator"
@@ -23944,10 +23954,6 @@
                   "type": "string",
                   "format": "int64",
                   "description": "last_changed_height indicates the height of the most recent change.\nIt is used to set the `last_changed_height` field in `VotingPowerSnapshot`."
-                },
-                "has_opt_out": {
-                  "type": "boolean",
-                  "description": "has_opt_out is used to indicate whether there has been any opt-out operation from\nthe most recently saved snapshot to the current height. This is because,\nwhen an opt-out operation occurs, the related AVS validator information changes,\nand the snapshot needs to be updated.\nCurrently, a boolean variable is used instead of an operator list\nbecause the snapshot is set by default to store all operator information related to AVS.\nTherefore, as long as any operator has opted out, the snapshot needs to be updated.\nIf we later introduce a limit on the maximum number of validators in AVS,\nsimilar to the MaxValidatorNumber in Dogfood, this may need to be changed to an operator list\nto track all operators that have opted out, thereby assisting with the correct snapshot update."
                 }
               },
               "title": "SnapshotHelper is used to record the helper information for voting power snapshot update"
@@ -41054,7 +41060,7 @@
           "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
         }
       },
-      "description": "AssetInfo defines the information for an asset to be used in staking."
+      "description": "AssetInfo defines the information for an asset to be used as the staking asset or\nreward asset."
     },
     "imuachain.assets.v1.ClientChainInfo": {
       "type": "object",
@@ -45680,6 +45686,16 @@
         "jailed": {
           "type": "boolean",
           "description": "jailed defined whether the operator has been jailed from bonded status or not."
+        },
+        "jailed_height": {
+          "type": "string",
+          "format": "uint64",
+          "description": "jailed_height is the height at which the operator was jailed.\nIt can be used to handle the impact of jailing on rewards. The default value is 0."
+        },
+        "un_jailed_height": {
+          "type": "string",
+          "format": "uint64",
+          "description": "un_jailed_height is the height at which the jailed operator was unJailed.\nIt can be used to handle the impact of unJailing on rewards. The default value is 0."
         }
       },
       "title": "OptedInfo is the opted information about operator"
@@ -46516,10 +46532,6 @@
           "type": "string",
           "format": "int64",
           "description": "last_changed_height indicates the height of the most recent change.\nIt is used to set the `last_changed_height` field in `VotingPowerSnapshot`."
-        },
-        "has_opt_out": {
-          "type": "boolean",
-          "description": "has_opt_out is used to indicate whether there has been any opt-out operation from\nthe most recently saved snapshot to the current height. This is because,\nwhen an opt-out operation occurs, the related AVS validator information changes,\nand the snapshot needs to be updated.\nCurrently, a boolean variable is used instead of an operator list\nbecause the snapshot is set by default to store all operator information related to AVS.\nTherefore, as long as any operator has opted out, the snapshot needs to be updated.\nIf we later introduce a limit on the maximum number of validators in AVS,\nsimilar to the MaxValidatorNumber in Dogfood, this may need to be changed to an operator list\nto track all operators that have opted out, thereby assisting with the correct snapshot update."
         }
       },
       "title": "SnapshotHelper is used to record the helper information for voting power snapshot update"

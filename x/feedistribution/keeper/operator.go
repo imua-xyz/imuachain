@@ -48,7 +48,7 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 	// fetch currentRewardRatio currentRewards
 	currentRewards, err := k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
 	if err != nil {
-		return currentRewards.Period, err
+		return 0, err
 	}
 
 	// calculate currentRewardRatio reward ratio
