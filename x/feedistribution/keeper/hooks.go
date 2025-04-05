@@ -50,11 +50,15 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 			return
 		}
 		// clear the delegation change information
-		err = wrapper.keeper.DeleteStakeChangedDelegationsByEpoch(ctx, epochIdentifier)
+		// this function will be called by the epoch hook, so using cache context
+		// to ensure the state atomicity.
+		cc, writeFunc := ctx.CacheContext()
+		err = wrapper.keeper.DeleteStakeChangedDelegationsByEpoch(cc, epochIdentifier)
 		if err != nil {
 			ctx.Logger().Error("failed to delete the delegation change information by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 			return
 		}
+		writeFunc()
 	}
 }
 

@@ -66,7 +66,7 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 			err = k.RedirectOperatorRewardsToCommunityPool(ctx, operator, currentRewards.Rewards)
 			if err != nil {
 				ctx.Logger().Error("IncrementOperatorPeriod: Failed to redirect the operator currentRewards to the community pool", "error", err, "operator", operator)
-				// don't return the error to continue the period update.
+				return 0, err
 			}
 		}
 		// currentRewardRatio reward ratio should be null

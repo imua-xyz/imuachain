@@ -72,4 +72,9 @@ var (
 		ModuleName, 14,
 		"the genesis data supplied is invalid",
 	)
+
+	ErrFailedToAllocateRewardsForOperators = errorsmod.Register(
+		ModuleName, 15,
+		"failed to allocate the rewards to operators of an AVS",
+	)
 )
