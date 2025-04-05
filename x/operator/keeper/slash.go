@@ -209,7 +209,30 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if err != nil {
 		return err
 	}
-	writeFunc()
+
+	// update the voting power and save the snapshot for all affected AVSs
+	affectedAVSList, affectedEpochList, err := k.GetImpactfulEpochsAndAVSsForOperator(ctx, parameter.Operator.String())
+	if err != nil {
+		return err
+	}
+	// update the operator asset USD value first
+	err = k.UpdatAllOperatorAssetUSDValues(cc, affectedEpochList)
+	if err != nil {
+		return err
+	}
+	for _, avs := range affectedAVSList {
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
+		if err != nil {
+			return err
+		}
+		err = k.UpdateVotingPower(cc, avs, epochInfo.Identifier, epochInfo.CurrentEpoch, true)
+		if err != nil {
+			return err
+		}
+	}
+	k.hooks.AfterSlash(cc, parameter.Operator, executionInfo.SlashProportion, affectedAVSList,
+		executionInfo.SlashAssetsPool)
+
 	// store the slash information
 	height := ctx.BlockHeight()
 	slashInfo := types.OperatorSlashInfo{
@@ -220,33 +243,11 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		SlashProportion: parameter.SlashProportion,
 		ExecutionInfo:   executionInfo,
 	}
-	err = k.UpdateOperatorSlashInfo(ctx, parameter.Operator.String(), parameter.AVSAddr, parameter.SlashID, slashInfo)
+	err = k.UpdateOperatorSlashInfo(cc, parameter.Operator.String(), parameter.AVSAddr, parameter.SlashID, slashInfo)
 	if err != nil {
 		return err
 	}
-
-	// update the voting power and save the snapshot for all affected AVSs
-	affectedAVSList, affectedEpochList, err := k.GetImpactfulEpochsAndAVSsForOperator(ctx, parameter.Operator.String())
-	if err != nil {
-		return err
-	}
-	// update the operator asset USD value first
-	err = k.UpdatAllOperatorAssetUSDValues(ctx, affectedEpochList)
-	if err != nil {
-		return err
-	}
-	for _, avs := range affectedAVSList {
-		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
-		if err != nil {
-			return err
-		}
-		err = k.UpdateVotingPower(ctx, avs, epochInfo.Identifier, epochInfo.CurrentEpoch, true)
-		if err != nil {
-			return err
-		}
-	}
-	k.hooks.AfterSlash(ctx, parameter.Operator, executionInfo.SlashProportion, affectedAVSList,
-		executionInfo.SlashAssetsPool)
+	writeFunc()
 	return nil
 }
 

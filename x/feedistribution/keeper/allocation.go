@@ -30,13 +30,17 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 		ctx.Logger().Info("AllocateTokensByEpoch: there isn't any rewards to distribute, skipping the avs", "avs", avs)
 		return nil
 	}
+
+	// this function will be called by the epoch hook, so using cache context
+	// to ensure the state atomicity.
+	cc, writeFunc := ctx.CacheContext()
 	// update the reward asset state
 	for _, token := range rewardDistribution.Rewards {
 		assetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, avs, token.Denom)
 		if err != nil {
 			return err
 		}
-		err = k.UpdateAVSRewardAssetState(ctx, avs, assetID, &types.DeltaAVSRewardAssetState{
+		err = k.UpdateAVSRewardAssetState(cc, avs, assetID, &types.DeltaAVSRewardAssetState{
 			RewardAllocationTotal: token.Amount,
 		})
 		if err != nil {
@@ -45,24 +49,26 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 	}
 	if len(rewardDistribution.OperatorRewardProportions) == 0 {
 		// distribute the rewards to the community pool
-		err := k.UpdateAVSCommunityPool(ctx, avs, true, rewardDistribution.Rewards)
+		err := k.UpdateAVSCommunityPool(cc, avs, true, rewardDistribution.Rewards)
 		if err != nil {
 			return err
 		}
 		ctx.Logger().Info("AllocateTokensByEpoch: add all rewards to the avs fee pool when the operator rewards proportion hasn't been configured", "avs", avs, "err", err)
+		writeFunc()
 		return nil
 	}
-	remaining, err := k.AllocateRewardsToOperators(ctx, avs, epochIdentifier, rewardDistribution)
+	remaining, err := k.AllocateRewardsToOperators(cc, avs, epochIdentifier, rewardDistribution)
 	if err != nil {
 		return err
 	}
 	if len(remaining) != 0 {
 		// add the remaining rewards to the community pool
-		err = k.UpdateAVSCommunityPool(ctx, avs, true, rewardDistribution.Rewards)
+		err = k.UpdateAVSCommunityPool(cc, avs, true, rewardDistribution.Rewards)
 		if err != nil {
 			return err
 		}
 	}
+	writeFunc()
 	return nil
 }
 
@@ -74,8 +80,7 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 	// todo: consider setting different tax rates for different AVSs.
 	communityTax, err := k.GetCommunityTax(ctx)
 	if err != nil {
-		ctx.Logger().Error("AllocateTokensByEpoch: failed to get the community tax, skipping tha avs", "avs", avsAddr, "err", err)
-		return nil, err
+		return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to get the community tax,err:%s", err)
 	}
 	remaining := rewardDistribution.Rewards
 	proportion := math.LegacyOneDec().Sub(communityTax)
@@ -85,42 +90,40 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 		// calculate the commission for the operator
 		ops, err := k.StakingKeeper.OperatorInfo(ctx, operatorProportion.OperatorAddr)
 		if err != nil {
-			ctx.Logger().Error("AllocateRewardsToOperators: Failed to get operator info, skipping the operator", "error", err, "operator", operatorProportion.OperatorAddr)
-			// continue distributing reward for the other operators
-			continue
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to get operator info,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
 		rewardsForStakers := reward
 		commission := reward.MulDecTruncate(ops.GetCommission().Rate)
 		err = k.UpdateOperatorAccumulatedCommission(ctx, operatorProportion.OperatorAddr, avsAddr, true, commission)
 		if err != nil {
-			ctx.Logger().Error("AllocateRewardsToOperators: Failed to distribute the commission to the operator, skipping the operator", "error", err, "operator", operatorProportion.OperatorAddr, "avs", avsAddr)
-			// distribute the commission to stakers if adding the commission to the operator fails.
-		} else {
-			rewardsForStakers = rewardsForStakers.Sub(commission)
-			// update current commission
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					types.EventTypeCommission,
-					sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
-					sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
-					sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
-				),
-			)
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to distribute the commission to the operator,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
+
+		// update current commission
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeCommission,
+				sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
+				sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+			),
+		)
+
+		rewardsForStakers = rewardsForStakers.Sub(commission)
 		// split the reward to multiple assets pool
 		leftover, err := k.SplitRewardsToAssetsPool(ctx, operatorProportion.OperatorAddr, avsAddr, epochIdentifier, rewardsForStakers)
 		if err != nil {
-			ctx.Logger().Error("AllocateRewardsToOperators: Failed to allocate rewards to the stakers", "error", err, "operator", operatorProportion.OperatorAddr, "avs", avsAddr)
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to allocate rewards to the stakers,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
 		// update the outstanding rewards for the operator
 		err = k.UpdateOperatorOutstandingRewards(ctx, operatorProportion.OperatorAddr, avsAddr, true, reward)
 		if err != nil {
-			ctx.Logger().Error("AllocateRewardsToOperators: Failed to update the operator outstanding rewards", "error", err, "operator", operatorProportion.OperatorAddr, "avs", avsAddr)
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to update the operator outstanding rewards,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
 		// calculate the remaining  rewards, it will be distributed to the community pool.
 		remaining = remaining.Sub(reward).Add(leftover...)
 	}
-	return remaining, err
+	return remaining, nil
 }
 
 // SplitRewardsToAssetsPool : split the rewards to multiple assets pool, then the reward of each

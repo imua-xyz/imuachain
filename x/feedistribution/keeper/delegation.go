@@ -59,8 +59,11 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 		return types.ErrEpochNotFound
 	}
 	opFunc := func(epochIdentifier, operator, assetID string, delegationChangeInfo *feedistributiontypes.DelegationChangeInfo) (bool, error) {
+		// this function will be called by the epoch hook, so using cache context
+		// to ensure the state atomicity.
 		// increase the period for the operator with changed delegations.
-		endingPeriod, err := k.IncrementOperatorPeriod(ctx, operator, assetID, epochIdentifier, delegationChangeInfo.TotalAmount)
+		cc, writeFunc := ctx.CacheContext()
+		endingPeriod, err := k.IncrementOperatorPeriod(cc, operator, assetID, epochIdentifier, delegationChangeInfo.TotalAmount)
 		if err != nil {
 			// Just log the error as a reminder; do not return it to avoid interrupting the handling
 			// of other operators.
@@ -68,6 +71,7 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 				operator, "assetID", assetID, "epochIdentifier", epochIdentifier, "err", err)
 			return false, nil
 		}
+		writeFunc()
 		// distribute the reward to the delegation with changed stakes.
 		err = k.DistributeRewardsToDelegations(ctx, endingPeriod, &epochInfo, operator, assetID, *delegationChangeInfo)
 		if err != nil {
@@ -309,16 +313,23 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 ) error {
 	var err error
 	for _, stakerID := range delegationChangeInfo.StakerIds {
+		// This function is called by the epoch hook. It uses a cache context
+		// to ensure atomicity of state updates. A separate cache context is
+		// created for each staker, so that if the reward distribution for a
+		// single delegation fails, only the state changes for that delegation
+		// are reverted. This prevents failures from affecting other delegations.
+		cc, writeFunc := ctx.CacheContext()
 		// initialize the delegation without the starting information.
 		delegationKey := string(assetstype.GetJoinedStoreKey(stakerID, assetID, operator))
 		if !k.HasDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier) {
-			err = k.initializeDelegationStartingInfo(ctx, true, sdk.ZeroDec(), delegationKey, operator,
+			err = k.initializeDelegationStartingInfo(cc, true, sdk.ZeroDec(), delegationKey, operator,
 				stakerID, assetID, epochInfo, endingPeriod)
 			if err != nil {
 				// Just log the error as a reminder; do not return it to avoid interrupting the handling
 				// of other stakers.
 				ctx.Logger().Error("DistributeRewardsToDelegations, failed to initialize the starting info for the  delegation", "endingPeriod", endingPeriod, "delegationKey", delegationKey,
 					"epochIdentifier", epochInfo.Identifier, "err", err)
+				continue
 			}
 		} else {
 			// get the starting information for the specific delegation
@@ -331,14 +342,16 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 				continue
 			}
 			// distribute the rewards for a delegation.
-			err = k.distributeRewardsToDelegation(ctx, true, endingPeriod, operator, stakerID, assetID, epochInfo, startingInfo)
+			err = k.distributeRewardsToDelegation(cc, true, endingPeriod, operator, stakerID, assetID, epochInfo, startingInfo)
 			if err != nil {
 				// Just log the error as a reminder; do not return it to avoid interrupting the handling
 				// of other stakers.
 				ctx.Logger().Error("DistributeRewardsToDelegations, failed to distribute rewards to the  delegation", "delegationKey", delegationKey,
 					"epochIdentifier", epochInfo.Identifier, "err", err)
+				continue
 			}
 		}
+		writeFunc()
 	}
 	return nil
 }
