@@ -72,4 +72,26 @@ contract GatewayCaller {
         }
     }
 
+    function callWithTryCatch(
+        uint32 clientChainID,
+        bytes calldata assetsAddress,
+        bytes calldata withdrawAddress,
+        uint256 opAmount
+    ) external returns (bool callSucceeded, string memory errorMessage) {
+        try Gateway(gateway).callPrecompileAndRevert(
+            clientChainID,
+            assetsAddress,
+            withdrawAddress,
+            opAmount
+        ) {
+            // This will never execute since the called function always reverts
+            return (true, "");
+        } catch Error(string memory reason) {
+            // Catch the revert but let the transaction complete successfully
+            return (false, reason);
+        } catch (bytes memory) {
+            // Catch any other type of revert
+            return (false, "Low-level revert");
+        }
+    }
 }

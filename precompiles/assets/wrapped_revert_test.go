@@ -1,6 +1,7 @@
 package assets_test
 
 import (
+	"fmt"
 	"math"
 	"math/big"
 
@@ -11,6 +12,13 @@ import (
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+)
+
+var (
+	// StorageSlotCounter is the storage slot of the counter object in the Gateway contract.
+	StorageSlotCounter = common.Big1
+	// CounterStartingValue is the starting value of the counter.
+	CounterStartingValue = uint64(1)
 )
 
 // ContractDeploymentData is a struct to define all relevant data to deploy a smart contract.
@@ -60,11 +68,18 @@ func (s *AssetsPrecompileSuite) prepareTestContracts() (common.Address, common.A
 	return gatewayCallerAddr, gatewayAddr
 }
 
+func (s *AssetsPrecompileSuite) getCounterValue(gatewayAddr common.Address) uint64 {
+	value := s.App.EvmKeeper.GetState(s.Ctx, gatewayAddr, common.BigToHash(StorageSlotCounter))
+	return value.Big().Uint64()
+}
+
 // TestWrappedRevert tests the wrapped revert scenario in which a failed call is wrapped in a
 // try catch block and prevented from bubbling to the Cosmos level. In this situation, the
 // revert of asset state should take effect while the transaction should still succeed.
 func (s *AssetsPrecompileSuite) TestWrappedRevert() {
-	gatewayCallerAddr, _ := s.prepareTestContracts()
+	gatewayCallerAddr, gatewayAddr := s.prepareTestContracts()
+	value := s.getCounterValue(gatewayAddr)
+	s.Require().Equal(CounterStartingValue, value)
 
 	// Setup common test parameters
 	clientChainLzID := uint32(101)
@@ -123,6 +138,9 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 	s.Require().NoError(err)
 
+	value = s.getCounterValue(gatewayAddr)
+	s.Require().Equal(CounterStartingValue+1, value)
+
 	// Update expected amount and check balance
 	opAmount = new(big.Int).Sub(opAmount, withdrawAmount)
 	checkBalance(opAmount)
@@ -135,12 +153,13 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 
 	// Test withdraw with revert scenarios
 	testCases := []struct {
-		name           string
-		revertCount    *big.Int
-		gasLimit       uint64
-		methodName     string
-		expectedAmount *big.Int
-		commitBefore   bool
+		name                 string
+		revertCount          *big.Int
+		gasLimit             uint64
+		methodName           string
+		expectedAmount       *big.Int
+		commitBefore         bool
+		expectedCounterValue uint64
 	}{
 		{
 			// case 1: try { withdraw; revert; } catch { } one time does not
@@ -152,6 +171,11 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 			expectedAmount: opAmount,
 			// reset everything before the test
 			commitBefore: true,
+			// the revert happens in the gateway depth, which holds the counter
+			// hence, counter value must not change.
+			// the same revert propagates up to the gateway caller depth, which
+			// catches the revert allowing the transaction to succeed.
+			expectedCounterValue: CounterStartingValue + 1,
 		},
 		{
 			// case 2: check that loop > N times with try { withdraw; revert; } catch { }
@@ -163,7 +187,8 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 			methodName:     "withdrawLSTAndThenRevertXTimes",
 			expectedAmount: opAmount,
 			// do not commit the block, so that the number of precompile calls is not reset
-			commitBefore: false,
+			commitBefore:         false,
+			expectedCounterValue: CounterStartingValue + 1,
 		},
 		{
 			// case 3: check that try { withdraw; } catch {} for > N times is only
@@ -189,8 +214,15 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 					big.NewInt(int64(evmtypes.MaxPrecompileCalls)),
 				),
 			),
-			// reset everything before the test
+			// reset everything before the test, particularly the number of precompile calls
 			commitBefore: true,
+			// the revert happens in the precompile, so that is the gateway depth.
+			// however, it happens after N tries have succeeded, so the counter
+			// value must be incremented by N
+			// In simpler words, we start with 2 (1 in the constructor, 1 in the first withdraw)
+			// then, we make 7 successful withdrawals, attempt the eighth one which fails
+			// so total is 2 + 7 = 9.
+			expectedCounterValue: CounterStartingValue + 1 + uint64(evmtypes.MaxPrecompileCalls),
 		},
 	}
 
@@ -212,10 +244,34 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		).WithGasLimit(tc.gasLimit)
 		_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 		s.Require().NoError(err)
+		value := s.getCounterValue(gatewayAddr)
+		s.Equal(tc.expectedCounterValue, value, fmt.Sprintf("counter value mismatch for %s", tc.name))
 
 		// Balance should remain unchanged after reverts
 		checkBalance(tc.expectedAmount)
 	}
+
+	// now, we run Adu's test
+	startingValue := s.getCounterValue(gatewayAddr)
+	stakerAssetInfo, err := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(
+		s.Ctx, stakerID, assetID,
+	)
+	s.Require().NoError(err)
+	initialBalance := stakerAssetInfo.TotalDepositAmount.BigInt()
+	args = callArgs.WithMethodName("callWithTryCatch").WithArgs(
+		clientChainLzID,
+		paddedUsdtAddress,
+		paddedStakerAddress,
+		withdrawAmount,
+	)
+	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
+	s.Require().NoError(err)
+	s.Commit()
+	value = s.getCounterValue(gatewayAddr)
+	// the revert happens so there is no change in the counter value
+	// or the deposited amount
+	s.Equal(startingValue, value)
+	checkBalance(initialBalance)
 }
 
 // DeployContractWithArgs is a helper function to deploy a contract with constructor arguments.

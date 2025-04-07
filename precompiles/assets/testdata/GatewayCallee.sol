@@ -2,12 +2,12 @@
 pragma solidity ^0.8.17;
 
 contract GatewayCallee {
-    uint256 public success;
+    uint256 public etherReceived;
 
-    function reverter(bool shouldRevert) public {
-        if (shouldRevert) {
-            revert("Intentional revert");
+    function callMe() external payable {
+        if (msg.value == 0) {
+            revert("No Zero Value");
         }
-        ++success;
+        etherReceived = msg.value;
     }
 }

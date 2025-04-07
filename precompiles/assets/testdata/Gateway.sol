@@ -7,9 +7,11 @@ import "./GatewayCallee.sol";
 
 contract Gateway {
     address public callee;
+    uint256 public counter;
 
     constructor(address callee_) {
         callee = callee_;
+        counter = 1;
     }
 
     // Deposit LST
@@ -37,6 +39,7 @@ contract Gateway {
         bytes calldata withdrawAddress,
         uint256 opAmount
     ) public returns (bool success, uint256 latestAssetState) {
+        counter++;
         // Call the precompile
         (success, latestAssetState) = ASSETS_CONTRACT.withdrawLST(
             clientChainID,
@@ -55,7 +58,7 @@ contract Gateway {
         uint256 opAmount
     ) public returns (bool success, uint256 latestAssetState) {
         (success, latestAssetState) = withdrawLST(clientChainID, assetsAddress, withdrawAddress, opAmount);
-        GatewayCallee(callee).reverter(true);
+        GatewayCallee(callee).callMe{value: 1 ether}();
     }
 
     // Query staker balance
@@ -69,5 +72,32 @@ contract Gateway {
             stakerAddress,
             tokenID
         );
+    }
+
+     function callPrecompileAndRevert(
+        uint32 clientChainID,
+        bytes calldata token,
+        bytes calldata staker,
+        uint256 amount
+    ) external {
+        counter += 1;
+        callPrecompile(clientChainID, token, staker, amount);
+        GatewayCallee(callee).callMe{value: address(this).balance + 1}();
+    }
+
+    function callPrecompile(
+        uint32 clientChainID,
+        bytes calldata token,
+        bytes calldata staker,
+        uint256 amount
+    ) public returns (bool) {
+        (bool success,) = ASSETS_CONTRACT.withdrawLST(
+            clientChainID,
+            token,
+            staker,
+            amount
+        );
+
+        return success;
     }
 }
