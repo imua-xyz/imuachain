@@ -77,4 +77,9 @@ var (
 		ModuleName, 15,
 		"failed to allocate the rewards to operators of an AVS",
 	)
+
+	ErrInvalidImuaReceiptAddr = errorsmod.Register(
+		ModuleName, 16,
+		"invalid imua receipt address",
+	)
 )

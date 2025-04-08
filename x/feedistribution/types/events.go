@@ -5,9 +5,17 @@ const (
 	EventTypeCommission         = "commission"
 	EventTypeSetWithdrawAddress = "set_withdraw_address"
 	EventTypeRewards            = "rewards"
-	EventTypeWithdrawRewards    = "withdraw_rewards"
-	EventTypeWithdrawCommission = "withdraw_commission"
-	EventTypeProposerReward     = "proposer_reward"
+	// EventTypeWithdrawRewards : withdraw the reward for a staker
+	EventTypeWithdrawRewards = "withdraw_rewards"
+
+	// EventTypeWithdrawCommission :  withdraw the commission for an operator
+	EventTypeWithdrawCommission             = "withdraw_commission"
+	AttributeKeyAllAVSActualWithdrawAmounts = "all_avs_actual_withdraw_amounts"
+	AttributeKeyTotalWithdrawAmount         = "total_withdraw_amount"
+	AttributeKeyWithdrawAmountFromDogfood   = "withdraw_amount_from_dogfood"
+	AttributeKeyStakerID                    = "staker_id"
+
+	EventTypeProposerReward = "proposer_reward"
 
 	AttributeKeyWithdrawAddress = "withdraw_address"
 	AttributeKeyOperator        = "operator"

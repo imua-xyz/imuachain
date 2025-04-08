@@ -227,6 +227,38 @@ func (k Keeper) UpdateOperatorAccumulatedCommission(ctx sdk.Context, operator, a
 	return nil
 }
 
+// IterateOperatorAccumulatedCommissions : iterates the accumulated commissions for an operator
+// and does some external operations.
+// `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
+func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator string, isUpdate bool,
+	opFunc func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, error),
+) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorAccumulatedCommission)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(operator))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		if err != nil {
+			return err
+		}
+		var accumulatedCommissions feedistributiontypes.OperatorAccumulatedCommission
+		k.cdc.MustUnmarshal(iterator.Value(), &accumulatedCommissions)
+		isBreak, err := opFunc(keys[1], &accumulatedCommissions)
+		if err != nil {
+			return err
+		}
+		if isBreak {
+			break
+		}
+		if isUpdate {
+			bz := k.cdc.MustMarshal(&accumulatedCommissions)
+			store.Set(iterator.Key(), bz)
+		}
+	}
+	return nil
+}
+
 // SetOperatorOutstandingRewards : set outstanding avs rewards for the operator
 func (k Keeper) SetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, rewards feedistributiontypes.OperatorOutstandingRewards) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
@@ -591,6 +623,36 @@ func (k Keeper) UpdateStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAdd
 	err = k.SetStakerOutstandingRewards(ctx, stakerID, avsAddr, rewards)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+// IterateStakerOutstandingRewards : iterates the outstanding rewards for a staker and does some external operations.
+// `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
+func (k Keeper) IterateStakerOutstandingRewards(ctx sdk.Context, stakerID string, isUpdate bool,
+	opFunc func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, error)) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerOutstandingRewards)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(stakerID))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		if err != nil {
+			return err
+		}
+		var outstandingRewards feedistributiontypes.StakerOutstandingRewards
+		k.cdc.MustUnmarshal(iterator.Value(), &outstandingRewards)
+		isBreak, err := opFunc(keys[1], &outstandingRewards)
+		if err != nil {
+			return err
+		}
+		if isBreak {
+			break
+		}
+		if isUpdate {
+			bz := k.cdc.MustMarshal(&outstandingRewards)
+			store.Set(iterator.Key(), bz)
+		}
 	}
 	return nil
 }

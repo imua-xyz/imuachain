@@ -1,6 +1,7 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"sort"
 	"strings"
@@ -13,6 +14,32 @@ type DeltaAVSRewardAssetState AVSRewardAssetState
 type OperatorRewardProportions []OperatorRewardProportion
 
 type CommonAVSRewards []CommonAVSRewardData
+
+type ActualWithdrawAmountPerAVS struct {
+	Avs                  string
+	ActualWithdrawAmount sdkmath.Int
+}
+
+type AllAVSActualWithdrawAmount []ActualWithdrawAmountPerAVS
+
+// String implements the Stringer interface for AllAVSActualWithdrawAmount. It returns a
+// human-readable representation of actual withdraw amounts of all AVSs
+func (aa AllAVSActualWithdrawAmount) String() string {
+	if len(aa) == 0 {
+		return ""
+	}
+
+	out := ""
+	for _, perAVS := range aa {
+		proportionStr := fmt.Sprintf("%v:%v", perAVS.Avs, perAVS.ActualWithdrawAmount.String())
+		out += fmt.Sprintf("%v,", proportionStr)
+	}
+
+	if out != "" {
+		out = out[:len(out)-1]
+	}
+	return out
+}
 
 // String implements the Stringer interface for OperatorRewardProportions. It returns a
 // human-readable representation of operator reward proportions

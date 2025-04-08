@@ -61,7 +61,7 @@ func (k Keeper) RewardForWithdraw(sdk.Context, *RewardParams) error {
 // Since this module acts as the distribution module for our network, this function is here.
 // When implemented, this function should find the pending (native token) rewards for the
 // specified delegator and validator address combination and send them to the delegator address.
-func (Keeper) WithdrawDelegationRewards(
+func (Keeper) WithdrawStakerRewards(
 	sdk.Context, sdk.AccAddress, sdk.ValAddress,
 ) (sdk.Coins, error) {
 	return nil, rtypes.ErrNotSupportYet

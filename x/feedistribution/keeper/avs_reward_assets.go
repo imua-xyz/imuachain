@@ -25,7 +25,7 @@ func (k Keeper) UpdateAVSRewardAssetState(ctx sdk.Context, avsAddr, assetID stri
 	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
 	value := store.Get(key)
 	if value == nil {
-		return types.ErrAVSRewardAssetNotFound
+		return types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,assetID:%s", avsAddr, assetID)
 	}
 
 	ret := types.AVSRewardAsset{}
@@ -134,7 +134,7 @@ func (k Keeper) GetAVSRewardAssetInfo(ctx sdk.Context, avsAddr, assetID string) 
 	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
 	value := store.Get(key)
 	if value == nil {
-		return nil, types.ErrAVSRewardAssetNotFound
+		return nil, types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,assetID:%s", avsAddr, assetID)
 	}
 
 	ret := types.AVSRewardAsset{}
@@ -155,7 +155,7 @@ func (k Keeper) GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol str
 	key := assetstype.GetJoinedStoreKey(avsAddr, symbol)
 	value := store.Get(key)
 	if value == nil {
-		return assetID, types.ErrAVSRewardAssetNotFound
+		return assetID, types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,assetID:%s", avsAddr, assetID)
 	}
 	return string(value), nil
 }

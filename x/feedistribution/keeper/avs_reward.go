@@ -34,7 +34,7 @@ type (
 // Since different AVSs may have distinct reward models, they can customize this logic through an AVS reward contract.
 // In such cases, we need to provide a precompiled interface for this function to facilitate reward contract
 // development. Additionally, AVSs might require a keeper to periodically call the customized reward contract and set
-// the reward distribution information. This process can be managed by an external service, such as the Chainlink  keeper.
+// the reward distribution information. This process can be managed by an external service, such as the Chainlink keeper.
 // In this case, the reward contract only needs to periodically update the corresponding parameters through the
 // precompiled interface. All reward distributions, including distributions to operators and stakers,
 // will be automatically executed on the Imua chain through the F1 distribution mechanism.
