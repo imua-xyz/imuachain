@@ -4,6 +4,7 @@
 package delegation
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -24,10 +26,17 @@ var (
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
 
+// DelegationMetaData contains all meta data concerning the Delegation contract.
+var DelegationMetaData = &bind.MetaData{
+	ABI: "[{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"staker\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"operator\",\"type\":\"bytes\"}],\"name\":\"associateOperatorWithStaker\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"assetsAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"stakerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"operatorAddr\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"opAmount\",\"type\":\"uint256\"}],\"name\":\"delegate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"staker\",\"type\":\"bytes\"}],\"name\":\"dissociateOperatorFromStaker\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"assetsAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"stakerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"operatorAddr\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"opAmount\",\"type\":\"uint256\"}],\"name\":\"undelegate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+}
+
 // DelegationABI is the input ABI used to generate the binding from.
-const DelegationABI = "[{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"staker\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"operator\",\"type\":\"bytes\"}],\"name\":\"associateOperatorWithStaker\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"lzNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"assetsAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"stakerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"operatorAddr\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"opAmount\",\"type\":\"uint256\"}],\"name\":\"delegate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"bytes\",\"name\":\"staker\",\"type\":\"bytes\"}],\"name\":\"dissociateOperatorFromStaker\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"clientChainID\",\"type\":\"uint32\"},{\"internalType\":\"uint64\",\"name\":\"lzNonce\",\"type\":\"uint64\"},{\"internalType\":\"bytes\",\"name\":\"assetsAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"stakerAddress\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"operatorAddr\",\"type\":\"bytes\"},{\"internalType\":\"uint256\",\"name\":\"opAmount\",\"type\":\"uint256\"}],\"name\":\"undelegate\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"success\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+// Deprecated: Use DelegationMetaData.ABI instead.
+var DelegationABI = DelegationMetaData.ABI
 
 // Delegation is an auto generated Go binding around an Ethereum contract.
 type Delegation struct {
@@ -126,11 +135,11 @@ func NewDelegationFilterer(address common.Address, filterer bind.ContractFiltere
 
 // bindDelegation binds a generic wrapper to an already deployed contract.
 func bindDelegation(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(DelegationABI))
+	parsed, err := DelegationMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+	return bind.NewBoundContract(address, *parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and
@@ -192,25 +201,25 @@ func (_Delegation *DelegationTransactorSession) AssociateOperatorWithStaker(clie
 	return _Delegation.Contract.AssociateOperatorWithStaker(&_Delegation.TransactOpts, clientChainID, staker, operator)
 }
 
-// Delegate is a paid mutator transaction binding the contract method 0x870c5b03.
+// Delegate is a paid mutator transaction binding the contract method 0x831d1ea5.
 //
-// Solidity: function delegate(uint32 clientChainID, uint64 lzNonce, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
-func (_Delegation *DelegationTransactor) Delegate(opts *bind.TransactOpts, clientChainID uint32, lzNonce uint64, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
-	return _Delegation.contract.Transact(opts, "delegate", clientChainID, lzNonce, assetsAddress, stakerAddress, operatorAddr, opAmount)
+// Solidity: function delegate(uint32 clientChainID, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
+func (_Delegation *DelegationTransactor) Delegate(opts *bind.TransactOpts, clientChainID uint32, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
+	return _Delegation.contract.Transact(opts, "delegate", clientChainID, assetsAddress, stakerAddress, operatorAddr, opAmount)
 }
 
-// Delegate is a paid mutator transaction binding the contract method 0x870c5b03.
+// Delegate is a paid mutator transaction binding the contract method 0x831d1ea5.
 //
-// Solidity: function delegate(uint32 clientChainID, uint64 lzNonce, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
-func (_Delegation *DelegationSession) Delegate(clientChainID uint32, lzNonce uint64, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
-	return _Delegation.Contract.Delegate(&_Delegation.TransactOpts, clientChainID, lzNonce, assetsAddress, stakerAddress, operatorAddr, opAmount)
+// Solidity: function delegate(uint32 clientChainID, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
+func (_Delegation *DelegationSession) Delegate(clientChainID uint32, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
+	return _Delegation.Contract.Delegate(&_Delegation.TransactOpts, clientChainID, assetsAddress, stakerAddress, operatorAddr, opAmount)
 }
 
-// Delegate is a paid mutator transaction binding the contract method 0x870c5b03.
+// Delegate is a paid mutator transaction binding the contract method 0x831d1ea5.
 //
-// Solidity: function delegate(uint32 clientChainID, uint64 lzNonce, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
-func (_Delegation *DelegationTransactorSession) Delegate(clientChainID uint32, lzNonce uint64, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
-	return _Delegation.Contract.Delegate(&_Delegation.TransactOpts, clientChainID, lzNonce, assetsAddress, stakerAddress, operatorAddr, opAmount)
+// Solidity: function delegate(uint32 clientChainID, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
+func (_Delegation *DelegationTransactorSession) Delegate(clientChainID uint32, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
+	return _Delegation.Contract.Delegate(&_Delegation.TransactOpts, clientChainID, assetsAddress, stakerAddress, operatorAddr, opAmount)
 }
 
 // DissociateOperatorFromStaker is a paid mutator transaction binding the contract method 0x1a004d5a.
@@ -234,23 +243,23 @@ func (_Delegation *DelegationTransactorSession) DissociateOperatorFromStaker(cli
 	return _Delegation.Contract.DissociateOperatorFromStaker(&_Delegation.TransactOpts, clientChainID, staker)
 }
 
-// Undelegate is a paid mutator transaction binding the contract method 0xdfea719f.
+// Undelegate is a paid mutator transaction binding the contract method 0x0415040e.
 //
-// Solidity: function undelegate(uint32 clientChainID, uint64 lzNonce, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
-func (_Delegation *DelegationTransactor) Undelegate(opts *bind.TransactOpts, clientChainID uint32, lzNonce uint64, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
-	return _Delegation.contract.Transact(opts, "undelegate", clientChainID, lzNonce, assetsAddress, stakerAddress, operatorAddr, opAmount)
+// Solidity: function undelegate(uint32 clientChainID, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
+func (_Delegation *DelegationTransactor) Undelegate(opts *bind.TransactOpts, clientChainID uint32, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
+	return _Delegation.contract.Transact(opts, "undelegate", clientChainID, assetsAddress, stakerAddress, operatorAddr, opAmount)
 }
 
-// Undelegate is a paid mutator transaction binding the contract method 0xdfea719f.
+// Undelegate is a paid mutator transaction binding the contract method 0x0415040e.
 //
-// Solidity: function undelegate(uint32 clientChainID, uint64 lzNonce, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
-func (_Delegation *DelegationSession) Undelegate(clientChainID uint32, lzNonce uint64, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
-	return _Delegation.Contract.Undelegate(&_Delegation.TransactOpts, clientChainID, lzNonce, assetsAddress, stakerAddress, operatorAddr, opAmount)
+// Solidity: function undelegate(uint32 clientChainID, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
+func (_Delegation *DelegationSession) Undelegate(clientChainID uint32, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
+	return _Delegation.Contract.Undelegate(&_Delegation.TransactOpts, clientChainID, assetsAddress, stakerAddress, operatorAddr, opAmount)
 }
 
-// Undelegate is a paid mutator transaction binding the contract method 0xdfea719f.
+// Undelegate is a paid mutator transaction binding the contract method 0x0415040e.
 //
-// Solidity: function undelegate(uint32 clientChainID, uint64 lzNonce, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
-func (_Delegation *DelegationTransactorSession) Undelegate(clientChainID uint32, lzNonce uint64, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
-	return _Delegation.Contract.Undelegate(&_Delegation.TransactOpts, clientChainID, lzNonce, assetsAddress, stakerAddress, operatorAddr, opAmount)
+// Solidity: function undelegate(uint32 clientChainID, bytes assetsAddress, bytes stakerAddress, bytes operatorAddr, uint256 opAmount) returns(bool success)
+func (_Delegation *DelegationTransactorSession) Undelegate(clientChainID uint32, assetsAddress []byte, stakerAddress []byte, operatorAddr []byte, opAmount *big.Int) (*types.Transaction, error) {
+	return _Delegation.Contract.Undelegate(&_Delegation.TransactOpts, clientChainID, assetsAddress, stakerAddress, operatorAddr, opAmount)
 }

@@ -43,6 +43,7 @@ type (
 		p          int
 	}
 )
+
 type blocks struct {
 	msgItemsInBlocks [][]*price
 	idx              int

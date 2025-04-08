@@ -19,14 +19,12 @@ interface IDelegation {
 /// @param clientChainID is the layerZero chainID if it is supported.
 //  It might be allocated by Imuachain when the client chain isn't supported
 //  by layerZero
-/// @param lzNonce The cross chain tx layerZero nonce
 /// @param assetsAddress The client chain asset Address
 /// @param stakerAddress The staker address
 /// @param operatorAddr  The operator address that wants to be delegated to
 /// @param opAmount The delegation amount
     function delegate(
         uint32 clientChainID,
-        uint64 lzNonce,
         bytes calldata assetsAddress,
         bytes calldata stakerAddress,
         bytes calldata operatorAddr,
@@ -38,14 +36,12 @@ interface IDelegation {
 /// @param clientChainID is the layerZero chainID if it is supported.
 //  It might be allocated by Imuachain when the client chain isn't supported
 //  by layerZero
-/// @param lzNonce The cross chain tx layerZero nonce
 /// @param assetsAddress The client chain asset Address
 /// @param stakerAddress The staker address
 /// @param operatorAddr  The operator address that wants to unDelegate from
 /// @param opAmount The Undelegation amount
     function undelegate(
         uint32 clientChainID,
-        uint64 lzNonce,
         bytes calldata assetsAddress,
         bytes calldata stakerAddress,
         bytes calldata operatorAddr,

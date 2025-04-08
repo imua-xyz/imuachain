@@ -105,7 +105,7 @@ func (s *PrecompileTestSuite) TestRun() {
 					rawPubkeys[i] = pubKey.Marshal()
 				}
 				input, err := s.precompile.Pack(
-					bls.MethodAggregatePubkeys,
+					bls.MethodAggregatePubKeys,
 					rawPubkeys,
 				)
 				s.Require().NoError(err, "failed to pack input")
@@ -113,7 +113,7 @@ func (s *PrecompileTestSuite) TestRun() {
 				return contract
 			},
 			func(data []byte) {
-				args, err := s.precompile.Unpack(bls.MethodAggregatePubkeys, data)
+				args, err := s.precompile.Unpack(bls.MethodAggregatePubKeys, data)
 				s.Require().NoError(err, "failed to unpack output")
 				s.Require().Len(args, 1)
 				aggPubkey, ok := args[0].([]byte)

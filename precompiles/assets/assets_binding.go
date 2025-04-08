@@ -177,7 +177,6 @@ func (_Assets *AssetsTransactorRaw) Transact(opts *bind.TransactOpts, method str
 func (_Assets *AssetsCaller) GetClientChains(opts *bind.CallOpts) (bool, []uint32, error) {
 	var out []interface{}
 	err := _Assets.contract.Call(opts, &out, "getClientChains")
-
 	if err != nil {
 		return *new(bool), *new([]uint32), err
 	}
@@ -186,7 +185,6 @@ func (_Assets *AssetsCaller) GetClientChains(opts *bind.CallOpts) (bool, []uint3
 	out1 := *abi.ConvertType(out[1], new([]uint32)).(*[]uint32)
 
 	return out0, out1, err
-
 }
 
 // GetClientChains is a free data retrieval call binding the contract method 0x41a3745b.
@@ -209,7 +207,8 @@ func (_Assets *AssetsCallerSession) GetClientChains() (bool, []uint32, error) {
 func (_Assets *AssetsCaller) IsRegisteredClientChain(opts *bind.CallOpts, clientChainID uint32) (struct {
 	Success      bool
 	IsRegistered bool
-}, error) {
+}, error,
+) {
 	var out []interface{}
 	err := _Assets.contract.Call(opts, &out, "isRegisteredClientChain", clientChainID)
 
@@ -225,7 +224,6 @@ func (_Assets *AssetsCaller) IsRegisteredClientChain(opts *bind.CallOpts, client
 	outstruct.IsRegistered = *abi.ConvertType(out[1], new(bool)).(*bool)
 
 	return *outstruct, err
-
 }
 
 // IsRegisteredClientChain is a free data retrieval call binding the contract method 0x6b67d7f7.
@@ -234,7 +232,8 @@ func (_Assets *AssetsCaller) IsRegisteredClientChain(opts *bind.CallOpts, client
 func (_Assets *AssetsSession) IsRegisteredClientChain(clientChainID uint32) (struct {
 	Success      bool
 	IsRegistered bool
-}, error) {
+}, error,
+) {
 	return _Assets.Contract.IsRegisteredClientChain(&_Assets.CallOpts, clientChainID)
 }
 
@@ -244,7 +243,8 @@ func (_Assets *AssetsSession) IsRegisteredClientChain(clientChainID uint32) (str
 func (_Assets *AssetsCallerSession) IsRegisteredClientChain(clientChainID uint32) (struct {
 	Success      bool
 	IsRegistered bool
-}, error) {
+}, error,
+) {
 	return _Assets.Contract.IsRegisteredClientChain(&_Assets.CallOpts, clientChainID)
 }
 
