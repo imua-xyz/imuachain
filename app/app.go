@@ -49,10 +49,6 @@ import (
 
 	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 
-	"github.com/imua-xyz/imuachain/x/reward"
-	rewardKeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
-	rewardTypes "github.com/imua-xyz/imuachain/x/reward/types"
-
 	// increases or decreases block gas limit based on usage
 	"github.com/evmos/evmos/v16/x/feemarket"
 	feemarketkeeper "github.com/evmos/evmos/v16/x/feemarket/keeper"
@@ -265,7 +261,6 @@ var (
 		assets.AppModuleBasic{},
 		operator.AppModuleBasic{},
 		delegation.AppModuleBasic{},
-		reward.AppModuleBasic{},
 		imslash.AppModuleBasic{},
 		avs.AppModuleBasic{},
 		oracle.AppModuleBasic{},
@@ -349,7 +344,6 @@ type ImuachainApp struct {
 	// imua assets module keepers
 	AssetsKeeper     assetsKeeper.Keeper
 	DelegationKeeper delegationKeeper.Keeper
-	RewardKeeper     rewardKeeper.Keeper
 	OperatorKeeper   operatorKeeper.Keeper
 	ImSlashKeeper    slashKeeper.Keeper
 	AVSManagerKeeper avsManagerKeeper.Keeper
@@ -435,7 +429,6 @@ func NewImuachainApp(
 		// Imuachain module keys
 		assetsTypes.StoreKey,
 		delegationTypes.StoreKey,
-		rewardTypes.StoreKey,
 		imslashtypes.StoreKey,
 		operatorTypes.StoreKey,
 		avsManagerTypes.StoreKey,
@@ -572,11 +565,7 @@ func NewImuachainApp(
 		authAddrString,        // authority to edit params
 	)
 
-	// these two modules aren't finalized yet.
-	app.RewardKeeper = rewardKeeper.NewKeeper(
-		appCodec, keys[rewardTypes.StoreKey], app.AssetsKeeper,
-		app.AVSManagerKeeper, authAddrString,
-	)
+	// this modules aren't finalized yet.
 	app.ImSlashKeeper = slashKeeper.NewKeeper(
 		appCodec, keys[imslashtypes.StoreKey], app.AssetsKeeper, authAddrString,
 	)
@@ -832,7 +821,6 @@ func NewImuachainApp(
 			app.DelegationKeeper,
 			app.AssetsKeeper,
 			app.ImSlashKeeper,
-			app.RewardKeeper,
 			app.AVSManagerKeeper,
 		),
 	)
@@ -914,7 +902,6 @@ func NewImuachainApp(
 		assets.NewAppModule(appCodec, app.AssetsKeeper),
 		operator.NewAppModule(appCodec, app.OperatorKeeper),
 		delegation.NewAppModule(appCodec, app.DelegationKeeper),
-		reward.NewAppModule(appCodec, app.RewardKeeper),
 		imslash.NewAppModule(appCodec, app.ImSlashKeeper),
 		avs.NewAppModule(appCodec, app.AVSManagerKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
@@ -955,7 +942,6 @@ func NewImuachainApp(
 		assetsTypes.ModuleName,
 		operatorTypes.ModuleName,
 		delegationTypes.ModuleName,
-		rewardTypes.ModuleName,
 		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
@@ -989,7 +975,6 @@ func NewImuachainApp(
 		imminttypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		assetsTypes.ModuleName,
-		rewardTypes.ModuleName,
 		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
@@ -1032,7 +1017,6 @@ func NewImuachainApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		upgradetypes.ModuleName, // no-op since we don't call SetInitVersionMap
-		rewardTypes.ModuleName,  // not fully implemented yet
 		imslashtypes.ModuleName, // not fully implemented yet
 		distrtypes.ModuleName,   // must be after the epoch
 		// must be the last module after others have been set up, so that it can check
@@ -1126,7 +1110,6 @@ func (app *ImuachainApp) setAnteHandler(txConfig client.TxConfig, maxGasWanted u
 		ExtensionOptionChecker: evmostypes.HasDynamicFeeExtensionOption,
 		StakingKeeper:          app.StakingKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
-		DistributionKeeper:     app.RewardKeeper,
 		IBCKeeper:              app.IBCKeeper,
 		SignModeHandler:        txConfig.SignModeHandler(),
 		SigGasConsumer:         ante.SigVerificationGasConsumer,

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	feedistribution "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 	"math/big"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -16,7 +17,6 @@ import (
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
 	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
-	rewardkeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
 )
 
 var _ vm.PrecompiledContract = &Precompile{}
@@ -29,15 +29,15 @@ var f embed.FS
 // Precompile defines the precompiled contract for reward.
 type Precompile struct {
 	cmn.Precompile
-	assetsKeeper assetskeeper.Keeper
-	rewardKeeper rewardkeeper.Keeper
+	assetsKeeper       assetskeeper.Keeper
+	distributionKeeper feedistribution.Keeper
 }
 
 // NewPrecompile creates a new reward Precompile instance as a
 // PrecompiledContract interface.
 func NewPrecompile(
 	stakingStateKeeper assetskeeper.Keeper,
-	rewardKeeper rewardkeeper.Keeper,
+	distributionKeeper feedistribution.Keeper,
 	authzKeeper authzkeeper.Keeper,
 ) (*Precompile, error) {
 	abiBz, err := f.ReadFile("abi.json")
@@ -59,8 +59,8 @@ func NewPrecompile(
 			ApprovalExpiration:   cmn.DefaultExpirationDuration, // should be configurable in the future.
 			Addr:                 common.HexToAddress("0x0000000000000000000000000000000000000806"),
 		},
-		rewardKeeper: rewardKeeper,
-		assetsKeeper: stakingStateKeeper,
+		distributionKeeper: distributionKeeper,
+		assetsKeeper:       stakingStateKeeper,
 	}, nil
 }
 

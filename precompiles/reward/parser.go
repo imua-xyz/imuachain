@@ -10,7 +10,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
-	"github.com/imua-xyz/imuachain/x/reward/keeper"
 )
 
 func (p Precompile) GetRewardParamsFromInputs(ctx sdk.Context, args []interface{}) (*keeper.RewardParams, error) {

@@ -121,6 +121,9 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 }
 
 // WithdrawOperatorCommission : withdraw operator commission
+// It's same as WithdrawStakerRewards, it will also be exposed via precompile.
+// So the operators will use their evm addresses to withdraw the commission
+// through an evm transaction.
 func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 	amount sdkmath.Int, operator, imuaReceiptAddr sdk.AccAddress) (sdkmath.Int, sdkmath.Int, error) {
 	withdrawAmountPerAVS := amount
