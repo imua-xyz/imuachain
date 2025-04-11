@@ -232,6 +232,7 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 	}
 
 	amountConverted, err := k.convertDecimal(ctx, assetID, amount, feederID, true)
+
 	if err != nil {
 		return err
 	}
@@ -376,7 +377,7 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance uint64, 
 		return
 	}
 
-	if action == types.Action_ACTION_DEPOSIT && len(validator) != 1 {
+	if action == types.Action_ACTION_DEPOSIT && len(validator) == 0 {
 		err = fmt.Errorf("deposit should have one validator, but got %d", len(validator))
 		return
 	}

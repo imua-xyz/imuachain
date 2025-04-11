@@ -193,6 +193,7 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 				s.Equal(types.BalanceInfo{
 					Block:   1,
 					RoundID: 0,
+					Index:   1,
 					Change:  types.Action_ACTION_DEPOSIT,
 					Balance: 32,
 				}, *stakerInfo.BalanceList[0])

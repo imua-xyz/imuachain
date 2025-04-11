@@ -114,19 +114,9 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "length not match for stakerInfosAssets and stakerListAssets",
 			genState: &types.GenesisState{
-				StakerListAssets: []types.StakerListAssets{
-					{
-						AssetId:    "0xasset1",
-						StakerList: &types.StakerList{},
-					},
-					{
-						AssetId:    "0xasset2",
-						StakerList: &types.StakerList{},
-					},
-				},
 				StakerInfosAssets: []types.StakerInfosAssets{
 					{
-						AssetId:     "0xasset1",
+						ChainId:     101,
 						StakerInfos: []*types.StakerInfo{},
 					},
 				},
@@ -136,23 +126,13 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "assetIds not match for stakerInfosAssets and stakerListAssets",
 			genState: &types.GenesisState{
-				StakerListAssets: []types.StakerListAssets{
-					{
-						AssetId:    "0xasset1",
-						StakerList: &types.StakerList{},
-					},
-					{
-						AssetId:    "0xasset2",
-						StakerList: &types.StakerList{},
-					},
-				},
 				StakerInfosAssets: []types.StakerInfosAssets{
 					{
-						AssetId:     "0xasset1",
+						ChainId:     101,
 						StakerInfos: []*types.StakerInfo{},
 					},
 					{
-						AssetId:     "0xasset3",
+						ChainId:     107,
 						StakerInfos: []*types.StakerInfo{},
 					},
 				},
@@ -162,23 +142,13 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid",
 			genState: &types.GenesisState{
-				StakerListAssets: []types.StakerListAssets{
-					{
-						AssetId:    "0xasset1",
-						StakerList: &types.StakerList{},
-					},
-					{
-						AssetId:    "0xasset2",
-						StakerList: &types.StakerList{},
-					},
-				},
 				StakerInfosAssets: []types.StakerInfosAssets{
 					{
-						AssetId:     "0xasset1",
+						ChainId:     101,
 						StakerInfos: []*types.StakerInfo{},
 					},
 					{
-						AssetId:     "0xasset2",
+						ChainId:     105,
 						StakerInfos: []*types.StakerInfo{},
 					},
 				},
@@ -188,24 +158,9 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "stakerAddr not matched for stakerInfosAsset and stakerListAsset",
 			genState: &types.GenesisState{
-				StakerListAssets: []types.StakerListAssets{
-					{
-						AssetId: "0xasset1",
-						StakerList: &types.StakerList{
-							StakerAddrs: []string{
-								"staker_01",
-								"staker_02",
-							},
-						},
-					},
-					{
-						AssetId:    "0xasset2",
-						StakerList: &types.StakerList{},
-					},
-				},
 				StakerInfosAssets: []types.StakerInfosAssets{
 					{
-						AssetId: "0xasset1",
+						ChainId: 101,
 						StakerInfos: []*types.StakerInfo{
 							{
 								StakerIndex: 0,
@@ -218,7 +173,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						AssetId:     "0xasset2",
+						ChainId:     105,
 						StakerInfos: []*types.StakerInfo{},
 					},
 				},
@@ -228,24 +183,9 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "stakerIndex not matched for stakerInfosAsset and stakerListAsset",
 			genState: &types.GenesisState{
-				StakerListAssets: []types.StakerListAssets{
-					{
-						AssetId: "0xasset1",
-						StakerList: &types.StakerList{
-							StakerAddrs: []string{
-								"staker_01",
-								"staker_02",
-							},
-						},
-					},
-					{
-						AssetId:    "0xasset2",
-						StakerList: &types.StakerList{},
-					},
-				},
 				StakerInfosAssets: []types.StakerInfosAssets{
 					{
-						AssetId: "0xasset1",
+						ChainId: 101,
 						StakerInfos: []*types.StakerInfo{
 							{
 								StakerIndex: 0,
@@ -258,7 +198,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						AssetId:     "0xasset2",
+						ChainId:     105,
 						StakerInfos: []*types.StakerInfo{},
 					},
 				},
@@ -268,24 +208,9 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "valid",
 			genState: &types.GenesisState{
-				StakerListAssets: []types.StakerListAssets{
-					{
-						AssetId: "0xasset1",
-						StakerList: &types.StakerList{
-							StakerAddrs: []string{
-								"staker_01",
-								"staker_02",
-							},
-						},
-					},
-					{
-						AssetId:    "0xasset2",
-						StakerList: &types.StakerList{},
-					},
-				},
 				StakerInfosAssets: []types.StakerInfosAssets{
 					{
-						AssetId: "0xasset1",
+						ChainId: 101,
 						StakerInfos: []*types.StakerInfo{
 							{
 								StakerIndex: 0,
@@ -298,7 +223,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 					{
-						AssetId:     "0xasset2",
+						ChainId:     105,
 						StakerInfos: []*types.StakerInfo{},
 					},
 				},
