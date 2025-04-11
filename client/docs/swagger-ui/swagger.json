@@ -20306,6 +20306,13 @@
             "type": "string"
           },
           {
+            "name": "balances_all",
+            "description": "balances_all is the flag to indicate whether all balances are requested.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
             "name": "pagination.key",
             "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
             "in": "query",
@@ -20373,7 +20380,7 @@
                       "items": {
                         "type": "string"
                       },
-                      "title": "staker's address"
+                      "title": "list of staker's address"
                     }
                   }
                 }
@@ -43163,7 +43170,7 @@
               "items": {
                 "type": "string"
               },
-              "title": "staker's address"
+              "title": "list of staker's address"
             }
           }
         }
@@ -43703,10 +43710,10 @@
           "items": {
             "type": "string"
           },
-          "title": "staker's address"
+          "title": "list of staker's address"
         }
       },
-      "title": "StakerList tells which stakers are active for one specific native-restaking asset"
+      "title": "StakerList defines the list of stakers"
     },
     "imuachain.oracle.v1.Token": {
       "type": "object",
