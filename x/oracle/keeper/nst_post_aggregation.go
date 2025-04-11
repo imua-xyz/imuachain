@@ -384,7 +384,7 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance uint64, 
 
 	stakerInfo := k.GetStakerInfo(ctx, chainID, stakerAddr)
 	if action != types.Action_ACTION_DEPOSIT && (stakerInfo.StakerAddr == "" || len(stakerInfo.BalanceList) == 0) {
-		err = fmt.Errorf("staker or balanceList is not found", "stakerAddr is empty: %t, balanceList is empty: %t, action: %s",
+		err = fmt.Errorf("staker or balanceList is not found, stakerAddr is empty: %t, balanceList is empty: %t, action: %s",
 			stakerInfo.StakerAddr == "", len(stakerInfo.BalanceList) == 0, action)
 		return
 	}
