@@ -3,7 +3,6 @@ package assets
 import (
 	"errors"
 	"fmt"
-	"github.com/imua-xyz/imuachain/utils"
 	"regexp"
 	"strings"
 
@@ -232,7 +231,7 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 }
 
 func (p Precompile) UpdateTokenFromInputs(ctx sdk.Context, args []interface{}) (clientChainID uint32, hexAssetAddr string, metadata string, err error) {
-	ta := utils.NewTypedArgs(args)
+	ta := NewTypedArgs(args)
 	if err := ta.RequireLen(len(p.ABI.Methods[MethodUpdateToken].Inputs)); err != nil {
 		return 0, "", "", err
 	}
