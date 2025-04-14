@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	precompilecommon "github.com/imua-xyz/imuachain/precompiles/common"
 	feedistribution "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 	"math/big"
 
@@ -87,32 +88,51 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 
 	cc := ctx
 	writeFunc := func() {}
+	// todo: It should be removed when rebasing onto the PR that fixed the EVM issue.
 	if p.IsTransaction(method.Name) {
 		cc, writeFunc = ctx.CacheContext()
 	}
-
-	var logError error
-
-	if method.Name == MethodReward {
-		bz, err = p.Reward(cc, evm.Origin, contract, stateDB, method, args)
-		if err != nil {
-			logError = err
-			bz, err = method.Outputs.Pack(false, new(big.Int))
-		}
-	} else {
-		// should never happen
-		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
+	var precompileCommonFunc precompilecommon.PrecompileCommonTxFunc
+	switch method.Name {
+	case MethodClaimReward:
+		precompileCommonFunc = p.ClaimReward
+	case MethodWithdrawReward:
+		precompileCommonFunc = p.WithdrawReward
+	case MethodWithdrawIMUATokenReward:
+		precompileCommonFunc = p.WithdrawIMUATokenReward
+	case MethodWithdrawCommission:
+		precompileCommonFunc = p.WithdrawCommission
+	case MethodWithdrawIMUATokenCommission:
+		precompileCommonFunc = p.WithdrawIMUATokenCommission
+	case MethodRegisterRewardToken:
+		precompileCommonFunc = p.RegisterRewardToken
+	case MethodUpdateRewardToken:
+		precompileCommonFunc = p.UpdateRewardToken
+	case MethodSetAVSRewardDistribution:
+		precompileCommonFunc = p.SetAVSRewardDistribution
+	case MethodSetAVSEpochReward:
+		precompileCommonFunc = p.SetAVSEpochReward
+	case MethodSetOperatorRewardProportions:
+		precompileCommonFunc = p.SetOperatorRewardProportions
+	case MethodSetAVSRewardParams:
+		precompileCommonFunc = p.SetAVSRewardParams
 	}
-
-	if logError != nil {
-		ctx.Logger().Error(
-			"return error when calling reward precompile",
-			"module", "reward precompile",
-			"method", method.Name,
-			"err", logError,
-		)
+	bz, err = precompileCommonFunc(cc, evm.Origin, contract, stateDB, method, args)
+	if err != nil {
+		ctx.Logger().Error("internal error when calling reward precompile", "module", "reward precompile", "method", method.Name, "err", err)
+		// for failed cases we expect it returns bool value instead of error
+		// this is a workaround because the error returned by precompile can not be caught in EVM
+		// see https://github.com/imua-xyz/imuachain/issues/70
+		// TODO: The pack value should be different by the method name, but it's fine currently.
+		// Because it should be removed when rebasing onto the PR that fixed the EVM issue.
+		bz, err = method.Outputs.Pack(false, new(big.Int))
 	} else {
 		writeFunc()
+	}
+
+	if err != nil {
+		ctx.Logger().Error("return error when calling reward precompile", "module", "reward precompile", "method", method.Name, "err", err)
+		return nil, err
 	}
 
 	cost := ctx.GasMeter().GasConsumed() - initialGas
@@ -127,7 +147,12 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 // IsTransaction checks if the given methodName corresponds to a transaction or query.
 func (Precompile) IsTransaction(methodName string) bool {
 	switch methodName {
-	case MethodReward:
+	case MethodClaimReward, MethodWithdrawReward,
+		MethodWithdrawIMUATokenReward, MethodWithdrawCommission,
+		MethodWithdrawIMUATokenCommission,
+		MethodRegisterRewardToken, MethodUpdateRewardToken,
+		MethodSetAVSRewardDistribution, MethodSetAVSEpochReward,
+		MethodSetOperatorRewardProportions, MethodSetAVSRewardParams:
 		return true
 	default:
 		// this panic is safe to perform because the `init` function

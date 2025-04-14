@@ -20,8 +20,8 @@ import (
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	avskeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+	distrkeeper "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 	imuaslashkeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
-	rewardkeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
 	"golang.org/x/exp/maps"
 )
 
@@ -34,7 +34,7 @@ func AvailablePrecompiles(
 	delegationKeeper delegationkeeper.Keeper,
 	assetskeeper assetskeeper.Keeper,
 	_ imuaslashkeeper.Keeper,
-	rewardKeeper rewardkeeper.Keeper,
+	distributionKeeper distrkeeper.Keeper,
 	avsManagerKeeper avskeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {
 	// Clone the mapping from the latest EVM fork.
@@ -78,7 +78,7 @@ func AvailablePrecompiles(
 	*/
 	rewardPrecompile, err := rewardprecompile.NewPrecompile(
 		assetskeeper,
-		rewardKeeper,
+		distributionKeeper,
 		authzKeeper,
 	)
 	if err != nil {

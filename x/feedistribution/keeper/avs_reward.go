@@ -60,7 +60,7 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 	for _, operator := range distribution.OperatorRewardProportions {
 		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
-		if !k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
+		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
 		}
 	}
@@ -172,9 +172,9 @@ func (k Keeper) DeleteAVSRewardDistribution(ctx sdk.Context, avsAddr string) err
 	return nil
 }
 
-func (k Keeper) SetAVSRewardParam(ctx sdk.Context, avsAddr string, param *feedistributiontypes.AVSRewardParam) error {
+func (k Keeper) SetAVSRewardParam(ctx sdk.Context, avsAddr string, param feedistributiontypes.AVSRewardParam) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardParam)
-	bz := k.cdc.MustMarshal(param)
+	bz := k.cdc.MustMarshal(&param)
 	store.Set(common.HexToAddress(avsAddr).Bytes(), bz)
 
 	// emit event for indexers

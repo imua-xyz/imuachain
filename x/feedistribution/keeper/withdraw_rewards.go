@@ -10,6 +10,10 @@ import (
 
 func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, withdrawAmount sdkmath.Int,
 	imuaReceiptAddr sdk.AccAddress, rewards sdk.DecCoins) (sdkmath.Int, sdkmath.Int, error) {
+	if withdrawAmount.IsNil() || !withdrawAmount.IsPositive() {
+		return sdkmath.Int{}, sdkmath.Int{}, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
+			"generalWithdrawFromAVS, the withdraw amount is nil or not positive, amount:%s", withdrawAmount)
+	}
 	// check and calculate the actual amount withdrawable for an AVS
 	rewardAssetInfo, err := k.GetAVSRewardAssetInfo(ctx, avs, assetID)
 	if err != nil {

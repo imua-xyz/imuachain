@@ -68,7 +68,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 	assetStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
 	symbolMap := make(map[string]interface{}, 0)
-	// check that the AVS is registered
+	// check if the AVS is registered
 	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
 		return types.ErrInvalidRewardAssetParameter.Wrapf("AVS not found %s", avsAddr)
 	}

@@ -3,7 +3,6 @@ package assets
 import (
 	"errors"
 	"fmt"
-	"github.com/imua-xyz/imuachain/utils"
 	"regexp"
 	"strings"
 
@@ -164,6 +163,10 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 		return nil, nil, err
 	}
 
+	if decimal > assetstypes.MaxDecimal {
+		return nil, nil, fmt.Errorf(imuacmn.ErrInvalidDecimal, decimal, assetstypes.MaxDecimal)
+	}
+
 	name, err := ta.GetRequiredString(3) // Must not be empty
 	if err != nil {
 		return nil, nil, err
@@ -228,7 +231,7 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 }
 
 func (p Precompile) UpdateTokenFromInputs(ctx sdk.Context, args []interface{}) (clientChainID uint32, hexAssetAddr string, metadata string, err error) {
-	ta := utils.NewTypedArgs(args)
+	ta := NewTypedArgs(args)
 	if err := ta.RequireLen(len(p.ABI.Methods[MethodUpdateToken].Inputs)); err != nil {
 		return 0, "", "", err
 	}

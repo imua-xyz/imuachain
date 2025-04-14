@@ -821,6 +821,7 @@ func NewImuachainApp(
 			app.DelegationKeeper,
 			app.AssetsKeeper,
 			app.ImSlashKeeper,
+			app.DistrKeeper,
 			app.AVSManagerKeeper,
 		),
 	)
