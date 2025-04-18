@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	"github.com/imua-xyz/imuachain/testutil"
 	"time"
+
+	"github.com/imua-xyz/imuachain/testutil"
 
 	"github.com/imua-xyz/imuachain/x/epochs/types"
 

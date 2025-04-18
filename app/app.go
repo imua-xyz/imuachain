@@ -1111,6 +1111,7 @@ func (app *ImuachainApp) setAnteHandler(txConfig client.TxConfig, maxGasWanted u
 		ExtensionOptionChecker: evmostypes.HasDynamicFeeExtensionOption,
 		StakingKeeper:          app.StakingKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
+		DistributionKeeper:     app.DistrKeeper,
 		IBCKeeper:              app.IBCKeeper,
 		SignModeHandler:        txConfig.SignModeHandler(),
 		SigGasConsumer:         ante.SigVerificationGasConsumer,

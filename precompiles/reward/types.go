@@ -1,13 +1,15 @@
 package reward
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
+	"math/big"
+
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/utils"
 	feedistribution "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
-	"math/big"
 )
 
 type ClaimRewardArgs struct {
@@ -44,7 +46,7 @@ type WithdrawIMUATokenCommissionArgs struct {
 }
 
 type RegisterRewardTokenArgs struct {
-	ClientChainId uint32 `abi:"clientChainId"`
+	ClientChainID uint32 `abi:"clientChainID"`
 	Token         []byte `abi:"token"`
 	Decimals      uint8  `abi:"decimals"`
 	Name          string `abi:"name"`
@@ -53,7 +55,7 @@ type RegisterRewardTokenArgs struct {
 }
 
 type UpdateRewardTokenArgs struct {
-	ClientChainId uint32 `abi:"clientChainId"`
+	ClientChainID uint32 `abi:"clientChainID"`
 	Token         []byte `abi:"token"`
 	MetaData      string `abi:"metaData"`
 }

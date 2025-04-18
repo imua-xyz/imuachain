@@ -123,7 +123,7 @@ interface IReward {
     ///
     /// TRANSACTIONS
     /// @dev register a token as the reward asset for an AVS.
-    /// @param clientChainId is the identifier of the token's home chain (LZ or otherwise)
+    /// @param clientChainID is the identifier of the token's home chain (LZ or otherwise)
     /// @param token is the address of the token on the home chain
     /// @param decimals is the number of decimals of the token
     /// @param name is the name of the token
@@ -135,7 +135,7 @@ interface IReward {
     /// This design ensures proper authorization, as only the AVS address is allowed
     /// to invoke these transaction interfaces.
     function registerRewardToken(
-        uint32 clientChainId,
+        uint32 clientChainID,
         bytes calldata token,
         uint8 decimals,
         string calldata name,
@@ -144,12 +144,12 @@ interface IReward {
     ) external returns (bool success);
 
     /// @dev update the metaInfo for the reward token.
-    /// @param clientChainId is the identifier of the token's home chain (LZ or otherwise)
+    /// @param clientChainID is the identifier of the token's home chain (LZ or otherwise)
     /// @param token is the address of the token on the home chain
     /// @param metaData is the arbitrary metadata of the token
     /// @return success if the token update is successful
     /// @dev The token must previously be registered before updating
-    function updateRewardToken(uint32 clientChainId, bytes calldata token, string calldata metaData)
+    function updateRewardToken(uint32 clientChainID, bytes calldata token, string calldata metaData)
     external returns (bool success);
 
     /// @dev set the reward distribution information for an AVS

@@ -1,8 +1,9 @@
 package assets
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 

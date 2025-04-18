@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -223,38 +224,6 @@ func (k Keeper) UpdateOperatorAccumulatedCommission(ctx sdk.Context, operator, a
 	err = k.SetOperatorAccumulatedCommission(ctx, operator, avsAddr, commission)
 	if err != nil {
 		return err
-	}
-	return nil
-}
-
-// IterateOperatorAccumulatedCommissions : iterates the accumulated commissions for an operator
-// and does some external operations.
-// `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
-func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator string, isUpdate bool,
-	opFunc func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, error),
-) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorAccumulatedCommission)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(operator))
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
-		if err != nil {
-			return err
-		}
-		var accumulatedCommissions feedistributiontypes.OperatorAccumulatedCommission
-		k.cdc.MustUnmarshal(iterator.Value(), &accumulatedCommissions)
-		isBreak, err := opFunc(keys[1], &accumulatedCommissions)
-		if err != nil {
-			return err
-		}
-		if isBreak {
-			break
-		}
-		if isUpdate {
-			bz := k.cdc.MustMarshal(&accumulatedCommissions)
-			store.Set(iterator.Key(), bz)
-		}
 	}
 	return nil
 }
@@ -627,32 +596,99 @@ func (k Keeper) UpdateStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAdd
 	return nil
 }
 
-// IterateStakerOutstandingRewards : iterates the outstanding rewards for a staker and does some external operations.
-// `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
-func (k Keeper) IterateStakerOutstandingRewards(ctx sdk.Context, stakerID string, isUpdate bool,
-	opFunc func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, error)) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerOutstandingRewards)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(stakerID))
+func GenericIterateStoreWithUpdate[T any](
+	ctx sdk.Context,
+	storeKey storetypes.StoreKey,
+	keyPrefix []byte,
+	iteratePrefix []byte,
+	isUpdate bool,
+	keyNumber int,
+	unmarshal func([]byte) (T, error),
+	marshal func(T) []byte,
+	opFunc func(keys []string, value T) (bool, error),
+) error {
+	store := prefix.NewStore(ctx.KVStore(storeKey), keyPrefix)
+	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), keyNumber)
 		if err != nil {
 			return err
 		}
-		var outstandingRewards feedistributiontypes.StakerOutstandingRewards
-		k.cdc.MustUnmarshal(iterator.Value(), &outstandingRewards)
-		isBreak, err := opFunc(keys[1], &outstandingRewards)
+
+		value, err := unmarshal(iterator.Value())
+		if err != nil {
+			return err
+		}
+
+		isBreak, err := opFunc(keys, value)
 		if err != nil {
 			return err
 		}
 		if isBreak {
 			break
 		}
+
 		if isUpdate {
-			bz := k.cdc.MustMarshal(&outstandingRewards)
-			store.Set(iterator.Key(), bz)
+			store.Set(iterator.Key(), marshal(value))
 		}
 	}
 	return nil
+}
+
+// IterateStakerOutstandingRewards : iterates the outstanding rewards for a staker and does some external operations.
+// `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
+func (k Keeper) IterateStakerOutstandingRewards(
+	ctx sdk.Context,
+	stakerID string,
+	isUpdate bool,
+	opFunc func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, error),
+) error {
+	return GenericIterateStoreWithUpdate[*feedistributiontypes.StakerOutstandingRewards](
+		ctx,
+		k.storeKey,
+		feedistributiontypes.KeyPrefixStakerOutstandingRewards,
+		[]byte(stakerID),
+		isUpdate,
+		2,
+		func(bz []byte) (*feedistributiontypes.StakerOutstandingRewards, error) {
+			var r feedistributiontypes.StakerOutstandingRewards
+			k.cdc.MustUnmarshal(bz, &r)
+			return &r, nil
+		},
+		func(r *feedistributiontypes.StakerOutstandingRewards) []byte {
+			return k.cdc.MustMarshal(r)
+		},
+		func(keys []string, value *feedistributiontypes.StakerOutstandingRewards) (bool, error) {
+			return opFunc(keys[1], value)
+		},
+	)
+}
+
+// IterateOperatorAccumulatedCommissions : iterates the accumulated commissions for an operator
+// and does some external operations.
+// `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
+func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator string, isUpdate bool,
+	opFunc func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, error),
+) error {
+	return GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorAccumulatedCommission](
+		ctx,
+		k.storeKey,
+		feedistributiontypes.KeyPrefixOperatorAccumulatedCommission,
+		[]byte(operator),
+		isUpdate,
+		2,
+		func(bz []byte) (*feedistributiontypes.OperatorAccumulatedCommission, error) {
+			var c feedistributiontypes.OperatorAccumulatedCommission
+			k.cdc.MustUnmarshal(bz, &c)
+			return &c, nil
+		},
+		func(v *feedistributiontypes.OperatorAccumulatedCommission) []byte {
+			return k.cdc.MustMarshal(v)
+		},
+		func(keys []string, value *feedistributiontypes.OperatorAccumulatedCommission) (bool, error) {
+			return opFunc(keys[1], value)
+		},
+	)
 }

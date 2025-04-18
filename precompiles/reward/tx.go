@@ -2,6 +2,9 @@ package reward
 
 import (
 	"fmt"
+	"math/big"
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -12,8 +15,6 @@ import (
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
-	"math/big"
-	"strings"
 )
 
 const (
@@ -33,19 +34,19 @@ const (
 	MethodSetAVSRewardParams           = "setAVSRewardParams"
 )
 
-func addressToID(ctx sdk.Context, assetKeeper assetskeeper.Keeper, chainLzID uint32, address []byte) (string, error) {
+func addressToID(ctx sdk.Context, assetKeeper assetskeeper.Keeper, chainLzID uint32, address []byte) ([]byte, string, error) {
 	chainInfo, err := assetKeeper.GetClientChainInfoByIndex(ctx, uint64(chainLzID))
 	if err != nil {
-		return "", err
+		return nil, "", err
 	}
 	if len(address) < int(chainInfo.AddressLength) {
-		return "", fmt.Errorf(imuacmn.ErrInvalidAddrLength, len(address), chainInfo.AddressLength)
+		return nil, "", fmt.Errorf(imuacmn.ErrInvalidAddrLength, len(address), chainInfo.AddressLength)
 	}
 
 	chainLzIDStr := hexutil.EncodeUint64(uint64(chainLzID))
-	ID := strings.Join([]string{hexutil.Encode(address), chainLzIDStr}, utils.DelimiterForID)
+	ID := strings.Join([]string{hexutil.Encode(address[:int(chainInfo.AddressLength)]), chainLzIDStr}, utils.DelimiterForID)
 
-	return ID, nil
+	return address[:int(chainInfo.AddressLength)], ID, nil
 }
 
 func (p Precompile) ClaimReward(
@@ -67,7 +68,7 @@ func (p Precompile) ClaimReward(
 		return nil, fmt.Errorf("error while unpacking args to ClaimRewardArgs struct: %s", err)
 	}
 
-	stakerID, err := addressToID(ctx, p.assetsKeeper, claimRewardArgs.ClientChainLzID, claimRewardArgs.StakerAddress)
+	_, stakerID, err := addressToID(ctx, p.assetsKeeper, claimRewardArgs.ClientChainLzID, claimRewardArgs.StakerAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -99,11 +100,11 @@ func (p Precompile) WithdrawReward(
 	if withdrawRewardArgs.OpAmount == nil || !(withdrawRewardArgs.OpAmount.Cmp(big.NewInt(0)) == 1) {
 		return nil, fmt.Errorf("WithdrawReward: invalid withdraw amount:%v", withdrawRewardArgs.OpAmount)
 	}
-	stakerID, err := addressToID(ctx, p.assetsKeeper, withdrawRewardArgs.ClientChainLzID, withdrawRewardArgs.StakerAddress)
+	_, stakerID, err := addressToID(ctx, p.assetsKeeper, withdrawRewardArgs.ClientChainLzID, withdrawRewardArgs.StakerAddress)
 	if err != nil {
 		return nil, err
 	}
-	rewardAssetID, err := addressToID(ctx, p.assetsKeeper, withdrawRewardArgs.RewardAssetChainLzID, withdrawRewardArgs.AssetAddress)
+	_, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, withdrawRewardArgs.RewardAssetChainLzID, withdrawRewardArgs.AssetAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +145,8 @@ func (p Precompile) WithdrawIMUATokenReward(
 			len(withdrawIMUATokenRewardArgs.ReceiptAddress), common.AddressLength)
 	}
 	receiptAccAddr := sdk.AccAddress(withdrawIMUATokenRewardArgs.ReceiptAddress)
-	stakerID, err := addressToID(ctx, p.assetsKeeper, withdrawIMUATokenRewardArgs.ClientChainLzID, withdrawIMUATokenRewardArgs.StakerAddress)
+	_, stakerID, err := addressToID(ctx, p.assetsKeeper, withdrawIMUATokenRewardArgs.ClientChainLzID,
+		withdrawIMUATokenRewardArgs.StakerAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +185,8 @@ func (p Precompile) WithdrawCommission(
 			len(withdrawCommissionArgs.OperatorAddress), common.AddressLength)
 	}
 	operatorAccAddr := sdk.AccAddress(withdrawCommissionArgs.OperatorAddress)
-	rewardAssetID, err := addressToID(ctx, p.assetsKeeper, withdrawCommissionArgs.RewardAssetChainLzID, withdrawCommissionArgs.AssetAddress)
+	_, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, withdrawCommissionArgs.RewardAssetChainLzID,
+		withdrawCommissionArgs.AssetAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +261,7 @@ func (p Precompile) RegisterRewardToken(
 	}
 	avsAddr := strings.ToLower(contract.CallerAddress.String())
 	// check the input args
-	_, err := addressToID(ctx, p.assetsKeeper, registerRewardTokenArgs.ClientChainId, registerRewardTokenArgs.Token)
+	rewardAssetAddr, _, err := addressToID(ctx, p.assetsKeeper, registerRewardTokenArgs.ClientChainID, registerRewardTokenArgs.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -276,9 +279,9 @@ func (p Precompile) RegisterRewardToken(
 		{
 			Name:             registerRewardTokenArgs.Name,
 			Symbol:           registerRewardTokenArgs.Symbol,
-			Address:          hexutil.Encode(registerRewardTokenArgs.Token[:]),
+			Address:          hexutil.Encode(rewardAssetAddr),
 			Decimals:         uint32(registerRewardTokenArgs.Decimals),
-			LayerZeroChainID: uint64(registerRewardTokenArgs.ClientChainId),
+			LayerZeroChainID: uint64(registerRewardTokenArgs.ClientChainID),
 			MetaInfo:         registerRewardTokenArgs.MetaData,
 		},
 	})
@@ -306,7 +309,7 @@ func (p Precompile) UpdateRewardToken(
 		return nil, fmt.Errorf(imuacmn.ErrInvalidMetaInfoLength, updateRewardTokenArgs.MetaData,
 			len(updateRewardTokenArgs.MetaData), assetstype.MaxChainTokenMetaInfoLength)
 	}
-	assetID, err := addressToID(ctx, p.assetsKeeper, updateRewardTokenArgs.ClientChainId, updateRewardTokenArgs.Token)
+	_, assetID, err := addressToID(ctx, p.assetsKeeper, updateRewardTokenArgs.ClientChainID, updateRewardTokenArgs.Token)
 	if err != nil {
 		return nil, err
 	}
