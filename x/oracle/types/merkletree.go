@@ -240,10 +240,8 @@ func (m *MerkleTree) VerifyAndCacheOrdered(targetIndex uint32, targetPiece []byt
 		}
 
 		if node.left != nil {
-
 			hash = innerHash(pairHash, hash)
 		} else {
-
 			hash = innerHash(hash, pairHash)
 		}
 		if node.parent.hash != nil {
