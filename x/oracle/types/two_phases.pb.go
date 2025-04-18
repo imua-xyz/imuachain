@@ -22,7 +22,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// Nonce is a message that contains a nonce for a feeder
+// ValidatorIndex represents the next index to be used for a validator of a specified feeder
 type ValidatorIndex struct {
 	// FeederID is the ID of the feeder that corresponding to the nonce
 	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
@@ -77,7 +77,7 @@ func (m *ValidatorIndex) GetNextIndex() uint32 {
 	return 0
 }
 
-// ValidatorNonce is a message that contains the nonces for a validator
+// FeederValidatorsIndex stores a list of validator next-indexes for feeders
 type FeederValidatorsIndex struct {
 	// nonces is the list of nonces for the feeders
 	ValidatorIndexList []*ValidatorIndex `protobuf:"bytes,2,rep,name=validator_index_list,json=validatorIndexList,proto3" json:"validator_index_list,omitempty"`
