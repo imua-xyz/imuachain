@@ -88,7 +88,7 @@ func (a *aggregator) RecordMsg(msg *MsgItem) error {
 	return err
 }
 
-// AddMsg records the message in a.v and do aggregation in a.ds
+// AddMsg records the message in a.v and perform aggregation in a.ds
 func (a *aggregator) AddMsg(msg *MsgItem) error {
 	// record into recordsValidators, validation for duplication
 	addedMsg, err := a.v.RecordMsg(msg)
@@ -110,7 +110,7 @@ func (a *aggregator) AddMsg(msg *MsgItem) error {
 	return nil
 }
 
-// TODO: V2: the accumulatedPower should corresponding to all valid validators which provides all sources required by rules(defined in oracle.Params)
+// TODO: V2: the accumulatedPower should correspond to all valid validators which provides all sources required by rules(defined in oracle.Params)
 func (a *aggregator) exceedsThreshold() bool {
 	return a.t.Exceeds(a.v.accumulatedPower)
 }

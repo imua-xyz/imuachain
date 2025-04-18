@@ -40,7 +40,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		return nil, types.ErrPriceProposalFormatInvalid.Wrap(err.Error())
 	}
 
-	// goto rawData process which needs no 'aggragation', we just verify the provided piece with recoreded root which got consensus
+	// goto rawData process which needs no 'aggragation', we just verify the provided piece with recorded root which got consensus
 	if msg.IsPhaseTwo() {
 		cachedRawData, err := ms.ProcessRawData(ctx, msg, ctx.IsCheckTx())
 		if err == nil {

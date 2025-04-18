@@ -230,7 +230,7 @@ func (em *ImuaMempool) getTxByFeederIDPieceIndex(feederID uint64, pieceIndex uin
 
 	if len(piecesCached) > 1 {
 		// we got different tx for the same piece, there must be at least one invalid piece
-		// imua-mempool don't do the verify, we just pick the first one in cache and move it the the end of the list for that pieceIndex
+		// imua-mempool don't do the verify, we just pick the first one in cache and move it to the end of the list for that pieceIndex
 		// we just remove the picked to the list end instead of deleting it since that't the duty of 'Remove'
 		piecesCached = append(piecesCached[1:], piecesCached[0])
 	}

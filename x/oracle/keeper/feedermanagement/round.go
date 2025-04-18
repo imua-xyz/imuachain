@@ -66,7 +66,7 @@ func (r *round) CopyForCheckTx() *round {
 	// flags has been taken care of
 	ret := *r
 	// cache does not need to be copied since it's a readonly interface,
-	// and there's no race condition since abci requests are not executing concurrntly
+	// and there's no race condition since abci requests are not executing concurrently
 	ret.a = ret.a.CopyForCheckTx()
 	ret.m = r.m.GetCopy()
 	ret.cachedProofForBlock = r.cachedProofForBlock.GetCopy()
@@ -115,7 +115,7 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes
 		return nil, nil, fmt.Errorf("failed to get msgItem from proto, error:%w", err)
 	}
 	if !r.IsQuoting() {
-		// record msg for 'handlQuotingMisBehavior'
+		// record msg for 'handleQuotingMisBehavior'
 		err := r.a.RecordMsg(msg)
 		if err == nil {
 			return nil, protoMsg, oracletypes.ErrQuoteRecorded
@@ -158,7 +158,7 @@ func (r *round) PrepareForNextBlock(currentHeight int64) (open bool) {
 		r.closeQuotingWindow()
 		return open
 	}
-	// currentHeight euqls to baseBlock
+	// currentHeight equals baseBlock
 	if currentHeight == r.roundBaseBlock && !r.IsQuoting() {
 		r.openQuotingWindow()
 		open = true
@@ -241,7 +241,7 @@ func (r *round) PerformanceReview(validator string) (miss, malicious bool) {
 	}
 	for _, p := range prices {
 		if p.EqualDS(price) {
-			// duplicated detID had been filtered out, so if an 'euqal' price is found, there will be no 'malicous' price for that detID
+			// duplicated detID has been filtered out, so if an 'equal' price is found, there will be no 'malicious' price for that detID
 			return
 		}
 		if p.DetID == price.DetID {

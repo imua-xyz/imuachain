@@ -64,7 +64,7 @@ func (f *FeederManager) SetNilCaches() {
 	f.cs = nil
 }
 
-// BeginBlock initializes the caches and slashing records, and setup the rounds
+// BeginBlock initializes the caches and slashing records, and set up the rounds
 func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 	// if the cache is nil and we are not in recovery mode, init the caches
 	if f.cs == nil {
@@ -73,7 +73,7 @@ func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 		if err != nil {
 			panic(err)
 		}
-		// init feederManager if failed to recovery, this should only happened on block_height==1
+		// init feederManager if recovery failed, this should only happen on block_height==1
 		if !recovered {
 			f.initCaches(ctx)
 			f.SetParamsUpdated()
@@ -81,7 +81,7 @@ func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
 		}
 		f.initBehaviorRecords(ctx, ctx.BlockHeight())
 		// in recovery mode, snapshot of feederManager is set in the beginblock instead of in the process of replaying endblockInrecovery
-		// TODO: remove this into recovery, and call separately for init mode, that would lead to write updateCheckTx twice, but more cleaar
+		// TODO: remove this into recovery, and call separately for init mode, that would lead to write updateCheckTx twice, but more clear
 		f.updateCheckTx()
 	}
 	return
@@ -196,7 +196,7 @@ func (f *FeederManager) updateBehaviorRecordsForNextBlock(ctx sdk.Context, added
 	}
 }
 
-// praepareRounds prepares the rounds for the next block, and returns the feederIDs of the rounds that are open on next block
+// prepareRounds prepares the rounds for the next block, and returns the feederIDs of the rounds that are open on next block
 func (f *FeederManager) prepareRounds(ctx sdk.Context) []int64 {
 	logger := f.k.Logger(ctx)
 	feederIDs := make([]int64, 0)
@@ -226,7 +226,7 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators
 			f.SetForceSeal()
 		}
 		if paramsOld.IsSlashingResetUpdate(&params) {
-			f.SetResetSlasing()
+			f.SetResetSlashing()
 		}
 		_ = f.cs.AddCache(&params)
 	}
@@ -301,7 +301,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 					if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit); !updated {
 						// this is an 'impossible' case, we should not reach here
 						latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
-						logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID", "feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit, "restul-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
+						logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID", "feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit, "result-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
 					} else {
 						fstr := strconv.FormatInt(feederID, 10)
 						successFeederIDs = append(successFeederIDs, fstr)
@@ -322,7 +322,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 					logger.Error("We currently only support rules under oracle V1", "feederID", r.feederID)
 				}
 			}
-			// keep aggregator for possible 'handlQuotingMisBehavior' at quotingWindowEnd
+			// keep aggregator for possible 'handleQuotingMisBehavior' at quotingWindowEnd
 			r.status = roundStatusClosed
 		} else if r.twoPhases {
 			// check if r is 2-phases and rawData is completed, for 2nd-phase, the status of round must be closed
@@ -330,7 +330,7 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 				if len(r.cachedProofForBlock) > 0 {
 					// #nosec G115
 					f.k.AddNodesToMerkleTree(ctx, uint64(r.feederID), r.cachedProofForBlock)
-					// reset cachedProofForBlock after commit to sate
+					// reset cachedProofForBlock after commit to state
 					r.cachedProofForBlock = nil
 				}
 				if LatestLeafIndex, ok := r.m.LatestLeafIndex(); ok {
@@ -410,7 +410,7 @@ func (f *FeederManager) handleMalicious(ctx sdk.Context, logger log.Logger, vali
 	)
 	consAddr, err := sdk.ConsAddressFromBech32(validator)
 	if err != nil {
-		logger.Error("when do orale_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
+		logger.Error("when performing oracle_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
 	}
 	operator := f.k.ValidatorByConsAddr(ctx, consAddr)
 	if operator != nil && !operator.IsJailed() {
@@ -510,7 +510,7 @@ func (f *FeederManager) handleMissCount(ctx sdk.Context, logger log.Logger, vali
 	if height > minHeight && reportedInfo.MissedRoundsCounter > maxMissed {
 		consAddr, err := sdk.ConsAddressFromBech32(validator)
 		if err != nil {
-			f.k.Logger(ctx).Error("when do orale_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
+			f.k.Logger(ctx).Error("when performing oracle_performance_review, got invalid consAddr string. This should never happen", "validatorStr", validator)
 			return
 		}
 		operator := f.k.ValidatorByConsAddr(ctx, consAddr)
@@ -619,6 +619,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	}
 }
 
+// setCommittableState sets the status of rounds to committable if their quoting window has ended or if forceSeal is set.
 func (f *FeederManager) setCommittableState(ctx sdk.Context) {
 	if f.forceSeal {
 		// safe to range map. update memory state only, the result would be the same in any order
@@ -638,6 +639,7 @@ func (f *FeederManager) setCommittableState(ctx sdk.Context) {
 	}
 }
 
+// updateRoundsParamsAndAddNewRounds updates round parameters and adds new rounds if params have changed.
 func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	logger := f.k.Logger(ctx)
@@ -670,6 +672,7 @@ func (f *FeederManager) updateRoundsParamsAndAddNewRounds(ctx sdk.Context) {
 	}
 }
 
+// removeExpiredRounds removes rounds that have expired based on the current block height.
 func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 	height := ctx.BlockHeight()
 	expiredFeederIDs := make([]int64, 0)
@@ -695,6 +698,7 @@ func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 	}
 }
 
+// updateAndCommitRoundsInRecovery updates and commits rounds during recovery mode.
 func (f *FeederManager) updateAndCommitRoundsInRecovery(ctx sdk.Context) {
 	f.setCommittableState(ctx)
 	f.commitRoundsInRecovery()
@@ -703,6 +707,7 @@ func (f *FeederManager) updateAndCommitRoundsInRecovery(ctx sdk.Context) {
 	f.removeExpiredRounds(ctx)
 }
 
+// updateAndCommitRounds updates and commits rounds during normal operation.
 func (f *FeederManager) updateAndCommitRounds(ctx sdk.Context) {
 	f.setCommittableState(ctx)
 	f.commitRounds(ctx)
@@ -712,6 +717,7 @@ func (f *FeederManager) updateAndCommitRounds(ctx sdk.Context) {
 	f.removeExpiredRounds(ctx)
 }
 
+// ResetFlags resets the update flags for params, validators, forceSeal, and resetSlashing.
 func (f *FeederManager) ResetFlags() {
 	f.paramsUpdated = false
 	f.validatorsUpdated = false
@@ -719,22 +725,27 @@ func (f *FeederManager) ResetFlags() {
 	f.resetSlashing = false
 }
 
+// SetParamsUpdated marks that params have been updated in the current block.
 func (f *FeederManager) SetParamsUpdated() {
 	f.paramsUpdated = true
 }
 
+// SetValidatorsUpdated marks that validators have been updated in the current block.
 func (f *FeederManager) SetValidatorsUpdated() {
 	f.validatorsUpdated = true
 }
 
-func (f *FeederManager) SetResetSlasing() {
+// SetResetSlashing marks that slashing should be reset due to param changes.
+func (f *FeederManager) SetResetSlashing() {
 	f.resetSlashing = true
 }
 
+// SetForceSeal marks that all rounds should be force sealed.
 func (f *FeederManager) SetForceSeal() {
 	f.forceSeal = true
 }
 
+// validateMsg validates a MsgCreatePrice against the current state and round configuration.
 func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreatePrice) (*round, error) {
 	// TODO:(leonz) ? this validation is not suitable for validateBasic, it need state information, but maybe move them into anteHandler ?
 	// nonce, feederID, creator has been verified by anteHandler
@@ -766,24 +777,24 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 					return nil, errors.New("price must not be empty")
 				}
 				if len(p.DetID) == 0 {
-					return nil, errors.New("detID of deteministic price must not be empty")
+					return nil, errors.New("detID of deterministic price must not be empty")
 				}
 				if p.Decimal != decimal {
-					return nil, fmt.Errorf("decimal not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
+					return nil, fmt.Errorf("decimal does not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
 				}
 				seenDetIDs[p.DetID] = struct{}{}
 			}
 		} else {
 			// NOTE: v1 does not actually have this type of sources
 			if l != 1 {
-				return nil, fmt.Errorf("non-deteministic sources should provide exactly one valid price, got:%d", len(ps.Prices))
+				return nil, fmt.Errorf("non-deterministic sources should provide exactly one valid price, got:%d", len(ps.Prices))
 			}
 			p := ps.Prices[0]
 			if len(p.Price) == 0 {
 				return nil, errors.New("price must not be empty")
 			}
 			if p.Decimal != decimal {
-				return nil, fmt.Errorf("decimal not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
+				return nil, fmt.Errorf("decimal does not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
 			}
 			if len(p.DetID) > 0 {
 				return nil, errors.New("price from non-deterministic should not have detID")
@@ -838,7 +849,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 	// #nosec G115 - TODO: use uint64 for rounds
 	r, ok := f.rounds[int64(msg.FeederID)]
 	if !ok {
-		// This should not happened since we do check the nonce in anthHandle
+		// This should not happened since we do check the nonce in anteHandler
 		vAddr, _ := oracletypes.ConsAddrStrFromCreator(msg.Creator)
 		return nil, fmt.Errorf("round not exists for feederID:%d, proposer:%s", msg.FeederID, vAddr)
 	}
@@ -849,8 +860,8 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 	}
 
 	if r.twoPhases == msg.IsNotTwoPhases() {
-		// this should not happen, since message itself had been checked in 'validateMsg', when came to here it means there' something wront in 'round' initialization
-		return nil, fmt.Errorf("the 2phases status of round and message is mismatched, there's got something wrong with mem-round initialzation, feederID:%d, r.IsTwoPhases:%t, msg.IsTwoPhases:%t", msg.FeederID, r.twoPhases, !msg.IsNotTwoPhases())
+		// this should not happen, since message itself had been checked in 'validateMsg', when came to here it means there' something wrong with mem-round initialization, feederID:%d, r.IsTwoPhases:%t, msg.IsTwoPhases:%t", msg.FeederID, r.twoPhases, !msg.IsNotTwoPhases())
+		return nil, fmt.Errorf("the 2phases status of round and message is mismatched, there's something wrong with mem-round initialization, feederID:%d, r.IsTwoPhases:%t, msg.IsTwoPhases:%t", msg.FeederID, r.twoPhases, !msg.IsNotTwoPhases())
 	}
 
 	if msg.IsPhaseTwo() && (r.m == nil || r.m.Completed()) {
@@ -860,6 +871,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 	return r, nil
 }
 
+// ProcessQuote processes a price quote message, validates it, tallies the result, and updates caches if needed.
 func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) (*oracletypes.PriceTimeRound, error) {
 	if isCheckTx {
 		f = f.getCheckTx()
@@ -894,6 +906,7 @@ func (f *FeederManager) ProcessQuote(ctx sdk.Context, msg *oracletypes.MsgCreate
 	return finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout)), nil
 }
 
+// getCheckTx returns a copy of the FeederManager for use in CheckTx mode.
 func (f *FeederManager) getCheckTx() *FeederManager {
 	fCheckTx := f.fCheckTx
 	ret := *fCheckTx
@@ -918,10 +931,11 @@ func (f *FeederManager) getCheckTx() *FeederManager {
 	return &ret
 }
 
+// updateCheckTx updates the fCheckTx field with a shallow copy of the current FeederManager state for CheckTx/simulation.
 func (f *FeederManager) updateCheckTx() {
 	// flgas are taken care of
 	// sortedFeederIDs will not be modified except in abci.EndBlock
-	// successFeedereIDs will not be modifed except in abci.EndBlock
+	// successFeederIDs will not be modifed except in abci.EndBlock
 	// caches will not be modifed except in abci.EndBlock, abci.DeliverTx (in abci.Query_simulate, or abci.CheckTx the update in ProcessQuote is forbided)
 	// shallow copy is good enough for these fields
 
@@ -948,6 +962,7 @@ func (f *FeederManager) updateCheckTx() {
 	f.fCheckTx = &ret
 }
 
+// ProcessQuoteInRecovery processes a batch of MsgItems during recovery mode, updating rounds as needed.
 func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) {
 	for _, msgItem := range msgItems {
 		// #nosec G115  // feederID is index of slice
@@ -961,7 +976,7 @@ func (f *FeederManager) ProcessQuoteInRecovery(msgItems []*oracletypes.MsgItem) 
 	}
 }
 
-// initCaches initializes the caches of the FeederManager with keeper, params, validatorPowers
+// initCaches initializes the caches of the FeederManager with keeper, params, and validator powers.
 func (f *FeederManager) initCaches(ctx sdk.Context) {
 	f.cs = newCaches()
 	params := f.k.GetParams(ctx)
@@ -973,6 +988,7 @@ func (f *FeederManager) initCaches(ctx sdk.Context) {
 	f.cs.Init(f.k, &params, validatorPowers)
 }
 
+// recovery attempts to recover the FeederManager state from recent params and validator updates.
 func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	height := ctx.BlockHeight()
 	recentParamsList, prevRecentParams, latestRecentParams := f.k.GetRecentParamsWithinMaxNonce(ctx)
@@ -1081,6 +1097,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	return true, nil
 }
 
+// RoundIDToBaseBlock returns the base block for a given feederID and roundID, if found.
 func (f *FeederManager) RoundIDToBaseBlock(feederID, roundID uint64) (uint64, bool) {
 	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
@@ -1090,7 +1107,7 @@ func (f *FeederManager) RoundIDToBaseBlock(feederID, roundID uint64) (uint64, bo
 	return r.baseBlockFromRoundID(roundID)
 }
 
-// BaseBlockToRoundID returns the roundID which the input baseblock indicates to, it is different to the roundID of which this baseBlock BelongsTo (+1)
+// BaseBlockToNextRoundID returns the roundID for the given feederID and base block, if found.
 func (f *FeederManager) BaseBlockToNextRoundID(feederID, baseBlock uint64) (uint64, bool) {
 	// TODO(leonz): use uint64 as f.rounds key
 	// #nosec G115
@@ -1109,6 +1126,7 @@ func (f *FeederManager) BaseBlockToNextRoundID(feederID, baseBlock uint64) (uint
 	return uint64(rID), true
 }
 
+// Equals compares two FeederManager instances for equality.
 func (f *FeederManager) Equals(fm *FeederManager) bool {
 	if f == nil || fm == nil {
 		return f == fm
@@ -1148,6 +1166,7 @@ func (f *FeederManager) Equals(fm *FeederManager) bool {
 	return true
 }
 
+// LatestRoundBaseBlock returns the base block of the latest round for a given feederID.
 func (f *FeederManager) LatestRoundBaseBlock(feederID uint64) (uint64, bool) {
 	// #nosec G115
 	r, ok := f.rounds[int64(feederID)]
@@ -1159,7 +1178,7 @@ func (f *FeederManager) LatestRoundBaseBlock(feederID uint64) (uint64, bool) {
 	return uint64(r.roundBaseBlock), true
 }
 
-// recoveryStartPoint returns the height to start the recovery process
+// getRecoveryStartPoint returns the height and params list to start the recovery process.
 func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.RecentParams, prevRecentParams, latestRecentParams *oracletypes.RecentParams, validatorUpdateHeight int64) (height int64, replayRecentParamsList []*oracletypes.RecentParams) {
 	if currentHeight > int64(latestRecentParams.Params.MaxNonce) {
 		height = currentHeight - int64(latestRecentParams.Params.MaxNonce)
@@ -1196,6 +1215,7 @@ func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.
 	return height, replayRecentParamsList
 }
 
+// getProtoMsgItemFromQuote converts a MsgCreatePrice to a MsgItem for processing.
 func getProtoMsgItemFromQuote(msg *oracletypes.MsgCreatePrice) *oracletypes.MsgItem {
 	// address has been valid before
 	validator, _ := oracletypes.ConsAddrStrFromCreator(msg.Creator)

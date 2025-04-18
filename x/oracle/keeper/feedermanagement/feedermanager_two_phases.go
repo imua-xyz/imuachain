@@ -167,7 +167,7 @@ func (f *FeederManager) resetPhaseTwoMaliciousTx() {
 	f.phaseTwoMaliciousTx = make(map[uint64]string)
 }
 
-// ProcessRawData verify the submitted piece of rawData with proof against the expected root and cached the result if it passded the verification
+// ProcessRawData verify the submitted piece of rawData with proof against the expected root and cached the result if it passed the verification
 // return (cached rawData piece, error)
 func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) ([]byte, error) {
 	if isCheckTx {

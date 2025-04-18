@@ -3,7 +3,7 @@ package imuachain.oracle.v1;
 
 option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
-// Nonce is a message that contains a nonce for a feeder
+// ValidatorIndex represents the next index to be used for a validator of a specified feeder
 message ValidatorIndex {
   // FeederID is the ID of the feeder that corresponding to the nonce
   string validator = 1;
@@ -11,7 +11,7 @@ message ValidatorIndex {
   uint32 next_index = 2;
 }
 
-// ValidatorNonce is a message that contains the nonces for a validator
+// FeederValidatorsIndex stores a list of validator next-indexes for feeders
 message FeederValidatorsIndex{
   // nonces is the list of nonces for the feeders
   repeated ValidatorIndex validator_index_list= 2;
