@@ -24,7 +24,6 @@ import (
 // delegate: update operator's price, operator's totalAmount, operator's totalShare, staker's share
 // undelegate: update operator's price, operator's totalAmount, operator's totalShare, staker's share
 // msg(refund or slash on beaconChain): update staker's price, operator's price
-
 // SetStakerInfosForAsset sets the staker information and balances for a given asset (chainID),
 // and updates the latest staker index and version. Used during aggregation or state sync.
 func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerInfos []*types.StakerInfo, version uint64) {
@@ -578,8 +577,29 @@ func (k Keeper) convertDecimal(ctx sdk.Context, assetID string, amount sdkmath.I
 	return retDec.RoundInt(), nil
 }
 
-// UpdateNSTBalanceChange is called in EndBlock (not as a transaction). It processes post-aggregation NST balance changes,
-// updates staker balances, removes stakers with zero balance, updates delegation, and emits events.
+// UpdateNSTBalanceChange processes post-aggregation NST (Native Staking Token) balance changes at the end of a block.
+//
+// This function is called in EndBlock (not as a transaction), so errors do not revert the block but are returned for logging/monitoring.
+// It is responsible for synchronizing the on-chain state with the results of off-chain aggregation/settlement.
+//
+// Steps performed:
+// 1. Unmarshal the provided rawData into a RawDataNST struct containing all balance changes for this round.
+// 2. Validate that the version in the balance changes matches the current on-chain version for the asset/chain.
+// 3. Retrieve the current staker list for the asset. If the cache is empty, fill it from the store.
+// 4. For each balance change:
+//   - Update the staker's balance and state (using updateStaker).
+//   - If the staker is removed (balance zero), record the index for later removal.
+//   - If the balance delta is nonzero, update the delegation module accordingly.
+//
+// 5. Remove all stakers that were marked for removal, updating the staker list and indexes.
+// 6. Commit all changes to the context cache.
+// 7. Increment the NST version for the asset/chain.
+// 8. Emit an event with the new root hash, version, and feederID for downstream consumers.
+//
+// This function ensures that the staker list, balances, and delegation state are all kept in sync after aggregation,
+// and that the system is ready for the next round of staking/aggregation.
+//
+// Errors are returned for monitoring but do not revert the block.
 func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, feederID, roundID uint64, kInf common.KeeperOracle) error {
 	balanceChanges := &types.RawDataNST{}
 	kInf.MustUnmarshal(rawData, balanceChanges)

@@ -9,10 +9,12 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// sourceChecker defines an interface for checking if a data source is deterministic.
 type sourceChecker interface {
 	IsDeterministic(sourceID int64) (bool, error)
 }
 
+// newAggregator creates a new aggregator with the given threshold and aggregation algorithm.
 func newAggregator(t *threshold, algo AggAlgorithm) *aggregator {
 	return &aggregator{
 		t:          t,
@@ -23,6 +25,7 @@ func newAggregator(t *threshold, algo AggAlgorithm) *aggregator {
 	}
 }
 
+// Equals checks if two aggregators are equal by comparing all their fields.
 func (a *aggregator) Equals(a2 *aggregator) bool {
 	if a == nil || a2 == nil {
 		return a == a2
@@ -51,6 +54,7 @@ func (a *aggregator) Equals(a2 *aggregator) bool {
 	return true
 }
 
+// CopyForCheckTx creates a deep copy of the aggregator for use in CheckTx (simulation).
 func (a *aggregator) CopyForCheckTx() *aggregator {
 	if a == nil {
 		return nil
@@ -69,6 +73,8 @@ func (a *aggregator) CopyForCheckTx() *aggregator {
 	}
 }
 
+// GetFinalPrice returns the final aggregated price if the threshold is exceeded.
+// If not, returns false. Caches the result for future calls.
 func (a *aggregator) GetFinalPrice() (*PriceResult, bool) {
 	if a.finalPrice != nil {
 		return a.finalPrice, true
@@ -83,12 +89,14 @@ func (a *aggregator) GetFinalPrice() (*PriceResult, bool) {
 	return finalPrice, ok
 }
 
+// RecordMsg records a message in the validator records. Returns error if duplicate or invalid.
 func (a *aggregator) RecordMsg(msg *MsgItem) error {
 	_, err := a.v.RecordMsg(msg)
 	return err
 }
 
-// AddMsg records the message in a.v and perform aggregation in a.ds
+// AddMsg records the message in validator records and aggregates in data source records.
+// Handles deterministic sources and updates final prices for DSs as needed.
 func (a *aggregator) AddMsg(msg *MsgItem) error {
 	// record into recordsValidators, validation for duplication
 	addedMsg, err := a.v.RecordMsg(msg)
@@ -110,11 +118,12 @@ func (a *aggregator) AddMsg(msg *MsgItem) error {
 	return nil
 }
 
-// TODO: V2: the accumulatedPower should correspond to all valid validators which provides all sources required by rules(defined in oracle.Params)
+// exceedsThreshold checks if the accumulated power exceeds the threshold.
 func (a *aggregator) exceedsThreshold() bool {
 	return a.t.Exceeds(a.v.accumulatedPower)
 }
 
+// newRecordsValidators creates a new recordsValidators struct.
 func newRecordsValidators() *recordsValidators {
 	return &recordsValidators{
 		finalPrice:       nil,
@@ -123,6 +132,7 @@ func newRecordsValidators() *recordsValidators {
 	}
 }
 
+// Equals checks if two recordsValidators are equal by comparing all fields.
 func (rv *recordsValidators) Equals(rv2 *recordsValidators) bool {
 	if rv == nil || rv2 == nil {
 		return rv == rv2
@@ -150,6 +160,7 @@ func (rv *recordsValidators) Equals(rv2 *recordsValidators) bool {
 	return true
 }
 
+// Cpy creates a deep copy of recordsValidators.
 func (rv *recordsValidators) Cpy() *recordsValidators {
 	if rv == nil {
 		return nil
@@ -181,6 +192,8 @@ func (rv *recordsValidators) Cpy() *recordsValidators {
 	}
 }
 
+// RecordMsg records a message for a validator, updating power and price sources.
+// Returns the added price sources and error if any.
 func (rv *recordsValidators) RecordMsg(msg *MsgItem) (*MsgItem, error) {
 	record, ok := rv.records[msg.Validator]
 	if !ok {
@@ -280,6 +293,7 @@ func newRecordsDSs(t *threshold) *recordsDSs {
 	}
 }
 
+// Equals checks if two recordsDSs are equal by comparing their threshold and all data source maps.
 func (rdss *recordsDSs) Equals(rdss2 *recordsDSs) bool {
 	if rdss == nil || rdss2 == nil {
 		return rdss == rdss2
@@ -301,6 +315,7 @@ func (rdss *recordsDSs) Equals(rdss2 *recordsDSs) bool {
 	return true
 }
 
+// Cpy creates a deep copy of recordsDSs.
 func (rdss *recordsDSs) Cpy() *recordsDSs {
 	if rdss == nil {
 		return nil
@@ -316,7 +331,7 @@ func (rdss *recordsDSs) Cpy() *recordsDSs {
 	}
 }
 
-// AddPriceSource adds prices for DS sources
+// AddPriceSource adds prices for DS sources. Returns true if added, false if not deterministic.
 func (rdss *recordsDSs) AddPriceSource(ps *priceSource, power *big.Int, validator string) bool {
 	if !ps.deterministic {
 		return false
@@ -336,6 +351,7 @@ func (rdss *recordsDSs) AddPriceSource(ps *priceSource, power *big.Int, validato
 	return true
 }
 
+// GetFinalPriceForSourceID returns the final price for a given sourceID if available.
 func (rdss *recordsDSs) GetFinalPriceForSourceID(sourceID int64) (*PriceResult, bool) {
 	rds, ok := rdss.dsMap[sourceID]
 	if !ok {
@@ -344,6 +360,7 @@ func (rdss *recordsDSs) GetFinalPriceForSourceID(sourceID int64) (*PriceResult, 
 	return rds.GetFinalPrice(rdss.t)
 }
 
+// GetFinalPriceForSources returns a map of all sourceIDs to their final prices, if all are available.
 func (rdss *recordsDSs) GetFinalPriceForSources() (map[int64]*PriceResult, bool) {
 	ret := make(map[int64]*PriceResult)
 	// safe to range map, the result is a map of 'all or none'
@@ -357,6 +374,7 @@ func (rdss *recordsDSs) GetFinalPriceForSources() (map[int64]*PriceResult, bool)
 	return ret, true
 }
 
+// GetFinalDetIDForSourceID returns the finalDetID for a given sourceID if available.
 func (rdss *recordsDSs) GetFinalDetIDForSourceID(sourceID int64) string {
 	if rds, ok := rdss.dsMap[sourceID]; ok {
 		if rds.finalPrice != nil {
@@ -369,6 +387,7 @@ func (rdss *recordsDSs) GetFinalDetIDForSourceID(sourceID int64) string {
 	return ""
 }
 
+// newRecordsDS creates a new recordsDS struct for a single data source.
 func newRecordsDS() *recordsDS {
 	return &recordsDS{
 		finalPrice:        nil,
@@ -379,6 +398,7 @@ func newRecordsDS() *recordsDS {
 	}
 }
 
+// Equals checks if two recordsDS are equal by comparing all fields.
 func (rds *recordsDS) Equals(rds2 *recordsDS) bool {
 	if rds == nil || rds2 == nil {
 		return rds == rds2
@@ -408,6 +428,7 @@ func (rds *recordsDS) Equals(rds2 *recordsDS) bool {
 	return true
 }
 
+// Cpy creates a deep copy of recordsDS.
 func (rds *recordsDS) Cpy() *recordsDS {
 	if rds == nil {
 		return nil
@@ -435,6 +456,8 @@ func (rds *recordsDS) Cpy() *recordsDS {
 	}
 }
 
+// GetFinalPrice returns the final price for this recordsDS if the threshold is exceeded.
+// It iterates from the most recent record backwards, looking for the first that exceeds the threshold.
 func (rds *recordsDS) GetFinalPrice(t *threshold) (*PriceResult, bool) {
 	if rds.finalPrice != nil {
 		return rds.finalPrice, true
@@ -453,8 +476,8 @@ func (rds *recordsDS) GetFinalPrice(t *threshold) (*PriceResult, bool) {
 	return nil, false
 }
 
-// AddPrice adds a price into recordsDS
-// NOTE: the input PricePower should be filtered by recordsValidators before calling this function to make sure the price is not duplicated by detID
+// AddPrice adds a price into recordsDS.
+// NOTE: the input PricePower should be filtered by recordsValidators before calling this function to make sure the price is not duplicated by detID.
 func (rds *recordsDS) AddPrice(p *PricePower) {
 	validator := maps.Keys(p.Validators)[0]
 	i := 0

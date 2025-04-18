@@ -99,8 +99,9 @@ func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]
 	if len(sl) == 0 {
 		return nil, fmt.Errorf("remove more stakers than exists, existing:%d, remove:%d", l2, l)
 	}
+	// Sort indexes in ascending order so we can safely remove from the end
 	slices.Sort(indexes)
-	// remove duplicates
+	// Remove duplicates from indexes
 	for i := 0; i < l-1; i++ {
 		if indexes[i] == indexes[i+1] {
 			indexes = slices.Delete(indexes, i, i+1)
@@ -108,27 +109,31 @@ func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]
 			i--
 		}
 	}
-	// make sure all indexes are valid
+	// Validate all indexes are in range
 	if int(indexes[l-1]) >= l2 {
 		return nil, fmt.Errorf("remove index exceeds exisintg max index, max:%d, remove:%d", l2, indexes[l-1])
 	}
+	// ret will map removed index to the staker that replaced it (if any)
 	ret := make(map[uint32]string)
 	removeMap := make(map[uint32]bool)
 	for _, i := range indexes {
 		removeMap[i] = true
 	}
-
+	// The main loop: for each index to remove, swap in a staker from the end (if not also being removed), then truncate
 	i := 0
 	j := 1
 	for ; j <= l2 && j <= l; j++ {
-		//#nosec G115
+		// Skip if the end index is also being removed
+		// #nosec G115
 		if int(indexes[i]) < l2-j && removeMap[uint32(l2-j)] {
 			continue
 		}
+		// If the index to remove is now at the end, just truncate
 		if int(indexes[i]) == l2-j {
 			j++
 			break
 		}
+		// If the index to remove is before the end, swap in the last staker
 		if int(indexes[i]) > l2-j {
 			break
 		}
@@ -136,10 +141,9 @@ func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]
 		sl[indexes[i]] = sl[l2-j]
 		i++
 	}
-
+	// Truncate the slice to remove the last j elements
 	if j > l2 {
 		j = l2
-		//#nosec G115
 	} else if j > 0 {
 		j--
 	}
