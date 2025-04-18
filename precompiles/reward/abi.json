@@ -30,7 +30,7 @@
     [
       {
         "internalType": "uint32",
-        "name": "clientChainId",
+        "name": "clientChainID",
         "type": "uint32"
       },
       {
@@ -240,7 +240,7 @@
     [
       {
         "internalType": "uint32",
-        "name": "clientChainId",
+        "name": "clientChainID",
         "type": "uint32"
       },
       {
