@@ -22,11 +22,11 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// ValidatorIndex represents the next index to be used for a validator of a specified feeder
+// ValidatorIndex represents the next index to be used for a validator of a specified feeder.
 type ValidatorIndex struct {
-	// FeederID is the ID of the feeder that corresponding to the nonce
+	// validator is the address of the validator associated with the feeder.
 	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
-	// value is the nonce value
+	// next_index is the next nonce value to be used for this validator.
 	NextIndex uint32 `protobuf:"varint,2,opt,name=next_index,json=nextIndex,proto3" json:"next_index,omitempty"`
 }
 
@@ -77,9 +77,9 @@ func (m *ValidatorIndex) GetNextIndex() uint32 {
 	return 0
 }
 
-// FeederValidatorsIndex stores a list of validator next-indexes for feeders
+// FeederValidatorsIndex stores a list of next indexes for validators of feeders.
 type FeederValidatorsIndex struct {
-	// nonces is the list of nonces for the feeders
+	// validator_index_list is the list of ValidatorIndex entries for the feeders.
 	ValidatorIndexList []*ValidatorIndex `protobuf:"bytes,1,rep,name=validator_index_list,json=validatorIndexList,proto3" json:"validator_index_list,omitempty"`
 }
 
@@ -123,11 +123,11 @@ func (m *FeederValidatorsIndex) GetValidatorIndexList() []*ValidatorIndex {
 	return nil
 }
 
-// HashNode represents a node in a Merkle tree
+// HashNode represents a node in a Merkle tree, containing its index and hash value.
 type HashNode struct {
-	// index is the index of the node in the tree
+	// index is the position of the node in the Merkle tree.
 	Index uint32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
-	// hash is the hash of the node
+	// hash is the hash value of the node.
 	Hash []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
@@ -178,9 +178,9 @@ func (m *HashNode) GetHash() []byte {
 	return nil
 }
 
-// Proof represents all hash nodes of a Mekle tree with indexes
+// FlattenTree represents all hash nodes of a Merkle tree, flattened into a list with their indexes.
 type FlattenTree struct {
-	// nodes is the list of all nodes in the tree
+	// nodes is the list of all HashNode entries in the Merkle tree.
 	Nodes []*HashNode `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
 }
 
@@ -224,11 +224,11 @@ func (m *FlattenTree) GetNodes() []*HashNode {
 	return nil
 }
 
-// TreeInfo represents the root hash and leaf count of a Merkle tree
+// TreeInfo contains the root hash and the number of leaves in a Merkle tree.
 type TreeInfo struct {
-	// leaf_count is the number of leaves in the tree
+	// leaf_count is the total number of leaves in the Merkle tree.
 	LeafCount uint32 `protobuf:"varint,1,opt,name=leaf_count,json=leafCount,proto3" json:"leaf_count,omitempty"`
-	// root_hash is the root hash of the tree
+	// root_hash is the root hash value of the Merkle tree.
 	RootHash []byte `protobuf:"bytes,2,opt,name=root_hash,json=rootHash,proto3" json:"root_hash,omitempty"`
 }
 
