@@ -96,7 +96,10 @@ func createNStakerInfos(keeper *keeper.Keeper, ctx sdk.Context, assetID string, 
 			},
 		})
 	}
-	_, chainID, _ := assetstypes.ParseID(assetID)
+	_, chainID, err := assetstypes.ParseID(assetID)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse assetID %s: %v", assetID, err))
+	}
 	keeper.SetStakerInfosForAsset(ctx, chainID, ret, uint64(n))
 	return ret
 }

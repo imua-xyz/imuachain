@@ -32,15 +32,15 @@ func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerIn
 	lastIndex := uint32(0)
 	for _, stakerInfo := range stakerInfos {
 		// set staker balances
-		keyBalances := types.NSTBalancesKey(chainID, stakerInfo.StakerAddr)
-		// stakerInfo.BalanceList must have at least one value of Deposit action
+		stakerAddr := strings.ToLower(stakerInfo.StakerAddr)
+		keyBalances := types.NSTBalancesKey(chainID, stakerAddr)
 		balances := types.Balances{
 			BalanceList: stakerInfo.BalanceList,
 		}
 		store.Set(keyBalances, k.cdc.MustMarshal(&balances))
 
 		// set staker basic info
-		keyStaker := types.NSTStakerKey(chainID, stakerInfo.StakerAddr)
+		keyStaker := types.NSTStakerKey(chainID, stakerAddr)
 		staker := types.Staker{
 			StakerIndex:   stakerInfo.StakerIndex,
 			ValidatorList: stakerInfo.ValidatorPubkeyList,
@@ -51,7 +51,7 @@ func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerIn
 		}
 
 		keyStakerIndex := types.NSTStakerAddrKey(chainID, staker.StakerIndex)
-		store.Set(keyStakerIndex, []byte(stakerInfo.StakerAddr))
+		store.Set(keyStakerIndex, []byte(stakerAddr))
 	}
 	// set indexes for staker
 	keyStakerIndex := types.NSTLatestStakerIndexKey(chainID)

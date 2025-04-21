@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -11,8 +10,8 @@ import (
 
 var (
 	emptyHashArr = [32]byte{}
-	
-	emptyHash    = emptyHashArr[:]
+
+	emptyHash = emptyHashArr[:]
 )
 
 func TestMerkleTreePath(t *testing.T) {
@@ -145,32 +144,23 @@ func GetNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32
 
 func test6pieces(t *testing.T) {
 	m, _ := NewMT(20, 6, emptyHash)
-	fmt.Println(len(m.t))
-
+	require.Equal(t, 11, len(m.t))
 	n := m.t[0]
 	for n != nil {
-		fmt.Println("node_index:", n.index)
 		if n.left != nil {
-			fmt.Println("  left sibling:", n.left.index)
 			n = n.parent
 			continue
 		}
 		if n.right != nil {
-			fmt.Println("  right sibling:", n.right.index)
 			n = n.parent
 			continue
 		}
-		fmt.Println("this is root node")
 		break
 	}
 	require.Nil(t, m.t[8])
-	//	fmt.Println(m.t[8] == nil)
 	require.Equal(t, uint32(10), m.t[10].index)
-	//	fmt.Println(m.t[10].index == 10)
 	require.Equal(t, m.t[5].parent, m.t[4].parent)
-	//	fmt.Println(m.t[4].parent == m.t[5].parent)
 	require.Equal(t, uint32(10), m.t[4].parent.index)
-	// fmt.Println(m.t[4].parent.index == 10)
 }
 
 func test5pieces() {
@@ -185,7 +175,6 @@ func test5pieces() {
 			n = n.parent
 			continue
 		}
-		fmt.Println("this is root node")
 		break
 	}
 }

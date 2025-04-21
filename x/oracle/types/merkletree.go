@@ -233,7 +233,6 @@ func (m *MerkleTree) VerifyAndCacheOrdered(targetIndex uint32, targetPiece []byt
 		}
 		var pairHash []byte
 		if pairNode.hash == nil {
-			//			pairHash = proof.getHashByIndex(pairNode.index)
 			hashNode := proof.getHashNodeByIndex(pairNode.index)
 			if hashNode == nil || len(hashNode.Hash) == 0 {
 				return nil, false
@@ -244,14 +243,12 @@ func (m *MerkleTree) VerifyAndCacheOrdered(targetIndex uint32, targetPiece []byt
 		} else {
 			pairHash = pairNode.hash
 		}
-
 		if node.left != nil {
 			hash = innerHash(pairHash, hash)
 		} else {
 			hash = innerHash(hash, pairHash)
 		}
 		if node.parent.hash != nil {
-			// verified := bytes.Equal(node.parent.hash, calculatedParentHash)
 			verified := bytes.Equal(node.parent.hash, hash)
 			if verified {
 				// Safe to range map: assignments by index are order-independent
@@ -265,7 +262,6 @@ func (m *MerkleTree) VerifyAndCacheOrdered(targetIndex uint32, targetPiece []byt
 			return nil, false
 		}
 		cachedHashes[node.parent.index] = hash
-
 		node = node.parent
 	}
 	return nil, false
