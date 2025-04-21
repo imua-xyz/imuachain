@@ -326,7 +326,6 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 
 						// Set up for 2-phases aggregation
 						if r.twoPhases {
-
 							rootHash := []byte(finalPrice.Price[:32])
 							tmp := finalPrice.Price[32:]
 							// no need to check err, the format is guarded by anteHandler
@@ -622,13 +621,7 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 				continue
 			}
 			validators := f.cs.GetValidators()
-			//			reportedRoundsWindow := f.k.GetReportedRoundsWindow(ctx)
 			for _, validator := range validators {
-				// reportedInfo, found := f.k.GetValidatorReportInfo(ctx, validator)
-				// if !found {
-				// 	logger.Error(fmt.Sprintf("Expected report info for validator %s but not found", validator))
-				// 	continue
-				// }
 				miss, malicious := r.PerformanceReview(validator)
 				if malicious {
 					finalPrice, _ := r.FinalPrice()
@@ -707,13 +700,20 @@ func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 	// the order does not matter when remove item from slice as RemoveNonceWithFeederIDForAll does
 	expiredFeederIDsToRemoveUint64 := make([]uint64, 0)
 	for _, feederID := range expiredFeederIDs {
-		if r := f.rounds[feederID]; r.status != roundStatusClosed {
+		r := f.rounds[feederID]
+		if r.status != roundStatusClosed {
 			r.closeQuotingWindow()
 			// #nosec G115
 			expiredFeederIDsToRemoveUint64 = append(expiredFeederIDsToRemoveUint64, uint64(feederID))
 		}
 		delete(f.rounds, feederID)
 		f.sortedFeederIDs.remove(feederID)
+		// TODO: remove related 2-phases aggregation state
+		if r.m != nil {
+			// #nosec G115
+			f.k.Clear2ndPhase(ctx, uint64(r.feederID), r.m.RootIndex())
+			r.m = nil
+		}
 	}
 	if len(expiredFeederIDsToRemoveUint64) > 0 {
 		f.k.RemoveNonceWithFeederIDsForValidators(ctx, expiredFeederIDsToRemoveUint64, f.cs.GetValidators())
@@ -808,7 +808,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 	// extra check for message as 1st phase for 2-phases aggregation
 	if msg.IsPhaseTwo() {
 		lPrice := len(msg.Prices[0].Prices[0].Price)
-		if lPrice > int(f.cs.RawDataPieceSize()) {
+		if lPrice == 0 || lPrice > int(f.cs.RawDataPieceSize()) {
 			return nil, fmt.Errorf("message for 2nd-phase aggregation should have exactly one price with length between 1 and %d", f.cs.RawDataPieceSize())
 		}
 	}
@@ -826,7 +826,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		}
 		// #nosec G115  // maxNonce is positive
 		windowForPhaseTwo := interval - uint64(f.cs.GetMaxNonce())*2
-		if leafCount > windowForPhaseTwo {
+		if leafCount == 0 || leafCount > windowForPhaseTwo {
 			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d and be at least 1, got%d", msg.FeederID, windowForPhaseTwo, leafCount)
 		}
 	}

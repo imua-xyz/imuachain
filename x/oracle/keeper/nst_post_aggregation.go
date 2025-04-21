@@ -351,7 +351,7 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance uint64, 
 		return updatedIndex, removed, balanceDelta, err
 	}
 
-	if action == types.Action_ACTION_DEPOSIT && len(validator) == 0 {
+	if action == types.Action_ACTION_DEPOSIT && validator == "" {
 		err = fmt.Errorf("deposit should have one validator, but got %d", len(validator))
 		return updatedIndex, removed, balanceDelta, err
 	}
@@ -628,7 +628,6 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 	// update all removed stakers' index
 	writeCache()
 	version := k.IncreaseVersion(ctx, chainID)
-	base64.StdEncoding.EncodeToString(rootHash)
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,
 		sdk.NewAttribute(types.AttributeKeyNSTBalanceUpdate, types.AttributeValueTrue),
