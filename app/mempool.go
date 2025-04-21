@@ -105,7 +105,7 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 	for _, txBytes := range txList {
 		tx, err := em.txDecoder(txBytes)
 		if err != nil {
-			keep = append(keep, tx)
+			// skip undecodable bytes - they will be recehecked when re-broadcast
 			continue
 		}
 		msgs, _, isRawData, _ := utils.OracleCreatePriceTx(tx)
@@ -233,6 +233,7 @@ func (em *ImuaMempool) getTxByFeederIDPieceIndex(feederID uint64, pieceIndex uin
 		// imua-mempool don't do the verify, we just pick the first one in cache and move it to the end of the list for that pieceIndex
 		// we just remove the picked to the list end instead of deleting it since that't the duty of 'Remove'
 		piecesCached = append(piecesCached[1:], piecesCached[0])
+		pwf[pieceIndex] = piecesCached
 	}
 	// the first cached piece had been moved to the end
 	return piecesCached[len(piecesCached)-1].Tx

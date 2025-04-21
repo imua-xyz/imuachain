@@ -14,7 +14,7 @@ message ValidatorIndex {
 // FeederValidatorsIndex stores a list of validator next-indexes for feeders
 message FeederValidatorsIndex{
   // nonces is the list of nonces for the feeders
-  repeated ValidatorIndex validator_index_list= 2;
+  repeated ValidatorIndex validator_index_list= 1;
 }
 
 // HashNode represents a node in a Merkle tree
