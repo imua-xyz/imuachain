@@ -45,6 +45,9 @@ func (k Keeper) AllDeposits(ctx sdk.Context) (deposits []assetstype.DepositsBySt
 }
 
 func (k Keeper) GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInfo []assetstype.DepositByAsset, err error) {
+	if stakerID == "" {
+		return nil, assetstype.ErrInvalidInputParameter.Wrapf("null stakerID")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakerAssetInfos)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(stakerID))
 	defer iterator.Close()

@@ -96,4 +96,9 @@ var (
 		ModuleName, 25,
 		"cannot increment undelegation ID above max uint64",
 	)
+
+	ErrInvalidInputParameter = errorsmod.Register(
+		ModuleName, 26,
+		"the input parameter is invalid",
+	)
 )

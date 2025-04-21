@@ -213,6 +213,13 @@ func (k *Keeper) QueryOperatorSlashInfo(goCtx context.Context, req *types.QueryO
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorSlashInfoByID, 0)
 
+	if _, err := sdk.AccAddressFromBech32(req.OperatorAddr); err != nil {
+		return nil, types.ErrParameterInvalid.Wrapf("invalid operator address,err:%s", err)
+	}
+	if !common.IsHexAddress(req.AvsAddress) {
+		return nil, types.ErrParameterInvalid.Wrapf("invalid avs address, not evm addr")
+	}
+
 	slashPrefix := utils.AppendMany(types.KeyPrefixOperatorSlashInfo, assetstype.GetJoinedStoreKeyForPrefix(req.OperatorAddr, strings.ToLower(req.AvsAddress)))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), slashPrefix)
 

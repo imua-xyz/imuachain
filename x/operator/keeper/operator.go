@@ -246,6 +246,9 @@ func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []
 }
 
 func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
+	if _, err := sdk.AccAddressFromBech32(operatorAddr); err != nil {
+		return nil, operatortypes.ErrParameterInvalid.Wrapf("invalid operator address,err:%s", err)
+	}
 	avsList := make([]string, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
 		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {

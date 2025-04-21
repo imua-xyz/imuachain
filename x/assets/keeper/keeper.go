@@ -74,7 +74,7 @@ type IAssets interface {
 		ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset,
 	) (*assetstype.StakerAssetInfo, error)
 
-	GetOperatorAssetInfos(ctx sdk.Context, operatorAddr sdk.Address, assetsFilter map[string]interface{}) (assetsInfo []assetstype.AssetByID, err error)
+	GetOperatorAssetInfos(ctx sdk.Context, operatorAddr string, assetsFilter map[string]interface{}) (assetsInfo []assetstype.AssetByID, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 	UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Address, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (err error)
 	PerformDepositOrWithdraw(ctx sdk.Context, params *DepositWithdrawParams) (finalDepositAmount sdkmath.Int, err error)
