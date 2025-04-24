@@ -220,14 +220,6 @@
           "Params": "ConsensusParams"
         }
       }
-    },
-    {
-      "url": "./tmp-swagger-gen/imuachain/reward/v1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "RewardParams"
-        }
-      }
     }
   ]
 }

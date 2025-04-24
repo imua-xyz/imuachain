@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package imuachain.avs.v1;
 
-import "amino/amino.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
@@ -296,18 +295,18 @@ service Msg {
   option (cosmos.msg.v1.service) = true;
   // RegisterAVS registers a new AVS with corresponding operator.
   rpc RegisterAVS(RegisterAVSReq) returns (RegisterAVSResponse) {
-    option (google.api.http).post = "/imuachain/avs/v1/tx/RegisterAVS";
+    option (google.api.http).post = "/imuachain/avs/v1/tx/register_avs";
   }
   // DelegateAssetToOperator delegates asset to operator.
   rpc DeRegisterAVS(DeRegisterAVSReq) returns (DeRegisterAVSResponse) {
-    option (google.api.http).post = "/imuachain/avs/v1/tx/DeRegisterAVS";
+    option (google.api.http).post = "/imuachain/avs/v1/tx/deregister_avs";
   }
   // RegisterAVSTask registers a new task.
   rpc RegisterAVSTask(RegisterAVSTaskReq) returns (RegisterAVSTaskResponse) {
-    option (google.api.http).post = "/imuachain/avs/v1/tx/RegisterAVSTask";
+    option (google.api.http).post = "/imuachain/avs/v1/tx/register_avs_task";
   }
   // SubmitTaskResult operator submit task results .
   rpc SubmitTaskResult(SubmitTaskResultReq) returns (SubmitTaskResultResponse) {
-    option (google.api.http).post = "/imuachain/avs/v1/tx/SubmitTaskResult";
+    option (google.api.http).post = "/imuachain/avs/v1/tx/submit_task_result";
   }
 }

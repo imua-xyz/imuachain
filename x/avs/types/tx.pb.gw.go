@@ -400,13 +400,13 @@ func RegisterMsgHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 }
 
 var (
-	pattern_Msg_RegisterAVS_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "RegisterAVS"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_RegisterAVS_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "register_avs"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_DeRegisterAVS_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "DeRegisterAVS"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_DeRegisterAVS_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "deregister_avs"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_RegisterAVSTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "RegisterAVSTask"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_RegisterAVSTask_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "register_avs_task"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Msg_SubmitTaskResult_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "SubmitTaskResult"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Msg_SubmitTaskResult_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"imuachain", "avs", "v1", "tx", "submit_task_result"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

@@ -5,7 +5,6 @@ import "amino/amino.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "google/api/annotations.proto";
 import "imuachain/assets/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/assets/types";

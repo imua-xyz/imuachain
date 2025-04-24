@@ -317,15 +317,22 @@ service Msg {
   option (cosmos.msg.v1.service) = true;
 
   // RegisterOperator registers a new operator.
-  rpc RegisterOperator(RegisterOperatorReq) returns (RegisterOperatorResponse);
+  rpc RegisterOperator(RegisterOperatorReq) returns (RegisterOperatorResponse) {
+    option (google.api.http).post = "/imuachain/operator/v1/tx/register_operator";
+  }
 
   // SetConsKey sets the operator's consensus key for an AVS. To do this, the operator
   // must have previously opted into the AVS.
-  rpc SetConsKey(SetConsKeyReq) returns (SetConsKeyResponse);
+  rpc SetConsKey(SetConsKeyReq) returns (SetConsKeyResponse) {
+    option (google.api.http).post = "/imuachain/operator/v1/tx/set_cons_key";
+  }
 
   // OptIntoAVS opts an operator into an AVS.
-  rpc OptIntoAVS(OptIntoAVSReq) returns (OptIntoAVSResponse);
-
+  rpc OptIntoAVS(OptIntoAVSReq) returns (OptIntoAVSResponse) {
+    option (google.api.http).post = "/imuachain/operator/v1/tx/opt_into_avs";
+  }
   // OptOutOfAVS opts an operator out of an AVS.
-  rpc OptOutOfAVS(OptOutOfAVSReq) returns (OptOutOfAVSResponse);
+  rpc OptOutOfAVS(OptOutOfAVSReq) returns (OptOutOfAVSResponse) {
+    option (google.api.http).post = "/imuachain/operator/v1/tx/opt_out_of_avs";
+  }
 }
