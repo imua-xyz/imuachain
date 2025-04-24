@@ -825,15 +825,18 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		}
 		l := len(ps.Prices)
 		if deterministic {
-			if l > int(f.cs.GetMaxNonce()) {
-				return nil, fmt.Errorf("deterministic source:id_%d must provide no more than %d prices from different DetIDs, got:%d", ps.SourceID, f.cs.GetMaxNonce(), l)
-			}
-			for _, p := range ps.Prices {
-				if len(p.DetID) == 0 {
-					return nil, errors.New("detID of deterministic price must not be empty")
+			if !msg.IsPhaseTwo() {
+				if l > int(f.cs.GetMaxNonce()) {
+					return nil, fmt.Errorf("deterministic source:id_%d must provide no more than %d prices from different DetIDs, got:%d",
+						ps.SourceID, f.cs.GetMaxNonce(), l)
 				}
-				if p.Decimal != decimal {
-					return nil, fmt.Errorf("decimal does not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
+				for _, p := range ps.Prices {
+					if len(p.DetID) == 0 {
+						return nil, errors.New("detID of deteministic price must not be empty")
+					}
+					if p.Decimal != decimal {
+						return nil, fmt.Errorf("decimal not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
+					}
 				}
 			}
 		} else {
@@ -858,7 +861,8 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 	if msg.IsPhaseTwo() {
 		lPrice := len(msg.Prices[0].Prices[0].Price)
 		if lPrice == 0 || lPrice > int(f.cs.RawDataPieceSize()) {
-			return nil, fmt.Errorf("message for 2nd-phase aggregation should have exactly one price with length between 1 and %d", f.cs.RawDataPieceSize())
+			return nil, fmt.Errorf("message for 2nd-phase aggregation should have exactly one price with length between 1 and %d",
+				f.cs.RawDataPieceSize())
 		}
 	}
 
@@ -876,7 +880,7 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		// #nosec G115  // maxNonce is positive
 		windowForPhaseTwo := interval - uint64(f.cs.GetMaxNonce())*2
 		if leafCount == 0 || leafCount > windowForPhaseTwo {
-			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d and be at least 1, got%d",
+			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have leafCount less than or equal to %d and be at least 1, got%d",
 				msg.FeederID, windowForPhaseTwo, leafCount)
 		}
 	}
