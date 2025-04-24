@@ -1,18 +1,9 @@
 package types
 
 import (
-	"fmt"
-
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
-)
-
-const (
-
-	// DefaultEpochIdentifier is the epoch identifier which is used, by default, to identify the
-	// epoch. Note that the options in the default genesis include minute, week, hour or day.
-	DefaultEpochIdentifier = epochstypes.MinuteEpochID
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -25,8 +16,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 // NewParams creates a new Params instance
 func NewParams() Params {
 	return Params{
-		EpochIdentifier: DefaultEpochIdentifier,
-		CommunityTax:    sdk.NewDecWithPrec(3, 2),
+		CommunityTax: sdk.NewDecWithPrec(3, 2),
 	}
 }
 
@@ -42,8 +32,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	if err := epochstypes.ValidateEpochIdentifierInterface(p.EpochIdentifier); err != nil {
-		return fmt.Errorf("epoch identifier: %w", err)
+	if p.CommunityTax.IsNil() || p.CommunityTax.IsNegative() || p.CommunityTax.GT(sdkmath.LegacyNewDec(1)) {
+		return ErrInvalidCommunityTax
 	}
 	return nil
 }

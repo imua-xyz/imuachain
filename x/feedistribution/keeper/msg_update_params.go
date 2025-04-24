@@ -2,9 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
-
-	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -12,7 +9,7 @@ import (
 	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
-func (k msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+func (k Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	if utils.IsMainnet(ctx.ChainID()) && k.authority != req.Authority {
@@ -28,11 +25,8 @@ func (k msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParam
 		"params.Authority", req.Authority,
 	)
 
-	// validate the existence of the epoch (stateful)
-	epochIdentifier := req.Params.EpochIdentifier
-	_, found := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
-	if !found {
-		return &types.MsgUpdateParamsResponse{}, errorsmod.Wrap(types.ErrEpochNotFound, fmt.Sprintf("epoch info not found %s", epochIdentifier))
+	if err := req.Params.Validate(); err != nil {
+		return &types.MsgUpdateParamsResponse{}, err
 	}
 	k.SetParams(ctx, req.Params)
 

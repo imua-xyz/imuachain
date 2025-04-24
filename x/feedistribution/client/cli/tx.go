@@ -2,9 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
-
-	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -31,9 +28,10 @@ func GetTxCmd() *cobra.Command {
 // CmdUpdateParams is to update Params for distribution module
 func CmdUpdateParams() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-params",
-		Short: "update params-update msg of the module",
-		Args:  cobra.ExactArgs(3),
+		Use:     "update-params [community-tax]",
+		Short:   "update params of the distribution module",
+		Example: "imua tx feedistribution update-params 0.1",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -41,23 +39,14 @@ func CmdUpdateParams() *cobra.Command {
 			}
 
 			sender := cliCtx.GetFromAddress()
-			communityInteger, err := strconv.ParseInt(args[1], 10, 64)
+			communityTax, err := sdk.NewDecFromStr(args[0])
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid community tax:%s,err:%s", args[0], err)
 			}
-			if err := epochsTypes.ValidateEpochIdentifierString(args[0]); err != nil {
-				return err
-			}
-			communityPrecise, err := strconv.ParseInt(args[2], 10, 64)
-			if err != nil {
-				return err
-			}
-			communityTax := sdk.NewDecWithPrec(communityInteger, communityPrecise)
 			msg := &types.MsgUpdateParams{
 				Authority: sender.String(),
 				Params: types.Params{
-					EpochIdentifier: args[0],
-					CommunityTax:    communityTax,
+					CommunityTax: communityTax,
 				},
 			}
 			// this calls ValidateBasic internally so we don't need to do that.

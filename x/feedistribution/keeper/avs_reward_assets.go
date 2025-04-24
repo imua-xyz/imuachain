@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -222,15 +224,18 @@ func (k Keeper) UpdateAVSRewardAssetMetaInfo(ctx sdk.Context, avsAddr, assetID s
 }
 
 func (k Keeper) GetAllRewardAssetsByAVS(ctx sdk.Context, avsAddr string) (allRewardAssets types.AVSRewardAssets, err error) {
+	if !common.IsHexAddress(avsAddr) {
+		return types.AVSRewardAssets{}, types.ErrInvalidInputParameter.Wrapf("Invalid AVS address: must be a valid EVM hexadecimal address, avsAddr:%s", avsAddr)
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(avsAddr))
 	defer iterator.Close()
 
-	ret := make([]*types.AVSRewardAsset, 0)
+	ret := make([]types.AVSRewardAsset, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var avsRewardAsset types.AVSRewardAsset
 		k.cdc.MustUnmarshal(iterator.Value(), &avsRewardAsset)
-		ret = append(ret, &avsRewardAsset)
+		ret = append(ret, avsRewardAsset)
 	}
 	return types.AVSRewardAssets{
 		AvsRewardAssets: ret,
@@ -238,6 +243,9 @@ func (k Keeper) GetAllRewardAssetsByAVS(ctx sdk.Context, avsAddr string) (allRew
 }
 
 func (k Keeper) GetAllAVSRewardAssetSymbols(ctx sdk.Context, avsAddr string) (symbols []string, err error) {
+	if !common.IsHexAddress(avsAddr) {
+		return nil, types.ErrInvalidInputParameter.Wrapf("Invalid AVS address: must be a valid EVM hexadecimal address, avsAddr:%s", avsAddr)
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(avsAddr))
 	defer iterator.Close()

@@ -82,4 +82,9 @@ var (
 		ModuleName, 16,
 		"invalid imua receipt address",
 	)
+
+	ErrInvalidCommunityTax = errorsmod.Register(
+		ModuleName, 17,
+		"invalid community tax",
+	)
 )

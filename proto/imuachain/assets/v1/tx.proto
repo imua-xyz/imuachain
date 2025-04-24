@@ -203,9 +203,7 @@ message MsgUpdateParamsResponse {}
 service Msg {
   option (cosmos.msg.v1.service) = true;
   // UpdateParams updates the parameters of the assets module.
-  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
-    option (google.api.http).post = "/imuachain/assets/v1/tx/MsgUpdateParams";
-  }
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
   // // RegisterClientChain registers the client chain
   // rpc RegisterClientChain(RegisterClientChainReq) returns (RegisterClientChainResponse) {
   //   option (google.api.http).post = "/imuachain/assets/v1/tx/RegisterClientChain";

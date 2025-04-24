@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,13 +9,6 @@ import (
 
 // InitGenesis initializes the module's state from a provided genesis state.
 func (k Keeper) InitGenesis(ctx sdk.Context, genState feedistributiontypes.GenesisState) {
-	epochID := genState.Params.EpochIdentifier
-	_, found := k.epochsKeeper.GetEpochInfo(ctx, epochID)
-	if !found {
-		// the panic is suitable here because it is being done at genesis, when the node
-		// is not running. it means that the genesis file is malformed.
-		panic(fmt.Sprintf("epoch info not found %s", epochID))
-	}
 	// init the state from the general exporting genesis file
 	k.SetParams(ctx, genState.Params)
 	err := k.SetAllAVSRewardAssets(ctx, genState.AllAvsRewardAssets)

@@ -218,7 +218,7 @@ message OperatorSlashEvent {
 }
 
 // FeePool is the global fee pool for distribution.
-// It holds decimal coins. Once whole those coins can be burned or distributed to the community pool.
+// It records the rewards accumulated for the community from an AVS.
 // The AVS address is implicit within the store key.
 message FeePool {
   // global fee pool for distribution.
@@ -274,5 +274,5 @@ message AVSRewardAsset {
 // AVSRewardAssets represents all reward assets of an AVS
 message AVSRewardAssets {
   // avs_reward_assets is a list of all reward asset for an AVS
-  repeated AVSRewardAsset avs_reward_assets = 1;
+  repeated AVSRewardAsset avs_reward_assets = 1 [(gogoproto.nullable) = false];
 }

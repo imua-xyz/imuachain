@@ -245,8 +245,7 @@ message OperatorSlashInfo {
 
 // RegisterOperatorReq is the request to register a new operator.
 message RegisterOperatorReq {
-  option (cosmos.msg.v1.signer) = "FromAddress";
-  option (amino.name) = "cosmos-sdk/OperatorInfo";
+  option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -261,8 +260,7 @@ message RegisterOperatorResponse {}
 
 // OptIntoAVSReq is the request to opt into an AVS.
 message OptIntoAVSReq {
-  option (cosmos.msg.v1.signer) = "FromAddress";
-  option (amino.name) = "cosmos-sdk/OptIntoAVSReq";
+  option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -281,8 +279,7 @@ message OptIntoAVSResponse {}
 
 // OptOutOfAVSReq is the request to opt out from an AVS.
 message OptOutOfAVSReq {
-  option (cosmos.msg.v1.signer) = "FromAddress";
-  option (amino.name) = "cosmos-sdk/OptOutOfAVSReq";
+  option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -298,7 +295,6 @@ message OptOutOfAVSResponse {}
 // SetConsKeyReq is the request to set the operator's consensus key for an AVS.
 message SetConsKeyReq {
   option (cosmos.msg.v1.signer) = "address";
-  option (amino.name) = "cosmos-sdk/SetConsKeyReq";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
   // address is the operator address
@@ -319,23 +315,17 @@ message SetConsKeyResponse {}
 // Msg defines the operator Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
+
   // RegisterOperator registers a new operator.
-  rpc RegisterOperator(RegisterOperatorReq) returns (RegisterOperatorResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/RegisterOperatorReq";
-  }
+  rpc RegisterOperator(RegisterOperatorReq) returns (RegisterOperatorResponse);
 
   // SetConsKey sets the operator's consensus key for an AVS. To do this, the operator
   // must have previously opted into the AVS.
-  rpc SetConsKey(SetConsKeyReq) returns (SetConsKeyResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/SetConsKeyReq";
-  }
+  rpc SetConsKey(SetConsKeyReq) returns (SetConsKeyResponse);
 
   // OptIntoAVS opts an operator into an AVS.
-  rpc OptIntoAVS(OptIntoAVSReq) returns (OptIntoAVSResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/OptIntoAVSReq";
-  }
+  rpc OptIntoAVS(OptIntoAVSReq) returns (OptIntoAVSResponse);
+
   // OptOutOfAVS opts an operator out of an AVS.
-  rpc OptOutOfAVS(OptOutOfAVSReq) returns (OptOutOfAVSResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/OptOutOfAVSReq";
-  }
+  rpc OptOutOfAVS(OptOutOfAVSReq) returns (OptOutOfAVSResponse);
 }

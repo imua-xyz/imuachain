@@ -41,7 +41,7 @@ message KeyValue {
 
 // DelegationIncOrDecInfo is the delegation increase or decrease info.
 message DelegationIncOrDecInfo {
-  option (cosmos.msg.v1.signer) = "fromAddress";
+  option (cosmos.msg.v1.signer) = "from_address";
   option (amino.name) = "cosmos-sdk/MsgAddOrDecreaseDelegation";
 
   option (gogoproto.equal) = false;

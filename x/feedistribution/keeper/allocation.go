@@ -121,6 +121,14 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 		if err != nil {
 			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to update the operator outstanding rewards,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeRewards,
+				sdk.NewAttribute(sdk.AttributeKeyAmount, reward.String()),
+				sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+			),
+		)
 		// calculate the remaining  rewards, it will be distributed to the community pool.
 		remaining = remaining.Sub(reward).Add(leftover...)
 	}

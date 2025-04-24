@@ -70,7 +70,7 @@ var (
 
 	// KeyPrefixFeePools :
 	// avsAddr -> types.FeePool
-	// Key for the fee pools of all AVSs; it will track multiple reward pools for different AVSs,
+	// Key for the fee pools of all AVSs; it will track multiple community reward pools for different AVSs,
 	// unlike the cosmos-sdk.
 	KeyPrefixFeePools = []byte{prefixFeePools}
 
