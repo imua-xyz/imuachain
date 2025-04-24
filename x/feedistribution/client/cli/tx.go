@@ -21,7 +21,10 @@ func GetTxCmd() *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-	cmd.AddCommand(CmdUpdateParams())
+	cmd.AddCommand(
+		CmdUpdateParams(),
+		CmdWithdrawDogfoodCommission(),
+	)
 	return cmd
 }
 
@@ -55,6 +58,27 @@ func CmdUpdateParams() *cobra.Command {
 	}
 
 	// transaction level flags from the SDK
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdWithdrawDogfoodCommission() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "withdraw-dogfood-commission",
+		Short:   "withdraw the dogfood commission for an operator",
+		Example: "imua tx feedistribution withdraw-dogfood-commission",
+		Args:    cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgWithdrawDogfoodCommission{
+				FromAddress: clientCtx.GetFromAddress().String(),
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

@@ -87,4 +87,9 @@ var (
 		ModuleName, 17,
 		"invalid community tax",
 	)
+
+	ErrInvalidCliCmdArg = errorsmod.Register(
+		ModuleName, 18,
+		"the input client command arguments are invalid",
+	)
 )
