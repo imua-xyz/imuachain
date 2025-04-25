@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -52,10 +51,10 @@ func (k Keeper) UpdateStakingAssetTotalAmount(ctx sdk.Context, assetID string, c
 // If an asset with the provided assetID already exists, it will return an error.
 func (k Keeper) SetStakingAssetInfo(ctx sdk.Context, info *assetstype.StakingAssetInfo) (err error) {
 	if info.AssetBasicInfo.Decimals > assetstype.MaxDecimal {
-		return errorsmod.Wrapf(assetstype.ErrInvalidInputParameter, "the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", info.AssetBasicInfo.Decimals, assetstype.MaxDecimal)
+		return assetstype.ErrInvalidInputParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", info.AssetBasicInfo.Decimals, assetstype.MaxDecimal)
 	}
 	if info.StakingTotalAmount.IsNegative() {
-		return errorsmod.Wrapf(assetstype.ErrInvalidInputParameter, "the total staking amount is negative, StakingTotalAmount:%v", info.StakingTotalAmount)
+		return assetstype.ErrInvalidInputParameter.Wrapf("the total staking amount is negative, StakingTotalAmount:%v", info.StakingTotalAmount)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakingAssetInfo)
 	_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(info.AssetBasicInfo.LayerZeroChainID, "", info.AssetBasicInfo.Address)
@@ -127,7 +126,7 @@ func (k Keeper) GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *asse
 // GetAssetsDecimal returns the decimal of all the provided assets.
 func (k Keeper) GetAssetsDecimal(ctx sdk.Context, assets map[string]interface{}) (decimals map[string]uint32, err error) {
 	if assets == nil {
-		return nil, errorsmod.Wrap(assetstype.ErrInputPointerIsNil, "assets is nil")
+		return nil, assetstype.ErrInputPointerIsNil.Wrap("assets is nil")
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakingAssetInfo)
 	decimals = make(map[string]uint32, 0)

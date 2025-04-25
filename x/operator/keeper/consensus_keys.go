@@ -410,13 +410,13 @@ func (k Keeper) GetActiveOperatorsForChainID(
 	operatorsAddr, pks := k.GetOperatorsForChainID(ctx, chainID)
 	activeOperator := make([]sdk.AccAddress, 0)
 	activePks := make([]keytypes.WrappedConsKey, 0)
-	// check if the operator is active
+	// check if the operator is opted-in and not jailed
 	for i, operator := range operatorsAddr {
-		if k.IsActive(ctx, operator.String(), avsAddrString) {
+		if k.IsOptedInAndNotJailed(ctx, operator.String(), avsAddrString) {
 			activeOperator = append(activeOperator, operator)
 			activePks = append(activePks, pks[i])
 		} else {
-			k.Logger(ctx).Info("GetActiveOperatorsForChainID operator is not active", "operator", operator.String())
+			k.Logger(ctx).Info("GetActiveOperatorsForChainID operator has opted out or is jailed.", "operator", operator.String())
 		}
 	}
 	return activeOperator, activePks

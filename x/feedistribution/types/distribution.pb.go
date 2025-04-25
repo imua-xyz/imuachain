@@ -772,6 +772,7 @@ type AVSRewardAssetState struct {
 	// in deficit for an extended period, preventing stakers and operators from claiming their rewards,
 	// they may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility
 	// to ensure its reward pool remains sufficiently funded.
+	// the debt is the difference between `reward_allocation_total` and `reward_pool_total`
 	RewardAllocationTotal github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=reward_allocation_total,json=rewardAllocationTotal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_allocation_total"`
 }
 

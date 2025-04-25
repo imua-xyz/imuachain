@@ -599,7 +599,7 @@ func (k Keeper) GetOrCalculateOperatorUSDValues(
 }
 
 func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr string, operator sdk.AccAddress) (sdkmath.LegacyDec, error) {
-	if !k.IsActive(ctx, operator.String(), avsAddr) {
+	if !k.IsOptedInAndNotJailed(ctx, operator.String(), avsAddr) {
 		return sdkmath.LegacyZeroDec(), nil
 	}
 	optedUSDValues, err := k.GetOperatorOptedUSDValue(ctx, avsAddr, operator.String())
@@ -684,7 +684,7 @@ func (k *Keeper) SetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 }
 
 func (k *Keeper) DeleteOperatorAssetUSDValueByEpoch(ctx sdk.Context, epochIdentifier, operator string) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
 	prefix := assetstype.GetJoinedStoreKey(epochIdentifier, operator)
 	iterator := sdk.KVStorePrefixIterator(store, prefix)
 	defer iterator.Close()

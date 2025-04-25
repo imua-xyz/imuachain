@@ -65,7 +65,7 @@ var (
 
 	ErrInvalidStartingInfo = errorsmod.Register(
 		ModuleName, 13,
-		"invalid stating information for a delegation",
+		"invalid starting information for a delegation",
 	)
 
 	ErrInvalidGenesisData = errorsmod.Register(

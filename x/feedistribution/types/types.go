@@ -101,7 +101,7 @@ func (cr CommonAVSRewardData) IsPositive() bool {
 
 func (cr CommonAVSRewardData) Add(avsRewardB CommonAVSRewardData) CommonAVSRewardData {
 	if cr.AVSAddress != avsRewardB.AVSAddress {
-		panic(fmt.Sprintf("avs address different: %v %v\n", cr.AVSAddress, avsRewardB.AVSAddress))
+		return cr
 	}
 	return CommonAVSRewardData{
 		AVSAddress: cr.AVSAddress,

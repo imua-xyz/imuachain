@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -121,7 +119,7 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 	key := assetstype.GetJoinedStoreKey(stakerID, assetID)
 	value := store.Get(key)
 	if value == nil {
-		return nil, errorsmod.Wrap(assetstype.ErrNoStakerAssetKey, fmt.Sprintf("the key is:%s", key))
+		return nil, assetstype.ErrNoStakerAssetKey.Wrapf("the key is:%s", key)
 	}
 	// when there is a slashing, we do not modify `StakerAssetInfo`.
 	// hence, all the amounts below are pre-slashing. however, when
