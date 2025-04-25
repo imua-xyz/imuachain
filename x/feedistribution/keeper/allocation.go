@@ -63,7 +63,7 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 	}
 	if len(remaining) != 0 {
 		// add the remaining rewards to the community pool
-		err = k.UpdateAVSCommunityPool(cc, avs, true, rewardDistribution.Rewards)
+		err = k.UpdateAVSCommunityPool(cc, avs, true, remaining)
 		if err != nil {
 			return err
 		}

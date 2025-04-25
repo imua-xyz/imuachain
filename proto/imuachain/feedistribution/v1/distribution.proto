@@ -237,6 +237,7 @@ message AVSRewardAssetState {
   // in deficit for an extended period, preventing stakers and operators from claiming their rewards,
   // they may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility
   // to ensure its reward pool remains sufficiently funded.
+  // the debt is the difference between `reward_allocation_total` and `reward_pool_total`
   string reward_allocation_total = 3  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

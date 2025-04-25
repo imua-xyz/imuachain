@@ -138,6 +138,8 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
 	// It's not allowed to opt-out if the operator isn't opted-in.
+	// There is no reason to restrict a jailed operator from opting out.
+	// Therefore, we only check if the operator has opted in here.
 	if !k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrNotOptedIn
 	}

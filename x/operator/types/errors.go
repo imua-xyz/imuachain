@@ -126,4 +126,9 @@ var (
 		ModuleName, 27,
 		"the operator is jailed",
 	)
+
+	ErrIsOptedOutOrJailed = errorsmod.Register(
+		ModuleName, 28,
+		"the operator is opted out or jailed",
+	)
 )

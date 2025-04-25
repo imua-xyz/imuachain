@@ -87,8 +87,8 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 		if assetStore.Has(assetKey) {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("the reward asset is already stored,avsAddr:%s,assetID:%s", avsAddr, assetID)
 		}
-		if symbolStore.Has(assetKey) {
-			return types.ErrInvalidRewardAssetParameter.Wrapf("the symbol key of reward asset is already stored,avsAddr:%s,assetID:%s", avsAddr, assetID)
+		if symbolStore.Has(symbolKey) {
+			return types.ErrInvalidRewardAssetParameter.Wrapf("the symbol key of reward asset is already stored,avsAddr:%s,assetID:%s,symbol:%s", avsAddr, assetID, assetInfo.Symbol)
 		}
 		// set the reward asset info
 		avsRewardAsset := &types.AVSRewardAsset{
@@ -189,7 +189,7 @@ func (k Keeper) UpdateAVSRewardAssetMetaInfo(ctx sdk.Context, avsAddr, assetID s
 	store.Set(key, bz)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			types.EventTypeUpdatedRewardAsset,
+			types.EventTypeUpdatedRewardAssetMetaInfo,
 			sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
 			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
 			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, metainfo),

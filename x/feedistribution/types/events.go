@@ -24,8 +24,8 @@ const (
 	// EventTypeNewAVSRewardAsset : new avs reward asset
 	EventTypeNewAVSRewardAsset = "avs_reward_asset_added"
 
-	// EventTypeUpdatedRewardAsset : reward asset update
-	EventTypeUpdatedRewardAsset = "avs_reward_asset_updated"
+	// EventTypeUpdatedRewardAssetMetaInfo : reward asset meta info update
+	EventTypeUpdatedRewardAssetMetaInfo = "reward_asset_meta_info_updated"
 
 	// EventTypeAVSRewardDistributionSet : set the avs reward distribution
 	EventTypeAVSRewardDistributionSet = "avs_reward_distribution_set"

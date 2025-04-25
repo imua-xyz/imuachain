@@ -276,8 +276,19 @@ func (k *Keeper) IsOptedOutButNotEffective(ctx sdk.Context, operatorAddr, avsAdd
 	return false
 }
 
+// IsActive is used to check if the operator is serving the AVS, the opted out operator will still serve the
+// AVS until the next epoch.
 func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr, avsAddr string) bool {
 	return !k.IsOptedOutAndEffective(ctx, operatorAddr, avsAddr) && !k.IsJailed(ctx, operatorAddr, avsAddr)
+}
+
+// IsOptedInAndNotJailed checks whether the operator is opted in and not jailed.
+// Compared to `IsActive`, this returns false immediately after the operator opts out.
+// It will be used when updating voting power at the end of an epoch, as we need to exclude
+// operators who have opted out in the current epoch. These operators would still be included
+// if we used `IsActive`, because the voting power update happens before the epoch info is updated.
+func (k *Keeper) IsOptedInAndNotJailed(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	return k.IsOptedIn(ctx, operatorAddr, avsAddr) && !k.IsJailed(ctx, operatorAddr, avsAddr)
 }
 
 func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error)) error {
