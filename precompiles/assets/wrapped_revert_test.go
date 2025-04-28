@@ -1,31 +1,17 @@
 package assets_test
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math"
 	"math/big"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
-
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/precompiles/assets/testdata"
 	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-)
-
-var (
-	// StorageSlotCounter is the storage slot of the counter object in the Gateway contract.
-	StorageSlotCounter = common.Big1
-	// CounterStartingValue is the starting value of the counter.
-	CounterStartingValue = uint64(1)
 )
 
 // ContractDeploymentData is a struct to define all relevant data to deploy a smart contract.
@@ -76,7 +62,7 @@ func (s *AssetsPrecompileSuite) prepareTestContracts() (common.Address, common.A
 }
 
 func (s *AssetsPrecompileSuite) getCounterValue(gatewayAddr common.Address) uint64 {
-	value := s.App.EvmKeeper.GetState(s.Ctx, gatewayAddr, common.BigToHash(StorageSlotCounter))
+	value := s.App.EvmKeeper.GetState(s.Ctx, gatewayAddr, common.BigToHash(common.Big1))
 	return value.Big().Uint64()
 }
 
@@ -86,7 +72,8 @@ func (s *AssetsPrecompileSuite) getCounterValue(gatewayAddr common.Address) uint
 func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	gatewayCallerAddr, gatewayAddr := s.prepareTestContracts()
 	value := s.getCounterValue(gatewayAddr)
-	s.Require().Equal(CounterStartingValue, value)
+	s.Require().Equal(uint64(1), value)
+	prevValue := value
 
 	// Setup common test parameters
 	clientChainLzID := uint32(101)
@@ -146,7 +133,8 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 	s.Require().NoError(err)
 
 	value = s.getCounterValue(gatewayAddr)
-	s.Require().Equal(CounterStartingValue+1, value)
+	s.Require().Equal(prevValue+1, value)
+	prevValue = value
 
 	// Update expected amount and check balance
 	opAmount = new(big.Int).Sub(opAmount, withdrawAmount)
@@ -160,13 +148,13 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 
 	// Test withdraw with revert scenarios
 	testCases := []struct {
-		name                 string
-		revertCount          *big.Int
-		gasLimit             uint64
-		methodName           string
-		expectedAmount       *big.Int
-		commitBefore         bool
-		expectedCounterValue uint64
+		name           string
+		revertCount    *big.Int
+		gasLimit       uint64
+		methodName     string
+		expectedAmount *big.Int
+		commitBefore   bool
+		valueDelta     uint64
 	}{
 		{
 			// case 1: try { withdraw; revert; } catch { } one time does not
@@ -178,11 +166,9 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 			expectedAmount: opAmount,
 			// reset everything before the test
 			commitBefore: true,
-			// the revert happens in the gateway depth, which holds the counter
-			// hence, counter value must not change.
-			// the same revert propagates up to the gateway caller depth, which
-			// catches the revert allowing the transaction to succeed.
-			expectedCounterValue: CounterStartingValue + 1,
+			// this state was wrapped in a try/catch block, so it should not change
+			// because the entire block was reverted
+			valueDelta: 0,
 		},
 		{
 			// case 2: check that loop > N times with try { withdraw; revert; } catch { }
@@ -194,8 +180,10 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 			methodName:     "withdrawLSTAndThenRevertXTimes",
 			expectedAmount: opAmount,
 			// do not commit the block, so that the number of precompile calls is not reset
-			commitBefore:         false,
-			expectedCounterValue: CounterStartingValue + 1,
+			commitBefore: false,
+			// this state was wrapped in a try/catch block, so it should not change
+			// because the entire block was reverted
+			valueDelta: 0,
 		},
 		{
 			// case 3: check that try { withdraw; } catch {} for > N times is only
@@ -223,13 +211,8 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 			),
 			// reset everything before the test, particularly the number of precompile calls
 			commitBefore: true,
-			// the revert happens in the precompile, so that is the gateway depth.
-			// however, it happens after N tries have succeeded, so the counter
-			// value must be incremented by N
-			// In simpler words, we start with 2 (1 in the constructor, 1 in the first withdraw)
-			// then, we make 7 successful withdrawals, attempt the eighth one which fails
-			// so total is 2 + 7 = 9.
-			expectedCounterValue: CounterStartingValue + 1 + uint64(evmtypes.MaxPrecompileCalls),
+			// successfully withdrew N times and did not revert any depth
+			valueDelta: uint64(evmtypes.MaxPrecompileCalls),
 		},
 	}
 
@@ -252,7 +235,11 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 		s.Require().NoError(err)
 		value := s.getCounterValue(gatewayAddr)
-		s.Equal(tc.expectedCounterValue, value, fmt.Sprintf("counter value mismatch for %s", tc.name))
+		s.Equal(
+			prevValue+tc.valueDelta, value,
+			fmt.Sprintf("counter value mismatch for %s", tc.name),
+		)
+		prevValue = value
 
 		// Balance should remain unchanged after reverts
 		checkBalance(tc.expectedAmount)
@@ -260,20 +247,9 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 }
 
 func (s *AssetsPrecompileSuite) TestGasStarvation() {
-	hexKey := "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE"
-	privKeyDecoded, err := hex.DecodeString(hexKey)
-	s.Require().NoError(err)
-	privKey := &ethsecp256k1.PrivKey{Key: privKeyDecoded}
-	key, err := privKey.ToECDSA()
-	s.Require().NoError(err)
-	s.PrivKey = privKey
-	s.Address = crypto.PubkeyToAddress(key.PublicKey)
-	account := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.AccAddress(s.Address.Bytes()))
-	if account == nil {
-		account = types.NewBaseAccount(s.Address[:], nil, 0, 0)
-	}
-	account.SetSequence(4)
-	s.App.AccountKeeper.SetAccount(s.Ctx, account)
+	addr, key := testutiltx.NewAccAddressAndKey()
+	s.PrivKey = key
+	s.Address = common.Address(addr.Bytes())
 	// test constants, must match contracts
 	const (
 		TEST_CHAIN_ID = uint32(99)
@@ -290,7 +266,7 @@ func (s *AssetsPrecompileSuite) TestGasStarvation() {
 	paddedStaker := paddingClientChainAddress(staker[:], assetstypes.GeneralClientChainAddrLength)
 	paddedAsset := paddingClientChainAddress(VIRTUAL_TOKEN[:], assetstypes.GeneralClientChainAddrLength)
 	// fund deployer and staker
-	err = testutil.FundAccountWithBaseDenom(
+	err := testutil.FundAccountWithBaseDenom(
 		s.Ctx, s.App.BankKeeper, s.Address[:], 1000000000000000000,
 	)
 	s.Require().NoError(err)
