@@ -380,13 +380,14 @@ func (s *AssetsPrecompileSuite) TestGasStarvation() {
 		ContractAddr: tryCatchCallerAddr,
 		ContractABI:  testdata.TryCatchCallerContract.ABI,
 		PrivKey:      s.PrivKey,
-	}.WithMethodName("callWithTryCatch").WithArgs(
+	}.WithMethodName("callWithTryCatchGasStarved").WithArgs(
 		reverterContractAddr,
 		TEST_CHAIN_ID,
 		paddedAsset,
 		paddedStaker,
 		DEPOSIT_AMOUNT,
-	).WithGasLimit(78_000)
+		big.NewInt(10_000),
+	)
 	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 	s.Require().NoError(err)
 	s.Commit()

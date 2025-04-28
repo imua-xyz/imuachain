@@ -26,15 +26,38 @@ contract TryCatchCaller {
             amount
         ) {
             // This will never execute since the called function always reverts
-            successCount++;
             return (true, "");
         } catch Error(string memory reason) {
             // Catch the revert but let the transaction complete successfully
-            errorCount++;
             return (false, reason);
         } catch (bytes memory) {
             // Catch any other type of revert
-            lowLevelRevertCount++;
+            return (false, "Low-level revert");
+        }
+    }
+
+    function callWithTryCatchGasStarved(
+        address reverterContract,
+        uint32 clientChainID,
+        bytes calldata token,
+        bytes calldata staker,
+        uint256 amount,
+        uint256 gasLimit
+    ) external returns (bool callSucceeded, string memory errorMessage) {
+        try PrecompileCallerThatReverts(reverterContract).callPrecompileAndRevertGasStarved(
+            clientChainID,
+            token,
+            staker,
+            amount,
+            gasLimit
+        ) {
+            // This will never execute since the called function always reverts
+            return (true, "");
+        } catch Error(string memory reason) {
+            // Catch the revert but let the transaction complete successfully
+            return (false, reason);
+        } catch (bytes memory) {
+            // Catch any other type of revert
             return (false, "Low-level revert");
         }
     }

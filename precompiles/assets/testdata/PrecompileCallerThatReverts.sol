@@ -61,6 +61,18 @@ contract PrecompileCallerThatReverts {
         anotherReverter.callMe{value: 1 ether}();
     }
 
+    function callPrecompileAndRevertGasStarved(
+        uint32 clientChainID,
+        bytes calldata token,
+        bytes calldata staker,
+        uint256 amount,
+        uint256 gasLimit
+    ) external {
+        nonce += 1;
+        callPrecompileGasStarved(clientChainID, token, staker, amount, gasLimit);
+        anotherReverter.callMe{value: 1 ether}();
+    }
+
     function callPrecompileAndNotRevert(
         uint32 clientChainID,
         bytes calldata token,
@@ -107,6 +119,30 @@ contract PrecompileCallerThatReverts {
         );
 
         return success;
+    }
+
+    function callPrecompileGasStarved(
+        uint32 clientChainID,
+        bytes calldata token,
+        bytes calldata staker,
+        uint256 amount,
+        uint256 gasLimit
+    ) public returns (bool success) {
+        bytes memory data = abi.encodeWithSelector(
+            ASSETS_CONTRACT.depositLST.selector,
+            clientChainID,
+            token,
+            staker,
+            amount
+        );
+        address target = address(ASSETS_CONTRACT);
+        assembly {
+            let ptr := add(data, 0x20)
+            success := call(
+                gasLimit, target, 0, add(data, 0x20), mload(data), ptr, 0x20
+            )
+            success := and(success, mload(ptr))
+        }
     }
 
     function callPrecompile2(
