@@ -1,11 +1,18 @@
 package assets_test
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"math/big"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/evmos/evmos/v16/crypto/ethsecp256k1"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/precompiles/assets/testdata"
 	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
@@ -166,7 +173,7 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 			// cause deposited amount to change
 			name:           "Verify that a wrapped revert undoes the state change",
 			revertCount:    big.NewInt(1),
-			gasLimit:       0,
+			gasLimit:       math.MaxInt64 - 1,
 			methodName:     "withdrawLSTAndThenRevertXTimes",
 			expectedAmount: opAmount,
 			// reset everything before the test
@@ -250,28 +257,142 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		// Balance should remain unchanged after reverts
 		checkBalance(tc.expectedAmount)
 	}
+}
 
-	// now, we run Adu's test
-	startingValue := s.getCounterValue(gatewayAddr)
-	stakerAssetInfo, err := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(
-		s.Ctx, stakerID, assetID,
+func (s *AssetsPrecompileSuite) TestGasStarvation() {
+	hexKey := "D196DCA836F8AC2FFF45B3C9F0113825CCBB33FA1B39737B948503B263ED75AE"
+	privKeyDecoded, err := hex.DecodeString(hexKey)
+	s.Require().NoError(err)
+	privKey := &ethsecp256k1.PrivKey{Key: privKeyDecoded}
+	key, err := privKey.ToECDSA()
+	s.Require().NoError(err)
+	s.PrivKey = privKey
+	s.Address = crypto.PubkeyToAddress(key.PublicKey)
+	account := s.App.AccountKeeper.GetAccount(s.Ctx, sdk.AccAddress(s.Address.Bytes()))
+	if account == nil {
+		account = types.NewBaseAccount(s.Address[:], nil, 0, 0)
+	}
+	account.SetSequence(4)
+	s.App.AccountKeeper.SetAccount(s.Ctx, account)
+	// test constants, must match contracts
+	const (
+		TEST_CHAIN_ID = uint32(99)
+	)
+	var (
+		VIRTUAL_TOKEN  = common.HexToAddress("0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB")
+		DEPOSIT_AMOUNT = big.NewInt(5)
+	)
+	deployer := testutiltx.GenerateAddress()
+	staker := testutiltx.GenerateAddress()
+	stakerID, ASSET_ID := assetstypes.GetStakerIDAndAssetID(
+		uint64(TEST_CHAIN_ID), staker[:], VIRTUAL_TOKEN[:],
+	)
+	paddedStaker := paddingClientChainAddress(staker[:], assetstypes.GeneralClientChainAddrLength)
+	paddedAsset := paddingClientChainAddress(VIRTUAL_TOKEN[:], assetstypes.GeneralClientChainAddrLength)
+	// fund deployer and staker
+	err = testutil.FundAccountWithBaseDenom(
+		s.Ctx, s.App.BankKeeper, s.Address[:], 1000000000000000000,
 	)
 	s.Require().NoError(err)
-	initialBalance := stakerAssetInfo.TotalDepositAmount.BigInt()
-	args = callArgs.WithMethodName("callWithTryCatch").WithArgs(
-		clientChainLzID,
-		paddedUsdtAddress,
-		paddedStakerAddress,
-		withdrawAmount,
+	err = testutil.FundAccountWithBaseDenom(
+		s.Ctx, s.App.BankKeeper, deployer[:], 1000000000000000000,
+	)
+	s.Require().NoError(err)
+	err = testutil.FundAccountWithBaseDenom(
+		s.Ctx, s.App.BankKeeper, staker[:], 1000000000000000000,
+	)
+	s.Require().NoError(err)
+	// deploy the third party callee contract
+	thirdPartyCalleeAddr, err := s.DeployContract(testdata.ThirdPartyCalleeContract)
+	s.Require().NoError(err)
+	// deploy the precompile caller contract
+	reverterContractAddr, err := s.DeployContractWithArgs(
+		ContractDeploymentData{
+			Contract:        testdata.PrecompileCallerThatRevertsContract,
+			ConstructorArgs: []interface{}{thirdPartyCalleeAddr},
+		},
+	)
+	s.Require().NoError(err)
+	// deploy the try catch caller contract
+	tryCatchCallerAddr, err := s.DeployContract(testdata.TryCatchCallerContract)
+	_ = tryCatchCallerAddr
+	s.Require().NoError(err)
+	// mark the precompile caller as an authorized gateway
+	authorizedGateways, err := s.App.AssetsKeeper.GetParams(s.Ctx)
+	s.Require().NoError(err)
+	authorizedGateways.Gateways = append(authorizedGateways.Gateways, reverterContractAddr.String())
+	err = s.App.AssetsKeeper.SetParams(s.Ctx, authorizedGateways)
+	s.Require().NoError(err)
+	// now, we do reverterContract.activateStakingForTestChain()
+	args := testutilcontracts.CallArgs{
+		ContractAddr: reverterContractAddr,
+		ContractABI:  testdata.PrecompileCallerThatRevertsContract.ABI,
+		PrivKey:      s.PrivKey,
+	}.WithMethodName("activateStakingForTestChain")
+	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
+	s.Require().NoError(err)
+	s.Commit()
+	// check if we are now registered
+	// 1. chain
+	s.Require().True(s.App.AssetsKeeper.ClientChainExists(s.Ctx, uint64(TEST_CHAIN_ID)))
+	// 2. token
+	s.Require().True(s.App.AssetsKeeper.IsStakingAsset(s.Ctx, ASSET_ID))
+	// get balance of staker
+	checkBalance := func(expectedAmount *big.Int) *big.Int {
+		stakerAssetInfo, err := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(
+			s.Ctx, stakerID, ASSET_ID,
+		)
+		if err != nil {
+			s.Equal(expectedAmount, big.NewInt(0))
+			return big.NewInt(0)
+		}
+		s.Equal(expectedAmount, stakerAssetInfo.TotalDepositAmount.BigInt())
+		return stakerAssetInfo.TotalDepositAmount.BigInt()
+	}
+	checkBalance(big.NewInt(0))
+	// get initial nonce
+	checkNonce := func(expectedNonce uint64, msgAndArgs ...interface{}) uint64 {
+		x := s.App.EvmKeeper.GetState(s.Ctx, reverterContractAddr, common.BigToHash(common.Big1)).Big().Uint64()
+		s.Equal(expectedNonce, x, msgAndArgs...)
+		return x
+	}
+	nonce1 := checkNonce(0, "initial nonce should be 0")
+	// make a real deposit
+	args = testutilcontracts.CallArgs{
+		ContractAddr: reverterContractAddr,
+		ContractABI:  testdata.PrecompileCallerThatRevertsContract.ABI,
+		PrivKey:      s.PrivKey,
+	}.WithMethodName("callPrecompileAndNotRevert").WithArgs(
+		TEST_CHAIN_ID,
+		paddedAsset,
+		paddedStaker,
+		DEPOSIT_AMOUNT,
 	)
 	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 	s.Require().NoError(err)
 	s.Commit()
-	value = s.getCounterValue(gatewayAddr)
-	// the revert happens so there is no change in the counter value
-	// or the deposited amount
-	s.Equal(startingValue, value)
-	checkBalance(initialBalance)
+	checkBalance(DEPOSIT_AMOUNT)
+	nonce2 := checkNonce(nonce1+1, "nonce should increase by 1")
+
+	lowLevelSlot := common.BigToHash(common.Big2)
+	previousCount := s.App.EvmKeeper.GetState(s.Ctx, tryCatchCallerAddr, lowLevelSlot).Big().Uint64()
+	args = testutilcontracts.CallArgs{
+		ContractAddr: tryCatchCallerAddr,
+		ContractABI:  testdata.TryCatchCallerContract.ABI,
+		PrivKey:      s.PrivKey,
+	}.WithMethodName("callWithTryCatch").WithArgs(
+		reverterContractAddr,
+		TEST_CHAIN_ID,
+		paddedAsset,
+		paddedStaker,
+		DEPOSIT_AMOUNT,
+	).WithGasLimit(78_000)
+	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
+	s.Require().NoError(err)
+	s.Commit()
+	checkNonce(nonce2, "nonce should not increase")
+	nextCount := s.App.EvmKeeper.GetState(s.Ctx, tryCatchCallerAddr, lowLevelSlot).Big().Uint64()
+	s.Equal(previousCount+1, nextCount, "success count should increase by 1")
 }
 
 // DeployContractWithArgs is a helper function to deploy a contract with constructor arguments.
