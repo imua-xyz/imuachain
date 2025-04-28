@@ -356,7 +356,7 @@ func (s *AssetsPrecompileSuite) TestGasStarvation() {
 		s.Equal(expectedNonce, x, msgAndArgs...)
 		return x
 	}
-	nonce1 := checkNonce(0, "initial nonce should be 0")
+	nonce := checkNonce(0, "initial nonce should be 0")
 	// make a real deposit
 	args = testutilcontracts.CallArgs{
 		ContractAddr: reverterContractAddr,
@@ -372,28 +372,34 @@ func (s *AssetsPrecompileSuite) TestGasStarvation() {
 	s.Require().NoError(err)
 	s.Commit()
 	checkBalance(DEPOSIT_AMOUNT)
-	nonce2 := checkNonce(nonce1+1, "nonce should increase by 1")
+	nonce = checkNonce(nonce+1, "nonce should increase by 1")
 
-	lowLevelSlot := common.BigToHash(common.Big2)
-	previousCount := s.App.EvmKeeper.GetState(s.Ctx, tryCatchCallerAddr, lowLevelSlot).Big().Uint64()
+	// make a gas starved call directly on the gateway
 	args = testutilcontracts.CallArgs{
-		ContractAddr: tryCatchCallerAddr,
-		ContractABI:  testdata.TryCatchCallerContract.ABI,
+		ContractAddr: reverterContractAddr,
+		ContractABI:  testdata.PrecompileCallerThatRevertsContract.ABI,
 		PrivKey:      s.PrivKey,
-	}.WithMethodName("callWithTryCatchGasStarved").WithArgs(
-		reverterContractAddr,
+	}.WithMethodName("callPrecompileGasStarved").WithArgs(
 		TEST_CHAIN_ID,
 		paddedAsset,
 		paddedStaker,
 		DEPOSIT_AMOUNT,
+		// slightly above the RequiredGas result of 9680
 		big.NewInt(10_000),
-	)
+	// overall tx should have enough gas limit
+	).WithGasLimit(1_000_000)
 	_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 	s.Require().NoError(err)
 	s.Commit()
-	checkNonce(nonce2, "nonce should not increase")
-	nextCount := s.App.EvmKeeper.GetState(s.Ctx, tryCatchCallerAddr, lowLevelSlot).Big().Uint64()
-	s.Equal(previousCount+1, nextCount, "success count should increase by 1")
+	// check nonce
+	nonce = checkNonce(nonce+1, "nonce should increase by 1")
+	// check failure count
+	failureCount := s.App.EvmKeeper.GetState(
+		s.Ctx, reverterContractAddr, common.BigToHash(common.Big3),
+	).Big().Uint64()
+	s.Equal(failureCount, uint64(1), "failure count should increase by 1")
+	// last, check deposit amount is unchanged
+	checkBalance(DEPOSIT_AMOUNT)
 }
 
 // DeployContractWithArgs is a helper function to deploy a contract with constructor arguments.

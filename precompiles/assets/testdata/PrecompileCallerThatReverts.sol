@@ -21,10 +21,11 @@ contract PrecompileCallerThatReverts {
     string public constant TEST_TOKEN_ORACLE_INFO = "TestChain,TestToken,8";
     bytes4 constant SELECTOR = this.callPrecompile.selector;
 
-    ThirdPartyCallee anotherReverter;
-
-    // local state 
-    uint256 public nonce;
+    // local state
+    ThirdPartyCallee anotherReverter; // 0
+    uint256 public nonce; // 1
+    uint256 public successCount; // 2
+    uint256 public failureCount; // 3
 
     constructor(address anotherReverter_) {
         anotherReverter = ThirdPartyCallee(anotherReverter_);
@@ -39,7 +40,6 @@ contract PrecompileCallerThatReverts {
             TEST_CHAIN_METADATA, 
             TEST_SIGNATURE_SCHEME
         );
-        
         _registerOrUpdateToken(
             TEST_CHAIN_ID, 
             VIRTUAL_TOKEN, 
@@ -128,6 +128,7 @@ contract PrecompileCallerThatReverts {
         uint256 amount,
         uint256 gasLimit
     ) public returns (bool success) {
+        nonce += 1;
         bytes memory data = abi.encodeWithSelector(
             ASSETS_CONTRACT.depositLST.selector,
             clientChainID,
@@ -142,6 +143,11 @@ contract PrecompileCallerThatReverts {
                 gasLimit, target, 0, add(data, 0x20), mload(data), ptr, 0x20
             )
             success := and(success, mload(ptr))
+        }
+        if (success) {
+            successCount += 1;
+        } else {
+            failureCount += 1;
         }
     }
 
