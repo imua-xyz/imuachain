@@ -222,6 +222,7 @@ func (gs GenesisState) ValidateAVSFeePools() error {
 
 func (gs GenesisState) ValidateAVSRewardDistributions() error {
 	validationFunc := func(_ int, info AVSAddrAndRewardDistribution) error {
+		totalProportion := sdkmath.LegacyZeroDec()
 		// check the avs address
 		if !common.IsHexAddress(info.Avs) {
 			return ErrInvalidGenesisData.Wrapf("ValidateAVSRewardDistributions: invalid avs address, avsAddr:%s", info.Avs)
@@ -238,13 +239,14 @@ func (gs GenesisState) ValidateAVSRewardDistributions() error {
 				)
 			}
 			if proportion.RewardProportion.IsNil() ||
-				proportion.RewardProportion.IsNegative() {
-				return errorsmod.Wrapf(
-					ErrInvalidGenesisData,
+				proportion.RewardProportion.LTE(sdkmath.LegacyZeroDec()) ||
+				proportion.RewardProportion.GT(sdkmath.LegacyNewDec(1)) {
+				return ErrInvalidGenesisData.Wrapf(
 					"ValidateAVSRewardDistributions: nil or negative reward proportion ,avs:%s,operator:%s",
 					info.Avs, proportion.OperatorAddr,
 				)
 			}
+			totalProportion.AddMut(proportion.RewardProportion)
 			return nil
 		}
 		seenFieldValueFunc := func(proportion OperatorRewardProportion) (string, struct{}) {
@@ -254,6 +256,12 @@ func (gs GenesisState) ValidateAVSRewardDistributions() error {
 			seenFieldValueFunc, validationFunc)
 		if err != nil {
 			return err
+		}
+		if totalProportion.GT(sdkmath.LegacyNewDec(1)) {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateAVSRewardDistributions: total operator proportions > 1 for avs %s: %s",
+				info.Avs, totalProportion,
+			)
 		}
 		return nil
 	}

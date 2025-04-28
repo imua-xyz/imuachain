@@ -30,6 +30,42 @@
     [
       {
         "internalType": "uint32",
+        "name": "rewardAssetChainLzID",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "avsAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "assetAddress",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "opAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "fundAVSReward",
+    "outputs":
+    [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "uint32",
         "name": "clientChainID",
         "type": "uint32"
       },

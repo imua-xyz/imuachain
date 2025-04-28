@@ -1,12 +1,14 @@
 package keeper
 
 import (
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
@@ -75,6 +77,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
+	updatedKeyValues := make([]utils.KeyValue, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var DelegationChangeInfo feedistributiontypes.DelegationChangeInfo
 		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
@@ -90,9 +93,15 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 			break
 		}
 		if isUpdate {
-			bz := k.cdc.MustMarshal(&DelegationChangeInfo)
-			store.Set(iterator.Key(), bz)
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+				Key:   iterator.Key(),
+				Value: &DelegationChangeInfo,
+			})
 		}
+	}
+	for _, updateKeyValue := range updatedKeyValues {
+		bz := k.cdc.MustMarshal(updateKeyValue.Value)
+		store.Set(updateKeyValue.Key, bz)
 	}
 	return nil
 }
@@ -596,21 +605,22 @@ func (k Keeper) UpdateStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAdd
 	return nil
 }
 
-func GenericIterateStoreWithUpdate[T any](
+func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 	ctx sdk.Context,
+	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,
 	keyPrefix []byte,
 	iteratePrefix []byte,
 	isUpdate bool,
 	keyNumber int,
 	unmarshal func([]byte) (T, error),
-	marshal func(T) []byte,
 	opFunc func(keys []string, value T) (bool, error),
 ) error {
 	store := prefix.NewStore(ctx.KVStore(storeKey), keyPrefix)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
+	updatedKeyValues := make([]utils.KeyValue, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), keyNumber)
 		if err != nil {
@@ -631,8 +641,14 @@ func GenericIterateStoreWithUpdate[T any](
 		}
 
 		if isUpdate {
-			store.Set(iterator.Key(), marshal(value))
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+				Key:   iterator.Key(),
+				Value: value,
+			})
 		}
+	}
+	for _, updateKeyValue := range updatedKeyValues {
+		store.Set(updateKeyValue.Key, cdc.MustMarshal(updateKeyValue.Value))
 	}
 	return nil
 }
@@ -647,6 +663,7 @@ func (k Keeper) IterateStakerOutstandingRewards(
 ) error {
 	return GenericIterateStoreWithUpdate[*feedistributiontypes.StakerOutstandingRewards](
 		ctx,
+		k.cdc,
 		k.storeKey,
 		feedistributiontypes.KeyPrefixStakerOutstandingRewards,
 		[]byte(stakerID),
@@ -656,9 +673,6 @@ func (k Keeper) IterateStakerOutstandingRewards(
 			var r feedistributiontypes.StakerOutstandingRewards
 			k.cdc.MustUnmarshal(bz, &r)
 			return &r, nil
-		},
-		func(r *feedistributiontypes.StakerOutstandingRewards) []byte {
-			return k.cdc.MustMarshal(r)
 		},
 		func(keys []string, value *feedistributiontypes.StakerOutstandingRewards) (bool, error) {
 			return opFunc(keys[1], value)
@@ -674,6 +688,7 @@ func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator 
 ) error {
 	return GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorAccumulatedCommission](
 		ctx,
+		k.cdc,
 		k.storeKey,
 		feedistributiontypes.KeyPrefixOperatorAccumulatedCommission,
 		[]byte(operator),
@@ -683,9 +698,6 @@ func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator 
 			var c feedistributiontypes.OperatorAccumulatedCommission
 			k.cdc.MustUnmarshal(bz, &c)
 			return &c, nil
-		},
-		func(v *feedistributiontypes.OperatorAccumulatedCommission) []byte {
-			return k.cdc.MustMarshal(v)
 		},
 		func(keys []string, value *feedistributiontypes.OperatorAccumulatedCommission) (bool, error) {
 			return opFunc(keys[1], value)

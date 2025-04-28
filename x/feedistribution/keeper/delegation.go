@@ -40,8 +40,8 @@ func (k Keeper) MarkStakeChangedDelegations(ctx sdk.Context, stakerID, assetID s
 			if err != nil {
 				return err
 			}
-			divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
-			delegationChangeInfo.TotalAmount = sdk.NewDecFromInt(prevAssetState.TotalAmount).QuoInt(divisor)
+			delegationChangeInfo.TotalAmount = feedistributiontypes.ScaleIntByDecimals(
+				prevAssetState.TotalAmount, assetInfo.AssetBasicInfo.Decimals)
 		}
 
 		delegationChangeInfo.AppendUniqueStakerID(stakerID)
@@ -103,8 +103,7 @@ func (k Keeper) initializeDelegationStartingInfo(
 		if err != nil {
 			return err
 		}
-		divisor := math.NewIntWithDecimal(1, int(assetInfo.AssetBasicInfo.Decimals)) // #nosec G115
-		stake = sdk.NewDecFromInt(delegatedAmount).QuoInt(divisor)
+		stake = feedistributiontypes.ScaleIntByDecimals(delegatedAmount, assetInfo.AssetBasicInfo.Decimals)
 	} else {
 		// The stake should remain unchanged when the isEndEpoch flag is false.
 		// This function is used for reward distribution triggered by a staker-initiated claim
@@ -122,11 +121,6 @@ func (k Keeper) initializeDelegationStartingInfo(
 		return k.DeleteDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier)
 	}
 
-	// increase the reference count
-	err := k.incrementReferenceCount(ctx, operator, assetID, epochInfo.Identifier, previousPeriod)
-	if err != nil {
-		return err
-	}
 	startingInfo := feedistributiontypes.DelegationStartingInfo{
 		PreviousPeriod: previousPeriod,
 		Stake:          stake,
@@ -138,7 +132,13 @@ func (k Keeper) initializeDelegationStartingInfo(
 		// since the current epoch's rewards have not been distributed yet.
 		startingInfo.EpochNumber = uint64(epochInfo.CurrentEpoch - 1)
 	}
-	err = k.SetDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier, startingInfo)
+	err := k.SetDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier, startingInfo)
+	if err != nil {
+		return err
+	}
+
+	// increase the reference count
+	err = k.incrementReferenceCount(ctx, operator, assetID, epochInfo.Identifier, previousPeriod)
 	if err != nil {
 		return err
 	}

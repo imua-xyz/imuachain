@@ -5,6 +5,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
@@ -142,6 +143,8 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(operator))
 	defer iterator.Close()
+	updateKeyValues := make([]utils.KeyValue, 0)
+	updateAssetIDs := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts assetstype.OperatorAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
@@ -160,21 +163,32 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 			return err
 		}
 		if isUpdate {
-			// store the updated state
-			bz := k.cdc.MustMarshal(&amounts)
-			store.Set(iterator.Key(), bz)
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					assetstype.EventTypeUpdatedOperatorAsset,
-					sdk.NewAttribute(assetstype.AttributeKeyOperatorAddress, operator),
-					sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
-					sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, amounts.TotalAmount.String()),
-					sdk.NewAttribute(assetstype.AttributeKeyPendingUndelegationAmount, amounts.PendingUndelegationAmount.String()),
-					sdk.NewAttribute(assetstype.AttributeKeyTotalShare, amounts.TotalShare.String()),
-					sdk.NewAttribute(assetstype.AttributeKeyOperatorShare, amounts.OperatorShare.String()),
-				),
-			)
+			// collect key values to update
+			updateKeyValues = append(updateKeyValues, utils.KeyValue{
+				Key:   iterator.Key(),
+				Value: &amounts,
+			})
+			updateAssetIDs = append(updateAssetIDs, assetID)
 		}
+	}
+
+	// bulk set the updated states
+	for i, updateKeyValue := range updateKeyValues {
+		// store the updated state
+		bz := k.cdc.MustMarshal(updateKeyValue.Value)
+		store.Set(updateKeyValue.Key, bz)
+		amounts := updateKeyValue.Value.(*assetstype.OperatorAssetInfo)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				assetstype.EventTypeUpdatedOperatorAsset,
+				sdk.NewAttribute(assetstype.AttributeKeyOperatorAddress, operator),
+				sdk.NewAttribute(assetstype.AttributeKeyAssetID, updateAssetIDs[i]),
+				sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, amounts.TotalAmount.String()),
+				sdk.NewAttribute(assetstype.AttributeKeyPendingUndelegationAmount, amounts.PendingUndelegationAmount.String()),
+				sdk.NewAttribute(assetstype.AttributeKeyTotalShare, amounts.TotalShare.String()),
+				sdk.NewAttribute(assetstype.AttributeKeyOperatorShare, amounts.OperatorShare.String()),
+			),
+		)
 	}
 	return nil
 }

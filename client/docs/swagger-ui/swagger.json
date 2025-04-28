@@ -23753,10 +23753,10 @@
                   "format": "uint64",
                   "description": "jailed_height is the height at which the operator was jailed.\nIt can be used to handle the impact of jailing on rewards. The default value is 0."
                 },
-                "un_jailed_height": {
+                "unjailed_height": {
                   "type": "string",
                   "format": "uint64",
-                  "description": "un_jailed_height is the height at which the jailed operator was unJailed.\nIt can be used to handle the impact of unJailing on rewards. The default value is 0."
+                  "description": "unjailed_height is the height at which the operator was un‑jailed.\nUsed when calculating reward eligibility windows."
                 }
               },
               "title": "OptedInfo is the opted information about operator"
@@ -45692,10 +45692,10 @@
           "format": "uint64",
           "description": "jailed_height is the height at which the operator was jailed.\nIt can be used to handle the impact of jailing on rewards. The default value is 0."
         },
-        "un_jailed_height": {
+        "unjailed_height": {
           "type": "string",
           "format": "uint64",
-          "description": "un_jailed_height is the height at which the jailed operator was unJailed.\nIt can be used to handle the impact of unJailing on rewards. The default value is 0."
+          "description": "unjailed_height is the height at which the operator was un‑jailed.\nUsed when calculating reward eligibility windows."
         }
       },
       "title": "OptedInfo is the opted information about operator"

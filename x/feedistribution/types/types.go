@@ -388,3 +388,11 @@ func (crs CommonAVSRewards) CalculateRewards(delegatedAmount sdk.Dec) (CommonAVS
 	}
 	return ret, nil
 }
+
+func ScaleIntByDecimals(amount sdkmath.Int, decimals uint32) sdk.Dec {
+	if decimals == 0 {
+		return sdk.NewDecFromInt(amount)
+	}
+	divisor := sdkmath.NewIntWithDecimal(1, int(decimals)) // #nosec G115
+	return sdk.NewDecFromInt(amount).QuoInt(divisor)
+}

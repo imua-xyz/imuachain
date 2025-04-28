@@ -34,7 +34,7 @@ func (k *Keeper) GetVotingPowerSnapshot(ctx sdk.Context, key []byte) (*types.Vot
 	return &ret, nil
 }
 
-func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(height int64, snapshot *types.VotingPowerSnapshot) error) error {
+func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, opFunc func(height int64, snapshot *types.VotingPowerSnapshot) error) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	iterator := sdk.KVStorePrefixIterator(store, common.HexToAddress(avsAddr).Bytes())
 	defer iterator.Close()
@@ -49,10 +49,6 @@ func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, isU
 		err = opFunc(height, &snapshot)
 		if err != nil {
 			return err
-		}
-		if isUpdate {
-			bz := k.cdc.MustMarshal(&snapshot)
-			store.Set(iterator.Key(), bz)
 		}
 	}
 	return nil
@@ -281,7 +277,7 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 		snapshotHelperStore.Set([]byte(avsAddr), bz)
 		return nil
 	}
-	err := k.IterateAVSUSDValues(ctx, false, opFunc)
+	err := k.IterateAVSUSDValues(ctx, opFunc)
 	if err != nil {
 		return err
 	}

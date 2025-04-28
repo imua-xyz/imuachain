@@ -108,8 +108,8 @@ func (h OperatorHooksWrapper) AfterJail(
 func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo) {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
-	for i := range affectedAVSList {
-		if affectedAVSList[i] == dogfoodAVSAddr {
+	for _, avs := range affectedAVSList {
+		if avs == dogfoodAVSAddr {
 			// check if the operator is in the current validator set.
 			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)
 			if !found || err != nil {

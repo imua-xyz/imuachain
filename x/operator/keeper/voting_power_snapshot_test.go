@@ -102,7 +102,7 @@ func (suite *OperatorTestSuite) printAllSnapshot(avs string) {
 		fmt.Println(string(bytes))
 		return nil
 	}
-	err := suite.App.OperatorKeeper.IterateVotingPowerSnapshot(suite.Ctx, avs, false, opFunc)
+	err := suite.App.OperatorKeeper.IterateVotingPowerSnapshot(suite.Ctx, avs, opFunc)
 	suite.NoError(err)
 }
 

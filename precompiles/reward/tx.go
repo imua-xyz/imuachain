@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -32,6 +34,7 @@ const (
 	MethodSetAVSEpochReward            = "setAVSEpochReward"
 	MethodSetOperatorRewardProportions = "setOperatorRewardProportions"
 	MethodSetAVSRewardParams           = "setAVSRewardParams"
+	MethodFundAVSReward                = "fundAVSReward"
 )
 
 func addressToID(ctx sdk.Context, assetKeeper assetskeeper.Keeper, chainLzID uint32, address []byte) ([]byte, string, error) {
@@ -423,6 +426,57 @@ func (p Precompile) SetAVSRewardParams(
 		CustomRewardInflation: setAVSRewardParams.IsCustomRewardInflation,
 		CustomOperatorRatio:   setAVSRewardParams.IsCustomOperatorRatio,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return method.Outputs.Pack(true)
+}
+
+func (p Precompile) FundAVSReward(
+	ctx sdk.Context,
+	_ common.Address,
+	contract *vm.Contract,
+	_ vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
+	}
+
+	var fundAVSRewardArgs FundAVSRewardArgs
+	if err := method.Inputs.Copy(&fundAVSRewardArgs, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to FundAVSRewardArgs struct: %s", err)
+	}
+	if fundAVSRewardArgs.OpAmount == nil || !(fundAVSRewardArgs.OpAmount.Cmp(big.NewInt(0)) == 1) {
+		return nil, fmt.Errorf("FundAVSReward: invalid fund amount:%v", fundAVSRewardArgs.OpAmount)
+	}
+	_, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, fundAVSRewardArgs.RewardAssetChainLzID, fundAVSRewardArgs.AssetAddress)
+	if err != nil {
+		return nil, err
+	}
+	if rewardAssetID == assetstype.ImuachainAssetID {
+		return nil, fmt.Errorf("can't fund the IMUA token for dogfood AVS,rewardAssetID:%s", rewardAssetID)
+	}
+	avsAddr := strings.ToLower(fundAVSRewardArgs.AVSAddress.String())
+	rewardAssetInfo, err := p.distributionKeeper.GetAVSRewardAssetInfo(ctx, avsAddr, rewardAssetID)
+	if err != nil {
+		return nil, fmt.Errorf("can't find the reward asset for the input avs,rewardAssetID:%s,avs:%s", rewardAssetID, avsAddr)
+	}
+	fundAmountDec := feedistributiontypes.ScaleIntByDecimals(
+		sdkmath.NewIntFromBigInt(fundAVSRewardArgs.OpAmount), rewardAssetInfo.AssetBasicInfo.Decimals)
+	if !fundAmountDec.IsPositive() {
+		return nil, fmt.Errorf("FundAVSReward: invalid fund amount after converting to decimal:%s", fundAmountDec)
+	}
+	err = p.distributionKeeper.UpdateAVSRewardAssetState(ctx,
+		strings.ToLower(fundAVSRewardArgs.AVSAddress.String()),
+		rewardAssetID,
+		&feedistributiontypes.DeltaAVSRewardAssetState{
+			RewardPoolBalance: fundAmountDec,
+			RewardPoolTotal:   fundAmountDec,
+		})
 	if err != nil {
 		return nil, err
 	}

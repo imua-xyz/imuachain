@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -128,7 +130,7 @@ func (k Keeper) SetAVSRewardProportionsExclusive(ctx sdk.Context, avsAddr string
 	for _, operator := range rewardProportions {
 		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
-		if !k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
+		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
 		}
 	}
@@ -211,7 +213,35 @@ func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 		if err != nil {
 			return nil, err
 		}
-		return feesCollected, nil
+		// fund the reward pool of dogfood AVS
+		validRewards := make(sdk.DecCoins, 0)
+		for _, singleReward := range feesCollected {
+			chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+			dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+			if !k.IsAVSRewardAssetBySymbol(ctx, dogfoodAVSAddr, singleReward.Denom) {
+				ctx.Logger().Error("can't get the dogfood reward asset by the denomination", "denomination", singleReward.Denom)
+				// An invalid reward shouldn't affect valid rewards.
+				continue
+			}
+			if singleReward.Amount.IsNil() || singleReward.Amount.IsNegative() {
+				ctx.Logger().Error("invalid amount when funding reward pool of dogfood", "reward", singleReward)
+				// An invalid reward shouldn't affect valid rewards.
+				continue
+			}
+			err = k.UpdateAVSRewardAssetState(ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID,
+				&feedistributiontypes.DeltaAVSRewardAssetState{
+					RewardPoolBalance: singleReward.Amount,
+					RewardPoolTotal:   singleReward.Amount,
+				})
+			if err != nil {
+				// continue to skip the invalid reward asset
+				ctx.Logger().Error("can't update the asset state for dogfood reward", "reward", singleReward)
+				continue
+			}
+			validRewards = append(validRewards, singleReward)
+		}
+
+		return validRewards, nil
 	}
 }
 
@@ -239,14 +269,14 @@ func (k Keeper) VotingPowerRatioAfterJail(ctx sdk.Context, operator, avsAddr str
 	currentHeight := uint64(ctx.BlockHeight())
 	currentEpochStartHeight := uint64(epochInfo.CurrentEpochStartHeight)
 	currentEpochBlockNumber := currentHeight - currentEpochStartHeight
-	if optedInfo.UnJailedHeight > currentHeight ||
+	if optedInfo.UnjailedHeight > currentHeight ||
 		optedInfo.JailedHeight > currentHeight ||
-		optedInfo.UnJailedHeight < optedInfo.JailedHeight {
-		return math.LegacyDec{}, feedistributiontypes.ErrInvalidJailOrUnJailHeight.Wrapf("jailed height:%v, unJailed height:%v", optedInfo.JailedHeight, optedInfo.UnJailedHeight)
+		optedInfo.UnjailedHeight < optedInfo.JailedHeight {
+		return math.LegacyDec{}, feedistributiontypes.ErrInvalidJailOrUnJailHeight.Wrapf("jailed height:%v, unJailed height:%v", optedInfo.JailedHeight, optedInfo.UnjailedHeight)
 	}
 	var effectiveBlockNumber uint64
 	if !optedInfo.Jailed {
-		if optedInfo.UnJailedHeight == operatortypes.DefaultUnJailedHeight ||
+		if optedInfo.UnjailedHeight == operatortypes.DefaultUnJailedHeight ||
 			optedInfo.JailedHeight < currentEpochStartHeight {
 			// The jail and unjail events occurred before the current epoch,
 			// so they won't affect the reward calculation for the current epoch.
@@ -255,10 +285,10 @@ func (k Keeper) VotingPowerRatioAfterJail(ctx sdk.Context, operator, avsAddr str
 		if optedInfo.JailedHeight < currentEpochStartHeight {
 			// the jail event occurred before the current epoch but the unJail event occurred in
 			// the current epoch
-			effectiveBlockNumber = currentHeight - optedInfo.UnJailedHeight
+			effectiveBlockNumber = currentHeight - optedInfo.UnjailedHeight
 		} else {
 			// both the jail and unJail events occurred in the current epoch
-			effectiveBlockNumber = currentEpochBlockNumber - (optedInfo.UnJailedHeight - optedInfo.JailedHeight)
+			effectiveBlockNumber = currentEpochBlockNumber - (optedInfo.UnjailedHeight - optedInfo.JailedHeight)
 		}
 	} else {
 		if optedInfo.JailedHeight <= currentEpochStartHeight {

@@ -111,7 +111,7 @@ func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes
 }
 
 // IterateOperators return the list of all operators' detailed information
-func (k *Keeper) IterateOperators(ctx sdk.Context, isUpdate bool, opFunc func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error)) error {
+func (k *Keeper) IterateOperators(ctx sdk.Context, opFunc func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error)) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
 	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
@@ -127,10 +127,6 @@ func (k *Keeper) IterateOperators(ctx sdk.Context, isUpdate bool, opFunc func(op
 		if isBreak {
 			break
 		}
-		if isUpdate {
-			bz := k.cdc.MustMarshal(&operatorInfo)
-			store.Set(iterator.Key(), bz)
-		}
 	}
 	return nil
 }
@@ -145,7 +141,7 @@ func (k *Keeper) AllOperators(ctx sdk.Context) []operatortypes.OperatorDetail {
 		})
 		return false, nil
 	}
-	err := k.IterateOperators(ctx, false, opFunc)
+	err := k.IterateOperators(ctx, opFunc)
 	if err != nil {
 		ctx.Logger().Error("error when iterating operators", "err", err)
 	}
@@ -291,7 +287,7 @@ func (k *Keeper) IsOptedInAndNotJailed(ctx sdk.Context, operatorAddr, avsAddr st
 	return k.IsOptedIn(ctx, operatorAddr, avsAddr) && !k.IsJailed(ctx, operatorAddr, avsAddr)
 }
 
-func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error)) error {
+func (k *Keeper) IterateOptInfo(ctx sdk.Context, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error)) error {
 	// get all opted-in info
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
@@ -306,10 +302,6 @@ func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []
 		}
 		if isBreak {
 			break
-		}
-		if isUpdate {
-			bz := k.cdc.MustMarshal(&optedInfo)
-			store.Set(iterator.Key(), bz)
 		}
 	}
 	return nil
@@ -330,7 +322,7 @@ func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) 
 		}
 		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -390,7 +382,7 @@ func (k *Keeper) GetUnbondingRelatedAVS(ctx sdk.Context, operatorAddr string) ([
 		}
 		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -465,7 +457,7 @@ func (k Keeper) GetImpactfulEpochsAndAVSsForOperator(ctx sdk.Context, operatorAd
 		}
 		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -502,7 +494,7 @@ func (k Keeper) IsImpactfulEpochForOperator(ctx sdk.Context, epochIdentifier, op
 		}
 		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
 	if err != nil {
 		return false
 	}
@@ -528,7 +520,7 @@ func (k *Keeper) GetAllOptedInfo(ctx sdk.Context) ([]operatortypes.OptedState, e
 		})
 		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte{}, opFunc)
+	err := k.IterateOptInfo(ctx, []byte{}, opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -549,7 +541,7 @@ func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([
 		}
 		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte{}, opFunc)
+	err := k.IterateOptInfo(ctx, []byte{}, opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -580,7 +572,7 @@ func (k *Keeper) IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool {
 		}
 		return false, nil
 	}
-	err = k.IterateOptInfo(ctx, false, []byte{}, opFunc)
+	err = k.IterateOptInfo(ctx, []byte{}, opFunc)
 	if err != nil {
 		ctx.Logger().Error("IsUnbondingRelatedAVS: failed to iterate the opt info", "err", err)
 		return true

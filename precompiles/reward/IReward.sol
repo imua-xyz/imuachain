@@ -1,4 +1,5 @@
-pragma solidity >=0.8.17 .0;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.17;
 
 /// @dev The reward contract's address.
 address constant REWARD_PRECOMPILE_ADDRESS = 0x0000000000000000000000000000000000000806;
@@ -52,7 +53,7 @@ interface IReward {
     /// @param stakerAddress The address of the staker claiming the reward.
     function claimReward(
         uint32 clientChainLzID,
-        bytes memory stakerAddress
+        bytes calldata stakerAddress
     ) external returns (bool success);
 
     /// @dev Withdraw the rewards earned from multiple AVSs (excluding the dogfood AVS) to the staker.
@@ -66,8 +67,8 @@ interface IReward {
     function withdrawReward(
         uint32 clientChainLzID,
         uint32 rewardAssetChainLzID,
-        bytes memory assetAddress,
-        bytes memory stakerAddress,
+        bytes calldata assetAddress,
+        bytes calldata stakerAddress,
         uint256 opAmount
     ) external returns (bool success, uint256 actualWithdrawAmount);
 
@@ -87,8 +88,8 @@ interface IReward {
     /// @param opAmount The reward amount
     function withdrawIMUATokenReward(
         uint32 clientChainLzID,
-        bytes memory stakerAddress,
-        bytes memory receiptAddress,
+        bytes calldata stakerAddress,
+        bytes calldata receiptAddress,
         uint256 opAmount
     ) external returns (bool success, uint256 actualWithdrawAmount, uint256 withdrawAmountFromDogfood);
 
@@ -101,8 +102,8 @@ interface IReward {
     /// @param opAmount The commission amount
     function withdrawCommission(
         uint32 rewardAssetChainLzID,
-        bytes memory assetAddress,
-        bytes memory operatorAddress,
+        bytes calldata assetAddress,
+        bytes calldata operatorAddress,
         uint256 opAmount
     ) external returns (bool success, uint256 actualWithdrawAmount);
 
@@ -114,8 +115,8 @@ interface IReward {
     /// The recipient and operator addresses should be of EVM address type
     /// @param opAmount The commission amount
     function withdrawIMUATokenCommission(
-        bytes memory operatorAddress,
-        bytes memory receiptAddress,
+        bytes calldata operatorAddress,
+        bytes calldata receiptAddress,
         uint256 opAmount
     ) external returns (bool success, uint256 actualWithdrawAmount, uint256 withdrawAmountFromDogfood);
 
@@ -185,4 +186,18 @@ interface IReward {
     /// when the corresponding flags are enabled through this interface.
     function setAVSRewardParams(bool isCustomRewardInflation, bool isCustomOperatorRatio)
     external returns (bool success);
+
+    /// @dev This function funds rewards for an AVS. Unlike the other interfaces for AVS mentioned above,
+    /// it should be called by the gateway contract, because the verification of funding to the reward
+    /// vault is handled by the system contracts. This interface only updates the state recorded in the native module.
+    /// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
+    /// @param avsAddress The avs address
+    /// @param assetAddress The reward asset Address
+    /// @param opAmount The reward amount to fund
+    function fundAVSReward(
+        uint32 rewardAssetChainLzID,
+        address avsAddress,
+        bytes calldata assetAddress,
+        uint256 opAmount
+    ) external returns (bool success);
 }

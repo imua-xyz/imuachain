@@ -117,6 +117,10 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		precompileCommonFunc = p.SetOperatorRewardProportions
 	case MethodSetAVSRewardParams:
 		precompileCommonFunc = p.SetAVSRewardParams
+	case MethodFundAVSReward:
+		precompileCommonFunc = p.FundAVSReward
+	default:
+		return nil, fmt.Errorf("unsupported reward method %s", method.Name)
 	}
 	bz, err = precompileCommonFunc(cc, evm.Origin, contract, stateDB, method, args)
 	if err != nil {
@@ -153,7 +157,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 		MethodWithdrawIMUATokenCommission,
 		MethodRegisterRewardToken, MethodUpdateRewardToken,
 		MethodSetAVSRewardDistribution, MethodSetAVSEpochReward,
-		MethodSetOperatorRewardProportions, MethodSetAVSRewardParams:
+		MethodSetOperatorRewardProportions, MethodSetAVSRewardParams,
+		MethodFundAVSReward:
 		return true
 	default:
 		// this panic is safe to perform because the `init` function

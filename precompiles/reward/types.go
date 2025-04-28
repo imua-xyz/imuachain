@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -89,6 +91,13 @@ type SetAVSRewardParamsArgs struct {
 	IsCustomOperatorRatio   bool `abi:"isCustomOperatorRatio"`
 }
 
+type FundAVSRewardArgs struct {
+	RewardAssetChainLzID uint32         `abi:"rewardAssetChainLzID"`
+	AVSAddress           common.Address `abi:"avsAddress"`
+	AssetAddress         []byte         `abi:"assetAddress"`
+	OpAmount             *big.Int       `abi:"opAmount"`
+}
+
 type ABIRewardCoins []ABIRewardCoin
 
 type ABIOperatorRewardProportions []ABIOperatorRewardProportion
@@ -151,7 +160,7 @@ func (ap ABIOperatorRewardProportions) ToProtoStruct() ([]feedistributiontypes.O
 			OperatorAddr:     operatorRewardProportion.Operator,
 			RewardProportion: proportion,
 		})
-		totalProportion = proportion
+		totalProportion.AddMut(proportion)
 		if totalProportion.GT(sdkmath.LegacyNewDec(1)) {
 			return fmt.Errorf("ABIOperatorRewardProportions.ToProtoStruct: total reward proportion shouldn't be greater than 1, totalProportion:%s", totalProportion)
 		}

@@ -216,7 +216,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		return err
 	}
 	// update the operator asset USD value first
-	err = k.UpdatAllOperatorAssetUSDValues(cc, affectedEpochList)
+	err = k.UpdateAllOperatorAssetUSDValues(cc, affectedEpochList)
 	if err != nil {
 		return err
 	}
@@ -332,10 +332,10 @@ func (k *Keeper) SetJailedState(ctx sdk.Context, consAddr sdk.ConsAddress, chain
 			// set the jailed height
 			info.JailedHeight = uint64(height)
 			// clear the height of the last unjailing.
-			info.UnJailedHeight = 0
+			info.UnjailedHeight = 0
 		} else {
 			// set the unJailed height
-			info.UnJailedHeight = uint64(height)
+			info.UnjailedHeight = uint64(height)
 		}
 	}
 	err := k.HandleOptedInfo(ctx, operatorAddr.String(), avsAddr, handleFunc)

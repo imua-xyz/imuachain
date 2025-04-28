@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
@@ -284,6 +286,8 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
 
+	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedOperators := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		keys, err := assetstype.ParseJoinedKey(iterator.Key())
 		if err != nil {
@@ -296,19 +300,28 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 			return err
 		}
 		if isUpdate {
-			bz := k.cdc.MustMarshal(&optedUSDValues)
-			store.Set(iterator.Key(), bz)
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					operatortypes.EventTypeUpdateOperatorUSDValue,
-					sdk.NewAttribute(operatortypes.AttributeKeyOperator, keys[1]),
-					sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
-					sdk.NewAttribute(operatortypes.AttributeKeySelfUSDValue, optedUSDValues.SelfUSDValue.String()),
-					sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, optedUSDValues.TotalUSDValue.String()),
-					sdk.NewAttribute(operatortypes.AttributeKeyActiveUSDValue, optedUSDValues.ActiveUSDValue.String()),
-				),
-			)
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+				Key:   iterator.Key(),
+				Value: &optedUSDValues,
+			})
+			updatedOperators = append(updatedOperators, keys[1])
 		}
+	}
+
+	for i, updatedKeyValue := range updatedKeyValues {
+		bz := k.cdc.MustMarshal(updatedKeyValue.Value)
+		store.Set(updatedKeyValue.Key, bz)
+		optedUSDValues := updatedKeyValue.Value.(*operatortypes.OperatorOptedUSDValue)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				operatortypes.EventTypeUpdateOperatorUSDValue,
+				sdk.NewAttribute(operatortypes.AttributeKeyOperator, updatedOperators[i]),
+				sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, avsAddr),
+				sdk.NewAttribute(operatortypes.AttributeKeySelfUSDValue, optedUSDValues.SelfUSDValue.String()),
+				sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, optedUSDValues.TotalUSDValue.String()),
+				sdk.NewAttribute(operatortypes.AttributeKeyActiveUSDValue, optedUSDValues.ActiveUSDValue.String()),
+			),
+		)
 	}
 	return nil
 }
@@ -386,7 +399,9 @@ func (k *Keeper) SetAllAVSUSDValues(ctx sdk.Context, usdValues []operatortypes.A
 	return nil
 }
 
-func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context, isUpdate bool, opFunc func(avsAddr string, avsUSDValue *operatortypes.DecValueField) error) error {
+func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context,
+	opFunc func(avsAddr string, avsUSDValue *operatortypes.DecValueField) error,
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
@@ -397,17 +412,6 @@ func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context, isUpdate bool, opFunc func
 		err := opFunc(string(iterator.Key()), &usdValue)
 		if err != nil {
 			return err
-		}
-		if isUpdate {
-			bz := k.cdc.MustMarshal(&usdValue)
-			store.Set(iterator.Key(), bz)
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					operatortypes.EventTypeUpdateAVSUSDValue,
-					sdk.NewAttribute(operatortypes.AttributeKeyAVSAddr, string(iterator.Key())),
-					sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, usdValue.Amount.String()),
-				),
-			)
 		}
 	}
 	return nil
@@ -426,7 +430,7 @@ func (k *Keeper) GetAllAVSUSDValues(ctx sdk.Context) ([]operatortypes.AVSUSDValu
 		})
 		return nil
 	}
-	err := k.IterateAVSUSDValues(ctx, false, opFunc)
+	err := k.IterateAVSUSDValues(ctx, opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -782,20 +786,20 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers [
 	return nil
 }
 
-// UpdatAllOperatorAssetUSDValues update all operator asset USD values for the input epoch list.
+// UpdateAllOperatorAssetUSDValues update all operator asset USD values for the input epoch list.
 // This function will be used for the voting power update. When the voting power update is caused
 // by slash, it might not be called at the end of epoch. And all assets USD values of an operator
 // should be same for the multiple epoch identifiers.
-func (k *Keeper) UpdatAllOperatorAssetUSDValues(ctx sdk.Context, epochIdentifiers []string) error {
+func (k *Keeper) UpdateAllOperatorAssetUSDValues(ctx sdk.Context, epochIdentifiers []string) error {
 	opFunc := func(operatorAddr sdk.AccAddress, _ *operatortypes.OperatorInfo) (bool, error) {
 		err := k.UpdateOperatorAssetUSDValue(ctx, epochIdentifiers, operatorAddr.String())
 		if err != nil {
-			ctx.Logger().Error("UpdatAllOperatorAssetUSDValues: error when updating the specific operator USD value", "err", err, "operator", operatorAddr.String())
+			ctx.Logger().Error("UpdateAllOperatorAssetUSDValues: error when updating the specific operator USD value", "err", err, "operator", operatorAddr.String())
 			// Don't return an error to continue handling the other operators.
 		}
 		return false, nil
 	}
-	err := k.IterateOperators(ctx, false, opFunc)
+	err := k.IterateOperators(ctx, opFunc)
 	if err != nil {
 		return err
 	}

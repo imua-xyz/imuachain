@@ -392,7 +392,7 @@ func (k Keeper) SetAllOperatorSlashEvent(
 func (k Keeper) GetAllOperatorSlashEvent(ctx sdk.Context) ([]feedistributiontypes.KeyAndOperatorSlashEvent, error) {
 	return GenericGetAllItems(
 		ctx, k, feedistributiontypes.KeyPrefixOperatorSlashEvent,
-		func() codec.ProtoMarshaler { return &feedistributiontypes.OperatorAccumulatedCommission{} },
+		func() codec.ProtoMarshaler { return &feedistributiontypes.OperatorSlashEvent{} },
 		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndOperatorSlashEvent {
 			return feedistributiontypes.KeyAndOperatorSlashEvent{
 				Key:                string(key),

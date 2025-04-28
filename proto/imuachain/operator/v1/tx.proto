@@ -139,9 +139,9 @@ message OptedInfo {
   // jailed_height is the height at which the operator was jailed.
   // It can be used to handle the impact of jailing on rewards. The default value is 0.
   uint64 jailed_height = 5;
-  // un_jailed_height is the height at which the jailed operator was unJailed.
-  // It can be used to handle the impact of unJailing on rewards. The default value is 0.
-  uint64 un_jailed_height = 6;
+  // unjailed_height is the height at which the operator was un‑jailed.
+  // Used when calculating reward eligibility windows.
+  uint64 unjailed_height = 6;
 }
 
 // OptedInAssetState is the state of opted-in asset

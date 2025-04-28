@@ -15,6 +15,10 @@ const (
 	AttributeKeyWithdrawAmountFromDogfood   = "withdraw_amount_from_dogfood"
 	AttributeKeyStakerID                    = "staker_id"
 
+	// EventTypeWithdrawCommissionFromDogfood :  withdraw all commissions only from dogfood.
+	EventTypeWithdrawCommissionFromDogfood = "withdraw_commission_from_dogfood"
+	AttributeKeyCommissionAmount           = "commission_amount"
+
 	EventTypeProposerReward = "proposer_reward"
 
 	AttributeKeyWithdrawAddress = "withdraw_address"

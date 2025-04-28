@@ -564,8 +564,9 @@ func (suite *BaseTestSuite) DoSetupTest() {
 	}
 	// Imuachain modules genesis
 	// x/assets
-	suite.ClientChains = DefaultTestClientChain
-	suite.Assets = DefaultTestStakingAssets
+	// make defensive copies to avoid mutating global test defaults
+	suite.ClientChains = append([]assetstypes.ClientChainInfo(nil), DefaultTestClientChain...)
+	suite.Assets = append([]assetstypes.AssetInfo(nil), DefaultTestStakingAssets...)
 
 	// Initialize an ImuachainApp for test
 	suite.SetupWithGenesisValSet(

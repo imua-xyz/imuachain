@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"cosmossdk.io/math"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -253,19 +252,9 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 
 	// get the previous operator asset state before update
-	var prevAssetState *assetstype.OperatorAssetInfo
-	if k.assetsKeeper.IsOperatorAssetExist(ctx, params.OperatorAddress, assetID) {
-		prevAssetState, err = k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, params.OperatorAddress, assetID)
-		if err != nil {
-			return err
-		}
-	} else {
-		prevAssetState = &assetstype.OperatorAssetInfo{
-			TotalAmount:               math.ZeroInt(),
-			PendingUndelegationAmount: math.ZeroInt(),
-			TotalShare:                math.LegacyZeroDec(),
-			OperatorShare:             math.LegacyZeroDec(),
-		}
+	prevAssetState, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, params.OperatorAddress, assetID)
+	if err != nil {
+		return err
 	}
 	// remove share
 	removeToken, err := k.RemoveShare(ctx, true, params.OperatorAddress, stakerID, assetID, share)
