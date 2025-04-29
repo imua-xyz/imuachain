@@ -61,18 +61,6 @@ contract PrecompileCallerThatReverts {
         anotherReverter.callMe{value: 1 ether}();
     }
 
-    function callPrecompileAndRevertGasStarved(
-        uint32 clientChainID,
-        bytes calldata token,
-        bytes calldata staker,
-        uint256 amount,
-        uint256 gasLimit
-    ) external {
-        nonce += 1;
-        callPrecompileGasStarved(clientChainID, token, staker, amount, gasLimit);
-        anotherReverter.callMe{value: 1 ether}();
-    }
-
     function callPrecompileAndNotRevert(
         uint32 clientChainID,
         bytes calldata token,
