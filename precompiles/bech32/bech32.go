@@ -78,9 +78,15 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 		bz, err = p.HexToBech32(method, args)
 	case MethodBech32ToHex:
 		bz, err = p.Bech32ToHex(method, args)
+	default:
+		// should never happen
+		bz, err = nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
 	if err != nil {
+		// this will (might?) cause the entire tx to fail.
+		// it is acceptable because it would represent an error
+		// in the precompile caller.
 		return nil, err
 	}
 
@@ -93,6 +99,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 	case MethodHexToBech32, MethodBech32ToHex:
 		return false
 	default:
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
 		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }

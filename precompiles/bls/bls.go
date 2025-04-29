@@ -56,24 +56,17 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 	if err != nil {
 		return 0
 	}
-	// TODO: @devin: add gas calculation depending on the method
 	switch method.Name {
 	case MethodVerify:
 		return Bls12381PairingBaseGas + Bls12381PairingPerPairGas
-
 	case MethodFastAggregateVerify:
-
 		return p.calculateFastAggregateVerifyGas(input)
-
 	case MethodAggregatePubKeys:
 		return p.calculateAggregationGas(input, Bls12381G1AddGas)
-
 	case MethodAggregateSignatures:
 		return p.calculateAggregationGas(input, Bls12381G2AddGas)
-
 	case MethodAddTwoPubKeys:
 		return Bls12381G1AddGas
-
 	default:
 		return 0
 	}
@@ -132,19 +125,43 @@ func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, er
 	switch method.Name {
 	case MethodVerify:
 		bz, err = p.Verify(method, args)
+		if err != nil {
+			// bool
+			bz, err = method.Outputs.Pack(false)
+		}
 	case MethodFastAggregateVerify:
 		bz, err = p.FastAggregateVerify(method, args)
+		if err != nil {
+			// bool
+			bz, err = method.Outputs.Pack(false)
+		}
 	case MethodAggregatePubKeys:
 		bz, err = p.AggregatePubKeys(method, args)
+		if err != nil {
+			// bytes memory. caller can check `res.length`
+			bz, err = method.Outputs.Pack([]byte{})
+		}
 	case MethodAggregateSignatures:
 		bz, err = p.AggregateSignatures(method, args)
+		if err != nil {
+			// bytes memory
+			bz, err = method.Outputs.Pack([]byte{})
+		}
 	case MethodAddTwoPubKeys:
 		bz, err = p.AddTwoPubKeys(method, args)
+		if err != nil {
+			// bytes memory
+			bz, err = method.Outputs.Pack([]byte{})
+		}
 	default:
-		return nil, fmt.Errorf("invalid method")
+		// should never happen
+		bz, err = nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
 	if err != nil {
+		// this will (might?) cause the entire tx to fail.
+		// it is acceptable because it would represent an error
+		// in the precompile caller.
 		return nil, err
 	}
 
@@ -170,8 +187,11 @@ func (Precompile) IsTransaction(methodName string) bool {
 		MethodAggregateSignatures,
 		MethodAddTwoPubKeys:
 		return false
+	default:
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
+		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
-	panic(fmt.Sprintf("unknown method: %s", methodName))
 }
 
 // Logger returns a precompile-specific logger.

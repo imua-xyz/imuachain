@@ -85,16 +85,34 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
-	if method.Name == MethodReward {
-		bz, err = p.Reward(ctx, evm.Origin, contract, stateDB, method, args)
+	cc := ctx
+	writeFunc := func() {}
+	if p.IsTransaction(method.Name) {
+		cc, writeFunc = ctx.CacheContext()
 	}
 
-	if err != nil {
-		// for failed cases we expect it returns bool value instead of error
-		// this is a workaround because the error returned by precompile can not be caught in EVM
-		// see https://github.com/imua-xyz/imuachain/issues/70
-		// TODO: we should figure out root cause and fix this issue to make precompiles work normally
-		return method.Outputs.Pack(false, new(big.Int))
+	var logError error
+
+	if method.Name == MethodReward {
+		bz, err = p.Reward(cc, evm.Origin, contract, stateDB, method, args)
+		if err != nil {
+			logError = err
+			bz, err = method.Outputs.Pack(false, new(big.Int))
+		}
+	} else {
+		// should never happen
+		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
+	}
+
+	if logError != nil {
+		ctx.Logger().Error(
+			"return error when calling reward precompile",
+			"module", "reward precompile",
+			"method", method.Name,
+			"err", logError,
+		)
+	} else {
+		writeFunc()
 	}
 
 	cost := ctx.GasMeter().GasConsumed() - initialGas
@@ -112,6 +130,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 	case MethodReward:
 		return true
 	default:
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
 		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }

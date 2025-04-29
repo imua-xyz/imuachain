@@ -209,7 +209,8 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 			bz, err = method.Outputs.Pack(common.Address{})
 		}
 	default:
-		return nil, fmt.Errorf("unknown method: %s", method.Name)
+		// should never happen
+		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
 	if logError != nil {
@@ -242,6 +243,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 		MethodGetOperatorTaskResponse, MethodGetChallengeInfo:
 		return false
 	default:
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
 		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }

@@ -88,6 +88,10 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if p.IsTransaction(method.Name) {
 		cc, writeFunc = ctx.CacheContext()
 	}
+
+	// for future-proofing, we used `method.Outputs.Pack` in each case.
+	// given the current return type of boolean being shared across all methods,
+	// it could instead have been moved outside of the switch statement.
 	switch method.Name {
 	case MethodDelegate:
 		bz, err = p.Delegate(cc, evm.Origin, contract, stateDB, method, args)
@@ -114,6 +118,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 			bz, err = method.Outputs.Pack(false)
 		}
 	default:
+		// should never happen
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
@@ -145,6 +150,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 		MethodDissociateOperatorFromStaker:
 		return true
 	default:
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
 		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }

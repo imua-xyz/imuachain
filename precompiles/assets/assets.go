@@ -164,6 +164,8 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	}
 
 	if logError != nil {
+		// write on ctx and not cc to ensure it is written on the
+		// original (uncached) context.
 		ctx.Logger().Error(
 			"return error when calling assets precompile",
 			"module", "assets precompile",
@@ -195,6 +197,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 		MethodGetStakerBalanceByToken:
 		return false
 	default:
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
 		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }

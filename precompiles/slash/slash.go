@@ -84,12 +84,33 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
-	if method.Name == MethodSlash {
-		bz, err = p.SubmitSlash(ctx, evm.Origin, contract, stateDB, method, args)
+	cc := ctx
+	writeFunc := func() {}
+	if p.IsTransaction(method.Name) {
+		cc, writeFunc = ctx.CacheContext()
 	}
 
-	if err != nil {
-		return nil, err
+	var logError error
+	if method.Name == MethodSlash {
+		bz, err = p.SubmitSlash(cc, evm.Origin, contract, stateDB, method, args)
+		if err != nil {
+			logError = err
+			bz, err = method.Outputs.Pack(false)
+		}
+	} else {
+		// should never happen
+		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
+	}
+
+	if logError != nil {
+		ctx.Logger().Error(
+			"return error when calling slash precompile",
+			"module", "slash precompile",
+			"method", method.Name,
+			"err", logError,
+		)
+	} else {
+		writeFunc()
 	}
 
 	cost := ctx.GasMeter().GasConsumed() - initialGas
@@ -107,6 +128,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 	case MethodSlash:
 		return true
 	default:
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
 		panic(fmt.Sprintf("unknown method: %s", methodName))
 	}
 }
