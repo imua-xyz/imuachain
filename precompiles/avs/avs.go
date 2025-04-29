@@ -59,13 +59,7 @@ func NewPrecompile(
 
 // RequiredGas calculates the precompiled contract's base gas rate.
 func (p Precompile) RequiredGas(input []byte) uint64 {
-	if len(input) < 4 {
-		// no payable or fallback functions here, so this is invalid
-		return 0
-	}
-	methodID := input[:4]
-
-	method, err := p.MethodById(methodID)
+	method, err := p.MethodById(input)
 	if err != nil {
 		// This should never happen since this method is going to fail during Run
 		return 0
@@ -84,160 +78,152 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
-	cc, writeFunc := ctx.CacheContext()
+	cc := ctx
+	writeFunc := func() {}
+	if p.IsTransaction(method.Name) {
+		cc, writeFunc = ctx.CacheContext()
+	}
+	var logError error
+
 	switch method.Name {
 	// transactions
 	case MethodRegisterAVS:
 		bz, err = p.RegisterAVS(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodDeregisterAVS:
 		bz, err = p.DeregisterAVS(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodUpdateAVS:
 		bz, err = p.UpdateAVS(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodRegisterOperatorToAVS:
 		bz, err = p.BindOperatorToAVS(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodDeregisterOperatorFromAVS:
 		bz, err = p.UnbindOperatorToAVS(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodCreateAVSTask:
 		bz, err = p.CreateAVSTask(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, uint64(0))
-		} else {
-			writeFunc()
 		}
 	case MethodRegisterBLSPublicKey:
 		bz, err = p.RegisterBLSPublicKey(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodChallenge:
 		bz, err = p.Challenge(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
-
 	case MethodOperatorSubmitTask:
 		bz, err = p.OperatorSubmitTask(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	// queries
 	case MethodGetOptInOperators:
-		bz, err = p.GetOptedInOperatorAccAddresses(ctx, contract, method, args)
+		bz, err = p.GetOptedInOperatorAccAddresses(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack([]string{})
 		}
 	case MethodGetAVSEpochIdentifier:
-		bz, err = p.GetAVSEpochIdentifier(ctx, contract, method, args)
+		bz, err = p.GetAVSEpochIdentifier(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack("")
 		}
 	case MethodGetTaskInfo:
-		bz, err = p.GetTaskInfo(ctx, contract, method, args)
+		bz, err = p.GetTaskInfo(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(nil)
 		}
 	case MethodIsOperator:
-		bz, err = p.IsOperator(ctx, contract, method, args)
+		bz, err = p.IsOperator(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
 		}
-
 	case MethodGetAVSUSDValue:
-		bz, err = p.GetAVSUSDValue(ctx, contract, method, args)
+		bz, err = p.GetAVSUSDValue(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(common.Big0)
 		}
-
 	case MethodGetRegisteredPubKey:
-		bz, err = p.GetRegisteredPubKey(ctx, contract, method, args)
+		bz, err = p.GetRegisteredPubKey(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack([]byte{})
 		}
 	case MethodGetOperatorOptedUSDValue:
-		bz, err = p.GetOperatorOptedUSDValue(ctx, contract, method, args)
+		bz, err = p.GetOperatorOptedUSDValue(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(common.Big0)
 		}
 	case MethodGetCurrentEpoch:
-		bz, err = p.GetCurrentEpoch(ctx, contract, method, args)
+		bz, err = p.GetCurrentEpoch(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(int64(0))
 		}
 	case MethodGetOperatorTaskResponse:
-		bz, err = p.GetOperatorTaskResponse(ctx, contract, method, args)
+		bz, err = p.GetOperatorTaskResponse(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(nil)
 		}
 	case MethodGetOperatorTaskResponseList:
-		bz, err = p.GetOperatorTaskResponseList(ctx, contract, method, args)
+		bz, err = p.GetOperatorTaskResponseList(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(nil)
 		}
 	case MethodGetChallengeInfo:
-		bz, err = p.GetChallengeInfo(ctx, contract, method, args)
+		bz, err = p.GetChallengeInfo(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling avs precompile", "module", "avs precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(common.Address{})
 		}
+	default:
+		return nil, fmt.Errorf("unknown method: %s", method.Name)
 	}
 
-	if err != nil {
-		ctx.Logger().Error("call avs precompile error", "module", "avs precompile", "err", err)
-		return nil, err
+	if logError != nil {
+		ctx.Logger().Error(
+			"return error when calling avs precompile",
+			"module", "avs precompile",
+			"method", method.Name,
+			"err", logError,
+		)
+	} else {
+		writeFunc()
 	}
 
 	cost := ctx.GasMeter().GasConsumed() - initialGas
-
 	if !contract.UseGas(cost) {
 		return nil, vm.ErrOutOfGas
 	}

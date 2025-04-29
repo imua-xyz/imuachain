@@ -65,15 +65,8 @@ func NewPrecompile(
 
 // RequiredGas calculates the precompiled contract's base gas rate.
 func (p Precompile) RequiredGas(input []byte) uint64 {
-	if len(input) < 4 {
-		// no payable or fallback functions here, so this is invalid
-		return 0
-	}
-	methodID := input[:4]
-
-	method, err := p.MethodById(methodID)
+	method, err := p.MethodById(input)
 	if err != nil {
-		// This should never happen since this method is going to fail during Run
 		return 0
 	}
 

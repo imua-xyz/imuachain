@@ -61,15 +61,8 @@ func NewPrecompile(
 
 // RequiredGas calculates the precompiled contract's base gas rate.
 func (p Precompile) RequiredGas(input []byte) uint64 {
-	if len(input) < 4 {
-		// no payable or fallback functions here, so this is invalid
-		return 0
-	}
-	methodID := input[:4]
-
-	method, err := p.MethodById(methodID)
+	method, err := p.MethodById(input)
 	if err != nil {
-		// Since the method fails during Run, it is safe to return 0 here.
 		return 0
 	}
 	return p.Precompile.RequiredGas(input, p.IsTransaction(method.Name))
@@ -86,96 +79,102 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
-	// we cache the context because we consume the failure, if any, in this function.
-	// cascading it to statedb is possible and will be performed in another PR.
-	// when that is done, the cacheContext can be skipped.
-	// see https://github.com/imua-xyz/imuachain/issues/70
-	cc, writeFunc := ctx.CacheContext()
+	// We have not determined the appropriate way to return an error from the precompile, that can be
+	// caught in Solidity. Hence, we return a bool value instead. However, since a precompile performs
+	// many stateful operations, we must wrap the overall execution in a cached context to guarantee
+	// atomicity.
+	cc := ctx
+	writeFunc := func() {}
+	if p.IsTransaction(method.Name) {
+		cc, writeFunc = ctx.CacheContext()
+	}
+
+	var logError error
+
 	switch method.Name {
 	// transactions
 	case MethodDepositLST, MethodWithdrawLST,
 		MethodDepositNST, MethodWithdrawNST:
 		bz, err = p.DepositOrWithdraw(cc, evm.Origin, contract, stateDB, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, new(big.Int))
-		} else {
-			writeFunc()
 		}
 	case MethodRegisterOrUpdateClientChain:
 		bz, err = p.RegisterOrUpdateClientChain(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, false)
-		} else {
-			writeFunc()
 		}
 	case MethodRegisterToken:
 		bz, err = p.RegisterToken(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodUpdateToken:
 		bz, err = p.UpdateToken(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	case MethodUpdateAuthorizedGateways:
-		bz, err = p.UpdateAuthorizedGateways(ctx, contract, method, args)
+		bz, err = p.UpdateAuthorizedGateways(cc, contract, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false)
-		} else {
-			writeFunc()
 		}
 	// queries
 	case MethodGetClientChains:
-		bz, err = p.GetClientChains(ctx, method, args)
+		bz, err = p.GetClientChains(cc, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, []uint32{})
 		}
 	case MethodIsRegisteredClientChain:
-		bz, err = p.IsRegisteredClientChain(ctx, method, args)
+		bz, err = p.IsRegisteredClientChain(cc, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, false)
 		}
 	case MethodIsAuthorizedGateway:
-		bz, err = p.IsAuthorizedGateway(ctx, method, args)
+		bz, err = p.IsAuthorizedGateway(cc, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, false)
 		}
 	case MethodGetTokenInfo:
-		bz, err = p.GetTokenInfo(ctx, method, args)
+		bz, err = p.GetTokenInfo(cc, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, NewEmptyTokenInfo())
 		}
 	case MethodGetStakerBalanceByToken:
-		bz, err = p.GetStakerBalanceByToken(ctx, method, args)
+		bz, err = p.GetStakerBalanceByToken(cc, method, args)
 		if err != nil {
-			ctx.Logger().Error("internal error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
+			logError = err
 			bz, err = method.Outputs.Pack(false, NewEmptyStakerBalance())
 		}
 	default:
+		// this will cause a vm.ErrExecutionReverted and kill the tx.
+		// it is acceptable for now, given the same happens if you call
+		// a contract with a non-existent method.
+		// this will never happen because RunSetup will error out first.
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
-	if err != nil {
-		ctx.Logger().Error("return error when calling assets precompile", "module", "assets precompile", "method", method.Name, "err", err)
-		return nil, err
+	if logError != nil {
+		ctx.Logger().Error(
+			"return error when calling assets precompile",
+			"module", "assets precompile",
+			"method", method.Name,
+			"err", logError,
+		)
+	} else {
+		writeFunc()
 	}
 
 	cost := ctx.GasMeter().GasConsumed() - initialGas
-
 	if !contract.UseGas(cost) {
 		return nil, vm.ErrOutOfGas
 	}

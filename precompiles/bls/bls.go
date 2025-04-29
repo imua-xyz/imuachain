@@ -117,21 +117,14 @@ func (p Precompile) calculateAggregationGas(input []byte, gasPerOp uint64) uint6
 	return (n - 1) * gasPerOp
 }
 
-// Run executes the precompiled contract deposit methods defined in the ABI.
+// Run executes the precompiled contract BLS methods defined in the ABI.
 func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, err error) {
-	// do not call RunSetup because this precompile is stateless
-	if len(contract.Input) < 4 {
-		return nil, vm.ErrExecutionReverted
-	}
-
-	methodID := contract.Input[:4]
-	method, err := p.MethodById(methodID)
+	method, err := p.MethodById(contract.Input)
 	if err != nil {
 		return nil, err
 	}
 
-	argsBz := contract.Input[4:]
-	args, err := method.Inputs.Unpack(argsBz)
+	args, err := method.Inputs.Unpack(contract.Input[4:])
 	if err != nil {
 		return nil, err
 	}

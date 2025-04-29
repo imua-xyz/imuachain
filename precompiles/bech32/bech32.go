@@ -63,19 +63,12 @@ func (p Precompile) RequiredGas([]byte) uint64 {
 
 // Run performs the bech32 precompile.
 func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, err error) {
-	// do not call RunSetup because this precompile is stateless
-	if len(contract.Input) < 4 {
-		return nil, vm.ErrExecutionReverted
-	}
-
-	methodID := contract.Input[:4]
-	method, err := p.MethodById(methodID)
+	method, err := p.MethodById(contract.Input)
 	if err != nil {
 		return nil, err
 	}
 
-	argsBz := contract.Input[4:]
-	args, err := method.Inputs.Unpack(argsBz)
+	args, err := method.Inputs.Unpack(contract.Input[4:])
 	if err != nil {
 		return nil, err
 	}

@@ -63,15 +63,8 @@ func NewPrecompile(
 
 // RequiredGas calculates the precompiled contract's base gas rate.
 func (p Precompile) RequiredGas(input []byte) uint64 {
-	if len(input) < 4 {
-		// no payable or fallback functions here, so this is invalid
-		return 0
-	}
-	methodID := input[:4]
-
-	method, err := p.MethodById(methodID)
+	method, err := p.MethodById(input)
 	if err != nil {
-		// This should never happen since this method is going to fail during Run
 		return 0
 	}
 
@@ -89,37 +82,53 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
-	cc, writeFunc := ctx.CacheContext()
+	var logError error
+	cc := ctx
+	writeFunc := func() {}
+	if p.IsTransaction(method.Name) {
+		cc, writeFunc = ctx.CacheContext()
+	}
 	switch method.Name {
-	// delegation transactions
 	case MethodDelegate:
 		bz, err = p.Delegate(cc, evm.Origin, contract, stateDB, method, args)
+		if err != nil {
+			logError = err
+			bz, err = method.Outputs.Pack(false)
+		}
 	case MethodUndelegate:
 		bz, err = p.Undelegate(cc, evm.Origin, contract, stateDB, method, args)
+		if err != nil {
+			logError = err
+			bz, err = method.Outputs.Pack(false)
+		}
 	case MethodAssociateOperatorWithStaker:
 		bz, err = p.AssociateOperatorWithStaker(cc, evm.Origin, contract, stateDB, method, args)
+		if err != nil {
+			logError = err
+			bz, err = method.Outputs.Pack(false)
+		}
 	case MethodDissociateOperatorFromStaker:
 		bz, err = p.DissociateOperatorFromStaker(cc, evm.Origin, contract, stateDB, method, args)
+		if err != nil {
+			logError = err
+			bz, err = method.Outputs.Pack(false)
+		}
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
-	if err != nil {
-		ctx.Logger().Error("internal error when calling delegation precompile error", "module", "delegation precompile", "err", err)
-		// for failed cases we expect it returns bool value instead of error
-		// this is a workaround because the error returned by precompile can not be caught in EVM
-		// see https://github.com/imua-xyz/imuachain/issues/70
-		// TODO: we should figure out root cause and fix this issue to make precompiles work normally
-		bz, err = method.Outputs.Pack(false)
-		if err != nil {
-			return nil, err
-		}
+	if logError != nil {
+		ctx.Logger().Error(
+			"return error when calling delegation precompile",
+			"module", "delegation precompile",
+			"method", method.Name,
+			"err", logError,
+		)
 	} else {
 		writeFunc()
 	}
 
 	cost := ctx.GasMeter().GasConsumed() - initialGas
-
 	if !contract.UseGas(cost) {
 		return nil, vm.ErrOutOfGas
 	}
