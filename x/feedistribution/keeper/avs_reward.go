@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"strconv"
 
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
@@ -66,6 +67,13 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
 		}
 	}
+
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return err
+	}
+	distribution.RewardsEpochNumber = epochInfo.CurrentEpoch
+	distribution.ProportionsEpochNumber = epochInfo.CurrentEpoch
 	bz := k.cdc.MustMarshal(&distribution)
 	store.Set(common.HexToAddress(avsAddr).Bytes(), bz)
 
@@ -74,6 +82,8 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeAVSRewardDistributionSet,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avsAddr),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochIdentifier, epochInfo.Identifier),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch, 10)),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochRewards, distribution.Rewards.String()),
 			sdk.NewAttribute(
 				feedistributiontypes.AttributeKeyOperatorProportions,
@@ -105,6 +115,12 @@ func (k Keeper) SetAVSEpochRewardExclusive(ctx sdk.Context, avsAddr string, rewa
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &rewardDistribution)
 	}
+
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return err
+	}
+	rewardDistribution.RewardsEpochNumber = epochInfo.CurrentEpoch
 	rewardDistribution.Rewards = rewards
 	bz := k.cdc.MustMarshal(&rewardDistribution)
 	store.Set(key, bz)
@@ -113,6 +129,8 @@ func (k Keeper) SetAVSEpochRewardExclusive(ctx sdk.Context, avsAddr string, rewa
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeAVSEpochRewardSet,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avsAddr),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochIdentifier, epochInfo.Identifier),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch, 10)),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochRewards, rewards.String()),
 		),
 	)
@@ -140,6 +158,12 @@ func (k Keeper) SetAVSRewardProportionsExclusive(ctx sdk.Context, avsAddr string
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &rewardDistribution)
 	}
+
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return err
+	}
+	rewardDistribution.ProportionsEpochNumber = epochInfo.CurrentEpoch
 	rewardDistribution.OperatorRewardProportions = rewardProportions
 	bz := k.cdc.MustMarshal(&rewardDistribution)
 	store.Set(key, bz)
@@ -148,6 +172,8 @@ func (k Keeper) SetAVSRewardProportionsExclusive(ctx sdk.Context, avsAddr string
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeAVSRewardProportionsSet,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avsAddr),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochIdentifier, epochInfo.Identifier),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochNumber, strconv.FormatInt(epochInfo.CurrentEpoch, 10)),
 			sdk.NewAttribute(
 				feedistributiontypes.AttributeKeyOperatorProportions,
 				feedistributiontypes.OperatorRewardProportions(rewardProportions).String()),

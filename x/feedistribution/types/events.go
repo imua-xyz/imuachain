@@ -58,4 +58,5 @@ const (
 	// EventTypeStakeChangedDelegationsDelete : delete the delegations with changed stake by epoch
 	EventTypeStakeChangedDelegationsDelete = "stake_change_delegations_delete"
 	AttributeKeyEpochIdentifier            = "epoch_identifier"
+	AttributeKeyEpochNumber                = "epoch_number"
 )

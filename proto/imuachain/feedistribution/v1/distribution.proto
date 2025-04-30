@@ -50,6 +50,10 @@ message AVSRewardDistribution {
   // operator_reward_proportions represents the reward proportions of all operators
   // that are eligible to be allocated rewards in the current epoch.
   repeated OperatorRewardProportion operator_reward_proportions = 2 [(gogoproto.nullable) = false];
+  // rewards_epoch_number is the epoch number at which the rewards are updated.
+  int64 rewards_epoch_number = 3;
+  // proportions_epoch_number is the epoch number at which the proportions are updated
+  int64 proportions_epoch_number = 4;
 }
 
 // CommonAVSRewardData is a common struct used to record the current rewards and cumulative

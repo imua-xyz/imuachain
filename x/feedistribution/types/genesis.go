@@ -231,6 +231,11 @@ func (gs GenesisState) ValidateAVSRewardDistributions() error {
 			return ErrInvalidGenesisData.Wrapf("ValidateAVSRewardDistributions: invalid rewards, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. avsAddr:%s", info.Avs)
 		}
 
+		if info.AvsRewardDistribution.RewardsEpochNumber < 0 || info.AvsRewardDistribution.ProportionsEpochNumber < 0 {
+			return ErrInvalidGenesisData.Wrapf("ValidateAVSRewardDistributions: negative epoch number,RewardsEpochNumber:%d,ProportionsEpochNumber:%d",
+				info.AvsRewardDistribution.RewardsEpochNumber, info.AvsRewardDistribution.ProportionsEpochNumber)
+		}
+
 		// check the operator proportions
 		validationFunc := func(_ int, proportion OperatorRewardProportion) error {
 			if _, err := sdk.AccAddressFromBech32(proportion.OperatorAddr); err != nil {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	precompilecommon "github.com/imua-xyz/imuachain/precompiles/common"
 	feedistribution "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -89,11 +88,10 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 
 	cc := ctx
 	writeFunc := func() {}
-	// todo: It should be removed when rebasing onto the PR that fixed the EVM issue.
 	if p.IsTransaction(method.Name) {
 		cc, writeFunc = ctx.CacheContext()
 	}
-	var precompileCommonFunc precompilecommon.PrecompileCommonTxFunc
+	var precompileCommonFunc imuacmn.PrecompileCommonTxFunc
 	switch method.Name {
 	case MethodClaimReward:
 		precompileCommonFunc = p.ClaimReward
