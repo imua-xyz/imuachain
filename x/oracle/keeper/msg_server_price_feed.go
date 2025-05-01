@@ -66,7 +66,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		return nil, err
 	}
 
-	logger.Info("added quote for aggregation", append(logQuote, "msg", msg, "isChekcTx", ctx.IsCheckTx())...)
+	logger.Info("added quote for aggregation", append(logQuote, "msg", msg, "isCheckTx", ctx.IsCheckTx())...)
 	// TODO: use another type
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,

@@ -59,7 +59,7 @@ func NewSetPubKeyDecorator(ak authante.AccountKeeper) SetPubKeyDecorator {
 
 func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	_, isOracle, _, mixed := utils.IsValidOracleTx(tx)
-	// tx shhould not be mixed with oracle create-price message and other messages
+	// tx should not be mixed with oracle create-price message and other messages
 	if mixed {
 		return ctx, errors.New("mixed tx with oracle create-price message")
 	}
