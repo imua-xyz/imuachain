@@ -1,9 +1,9 @@
 package keeper
 
 import (
-	"fmt"
-
 	sdkmath "cosmossdk.io/math"
+	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -119,6 +119,28 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 		)
 	}
 	return nil
+}
+
+// IsAVSAllRewardsClaimed checks whether all rewards for the given AVS have been distributed and claimed.
+// This imposes a restriction on AVS deregistration to prevent AVSs from escaping rewards.
+// TODO: This restriction may introduce an issue where a staker can block an AVS from being removed from the
+// protocol by refusing to claim rewards. In the future, we may need to design a mechanism to support
+// forced deregistration to handle this case.
+func (k Keeper) IsAVSAllRewardsClaimed(ctx sdk.Context, avsAddr string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	iterator := sdk.KVStorePrefixIterator(store, []byte(strings.ToLower(avsAddr)))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var avsRewardAsset types.AVSRewardAsset
+		k.cdc.MustUnmarshal(iterator.Value(), &avsRewardAsset)
+		// check if the reward has been distributed and claimed
+		claimedAmount := avsRewardAsset.RewardAssetState.RewardPoolTotal.Sub(avsRewardAsset.RewardAssetState.RewardPoolBalance)
+		if !avsRewardAsset.RewardAssetState.RewardAllocationTotal.Equal(claimedAmount) {
+			return false
+		}
+	}
+	return true
 }
 
 // IsAVSRewardAssetByAssetID checks if the assetID is a reward asset of specified AVS.

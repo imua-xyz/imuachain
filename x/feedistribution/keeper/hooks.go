@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"strings"
-
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
@@ -32,34 +30,31 @@ func (wrapper EpochsHooksWrapper) BeforeEpochStart(_ sdk.Context, _ string, _ in
 
 // AfterEpochEnd mints and allocates coins at the end of each epoch end
 func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
-	expEpochID := wrapper.keeper.GetParams(ctx).EpochIdentifier
-	if strings.Compare(epochIdentifier, expEpochID) == 0 {
-		// distribute the rewards to operators
-		err := wrapper.keeper.AllocateRewardsByEpoch(ctx, epochIdentifier, epochNumber)
-		if err != nil {
-			ctx.Logger().Error("failed to allocate the rewards by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
-			// Do not return, as the reward distribution for stakers should not be affected
-			// by the AVS rewards distribution of the current epoch.
-			// If the function returns here, the cumulative rewards for the staker will not be
-			// distributed correctly.
-		}
-		// handle delegations whose stake has changed.
-		err = wrapper.keeper.HandleChangedDelegations(ctx, epochIdentifier)
-		if err != nil {
-			ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
-			return
-		}
-		// clear the delegation change information
-		// this function will be called by the epoch hook, so using cache context
-		// to ensure the state atomicity.
-		cc, writeFunc := ctx.CacheContext()
-		err = wrapper.keeper.DeleteStakeChangedDelegationsByEpoch(cc, epochIdentifier)
-		if err != nil {
-			ctx.Logger().Error("failed to delete the delegation change information by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
-			return
-		}
-		writeFunc()
+	// distribute the rewards to operators
+	err := wrapper.keeper.AllocateRewardsByEpoch(ctx, epochIdentifier, epochNumber)
+	if err != nil {
+		ctx.Logger().Error("failed to allocate the rewards by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		// Do not return, as the reward distribution for stakers should not be affected
+		// by the AVS rewards distribution of the current epoch.
+		// If the function returns here, the cumulative rewards for the staker will not be
+		// distributed correctly.
 	}
+	// handle delegations whose stake has changed.
+	err = wrapper.keeper.HandleChangedDelegations(ctx, epochIdentifier)
+	if err != nil {
+		ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		return
+	}
+	// clear the delegation change information
+	// this function will be called by the epoch hook, so using cache context
+	// to ensure the state atomicity.
+	cc, writeFunc := ctx.CacheContext()
+	err = wrapper.keeper.DeleteStakeChangedDelegationsByEpoch(cc, epochIdentifier)
+	if err != nil {
+		ctx.Logger().Error("failed to delete the delegation change information by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		return
+	}
+	writeFunc()
 }
 
 // DelegationHooksWrapper is the wrapper structure that implements the delegation hooks for the

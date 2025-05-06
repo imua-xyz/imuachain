@@ -212,15 +212,18 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			"HandleOperatorSlashEvent: fraction must be >=0 and <=1, current fraction: %s", slashProportion)
 	}
 	// the slash event will influence all epochs
-	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
-
+	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	for _, slashAsset := range slashAssetsPool {
 		curDelegationAmount, err := k.getOperatorCurrentDelegatedAmount(ctx, operator, slashAsset.AssetID)
 		if err != nil {
 			return err
 		}
 		var preDelegationAmount sdk.Dec
-		for _, epochInfo := range allEpochs {
+		for _, epochIdentifier := range allEpochIdentifiers {
+			epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
+			if !exist {
+				return feedistributiontypes.ErrEpochNotFound.Wrapf("HandleOperatorSlashEvent, epochIdentifier:%s", epochIdentifier)
+			}
 			// get the delegation amount at the end of the previous epoch.
 			if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID) {
 				delegationChangeInfo, err := k.GetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID)
@@ -255,8 +258,8 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 	}
 
 	// clear the delegation changes for all epochs
-	for _, epochInfo := range allEpochs {
-		err := k.DeleteStakeChangedDelegationsByEpoch(ctx, epochInfo.Identifier)
+	for _, epochIdentifier := range allEpochIdentifiers {
+		err := k.DeleteStakeChangedDelegationsByEpoch(ctx, epochIdentifier)
 		if err != nil {
 			return err
 		}

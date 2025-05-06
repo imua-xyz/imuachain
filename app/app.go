@@ -680,6 +680,7 @@ func NewImuachainApp(
 		app.AssetsKeeper,
 		app.EpochsKeeper,
 		app.EvmKeeper,
+		&app.DistrKeeper,
 	)
 	// operator registry, which handles vote power (and this requires delegation keeper).
 	// this keeper is initialized after the avs keeper because it depends on the avs keeper

@@ -17,7 +17,6 @@ import (
 // EpochsKeeper represents the expected keeper interface for the epochs module.
 type EpochsKeeper interface {
 	GetEpochInfo(ctx sdk.Context, identifier string) (epochsTypes.EpochInfo, bool)
-	AllEpochInfos(ctx sdk.Context) []epochsTypes.EpochInfo
 }
 
 type FeeDistributionHooks interface{}
@@ -64,6 +63,7 @@ type OperatorKeeper interface {
 // AVSKeeper represents the expected keeper interface for the avs module.
 type AVSKeeper interface {
 	GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) []string
+	GetEpochsUsedByAllAVSs(ctx sdk.Context) []string
 	IsAVS(ctx sdk.Context, addr string) (bool, error)
 	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochsTypes.EpochInfo, error)
 }

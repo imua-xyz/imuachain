@@ -100,6 +100,20 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 	return avsList
 }
 
+// GetEpochsUsedByAllAVSs returns a list of epoch identifiers currently in use by the AVSs.
+func (k *Keeper) GetEpochsUsedByAllAVSs(ctx sdk.Context) []string {
+	epochIdentifiers := make([]string, 0)
+	seen := make(map[string]interface{})
+	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) (stop bool) {
+		if _, ok := seen[avsInfo.EpochIdentifier]; !ok {
+			seen[avsInfo.EpochIdentifier] = nil
+			epochIdentifiers = append(epochIdentifiers, avsInfo.EpochIdentifier)
+		}
+		return false
+	})
+	return epochIdentifiers
+}
+
 // GetAVSInfoByTaskAddress returns the AVS  which containing this task address
 // A task contract address can only be used by one avs
 // TODO:this function is frequently used while its implementation iterates over existing avs to find the target avs by task contract address,  we should use a reverse mapping to avoid iteration

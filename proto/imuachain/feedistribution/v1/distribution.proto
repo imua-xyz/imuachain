@@ -219,7 +219,7 @@ message FeePool {
 // AVSRewardAssetState defines the state of an asset to be used as a reward for an AVS
 message AVSRewardAssetState {
   // reward_pool_balance is the asset balance of reward pool. It gets updated each time
-  // an AVS deposits funds into the treasury or stakers/operators withdraw from it.
+  // an AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.
   // We use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,
   // and we also use it when handling the distribution with F1.
   string reward_pool_balance = 1  [
@@ -228,8 +228,8 @@ message AVSRewardAssetState {
     (gogoproto.nullable) = false
   ];
   // reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
-  // each time an AVS deposits funds into the treasury. The difference between it and reward_pool_balance
-  // represents the total amount claimed by stakers and operators.
+  // each time an AVS deposits/withdraws funds into/from the treasury. The difference between it and
+  // reward_pool_balance represents the total amount claimed by stakers and operators.
   string reward_pool_total = 2  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

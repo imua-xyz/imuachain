@@ -34,9 +34,10 @@ type (
 		storeKey       storetypes.StoreKey
 		operatorKeeper types.OperatorKeeper
 		// other keepers
-		assetsKeeper types.AssetsKeeper
-		epochsKeeper types.EpochsKeeper
-		evmKeeper    types.EVMKeeper
+		assetsKeeper       types.AssetsKeeper
+		epochsKeeper       types.EpochsKeeper
+		evmKeeper          types.EVMKeeper
+		distributionKeeper types.DistributionKeeper
 	}
 )
 
@@ -47,14 +48,16 @@ func NewKeeper(
 	assetKeeper types.AssetsKeeper,
 	epochsKeeper types.EpochsKeeper,
 	evmKeeper types.EVMKeeper,
+	distributionKeeper types.DistributionKeeper,
 ) Keeper {
 	return Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		operatorKeeper: operatorKeeper,
-		assetsKeeper:   assetKeeper,
-		epochsKeeper:   epochsKeeper,
-		evmKeeper:      evmKeeper,
+		cdc:                cdc,
+		storeKey:           storeKey,
+		operatorKeeper:     operatorKeeper,
+		assetsKeeper:       assetKeeper,
+		epochsKeeper:       epochsKeeper,
+		evmKeeper:          evmKeeper,
+		distributionKeeper: distributionKeeper,
 	}
 }
 
@@ -158,7 +161,11 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 		// If avs DeRegisterAction check UnbondingPeriod
 		// #nosec G115
 		if k.operatorKeeper.IsUnbondingRelatedAVS(ctx, params.AvsAddress.String()) {
-			return errorsmod.Wrap(types.ErrUnbondingPeriod, fmt.Sprintf("not qualified to deregister %s", avsInfo))
+			return types.ErrCannotDeregister.Wrapf("The AVS still influences the unbonding duration of operators. avs:%s", params.AvsAddress)
+		}
+
+		if !k.distributionKeeper.IsAVSAllRewardsClaimed(ctx, params.AvsAddress.String()) {
+			return types.ErrCannotDeregister.Wrapf("There are some rewards remaining to be distributed and claimed. avs:%s", params.AvsAddress)
 		}
 
 		// If avs DeRegisterAction check avsname

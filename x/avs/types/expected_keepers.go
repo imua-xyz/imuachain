@@ -55,3 +55,8 @@ type AssetsKeeper interface {
 	) (info *assetstype.StakingAssetInfo, err error)
 	IsStakingAsset(sdk.Context, string) bool
 }
+
+// DistributionKeeper represents the expected keeper interface for the distribution module.
+type DistributionKeeper interface {
+	IsAVSAllRewardsClaimed(ctx sdk.Context, avsAddr string) bool
+}

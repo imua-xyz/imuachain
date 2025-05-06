@@ -23,9 +23,9 @@ var (
 		ModuleName, 5,
 		"Error: Undefined action",
 	)
-	ErrUnbondingPeriod = errorsmod.Register(
+	ErrCannotDeregister = errorsmod.Register(
 		ModuleName, 6,
-		"Error: UnbondingPeriod check failed",
+		"Error: can not deregister",
 	)
 	ErrEpochNotFound = errorsmod.Register(
 		ModuleName, 7,

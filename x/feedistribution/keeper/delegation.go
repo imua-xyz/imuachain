@@ -20,14 +20,14 @@ func (k Keeper) MarkStakeChangedDelegations(ctx sdk.Context, stakerID, assetID s
 	// If we don’t update the period for operators who have opted out of an AVS, the reward calculation
 	// cannot correctly determine the stake and reward ratio for a staker. This is because the staker might
 	// have delegated or undelegated tokens, altering the delegated stake during the opting-out period.
-	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
+	allEpochs := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	var err error
-	for _, epochInfo := range allEpochs {
+	for _, epochIdentifier := range allEpochs {
 		delegationChangeInfo := feedistributiontypes.DelegationChangeInfo{
 			StakerIds: make([]string, 0),
 		}
-		if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID) {
-			delegationChangeInfo, err = k.GetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID)
+		if k.HasStakeChangedDelegations(ctx, epochIdentifier, operator.String(), assetID) {
+			delegationChangeInfo, err = k.GetStakeChangedDelegations(ctx, epochIdentifier, operator.String(), assetID)
 			if err != nil {
 				return err
 			}
@@ -45,7 +45,7 @@ func (k Keeper) MarkStakeChangedDelegations(ctx sdk.Context, stakerID, assetID s
 		}
 
 		delegationChangeInfo.AppendUniqueStakerID(stakerID)
-		err = k.SetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), assetID, delegationChangeInfo)
+		err = k.SetStakeChangedDelegations(ctx, epochIdentifier, operator.String(), assetID, delegationChangeInfo)
 		if err != nil {
 			return err
 		}
@@ -360,10 +360,13 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 // It is triggered when the staker submits a transaction. So the transaction will be
 // handled during the epoch.
 func (k Keeper) StakerClaimDelegationRewards(ctx sdk.Context, stakerID string) error {
-	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
+	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
-		for i := range allEpochs {
-			epochInfo := allEpochs[i]
+		for _, epochIdentifier := range allEpochIdentifiers {
+			epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
+			if !exist {
+				return false, feedistributiontypes.ErrEpochNotFound.Wrapf("StakerClaimDelegationReward, epochIdentifier:%s", epochIdentifier)
+			}
 			// get the starting info
 			delegationKey := string(assetstype.GetJoinedStoreKey(stakerID, keys.AssetId, keys.OperatorAddr))
 			if !k.HasDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier) {
