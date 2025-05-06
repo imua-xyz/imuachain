@@ -52,11 +52,6 @@ func (s *AssetsPrecompileSuite) TestIsTransaction() {
 			s.precompile.Methods[assetsprecompile.MethodGetClientChains].Name,
 			false,
 		},
-		{
-			"invalid",
-			"invalid",
-			false,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -85,7 +80,6 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 	stakerAddrStr := strings.ToLower(s.Address.String())
 	NSTAssetAddr := assetstypes.GenerateNSTAddr(s.ClientChains[0].AddressLength)
 	stakerID, assetID := assetstype.GetStakerIDAndAssetID(s.ClientChains[0].LayerZeroChainID, s.Address.Bytes(), NSTAssetAddr)
-
 	opAmount := big.NewInt(100)
 	opAmount32, _ := new(big.Int).SetString("32000000000000000000", 10)
 	assetAddr := usdtAddress
@@ -173,7 +167,6 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 				depositModuleParam := &assetstype.Params{
 					Gateways: []string{s.Address.String()},
 				}
-				assetAddr = usdtAddress
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
 				return commonMalleate(assetsprecompile.MethodDepositNST, assetAddrNST, opAmount32)
@@ -184,7 +177,8 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 			extra: func() {
 				amount32 := sdkmath.NewIntWithDecimal(32, 18)
 				// check depositNST successfully updated stakerAssetInfo in assets_module
-				stakerAssetInfo, _ := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(s.Ctx, stakerID, assetID)
+				stakerAssetInfo, err := s.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(s.Ctx, stakerID, assetID)
+				s.Require().NoError(err)
 				s.Equal(&assetstypes.StakerAssetInfo{
 					TotalDepositAmount:        amount32,
 					WithdrawableAmount:        amount32,
@@ -281,6 +275,9 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 				s.Require().True(ok)
 				s.Require().False(success)
 			}
+			// commit the stateDB to the ctx so that changes are reflected in the ctx
+			err = s.StateDB.Commit()
+			s.Require().NoError(err)
 			if tc.extra != nil {
 				// run extra logic/checking for this test case
 				tc.extra()
@@ -452,6 +449,9 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 				s.Require().Nil(bz, "expected returned bytes to be nil")
 				s.Require().ErrorContains(err, tc.errContains)
 			}
+			// commit the stateDB to the ctx so that changes are reflected in the ctx
+			err = s.StateDB.Commit()
+			s.Require().NoError(err)
 			if tc.extra != nil {
 				tc.extra()
 			}

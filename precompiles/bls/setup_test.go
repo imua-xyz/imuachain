@@ -50,7 +50,7 @@ func (s *PrecompileTestSuite) SetupTest() {
 	s.aggregatedPublicKey = blst.AggregateMultiplePubkeys(s.publicKeys)
 	s.signature = blst.AggregateSignatures(sigs)
 
-	blsPrecompile, err := bls.NewPrecompile(6000)
+	blsPrecompile, err := bls.NewPrecompile()
 	s.Require().NoError(err, "failed to create bls precompile")
 	s.precompile = blsPrecompile
 

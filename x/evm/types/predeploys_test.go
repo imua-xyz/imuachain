@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	url = "https://rpc.ankr.com/eth_sepolia"
+	url = "https://eth-sepolia.g.alchemy.com/v2/Ru0n0aw_MVLJ9RUhgnIl036n4IM_mHCB"
 )
 
 // TestValidateDefaultPredeploys checks the format of the default predeploys, and that

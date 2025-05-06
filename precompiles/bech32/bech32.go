@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 	cmn "github.com/evmos/evmos/v16/precompiles/common"
+	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 )
 
 const (
@@ -50,13 +51,9 @@ func NewPrecompile(authzKeeper authzkeeper.Keeper) (*Precompile, error) {
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
 			// should be configurable in the future.
 			ApprovalExpiration: cmn.DefaultExpirationDuration,
+			Addr:               common.HexToAddress("0x0000000000000000000000000000000000000400"),
 		},
 	}, nil
-}
-
-// Address returns the address of the bech32 precompile.
-func (p Precompile) Address() common.Address {
-	return common.HexToAddress("0x0000000000000000000000000000000000000400")
 }
 
 // RequiredGas returns the gas required to execute the bech32 precompile.
@@ -65,38 +62,53 @@ func (p Precompile) RequiredGas([]byte) uint64 {
 }
 
 // Run performs the bech32 precompile.
-func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	ctx, stateDB, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+func (p Precompile) Run(_ *vm.EVM, contract *vm.Contract, _ bool) (bz []byte, err error) {
+	method, err := p.MethodById(contract.Input)
 	if err != nil {
 		return nil, err
 	}
-	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
-	// bug fix to commit dirty objects
-	if err := stateDB.Commit(); err != nil {
+
+	args, err := method.Inputs.Unpack(contract.Input[4:])
+	if err != nil {
 		return nil, err
 	}
 
 	switch method.Name {
 	case MethodHexToBech32:
-		return p.HexToBech32(method, args)
+		bz, err = p.HexToBech32(method, args)
 	case MethodBech32ToHex:
-		return p.Bech32ToHex(method, args)
+		bz, err = p.Bech32ToHex(method, args)
+	default:
+		// should never happen
+		bz, err = nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
 
-	cost := ctx.GasMeter().GasConsumed() - initialGas
-	if !contract.UseGas(cost) {
-		return nil, vm.ErrOutOfGas
+	if err != nil {
+		// this will (might?) cause the entire tx to fail.
+		// it is acceptable because it would represent an error
+		// in the precompile caller.
+		return nil, err
 	}
-	return nil, nil
+
+	return bz, nil
 }
 
 // IsTransaction reports whether a precompile is write (true) or read-only (false).
-func (Precompile) IsTransaction(methodID string) bool {
-	switch methodID {
-	// explicitly mark read-only for these
-	case MethodBech32ToHex, MethodHexToBech32:
+func (Precompile) IsTransaction(methodName string) bool {
+	switch methodName {
+	case MethodHexToBech32, MethodBech32ToHex:
 		return false
 	default:
-		return false
+		// this panic is safe to perform because the `init` function
+		// below forces developers to add all methods to the switch statement.
+		panic(fmt.Sprintf("unknown method: %s", methodName))
+	}
+}
+
+func init() {
+	// dummy instance
+	var p Precompile
+	if err := imuacmn.ValidateIsTx(f, p.IsTransaction); err != nil {
+		panic(err)
 	}
 }

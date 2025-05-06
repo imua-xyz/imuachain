@@ -27,11 +27,6 @@ func (s *SlashPrecompileTestSuite) TestIsTransaction() {
 			s.precompile.Methods[slash.MethodSlash].Name,
 			true,
 		},
-		{
-			"invalid",
-			"invalid",
-			false,
-		},
 	}
 
 	for _, tc := range testCases {

@@ -1399,7 +1399,9 @@ func (app *ImuachainApp) BlockedAddrs() map[string]bool {
 	// exists on the contract. In other words, these blocking is enabled to prevent these
 	// addresses from being used as token sinks.
 
-	// prevent all precompile addresses from receiving or sending tokens
+	// The addresses below are hardcoded and not fetched via the x/evm keeper because
+	// that is initialized much later (after the x/bank keeper).
+
 	// we don't add the Ethereum-inherited Berlin precompiles, since they are
 	// allowed to receive tokens on Eth mainnet.
 	for _, hexAddr := range imuaevmtypes.ImuachainAvailableEVMExtensions {

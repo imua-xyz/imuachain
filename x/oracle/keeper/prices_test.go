@@ -120,5 +120,4 @@ func TestPriceGrowID(t *testing.T) {
 	price, latestRoundID = keeper.GrowRoundID(ctx, 1, id7Uint)
 	require.Equal(t, "799", price)
 	require.Equal(t, id7Uint, latestRoundID)
-
 }

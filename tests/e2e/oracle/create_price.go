@@ -89,13 +89,12 @@ func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
 
 	s.moveToAndCheck(85)
 	clientChainID := uint32(101)
-	lzNonce := uint64(0)
 	assetAddr, _ := hexutil.Decode(network.ETHAssetAddress)
 	stakerAddr := []byte(s.network.Validators[0].Address)
 	operatorAddr := []byte(s.network.Validators[0].Address.String())
 	opAmount := big.NewInt(90000000)
 	// deposit 32 NSTETH to staker from beaconchain_validatro_1
-	err = s.network.SendPrecompileTx(network.DELEGATION, "delegate", clientChainID, lzNonce, assetAddr, stakerAddr, operatorAddr, opAmount)
+	err = s.network.SendPrecompileTx(network.DELEGATION, "delegate", clientChainID, assetAddr, stakerAddr, operatorAddr, opAmount)
 	s.Require().NoError(err)
 
 	// wait for validator set update

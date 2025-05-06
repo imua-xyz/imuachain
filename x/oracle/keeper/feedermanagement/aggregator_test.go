@@ -198,7 +198,6 @@ func TestAggregation(t *testing.T) {
 				So(finalPrice, ShouldResemble, ps2.prices[0].PriceResult())
 				So(ok, ShouldBeTrue)
 			})
-
 		})
 		Convey("add msgs in aggregator", func() {
 			a := newAggregator(th, defaultAggMedian)
@@ -324,7 +323,6 @@ func TestAggregation(t *testing.T) {
 										So(addedMsgItem, ShouldResemble, pmsg5)
 										So(err, ShouldBeNil)
 									})
-
 								})
 							})
 						})
