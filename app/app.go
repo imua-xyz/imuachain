@@ -1394,6 +1394,11 @@ func (app *ImuachainApp) BlockedAddrs() map[string]bool {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
 	}
 
+	// We prevent precompiles and predeploys from receiving tokens via x/bank messages.
+	// Tokens can still be received via EVM transactions, if a fallback or payable method
+	// exists on the contract. In other words, these blocking is enabled to prevent these
+	// addresses from being used as token sinks.
+
 	// prevent all precompile addresses from receiving or sending tokens
 	// we don't add the Ethereum-inherited Berlin precompiles, since they are
 	// allowed to receive tokens on Eth mainnet.
