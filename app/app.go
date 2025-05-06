@@ -1402,8 +1402,8 @@ func (app *ImuachainApp) BlockedAddrs() map[string]bool {
 	// The addresses below are hardcoded and not fetched via the x/evm keeper because
 	// that is initialized much later (after the x/bank keeper).
 
-	// we don't add the Ethereum-inherited Berlin precompiles, since they are
-	// allowed to receive tokens on Eth mainnet.
+	// the Ethereum-inherited Berlin precompiles are not included here because
+	// they do not validate `msg.Value` when being called.
 	for _, hexAddr := range imuaevmtypes.ImuachainAvailableEVMExtensions {
 		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr).Bytes()).String()
 		blockedAddrs[bech32Addr] = true
