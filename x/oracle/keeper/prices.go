@@ -206,7 +206,8 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 
 	p := *k.GetParamsFromCache()
 	// #nosec G115  // maxSizePrices is not negative
-	if expiredRoundID := nextRoundID - uint64(p.MaxSizePrices); expiredRoundID > 0 {
+	if nextRoundID > uint64(p.MaxSizePrices) {
+		expiredRoundID := nextRoundID - uint64(p.MaxSizePrices)
 		store.Delete(types.PricesRoundKey(expiredRoundID))
 	}
 	k.IncreaseNextRoundID(ctx, tokenID)

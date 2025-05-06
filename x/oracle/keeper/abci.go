@@ -7,8 +7,6 @@ import (
 
 func (k Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	if len(k.postHandlers) == 0 {
-		// bond handlers for custom pre defined token feeders
-		k.RegisterPostAggregation()
 		// bond handlers for nst token feeders
 		p := k.GetParams(ctx)
 		// it's safe to iterate over the map, the order of the elements is not important
