@@ -1394,21 +1394,22 @@ func (app *ImuachainApp) BlockedAddrs() map[string]bool {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
 	}
 
-	// EVM blocked addrs are not fetched via evmkeeper because that is not yet initialized.
+	// We prevent precompiles and predeploys from receiving tokens via x/bank messages.
+	// Tokens can still be received via EVM transactions, if a fallback or payable method
+	// exists on the contract. In other words, these blocking is enabled to prevent these
+	// addresses from being used as token sinks.
 
-	// prevent all precompile addresses from receiving or sending tokens
-	// we don't add the Ethereum-inherited Berlin precompiles, since they are
-	// allowed to receive tokens on Eth mainnet.
+	// The addresses below are hardcoded and not fetched via the x/evm keeper because
+	// that is initialized much later (after the x/bank keeper).
+
+	// the Ethereum-inherited Berlin precompiles are not included here because
+	// they do not validate `msg.Value` when being called.
 	for _, hexAddr := range imuaevmtypes.ImuachainAvailableEVMExtensions {
 		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr).Bytes()).String()
 		blockedAddrs[bech32Addr] = true
 	}
 
 	// now do the predeploys
-	// TODO: check if the predeploys can forward tokens to deployments made through them
-	// by `msg.value` even if the predeploys are themselves blocked from receiving funds.
-	// ideally, this should be permitted because the balance is only saved when committing
-	// the state.
 	for _, hexAddr := range imuaevmtypes.DefaultPredeploys {
 		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr.Address).Bytes()).String()
 		blockedAddrs[bech32Addr] = true

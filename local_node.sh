@@ -43,6 +43,10 @@ command -v cast >/dev/null 2>&1 || {
 	echo >&2 "cast not installed. More info: https://getfoundry.sh"
 	exit 1
 }
+command -v bc >/dev/null 2>&1 || {
+	echo >&2 "bc not installed. More info: https://www.gnu.org/software/bc/manual/bc.html"
+	exit 1
+}
 
 # used to exit on first error (any non-zero exit code)
 set -e
