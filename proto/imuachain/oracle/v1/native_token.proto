@@ -40,7 +40,7 @@ message StakerInfo {
   // the index of corresponding staker in staker list
   uint32 staker_index = 2;
   // list of validators that this staker corresponding to on beacon chain
-  repeated ValidatorVersion validator_pubkey_list = 3;
+  repeated ValidatorDeposit validator_list = 3;
   // list of balances to represets the history of this staker
   repeated BalanceInfo balance_list = 4;
 }
@@ -51,12 +51,12 @@ message StakerList {
   repeated string staker_addrs = 1;
 }
 
-// StakerInfo defines the basic info of a staker
+// Staker defines the basic info of a staker
 message Staker {
   // staker's index
   uint32 staker_index = 1;
   // validtor_list is the list of validators that this staker corresponding to on beacon chain
-  repeated ValidatorVersion validator_list= 2;
+  repeated ValidatorDeposit validator_list= 2;
 }
 
 // Balances defines the list of balanceInfo
@@ -66,11 +66,18 @@ message Balances {
 }
 
 // ValidatorVersion defines the version of a validator
-message ValidatorVersion {
-  // validator's public key
+// message ValidatorVersion {
+//   // validator's public key
+//   string validator_pubkey = 1;
+//   // version of the validator
+//   uint64 version = 2;
+// }
+
+// ValidatorDeposit defines the version of a validator
+message ValidatorDeposit {
   string validator_pubkey = 1;
-  // version of the validator
   uint64 version = 2;
+  uint64 deposit_amount = 3;
 }
 
 // NSTVersion defines the version of native-staking token

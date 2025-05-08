@@ -2,14 +2,15 @@ package types
 
 const maxSize = 100
 
-func NewStakerInfo(stakerAddr, validatorPubkey string, version uint64) *StakerInfo {
+func NewStakerInfo(stakerAddr, validatorPubkey string, version, amount uint64) *StakerInfo {
 	return &StakerInfo{
 		StakerAddr:  stakerAddr,
 		StakerIndex: 0,
-		ValidatorPubkeyList: []*ValidatorVersion{
+		ValidatorList: []*ValidatorDeposit{
 			{
 				ValidatorPubkey: validatorPubkey,
 				Version:         version,
+				DepositAmount:   amount,
 			},
 		},
 		BalanceList: make([]*BalanceInfo, 0, 1),
