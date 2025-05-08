@@ -43,7 +43,7 @@ func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerIn
 		keyStaker := types.NSTStakerKey(chainID, stakerAddr)
 		staker := types.Staker{
 			StakerIndex:   stakerInfo.StakerIndex,
-			ValidatorList: stakerInfo.ValidatorPubkeyList,
+			ValidatorList: stakerInfo.ValidatorList,
 		}
 		store.Set(keyStaker, k.cdc.MustMarshal(&staker))
 		if stakerInfo.StakerIndex > lastIndex {
@@ -90,10 +90,10 @@ func (k Keeper) GetStakerInfo(ctx sdk.Context, chainID uint64, stakerAddr string
 	k.cdc.MustUnmarshal(value, balances)
 
 	return types.StakerInfo{
-		StakerAddr:          stakerAddr,
-		StakerIndex:         staker.StakerIndex,
-		ValidatorPubkeyList: staker.ValidatorList,
-		BalanceList:         balances.BalanceList,
+		StakerAddr:    stakerAddr,
+		StakerIndex:   staker.StakerIndex,
+		ValidatorList: staker.ValidatorList,
+		BalanceList:   balances.BalanceList,
 	}
 }
 
@@ -105,17 +105,12 @@ func (k Keeper) GetStakerInfos(ctx sdk.Context, req *types.QueryStakerInfosReque
 	}
 
 	_, chainID, _ := assetstypes.ParseID(strings.ToLower(req.AssetId))
-	store := ctx.KVStore(k.storeKey)
-	// retrieve version
-	bz := store.Get(types.NSTVersionKey(chainID))
-	version := uint64(0)
-	var err error
-	if bz != nil {
-		version, err = types.BytesToUint64(bz)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to parse version: %v", err)
-		}
+	versions, found := k.GetNSTVersionsFromAssetID(ctx, req.AssetId)
+	if !found {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("version for assetID:%s not found", req.AssetId))
 	}
+
+	store := ctx.KVStore(k.storeKey)
 	storePrefix := prefix.NewStore(store, types.NSTStakerKeyChainIDPrefix(chainID))
 	retStakerInfos := make([]*types.StakerInfo, 0)
 	resPage, err := query.Paginate(storePrefix, req.Pagination, func(key []byte, value []byte) error {
@@ -132,7 +127,7 @@ func (k Keeper) GetStakerInfos(ctx sdk.Context, req *types.QueryStakerInfosReque
 	return &types.QueryStakerInfosResponse{
 		// TODO: update type to uint64 to avoid confusion
 		// #nosec G115
-		Version:     version,
+		Version:     &versions,
 		StakerInfos: retStakerInfos,
 		Pagination:  resPage,
 	}, nil
@@ -156,9 +151,9 @@ func (k Keeper) getStakerInfos(store sdk.KVStore, balancesKeyPrefix, key, value 
 	}
 
 	stakerInfo := types.StakerInfo{
-		StakerAddr:          string(key),
-		StakerIndex:         staker.StakerIndex,
-		ValidatorPubkeyList: staker.ValidatorList,
+		StakerAddr:    string(key),
+		StakerIndex:   staker.StakerIndex,
+		ValidatorList: staker.ValidatorList,
 	}
 
 	balances := &types.Balances{}
@@ -269,9 +264,10 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		return err
 	}
 
-	version := k.GetNSTVersion(ctx, chainID)
+	versions, _ := k.GetNSTVersions(ctx, chainID)
 	// we use index to sync with client about status of stakerInfo.ValidatorPubkeyList
-	eventValue := fmt.Sprintf("%s_%d_%s_%d_%d_%d", types.AttributeValueNativeTokenDeposit, index, validatorPubkey, version, amountConverted.Uint64(), feederID)
+	// eventValue := fmt.Sprintf("%s_%d_%s_%d_%d_%d", types.AttributeValueNativeTokenDeposit, index, validatorPubkey, version, amountConverted.Uint64(), feederID)
+	eventValue := fmt.Sprintf("%s_%d_%s_%s_%d_%d_%d", types.AttributeValueNativeTokenDeposit, index, stakerAddr, validatorPubkey, versions.Version.Version, amountConverted.Uint64(), feederID)
 	if len(*k.cachedNSTStakersEventValue) > 0 {
 		*k.cachedNSTStakersEventValue += types.DelimiterForBase64
 	}
@@ -279,27 +275,6 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		*k.cachedNSTStakersEventValue += eventValue
 	}
 	return nil
-}
-
-// GetNSTVersionFromAssetID retrieves the NST version for a given assetID (parsing chainID from assetID).
-func (k Keeper) GetNSTVersionFromAssetID(ctx sdk.Context, assetID string) uint64 {
-	_, chainID, _ := assetstypes.ParseID(strings.ToLower(assetID))
-	return k.GetNSTVersion(ctx, chainID)
-}
-
-// GetNSTVersion gets the NST version for a given chainID from the store.
-func (k Keeper) GetNSTVersion(ctx sdk.Context, chainID uint64) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	key := types.NSTVersionKey(chainID)
-	value := store.Get(key)
-	if value == nil {
-		return 0
-	}
-	v, err := types.BytesToUint64(value)
-	if err != nil {
-		return 0
-	}
-	return v
 }
 
 // removeStaker removes a staker and their balances from the store when their balance becomes zero.
@@ -351,6 +326,7 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance uint64, 
 			balanceDelta = sdkmath.NewIntFromUint64(balances.BalanceList[len(balances.BalanceList)-1].Balance)
 		}
 		updatedIndex, removed = k.removeStaker(ctx, chainID, stakerAddr)
+		k.IncreaseVersionByFeed(ctx, chainID)
 		return updatedIndex, removed, balanceDelta, err
 	}
 
@@ -373,7 +349,7 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance uint64, 
 		Change: action,
 	}
 	staker := &types.Staker{
-		ValidatorList: stakerInfo.ValidatorPubkeyList,
+		ValidatorList: stakerInfo.ValidatorList,
 	}
 	balanceDelta = sdkmath.NewIntFromUint64(balance)
 	if stakerInfo.StakerAddr == "" {
@@ -403,9 +379,10 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance uint64, 
 	// set staker
 	if action == types.Action_ACTION_DEPOSIT {
 		updatedVersion := k.IncreaseVersionByDeposit(ctx, chainID, balance)
-		staker.ValidatorList = append(staker.ValidatorList, &types.ValidatorVersion{
+		staker.ValidatorList = append(staker.ValidatorList, &types.ValidatorDeposit{
 			ValidatorPubkey: validator,
 			Version:         updatedVersion,
+			DepositAmount:   balance,
 		})
 	}
 	k.SetStaker(ctx, chainID, stakerAddr, staker)
@@ -421,6 +398,23 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance uint64, 
 	bz := k.cdc.MustMarshal(balances)
 	store.Set(keyBalances, bz)
 	return updatedIndex, removed, balanceDelta, err
+}
+
+func (k Keeper) GetNSTVersionsFromAssetID(ctx sdk.Context, assetID string) (types.NSTVersion, bool) {
+	_, chainID, _ := assetstypes.ParseID(strings.ToLower(assetID))
+	return k.GetNSTVersions(ctx, chainID)
+}
+
+func (k Keeper) GetNSTVersions(ctx sdk.Context, chainID uint64) (types.NSTVersion, bool) {
+	store := ctx.KVStore(k.storeKey)
+	key := types.NSTVersionKey(chainID)
+	value := store.Get(key)
+	if value == nil {
+		return types.NSTVersion{}, false
+	}
+	var v types.NSTVersion
+	k.cdc.MustUnmarshal(value, &v)
+	return v, true
 }
 
 func (k Keeper) IncreaseVersionByDeposit(ctx sdk.Context, chainID, amountAdd uint64) uint64 {
@@ -637,9 +631,9 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 	chainID, _ := hexutil.DecodeUint64(chainIDStr)
 	// TODO(leonz): use uint64 for version state
 	// #nosec G115
-	v := k.GetNSTVersion(ctx, chainID)
-	if balanceChanges.Version != v {
-		return fmt.Errorf("version not match, expected %d, got %d, assetID:%s", v, balanceChanges.Version, assetID)
+	versions, found := k.GetNSTVersions(ctx, chainID)
+	if !found || balanceChanges.Version != versions.FeedVersion.Version {
+		return fmt.Errorf("version not match, expected %d, got %d, assetID:%s", versions.FeedVersion.Version, balanceChanges.Version, assetID)
 	}
 
 	sl := k.GetStakerList(ctx, assetID)
