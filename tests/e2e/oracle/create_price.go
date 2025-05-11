@@ -336,8 +336,12 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	s.Require().Equal(oracletypes.StakerInfo{
 		StakerAddr:  stakerAddrStr,
 		StakerIndex: 0,
-		ValidatorPubkeyList: []string{
-			hexutil.Encode(validatorPubkey),
+		ValidatorList: []*oracletypes.ValidatorDeposit{
+			{
+				ValidatorPubkey: hexutil.Encode(validatorPubkey),
+				Version:         1,
+				DepositAmount:   32,
+			},
 		},
 		BalanceList: []*oracletypes.BalanceInfo{
 			{

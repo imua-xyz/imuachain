@@ -18,8 +18,7 @@ func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
 	stakerAddrStrs := s.depositNST(3, 60)
 	// #nosec G115
 	stakerCount := uint32(len(stakerAddrStrs))
-	version := uint64(stakerCount)
-	c1 := uint32(30)
+	c1 := uint32(1)
 	c2 := uint32(60)
 	if c1 > stakerCount {
 		c1 = stakerCount
@@ -27,10 +26,59 @@ func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
 	} else if c2 > stakerCount {
 		c2 = stakerCount
 	}
+	version := uint64(1)
+	// all validator deposited with the same amount of 32, so the first staker could be any of all stakers in the test case
 	s.updateNSTBalance(7, version, c1, stakerAddrStrs, true)
 
-	version = 91
-	s.updateNSTBalance(32, version, c2, stakerAddrStrs, true)
+	/**
+		add 2 more validators for staker to check situation in which feedVerion < version
+		1. 2 deposits: {feedVersion: 61, version: 61} -> {feedVersion: 61, version: 63}
+		2. update balance at version 61, so the balance change should only affect balance at version 61
+		3. after balance update: {feedVersion: 61, version: 63} -> {feedVersion: 64, version: 64}
+	**/
+	s.moveToAndCheck(10)
+	clientChainID := uint32(101)
+	opAmount := big.NewInt(32)
+	nonce := uint64(0)
+	var err error
+	stakerAddrStr := stakerAddrStrs[0]
+	stakerAddr, _ := hexutil.Decode(stakerAddrStr)
+	validatorPubkey := []byte{byte(100)}
+	// deposit 32 NSTETH to staker from beaconchain_validatro_100
+	nonce, err = s.network.SendPrecompileTxWithNonce(network.ASSETS, "depositNST", nonce, clientChainID, validatorPubkey, stakerAddr, opAmount)
+	s.Require().NoError(err)
+
+	validatorPubkey = []byte{byte(101)}
+	// deposit 32 NSTETH to staker from beaconchain_validatro_101
+	_, err = s.network.SendPrecompileTxWithNonce(network.ASSETS, "depositNST", nonce, clientChainID, validatorPubkey, stakerAddr, opAmount)
+	s.Require().NoError(err)
+
+	s.moveNAndCheck(2)
+	resStakerInfo, err := s.network.QueryOracle().StakerInfo(context.Background(), &oracletypes.QueryStakerInfoRequest{AssetId: network.NativeAssetID, StakerAddr: stakerAddrStrs[0]})
+	s.Require().NoError(err)
+	versionInfo, feedVersionInfo := resStakerInfo.Version.Version, resStakerInfo.Version.FeedVersion
+	// feedVersion should be 61 by last update
+	s.Require().Equal(uint64(61), feedVersionInfo.Version)
+	// version grows by 1 when the staker deposits, so it should be 61+1*2 = 63
+	s.Require().Equal(uint64(63), versionInfo.Version)
+	s.Require().Equal(uint64(64), versionInfo.DepositAmount-feedVersionInfo.DepositAmount)
+	s.Require().Equal(oracletypes.ValidatorDeposit{
+		ValidatorPubkey: hexutil.Encode(validatorPubkey),
+		DepositAmount:   32,
+		Version:         63,
+	}, *resStakerInfo.StakerInfo.ValidatorList[2])
+
+	version = 61
+	changes := s.updateNSTBalance(32, version, c2, stakerAddrStrs, true)
+
+	resStakerInfo, err = s.network.QueryOracle().StakerInfo(context.Background(), &oracletypes.QueryStakerInfoRequest{AssetId: network.NativeAssetID, StakerAddr: stakerAddrStrs[0]})
+	s.Require().NoError(err)
+	blUpdated := resStakerInfo.StakerInfo.BalanceList
+	// we update balance at versions: {feed:61, version:63} then the balance change should only affect balance at version 61, so the result should be newBalance + 64(deposit amount of version 62 and 63)
+	s.Require().Equal(changes[0].Balance+64, blUpdated[len(blUpdated)-1].Balance)
+	versionInfo, feedVersionInfo = resStakerInfo.Version.Version, resStakerInfo.Version.FeedVersion
+	s.Require().Equal(uint64(64), feedVersionInfo.Version)
+	s.Require().Equal(uint64(64), versionInfo.Version)
 }
 
 func (s *E2ETestSuite) testTwoPhaseNSTMalicious(_ uint64) {
@@ -144,7 +192,7 @@ func (s *E2ETestSuite) depositNST(start int64, stakerCount int) []string {
 }
 
 // start should be the base block of an nst-feeder round
-func (s *E2ETestSuite) updateNSTBalance(start uint64, version uint64, stakerCount uint32, stakerAddrStrs []string, checkPieceError bool) {
+func (s *E2ETestSuite) updateNSTBalance(start uint64, version uint64, stakerCount uint32, stakerAddrStrs []string, checkPieceError bool) []*oracletypes.NSTKV {
 	mt, changes := getNstRootAndPiecesWithParams(version, stakerCount, 32)
 
 	s.sendRawDataRoot(start, mt.RootHash(), mt.LeafCount())
@@ -194,6 +242,7 @@ func (s *E2ETestSuite) updateNSTBalance(start uint64, version uint64, stakerCoun
 		l := len(bl) - 1
 		s.Require().Equal(changes[idx].Balance, bl[l].Balance)
 	}
+	return changes
 }
 
 func (s *E2ETestSuite) sendRawDataRoot(start uint64, root []byte, count uint32) {
