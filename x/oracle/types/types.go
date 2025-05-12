@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -152,8 +153,11 @@ func Uint64Bytes(value uint64) []byte {
 	return valueBytes
 }
 
-func BytesToUint64(bz []byte) uint64 {
-	return binary.BigEndian.Uint64(bz)
+func BytesToUint64(bz []byte) (uint64, error) {
+	if len(bz) < 8 {
+		return 0, fmt.Errorf("invalid length of bytes when convert to uint64: %d", len(bz))
+	}
+	return binary.BigEndian.Uint64(bz), nil
 }
 
 func Uint32Bytes(value uint32) []byte {
@@ -162,8 +166,11 @@ func Uint32Bytes(value uint32) []byte {
 	return valueBytes
 }
 
-func BytesToUint32(bz []byte) uint32 {
-	return binary.BigEndian.Uint32(bz)
+func BytesToUint32(bz []byte) (uint32, error) {
+	if len(bz) < 4 {
+		return 0, fmt.Errorf("invalid length of bytes when convert to uint32: %d", len(bz))
+	}
+	return binary.BigEndian.Uint32(bz), nil
 }
 
 func ConsAddrStrFromCreator(creator string) (string, error) {

@@ -113,7 +113,10 @@ func (k Keeper) GetRawDataPieces(ctx sdk.Context, feederID uint64) ([][]byte, er
 	if bz == nil {
 		return nil, nil
 	}
-	nextPieceIndex := types.BytesToUint32(bz)
+	nextPieceIndex, err := types.BytesToUint32(bz)
+	if err != nil {
+		return nil, err
+	}
 	if nextPieceIndex == 0 {
 		return nil, nil
 	}

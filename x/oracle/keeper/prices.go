@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"encoding/binary"
-
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -92,7 +90,7 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 }
 
 // return latest price for assets
-func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]interface{}) (prices map[string]types.Price, err error) {
+func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]any) (prices map[string]types.Price, err error) {
 	// get params from cache if exists
 	p := k.GetParamsFromCache()
 	// ret := make(map[string]types.Price)
@@ -166,9 +164,14 @@ func (k Keeper) GetAllPrices(ctx sdk.Context) (list []types.Prices) {
 	defer iterator.Close()
 
 	var price types.Prices
+	//	var err error
 	prevTokenID := uint64(0)
 	for ; iterator.Valid(); iterator.Next() {
-		tokenID, _, nextRoundID := parseKey(iterator.Key())
+		tokenID, _, nextRoundID, err := parseKey(iterator.Key())
+		if err != nil {
+			k.Logger(ctx).Error("GetAllPrices failed to parse key", "key", iterator.Key(), "err", err)
+			return []types.Prices{}
+		}
 		if prevTokenID == 0 {
 			prevTokenID = tokenID
 			price.TokenID = tokenID
@@ -178,7 +181,11 @@ func (k Keeper) GetAllPrices(ctx sdk.Context) (list []types.Prices) {
 			price = types.Prices{TokenID: tokenID}
 		}
 		if nextRoundID {
-			price.NextRoundID = binary.BigEndian.Uint64(iterator.Value())
+			price.NextRoundID, err = types.BytesToUint64(iterator.Value())
+			if err != nil {
+				k.Logger(ctx).Error("GetAllPrices failed to parse nextRoundID", "nextRoundID", iterator.Value(), "err", err)
+				return []types.Prices{}
+			}
 		} else {
 			var val types.PriceTimeRound
 			k.cdc.MustUnmarshal(iterator.Value(), &val)
@@ -231,8 +238,7 @@ func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price
 	if nextRoundID > storedNextRoundID {
 		// if storedNextRoundID is too old, we just set it with input params
 		store := k.getPriceTRStore(ctx, tokenID)
-		b := make([]byte, 8)
-		binary.BigEndian.PutUint64(b, nextRoundID)
+		b := types.Uint64Bytes(nextRoundID)
 		store.Set(types.PricesNextRoundIDKey, b)
 	}
 	roundID = nextRoundID
@@ -262,7 +268,13 @@ func (k Keeper) GetPriceTRLatest(ctx sdk.Context, tokenID uint64) (price types.P
 	if nextRoundIDB == nil {
 		return
 	}
-	nextRoundID := binary.BigEndian.Uint64(nextRoundIDB)
+	nextRoundID, err := types.BytesToUint64(nextRoundIDB)
+	// This should not happen
+	if err != nil {
+		// This should not happen
+		k.Logger(ctx).Error("GetPriceTRLatest failed to parse nextRoundID", "nextRoundIDB", nextRoundIDB, "err", err)
+		return
+	}
 	// this token has no valid round yet
 	if nextRoundID <= 1 {
 		return
@@ -278,23 +290,24 @@ func (k Keeper) GetPriceTRLatest(ctx sdk.Context, tokenID uint64) (price types.P
 
 // GetNextRoundID gets the next round id of a token
 func (k Keeper) GetNextRoundID(ctx sdk.Context, tokenID uint64) (nextRoundID uint64) {
-	nextRoundID = 1
+	var err error
 	store := k.getPriceTRStore(ctx, tokenID)
 	nextRoundIDB := store.Get(types.PricesNextRoundIDKey)
 	if nextRoundIDB != nil {
-		if nextRoundID = binary.BigEndian.Uint64(nextRoundIDB); nextRoundID == 0 {
-			nextRoundID = 1
+		nextRoundID, err = types.BytesToUint64(nextRoundIDB)
+		if err != nil {
+			// this should not happen, we simplely log it here
+			k.Logger(ctx).Error("GetNextRoundID failed to parse nextRoundID", "error", err)
 		}
 	}
-	return
+	return max(1, nextRoundID)
 }
 
 // IncreaseNextRoundID increases nextRoundID persisted by 1 of a token
 func (k Keeper) IncreaseNextRoundID(ctx sdk.Context, tokenID uint64) uint64 {
 	store := k.getPriceTRStore(ctx, tokenID)
 	nextRoundID := k.GetNextRoundID(ctx, tokenID)
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, nextRoundID+1)
+	b := types.Uint64Bytes(nextRoundID + 1)
 	store.Set(types.PricesNextRoundIDKey, b)
 	return nextRoundID
 }
@@ -304,12 +317,16 @@ func (k Keeper) getPriceTRStore(ctx sdk.Context, tokenID uint64) prefix.Store {
 	return prefix.NewStore(store, types.PricesKey(tokenID))
 }
 
-func parseKey(key []byte) (tokenID uint64, roundID uint64, nextRoundID bool) {
-	tokenID = binary.BigEndian.Uint64(key[:8])
+func parseKey(key []byte) (tokenID uint64, roundID uint64, nextRoundID bool, err error) {
+	if len(key) < 17 {
+		err = types.ErrGetPriceRoundNotFound.Wrapf("key length is too short")
+		return
+	}
+	tokenID, _ = types.BytesToUint64(key[:8])
 	if len(key) == 21 {
 		nextRoundID = true
 		return
 	}
-	roundID = binary.BigEndian.Uint64(key[9:17])
+	roundID, _ = types.BytesToUint64(key[9:17])
 	return
 }
