@@ -75,7 +75,7 @@ func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdatePara
 	}
 
 	if !updated {
-		return &types.MsgUpdateParamsResponse{}, types.ErrNoOp
+		return nil, types.ErrNoOp
 	}
 	// validate params
 	if err = p.Validate(); err != nil {

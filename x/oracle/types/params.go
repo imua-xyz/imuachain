@@ -348,7 +348,7 @@ func (p Params) AddRules(rules ...*RuleSource) (Params, error) {
 	if len(rules) == 0 {
 		return p, ErrNoOp
 	}
-	if len(rules)+len(p.Rules) >= maxRules {
+	if len(rules)+len(p.Rules) > maxRules {
 		return p, ErrInvalidParams.Wrap("invalid rules to add, too many rules")
 	}
 	p.Rules = append(p.Rules, rules...)
