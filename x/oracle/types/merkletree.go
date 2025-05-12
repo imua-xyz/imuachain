@@ -164,6 +164,12 @@ func (m *MerkleTree) VerifyAndCacheOrdered(targetIndex uint32, targetPiece []byt
 	if targetIndex >= m.leafCount || targetIndex != uint32(len(m.pieces)) {
 		return nil, false
 	}
+	// #nosec G115
+	if m.leafCount > 1 &&
+		targetIndex < m.leafCount-1 &&
+		uint32(len(targetPiece)) != m.pieceSize {
+		return nil, false
+	}
 	hash := leafHash(targetPiece)
 	// get hashed-leafnode
 	node := m.t[targetIndex]
