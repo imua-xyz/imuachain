@@ -20,7 +20,7 @@ func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 		return fmt.Errorf("error loading the ABI %s", err)
 	}
 
-	abi, err := abi.JSON(bytes.NewReader(abiBz))
+	abiDerived, err := abi.JSON(bytes.NewReader(abiBz))
 	if err != nil {
 		return fmt.Errorf("error parsing the ABI %s", err)
 	}
@@ -28,8 +28,10 @@ func ValidateIsTx(fs embed.FS, isTx func(methodName string) bool) error {
 	// sort for determinism
 	// although this method is only used during `init()` currently,
 	// this is a form of future-proofing.
-	methods := make([]string, 0, len(abi.Methods))
-	for _, method := range abi.Methods {
+	methods := make([]string, 0, len(abiDerived.Methods))
+	for _, method := range abiDerived.Methods {
+		// `RunSetup` does not discriminate based on the method type
+		// So we should not do so either.
 		methods = append(methods, method.Name)
 	}
 	sort.Strings(methods)

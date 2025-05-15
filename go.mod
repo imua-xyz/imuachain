@@ -277,7 +277,7 @@ replace (
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
 	// use imua fork of evmos which contains evm and precompile fixes
-	github.com/evmos/evmos/v16 => github.com/imua-xyz/evmos/v16 v16.0.3-0.20250428082709-46118f23fed5
+	github.com/evmos/evmos/v16 => github.com/imua-xyz/evmos/v16 v16.0.3-0.20250515032007-e21b41cb9b20
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 	// replace broken goleveldb

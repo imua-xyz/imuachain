@@ -100,4 +100,28 @@ contract Gateway {
 
         return success;
     }
+
+    function callPrecompileWithData(
+        // we use `memory` and not `calldata` because of more
+        // assembly code flexibility
+        bytes memory data
+    ) public payable {
+        uint256 len = data.length;
+        require(len <= 32, "Data too long");
+        counter += 1;
+        assembly {
+            let success := call(
+                gas(), // all remaining gas
+                ASSETS_PRECOMPILE_ADDRESS,
+                callvalue(), // msg.value
+                add(data, 0x20), // input pointer
+                len, // length of data at input pointer
+                mload(0x40), // where to store output
+                0 // output size - which is irrelevant for this test
+            )
+            if iszero(success) {
+                revert(0, 0)
+            }
+        }
+    }
 }

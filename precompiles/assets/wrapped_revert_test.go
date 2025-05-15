@@ -6,6 +6,8 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/precompiles/assets/testdata"
 	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
@@ -243,6 +245,72 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 
 		// Balance should remain unchanged after reverts
 		checkBalance(tc.expectedAmount)
+	}
+
+	// case of unknown methods
+	prevBalance := s.App.EvmKeeper.GetBalance(s.Ctx, gatewayCallerAddr)
+	for _, tc := range []struct {
+		name  string
+		data  string
+		value *big.Int
+	}{
+		{
+			name: "unknown method",
+			data: hexutil.Encode(
+				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:4],
+			),
+			value: big.NewInt(0),
+		},
+		{
+			name: "unknown method with value",
+			data: hexutil.Encode(
+				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:4],
+			),
+			value: big.NewInt(1),
+		},
+		{
+			name:  "fallback method",
+			data:  "0x",
+			value: big.NewInt(0),
+		},
+		{
+			name:  "receive method with value",
+			data:  "0x",
+			value: big.NewInt(1),
+		},
+		{
+			name: "short calldata",
+			data: hexutil.Encode(
+				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:2],
+			),
+			value: big.NewInt(0),
+		},
+		{
+			name: "short calldata with value",
+			data: hexutil.Encode(
+				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:2],
+			),
+			value: big.NewInt(1),
+		},
+	} {
+		args := callArgs.WithMethodName(
+			"callPrecompileWithDataInsideTryCatch",
+		).WithArgs(
+			hexutil.MustDecode(tc.data),
+		).WithAmount(tc.value)
+		_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
+		s.Require().NoError(err)
+		s.Commit()
+		// value does not change
+		s.Equal(
+			s.getCounterValue(gatewayAddr), prevValue,
+			fmt.Sprintf("counter value should not change for %s", tc.name),
+		)
+		nextBalance := s.App.EvmKeeper.GetBalance(s.Ctx, gatewayCallerAddr)
+		s.Equal(
+			prevBalance.Add(prevBalance, tc.value), nextBalance,
+			fmt.Sprintf("gateway caller balance should change for %s", tc.name),
+		)
 	}
 }
 
