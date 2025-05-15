@@ -18,6 +18,7 @@ import (
 // rawData txs are txs with MsgCreatePrice message which inlude raw data piece and proof used to submit oracle data to chain
 // rawData pieces is required to be submitted in order, and the piece index is verified in anteHandler
 // in ImuaMempool, we pre cache rawData pieces for each feederID(the proposer would have more chance to include a valid rawData piece in block to get avoid of being punished by miss-count)
+// Note: This implementation assumes single-threaded usage as it doesn't implement concurrency protection.
 type ImuaMempool struct {
 	// feederID -> pieceIndex->[]PieceWithProof, cached pieceWithProof for feederID
 	cachedPieces map[uint64]map[uint32][]*oracletypes.PieceWithProof
@@ -29,7 +30,9 @@ type ImuaMempool struct {
 
 var _ mempool.Mempool = &ImuaMempool{}
 
-// Insert inserts a tx into mempool, currently only used for rawData from tx related to 2-phases aggregation of oracle modul
+// Insert inserts a tx into mempool. While it accepts all transaction types, it only processes and caches
+// raw data transactions related to 2-phases aggregation of the oracle module. Non-oracle transactions
+// are simply passed through without any processing.
 func (em *ImuaMempool) Insert(_ context.Context, tx sdk.Tx) error {
 	// we don't filter tx not with message of rawData type, those tx will just be added into tendermint's txpool
 	if !em.includesMsgOracle(tx) {
@@ -73,10 +76,10 @@ func (em *ImuaMempool) Insert(_ context.Context, tx sdk.Tx) error {
 // Select selects txs for block proposal, we only select rawData txs with rawData message which is used for 2-phases aggregation of oracle module, for other txs we just return them
 // we only keep one tx for each feederID, and we only keep the tx with the piece index expected by the feederID
 func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iterator {
-	// remove all expired tx, when Select for block 100, all txs belongs to 99 or before should be removed
+	// Remove all expired transactions. For example, when selecting for block 100,
+	// all transactions belonging to block 99 or earlier should be removed since they're
+	// no longer relevant for the current selection round.
 
-	// feederIDS:[]uint64, which are expecting rawData
-	// []Tx, each feederID must have one tx
 	collectingFeederIDs := em.k.FeederManager.FeederIDsCollectingRawData()
 	if len(collectingFeederIDs) == 0 {
 		// remove all cached pieces since no collectingFeederIDs available
@@ -102,7 +105,7 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 	// remove all expired txs from cache
 	em.clearExpiredFeederIDcache(collectingFeederIDs)
 
-	seenFeederIDs := make(map[uint64]struct{})
+	seenFeederIDs := make(map[uint64]struct{}, len(collectingFeederIDs))
 	keep := make([]sdk.Tx, 0, len(txList))
 	for _, txBytes := range txList {
 		tx, err := em.txDecoder(txBytes)

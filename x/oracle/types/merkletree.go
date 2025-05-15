@@ -216,7 +216,8 @@ func (m *MerkleTree) VerifyAndCacheOrdered(targetIndex uint32, targetPiece []byt
 			// verified := bytes.Equal(node.parent.hash, calculatedParentHash)
 			verified := bytes.Equal(node.parent.hash, hash)
 			if verified {
-				// copy cached into merkletree
+				// Safe to range map: assignments by index are order-independent
+				// and yield the same final state regardless of iteration order.
 				for idx, cachedHash := range cachedHashes {
 					m.t[idx].hash = cachedHash
 				}
