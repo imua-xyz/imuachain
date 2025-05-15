@@ -23,11 +23,11 @@ service Msg {
 enum AggregationPhase{
   option (gogoproto.goproto_enum_prefix) = false;
   // MESSAGE_PHASE_NON is the default value, which means the message is not of type 2-phases aggregation
-  AGGREGATION_PHASE_UNSPECIFIED = 0[(gogoproto.enumvalue_customname) = "AggregationPhaseUnspecified"];
+  AGGREGATION_PHASE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "AggregationPhaseUnspecified"];
   // MESSAGE_PHASE_ONE is the first phase of the 2-phases aggregation
-  AGGREGATION_PHASE_ONE = 1[(gogoproto.enumvalue_customname) = "AggregationPhaseOne"];
+  AGGREGATION_PHASE_ONE = 1 [(gogoproto.enumvalue_customname) = "AggregationPhaseOne"];
   // MESSAGE_PHASE_TWO is the second phase of the 2-phases aggregation
-  AGGREGATION_PHASE_TWO = 2[(gogoproto.enumvalue_customname) = "AggregationPhaseTwo"];
+  AGGREGATION_PHASE_TWO = 2 [(gogoproto.enumvalue_customname) = "AggregationPhaseTwo"];
 }
 
 

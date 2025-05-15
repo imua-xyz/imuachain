@@ -289,19 +289,23 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 		if r.Committable() {
 			finalPrice, ok := r.FinalPrice()
 			if !ok {
-				logger.Info("commit round with price from previous", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
+				logger.Info("commit round with price from previous",
+					"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
 				// #nosec G115  // tokenID is index of slice
 				f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
 			} else {
 				if f.cs.IsRuleV1(r.feederID) {
 					priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
-					logger.Info("commit round with aggregated price", "feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
+					logger.Info("commit round with aggregated price",
+						"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
 
 					// #nosec G115  // tokenID is index of slice
 					if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit); !updated {
 						// this is an 'impossible' case, we should not reach here
 						latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
-						logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID", "feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit, "result-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
+						logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID",
+							"feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit,
+							"result-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
 					} else {
 						fstr := strconv.FormatInt(feederID, 10)
 						successFeederIDs = append(successFeederIDs, fstr)
@@ -314,7 +318,8 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 							r.m, _ = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(lc), []byte(finalPrice.Price))
 							// set up state for 2nd phase aggregation
 							// #nosec G115
-							logger.Info("set up 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
+							logger.Info("set up 2ndPhase on successful 1stPhase aggregation",
+								"feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
 							f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(lc), []byte(finalPrice.Price))
 						}
 					}
