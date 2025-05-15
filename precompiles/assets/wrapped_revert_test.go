@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/precompiles/assets/testdata"
@@ -249,55 +248,50 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 
 	// case of unknown methods
 	prevBalance := s.App.EvmKeeper.GetBalance(s.Ctx, gatewayCallerAddr)
+	unknownMethodSelector := crypto.Keccak256Hash(
+		[]byte("unknownMethod(uint256)"),
+	).Bytes()[:4]
 	for _, tc := range []struct {
 		name  string
-		data  string
+		data  []byte
 		value *big.Int
 	}{
 		{
-			name: "unknown method",
-			data: hexutil.Encode(
-				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:4],
-			),
+			name:  "unknown method",
+			data:  unknownMethodSelector,
 			value: big.NewInt(0),
 		},
 		{
-			name: "unknown method with value",
-			data: hexutil.Encode(
-				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:4],
-			),
+			name:  "unknown method with value",
+			data:  unknownMethodSelector,
 			value: big.NewInt(1),
 		},
 		{
 			name:  "fallback method",
-			data:  "0x",
+			data:  []byte{},
 			value: big.NewInt(0),
 		},
 		{
 			name:  "receive method with value",
-			data:  "0x",
+			data:  []byte{},
 			value: big.NewInt(1),
 		},
 		{
-			name: "short calldata",
-			data: hexutil.Encode(
-				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:2],
-			),
+			name:  "short calldata",
+			data:  unknownMethodSelector[:2],
 			value: big.NewInt(0),
 		},
 		{
-			name: "short calldata with value",
-			data: hexutil.Encode(
-				crypto.Keccak256Hash([]byte("unknownMethod()")).Bytes()[:2],
-			),
+			name:  "short calldata with value",
+			data:  unknownMethodSelector[:2],
 			value: big.NewInt(1),
 		},
+		// long calldata does not need to be tested here, because
+		// MethodByID will error for unknown methods anyway
 	} {
 		args := callArgs.WithMethodName(
 			"callPrecompileWithDataInsideTryCatch",
-		).WithArgs(
-			hexutil.MustDecode(tc.data),
-		).WithAmount(tc.value)
+		).WithArgs(tc.data).WithAmount(tc.value)
 		_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
 		s.Require().NoError(err)
 		s.Commit()
