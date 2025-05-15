@@ -308,9 +308,10 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 		)
 		nextBalance := s.App.EvmKeeper.GetBalance(s.Ctx, gatewayCallerAddr)
 		s.Equal(
-			prevBalance.Add(prevBalance, tc.value), nextBalance,
+			new(big.Int).Add(prevBalance, tc.value), nextBalance,
 			fmt.Sprintf("gateway caller balance should change for %s", tc.name),
 		)
+		prevBalance = nextBalance
 	}
 }
 
