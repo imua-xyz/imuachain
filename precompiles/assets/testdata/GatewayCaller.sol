@@ -94,4 +94,15 @@ contract GatewayCaller {
             return (false, "Low-level revert");
         }
     }
+
+    function callPrecompileWithDataInsideTryCatch(
+        bytes memory data
+    ) public payable {
+        try Gateway(gateway).callPrecompileWithData{value: msg.value}(data) {
+            // do nothing
+        } catch {
+            // do nothing
+        }
+    }
+
 }

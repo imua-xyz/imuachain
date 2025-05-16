@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/precompiles/assets/testdata"
 	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
@@ -243,6 +244,68 @@ func (s *AssetsPrecompileSuite) TestWrappedRevert() {
 
 		// Balance should remain unchanged after reverts
 		checkBalance(tc.expectedAmount)
+	}
+
+	// case of unknown methods
+	prevBalance := s.App.EvmKeeper.GetBalance(s.Ctx, gatewayCallerAddr)
+	unknownMethodSelector := crypto.Keccak256Hash(
+		[]byte("unknownMethod(uint256)"),
+	).Bytes()[:4]
+	for _, tc := range []struct {
+		name  string
+		data  []byte
+		value *big.Int
+	}{
+		{
+			name:  "unknown method",
+			data:  unknownMethodSelector,
+			value: big.NewInt(0),
+		},
+		{
+			name:  "unknown method with value",
+			data:  unknownMethodSelector,
+			value: big.NewInt(1),
+		},
+		{
+			name:  "fallback method",
+			data:  []byte{},
+			value: big.NewInt(0),
+		},
+		{
+			name:  "receive method with value",
+			data:  []byte{},
+			value: big.NewInt(1),
+		},
+		{
+			name:  "short calldata",
+			data:  unknownMethodSelector[:2],
+			value: big.NewInt(0),
+		},
+		{
+			name:  "short calldata with value",
+			data:  unknownMethodSelector[:2],
+			value: big.NewInt(1),
+		},
+		// long calldata does not need to be tested here, because
+		// MethodByID will error for unknown methods anyway
+	} {
+		args := callArgs.WithMethodName(
+			"callPrecompileWithDataInsideTryCatch",
+		).WithArgs(tc.data).WithAmount(tc.value)
+		_, _, err = testutilcontracts.Call(s.Ctx, s.App, args)
+		s.Require().NoError(err)
+		s.Commit()
+		// value does not change
+		s.Equal(
+			s.getCounterValue(gatewayAddr), prevValue,
+			fmt.Sprintf("counter value should not change for %s", tc.name),
+		)
+		nextBalance := s.App.EvmKeeper.GetBalance(s.Ctx, gatewayCallerAddr)
+		s.Equal(
+			new(big.Int).Add(prevBalance, tc.value), nextBalance,
+			fmt.Sprintf("gateway caller balance should change for %s", tc.name),
+		)
+		prevBalance = nextBalance
 	}
 }
 
