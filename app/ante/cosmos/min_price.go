@@ -32,7 +32,7 @@ func (mpd MinGasPriceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 		return ctx, errorsmod.Wrapf(errortypes.ErrInvalidType, "invalid transaction type %T, expected sdk.FeeTx", tx)
 	}
 
-	if _, isOracle, _, _ := anteutils.IsValidOracleTx(tx); isOracle {
+	if anteutils.IsOracleCreatePriceTx(tx) {
 		return next(ctx, tx, simulate)
 	}
 

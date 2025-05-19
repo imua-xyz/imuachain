@@ -14,6 +14,8 @@ import (
 
 type ItemV map[string]*big.Int
 
+const v1RuleID = 1
+
 func (c *caches) CpyForSimulation() *caches {
 	ret := *c
 	msg := *(c.msg)
@@ -85,70 +87,10 @@ func (c *caches) IsDeterministic(sourceID int64) (bool, error) {
 	return sources[sourceID].Deterministic, nil
 }
 
-// RuleV1:
-// 1. single deterministic source (like chainlink)
-// 2. 2-phase aggregation with single deterministic source
-// we don't verify the source-name to be 'chainlink' or 'beaconchain', it is satisefied as long as
-// all validators agreed on the same source
+// RuleV1, we restrict the source to be Chainlink and only that source is acceptable
 func (c *caches) IsRuleV1(feederID int64) bool {
-	if feederID < 0 || feederID >= int64(len(c.params.params.TokenFeeders)) {
-		return false
-	}
-	p := c.params.params
-	// #nosec - G115 ruleID is assigned with slice index
-	ruleID := int(p.TokenFeeders[feederID].RuleID)
-	if ruleID == 0 || ruleID >= len(p.Rules) {
-		return false
-	}
-
-	rule := p.Rules[ruleID]
-	// for v1, only single deterministic source is supported
-	if len(rule.SourceIDs) == 1 {
-		// #nosec G115 - sourceID is assigned with slice index
-		sID := int(rule.SourceIDs[0])
-		if sID > 0 {
-			if sID >= len(p.Sources) {
-				return false
-			}
-			if s := p.Sources[sID]; s.Deterministic {
-				return true
-			}
-		}
-	}
-
-	return c.isRule2PhasesByRule(rule)
-}
-
-// TODO: forward this to cacheParams
-// IsRule2Phases returns whether a tokenfeeder is restricted by 2-phases rule
-func (c *caches) IsRule2PhasesByFeederID(feederID uint64) bool {
-	if feederID >= uint64(len(c.params.params.TokenFeeders)) {
-		return false
-	}
-	p := c.params.params
-	// #nosec G115 - ruleID is set from index of slice which is actually type of int
-	ruleID := int(p.TokenFeeders[feederID].RuleID)
-	if ruleID == 0 || ruleID >= len(p.Rules) {
-		return false
-	}
-	rule := p.Rules[ruleID]
-	return c.isRule2PhasesByRule(rule)
-}
-
-func (c *caches) isRule2PhasesByRule(rule *oracletypes.RuleSource) bool {
-	// just check the format and don't care the verification here, the verification should be done by 'params' not in this memory calculator(feedermanager)
-	if len(rule.SourceIDs) == 1 && rule.SourceIDs[0] == 0 &&
-		rule.Nom != nil && len(rule.Nom.SourceIDs) == 1 {
-		// #nosec G115 - ruleID is set from index of slice which is actually type of int
-		sID := int(rule.Nom.SourceIDs[0])
-		if sID == 0 || sID >= len(c.params.params.Sources) {
-			return false
-		}
-		if s := c.params.params.Sources[sID]; s.Deterministic && rule.Nom.Minimum == 1 {
-			return true
-		}
-	}
-	return false
+	ruleID := c.params.params.TokenFeeders[feederID].RuleID
+	return ruleID == v1RuleID && len(c.params.params.Sources) == 2 && c.params.params.Sources[1].Name == oracletypes.SourceChainlinkName
 }
 
 func (c *caches) GetTokenIDForFeederID(feederID int64) (int64, bool) {
@@ -424,18 +366,6 @@ func (c *caches) Commit(ctx sdk.Context, reset bool) (msgUpdated, validatorsUpda
 		c.ResetCaches()
 	}
 	return
-}
-
-func (c *caches) RawDataPieceSize() uint32 {
-	return c.params.params.PieceSizeByte
-}
-
-func (c *caches) IntervalForFeederID(feederID uint64) (uint64, bool) {
-	// TODO: change type of interval to uint32
-	if feederID >= uint64(len(c.params.params.TokenFeeders)) {
-		return 0, false
-	}
-	return c.params.params.TokenFeeders[feederID].Interval, true
 }
 
 func (c *caches) ResetCaches() {

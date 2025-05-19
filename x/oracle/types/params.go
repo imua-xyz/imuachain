@@ -72,11 +72,6 @@ func DefaultParams() Params {
 		Rules: []*RuleSource{
 			// 0 is reserved
 			{},
-			{
-				// all sources math
-				SourceIDs: []uint64{0},
-				Nom:       nil,
-			},
 		},
 		// TokenFeeder describes when a token start to be updated with its price, and the frequency, endTime.
 		TokenFeeders: []*TokenFeeder{
@@ -96,7 +91,6 @@ func DefaultParams() Params {
 			OracleMaliciousJailDuration: 30 * 24 * time.Hour,
 			SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
 		},
-		PieceSizeByte: 48000,
 	}
 }
 
@@ -543,14 +537,8 @@ func (p Params) GetTokenIDFromAssetID(assetID string) int {
 	return 0
 }
 
-func (p Params) GetAssetIDForNSTFromFeederID(feederID uint64) string {
-	tokenID := p.TokenFeeders[feederID].TokenID
-
-	if tokenID >= uint64(len(p.Tokens)) {
-		return ""
-	}
-	assetIDs := strings.Split(p.Tokens[tokenID].AssetID, ",")
-
+func (p Params) GetAssetIDForNSTFromTokenID(tokenID uint64) string {
+	assetIDs := p.GetAssetIDsFromTokenID(tokenID)
 	for _, assetID := range assetIDs {
 		if nstChain, ok := strings.CutPrefix(strings.ToLower(assetID), NSTIDPrefix); ok {
 			if NSTChain, ok := NSTChainsInverted[nstChain]; ok {
@@ -559,6 +547,13 @@ func (p Params) GetAssetIDForNSTFromFeederID(feederID uint64) string {
 		}
 	}
 	return ""
+}
+
+func (p Params) GetAssetIDsFromTokenID(tokenID uint64) []string {
+	if tokenID >= uint64(len(p.Tokens)) {
+		return nil
+	}
+	return strings.Split(p.Tokens[tokenID].AssetID, ",")
 }
 
 func (p Params) IsDeterministicSource(sourceID uint64) bool {
@@ -671,12 +666,4 @@ func (p Params) IsSlashingResetUpdate(params *Params) bool {
 		return true
 	}
 	return false
-}
-
-func (p Params) IsNST(tokenID int) bool {
-	if tokenID >= len(p.Tokens) {
-		return false
-	}
-	token := p.Tokens[tokenID]
-	return strings.HasPrefix(strings.ToLower(token.AssetID), NSTIDPrefix)
 }

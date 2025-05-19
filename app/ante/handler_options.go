@@ -120,7 +120,6 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		cosmosante.NewIncrementSequenceDecorator(options.AccountKeeper, options.OracleKeeper),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
 		evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
-		cosmosante.NewOracleTwoPhasesDecorator(options.OracleKeeper),
 	)
 }
 

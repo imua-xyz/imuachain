@@ -6,7 +6,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
@@ -31,7 +30,7 @@ type KeeperOracle interface {
 	ClearAllValidatorReportInfo(ctx sdk.Context)
 	ClearAllValidatorMissedRoundBitArray(ctx sdk.Context)
 	GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price string, roundID uint64)
-	AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound) bool
+	AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound, detID string) bool
 	GetValidatorReportInfo(ctx sdk.Context, validator string) (info types.ValidatorReportInfo, found bool)
 	GetMaliciousJailDuration(ctx sdk.Context) (res time.Duration)
 	ClearValidatorMissedRoundBitArray(ctx sdk.Context, validator string)
@@ -72,17 +71,6 @@ type KeeperOracle interface {
 	SetNonce(ctx sdk.Context, nonce types.ValidatorNonce)
 	GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.Price, error)
 	GetMultipleAssetsPrices(ctx sdk.Context, assetIDs map[string]interface{}) (map[string]types.Price, error)
-
-	Setup2ndPhase(ctx sdk.Context, feederID uint64, validators []string, leafCount uint32, rootHash []byte)
-	Clear2ndPhase(ctx sdk.Context, feederID uint64, rootIndex uint32)
-	AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*types.HashNode)
-	SetNextPieceIndexForFeeder(ctx sdk.Context, feederID uint64, pieceIndex uint32)
-	GetPostAggregation(feederID int64) (handler PostAggregationHandler, found bool)
-	SetRawDataPiece(ctx sdk.Context, feederID uint64, pieceIndex uint32, rawData []byte)
-	GetRawDataPieces(ctx sdk.Context, feederID uint64) ([][]byte, error)
-	GetFeederTreeInfo(ctx sdk.Context, feederID uint64) (uint32, []byte)
-	GetNodesFromMerkleTree(ctx sdk.Context, feederID uint64) []*types.HashNode
-	MustUnmarshal(bz []byte, ptr codec.ProtoMarshaler)
 }
 
 var _ KeeperDogfood = dogfoodkeeper.Keeper{}

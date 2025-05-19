@@ -2,7 +2,6 @@ package network
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -47,8 +46,10 @@ var (
 	}
 
 	DefaultGenStateOperator = operatortypes.GenesisState{}
+	// DefaultGenStateOperator = *operatortypes.DefaultGenesis()
 
 	DefaultGenStateDelegation = delegationtypes.GenesisState{}
+	// DefaultGenStateDelegation = *delegationtypes.DefaultGenesis()
 
 	DefaultGenStateDogfood = *dogfoodtypes.DefaultGenesis()
 
@@ -74,21 +75,13 @@ func init() {
 		Valid:         true,
 		Deterministic: true,
 	})
-	DefaultGenStateOracle.Params.Rules = append(DefaultGenStateOracle.Params.Rules,
-		&oracletypes.RuleSource{
-			SourceIDs: []uint64{1},
-		},
-		&oracletypes.RuleSource{
-			// all sources math
-			SourceIDs: []uint64{0},
-			Nom: &oracletypes.NOMSource{
-				SourceIDs: []uint64{1},
-				Minimum:   1,
-			},
-		})
+	DefaultGenStateOracle.Params.Rules = append(DefaultGenStateOracle.Params.Rules, &oracletypes.RuleSource{
+		// all sources math
+		SourceIDs: []uint64{0},
+	})
 	DefaultGenStateOracle.Params.TokenFeeders = append(DefaultGenStateOracle.Params.TokenFeeders, &oracletypes.TokenFeeder{
 		TokenID:      1,
-		RuleID:       2,
+		RuleID:       1,
 		StartRoundID: 1,
 		// set ETH tokenfeeder's 'StartBaseBlock' to 10
 		StartBaseBlock: 10,
@@ -105,7 +98,7 @@ func init() {
 	})
 	DefaultGenStateOracle.Params.TokenFeeders = append(DefaultGenStateOracle.Params.TokenFeeders, &oracletypes.TokenFeeder{
 		TokenID:        2,
-		RuleID:         3,
+		RuleID:         1,
 		StartRoundID:   1,
 		StartBaseBlock: 7,
 		Interval:       10,
@@ -114,18 +107,6 @@ func init() {
 	DefaultGenStateOracle.Params.Slashing.ReportedRoundsWindow = 4
 	// set jailduration of oracle report downtime to 15 seconds for test
 	DefaultGenStateOracle.Params.Slashing.OracleMissJailDuration = 15 * time.Second
-	switch os.Getenv("TEST_OPTION") {
-	case "nst-malicious":
-		fallthrough
-	case "nst":
-		DefaultGenStateOracle.Params.PieceSizeByte = 32
-		DefaultGenStateOracle.Params.TokenFeeders[2].Interval = 25
-	default:
-	}
-	//	if os.Getenv("TEST_OPTION") == "nst" {
-	//		DefaultGenStateOracle.Params.PieceSizeByte = 32
-	//		DefaultGenStateOracle.Params.TokenFeeders[2].Interval = 25
-	//	}
 }
 
 func NewTestToken(name, metaInfo, address string, chainID uint64, decimal uint32, amount int64) assetstypes.StakingAssetInfo {

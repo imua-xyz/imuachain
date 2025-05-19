@@ -1,68 +1,11 @@
 package types
 
 import (
-	"bytes"
 	"encoding/binary"
-	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-type PieceWithProof struct {
-	Index   uint32
-	RawData []byte
-	//	Proof   []*HashNode
-	Proof     Proof
-	BaseBlock uint64
-	// reference to the tx including this piece
-	Tx sdk.Tx
-}
-
-func (p *PieceWithProof) ProofSize() uint32 {
-	// #nosec G115
-	return uint32(len(p.Proof))
-}
-
-func (p *PieceWithProof) HasIndexOnProofPath(index uint32) bool {
-	for _, pn := range p.Proof {
-		if index == pn.Index {
-			return true
-		}
-	}
-	return false
-}
-
-func (p *PieceWithProof) EqualsTo(p2 *PieceWithProof) bool {
-	if p.Index != p2.Index {
-		return false
-	}
-	if !bytes.Equal(p.RawData, p2.RawData) {
-		return false
-	}
-	if len(p.Proof) != len(p2.Proof) {
-		return false
-	}
-
-	// we require these to be exactly the same(same order) which is identical with anteHandler proofPath check
-	for i, pn := range p.Proof {
-		if pn.Index != p2.Proof[i].Index {
-			return false
-		}
-		if !bytes.Equal(pn.Hash, p2.Proof[i].Hash) {
-			return false
-		}
-	}
-	return true
-}
-
-// MsgCreatePriceRawData defined as alias of MsgCreatePrice with rawData related method to get rid of redundant checking wehter the MsgCreatePrice is with a valid RawData message
-// TODO: add filed 'parsed' into this struct to avoid redundant parse
-// type MsgCreatePriceRawData MsgCreatePrice
-type MsgCreatePriceRawData struct {
-	*MsgCreatePrice
-	Piece *PieceWithProof
-}
 
 type OracleInfo struct {
 	Chain struct {
@@ -121,15 +64,11 @@ const (
 
 	SourceChainlinkName = "Chainlink"
 	SourceChainlinkID   = 1
-
-	RuleIDAll  = 1
-	TimeLayout = "2006-01-02 15:04:05"
+	TimeLayout          = "2006-01-02 15:04:05"
 
 	DelimiterForCombinedKey = byte('/')
 
 	NilDetID = ""
-
-	DelimiterForBase64 = "|"
 )
 
 var (
@@ -151,26 +90,6 @@ func Uint64Bytes(value uint64) []byte {
 	valueBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(valueBytes, value)
 	return valueBytes
-}
-
-func BytesToUint64(bz []byte) (uint64, error) {
-	if len(bz) < 8 {
-		return 0, fmt.Errorf("invalid length of bytes when convert to uint64: %d", len(bz))
-	}
-	return binary.BigEndian.Uint64(bz), nil
-}
-
-func Uint32Bytes(value uint32) []byte {
-	valueBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(valueBytes, value)
-	return valueBytes
-}
-
-func BytesToUint32(bz []byte) (uint32, error) {
-	if len(bz) < 4 {
-		return 0, fmt.Errorf("invalid length of bytes when convert to uint32: %d", len(bz))
-	}
-	return binary.BigEndian.Uint32(bz), nil
 }
 
 func ConsAddrStrFromCreator(creator string) (string, error) {

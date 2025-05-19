@@ -16,7 +16,7 @@ import (
 )
 
 func TestQueryStakerInfosPaginated(t *testing.T) {
-	assetID := string("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x7595")
+	assetID := string(keeper.NSTETHAssetIDMainnet)
 	keeper, ctx := keepertest.OracleKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNStakerInfos(keeper, ctx, assetID, 5)

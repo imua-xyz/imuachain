@@ -20,28 +20,6 @@ func NewMsgCreatePrice(creator string, feederID uint64, prices []*PriceSource, b
 	}
 }
 
-func NewMsgCreatePrice2Phase(creator string, feederID uint64, prices []*PriceSource, basedBlock uint64, nonce int32) *MsgCreatePrice {
-	return &MsgCreatePrice{
-		Creator:    creator,
-		FeederID:   feederID,
-		Prices:     prices,
-		BasedBlock: basedBlock,
-		Nonce:      nonce,
-		Phase:      AggregationPhaseOne,
-	}
-}
-
-func NewMsgCreatePrice2Phase2(creator string, feederID uint64, prices []*PriceSource, basedBlock uint64, nonce int32) *MsgCreatePrice {
-	return &MsgCreatePrice{
-		Creator:    creator,
-		FeederID:   feederID,
-		Prices:     prices,
-		BasedBlock: basedBlock,
-		Nonce:      nonce,
-		Phase:      AggregationPhaseTwo,
-	}
-}
-
 func (msg *MsgCreatePrice) Route() string {
 	return RouterKey
 }
@@ -69,32 +47,4 @@ func (msg *MsgCreatePrice) ValidateBasic() error {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid creator address (%s)", err)
 	}
 	return nil
-}
-
-func (msg *MsgCreatePrice) IsSinglePhase() bool {
-	return msg.Phase == AggregationPhaseUnspecified
-}
-
-func (msg *MsgCreatePrice) IsPhaseOne() bool {
-	return msg.Phase == AggregationPhaseOne
-}
-
-func (msg *MsgCreatePrice) IsPhaseTwo() bool {
-	return msg.Phase == AggregationPhaseTwo
-}
-
-// NOTE: this should be the only way a MsgCreatePriceRawData is derived
-// GetRawData returns wether this is a message with piece of rawData, and parse rawData piece if true
-// NOTE: all method for MsgCreatePriceRawData is assumed that the MsgCreatePriceRawData is derived from MsgCreatePrice by 'feederManager.GetRawData' which had done the basic veirfy, so we don't do that repeatedly
-
-func (msgP *MsgCreatePriceRawData) PieceIndex() uint32 {
-	return msgP.Piece.Index
-}
-
-func (msgP *MsgCreatePriceRawData) GetPieceWithProof() *PieceWithProof {
-	return msgP.Piece
-}
-
-func (msgP *MsgCreatePriceRawData) GetPieceRawData() []byte {
-	return msgP.Piece.RawData
 }

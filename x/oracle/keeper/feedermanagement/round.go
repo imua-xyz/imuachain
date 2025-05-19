@@ -3,12 +3,11 @@ package feedermanagement
 import (
 	"fmt"
 
-	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader, algo AggAlgorithm, twoPhases bool, postHandler common.PostAggregationHandler) *round {
-	ret := &round{
+func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowSize int64, cache CacheReader, algo AggAlgorithm) *round {
+	return &round{
 		// #nosec G115
 		startBaseBlock: int64(tokenFeeder.StartBaseBlock),
 		// #nosec G115
@@ -22,20 +21,14 @@ func newRound(feederID int64, tokenFeeder *oracletypes.TokenFeeder, quoteWindowS
 		// #nosec G115
 		tokenID: int64(tokenFeeder.TokenID),
 		cache:   cache,
+
 		// default value
 		status:         roundStatusClosed,
 		a:              nil,
 		roundBaseBlock: 0,
 		roundID:        0,
 		algo:           algo,
-		twoPhases:      twoPhases,
 	}
-	if twoPhases {
-		if postHandler != nil {
-			ret.h = postHandler
-		}
-	}
-	return ret
 }
 
 func (r *round) Equals(r2 *round) bool {
@@ -66,10 +59,8 @@ func (r *round) CopyForCheckTx() *round {
 	// flags has been taken care of
 	ret := *r
 	// cache does not need to be copied since it's a readonly interface,
-	// and there's no race condition since abci requests are not executing concurrently
+	// and there's no race condition since abci requests are not executing concurrntly
 	ret.a = ret.a.CopyForCheckTx()
-	ret.m = r.m.GetCopy()
-	ret.cachedProofForBlock = r.cachedProofForBlock.GetCopy()
 	return &ret
 }
 
@@ -95,11 +86,8 @@ func (r *round) getMsgItemFromProto(msg *oracletypes.MsgItem) (*MsgItem, error) 
 	}, nil
 }
 
-func (r *round) ValidQuotingBaseBlock(height int64, notTwoPhase bool) bool {
-	if notTwoPhase {
-		return r.IsQuotingWindowOpen() && r.roundBaseBlock == height
-	}
-	return r.roundBaseBlock == height
+func (r *round) ValidQuotingBaseBlock(height int64) bool {
+	return r.IsQuotingWindowOpen() && r.roundBaseBlock == height
 }
 
 // Tally process information to get the final price
@@ -115,7 +103,7 @@ func (r *round) Tally(protoMsg *oracletypes.MsgItem) (*PriceResult, *oracletypes
 		return nil, nil, fmt.Errorf("failed to get msgItem from proto, error:%w", err)
 	}
 	if !r.IsQuoting() {
-		// record msg for 'handleQuotingMisBehavior'
+		// record msg for 'handlQuotingMisBehavior'
 		err := r.a.RecordMsg(msg)
 		if err == nil {
 			return nil, protoMsg, oracletypes.ErrQuoteRecorded
@@ -158,7 +146,7 @@ func (r *round) PrepareForNextBlock(currentHeight int64) (open bool) {
 		r.closeQuotingWindow()
 		return open
 	}
-	// currentHeight equals baseBlock
+	// currentHeight euqls to baseBlock
 	if currentHeight == r.roundBaseBlock && !r.IsQuoting() {
 		r.openQuotingWindow()
 		open = true
@@ -180,11 +168,6 @@ func (r *round) PrepareForNextBlock(currentHeight int64) (open bool) {
 			r.openQuotingWindow()
 			open = true
 		}
-		if r.twoPhases {
-			// wait quoteWindowSize-1 blocks for proposer to collecting pieces
-			// #nosec G115
-			r.roundPhaseTwoCheckingBlock = uint64(r.roundBaseBlock + 2*r.quoteWindowSize)
-		}
 	}
 	return open
 }
@@ -200,8 +183,8 @@ func (r *round) IsQuotingWindowOpen() bool {
 	return r.a != nil
 }
 
-func (r *round) IsQuotingWindowEnd(height int64) bool {
-	_, _, delta, _ := r.getPosition(height)
+func (r *round) IsQuotingWindowEnd(currentHeight int64) bool {
+	_, _, delta, _ := r.getPosition(currentHeight)
 	return delta == r.quoteWindowSize
 }
 
@@ -241,7 +224,7 @@ func (r *round) PerformanceReview(validator string) (miss, malicious bool) {
 	}
 	for _, p := range prices {
 		if p.EqualDS(price) {
-			// duplicated detID has been filtered out, so if an 'equal' price is found, there will be no 'malicious' price for that detID
+			// duplicated detID had been filtered out, so if an 'euqal' price is found, there will be no 'malicous' price for that detID
 			return
 		}
 		if p.DetID == price.DetID {
@@ -280,25 +263,4 @@ func (r *round) getPosition(currentHeight int64) (baseBlock, roundID, delta int6
 	delta -= rounds * r.interval
 	baseBlock = currentHeight - delta
 	return
-}
-
-func (r *round) baseBlockFromRoundID(roundID uint64) (uint64, bool) {
-	// #nosec G115  - startRoundID is non-negative
-	if roundID < uint64(r.startRoundID) {
-		return 0, false
-	}
-	// #nosec G115
-	ret := (roundID-uint64(r.startRoundID))*uint64(r.interval) + uint64(r.startBaseBlock)
-	if r.endBlock > 0 && ret > uint64(r.endBlock) {
-		return 0, false
-	}
-	return ret, true
-}
-
-func (r *round) PieceCount() uint32 {
-	if r.m == nil {
-		return 0
-	}
-
-	return r.m.LeafCount()
 }

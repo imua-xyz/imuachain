@@ -32,5 +32,4 @@ const (
 	AttributeValueNativeTokenWithdraw  = "withdraw"
 	AttributeValueMissingReportPrice   = "missing_report_price"
 	AttributeValueMaliciousReportPrice = "malicious_report_price"
-	AttributeValueMaliciousReportPiece = "malicious_report_piece"
 )
