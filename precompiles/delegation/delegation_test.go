@@ -89,7 +89,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
 		s.NoError(err)
 	}
-	commonMalleate := func() (common.Address, []byte) {
+	commonMalleate := func(instantUnbond bool) (common.Address, []byte) {
 		// prepare the call input for delegation test
 		input, err := s.precompile.Pack(
 			delegation.MethodDelegate,
@@ -119,7 +119,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 		{
 			name: "fail - delegateToThroughClientChain transaction will fail because the imuaLzAppAddress is mismatched",
 			malleate: func() (common.Address, []byte) {
-				return commonMalleate()
+				return commonMalleate(false)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -133,7 +133,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
-				return commonMalleate()
+				return commonMalleate(false)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -147,7 +147,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 				}
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
-				return commonMalleate()
+				return commonMalleate(false)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -162,7 +162,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 				err := s.App.AssetsKeeper.SetParams(s.Ctx, depositModuleParam)
 				s.Require().NoError(err)
 				registerOperator()
-				return commonMalleate()
+				return commonMalleate(false)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -178,7 +178,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 				s.Require().NoError(err)
 				registerOperator()
 				depositAsset(s.Address.Bytes(), sdkmath.NewIntFromBigInt(smallDepositAmount))
-				return commonMalleate()
+				return commonMalleate(false)
 			},
 			readOnly:    false,
 			expPass:     false,
@@ -194,7 +194,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 				s.Require().NoError(err)
 				registerOperator()
 				depositAsset(s.Address.Bytes(), sdkmath.NewIntFromBigInt(depositAmount))
-				return commonMalleate()
+				return commonMalleate(false)
 			},
 			returnBytes: successRet,
 			readOnly:    false,
@@ -324,7 +324,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
 		s.NoError(err)
 	}
-	commonMalleate := func() (common.Address, []byte) {
+	commonMalleate := func(instantUnbond bool) (common.Address, []byte) {
 		// prepare the call input for delegation test
 		input, err := s.precompile.Pack(
 			delegation.MethodUndelegate,
@@ -333,6 +333,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 			paddingClientChainAddress(s.Address.Bytes(), types.GeneralClientChainAddrLength),
 			[]byte(operatorAddr),
 			delegationAmount,
+			instantUnbond,
 		)
 		s.Require().NoError(err, "failed to pack input")
 		return s.Address, input
@@ -349,7 +350,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		returnBytes []byte
 	}{
 		{
-			name: "pass - undelegateFromThroughClientChain transaction",
+			name: "pass - normal undelegation",
 			malleate: func() (common.Address, []byte) {
 				depositModuleParam := &assetstype.Params{
 					Gateways: []string{s.Address.String()},
@@ -359,7 +360,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 				registerOperator()
 				depositAsset(s.Address.Bytes(), sdkmath.NewIntFromBigInt(depositAmount))
 				delegateAsset(s.Address.Bytes(), sdkmath.NewIntFromBigInt(delegationAmount))
-				return commonMalleate()
+				return commonMalleate(false)
 			},
 			returnBytes: successRet,
 			readOnly:    false,

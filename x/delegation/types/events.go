@@ -40,4 +40,7 @@ const (
 	// undelegation held back or released
 	EventTypeUndelegationHoldCountChanged = "undelegation_hold_count_changed"
 	AttributeKeyHoldCount                 = "hold_count"
+
+	// instant unbonding
+	InstantUnbonding = "instant_unbonding"
 )

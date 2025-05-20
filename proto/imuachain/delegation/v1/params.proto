@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package imuachain.delegation.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
+
+// Params defines the parameters for the module.
+message Params {
+  // instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)
+  uint32 instant_undelegation_penalty = 1;
+}

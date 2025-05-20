@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	context "context"
+	"context"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,7 +11,15 @@ import (
 	"github.com/minio/sha256-simd"
 )
 
-var _ types.MsgServer = &Keeper{}
+var _ types.MsgServer = &msgServer{}
+
+type msgServer struct {
+	Keeper
+}
+
+func NewMsgServerImpl(keeper Keeper) types.MsgServer {
+	return &msgServer{Keeper: keeper}
+}
 
 // DelegateAssetToOperator delegates asset to operator. Currently, it only supports native token
 func (k *Keeper) DelegateAssetToOperator(
@@ -23,8 +31,8 @@ func (k *Keeper) DelegateAssetToOperator(
 	// no need to validate whether assetID == native token, since that is done by ValidateBasic.
 	logger.Info("DelegateAssetToOperator-nativeToken", "msg", msg)
 
-	delegationParamsList := newDelegationParams(
-		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, common.Hash{},
+	delegationParamsList := newDelegationOrUndelegationParams(
+		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, common.Hash{}, false,
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, delegationParams := range delegationParamsList {
@@ -65,24 +73,32 @@ func (k *Keeper) UndelegateAssetFromOperator(
 	combined := fmt.Sprintf("%s-%d", txHash, nonce)
 	uniqueHash := sha256.Sum256([]byte(combined))
 
-	inputParamsList := newDelegationParams(
-		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, uniqueHash,
+	instantUnbonding := msg.InstantUnbonding
+	inputParamsList := newDelegationOrUndelegationParams(
+		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, uniqueHash, instantUnbonding,
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, inputParams := range inputParamsList {
-		if err := k.UndelegateFrom(cachedCtx, inputParams); err != nil {
-			return nil, err
+		// Get instant unbonding flag from the message
+		if instantUnbonding {
+			if err := k.InstantUndelegateFrom(cachedCtx, inputParams); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := k.UndelegateFrom(cachedCtx, inputParams); err != nil {
+				return nil, err
+			}
 		}
 	}
 	writeFunc()
 	return &types.UndelegationResponse{}, nil
 }
 
-// newDelegationParams creates delegation params from the given base info.
-func newDelegationParams(
+// newDelegationOrUndelegationParams creates delegation params from the given base info.
+func newDelegationOrUndelegationParams(
 	baseInfo *types.DelegationIncOrDecInfo,
 	assetAddrStr string, clientChainLzID uint64,
-	txHash common.Hash,
+	txHash common.Hash, instantUnbonding bool,
 ) []*types.DelegationOrUndelegationParams {
 	// can use `Must` since pre-validated
 	stakerAddr := sdk.MustAccAddressFromBech32(baseInfo.FromAddress).Bytes()
@@ -98,6 +114,7 @@ func newDelegationParams(
 			stakerAddr,
 			kv.Value.Amount,
 			txHash,
+			instantUnbonding,
 		)
 		res = append(res, inputParams)
 	}

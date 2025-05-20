@@ -49,6 +49,8 @@ func (k Keeper) InitGenesis(
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set global undelegationID"))
 	}
+	// Set the instant undelegation penalty
+	k.SetParams(ctx, gs.Params)
 	return []abci.ValidatorUpdate{}
 }
 
@@ -75,5 +77,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *delegationtype.GenesisState {
 		panic(errorsmod.Wrap(err, "failed to get all undelegations").Error())
 	}
 	res.LastUndelegationId = k.GetLastUndelegationID(ctx)
+	res.Params = k.GetParams(ctx)
 	return &res
 }

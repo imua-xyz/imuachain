@@ -40,12 +40,14 @@ interface IDelegation {
 /// @param stakerAddress The staker address
 /// @param operatorAddr  The operator address that wants to unDelegate from
 /// @param opAmount The Undelegation amount
+/// @param instantUnbond Whether to unbond immediately
     function undelegate(
         uint32 clientChainID,
         bytes calldata assetsAddress,
         bytes calldata stakerAddress,
         bytes calldata operatorAddr,
-        uint256 opAmount
+        uint256 opAmount,
+        bool instantUnbond
     ) external returns (bool success);
 
 /// @dev associate the staker as being owned by the specified operator

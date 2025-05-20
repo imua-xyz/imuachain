@@ -54,6 +54,8 @@ const (
 	prefixAssociatedOperatorByStaker
 
 	prefixForLastUndelegationID
+
+	prefixParams
 )
 
 var (
@@ -86,6 +88,8 @@ var (
 
 	// KeyPrefixAssociatedOperatorByStaker stakerID -> operator address
 	KeyPrefixAssociatedOperatorByStaker = []byte{prefixAssociatedOperatorByStaker}
+
+	KeyPrefixParams = []byte{prefixParams}
 )
 
 func IteratorPrefixForStakerAsset(stakerID, assetID string) []byte {

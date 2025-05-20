@@ -108,3 +108,26 @@ func validateDelegationInfo(assetID string, baseInfo *DelegationIncOrDecInfo) er
 	}
 	return nil
 }
+
+func (msg *MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(msg.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (msg *MsgUpdateParams) GetSignBytes() []byte {
+	return nil
+}
+
+// ValidateBasic does a sanity check on the provided data.
+func (msg *MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(msg.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
+	}
+
+	if err := msg.Params.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}

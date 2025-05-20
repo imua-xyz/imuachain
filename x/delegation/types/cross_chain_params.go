@@ -16,6 +16,9 @@ type DelegationOrUndelegationParams struct {
 	OpAmount        sdkmath.Int
 	TxHash          common.Hash
 	// todo: The operator approved signature might be needed here in future
+
+	// indicator for instant unbonding, default is false.
+	InstantUnbonding bool
 }
 
 func NewDelegationOrUndelegationParams(
@@ -26,14 +29,16 @@ func NewDelegationOrUndelegationParams(
 	stakerAddress []byte,
 	opAmount sdkmath.Int,
 	txHash common.Hash,
+	instantUnbonding bool,
 ) *DelegationOrUndelegationParams {
 	return &DelegationOrUndelegationParams{
-		ClientChainID:   clientChainID,
-		Action:          action,
-		AssetsAddress:   assetsAddress,
-		OperatorAddress: operatorAddress,
-		StakerAddress:   stakerAddress,
-		OpAmount:        opAmount,
-		TxHash:          txHash,
+		ClientChainID:    clientChainID,
+		Action:           action,
+		AssetsAddress:    assetsAddress,
+		OperatorAddress:  operatorAddress,
+		StakerAddress:    stakerAddress,
+		OpAmount:         opAmount,
+		TxHash:           txHash,
+		InstantUnbonding: instantUnbonding,
 	}
 }

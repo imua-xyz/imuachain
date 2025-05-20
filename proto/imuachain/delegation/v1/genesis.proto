@@ -3,6 +3,7 @@ syntax = "proto3";
 package imuachain.delegation.v1;
 
 import "gogoproto/gogo.proto";
+import "imuachain/delegation/v1/params.proto";
 import "imuachain/delegation/v1/query.proto";
 import "imuachain/delegation/v1/tx.proto";
 
@@ -13,16 +14,18 @@ option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
 // or in the event of a restart. At this point, it is only built with
 // the former in mind. There are no params in this module.
 message GenesisState {
+  // params refers to the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
   // associations represents the association between a staker and an operator.
-  repeated StakerToOperator associations = 1 [(gogoproto.nullable) = false];
+  repeated StakerToOperator associations = 2 [(gogoproto.nullable) = false];
   // delegation_states is a list of all delegation states.
-  repeated DelegationStates delegation_states = 2 [(gogoproto.nullable) = false];
+  repeated DelegationStates delegation_states = 3 [(gogoproto.nullable) = false];
   // stakers_by_operator is a staker list for the operators
-  repeated StakersByOperator stakers_by_operator = 3 [(gogoproto.nullable) = false];
+  repeated StakersByOperator stakers_by_operator = 4 [(gogoproto.nullable) = false];
   // undelegations is a list of all undelegations
-  repeated UndelegationAndHoldCount undelegations = 4 [(gogoproto.nullable) = false];
+  repeated UndelegationAndHoldCount undelegations = 5 [(gogoproto.nullable) = false];
   // last_undelegation_id is a globally incremented ID assigned to undelegations.
-  uint64 last_undelegation_id = 5;
+  uint64 last_undelegation_id = 6;
 }
 
 // DelegationStates is a helper struct for the delegation state

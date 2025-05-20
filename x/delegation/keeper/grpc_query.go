@@ -6,6 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ delegationtype.QueryServer = &Keeper{}
@@ -98,4 +100,13 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 		Count:   uint64(len(stakers.Stakers)),
 		Stakers: stakers.Stakers,
 	}, nil
+}
+
+func (k Keeper) QueryParams(goCtx context.Context, req *delegationtype.QueryParamsRequest) (*delegationtype.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	return &delegationtype.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }

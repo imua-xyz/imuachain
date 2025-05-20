@@ -13,8 +13,8 @@ import (
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
-func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interface{}) (*delegationtypes.DelegationOrUndelegationParams, error) {
-	inputsLen := len(p.ABI.Methods[MethodDelegate].Inputs)
+func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interface{}, method string) (*delegationtypes.DelegationOrUndelegationParams, error) {
+	inputsLen := len(p.ABI.Methods[method].Inputs)
 	if len(args) != inputsLen {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, inputsLen, len(args))
 	}

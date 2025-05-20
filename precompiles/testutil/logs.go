@@ -39,7 +39,7 @@ func CheckLogs(logArgs LogCheckArgs) error {
 		)
 	}
 
-	if err := CheckVMError(logArgs.Res, logArgs.ErrContains); err != nil {
+	if err := CheckVMError(logArgs.Res, "%s", logArgs.ErrContains); err != nil {
 		return err
 	}
 

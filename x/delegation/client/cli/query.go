@@ -36,7 +36,34 @@ func GetQueryCmd() *cobra.Command {
 		QueryAssociatedOperatorByStaker(),
 		QueryAssociatedStakersByOperator(),
 		QueryDelegatedStakersByOperator(),
-	)
+		QueryParams())
+	return cmd
+}
+
+func QueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "shows the parameters of the module for instant unbonding",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := delegationtype.NewQueryClient(clientCtx)
+
+			res, err := queryClient.QueryParams(cmd.Context(), &delegationtype.QueryParamsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
 	return cmd
 }
 

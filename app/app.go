@@ -550,7 +550,7 @@ func NewImuachainApp(
 
 	// handles delegations by stakers, and must know if the delegatee operator is registered.
 	app.DelegationKeeper = delegationKeeper.NewKeeper(
-		keys[delegationTypes.StoreKey], appCodec,
+		keys[delegationTypes.StoreKey], appCodec, authAddrString,
 		app.AssetsKeeper,
 		delegationTypes.VirtualSlashKeeper{},
 		&app.OperatorKeeper,

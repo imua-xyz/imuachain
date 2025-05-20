@@ -5,6 +5,7 @@ import "cosmos/query/v1/query.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/delegation/v1/params.proto";
 import "imuachain/delegation/v1/tx.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
@@ -184,6 +185,15 @@ message QueryDelegatedStakersByOperatorResponse {
   repeated string stakers = 2;
 }
 
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
 // Query is the service API for the delegation module.
 service Query {
   // DelegationInfo queries the delegation information for {stakerID, assetID}.
@@ -234,5 +244,10 @@ service Query {
   rpc QueryDelegatedStakersByOperator(QueryDelegatedStakersByOperatorReq) returns (QueryDelegatedStakersByOperatorResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/delegation/v1/delegated_stakers/{operator}/{asset_id}";
+  }
+
+  // Parameters queries the parameters of the module.
+  rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/imuachain/delegation/v1/params";
   }
 }

@@ -20,7 +20,7 @@ service Msg {
 }
 
 // AggregationPhase defines the aggregation phase of the message
-enum AggregationPhase{
+enum AggregationPhase {
   option (gogoproto.goproto_enum_prefix) = false;
   // MESSAGE_PHASE_NON is the default value, which means the message is not of type 2-phases aggregation
   AGGREGATION_PHASE_UNSPECIFIED = 0 [(gogoproto.enumvalue_customname) = "AggregationPhaseUnspecified"];

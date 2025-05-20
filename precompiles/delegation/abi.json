@@ -119,6 +119,11 @@
         "name": "opAmount",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "instantUnbond",
+        "type": "bool",
+        "internalType": "bool"
       }
     ],
     "outputs": [

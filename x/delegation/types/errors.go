@@ -101,4 +101,6 @@ var (
 		ModuleName, 26,
 		"the input parameter is invalid",
 	)
+
+	ErrInvalidParams = errorsmod.Register(ModuleName, 1, "invalid params")
 )

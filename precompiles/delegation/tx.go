@@ -48,7 +48,7 @@ func (p Precompile) Delegate(
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
-	delegationParams, err := p.GetDelegationParamsFromInputs(ctx, args)
+	delegationParams, err := p.GetDelegationParamsFromInputs(ctx, args, MethodDelegate)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (p Precompile) Undelegate(
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
-	undelegationParams, err := p.GetDelegationParamsFromInputs(ctx, args)
+	undelegationParams, err := p.GetDelegationParamsFromInputs(ctx, args, MethodUndelegate)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,11 @@ func (p Precompile) Undelegate(
 	}
 	undelegationParams.TxHash = txHash
 
-	err = p.delegationKeeper.UndelegateFrom(ctx, undelegationParams)
+	if undelegationParams.InstantUnbonding {
+		err = p.delegationKeeper.InstantUndelegateFrom(ctx, undelegationParams)
+	} else {
+		err = p.delegationKeeper.UndelegateFrom(ctx, undelegationParams)
+	}
 	if err != nil {
 		return nil, err
 	}

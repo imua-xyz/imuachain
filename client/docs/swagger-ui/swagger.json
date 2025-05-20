@@ -21137,6 +21137,70 @@
         ]
       }
     },
+    "/imuachain/delegation/v1/params": {
+      "get": {
+        "summary": "Parameters queries the parameters of the module.",
+        "operationId": "QueryParams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "params": {
+                  "description": "params holds all the parameters of this module.",
+                  "type": "object",
+                  "properties": {
+                    "instant_undelegation_penalty": {
+                      "type": "integer",
+                      "format": "int64",
+                      "title": "instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)"
+                    }
+                  }
+                }
+              },
+              "description": "QueryParamsResponse is response type for the Query/Params RPC method."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/delegation/v1/pending_undelegations/{epoch_identifier}/{epoch_number}": {
       "get": {
         "summary": "QueryUndelegationsByEpochInfo queries all undelegations waiting to be completed by\n{epoch_identifier,epoch_number}.",
@@ -44138,6 +44202,17 @@
       },
       "title": "DelegationInfoAndOperator includes the SingleDelegationInfo and operator address"
     },
+    "imuachain.delegation.v1.Params": {
+      "type": "object",
+      "properties": {
+        "instant_undelegation_penalty": {
+          "type": "integer",
+          "format": "int64",
+          "title": "instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)"
+        }
+      },
+      "description": "Params defines the parameters for the module."
+    },
     "imuachain.delegation.v1.QueryAssociatedOperatorByStakerResponse": {
       "type": "object",
       "properties": {
@@ -44223,6 +44298,23 @@
         }
       },
       "description": "QueryDelegationInfoResponse is the response for delegations by staker id and\nasset id."
+    },
+    "imuachain.delegation.v1.QueryParamsResponse": {
+      "type": "object",
+      "properties": {
+        "params": {
+          "description": "params holds all the parameters of this module.",
+          "type": "object",
+          "properties": {
+            "instant_undelegation_penalty": {
+              "type": "integer",
+              "format": "int64",
+              "title": "instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)"
+            }
+          }
+        }
+      },
+      "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
     "imuachain.delegation.v1.SingleDelegationInfo": {
       "type": "object",

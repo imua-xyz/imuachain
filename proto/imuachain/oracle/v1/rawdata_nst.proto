@@ -14,8 +14,8 @@ message NSTKV {
 
 // RawDataNST represents balance changes of all stakers for a NST
 message RawDataNST {
-  // version of stakerList which the raw data corresponding to 
+  // version of stakerList which the raw data corresponding to
   uint64 version = 1;
-  // NSTKV use array to describe {staker_indx: balance_change} for all stakers whose balance had changed 
+  // NSTKV use array to describe {staker_indx: balance_change} for all stakers whose balance had changed
   repeated NSTKV nst_balance_changes = 2;
 }

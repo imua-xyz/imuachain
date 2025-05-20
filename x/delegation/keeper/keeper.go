@@ -11,9 +11,11 @@ import (
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
+// Keeper is the keeper for this module
 type Keeper struct {
-	storeKey storetypes.StoreKey
-	cdc      codec.BinaryCodec
+	storeKey  storetypes.StoreKey
+	cdc       codec.BinaryCodec
+	authority string
 
 	// other keepers
 	accountKeeper  delegationtype.AccountKeeper
@@ -25,9 +27,11 @@ type Keeper struct {
 	hooks          delegationtype.DelegationHooks
 }
 
+// NewKeeper creates a new Keeper instance
 func NewKeeper(
 	storeKey storetypes.StoreKey,
 	cdc codec.BinaryCodec,
+	authority string,
 	assetsKeeper delegationtype.AssetsKeeper,
 	slashKeeper delegationtype.SlashKeeper,
 	operatorKeeper delegationtype.OperatorKeeper,
@@ -38,6 +42,7 @@ func NewKeeper(
 	return Keeper{
 		storeKey:       storeKey,
 		cdc:            cdc,
+		authority:      authority,
 		assetsKeeper:   assetsKeeper,
 		slashKeeper:    slashKeeper,
 		operatorKeeper: operatorKeeper,

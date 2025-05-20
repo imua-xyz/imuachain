@@ -80,7 +80,7 @@ func (am AppModule) IsAppModule() {}
 
 // RegisterServices registers module services.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	delegationtype.RegisterMsgServer(cfg.MsgServer(), &am.keeper)
+	delegationtype.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
 	delegationtype.RegisterQueryServer(cfg.QueryServer(), &am.keeper)
 }
 
