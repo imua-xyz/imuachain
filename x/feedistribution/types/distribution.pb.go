@@ -776,13 +776,13 @@ func (m *FeePool) GetCommunityPool() github_com_cosmos_cosmos_sdk_types.DecCoins
 // AVSRewardAssetState defines the state of an asset to be used as a reward for an AVS
 type AVSRewardAssetState struct {
 	// reward_pool_balance is the asset balance of reward pool. It gets updated each time
-	// an AVS deposits funds into the treasury or stakers/operators withdraw from it.
+	// an AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.
 	// We use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,
 	// and we also use it when handling the distribution with F1.
 	RewardPoolBalance github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=reward_pool_balance,json=rewardPoolBalance,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_pool_balance"`
 	// reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
-	// each time an AVS deposits funds into the treasury. The difference between it and reward_pool_balance
-	// represents the total amount claimed by stakers and operators.
+	// each time an AVS deposits/withdraws funds into/from the treasury. The difference between it and
+	// reward_pool_balance represents the total amount claimed by stakers and operators.
 	RewardPoolTotal github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=reward_pool_total,json=rewardPoolTotal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_pool_total"`
 	// reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`
 	// because AVS is allowed to accumulate debt and repay it by funding the reward pool later.

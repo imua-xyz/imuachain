@@ -75,7 +75,7 @@ func (p Precompile) ClaimReward(
 	if err != nil {
 		return nil, err
 	}
-	err = p.distributionKeeper.StakerClaimDelegationRewards(ctx, stakerID)
+	err = p.distributionKeeper.ClaimDelegationRewards(ctx, stakerID)
 	if err != nil {
 		return nil, err
 	}

@@ -791,10 +791,10 @@ func NewImuachainApp(
 
 	(&app.EpochsKeeper).SetHooks(
 		epochstypes.NewMultiEpochHooks(
+			app.ImmintKeeper.EpochsHooks(),     // must come before the distribution keeper.
 			app.DistrKeeper.EpochsHooks(),      // come first for using the voting power of last epoch
 			app.OperatorKeeper.EpochsHooks(),   // must come before staking keeper so it can set the USD value
 			app.StakingKeeper.EpochsHooks(),    // at this point, the order is irrelevant.
-			app.ImmintKeeper.EpochsHooks(),     // however, this may change once we have distribution
 			app.AVSManagerKeeper.EpochsHooks(), // no-op for now
 		),
 	)

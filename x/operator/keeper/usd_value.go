@@ -712,7 +712,7 @@ func (k *Keeper) GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 	var ret operatortypes.DecValueField
 	value := store.Get(key)
 	if value == nil {
-		return sdkmath.LegacyDec{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorAssetUSDValue: key is %s", key))
+		return sdkmath.LegacyDec{}, operatortypes.ErrNoKeyInTheStore.Wrapf("GetOperatorAssetUSDValue: key is %s", key)
 	}
 	k.cdc.MustUnmarshal(value, &ret)
 
@@ -724,6 +724,32 @@ func (k *Keeper) HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
 	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	return store.Has(key)
+}
+
+func (k *Keeper) SetAllOperatorAssetUSDValues(ctx sdk.Context, usdValues []operatortypes.OperatorAssetUSDValue) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
+	for _, usdValue := range usdValues {
+		bz := k.cdc.MustMarshal(&usdValue.Value)
+		store.Set([]byte(usdValue.Key), bz)
+	}
+	return nil
+}
+
+func (k *Keeper) GetAllOperatorAssetUSDValues(ctx sdk.Context) ([]operatortypes.OperatorAssetUSDValue, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+
+	ret := make([]operatortypes.OperatorAssetUSDValue, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		var value operatortypes.DecValueField
+		k.cdc.MustUnmarshal(iterator.Value(), &value)
+		ret = append(ret, operatortypes.OperatorAssetUSDValue{
+			Key:   string(iterator.Key()),
+			Value: value,
+		})
+	}
+	return ret, nil
 }
 
 // UpdateOperatorAssetUSDValue update the operator asset USD value by epoch.
@@ -853,6 +879,7 @@ func (k *Keeper) HasAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string) bool {
 }
 
 func (k *Keeper) GetRecentEndedEpochAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error) {
+	fmt.Println("call GetRecentEndedEpochAVSAssets", k.HasAVSAssetsPerEpoch(ctx, avsAddr))
 	if k.HasAVSAssetsPerEpoch(ctx, avsAddr) {
 		// the avs assets have been changed, use a dedicated assets list.
 		return k.GetAVSAssetsPerEpoch(ctx, avsAddr)

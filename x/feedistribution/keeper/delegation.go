@@ -10,7 +10,7 @@ import (
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
-func (k Keeper) MarkStakeChangedDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error {
+func (k Keeper) MarkChangedDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error {
 	// The reason for marking delegations with stake changes for all epochs instead of only the impactful
 	// epochs is that we need to update the operator’s period whenever the delegated stake changes,
 	// regardless of whether the operator is serving any AVSs.
@@ -182,13 +182,10 @@ func (k Keeper) calculateDelegationRewardsBetween(ctx sdk.Context, startingPerio
 }
 
 // calculateDelegationRewards calculates the rewards accrued by a delegation
-func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64, operator, assetID,
-	epochIdentifier string, startingInfo feedistributiontypes.DelegationStartingInfo,
+func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64, operator, assetID string,
+	currentEpochInfo *epochsTypes.EpochInfo, startingInfo feedistributiontypes.DelegationStartingInfo,
 ) (feedistributiontypes.CommonAVSRewards, sdk.Dec, error) {
-	currentEpochInfo, isExist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
-	if !isExist {
-		return nil, sdk.Dec{}, feedistributiontypes.ErrEpochNotFound
-	}
+	epochIdentifier := currentEpochInfo.Identifier
 	currentEpochNumber := uint64(currentEpochInfo.CurrentEpoch)
 	startingEpochNumber := startingInfo.EpochNumber
 	rewards := make([]feedistributiontypes.CommonAVSRewardData, 0)
@@ -255,7 +252,7 @@ func (k Keeper) distributeRewardsToDelegation(
 	operator, stakerID, assetID string,
 	epochInfo *epochsTypes.EpochInfo, startingInfo feedistributiontypes.DelegationStartingInfo,
 ) error {
-	allAVSRewardsRaw, lastStake, err := k.calculateDelegationRewards(ctx, endingPeriod, operator, assetID, epochInfo.Identifier, startingInfo)
+	allAVSRewardsRaw, lastStake, err := k.calculateDelegationRewards(ctx, endingPeriod, operator, assetID, epochInfo, startingInfo)
 	if err != nil {
 		return err
 	}
@@ -356,10 +353,10 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 	return nil
 }
 
-// StakerClaimDelegationRewards allows the staker to actively claim their rewards.
+// ClaimDelegationRewards allows the staker to actively claim their rewards.
 // It is triggered when the staker submits a transaction. So the transaction will be
 // handled during the epoch.
-func (k Keeper) StakerClaimDelegationRewards(ctx sdk.Context, stakerID string) error {
+func (k Keeper) ClaimDelegationRewards(ctx sdk.Context, stakerID string) error {
 	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
 		for _, epochIdentifier := range allEpochIdentifiers {

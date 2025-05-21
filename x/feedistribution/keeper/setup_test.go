@@ -1,6 +1,8 @@
 package keeper_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"testing"
 	"time"
 
@@ -13,6 +15,12 @@ var s *KeeperTestSuite
 type KeeperTestSuite struct {
 	testutil.BaseTestSuite
 	EpochDuration time.Duration
+
+	// Used for test
+	testOperators []types.AccAddress
+	testAVSs      []common.Address
+	// Use the default EVM-compatible client chain for testing stakers.
+	testStakers []common.Address
 }
 
 func TestKeeperTestSuite(t *testing.T) {

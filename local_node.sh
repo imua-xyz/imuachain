@@ -178,6 +178,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["operator"]["operator_usd_values"][0]["opted_usd_value"]["self_usd_value"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operator_usd_values"][0]["opted_usd_value"]["total_usd_value"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operator_usd_values"][0]["opted_usd_value"]["active_usd_value"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["operator"]["operator_asset_usd_values"][0]["key"]="minute/'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["operator"]["operator_asset_usd_values"][0]["value"]["amount"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# x/delegation
 	jq '.app_state["delegation"]["delegation_states"][0]["key"]="'"$LOCAL_ADDRESS_HEX"'_0x65/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -203,6 +205,23 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# set the epoch identifier to `minute`. the default set by the module is `day`,
 	# which is more suitable for a live network and not a localnet.
 	jq '.app_state["immint"]["params"]["epoch_identifier"]="minute"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
+  # x/distribution
+  jq --arg AVS_ADDRESS "$AVS_ADDRESS" '.app_state["feedistribution"]["all_avs_reward_assets"] = [{
+    "avs": $AVS_ADDRESS,
+    "avs_reward_assets": [{
+      "asset_basic_info": {
+        "name": "Native IM token",
+        "symbol": "hua",
+        "address": "0x0000000000000000000000000000000000000000",
+        "decimals": 0,
+        "layer_zero_chain_id": 0,
+        "meta_info": "IM native to the Imua chain"
+      }
+    }]
+  }]' "$GENESIS" > "$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
+
 
 	# x/oracle
 	# chain

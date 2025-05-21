@@ -1,6 +1,7 @@
 package types
 
 import (
+	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
@@ -20,22 +21,24 @@ func NewGenesisState(
 	slashStates []OperatorSlashState,
 	prevConsKeys []PrevConsKey,
 	operatorKeyRemovals []OperatorKeyRemoval,
+	operatorAssetUSDValues []OperatorAssetUSDValue,
 ) *GenesisState {
 	return &GenesisState{
-		Operators:           operators,
-		OperatorRecords:     operatorConsKeys,
-		OptStates:           optStates,
-		OperatorUSDValues:   operatorUSDValues,
-		AVSUSDValues:        avsUSDValues,
-		SlashStates:         slashStates,
-		PreConsKeys:         prevConsKeys,
-		OperatorKeyRemovals: operatorKeyRemovals,
+		Operators:              operators,
+		OperatorRecords:        operatorConsKeys,
+		OptStates:              optStates,
+		OperatorUSDValues:      operatorUSDValues,
+		AVSUSDValues:           avsUSDValues,
+		SlashStates:            slashStates,
+		PreConsKeys:            prevConsKeys,
+		OperatorKeyRemovals:    operatorKeyRemovals,
+		OperatorAssetUsdValues: operatorAssetUSDValues,
 	}
 }
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	return NewGenesisState(nil, nil, nil, nil, nil, nil, nil, nil)
+	return NewGenesisState(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 // ValidateOperators rationale for the validation:
@@ -482,6 +485,46 @@ func (gs GenesisState) ValidateOperatorKeyRemovals(operators map[string]struct{}
 	return nil
 }
 
+func (gs GenesisState) ValidateOperatorAssetUSDValues(operators map[string]struct{}) error {
+	if len(gs.OperatorUSDValues) != 0 && len(gs.OperatorAssetUsdValues) == 0 {
+		return ErrInvalidGenesisData.Wrap("ValidateOperatorAssetUSDValues: the USD value of the operator's asset can't be empty.")
+	}
+	validationFunc := func(_ int, usdValue OperatorAssetUSDValue) error {
+		stringList, err := assetstypes.ParseJoinedStoreKey([]byte(usdValue.Key), 3)
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorAssetUSDValues: can't parse the joined key: %s, err:%s", usdValue.Key, err.Error())
+		}
+		epochIdentifier, operator, assetID := stringList[0], stringList[1], stringList[2]
+		err = epochtypes.ValidateEpochIdentifierString(epochIdentifier)
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorAssetUSDValues: invalid epoch identifier,key: %s, err:%s", usdValue.Key, err.Error())
+		}
+		// check that the operator is registered
+		if _, ok := operators[operator]; !ok {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateOperatorAssetUSDValues: unknown operator address for the opted usdValue, %+v",
+				usdValue,
+			)
+		}
+		_, _, err = assetstypes.ValidateID(assetID, true, false)
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateDeposits: invalid assetID: %s",
+				assetID,
+			)
+		}
+		return nil
+	}
+	seenFieldValueFunc := func(usdValue OperatorAssetUSDValue) (string, struct{}) {
+		return usdValue.Key, struct{}{}
+	}
+	_, err := utils.CommonValidation(gs.OperatorAssetUsdValues, seenFieldValueFunc, validationFunc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
@@ -514,6 +557,10 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 	err = gs.ValidateOperatorKeyRemovals(operators)
+	if err != nil {
+		return err
+	}
+	err = gs.ValidateOperatorAssetUSDValues(operators)
 	if err != nil {
 		return err
 	}

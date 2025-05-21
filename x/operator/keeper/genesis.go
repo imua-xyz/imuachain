@@ -54,6 +54,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) []abci.Va
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all key removals for operators"))
 	}
+	err = k.SetAllOperatorAssetUSDValues(ctx, state.OperatorAssetUsdValues)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all operator asset USD values"))
+	}
 	return []abci.ValidatorUpdate{}
 }
 
@@ -95,6 +99,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	res.OperatorKeyRemovals, err = k.GetAllOperatorKeyRemovals(ctx)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all key removals for operators").Error())
+	}
+
+	res.OperatorAssetUsdValues, err = k.GetAllOperatorAssetUSDValues(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all operator asset USD values").Error())
 	}
 
 	return &res

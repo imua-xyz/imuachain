@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
@@ -11,23 +12,26 @@ import (
 func (k Keeper) AllocateRewardsByEpoch(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) error {
 	avsList := k.avsKeeper.GetEpochEndAVSs(ctx, epochIdentifier, endingEpochNumber)
 	for _, avs := range avsList {
+		fmt.Println("call AllocateRewardsByAVS", avs, epochIdentifier, endingEpochNumber, ctx.BlockHeight())
 		err := k.AllocateRewardsByAVS(ctx, avs, epochIdentifier)
 		if err != nil {
-			ctx.Logger().Error("AllocateTokensByEpoch: failed to allocate rewards by avs, skipping the avs",
+			fmt.Println("AllocateRewardsByEpoch", err, avs, epochIdentifier, endingEpochNumber)
+			ctx.Logger().Info("AllocateTokensByEpoch: failed to allocate rewards by avs, skipping the avs",
 				"err", err, "avs", avs)
 		}
+		fmt.Println("")
 		// continue handling the other AVSs
 	}
 	return nil
 }
 
 func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier string) error {
-	_, rewardDistribution, err := k.AVSRewardDistributionByParam(ctx, avs)
+	isDogfood, rewardAndProportions, err := k.AVSRewardAndProportionsByParam(ctx, avs)
 	if err != nil {
 		return err
 	}
-	if len(rewardDistribution.Rewards) == 0 {
-		ctx.Logger().Info("AllocateTokensByEpoch: there isn't any rewards to distribute, skipping the avs", "avs", avs)
+	if len(rewardAndProportions.Rewards) == 0 {
+		ctx.Logger().Info("AllocateTokensByEpoch: there isn't any rewards to distribute, skipping the avs", "isDogfood", isDogfood, "avs", avs)
 		return nil
 	}
 
@@ -35,7 +39,7 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 	// to ensure the state atomicity.
 	cc, writeFunc := ctx.CacheContext()
 	// update the reward asset state
-	for _, token := range rewardDistribution.Rewards {
+	for _, token := range rewardAndProportions.Rewards {
 		assetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, avs, token.Denom)
 		if err != nil {
 			return err
@@ -47,9 +51,9 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 			return err
 		}
 	}
-	if len(rewardDistribution.OperatorRewardProportions) == 0 {
+	if len(rewardAndProportions.OperatorRewardProportions) == 0 {
 		// distribute the rewards to the community pool
-		err := k.UpdateAVSCommunityPool(cc, avs, true, rewardDistribution.Rewards)
+		err := k.UpdateAVSCommunityPool(cc, avs, true, rewardAndProportions.Rewards)
 		if err != nil {
 			return err
 		}
@@ -57,7 +61,7 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 		writeFunc()
 		return nil
 	}
-	remaining, err := k.AllocateRewardsToOperators(cc, avs, epochIdentifier, rewardDistribution)
+	remaining, err := k.AllocateRewardsToOperators(cc, avs, epochIdentifier, rewardAndProportions)
 	if err != nil {
 		return err
 	}
@@ -74,7 +78,7 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 
 // AllocateRewardsToOperators allocate the rewards to the related operators for an AVS
 // the remaining rewards will be returned.
-func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdentifier string, rewardDistribution types.AVSRewardDistribution) (sdk.DecCoins, error) {
+func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdentifier string, rewardsAndProportions types.EpochRewardsAndProportions) (sdk.DecCoins, error) {
 	// calculate the community tax, then allocate the remaining rewards to the operators.
 	// use a same community tax for all AVS
 	// todo: consider setting different tax rates for different AVSs.
@@ -82,10 +86,11 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 	if err != nil {
 		return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to get the community tax,err:%s", err)
 	}
-	remaining := rewardDistribution.Rewards
+	remaining := rewardsAndProportions.Rewards
 	proportion := math.LegacyOneDec().Sub(communityTax)
-	rewardsForOperators := rewardDistribution.Rewards.MulDecTruncate(proportion)
-	for _, operatorProportion := range rewardDistribution.OperatorRewardProportions {
+	rewardsForOperators := rewardsAndProportions.Rewards.MulDecTruncate(proportion)
+	fmt.Println("call AllocateRewardsToOperators， avsAddr and reward proportions:", avsAddr, rewardsAndProportions)
+	for _, operatorProportion := range rewardsAndProportions.OperatorRewardProportions {
 		reward := rewardsForOperators.MulDecTruncate(operatorProportion.RewardProportion)
 		// calculate the commission for the operator
 		ops, err := k.StakingKeeper.OperatorInfo(ctx, operatorProportion.OperatorAddr)
@@ -94,11 +99,11 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 		}
 		rewardsForStakers := reward
 		commission := reward.MulDecTruncate(ops.GetCommission().Rate)
+		fmt.Println("UpdateOperatorAccumulatedCommission", operatorProportion.OperatorAddr, reward, commission)
 		err = k.UpdateOperatorAccumulatedCommission(ctx, operatorProportion.OperatorAddr, avsAddr, true, commission)
 		if err != nil {
 			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to distribute the commission to the operator,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
-
 		// update current commission
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -113,10 +118,11 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 		// split the reward to multiple assets pool
 		leftover, err := k.SplitRewardsToAssetsPool(ctx, operatorProportion.OperatorAddr, avsAddr, epochIdentifier, rewardsForStakers)
 		if err != nil {
-			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to allocate rewards to the stakers,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("SplitRewardsToAssetsPool,avs:%s,operator:%s,err:%s", avsAddr, operatorProportion.OperatorAddr, err)
 		}
 		// update the outstanding rewards for the operator
 		err = k.UpdateOperatorOutstandingRewards(ctx, operatorProportion.OperatorAddr, avsAddr, true, reward)
+		fmt.Println("UpdateOperatorOutstandingRewards～～～～～～～～～～～～～～～", err, operatorProportion.OperatorAddr, reward)
 		if err != nil {
 			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to update the operator outstanding rewards,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
@@ -137,6 +143,7 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("call SplitRewardsToAssetsPool, avs assets:", avsAddr, assets)
 	// get the operator opted USD value
 	optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator)
 	if err != nil {
@@ -147,6 +154,7 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 	for _, assetID := range assets {
 		if !k.operatorKeeper.HasOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID) {
 			// no rewards for assets that are not owned by the operator.
+			fmt.Println("SplitRewardsToAssetsPool, operator asset USD value doesn't exist", operator, assetID)
 			continue
 		}
 		// get the USD value for asset
@@ -155,13 +163,16 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			return nil, err
 		}
 		if assetUSDValue.IsZero() {
+			fmt.Println("SplitRewardsToAssetsPool, operator asset USD value is zero", assetUSDValue)
 			// no rewards for assets with a zero USD value.
+			ctx.Logger().Info("SplitRewardsToAssetsPool: no rewards for assets with a zero USD value.", "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
 			continue
 		} else if assetUSDValue.GT(optedUSDValue.ActiveUSDValue) ||
 			assetUSDValue.IsNegative() {
 			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool,assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
 		}
 		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
+		fmt.Println("UpdateOperatorCurrentRewards assetRewards", operator, assetID, assetRewards)
 		if assetRewards.IsAllPositive() {
 			err = k.UpdateOperatorCurrentRewards(
 				ctx, operator, assetID, epochIdentifier,

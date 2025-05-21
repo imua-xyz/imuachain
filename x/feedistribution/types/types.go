@@ -20,7 +20,10 @@ type ActualWithdrawAmountPerAVS struct {
 	Avs                  string
 	ActualWithdrawAmount sdkmath.Int
 }
-
+type EpochRewardsAndProportions struct {
+	Rewards                   sdk.DecCoins
+	OperatorRewardProportions []OperatorRewardProportion
+}
 type AllAVSActualWithdrawAmount []ActualWithdrawAmountPerAVS
 
 // String implements the Stringer interface for AllAVSActualWithdrawAmount. It returns a
@@ -395,4 +398,12 @@ func ScaleIntByDecimals(amount sdkmath.Int, decimals uint32) sdk.Dec {
 	}
 	divisor := sdkmath.NewIntWithDecimal(1, int(decimals)) // #nosec G115
 	return sdk.NewDecFromInt(amount).QuoInt(divisor)
+}
+
+func UnscaleDecToInt(dec sdk.Dec, decimals uint32) sdkmath.Int {
+	if decimals == 0 {
+		return dec.TruncateInt()
+	}
+	multiplier := sdkmath.NewIntWithDecimal(1, int(decimals)) // 10^decimals
+	return dec.MulInt(multiplier).TruncateInt()
 }

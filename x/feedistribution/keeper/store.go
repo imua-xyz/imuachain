@@ -345,15 +345,19 @@ func (k Keeper) UpdateOperatorCurrentRewards(ctx sdk.Context, operator, assetID,
 	if len(deltaRewards.Rewards) == 0 {
 		return nil
 	}
-	// We don't need to handle the initialization case here because this state
-	// should have been initialized when processing delegation change events at
-	// the end of the previous epoch.
 	// It sets 1 as the start period and initializes the rewards slice as null.
-	// Then, at the end of the current epoch, the operator will receive rewards.
-	// Therefore, an error will be returned if the state cannot be retrieved here.
-	rewards, err := k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
-	if err != nil {
-		return err
+	// set the initialized value
+	rewards := feedistributiontypes.OperatorCurrentRewards{
+		Rewards: make([]feedistributiontypes.CommonAVSRewardData, 0),
+		// the period in current rewards starts from 1.
+		Period: 1,
+	}
+	var err error
+	if k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier) {
+		rewards, err = k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
+		if err != nil {
+			return err
+		}
 	}
 	err = rewards.UpdateReward(isIncrease, deltaRewards)
 	if err != nil {

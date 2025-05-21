@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -48,10 +46,6 @@ type (
 // AVSs can choose between these two methods based on their specific needs.
 func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distribution feedistributiontypes.AVSRewardDistribution) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
-	if len(distribution.Rewards) == 0 {
-		// don't set if the rewards are null
-		return nil
-	}
 	// check if the reward asset has been registered by the AVS
 	for _, rewardCoin := range distribution.Rewards {
 		if !k.IsAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Denom) {
@@ -97,12 +91,9 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 // It is also provided to the AVS through a precompile contract.
 // This interface allows the AVS to customize the reward inflation logic per epoch,
 // providing greater flexibility for the AVS.
+// Setting null rewards is allowed, enabling the AVS to disable reward distribution.
 func (k Keeper) SetAVSEpochRewardExclusive(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
-	if len(rewards) == 0 {
-		// don't set if the rewards are null
-		return nil
-	}
 	// check if the reward asset has been registered by the AVS
 	for _, rewardCoin := range rewards {
 		if !k.IsAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Denom) {
@@ -239,12 +230,14 @@ func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 		if err != nil {
 			return nil, err
 		}
+
+		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+		dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 		// fund the reward pool of dogfood AVS
 		validRewards := make(sdk.DecCoins, 0)
 		for _, singleReward := range feesCollected {
-			chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-			dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
-			if !k.IsAVSRewardAssetBySymbol(ctx, dogfoodAVSAddr, singleReward.Denom) {
+			assetID, _, err := k.GetAVSRewardAssetBySymbol(ctx, dogfoodAVSAddr, singleReward.Denom)
+			if err != nil {
 				ctx.Logger().Error("can't get the dogfood reward asset by the denomination", "denomination", singleReward.Denom)
 				// An invalid reward shouldn't affect valid rewards.
 				continue
@@ -254,7 +247,7 @@ func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 				// An invalid reward shouldn't affect valid rewards.
 				continue
 			}
-			err = k.UpdateAVSRewardAssetState(ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID,
+			err = k.UpdateAVSRewardAssetState(ctx, dogfoodAVSAddr, assetID,
 				&feedistributiontypes.DeltaAVSRewardAssetState{
 					RewardPoolBalance: singleReward.Amount,
 					RewardPoolTotal:   singleReward.Amount,
@@ -362,6 +355,7 @@ func (k Keeper) CommonRewardProportion(
 		}
 		if !isHandleJail {
 			rewardProportion := votingPowerDec.QuoTruncate(totalVotingPower)
+			fmt.Println("CommonRewardProportion not handle jail", operatorAddr, votingPowerDec, totalVotingPower, rewardProportion)
 			operatorRewardProportions = append(operatorRewardProportions,
 				feedistributiontypes.OperatorRewardProportion{
 					OperatorAddr:     operatorAddr,
@@ -397,6 +391,7 @@ func (k Keeper) CommonRewardProportion(
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("call CommonRewardProportion", isHandleJail, totalPowerAfterJail, operatorVotingPowersAfterJail)
 	if isHandleJail {
 		// recalculate the reward proportion
 		operatorRewardProportions = make([]feedistributiontypes.OperatorRewardProportion, 0)
@@ -499,11 +494,7 @@ func (k Keeper) DefaultRewardProportionsFnForAVSs() OperatorRewardProportionsFn 
 	}
 }
 
-func (k Keeper) AVSRewardDistributionByParam(ctx sdk.Context, avsAddr string) (bool, feedistributiontypes.AVSRewardDistribution, error) {
-	param, err := k.GetAVSRewardParam(ctx, avsAddr)
-	if err != nil {
-		return false, feedistributiontypes.AVSRewardDistribution{}, err
-	}
+func (k Keeper) AVSRewardAndProportionsByParam(ctx sdk.Context, avsAddr string) (bool, feedistributiontypes.EpochRewardsAndProportions, error) {
 	var avsEpochRewardFn AVSEpochRewardFn
 	var operatorRewardProportionsFn OperatorRewardProportionsFn
 	var isDogfood bool
@@ -515,6 +506,10 @@ func (k Keeper) AVSRewardDistributionByParam(ctx sdk.Context, avsAddr string) (b
 		avsEpochRewardFn = k.EpochRewardFnForDogfood()
 		operatorRewardProportionsFn = k.RewardProportionsFnForDogfood()
 	} else {
+		param, err := k.GetAVSRewardParam(ctx, avsAddr)
+		if err != nil {
+			return false, feedistributiontypes.EpochRewardsAndProportions{}, err
+		}
 		// check the reward parameter of AVS
 		if param.CustomRewardInflation {
 			avsEpochRewardFn = k.CustomizedEpochRewardFnForAVSs()
@@ -529,13 +524,17 @@ func (k Keeper) AVSRewardDistributionByParam(ctx sdk.Context, avsAddr string) (b
 	}
 	avsEpochReward, err := avsEpochRewardFn(ctx, avsAddr)
 	if err != nil {
-		return isDogfood, feedistributiontypes.AVSRewardDistribution{}, err
+		return isDogfood, feedistributiontypes.EpochRewardsAndProportions{}, err
+	}
+	// don't calculate the operator reward proportions if the epoch rewards is null
+	if len(avsEpochReward) == 0 {
+		return isDogfood, feedistributiontypes.EpochRewardsAndProportions{}, nil
 	}
 	operatorRewardProportions, err := operatorRewardProportionsFn(ctx, avsAddr)
 	if err != nil {
-		return isDogfood, feedistributiontypes.AVSRewardDistribution{}, err
+		return isDogfood, feedistributiontypes.EpochRewardsAndProportions{}, err
 	}
-	return isDogfood, feedistributiontypes.AVSRewardDistribution{
+	return isDogfood, feedistributiontypes.EpochRewardsAndProportions{
 		Rewards:                   avsEpochReward,
 		OperatorRewardProportions: operatorRewardProportions,
 	}, nil

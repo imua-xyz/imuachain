@@ -113,8 +113,7 @@ func (ar ABIRewardCoins) ToProtoStruct(ctx sdk.Context, avsAddr string, k feedis
 		if err != nil {
 			return err
 		}
-		decimalFactor := sdkmath.NewIntWithDecimal(1, int(rewardAssetInfo.AssetBasicInfo.Decimals)) // #nosec G115
-		amountDecimal := sdk.NewDecFromBigInt(rewardCoin.Amount).QuoInt(decimalFactor)
+		amountDecimal := feedistributiontypes.ScaleIntByDecimals(sdkmath.NewIntFromBigInt(rewardCoin.Amount), rewardAssetInfo.AssetBasicInfo.Decimals)
 		if amountDecimal.IsNil() || !amountDecimal.IsPositive() {
 			return fmt.Errorf("ABIRewardCoins.ToProtoStruct: invalid amount after converting to devimal:%s", amountDecimal)
 		}
