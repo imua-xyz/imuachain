@@ -66,6 +66,10 @@ func (k Keeper) GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInf
 		})
 	}
 	// add imua-native-token info
+	// don't add the IMUA token if it hasn't been registered.
+	if !k.IsStakingAsset(ctx, assetstype.ImuachainAssetID) {
+		return ret, nil
+	}
 	info, err := k.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetstype.ImuachainAssetID)
 	if err != nil {
 		return nil, err
@@ -78,6 +82,9 @@ func (k Keeper) GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInf
 }
 
 func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, assetID string) (info *assetstype.StakerAssetInfo, err error) {
+	if !k.IsStakingAsset(ctx, assetID) {
+		return nil, assetstype.ErrNoClientChainAssetKey.Wrapf("assetID:%s", assetID)
+	}
 	if assetID == assetstype.ImuachainAssetID {
 		stakerAddrStr, _, err := assetstype.ParseID(stakerID)
 		if err != nil {

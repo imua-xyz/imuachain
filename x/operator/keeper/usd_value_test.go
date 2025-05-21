@@ -143,17 +143,11 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 		suite.Ctx, operators, chainIDWithoutRevision,
 	)
 	suite.NoError(err)
-	allAssets, err := suite.App.AssetsKeeper.GetAllStakingAssetsInfo(suite.Ctx)
-	suite.NoError(err)
-	suite.Equal(1, len(allAssets))
-	var asset assetstype.AssetInfo
-	for _, value := range allAssets {
-		asset = value.AssetBasicInfo
-	}
 
-	assetAddr := common.HexToAddress(asset.Address)
-	depositAmount := sdkmath.NewIntWithDecimal(2, int(asset.Decimals))
-	delegationAmount := sdkmath.NewIntWithDecimal(int64(addPower), int(asset.Decimals))
+	testAsset := suite.Assets[0]
+	assetAddr := common.HexToAddress(testAsset.Address)
+	depositAmount := sdkmath.NewIntWithDecimal(2, int(testAsset.Decimals))
+	delegationAmount := sdkmath.NewIntWithDecimal(int64(addPower), int(testAsset.Decimals))
 	suite.prepareDeposit(suite.Address, assetAddr, depositAmount)
 	// the order here is unknown, so we need to check which operator has the highest power
 	if powers[0] > powers[1] {

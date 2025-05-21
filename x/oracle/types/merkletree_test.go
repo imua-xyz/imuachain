@@ -107,7 +107,6 @@ func verifyPiece(t *testing.T, index uint32, mt, mtEmpty *MerkleTree, expectedPa
 	if index == mt.leafCount-1 {
 		require.True(t, ok)
 	} else {
-
 		require.False(t, ok)
 	}
 	require.Equal(t, piece, pieces[index])

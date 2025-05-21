@@ -462,7 +462,7 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 func (s *AssetsPrecompileSuite) TestGetClientChains() {
 	input, err := s.precompile.Pack("getClientChains")
 	s.Require().NoError(err, "failed to pack input")
-	output, err := s.precompile.Methods["getClientChains"].Outputs.Pack(true, []uint32{101})
+	output, err := s.precompile.Methods["getClientChains"].Outputs.Pack(true, []uint32{0, 101})
 	s.Require().NoError(err, "failed to pack output")
 	s.Run("get client chains", func() {
 		s.SetupTest()
