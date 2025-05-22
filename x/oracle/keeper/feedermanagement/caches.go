@@ -384,6 +384,24 @@ func (c *caches) GetNSTFeederIDFromClientChainID(clientChainID uint64) (uint64, 
 	return 0, false
 }
 
+func (c *caches) GetNSTChainIDFromFeederID(feederID uint64) (uint64, bool) {
+	if feederID >= uint64(len(c.params.params.TokenFeeders)) {
+		return 0, false
+	}
+	tokenFeeder := c.params.params.TokenFeeders[feederID]
+	if tokenFeeder == nil {
+		return 0, false
+	}
+	if tokenFeeder.TokenID == 0 || tokenFeeder.TokenID >= uint64(len(c.params.params.Tokens)) {
+		return 0, false
+	}
+	clientChainID, ok := oracletypes.GetClientChainIDFromNSTAssetID(c.params.params.Tokens[tokenFeeder.TokenID].AssetID)
+	if !ok {
+		return 0, false
+	}
+	return clientChainID, true
+}
+
 // SkipCommit skip real commit by setting the update flag to false
 func (c *caches) SkipCommit() {
 	c.validators.update = false

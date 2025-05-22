@@ -36,6 +36,21 @@ func (c *Caches) RemoveNSTStakerList(chainID uint64) {
 	delete(c.nstStakerList, chainID)
 }
 
+func (c *Caches) AddNSTStaker(chainID uint64, staker string, index uint32) bool {
+	if c.nstStakerList == nil {
+		if index > 0 {
+			return false
+		}
+		c.nstStakerList = make(map[uint64][]string)
+	}
+	sl := c.nstStakerList[chainID]
+	if int(index) != len(sl) {
+		return false
+	}
+	c.nstStakerList[chainID] = append(sl, staker)
+	return true
+}
+
 func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]string, error) {
 	if c.nstStakerList == nil {
 		c.nstStakerList = make(map[uint64][]string)
