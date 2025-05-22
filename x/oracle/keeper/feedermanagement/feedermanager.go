@@ -1249,7 +1249,7 @@ func (f *FeederManager) GetNSTChainIDFromFeederID(feederID uint64) (uint64, bool
 	return f.cs.GetNSTChainIDFromFeederID(feederID)
 }
 
-// getRecoveryStartPoint returns the height to start the recovery process
+// recoveryStartPoint returns the height to start the recovery process
 func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.RecentParams, prevRecentParams, latestRecentParams *oracletypes.RecentParams, validatorUpdateHeight int64) (height int64, replayRecentParamsList []*oracletypes.RecentParams) {
 	if currentHeight > int64(latestRecentParams.Params.MaxNonce) {
 		height = currentHeight - int64(latestRecentParams.Params.MaxNonce)

@@ -205,8 +205,13 @@ func (k Keeper) GetAllStakerInfosAssets(ctx sdk.Context) ([]types.StakerInfosAss
 }
 
 // getStakerListNoCache retrieves the list of staker addresses for an asset (chainID) directly from the store (no cache).
-func (k Keeper) getStakerListNoCache(ctx sdk.Context, assetID string) types.StakerList {
-	_, chainID, _ := assetstypes.ParseID(assetID)
+func (k Keeper) getStakerListNoCache(ctx sdk.Context, assetID string, chainID uint64) types.StakerList {
+	if chainID == 0 {
+		if len(assetID) == 0 {
+			return types.StakerList{}
+		}
+		_, chainID, _ = assetstypes.ParseID(assetID)
+	}
 	store := ctx.KVStore(k.storeKey)
 	keyStakerAddrPrefix := types.NSTStakerAddrKeyChainIDPrefix(chainID)
 	store = prefix.NewStore(store, keyStakerAddrPrefix)
@@ -227,14 +232,19 @@ func (k Keeper) getStakerListNoCache(ctx sdk.Context, assetID string) types.Stak
 
 // GetStakerList returns the staker list for a native-restaking asset, using cache if available.
 // If not cached, fetches from store and updates the cache.
-func (k Keeper) GetStakerList(ctx sdk.Context, assetID string) types.StakerList {
-	_, chainID, _ := assetstypes.ParseID(assetID)
-	if sl := k.c.GetNSTStakerList(chainID); sl != nil {
-		return types.StakerList{
-			StakerAddrs: sl,
+func (k Keeper) GetStakerList(ctx sdk.Context, assetID string, chainID uint64) types.StakerList {
+	if chainID == 0 {
+		if len(assetID) == 0 {
+			return types.StakerList{}
+		}
+		_, chainID, _ = assetstypes.ParseID(assetID)
+		if sl := k.c.GetNSTStakerList(chainID); sl != nil {
+			return types.StakerList{
+				StakerAddrs: sl,
+			}
 		}
 	}
-	stakerList := k.getStakerListNoCache(ctx, assetID)
+	stakerList := k.getStakerListNoCache(ctx, assetID, chainID)
 	// update cache
 	k.c.SetNSTStakerList(chainID, stakerList.StakerAddrs)
 	return stakerList
@@ -264,9 +274,12 @@ func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, staker
 		return err
 	}
 
+	if !k.c.AddNSTStaker(chainID, stakerAddr, index) {
+		k.refreshCachedStakerList(ctx, chainID)
+	}
+
 	versions, _ := k.GetNSTVersions(ctx, chainID)
 	// we use index to sync with client about status of stakerInfo.ValidatorPubkeyList
-	// eventValue := fmt.Sprintf("%s_%d_%s_%d_%d_%d", types.AttributeValueNativeTokenDeposit, index, validatorPubkey, version, amountConverted.Uint64(), feederID)
 	eventValue := fmt.Sprintf("%s_%d_%s_%s_%d_%d_%d", types.AttributeValueNativeTokenDeposit, index, stakerAddr, validatorPubkey, versions.Version.Version, amountConverted.Uint64(), feederID)
 	if len(*k.cachedNSTStakersEventValue) > 0 {
 		*k.cachedNSTStakersEventValue += types.DelimiterForBase64
@@ -324,12 +337,11 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 
 	store := ctx.KVStore(k.storeKey)
 	// if latestVersion > feedVersion, it means that there are new dposits after the last feed
-	if action == types.Action_ACTION_SLASH_REFUND && balance == 0 && latestVersion == feedVersion {
+	if action == types.Action_ACTION_SLASH_REFUND && balance == 0 && latestVersion <= feedVersion {
 		// this is a special case, we need to remove the staker from the list
 		// and update the index of the last staker
 		balanceDelta = sdkmath.ZeroInt().Sub(sdkmath.NewIntFromUint64(balanceAtFeedVersion))
 		updatedIndex, removed = k.removeStaker(ctx, chainID, stakerAddr)
-		_, _, err = k.IncreaseVersionByFeed(ctx, chainID)
 		return updatedIndex, removed, balanceDelta, err
 	}
 
@@ -606,6 +618,13 @@ func (k Keeper) convertDecimal(ctx sdk.Context, assetID string, amount sdkmath.I
 	return retDec.RoundInt(), nil
 }
 
+func (k Keeper) refreshCachedStakerList(ctx sdk.Context, chainID uint64) {
+	sl := k.getStakerListNoCache(ctx, "", chainID)
+	if len(sl.StakerAddrs) > 0 {
+		k.c.SetNSTStakerList(chainID, sl.StakerAddrs)
+	}
+}
+
 // UpdateNSTBalanceChange processes post-aggregation NST (Native Staking Token) balance changes at the end of a block.
 //
 // This function is called in EndBlock (not as a transaction), so errors do not revert the block but are returned for logging/monitoring.
@@ -645,15 +664,14 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 		return fmt.Errorf("version not match, expected %d, got %d, assetID:%s", versions.FeedVersion.Version, balanceChanges.Version, assetID)
 	}
 
-	sl := k.GetStakerList(ctx, assetID)
+	sl := k.GetStakerList(ctx, "", chainID)
 	if len(sl.StakerAddrs) == 0 {
 		return errors.New("staker list is empty")
 	}
 
 	// fill staker list cache
 	if len(k.c.GetNSTStakerList(chainID)) == 0 {
-		//		_ = k.GetStakerList(ctx, assetID)
-		sl := k.getStakerListNoCache(ctx, assetID)
+		sl := k.getStakerListNoCache(ctx, "", chainID)
 		if len(sl.StakerAddrs) > 0 {
 			k.c.SetNSTStakerList(chainID, sl.StakerAddrs)
 		}
