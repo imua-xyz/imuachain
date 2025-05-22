@@ -426,4 +426,4 @@ EOF
 fi
 
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
-imuad start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true
+imuad start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --oracle --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true
