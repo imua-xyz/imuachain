@@ -315,19 +315,24 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 						if r.twoPhases {
 							rootHash := []byte(finalPrice.Price[:32])
 							tmp := finalPrice.Price[32:]
-							// no need to check err, the format is guarded by anteHandler
-							leafCount, _ := strconv.ParseUint(tmp, 10, 32)
-							// no more validation check, they've all been done by previous process
-							//							lc, _ := strconv.ParseUint(finalPrice.DetID, 10, 32)
-							// set up mem-round for 2nd phase aggregation
-							//							r.m, _ = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(lc), []byte(finalPrice.Price))
-							r.m, _ = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(leafCount), rootHash)
-							// set up state for 2nd phase aggregation
-							// #nosec G115
-							logger.Info("set up 2ndPhase on successful 1stPhase aggregation",
-								"feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
-							if err := f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(leafCount), rootHash); err != nil {
-								logger.Error("failed to setup 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "error", err)
+							leafCount, err := strconv.ParseUint(tmp, 10, 32)
+							// this should not happen, the format is guarded by anteHandler
+							if err != nil {
+								logger.Error("failed to parse leafCount from finalPrice", "feederID", r.feederID, "error", err)
+							} else {
+								// set up mem-round for 2nd phase aggregation
+								r.m, err = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(leafCount), rootHash)
+								if err != nil {
+									logger.Error("failed to create merkle tree", "feederID", r.feederID, "error", err)
+								} else {
+									// set up state for 2nd phase aggregation
+									// #nosec G115
+									logger.Info("set up 2ndPhase on successful 1stPhase aggregation",
+										"feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
+									if err := f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(leafCount), rootHash); err != nil {
+										logger.Error("failed to setup 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "error", err)
+									}
+								}
 							}
 						}
 					}
