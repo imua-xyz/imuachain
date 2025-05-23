@@ -279,6 +279,114 @@ func (f *FeederManager) commitRoundsInRecovery() {
 	}
 }
 
+func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, logger log.Logger) (success bool) {
+	if feederID == 0 || feederID > int64(len(f.rounds)) {
+		logger.Error("invalid feederID", "feederID", feederID)
+		return success
+	}
+
+	r := f.rounds[feederID]
+	if f.forceSeal {
+		defer func() {
+			// close all quotingWindow to skip current rounds' 'handlQuotingMisBehavior'
+			r.closeQuotingWindow()
+			if r.twoPhases && r.m != nil {
+				// #nosec G115
+				f.k.Clear2ndPhase(ctx, uint64(feederID), r.m.RootIndex())
+				r.m = nil
+			}
+		}()
+	}
+
+	if r.Committable() {
+		// just set status to close, and keep aggregator for possible 'handleQuotingMisBehavior' at quotingWindowEnd
+		r.status = roundStatusClosed
+		finalPrice, ok := r.FinalPrice()
+		if !ok {
+			logger.Info("commit round with price from previous",
+				"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
+			// #nosec G115  // tokenID is index of slice
+			f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
+			return success
+		}
+		if !f.cs.IsRuleV1(r.feederID) {
+			logger.Error("We currently only support rules under oracle V1", "feederID", r.feederID)
+			return success
+		}
+		priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
+		logger.Info("commit round with aggregated price",
+			"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
+
+		// #nosec G115  // tokenID is index of slice
+		if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit); !updated {
+			// this is an 'impossible' case, we should not reach here
+			latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
+			logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID",
+				"feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit,
+				"result-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
+		} else {
+			success = true
+			// set up for 2-phases aggregation
+			if r.twoPhases {
+				rootHash := []byte(finalPrice.Price[:32])
+				tmp := finalPrice.Price[32:]
+				leafCount, err := strconv.ParseUint(tmp, 10, 32)
+				// this should not happen, the format is guarded by anteHandler
+				if err != nil {
+					logger.Error("failed to parse leafCount from finalPrice", "feederID", r.feederID, "error", err)
+					return success
+				}
+				// set up mem-round for 2nd phase aggregation
+				r.m, err = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(leafCount), rootHash)
+				if err != nil {
+					logger.Error("failed to create merkle tree", "feederID", r.feederID, "error", err)
+					return success
+				}
+				// set up state for 2nd phase aggregation
+				// #nosec G115
+				logger.Info("set up 2ndPhase on successful 1stPhase aggregation",
+					"feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
+				if err := f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(leafCount), rootHash); err != nil {
+					logger.Error("failed to setup 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "error", err)
+				}
+			}
+		}
+		return success
+	}
+	if r.twoPhases {
+		// check if r is 2-phases and rawData is completed, for 2nd-phase, the status of round must be closed
+		if r.m.CollectingRawData() {
+			if len(r.cachedProofForBlock) > 0 {
+				// #nosec G115
+				f.k.AddNodesToMerkleTree(ctx, uint64(r.feederID), r.cachedProofForBlock)
+				// reset cachedProofForBlock after commit to state
+				r.cachedProofForBlock = nil
+			}
+			if LatestLeafIndex, ok := r.m.LatestLeafIndex(); ok {
+				// #nosec G115
+				f.k.SetNextPieceIndexForFeeder(ctx, uint64(r.feederID), LatestLeafIndex+1)
+			}
+			return success
+		}
+		if rawData, ok := r.m.CompleteRawData(); ok {
+			rootHash := r.m.RootHash()
+			logger.Info("execute postHandler after 2ndPhase completed collecting rawData", "feederID", r.feederID, "rootHash", base64.StdEncoding.EncodeToString(rootHash), "leafCount", r.m.LeafCount())
+			// execute pootHandler with rawData
+			// #nosec G115
+			if err := r.h(ctx, rootHash, rawData, uint64(r.feederID), uint64(r.roundID), f.k); err != nil {
+				// just log the error and wait for next round to update
+				// TODO(leonz): this suites for NST, we can just wait for next round to update, but does it suites for commmon case ? should we do some other postHandling for this fail when it's not of NST case?
+				logger.Error("failed to execute postHandler for 2phases aggregation on consensus price", "feederID", r.feederID, "roundID", r.roundID, "consensus_1st-phase-hash", hex.EncodeToString(r.m.RootHash()), "error", err)
+			}
+			// reset related cache from state
+			// #nosec G115
+			f.k.Clear2ndPhase(ctx, uint64(r.feederID), r.m.RootIndex())
+			r.m = nil
+		}
+	}
+	return success
+}
+
 func (f *FeederManager) commitRounds(ctx sdk.Context) {
 	logger := f.k.Logger(ctx)
 	height := ctx.BlockHeight()
@@ -286,100 +394,8 @@ func (f *FeederManager) commitRounds(ctx sdk.Context) {
 	// it's safe to range map directly since the sate update is independent for each feederID, however we use sortedFeederIDs to keep the order of logs
 	// this can be replaced by map iteration directly when better performance is needed
 	for _, feederID := range f.sortedFeederIDs {
-		r := f.rounds[feederID]
-		if r.Committable() {
-			finalPrice, ok := r.FinalPrice()
-			if !ok {
-				logger.Info("commit round with price from previous",
-					"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
-				// #nosec G115  // tokenID is index of slice
-				f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
-			} else {
-				if f.cs.IsRuleV1(r.feederID) {
-					priceCommit := finalPrice.ProtoPriceTimeRound(r.roundID, ctx.BlockTime().Format(oracletypes.TimeLayout))
-					logger.Info("commit round with aggregated price",
-						"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
-
-					// #nosec G115  // tokenID is index of slice
-					if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit); !updated {
-						// this is an 'impossible' case, we should not reach here
-						latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
-						logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID",
-							"feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit,
-							"result-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)
-					} else {
-						fstr := strconv.FormatInt(feederID, 10)
-						successFeederIDs = append(successFeederIDs, fstr)
-
-						// set up for 2-phases aggregation
-						if r.twoPhases {
-							rootHash := []byte(finalPrice.Price[:32])
-							tmp := finalPrice.Price[32:]
-							leafCount, err := strconv.ParseUint(tmp, 10, 32)
-							// this should not happen, the format is guarded by anteHandler
-							if err != nil {
-								logger.Error("failed to parse leafCount from finalPrice", "feederID", r.feederID, "error", err)
-							} else {
-								// set up mem-round for 2nd phase aggregation
-								r.m, err = oracletypes.NewMT(f.cs.RawDataPieceSize(), uint32(leafCount), rootHash)
-								if err != nil {
-									logger.Error("failed to create merkle tree", "feederID", r.feederID, "error", err)
-								} else {
-									// set up state for 2nd phase aggregation
-									// #nosec G115
-									logger.Info("set up 2ndPhase on successful 1stPhase aggregation",
-										"feederID", r.feederID, "rootHash", hex.EncodeToString([]byte(finalPrice.Price)), "leafCount", finalPrice.DetID)
-									if err := f.k.Setup2ndPhase(ctx, uint64(r.feederID), f.cs.GetValidators(), uint32(leafCount), rootHash); err != nil {
-										logger.Error("failed to setup 2ndPhase on successful 1stPhase aggregation", "feederID", r.feederID, "error", err)
-									}
-								}
-							}
-						}
-					}
-				} else {
-					logger.Error("We currently only support rules under oracle V1", "feederID", r.feederID)
-				}
-			}
-			// keep aggregator for possible 'handleQuotingMisBehavior' at quotingWindowEnd
-			r.status = roundStatusClosed
-		} else if r.twoPhases {
-			// check if r is 2-phases and rawData is completed, for 2nd-phase, the status of round must be closed
-			if r.m.CollectingRawData() {
-				if len(r.cachedProofForBlock) > 0 {
-					// #nosec G115
-					f.k.AddNodesToMerkleTree(ctx, uint64(r.feederID), r.cachedProofForBlock)
-					// reset cachedProofForBlock after commit to state
-					r.cachedProofForBlock = nil
-				}
-				if LatestLeafIndex, ok := r.m.LatestLeafIndex(); ok {
-					// #nosec G115
-					f.k.SetNextPieceIndexForFeeder(ctx, uint64(r.feederID), LatestLeafIndex+1)
-				}
-			} else if rawData, ok := r.m.CompleteRawData(); ok {
-				rootHash := r.m.RootHash()
-				logger.Info("execute postHandler after 2ndPhase completed collecting rawData", "feederID", r.feederID, "rootHash", base64.StdEncoding.EncodeToString(rootHash), "leafCount", r.m.LeafCount())
-				// execute pootHandler with rawData
-				// #nosec G115
-				if err := r.h(ctx, rootHash, rawData, uint64(r.feederID), uint64(r.roundID), f.k); err != nil {
-					// just log the error and wait for next round to update
-					// TODO(leonz): this suites for NST, we can just wait for next round to update, but does it suites for commmon case ? should we do some other postHandling for this fail when it's not of NST case?
-					logger.Error("failed to execute postHandler for 2phases aggregation on consensus price", "feederID", r.feederID, "roundID", r.roundID, "consensus_1st-phase-hash", hex.EncodeToString(r.m.RootHash()), "error", err)
-				}
-				// reset related cache from state
-				// #nosec G115
-				f.k.Clear2ndPhase(ctx, uint64(r.feederID), r.m.RootIndex())
-				r.m = nil
-			}
-		}
-
-		// close all quotingWindow to skip current rounds' 'handlQuotingMisBehavior'
-		if f.forceSeal {
-			r.closeQuotingWindow()
-			if r.twoPhases && r.m != nil {
-				// #nosec G115
-				f.k.Clear2ndPhase(ctx, uint64(feederID), r.m.RootIndex())
-				r.m = nil
-			}
+		if f.processRound(ctx, feederID, height, logger) {
+			successFeederIDs = append(successFeederIDs, strconv.FormatInt(feederID, 10))
 		}
 	}
 	if len(successFeederIDs) > 0 {
