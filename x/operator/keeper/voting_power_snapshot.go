@@ -10,8 +10,6 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-const InitialEpochNumber int64 = 1
-
 func (k *Keeper) SetVotingPowerSnapshot(ctx sdk.Context, key []byte, snapshot *types.VotingPowerSnapshot) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	bz := k.cdc.MustMarshal(snapshot)
@@ -259,7 +257,7 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 		epochNumber := epochInfo.CurrentEpoch
 		// set the epoch number to 1 when epoch start for the first time.
 		if !epochInfo.EpochCountingStarted {
-			epochNumber = InitialEpochNumber
+			epochNumber = types.InitialEpochNumber
 		}
 		bz := k.cdc.MustMarshal(&types.VotingPowerSnapshot{
 			TotalVotingPower:     avsUSDValue.Amount,

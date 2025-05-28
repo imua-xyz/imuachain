@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
@@ -33,7 +34,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 	// distribute the rewards to operators
 	err := wrapper.keeper.AllocateRewardsByEpoch(ctx, epochIdentifier, epochNumber)
 	if err != nil {
-		ctx.Logger().Info("failed to allocate the rewards by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		ctx.Logger().Info("failed to allocate the rewards by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 		// Do not return, as the reward distribution for stakers should not be affected
 		// by the AVS rewards distribution of the current epoch.
 		// If the function returns here, the cumulative rewards for the staker will not be
@@ -42,7 +43,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 	// handle delegations whose stake has changed.
 	err = wrapper.keeper.HandleChangedDelegations(ctx, epochIdentifier)
 	if err != nil {
-		ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 		return
 	}
 	// clear the delegation change information
@@ -51,7 +52,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 	cc, writeFunc := ctx.CacheContext()
 	err = wrapper.keeper.DeleteStakeChangedDelegationsByEpoch(cc, epochIdentifier)
 	if err != nil {
-		ctx.Logger().Error("failed to delete the delegation change information by epoch", "err", err, "epochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		ctx.Logger().Error("failed to delete the delegation change information by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 		return
 	}
 	writeFunc()
@@ -74,16 +75,18 @@ func (k *Keeper) DelegationHooks() DelegationHooksWrapper {
 
 // AfterDelegation is called after a delegation is made.
 func (wrapper DelegationHooksWrapper) AfterDelegation(
-	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo,
+	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
+	preDelegatedAmount math.Int, prevAssetState assetstype.OperatorAssetInfo,
 ) error {
-	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, prevAssetState)
+	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
 }
 
 // AfterUndelegationStarted is called after an undelegation is started.
 func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
-	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, _ []byte, prevAssetState assetstype.OperatorAssetInfo,
+	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, _ []byte,
+	preDelegatedAmount math.Int, prevAssetState assetstype.OperatorAssetInfo,
 ) error {
-	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, prevAssetState)
+	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
 }
 
 // OperatorHooksWrapper is the wrapper structure that implements the operator hooks for the

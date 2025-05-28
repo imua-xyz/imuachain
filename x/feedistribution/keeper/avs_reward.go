@@ -46,16 +46,16 @@ type (
 // AVSs can choose between these two methods based on their specific needs.
 func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distribution feedistributiontypes.AVSRewardDistribution) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
-	// check if the reward asset has been registered by the AVS
+	// checkDelegationStates if the reward asset has been registered by the AVS
 	for _, rewardCoin := range distribution.Rewards {
 		if !k.IsAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Denom) {
-			return feedistributiontypes.ErrAVSRewardAssetNotFound.Wrapf("the reward coin isn't registered, avsAddr:%s denomination:%s", avsAddr, rewardCoin.Denom)
+			return feedistributiontypes.ErrAVSRewardAssetNotFound.Wrapf("the reward coin isn't registered, AvsAddr:%s denomination:%s", avsAddr, rewardCoin.Denom)
 		}
 	}
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
 	for _, operator := range distribution.OperatorRewardProportions {
-		// We don't check if the operator is jailed here because there might
+		// We don't checkDelegationStates if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
 		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
@@ -94,10 +94,10 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 // Setting null rewards is allowed, enabling the AVS to disable reward distribution.
 func (k Keeper) SetAVSEpochRewardExclusive(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
-	// check if the reward asset has been registered by the AVS
+	// checkDelegationStates if the reward asset has been registered by the AVS
 	for _, rewardCoin := range rewards {
 		if !k.IsAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Denom) {
-			return feedistributiontypes.ErrAVSRewardAssetNotFound.Wrapf("the reward coin isn't registered, avsAddr:%s denomination:%s", avsAddr, rewardCoin.Denom)
+			return feedistributiontypes.ErrAVSRewardAssetNotFound.Wrapf("the reward coin isn't registered, AvsAddr:%s denomination:%s", avsAddr, rewardCoin.Denom)
 		}
 	}
 	rewardDistribution := feedistributiontypes.AVSRewardDistribution{}
@@ -137,7 +137,7 @@ func (k Keeper) SetAVSRewardProportionsExclusive(ctx sdk.Context, avsAddr string
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
 	for _, operator := range rewardProportions {
-		// We don't check if the operator is jailed here because there might
+		// We don't checkDelegationStates if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
 		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
@@ -212,7 +212,7 @@ func (k Keeper) GetAVSRewardParam(ctx sdk.Context, avsAddr string) (*feedistribu
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardParam)
 	value := store.Get(common.HexToAddress(avsAddr).Bytes())
 	if value == nil {
-		return nil, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetAVSRewardParam, avsAddr:%s", avsAddr)
+		return nil, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetAVSRewardParam, AvsAddr:%s", avsAddr)
 	}
 
 	ret := feedistributiontypes.AVSRewardParam{}
@@ -355,7 +355,6 @@ func (k Keeper) CommonRewardProportion(
 		}
 		if !isHandleJail {
 			rewardProportion := votingPowerDec.QuoTruncate(totalVotingPower)
-			fmt.Println("CommonRewardProportion not handle jail", operatorAddr, votingPowerDec, totalVotingPower, rewardProportion)
 			operatorRewardProportions = append(operatorRewardProportions,
 				feedistributiontypes.OperatorRewardProportion{
 					OperatorAddr:     operatorAddr,
@@ -391,7 +390,6 @@ func (k Keeper) CommonRewardProportion(
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("call CommonRewardProportion", isHandleJail, totalPowerAfterJail, operatorVotingPowersAfterJail)
 	if isHandleJail {
 		// recalculate the reward proportion
 		operatorRewardProportions = make([]feedistributiontypes.OperatorRewardProportion, 0)
@@ -498,7 +496,7 @@ func (k Keeper) AVSRewardAndProportionsByParam(ctx sdk.Context, avsAddr string) 
 	var avsEpochRewardFn AVSEpochRewardFn
 	var operatorRewardProportionsFn OperatorRewardProportionsFn
 	var isDogfood bool
-	// check if the avs is dogfood
+	// checkDelegationStates if the avs is dogfood
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	if dogfoodAVSAddr == avsAddr {
@@ -510,7 +508,7 @@ func (k Keeper) AVSRewardAndProportionsByParam(ctx sdk.Context, avsAddr string) 
 		if err != nil {
 			return false, feedistributiontypes.EpochRewardsAndProportions{}, err
 		}
-		// check the reward parameter of AVS
+		// checkDelegationStates the reward parameter of AVS
 		if param.CustomRewardInflation {
 			avsEpochRewardFn = k.CustomizedEpochRewardFnForAVSs()
 		} else {

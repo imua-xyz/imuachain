@@ -110,12 +110,25 @@ message OperatorCurrentRewards {
   uint64 period = 2;
 }
 
+// StakerDelegationChange includes the staker ID and the delegated amount at the end
+// of the previous epoch for stakers whose delegation has changed.
+message StakerDelegationChange {
+  // staker_id is the stakerID
+  string staker_id = 1;
+  // previous_delegated_amount will be used to initialize the starting info for the delegation
+  string previous_delegated_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
 // DelegationChangeInfo represents the information about delegation changes in an epoch.
 // It includes the stakers whose delegated stake has changed and the total
 // delegated amount of the operator's assets at the end of the previous epoch.
 message DelegationChangeInfo {
-  // staker_ids is a slice of stakerID whose delegated stake has changed.
-  repeated string staker_ids = 1;
+  // staker_delegation_changes is a slice of staker info with changed delegation stakes.
+  repeated StakerDelegationChange staker_delegation_changes = 1 [(gogoproto.nullable) = false];
   // total_amount is the total delegated amount of the operator's assets at the end of
   // the previous epoch. It will be used to calculate the reward per unit of stake.
   // We use decimal here because we don't want the reward for one unit of stake to be too small.

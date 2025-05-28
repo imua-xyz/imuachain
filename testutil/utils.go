@@ -55,12 +55,13 @@ import (
 type BaseTestSuite struct {
 	suite.Suite
 
-	Ctx            sdk.Context
-	App            *imuaapp.ImuachainApp
-	Address        common.Address
-	AccAddress     sdk.AccAddress
-	StakerAddr     string
-	DogfoodAVSAddr string
+	Ctx                 sdk.Context
+	App                 *imuaapp.ImuachainApp
+	Address             common.Address
+	AccAddress          sdk.AccAddress
+	StakerAddr          string
+	DogfoodAVSAddr      string
+	DistributionGenesis *distributiontypes.GenesisState
 
 	PrivKey   cryptotypes.PrivKey
 	Signer    keyring.Signer
@@ -71,6 +72,7 @@ type BaseTestSuite struct {
 	ClientChains []assetstypes.ClientChainInfo
 	Assets       []assetstypes.AssetInfo
 	AssetIDs     []string
+	StakerIDs    []string
 	// for tracking validator across blocks
 	ValSet     *tmtypes.ValidatorSet
 	Operators  []sdk.AccAddress
@@ -184,6 +186,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		suite.ClientChains[0].LayerZeroChainID,
 		common.Address(operator2.Bytes()).String(), "",
 	)
+	suite.StakerIDs = []string{stakerID1, stakerID2}
 	_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(
 		suite.ClientChains[0].LayerZeroChainID,
 		"", suite.Assets[0].Address,
@@ -552,6 +555,68 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			},
 		},
 	}
+	distributionGenesis.AllOperatorCurrentRewards = []distributiontypes.KeyAndOperatorCurrentRewards{
+		{
+			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID, dogfoodtypes.DefaultEpochIdentifier)),
+			OperatorCurrentRewards: distributiontypes.OperatorCurrentRewards{
+				Rewards: []distributiontypes.CommonAVSRewardData(nil),
+				// the period in current rewards starts from 1.
+				Period: 1,
+			},
+		},
+		{
+			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID, dogfoodtypes.DefaultEpochIdentifier)),
+			OperatorCurrentRewards: distributiontypes.OperatorCurrentRewards{
+				Rewards: []distributiontypes.CommonAVSRewardData(nil),
+				// the period in current rewards starts from 1.
+				Period: 1,
+			},
+		},
+	}
+
+	// the period of first historical reward should be 0
+	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(0))
+	distributionGenesis.AllOperatorHistoricalRewards = []distributiontypes.KeyAndOperatorHistoricalRewards{
+		{
+			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID, dogfoodtypes.DefaultEpochIdentifier, periodHexStr)),
+			OperatorHistoricalRewards: distributiontypes.OperatorHistoricalRewards{
+				CumulativeRewardRatios: []distributiontypes.CommonAVSRewardData(nil),
+				// set the reference count to 2 because it will be referenced by the current reward and a default delegation.
+				ReferenceCount: 2,
+			},
+		},
+		{
+			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID, dogfoodtypes.DefaultEpochIdentifier, periodHexStr)),
+			OperatorHistoricalRewards: distributiontypes.OperatorHistoricalRewards{
+				CumulativeRewardRatios: []distributiontypes.CommonAVSRewardData(nil),
+				// set the reference count to 2 because it will be referenced by the current reward and a default delegation.
+				ReferenceCount: 2,
+			},
+		},
+	}
+	distributionGenesis.AllDelegationStartingInfos = []distributiontypes.KeyAndDelegationStartingInfo{
+		{
+			Key: string(assetstypes.GetJoinedStoreKey(stakerID1, assetID, operator1.String(), dogfoodtypes.DefaultEpochIdentifier)),
+			DelegationStartingInfo: distributiontypes.DelegationStartingInfo{
+				// genesis delegation references the first historical reward as the starting point.
+				PreviousPeriod: 0,
+				Stake:          sdk.NewDec(power),
+				// using 0 as the epochNumber of genesis block
+				EpochNumber: uint64(operatortypes.InitialEpochNumber - 1),
+			},
+		},
+		{
+			Key: string(assetstypes.GetJoinedStoreKey(stakerID2, assetID, operator2.String(), dogfoodtypes.DefaultEpochIdentifier)),
+			DelegationStartingInfo: distributiontypes.DelegationStartingInfo{
+				// genesis delegation references the first historical reward as the starting point.
+				PreviousPeriod: 0,
+				Stake:          sdk.NewDec(power2),
+				// using 0 as the epochNumber of genesis block
+				EpochNumber: uint64(operatortypes.InitialEpochNumber - 1),
+			},
+		},
+	}
+	suite.DistributionGenesis = distributionGenesis
 	genesisState[distributiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(distributionGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -696,6 +761,12 @@ func (suite *BaseTestSuite) RunToEpochEnd(epochIdentifier string) {
 	suite.App.EndBlocker(suite.Ctx, abci.RequestEndBlock{
 		Height: suite.Ctx.BlockHeight(),
 	})
+}
+
+func (suite *BaseTestSuite) RunToEpochEndN(epochIdentifier string, number int) {
+	for i := 0; i < number; i++ {
+		suite.RunToEpochEnd(epochIdentifier)
+	}
 }
 
 func (suite *BaseTestSuite) DebugPrintObject(object interface{}) {

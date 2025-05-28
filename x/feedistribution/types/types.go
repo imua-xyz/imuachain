@@ -66,26 +66,40 @@ func (op OperatorRewardProportions) String() string {
 
 // AppendUniqueStakerID appends a new stakerID to the staker list in DelegationChangeInfo
 // only if it's not already present.
-func (d *DelegationChangeInfo) AppendUniqueStakerID(newStaker string) {
+// return true if the stake is appended
+func (d *DelegationChangeInfo) AppendUniqueStakerID(stakerID string, preDelegatedAmount sdkmath.Int, assetDecimal uint32) bool {
 	// Check if the newKey already exists in the slice
-	for _, stakerID := range d.StakerIds {
-		if stakerID == newStaker {
+	for _, stakerDelegationChange := range d.StakerDelegationChanges {
+		if stakerDelegationChange.StakerId == stakerID {
 			// If the staker already exists, do not append it
-			return
+			return false
 		}
 	}
 	// Append the newKey if it's not already present
-	d.StakerIds = append(d.StakerIds, newStaker)
+	d.StakerDelegationChanges = append(d.StakerDelegationChanges, StakerDelegationChange{
+		StakerId: stakerID,
+		PreviousDelegatedAmount: ScaleIntByDecimals(
+			preDelegatedAmount, assetDecimal),
+	})
+	return true
+}
+
+func (d *DelegationChangeInfo) DelegationChangesByStaker() map[string]sdk.Dec {
+	ret := make(map[string]sdk.Dec)
+	for _, changedDelegation := range d.StakerDelegationChanges {
+		ret[changedDelegation.StakerId] = changedDelegation.PreviousDelegatedAmount
+	}
+	return ret
 }
 
 func (d *DelegationChangeInfo) StakersAsString() string {
-	if len(d.StakerIds) == 0 {
+	if len(d.StakerDelegationChanges) == 0 {
 		return ""
 	}
 
 	out := ""
-	for _, stakerID := range d.StakerIds {
-		out += fmt.Sprintf("%v,", stakerID)
+	for _, stakerDelegationChange := range d.StakerDelegationChanges {
+		out += fmt.Sprintf("%v:%s,", stakerDelegationChange.StakerId, stakerDelegationChange.PreviousDelegatedAmount)
 	}
 	if out != "" {
 		out = out[:len(out)-1]

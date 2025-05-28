@@ -247,7 +247,7 @@ func (k Keeper) RemoveShare(
 			}
 		}
 	}
-	shareIsZero, err := k.UpdateDelegationState(ctx, stakerID, assetID, operator.String(), deltaAmount)
+	shareIsZero, _, err := k.UpdateDelegationState(ctx, stakerID, assetID, operator.String(), deltaAmount)
 	if err != nil {
 		return removeToken, err
 	}

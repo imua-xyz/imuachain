@@ -319,16 +319,23 @@ func (gs GenesisState) ValidateDelegationChangeInfos() error {
 			)
 		}
 		// check the staker list
-		validationFunc := func(_ int, stakerID string) error {
-			if _, _, err := assetstypes.ValidateID(stakerID, true, false); err != nil {
-				return ErrInvalidGenesisData.Wrapf("ValidateDelegationChangeInfos: invalid stakerID, key:%s,stakerID:%s", info.Key, stakerID)
+		validationFunc := func(_ int, delegationChangeInfo StakerDelegationChange) error {
+			if _, _, err := assetstypes.ValidateID(delegationChangeInfo.StakerId, true, false); err != nil {
+				return ErrInvalidGenesisData.Wrapf("ValidateDelegationChangeInfos: invalid stakerID, key:%s,stakerID:%s", info.Key, delegationChangeInfo.StakerId)
+			}
+			if delegationChangeInfo.PreviousDelegatedAmount.IsNil() ||
+				delegationChangeInfo.PreviousDelegatedAmount.IsNegative() {
+				return errorsmod.Wrapf(
+					ErrInvalidGenesisData,
+					"ValidateDelegationChangeInfos: nil or negative PreviousDelegatedAmount,stakerID:%s,PreviousDelegatedAmount:%v", delegationChangeInfo.StakerId, delegationChangeInfo.PreviousDelegatedAmount,
+				)
 			}
 			return nil
 		}
-		seenFieldValueFunc := func(stakerID string) (string, struct{}) {
-			return stakerID, struct{}{}
+		seenFieldValueFunc := func(delegationChangeInfo StakerDelegationChange) (string, struct{}) {
+			return delegationChangeInfo.StakerId, struct{}{}
 		}
-		_, err = utils.CommonValidation(info.DelegationChangeInfo.StakerIds, seenFieldValueFunc, validationFunc)
+		_, err = utils.CommonValidation(info.DelegationChangeInfo.StakerDelegationChanges, seenFieldValueFunc, validationFunc)
 		if err != nil {
 			return err
 		}

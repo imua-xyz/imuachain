@@ -30,7 +30,7 @@ func (suite *KeeperTestSuite) registerRewardAssets(avsList []common.Address) {
 		}
 
 		err := suite.App.DistrKeeper.SetAVSRewardAssets(suite.Ctx, strings.ToLower(avs.String()), rewardAssets)
-		suite.NoError(err)
+		suite.Require().NoError(err)
 	}
 }
 
@@ -39,7 +39,7 @@ func (suite *KeeperTestSuite) setRewardParams(avsList []common.Address) {
 	for _, avs := range avsList {
 		// set reward parameter
 		err := suite.App.DistrKeeper.SetAVSRewardParam(suite.Ctx, strings.ToLower(avs.String()), DefaultRewardParameter)
-		suite.NoError(err)
+		suite.Require().NoError(err)
 	}
 }
 
@@ -51,9 +51,9 @@ func (suite *KeeperTestSuite) mintDogfoodTestReward() {
 	)
 	mintedCoins := sdk.NewCoins(mintedCoin)
 	err := suite.App.ImmintKeeper.MintCoins(suite.Ctx, mintedCoins)
-	suite.NoError(err)
+	suite.Require().NoError(err)
 	err = suite.App.ImmintKeeper.AddCollectedFees(suite.Ctx, mintedCoins)
-	suite.NoError(err)
+	suite.Require().NoError(err)
 }
 
 func (suite *KeeperTestSuite) TestSetAVSRewardParam() {
@@ -94,7 +94,7 @@ func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {
 				suite.registerRewardAssets(suite.testAVSs)
 				avsStr := strings.ToLower(suite.testAVSs[0].String())
 				avsRewardAsset, err := suite.App.DistrKeeper.GetAllRewardAssetsByAVS(suite.Ctx, avsStr)
-				suite.NoError(err)
+				suite.Require().NoError(err)
 
 				epochRewards := make(sdk.DecCoins, 0)
 				for _, rewardAsset := range avsRewardAsset.AvsRewardAssets {
@@ -136,7 +136,7 @@ func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {
 			} else if tc.errContains != "" {
 				s.Require().ErrorContains(err, tc.errContains)
 			}
-			// check the state after setting rewards
+			// checkDelegationStates the state after setting rewards
 			distributionInfo, err := suite.App.DistrKeeper.GetAVSRewardDistribution(suite.Ctx, testAvs)
 			if !tc.rewardExists {
 				s.Require().ErrorIs(err, feedistributiontypes.ErrNotAVSRewardDistribution)
@@ -239,7 +239,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 				suite.Require().Equal(testOperatorNumber, len(rewardsAndProportions.OperatorRewardProportions))
 				for _, operatorRewardProportion := range rewardsAndProportions.OperatorRewardProportions {
 					suite.Require().Contains(suite.testOperators, sdk.MustAccAddressFromBech32(operatorRewardProportion.OperatorAddr))
-					suite.Equal(sdk.NewDec(1).QuoInt64(int64(testOperatorNumber)), operatorRewardProportion.RewardProportion)
+					suite.Require().Equal(sdk.NewDec(1).QuoInt64(int64(testOperatorNumber)), operatorRewardProportion.RewardProportion)
 				}
 			},
 		},
@@ -259,12 +259,12 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 				suite.Require().Equal(testOperatorNumber+len(suite.Operators), len(rewardsAndProportions.OperatorRewardProportions))
 
 				avsUSDValue, err := suite.App.OperatorKeeper.GetAVSUSDValue(suite.Ctx, suite.DogfoodAVSAddr)
-				suite.NoError(err)
+				suite.Require().NoError(err)
 				for _, operatorRewardProportion := range rewardsAndProportions.OperatorRewardProportions {
 					operatorUSDValue, err := suite.App.OperatorKeeper.GetOperatorOptedUSDValue(suite.Ctx, suite.DogfoodAVSAddr, operatorRewardProportion.OperatorAddr)
-					suite.NoError(err)
+					suite.Require().NoError(err)
 					expectedProportion := operatorUSDValue.ActiveUSDValue.QuoTruncate(avsUSDValue)
-					suite.Equal(expectedProportion, operatorRewardProportion.RewardProportion)
+					suite.Require().Equal(expectedProportion, operatorRewardProportion.RewardProportion)
 				}
 			},
 		},

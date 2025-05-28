@@ -89,7 +89,7 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 	remaining := rewardsAndProportions.Rewards
 	proportion := math.LegacyOneDec().Sub(communityTax)
 	rewardsForOperators := rewardsAndProportions.Rewards.MulDecTruncate(proportion)
-	fmt.Println("call AllocateRewardsToOperators， avsAddr and reward proportions:", avsAddr, rewardsAndProportions)
+	fmt.Println("call AllocateRewardsToOperators， AvsAddr and reward proportions:", avsAddr, rewardsAndProportions)
 	for _, operatorProportion := range rewardsAndProportions.OperatorRewardProportions {
 		reward := rewardsForOperators.MulDecTruncate(operatorProportion.RewardProportion)
 		// calculate the commission for the operator
@@ -165,7 +165,7 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 		if assetUSDValue.IsZero() {
 			fmt.Println("SplitRewardsToAssetsPool, operator asset USD value is zero", assetUSDValue)
 			// no rewards for assets with a zero USD value.
-			ctx.Logger().Info("SplitRewardsToAssetsPool: no rewards for assets with a zero USD value.", "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
+			ctx.Logger().Info("SplitRewardsToAssetsPool: no rewards for assets with a zero USD value.", "EpochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
 			continue
 		} else if assetUSDValue.GT(optedUSDValue.ActiveUSDValue) ||
 			assetUSDValue.IsNegative() {
@@ -174,6 +174,16 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
 		fmt.Println("UpdateOperatorCurrentRewards assetRewards", operator, assetID, assetRewards)
 		if assetRewards.IsAllPositive() {
+			if !k.isOperatorPeriodInitialized(ctx, operator, assetID, epochIdentifier) {
+				// Initialize the currentRewardRatio currentRewards and period of the operator.
+				// This case occurs when distributing rewards to an operator for the first time.
+				// At this point, the operator's previous rewards should be zero,
+				// and no currentRewardRatio currentRewards state has been recorded.
+				err = k.initializeOperatorPeriod(ctx, operator, assetID, epochIdentifier)
+				if err != nil {
+					return nil, err
+				}
+			}
 			err = k.UpdateOperatorCurrentRewards(
 				ctx, operator, assetID, epochIdentifier,
 				true, types.CommonAVSRewardData{

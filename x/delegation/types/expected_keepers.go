@@ -28,10 +28,12 @@ func (VirtualSlashKeeper) OperatorAssetSlashedProportion(_ sdk.Context, _ sdk.Ac
 // DelegationHooks are event hooks triggered by the delegation module
 type DelegationHooks interface {
 	// AfterDelegation :
-	AfterDelegation(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, prevAssetState assetstype.OperatorAssetInfo) error
+	AfterDelegation(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
+		preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo) error
 	// AfterUndelegationStarted for undelegation, we use the address of the operator to figure out the list of impacted
 	// chains for that operator. and we need the identifier to hold it until confirmed by subscriber
-	AfterUndelegationStarted(ctx sdk.Context, stakerID, assetID string, addr sdk.AccAddress, recordKey []byte, prevAssetState assetstype.OperatorAssetInfo) error
+	AfterUndelegationStarted(ctx sdk.Context, stakerID, assetID string, addr sdk.AccAddress, recordKey []byte,
+		preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo) error
 }
 
 type OperatorKeeper interface {

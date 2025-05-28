@@ -20,7 +20,9 @@ type KeeperTestSuite struct {
 	testOperators []types.AccAddress
 	testAVSs      []common.Address
 	// Use the default EVM-compatible client chain for testing stakers.
-	testStakers []common.Address
+	testStakers       []common.Address
+	testStakerIDs     []string
+	testClientChainID uint64
 }
 
 func TestKeeperTestSuite(t *testing.T) {

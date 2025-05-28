@@ -95,7 +95,12 @@ func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Addre
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &assetState)
 	}
-	stateBeforeUpdate = assetState
+	stateBeforeUpdate = assetstype.OperatorAssetInfo{
+		TotalAmount:               math.NewIntFromBigInt(assetState.TotalAmount.BigInt()),
+		PendingUndelegationAmount: math.NewIntFromBigInt(assetState.PendingUndelegationAmount.BigInt()),
+		TotalShare:                assetState.TotalShare.Clone(),
+		OperatorShare:             assetState.OperatorShare.Clone(),
+	}
 	// update all states of the specified operator asset
 	err = assetstype.UpdateAssetValue(&assetState.TotalAmount, &changeAmount.TotalAmount)
 	if err != nil {

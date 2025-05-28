@@ -26,7 +26,7 @@ var (
 	}
 )
 
-type expectedTestStates struct {
+type expectedAllocationStates struct {
 	rewardAllocationTotal sdk.Dec
 	communityFeePool      sdk.DecCoins
 	// key is the operator address
@@ -45,15 +45,15 @@ func addDecCoin(m map[string]sdk.DecCoins, assetSymbol, operator string, amount 
 		m[operator] = sdk.DecCoins{coin}
 	}
 }
-func (expectedStates *expectedTestStates) addAccumulatedCommission(assetSymbol, operator string, amount sdk.Dec) {
+func (expectedStates *expectedAllocationStates) addAccumulatedCommission(assetSymbol, operator string, amount sdk.Dec) {
 	addDecCoin(expectedStates.accumulatedCommission, assetSymbol, operator, amount)
 }
 
-func (expectedStates *expectedTestStates) addOutstandingRewards(assetSymbol, operator string, amount sdk.Dec) {
+func (expectedStates *expectedAllocationStates) addOutstandingRewards(assetSymbol, operator string, amount sdk.Dec) {
 	addDecCoin(expectedStates.outstandingRewards, assetSymbol, operator, amount)
 }
 
-func (expectedStates *expectedTestStates) addOperatorCurrentReward(avsAddr, assetSymbol, operator, assetID string, amount sdk.Dec) {
+func (expectedStates *expectedAllocationStates) addOperatorCurrentReward(avsAddr, assetSymbol, operator, assetID string, amount sdk.Dec) {
 	coin := sdk.NewDecCoinFromDec(assetSymbol, amount)
 	if _, ok := expectedStates.operatorCurrentReward[operator]; !ok {
 		expectedStates.operatorCurrentReward[operator] = make(map[string]feedistributiontypes.OperatorCurrentRewards)
@@ -80,8 +80,9 @@ func (suite *KeeperTestSuite) prepareTestBase(stakerNumber, operatorNumber, avsN
 	suite.Require().GreaterOrEqual(stakerNumber, operatorNumber, "There should be an equal number of stakers and operators, as each pair is associated by index.")
 	testClientChainID := suite.ClientChains[0].LayerZeroChainID
 	// create test stakers
-	stakerAddrs, _ := suite.CreateStakers(stakerNumber, testClientChainID)
+	stakerAddrs, stakerIDs := suite.CreateStakers(stakerNumber, testClientChainID)
 	suite.testStakers = stakerAddrs
+	suite.testStakerIDs = stakerIDs
 	// create and register test operators
 	operators := suite.RegisterOperators(operatorNumber)
 	suite.testOperators = operators
@@ -106,7 +107,7 @@ func (suite *KeeperTestSuite) setAVSEpochRewards(avsList []common.Address, rewar
 		// set the allocated reward of each epoch
 		avsStr := strings.ToLower(avs.String())
 		avsRewardAsset, err := suite.App.DistrKeeper.GetAllRewardAssetsByAVS(suite.Ctx, avsStr)
-		suite.NoError(err)
+		suite.Require().NoError(err)
 
 		epochRewards := make(sdk.DecCoins, 0)
 		if rewardAmountPerEpoch > 0 {
@@ -118,43 +119,43 @@ func (suite *KeeperTestSuite) setAVSEpochRewards(avsList []common.Address, rewar
 			}
 		}
 		err = suite.App.DistrKeeper.SetAVSEpochRewardExclusive(suite.Ctx, avsStr, epochRewards)
-		suite.NoError(err)
+		suite.Require().NoError(err)
 	}
 }
 
-func (suite *KeeperTestSuite) commonCheckStates(testAVSAddr string, states expectedTestStates) {
+func (suite *KeeperTestSuite) checkAllocationStates(testAVSAddr string, states expectedAllocationStates) {
 	allRewardAssets, err := suite.App.DistrKeeper.GetAllRewardAssetsByAVS(suite.Ctx, testAVSAddr)
-	suite.NoError(err)
+	suite.Require().NoError(err)
 	suite.Require().Equal(RewardAssetNumberPerAVS, len(allRewardAssets.AvsRewardAssets))
 	for _, rewardAsset := range allRewardAssets.AvsRewardAssets {
 		suite.Require().Equal(states.rewardAllocationTotal, rewardAsset.RewardAssetState.RewardAllocationTotal)
 	}
 
-	// check the community fee
+	// checkDelegationStates the community fee
 	communityFeePool, err := suite.App.DistrKeeper.GetAVSFeePool(suite.Ctx, testAVSAddr)
-	suite.NoError(err)
-	suite.Equal(states.communityFeePool, communityFeePool.CommunityPool)
+	suite.Require().NoError(err)
+	suite.Require().Equal(states.communityFeePool, communityFeePool.CommunityPool)
 
-	// check the accumulated commission
+	// checkDelegationStates the accumulated commission
 	for operator, expectedCommission := range states.accumulatedCommission {
 		accumulatedCommission, err := suite.App.DistrKeeper.GetOperatorAccumulatedCommission(suite.Ctx, operator, testAVSAddr)
-		suite.NoError(err)
-		suite.Equal(expectedCommission, accumulatedCommission.Commission, fmt.Sprintf("operator:%s,avs:%s", operator, testAVSAddr))
+		suite.Require().NoError(err)
+		suite.Require().Equal(expectedCommission, accumulatedCommission.Commission, "operator:%s,avs:%s", operator, testAVSAddr)
 	}
 
-	// check the operator outstanding rewards
+	// checkDelegationStates the operator outstanding rewards
 	for operator, expectedOutstandingRewards := range states.outstandingRewards {
 		outstandingRewards, err := suite.App.DistrKeeper.GetOperatorOutstandingRewards(suite.Ctx, operator, testAVSAddr)
-		suite.NoError(err)
-		suite.Equal(expectedOutstandingRewards, outstandingRewards.Rewards)
+		suite.Require().NoError(err)
+		suite.Require().Equal(expectedOutstandingRewards, outstandingRewards.Rewards)
 	}
 
-	// check the current rewards for the operator after splitting into different asset pools.
+	// checkDelegationStates the current rewards for the operator after splitting into different asset pools.
 	for operator, assetIDAndCurrentReward := range states.operatorCurrentReward {
 		for assetID, expectedCurrentReward := range assetIDAndCurrentReward {
 			operatorCurrentReward, err := suite.App.DistrKeeper.GetOperatorCurrentRewards(suite.Ctx, operator, assetID, dogfoodtypes.DefaultEpochIdentifier)
-			suite.NoError(err)
-			suite.Equal(expectedCurrentReward, operatorCurrentReward, fmt.Sprintf("operator:%s, assetID:%s", operator, assetID))
+			suite.Require().NoError(err)
+			suite.Require().Equal(expectedCurrentReward, operatorCurrentReward, "operator:%s, assetID:%s", operator, assetID)
 		}
 	}
 }
@@ -168,7 +169,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 		expPass           bool
 		isDogfood         bool
 		errContains       string
-		getExpectedStates func(runToEpochNumber int64) *expectedTestStates
+		getExpectedStates func(runToEpochNumber int64) *expectedAllocationStates
 	}{
 		{
 			name: "fail - test the case where the AVS is not active in the first epoch.",
@@ -195,7 +196,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 			readOnly:  false,
 			expPass:   true,
 			isDogfood: false,
-			getExpectedStates: func(_ int64) *expectedTestStates {
+			getExpectedStates: func(_ int64) *expectedAllocationStates {
 				testAVSAddr := strings.ToLower(suite.testAVSs[testAVSIndex].String())
 				assetSymbol := fmt.Sprintf("avs%dsymbol%d", testAVSIndex, 0)
 
@@ -213,7 +214,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 				// since we delegated equal amounts and all asset prices use default values.
 				expectedRewardPerAsset := expectedOperatorOutstandingRewards.Sub(expectedOperatorCommission).QuoInt64(int64(len(suite.AssetIDs)))
 
-				expectedStates := expectedTestStates{
+				expectedStates := expectedAllocationStates{
 					rewardAllocationTotal: sdk.NewDec(DefaultEpochRewardAmount),
 					communityFeePool:      sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedCommunityFee)},
 					accumulatedCommission: make(map[string]sdk.DecCoins),
@@ -224,7 +225,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 				for _, operator := range suite.testOperators {
 					expectedStates.accumulatedCommission[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedOperatorCommission)}
 					expectedStates.outstandingRewards[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedOperatorOutstandingRewards)}
-					// check the current rewards for the operator after splitting into different asset pools.
+					// checkDelegationStates the current rewards for the operator after splitting into different asset pools.
 					for _, stakingAssetID := range suite.AssetIDs {
 						expectedStates.addOperatorCurrentReward(testAVSAddr, assetSymbol, operator.String(), stakingAssetID, expectedRewardPerAsset)
 					}
@@ -241,7 +242,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 			readOnly:  false,
 			expPass:   true,
 			isDogfood: true,
-			getExpectedStates: func(_ int64) *expectedTestStates {
+			getExpectedStates: func(_ int64) *expectedAllocationStates {
 				assetSymbol := utils.BaseDenom
 				mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
 				// calculate the expected state
@@ -258,7 +259,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 				expectedOperator0RewardPerAsset := expectedOperator0OutstandingRewards
 				expectedOperator1RewardPerAsset := expectedOperator1OutstandingRewards
 
-				expectedStates := expectedTestStates{
+				expectedStates := expectedAllocationStates{
 					rewardAllocationTotal: totalRewardDec,
 					communityFeePool:      sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedCommunityFee)},
 					// the commission rate is set to zero, so the operator doesn't accumulate any commission
@@ -311,18 +312,16 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 					Params:    dogfoodParam,
 					Authority: authAddrString,
 				})
-				suite.NoError(err)
+				suite.Require().NoError(err)
 				n := 2
-				for i := 0; i < n; i++ {
-					suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
-				}
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, n)
 				suite.mintDogfoodTestReward()
 				return suite.DogfoodAVSAddr, int64(n)
 			},
 			readOnly:  false,
 			expPass:   true,
 			isDogfood: true,
-			getExpectedStates: func(runToEpochNumber int64) *expectedTestStates {
+			getExpectedStates: func(runToEpochNumber int64) *expectedAllocationStates {
 				assetSymbol := utils.BaseDenom
 				mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
 				// calculate the expected state
@@ -333,7 +332,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 				epochRewardsExcludeCommunityTax := epochRewardDec.MulTruncate(proportion)
 				expectedCommunityFee := totalRewardDec.Clone()
 
-				expectedStates := expectedTestStates{
+				expectedStates := expectedAllocationStates{
 					rewardAllocationTotal: totalRewardDec,
 					// the commission rates of newly added operators are not zero , so they will accumulate some commissions
 					accumulatedCommission: make(map[string]sdk.DecCoins),
@@ -425,10 +424,10 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 				s.Require().ErrorContains(err, tc.errContains)
 			}
 			fmt.Println()
-			// check the state after unit test
+			// checkDelegationStates the state after unit test
 			if tc.getExpectedStates != nil {
 				expectedStates := tc.getExpectedStates(runToEpochNumber)
-				s.commonCheckStates(testAVSAddr, *expectedStates)
+				s.checkAllocationStates(testAVSAddr, *expectedStates)
 			}
 		})
 	}
@@ -450,7 +449,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByEpoch() {
 			checkState: func() {
 				for _, avs := range suite.testAVSs {
 					allRewardAssets, err := suite.App.DistrKeeper.GetAllRewardAssetsByAVS(suite.Ctx, strings.ToLower(avs.String()))
-					suite.NoError(err)
+					suite.Require().NoError(err)
 					suite.Require().Equal(0, len(allRewardAssets.AvsRewardAssets))
 				}
 			},
@@ -468,7 +467,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByEpoch() {
 			checkState: func() {
 				for _, avs := range suite.testAVSs {
 					allRewardAssets, err := suite.App.DistrKeeper.GetAllRewardAssetsByAVS(suite.Ctx, strings.ToLower(avs.String()))
-					suite.NoError(err)
+					suite.Require().NoError(err)
 					suite.Require().Equal(RewardAssetNumberPerAVS, len(allRewardAssets.AvsRewardAssets))
 					for _, rewardAsset := range allRewardAssets.AvsRewardAssets {
 						suite.Require().Equal(sdk.NewDec(DefaultEpochRewardAmount), rewardAsset.RewardAssetState.RewardAllocationTotal)
@@ -489,7 +488,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByEpoch() {
 			}
 			// get current epoch info
 			epochInfo, exist := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, dogfoodtypes.DefaultEpochIdentifier)
-			suite.True(exist)
+			suite.Require().True(exist)
 
 			err := suite.App.DistrKeeper.AllocateRewardsByEpoch(suite.Ctx, dogfoodtypes.DefaultEpochIdentifier, epochInfo.CurrentEpoch)
 			if tc.expPass {
@@ -497,7 +496,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByEpoch() {
 			} else if tc.errContains != "" {
 				s.Require().ErrorContains(err, tc.errContains)
 			}
-			// check the state after unit test
+			// checkDelegationStates the state after unit test
 			if tc.checkState != nil {
 				tc.checkState()
 			}

@@ -2,12 +2,17 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
+	"fmt"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
+func (k Keeper) isOperatorPeriodInitialized(ctx sdk.Context, operator, assetID, epochIdentifier string) bool {
+	return k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
+}
 func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epochIdentifier string) error {
+	fmt.Println("call initializeOperatorPeriod", operator, assetID, epochIdentifier)
 	// initialize the historical rewards
 	// the period in the historical rewards starts from 0
 	err := k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, 0,
@@ -29,6 +34,68 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 	if err != nil {
 		return err
 	}
+
+	// initialize all related delegations
+	// When initializing an operator, there are three types of delegations to handle:
+	// 1. Delegations created before the current epoch and not modified during this epoch.
+	// 2. Delegations created before the current epoch but modified during this epoch.
+	// 3. Delegations created during the current epoch.
+
+	// The first two types should be initialized immediately after the operator is initialized,
+	// because they are eligible to receive rewards from the current epoch. This ensures that
+	// their starting info is correctly recorded before rewards for this epoch are distributed.
+
+	// The third type is not initialized here. Instead, it will be initialized when processing
+	// delegation changes during the current epoch. These delegations will not receive rewards
+	// for the current epoch — their rewards start accumulating from the next epoch.
+
+	// For the first type, since no change has occurred in the current epoch, we can directly use
+	// the currently retrieved delegated amount as the starting stake.
+
+	// For the second type, since a change has occurred, we must use the stored preStake as the
+	// starting stake.
+
+	// In both cases, the startingEpochNumber and the referenced period should point to the
+	// previous epoch and the previous period, respectively, to ensure that rewards from the
+	// current epoch are not skipped during future calculations.
+	stakerList, err := k.delegationKeeper.GetStakersByOperator(ctx, operator, assetID)
+	if err != nil {
+		return err
+	}
+	changedDelegations, err := k.GetStakeChangedDelegations(ctx, epochIdentifier, operator, assetID)
+	if err != nil {
+		return err
+	}
+	changedDelegationByStaker := changedDelegations.DelegationChangesByStaker()
+	currentEpochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
+	if !exist {
+		return feedistributiontypes.ErrEpochNotFound.Wrapf("initializeOperatorPeriod, EpochIdentifier:%s", epochIdentifier)
+	}
+	startEpochNumber := uint64(currentEpochInfo.CurrentEpoch - 1)
+	prePeriod := uint64(0)
+	var usePreStake bool
+	var preStake sdk.Dec
+	for _, stakerID := range stakerList.Stakers {
+		// initialize the starting info for the delegation
+		stake, ok := changedDelegationByStaker[stakerID]
+		if ok {
+			if !stake.IsPositive() {
+				// the delegation is type 3
+				continue
+			}
+			// the delegation is type 2
+			usePreStake = true
+			preStake = stake
+		} else {
+			// the delegation is type 1
+			usePreStake = false
+		}
+		err = k.initializeDelegationStartingInfo(ctx, operator, stakerID, assetID, epochIdentifier,
+			usePreStake, preStake, startEpochNumber, prePeriod)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -41,13 +108,6 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 	if preDelegationAmount.IsNegative() {
 		return 0, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
 			"IncrementOperatorPeriod, the previous delegation amount is negative, amount:%s", preDelegationAmount)
-	}
-	if !k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier) {
-		// Initialize the currentRewardRatio currentRewards and period of the operator.
-		// This case occurs when processing an operator's delegation changes for the first time.
-		// At this point, the operator's previous delegation amount should be zero,
-		// and no currentRewardRatio currentRewards state has been recorded.
-		return 0, k.initializeOperatorPeriod(ctx, operator, assetID, epochIdentifier)
 	}
 	// fetch currentRewardRatio currentRewards
 	currentRewards, err := k.GetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
@@ -147,7 +207,7 @@ func (k Keeper) incrementReferenceCount(ctx sdk.Context, operator, assetID, epoc
 	// This ensures that a period is referenced by at most one delegation and the current rewards,
 	// meaning the count must be less than or equal to 2.
 	// In the Imua protocol, rewards are distributed per epoch, so a period may be referenced
-	// by multiple delegations. Therefore, we do not check the upper limit of the reference count here.
+	// by multiple delegations. Therefore, we do not checkDelegationStates the upper limit of the reference count here.
 	historical.ReferenceCount++
 	return k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period, historical)
 }
@@ -222,7 +282,7 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 		for _, epochIdentifier := range allEpochIdentifiers {
 			epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
 			if !exist {
-				return feedistributiontypes.ErrEpochNotFound.Wrapf("HandleOperatorSlashEvent, epochIdentifier:%s", epochIdentifier)
+				return feedistributiontypes.ErrEpochNotFound.Wrapf("HandleOperatorSlashEvent, EpochIdentifier:%s", epochIdentifier)
 			}
 			// get the delegation amount at the end of the previous epoch.
 			if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID) {
@@ -234,6 +294,19 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			} else {
 				// the delegation amount doesn't have any change.
 				preDelegationAmount = curDelegationAmount
+			}
+			// For a new operator, it will be initialized when rewards are first allocated to it.
+			// Therefore, if a slash occurs during its first active epoch, it might not have been initialized yet.
+			// We need to initialize it before creating a new period for the slash event to handle this case.
+			if !k.isOperatorPeriodInitialized(ctx, operator.String(), slashAsset.AssetID, epochIdentifier) {
+				// Initialize the currentRewardRatio currentRewards and period of the operator.
+				// This case occurs when distributing rewards to an operator for the first time.
+				// At this point, the operator's previous rewards should be zero,
+				// and no currentRewardRatio currentRewards state has been recorded.
+				err = k.initializeOperatorPeriod(ctx, operator.String(), slashAsset.AssetID, epochIdentifier)
+				if err != nil {
+					return err
+				}
 			}
 			// increase the periods for the slashed operator and assets.
 			// because the total asset amount is changed.

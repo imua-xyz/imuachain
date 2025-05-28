@@ -78,6 +78,7 @@ type AssetsKeeper interface {
 type DelegationKeeper interface {
 	GetDelegationInfoWithAmount(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, error)
 	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
+	GetStakersByOperator(ctx sdk.Context, operator, assetID string) (delegationtype.StakerList, error)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

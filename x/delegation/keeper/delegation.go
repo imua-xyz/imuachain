@@ -116,7 +116,7 @@ func (k *Keeper) delegateTo(
 	deltaAmount := &delegationtype.DeltaDelegationAmounts{
 		UndelegatableShare: share,
 	}
-	_, err = k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
+	_, preDelegationState, err := k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
 	if err != nil {
 		return err
 	}
@@ -126,8 +126,14 @@ func (k *Keeper) delegateTo(
 	}
 
 	if notGenesis {
+		// calculate the previous delegation amount
+		preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+			prevAssetState.TotalShare, prevAssetState.TotalAmount)
+		if err != nil {
+			return err
+		}
 		// call the hooks registered by the other modules
-		err = k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, prevAssetState)
+		err = k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, preDelegatedAmount, prevAssetState)
 		if err != nil {
 			return err
 		}
@@ -256,6 +262,16 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	if err != nil {
 		return err
 	}
+	preDelegationState, err := k.GetSingleDelegationInfo(ctx, stakerID, assetID, params.OperatorAddress.String())
+	if err != nil {
+		return err
+	}
+	// calculate the previous delegation amount
+	preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+		prevAssetState.TotalShare, prevAssetState.TotalAmount)
+	if err != nil {
+		return err
+	}
 	// remove share
 	removeToken, err := k.RemoveShare(ctx, true, params.OperatorAddress, stakerID, assetID, share)
 	if err != nil {
@@ -299,7 +315,8 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 
 	recordKey := r.GetKey()
 	// call the hooks registered by the other modules
-	err = k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress, recordKey, *prevAssetState)
+	err = k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress,
+		recordKey, preDelegatedAmount, *prevAssetState)
 	if err != nil {
 		return err
 	}
