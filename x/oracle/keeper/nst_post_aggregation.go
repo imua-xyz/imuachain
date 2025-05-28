@@ -645,7 +645,10 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 			continue
 		}
 
-		balanceDeltaConverted, err := k.convertDecimal(ctx, assetID, balanceDelta, feederID, false)
+		balanceDeltaConverted, err := k.convertDecimal(cc, assetID, balanceDelta, feederID, false)
+		if err != nil {
+			return fmt.Errorf("failed to convert balance delta: %w", err)
+		}
 		if err := k.delegationKeeper.UpdateNSTBalance(cc, getStakerID(stakerAddr, chainID), assetID, balanceDeltaConverted); err != nil {
 			return err
 		}
