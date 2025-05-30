@@ -132,7 +132,6 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["assets"]["tokens"][2]["asset_basic_info"]["layer_zero_chain_id"]="101"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["tokens"][2]["staking_total_amount"]="5000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
-
 	jq '.app_state["assets"]["tokens"][3]["asset_basic_info"]["name"]="nstsol"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["tokens"][3]["asset_basic_info"]["meta_info"]="sol native token"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["tokens"][3]["asset_basic_info"]["address"]="0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
