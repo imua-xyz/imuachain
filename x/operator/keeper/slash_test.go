@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -12,11 +11,6 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator/keeper"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
-
-func (suite *OperatorTestSuite) TestSlashID() {
-	slashID := keeper.GetSlashIDForDogfood(stakingtypes.Infraction_INFRACTION_DOWNTIME, 11553600)
-	fmt.Println("the slashID is:", slashID)
-}
 
 func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	// current height: 1 epoch: 1

@@ -75,7 +75,8 @@ func (p Precompile) ClaimReward(
 	if err != nil {
 		return nil, err
 	}
-	err = p.distributionKeeper.ClaimDelegationRewards(ctx, stakerID)
+	// todo: the total claimed rewards should be returned to the caller.
+	_, err = p.distributionKeeper.ClaimDelegationRewards(ctx, stakerID)
 	if err != nil {
 		return nil, err
 	}

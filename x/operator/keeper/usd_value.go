@@ -879,7 +879,6 @@ func (k *Keeper) HasAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string) bool {
 }
 
 func (k *Keeper) GetRecentEndedEpochAVSAssets(ctx sdk.Context, avsAddr string) ([]string, error) {
-	fmt.Println("call GetRecentEndedEpochAVSAssets", k.HasAVSAssetsPerEpoch(ctx, avsAddr))
 	if k.HasAVSAssetsPerEpoch(ctx, avsAddr) {
 		// the avs assets have been changed, use a dedicated assets list.
 		return k.GetAVSAssetsPerEpoch(ctx, avsAddr)

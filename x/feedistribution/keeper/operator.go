@@ -62,11 +62,16 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 	if err != nil {
 		return err
 	}
-	changedDelegations, err := k.GetStakeChangedDelegations(ctx, epochIdentifier, operator, assetID)
-	if err != nil {
-		return err
+
+	changedDelegationByStaker := make(map[string]sdk.Dec)
+	if k.HasStakeChangedDelegations(ctx, epochIdentifier, operator, assetID) {
+		changedDelegations, err := k.GetStakeChangedDelegations(ctx, epochIdentifier, operator, assetID)
+		if err != nil {
+			return err
+		}
+		changedDelegationByStaker = changedDelegations.DelegationChangesByStaker()
 	}
-	changedDelegationByStaker := changedDelegations.DelegationChangesByStaker()
+
 	currentEpochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
 	if !exist {
 		return feedistributiontypes.ErrEpochNotFound.Wrapf("initializeOperatorPeriod, EpochIdentifier:%s", epochIdentifier)

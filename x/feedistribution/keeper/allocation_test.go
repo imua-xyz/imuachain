@@ -92,7 +92,9 @@ func (suite *KeeperTestSuite) prepareTestBase(stakerNumber, operatorNumber, avsN
 	suite.testAVSs = testAVSs
 
 	// deposit and delegate the test asset
-	suite.DepositAndDelegateToOperators(true, testClientChainID, stakerAddrs, operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+	suite.DepositAndDelegateToOperators(true, testClientChainID,
+		common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+		stakerAddrs, operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
 	// deposit and delegate the IMUA token
 	suite.DepositAndDelegateIMUAToOperators(stakerAddrs, operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
 
@@ -121,6 +123,18 @@ func (suite *KeeperTestSuite) setAVSEpochRewards(avsList []common.Address, rewar
 		err = suite.App.DistrKeeper.SetAVSEpochRewardExclusive(suite.Ctx, avsStr, epochRewards)
 		suite.Require().NoError(err)
 	}
+}
+
+func (suite *KeeperTestSuite) updateDogfoodAssetsList(assetIDS []string) {
+	dogfoodParam := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx)
+	dogfoodParam.AssetIDs = assetIDS
+	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName)
+	authAddrString := authAddr.String()
+	_, err := suite.App.StakingKeeper.UpdateParams(suite.Ctx, &dogfoodtypes.MsgUpdateParams{
+		Params:    dogfoodParam,
+		Authority: authAddrString,
+	})
+	suite.Require().NoError(err)
 }
 
 func (suite *KeeperTestSuite) checkAllocationStates(testAVSAddr string, states expectedAllocationStates) {
@@ -302,17 +316,8 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 				// add the IMUA token to the asset list of the dogfood AVS to test the case with two restaking assets
 				// the newly added test operators who opted in at the first epoch have already deposited and delegated
 				// these assets to the dogfood AVS.
-				dogfoodParam := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx)
 				// the assetIDs in the suite have been updated when another test AVS was registered.
-				dogfoodParam.AssetIDs = suite.AssetIDs
-				fmt.Println("the suite assetIDs is:", suite.AssetIDs)
-				authAddr := authtypes.NewModuleAddress(govtypes.ModuleName)
-				authAddrString := authAddr.String()
-				_, err := suite.App.StakingKeeper.UpdateParams(suite.Ctx, &dogfoodtypes.MsgUpdateParams{
-					Params:    dogfoodParam,
-					Authority: authAddrString,
-				})
-				suite.Require().NoError(err)
+				suite.updateDogfoodAssetsList(suite.AssetIDs)
 				n := 2
 				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, n)
 				suite.mintDogfoodTestReward()

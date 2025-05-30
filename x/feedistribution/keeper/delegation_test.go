@@ -10,6 +10,7 @@ import (
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	"strings"
 )
 
@@ -93,6 +94,28 @@ func (suite *KeeperTestSuite) checkDelegationStates(expectedStates *expectedDele
 }
 
 func (suite *KeeperTestSuite) defaultDelegationRewardStates() expectedDelegationRewardStates {
+	// the period in current rewards starts from 1.
+	defaultOperatorCurrentPeriod := uint64(1)
+	defaultOperatorHistoricalReward := feedistributiontypes.OperatorHistoricalRewards{
+		CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData(nil),
+		// set the reference count to 2 because it will be referenced by the current reward and a default delegation.
+		ReferenceCount: 2,
+	}
+
+	delegation1StartingInfo := feedistributiontypes.DelegationStartingInfo{
+		// genesis delegation references the first historical reward as the starting point.
+		PreviousPeriod: 0,
+		Stake:          sdk.NewDec(suite.Powers[0]),
+		// using 0 as the epochNumber of genesis block
+		EpochNumber: uint64(operatortypes.InitialEpochNumber - 1),
+	}
+	delegation2StartingInfo := feedistributiontypes.DelegationStartingInfo{
+		// genesis delegation references the first historical reward as the starting point.
+		PreviousPeriod: 0,
+		Stake:          sdk.NewDec(suite.Powers[1]),
+		// using 0 as the epochNumber of genesis block
+		EpochNumber: uint64(operatortypes.InitialEpochNumber - 1),
+	}
 	return expectedDelegationRewardStates{
 		AvsAddr:         suite.DogfoodAVSAddr,
 		EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,
@@ -100,24 +123,24 @@ func (suite *KeeperTestSuite) defaultDelegationRewardStates() expectedDelegation
 			suite.Operators[0].String(): {
 				suite.AssetIDs[0]: {
 					DelegationStartingInfos: map[string]*feedistributiontypes.DelegationStartingInfo{
-						suite.StakerIDs[0]: &suite.DistributionGenesis.AllDelegationStartingInfos[0].DelegationStartingInfo,
+						suite.StakerIDs[0]: &delegation1StartingInfo,
 					},
 					HasCurrentOperatorRewards: true,
-					OperatorCurrentPeriod:     suite.DistributionGenesis.AllOperatorCurrentRewards[0].OperatorCurrentRewards.Period,
+					OperatorCurrentPeriod:     defaultOperatorCurrentPeriod,
 					OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
-						0: suite.DistributionGenesis.AllOperatorHistoricalRewards[0].OperatorHistoricalRewards,
+						0: defaultOperatorHistoricalReward,
 					},
 				},
 			},
 			suite.Operators[1].String(): {
 				suite.AssetIDs[0]: {
 					DelegationStartingInfos: map[string]*feedistributiontypes.DelegationStartingInfo{
-						suite.StakerIDs[1]: &suite.DistributionGenesis.AllDelegationStartingInfos[1].DelegationStartingInfo,
+						suite.StakerIDs[1]: &delegation2StartingInfo,
 					},
 					HasCurrentOperatorRewards: true,
-					OperatorCurrentPeriod:     suite.DistributionGenesis.AllOperatorCurrentRewards[1].OperatorCurrentRewards.Period,
+					OperatorCurrentPeriod:     1,
 					OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
-						0: suite.DistributionGenesis.AllOperatorHistoricalRewards[1].OperatorHistoricalRewards,
+						0: defaultOperatorHistoricalReward,
 					},
 				},
 			},
@@ -167,8 +190,10 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 				delegationTimes := 5
 				for i := 0; i < delegationTimes; i++ {
 					// deposit and delegate to the first operator from the default staker
-					suite.DepositAndDelegateToOperators(false, defaultLzChainID, []common.Address{defaultStakerAddr},
-						[]sdk.AccAddress{defaultOperator}, testutil.DefaultDelegateAmount, testutil.DefaultDelegateAmount)
+					suite.DepositAndDelegateToOperators(false, defaultLzChainID,
+						common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+						[]common.Address{defaultStakerAddr}, []sdk.AccAddress{defaultOperator},
+						testutil.DefaultDelegateAmount, testutil.DefaultDelegateAmount)
 				}
 
 				return defaultArgs, map[string]*feedistributiontypes.DelegationChangeInfo{
@@ -189,8 +214,9 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 			malleate: func() (markChangedDelegationsArgs, map[string]*feedistributiontypes.DelegationChangeInfo) {
 				// change the delegation state by another delegation
 				// deposit and delegate to the first operator from the default staker
-				suite.DepositAndDelegateToOperators(false, defaultLzChainID, []common.Address{defaultStakerAddr},
-					[]sdk.AccAddress{defaultOperator}, testutil.DefaultDelegateAmount, testutil.DefaultDelegateAmount)
+				suite.DepositAndDelegateToOperators(false, defaultLzChainID,
+					common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+					[]common.Address{defaultStakerAddr}, []sdk.AccAddress{defaultOperator}, testutil.DefaultDelegateAmount, testutil.DefaultDelegateAmount)
 				// run to the end of current epoch
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
 
@@ -207,7 +233,9 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
 				preTotalDelegationAmount := testutil.DefaultDelegateAmount * int64(len(suite.testStakers))
 				// deposit and delegate the test asset again, which will call the function `MarkChangedDelegations`
-				suite.DepositAndDelegateToOperators(false, defaultLzChainID, suite.testStakers, suite.testOperators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+				suite.DepositAndDelegateToOperators(false, defaultLzChainID,
+					common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+					suite.testStakers, suite.testOperators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
 
 				expectedStakerIDs := make([]feedistributiontypes.StakerDelegationChange, 0)
 				for _, stakerAddr := range suite.testStakers {
@@ -268,14 +296,15 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 
 // return the total rewards for stakers and the reward ratio
 func (suite *KeeperTestSuite) calculateExpectedOperatorReward(
-	operatorPower, totalPower, totalStake int64,
+	operatorAssetPower, totalPower, totalStake int64,
 	rewardPerEpoch, communityTax, commissionRate sdk.Dec,
 	epochNumber int, avsAddr, rewardAssetSymbol string) (feedistributiontypes.CommonAVSRewardData, feedistributiontypes.CommonAVSRewardData) {
+	fmt.Printf("~~~~calculateExpectedOperatorReward,operatorAssetPower:%d,totalPower:%d,totalStake:%d\r\n", operatorAssetPower, totalPower, totalStake)
 	totalReward := rewardPerEpoch.MulInt64(int64(epochNumber))
 	proportion := math.LegacyOneDec().Sub(communityTax)
 	totalRewardsExcludeCommunityTax := totalReward.MulTruncate(proportion)
 
-	operatorTotalReward := totalRewardsExcludeCommunityTax.MulTruncate(sdk.NewDec(operatorPower).QuoTruncate(sdk.NewDec(totalPower)))
+	operatorTotalReward := totalRewardsExcludeCommunityTax.MulTruncate(sdk.NewDec(operatorAssetPower).QuoTruncate(sdk.NewDec(totalPower)))
 	operatorCommission := operatorTotalReward.MulTruncate(commissionRate)
 	totalRewardForStakers := operatorTotalReward.Sub(operatorCommission)
 	rewardRito := totalRewardForStakers.QuoTruncate(sdk.NewDec(totalStake))
@@ -305,7 +334,33 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 			readOnly:           false,
 			expPass:            true,
 			malleate: func() expectedDelegationRewardStates {
-				return suite.defaultDelegationRewardStates()
+				// The state of genesis operators and delegations doesn't need to be recorded in the
+				// genesis file, because it will be initialized automatically before rewards are distributed.
+				nullOperatorAssetState := operatorAssetState{
+					DelegationStartingInfos: map[string]*feedistributiontypes.DelegationStartingInfo{
+						// the starting info will be initialized when initializing operator, which
+						// happens at the end of first epoch.
+						suite.StakerIDs[0]: nil,
+					},
+					HasCurrentOperatorRewards: false,
+					OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{},
+				}
+				return expectedDelegationRewardStates{
+					AvsAddr:         suite.DogfoodAVSAddr,
+					EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,
+					OperatorAssetStates: map[string]map[string]operatorAssetState{
+						suite.Operators[0].String(): {
+							suite.AssetIDs[0]: nullOperatorAssetState,
+						},
+						suite.Operators[1].String(): {
+							suite.AssetIDs[0]: nullOperatorAssetState,
+						},
+					},
+					StakerOutstandingRewards: map[string]*feedistributiontypes.StakerOutstandingRewards{
+						suite.StakerIDs[0]: nil,
+						suite.StakerIDs[1]: nil,
+					},
+				}
 			},
 		},
 		{
@@ -328,8 +383,9 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				// deposit and delegate the test asset to the default operators
 				opNumber := 5
 				for i := 0; i < opNumber; i++ {
-					suite.DepositAndDelegateToOperators(false, suite.testClientChainID, suite.testStakers,
-						suite.Operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+					suite.DepositAndDelegateToOperators(false, suite.testClientChainID,
+						common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+						suite.testStakers, suite.Operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
 				}
 				// run to the end of current epoch
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
@@ -393,7 +449,9 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 					// change the default delegation amount for the operator through a new delegation.
 					// it will trigger the reward distribution for this delegation at the end of epoch.
 					suite.DepositAndDelegateToOperators(
-						false, suite.testClientChainID, []common.Address{common.Address(testOperator)},
+						false, suite.testClientChainID,
+						common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+						[]common.Address{common.Address(testOperator)},
 						[]sdk.AccAddress{testOperator}, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
 				}
 				// run to epoch again to trigger the reward distribution for the delegation
@@ -476,6 +534,175 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				return defaultDelegationRewardState
 			},
 		},
+		{
+			name:               "pass - add new test operators and delegations, then distribute rewards for them.",
+			shouldCallTestFunc: false,
+			readOnly:           false,
+			expPass:            true,
+			malleate: func() expectedDelegationRewardStates {
+				epochDuration := 5
+				// prepare the test operators and delegations
+				operators := suite.RegisterOperators(1)
+				suite.testOperators = operators
+
+				// key is the assetID and stakerID
+				allTestDelegations := make(map[string]map[string]*feedistributiontypes.DelegationStartingInfo)
+				for _, assetID := range suite.AssetIDs {
+					allTestDelegations[assetID] = make(map[string]*feedistributiontypes.DelegationStartingInfo)
+				}
+				allTestStakerIDs := make([]string, 0)
+
+				// deposit and delegate the test asset before the operator has opted-in
+				suite.DepositAndDelegateToOperators(true, s.testClientChainID,
+					common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+					s.testStakers, operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+				// deposit and delegate the IMUA token before the operator has opted-in
+				suite.DepositAndDelegateIMUAToOperators(s.testStakers, operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+				operatorAssetPower1 := testutil.DefaultDelegateAmount * int64(len(s.testStakers))
+
+				initialTotalPower := suite.TotalPower
+				assetNumber := len(suite.AssetIDs)
+				totalPowerAfterDelegations := initialTotalPower + operatorAssetPower1*int64(assetNumber)
+				mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
+				epochRewardDec := sdk.NewDecFromInt(mintParam.EpochReward)
+				_, assetRewardRatio1 := suite.calculateExpectedOperatorReward(
+					operatorAssetPower1, totalPowerAfterDelegations, operatorAssetPower1, epochRewardDec,
+					feedistributiontypes.DefaultParams().CommunityTax, testutil.DefaultOperatorCommission.Rate,
+					epochDuration, suite.DogfoodAVSAddr, utils.BaseDenom)
+
+				assetsDecimals := make(map[string]uint32)
+				// record the test delegations
+				for i, assetID := range suite.AssetIDs {
+					assetsDecimals[assetID] = suite.Assets[i].Decimals
+					_, clientChainID, err := assetstype.ParseID(assetID)
+					suite.Require().NoError(err)
+					for _, stakerAddr := range s.testStakers {
+						// The IDs of stakers who delegated the IMUA token are different, because they use IMUA's chain ID.
+						// So there will be four staker IDs after the test delegations.
+						stakerID, _ := assetstype.GetStakerIDAndAssetID(clientChainID, stakerAddr[:], nil)
+						allTestDelegations[assetID][stakerID] = &feedistributiontypes.DelegationStartingInfo{
+							PreviousPeriod: 0,
+							Stake:          sdk.NewDec(testutil.DefaultDelegateAmount),
+							// start from the first epoch, but active from the second epoch
+							EpochNumber: 1,
+						}
+						allTestStakerIDs = append(allTestStakerIDs, stakerID)
+					}
+				}
+				firstBatchStakerCount := len(allTestStakerIDs)
+
+				// opts the operators into the dogfood AVS
+				suite.OptIntoDogfood(operators)
+
+				// run some epochs to activate the operator and delegations
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, epochDuration)
+
+				// Create another test staker and delegate two assets to the test operator,
+				// to test the case where the delegation occurs after the operator is activated.
+				testStakersNumber2 := 1
+				stakerAddrs, _ := s.CreateStakers(testStakersNumber2, s.testClientChainID)
+				// deposit and delegate the test asset after the operator is activated.
+				suite.DepositAndDelegateToOperators(true, s.testClientChainID,
+					common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+					stakerAddrs, operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+				// deposit and delegate the IMUA token after the operator is activated.
+				suite.DepositAndDelegateIMUAToOperators(stakerAddrs, operators, testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+				operatorAssetPower2 := operatorAssetPower1 + testutil.DefaultDelegateAmount*int64(testStakersNumber2)
+				totalPowerAfterDelegations += testutil.DefaultDelegateAmount * int64(testStakersNumber2) * int64(assetNumber)
+				// record the new test delegations
+				for _, assetID := range suite.AssetIDs {
+					_, clientChainID, err := assetstype.ParseID(assetID)
+					suite.Require().NoError(err)
+					for _, stakerAddr := range stakerAddrs {
+						// The IDs of stakers who delegated the IMUA token are different, because they use IMUA's chain ID.
+						// So there will be two staker IDs after the test delegations.
+						stakerID, _ := assetstype.GetStakerIDAndAssetID(clientChainID, stakerAddr[:], nil)
+						allTestDelegations[assetID][stakerID] = &feedistributiontypes.DelegationStartingInfo{
+							// the new delegation will increase the operator period
+							PreviousPeriod: 1,
+							Stake:          sdk.NewDec(testutil.DefaultDelegateAmount),
+							// start from 1+epochDuration but active from 2+epochDuration
+							EpochNumber: uint64(1 + epochDuration),
+						}
+						allTestStakerIDs = append(allTestStakerIDs, stakerID)
+					}
+				}
+
+				// run some epochs to activate the new delegations
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, epochDuration)
+
+				// undelegate all stakes to claim all rewards automatically
+				for assetID, delegationsPerStaker := range allTestDelegations {
+					for stakerID, delegationStartingInfo := range delegationsPerStaker {
+						assetAddressStr, clientChainID, err := assetstype.ParseID(assetID)
+						suite.Require().NoError(err)
+						stakerAddressStr, _, err := assetstype.ParseID(stakerID)
+						suite.Require().NoError(err)
+						multiplier := math.NewIntWithDecimal(1, int(assetsDecimals[assetID])) // 10^decimals
+						delegationAmountBigInt := delegationStartingInfo.Stake.MulInt(multiplier).TruncateInt()
+						suite.Delegation(false, clientChainID, common.HexToAddress(stakerAddressStr), common.HexToAddress(assetAddressStr), operators[0], delegationAmountBigInt)
+					}
+				}
+				// run to epoch end to activate the undelegations
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
+
+				// construct the expected states
+				_, assetRewardRatio2 := suite.calculateExpectedOperatorReward(
+					operatorAssetPower2, totalPowerAfterDelegations, operatorAssetPower2, epochRewardDec,
+					feedistributiontypes.DefaultParams().CommunityTax, testutil.DefaultOperatorCommission.Rate,
+					epochDuration, suite.DogfoodAVSAddr, utils.BaseDenom)
+				// The expected state for the two test assets should be the same,
+				// because they have the same price and the same test delegations.
+				operatorStatePerAsset := operatorAssetState{
+					HasCurrentOperatorRewards: true,
+					// there were three delegation changes.
+					OperatorCurrentPeriod:   3,
+					DelegationStartingInfos: make(map[string]*feedistributiontypes.DelegationStartingInfo),
+					OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
+						2: {
+							// it will only be referenced by the current reward
+							ReferenceCount:         1,
+							CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{assetRewardRatio2.Add(assetRewardRatio1)},
+						},
+					},
+				}
+
+				// The two test stakers who delegated at epoch 1 will accumulate rewards
+				// over 2 * epochDuration epochs.
+				stakerReward1 := assetRewardRatio2.Add(assetRewardRatio1).Rewards.MulDecTruncate(sdk.NewDec(testutil.DefaultDelegateAmount))
+
+				// The test stakers who delegated at epoch 6 will accumulate rewards
+				// over 1*epochDuration epochs.
+				stakerReward2 := assetRewardRatio2.Rewards.MulDecTruncate(sdk.NewDec(testutil.DefaultDelegateAmount))
+
+				stakerOutstandingRewards := make(map[string]*feedistributiontypes.StakerOutstandingRewards)
+				for i, stakerID := range allTestStakerIDs {
+					// all stake has been undelegated, so the starting info will be deleted
+					operatorStatePerAsset.DelegationStartingInfos[stakerID] = nil
+					if i >= firstBatchStakerCount {
+						stakerOutstandingRewards[stakerID] = &feedistributiontypes.StakerOutstandingRewards{
+							Rewards: stakerReward2,
+						}
+					} else {
+						stakerOutstandingRewards[stakerID] = &feedistributiontypes.StakerOutstandingRewards{
+							Rewards: stakerReward1,
+						}
+					}
+				}
+
+				return expectedDelegationRewardStates{
+					EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,
+					AvsAddr:         suite.DogfoodAVSAddr,
+					OperatorAssetStates: map[string]map[string]operatorAssetState{
+						operators[0].String(): {
+							suite.AssetIDs[0]: operatorStatePerAsset,
+							suite.AssetIDs[1]: operatorStatePerAsset,
+						},
+					},
+					StakerOutstandingRewards: stakerOutstandingRewards,
+				}
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
@@ -487,9 +714,154 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 			s.testStakers = stakerAddrs
 			s.testStakerIDs = stakerIDs
 
+			// add the IMUA token into the support list of dogfood
+			_, imuaAssetID := assetstype.GetStakerIDAndAssetIDFromStr(
+				suite.ClientChains[1].LayerZeroChainID,
+				"", suite.Assets[1].Address,
+			)
+			suite.AssetIDs = []string{suite.AssetIDs[0], imuaAssetID}
+			suite.updateDogfoodAssetsList(suite.AssetIDs)
+
 			expectedStates := tc.malleate()
 			// checkDelegationStates the state after unit test
 			suite.checkDelegationStates(&expectedStates)
+		})
+	}
+}
+
+func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
+	testcases := []struct {
+		name     string
+		malleate func() (string, expectedDelegationRewardStates)
+		// In some test cases, the function is already called automatically in `malleate`,
+		// so it may not need to be called again in the main flow.
+		shouldCallTestFunc bool
+		readOnly           bool
+		expPass            bool
+		errContains        string
+	}{
+		{
+			name:               "pass - claim the delegation rewards actively",
+			shouldCallTestFunc: true,
+			readOnly:           false,
+			expPass:            true,
+			malleate: func() (string, expectedDelegationRewardStates) {
+				testStakerID := suite.StakerIDs[0]
+				// Create a new asset to test claiming rewards from multiple delegations for one staker.
+				newTokenDecimal := uint32(18)
+				newAssetAddrs, newAssetIDs := suite.RegisterAssets(1, newTokenDecimal)
+				fmt.Println("the new test assetID is:", newAssetIDs[0])
+				// add the new asset into the support list of dogfood
+				assetIDs := []string{suite.AssetIDs[0], newAssetIDs[0]}
+				suite.updateDogfoodAssetsList(assetIDs)
+
+				// delegate the new asset to the test operator
+				testOperator := suite.Operators[0]
+				stakerAddrs := []common.Address{
+					common.Address(suite.Operators[0]),
+				}
+				suite.DepositAndDelegateToOperators(
+					false, suite.testClientChainID,
+					newAssetAddrs[0], newTokenDecimal,
+					stakerAddrs, []sdk.AccAddress{testOperator},
+					testutil.DefaultDepositAmount, testutil.DefaultDelegateAmount)
+				// run some epochs to accumulate rewards
+				runEpochNumber := 5
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, runEpochNumber)
+
+				// construct the expected reward state after claiming
+				mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
+				epochRewardDec := sdk.NewDecFromInt(mintParam.EpochReward)
+				// Calculate the reward and ratio for operator asset1 during the first epoch.
+				_, operatorAsset1RewardRatio1 := suite.calculateExpectedOperatorReward(suite.Powers[0], suite.TotalPower, suite.Powers[0], epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+					1, suite.DogfoodAVSAddr, utils.BaseDenom)
+				//fmt.Println("operatorAsset1Reward1,operatorAsset1RewardRatio1", operatorAsset1Reward1, operatorAsset1RewardRatio1)
+				// calculate the reward and ratio for the operator asset1 during the next four epochs.
+				_, operatorAsset1RewardRatio2 := suite.calculateExpectedOperatorReward(suite.Powers[0], suite.TotalPower+testutil.DefaultDelegateAmount, suite.Powers[0], epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+					runEpochNumber-1, suite.DogfoodAVSAddr, utils.BaseDenom)
+				//fmt.Println("operatorAsset1Reward2,operatorAsset1RewardRatio2", operatorAsset1Reward2, operatorAsset1RewardRatio2)
+				// calculate the reward and ratio for the operator asset2 during the next four epochs.
+				// this asset is delegated after the first epoch
+				_, operatorAsset2RewardRatio := suite.calculateExpectedOperatorReward(testutil.DefaultDelegateAmount, suite.TotalPower+testutil.DefaultDelegateAmount, testutil.DefaultDelegateAmount, epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+					runEpochNumber-1, suite.DogfoodAVSAddr, utils.BaseDenom)
+				stakerDelegation1Rewards := operatorAsset1RewardRatio1.Add(operatorAsset1RewardRatio2).Rewards.MulDecTruncate(sdk.NewDec(suite.Powers[0]))
+				stakerDelegation2Rewards := operatorAsset1RewardRatio2.Rewards.MulDecTruncate(sdk.NewDec(testutil.DefaultDelegateAmount))
+				//fmt.Println("operatorAsset2Reward,operatorAsset2RewardRatio", operatorAsset2Reward, operatorAsset2RewardRatio)
+				return testStakerID, expectedDelegationRewardStates{
+					AvsAddr:         suite.DogfoodAVSAddr,
+					EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,
+					OperatorAssetStates: map[string]map[string]operatorAssetState{
+						testOperator.String(): {
+							assetIDs[0]: {
+								DelegationStartingInfos: map[string]*feedistributiontypes.DelegationStartingInfo{
+									testStakerID: {
+										PreviousPeriod: 1,
+										Stake:          sdk.NewDec(suite.Powers[0]),
+										EpochNumber:    uint64(runEpochNumber),
+									},
+								},
+								HasCurrentOperatorRewards: true,
+								OperatorCurrentPeriod:     2,
+								OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
+									1: {
+										ReferenceCount: 2,
+										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+											operatorAsset1RewardRatio1.Add(operatorAsset1RewardRatio2),
+										},
+									},
+								},
+							},
+							assetIDs[1]: {
+								DelegationStartingInfos: map[string]*feedistributiontypes.DelegationStartingInfo{
+									testStakerID: {
+										PreviousPeriod: 1,
+										Stake:          sdk.NewDec(testutil.DefaultDelegateAmount),
+										EpochNumber:    uint64(runEpochNumber),
+									},
+								},
+								HasCurrentOperatorRewards: true,
+								OperatorCurrentPeriod:     2,
+								OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
+									1: {
+										ReferenceCount: 2,
+										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+											operatorAsset2RewardRatio,
+										},
+									},
+								},
+							},
+						},
+					},
+					StakerOutstandingRewards: map[string]*feedistributiontypes.StakerOutstandingRewards{
+						testStakerID: {
+							Rewards: stakerDelegation1Rewards.Add(stakerDelegation2Rewards...),
+						},
+					},
+				}
+			},
+		},
+	}
+	for _, tc := range testcases {
+		tc := tc
+		s.Run(tc.name, func() {
+			s.SetupTest() // Reset state for each test case
+			s.testClientChainID = s.ClientChains[0].LayerZeroChainID
+			testStakerID, expectedStates := tc.malleate()
+			totalClaimedRewards, err := suite.App.DistrKeeper.ClaimDelegationRewards(suite.Ctx, testStakerID)
+			if tc.expPass {
+				s.Require().NoError(err)
+			} else if tc.errContains != "" {
+				s.Require().ErrorContains(err, tc.errContains)
+			}
+			// checkDelegationStates the state after unit test
+			suite.checkDelegationStates(&expectedStates)
+
+			suite.Require().Equal(feedistributiontypes.CommonAVSRewards{
+				{
+					AVSAddress: suite.DogfoodAVSAddr,
+					Rewards:    expectedStates.StakerOutstandingRewards[testStakerID].Rewards,
+				},
+			}, totalClaimedRewards)
 		})
 	}
 }

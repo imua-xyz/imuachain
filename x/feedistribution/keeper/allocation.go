@@ -171,6 +171,7 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			assetUSDValue.IsNegative() {
 			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool,assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
 		}
+		fmt.Println("SplitRewardsToAssetsPool, operator asset USD value and totalUSDValue is:", assetID, assetUSDValue, optedUSDValue.ActiveUSDValue)
 		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
 		fmt.Println("UpdateOperatorCurrentRewards assetRewards", operator, assetID, assetRewards)
 		if assetRewards.IsAllPositive() {

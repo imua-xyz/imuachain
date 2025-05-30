@@ -84,7 +84,6 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 			return nil
 		}
 	}
-
 	// add a new token
 	p.Tokens = append(p.Tokens, &types.Token{
 		Name:            oInfo.Token.Name,

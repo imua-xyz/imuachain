@@ -55,13 +55,12 @@ import (
 type BaseTestSuite struct {
 	suite.Suite
 
-	Ctx                 sdk.Context
-	App                 *imuaapp.ImuachainApp
-	Address             common.Address
-	AccAddress          sdk.AccAddress
-	StakerAddr          string
-	DogfoodAVSAddr      string
-	DistributionGenesis *distributiontypes.GenesisState
+	Ctx            sdk.Context
+	App            *imuaapp.ImuachainApp
+	Address        common.Address
+	AccAddress     sdk.AccAddress
+	StakerAddr     string
+	DogfoodAVSAddr string
 
 	PrivKey   cryptotypes.PrivKey
 	Signer    keyring.Signer
@@ -555,68 +554,6 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			},
 		},
 	}
-	distributionGenesis.AllOperatorCurrentRewards = []distributiontypes.KeyAndOperatorCurrentRewards{
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID, dogfoodtypes.DefaultEpochIdentifier)),
-			OperatorCurrentRewards: distributiontypes.OperatorCurrentRewards{
-				Rewards: []distributiontypes.CommonAVSRewardData(nil),
-				// the period in current rewards starts from 1.
-				Period: 1,
-			},
-		},
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID, dogfoodtypes.DefaultEpochIdentifier)),
-			OperatorCurrentRewards: distributiontypes.OperatorCurrentRewards{
-				Rewards: []distributiontypes.CommonAVSRewardData(nil),
-				// the period in current rewards starts from 1.
-				Period: 1,
-			},
-		},
-	}
-
-	// the period of first historical reward should be 0
-	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(0))
-	distributionGenesis.AllOperatorHistoricalRewards = []distributiontypes.KeyAndOperatorHistoricalRewards{
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID, dogfoodtypes.DefaultEpochIdentifier, periodHexStr)),
-			OperatorHistoricalRewards: distributiontypes.OperatorHistoricalRewards{
-				CumulativeRewardRatios: []distributiontypes.CommonAVSRewardData(nil),
-				// set the reference count to 2 because it will be referenced by the current reward and a default delegation.
-				ReferenceCount: 2,
-			},
-		},
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID, dogfoodtypes.DefaultEpochIdentifier, periodHexStr)),
-			OperatorHistoricalRewards: distributiontypes.OperatorHistoricalRewards{
-				CumulativeRewardRatios: []distributiontypes.CommonAVSRewardData(nil),
-				// set the reference count to 2 because it will be referenced by the current reward and a default delegation.
-				ReferenceCount: 2,
-			},
-		},
-	}
-	distributionGenesis.AllDelegationStartingInfos = []distributiontypes.KeyAndDelegationStartingInfo{
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(stakerID1, assetID, operator1.String(), dogfoodtypes.DefaultEpochIdentifier)),
-			DelegationStartingInfo: distributiontypes.DelegationStartingInfo{
-				// genesis delegation references the first historical reward as the starting point.
-				PreviousPeriod: 0,
-				Stake:          sdk.NewDec(power),
-				// using 0 as the epochNumber of genesis block
-				EpochNumber: uint64(operatortypes.InitialEpochNumber - 1),
-			},
-		},
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(stakerID2, assetID, operator2.String(), dogfoodtypes.DefaultEpochIdentifier)),
-			DelegationStartingInfo: distributiontypes.DelegationStartingInfo{
-				// genesis delegation references the first historical reward as the starting point.
-				PreviousPeriod: 0,
-				Stake:          sdk.NewDec(power2),
-				// using 0 as the epochNumber of genesis block
-				EpochNumber: uint64(operatortypes.InitialEpochNumber - 1),
-			},
-		},
-	}
-	suite.DistributionGenesis = distributionGenesis
 	genesisState[distributiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(distributionGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -771,7 +708,7 @@ func (suite *BaseTestSuite) RunToEpochEndN(epochIdentifier string, number int) {
 
 func (suite *BaseTestSuite) DebugPrintObject(object interface{}) {
 	bytes, err := json.MarshalIndent(object, " ", " ")
-	suite.NoError(err)
+	suite.Require().NoError(err)
 	fmt.Println(string(bytes))
 }
 
@@ -786,7 +723,7 @@ func (suite *BaseTestSuite) RegisterOperator(operator string, commission staking
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
-	suite.NoError(err)
+	suite.Require().NoError(err)
 }
 
 func (suite *BaseTestSuite) Deposit(clientChainLzID uint64, stakerAddr, assetAddr common.Address, amount sdk.Int) (string, string) {
@@ -800,7 +737,7 @@ func (suite *BaseTestSuite) Deposit(clientChainLzID uint64, stakerAddr, assetAdd
 		AssetsAddress:   assetAddr[:],
 	}
 	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
-	suite.NoError(err)
+	suite.Require().NoError(err)
 	return stakerID, assetID
 }
 
@@ -819,7 +756,7 @@ func (suite *BaseTestSuite) Delegation(isDelegation bool, clientChainLzID uint64
 	} else {
 		err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, param)
 	}
-	suite.NoError(err)
+	suite.Require().NoError(err)
 }
 
 func (suite *BaseTestSuite) RegisterAvs(avsName string, avsAddr common.Address, assetIDs []string, epochIdentifier string, unbondingPeriod uint64) {
@@ -830,7 +767,7 @@ func (suite *BaseTestSuite) RegisterAvs(avsName string, avsAddr common.Address, 
 		AssetIDs:        assetIDs,
 		UnbondingPeriod: unbondingPeriod,
 	})
-	suite.NoError(err)
+	suite.Require().NoError(err)
 }
 
 func (suite *BaseTestSuite) RegisterAVSs(number int, epochIdentifier string) []common.Address {
@@ -868,7 +805,7 @@ func (suite *BaseTestSuite) OptIntoAVSs(operators []sdk.AccAddress, avsList []co
 	for _, operator := range operators {
 		for _, avs := range avsList {
 			err := suite.App.OperatorKeeper.OptIn(suite.Ctx, operator, strings.ToLower(avs.String()))
-			suite.NoError(err)
+			suite.Require().NoError(err)
 		}
 	}
 	return
@@ -878,10 +815,10 @@ func (suite *BaseTestSuite) OptIntoDogfood(operators []sdk.AccAddress) {
 	for _, operator := range operators {
 		privVal := mock.NewPV()
 		pubKey, err := privVal.GetPubKey()
-		suite.NoError(err)
+		suite.Require().NoError(err)
 		consensusKey := keytypes.NewWrappedConsKeyFromHex(hexutil.Encode(pubKey.Bytes()))
 		err = suite.App.OperatorKeeper.OptInWithConsKey(suite.Ctx, operator, suite.DogfoodAVSAddr, consensusKey)
-		suite.NoError(err)
+		suite.Require().NoError(err)
 	}
 }
 
@@ -897,10 +834,58 @@ func (suite *BaseTestSuite) CreateStakers(number int, clientChainLzID uint64) ([
 	return stakerAddrs, stakerIDs
 }
 
-func (suite *BaseTestSuite) DepositAndDelegateToOperators(isAssociate bool, clientChainLzID uint64,
+func (suite *BaseTestSuite) RegisterAssets(number int, decimal uint32) ([]common.Address, []string) {
+	assetAddrs := make([]common.Address, 0)
+	assetIDs := make([]string, 0)
+	clientChainLzID := suite.ClientChains[0].LayerZeroChainID
+	for i := 0; i < number; i++ {
+		name := fmt.Sprintf("testAsset%d", i)
+		symbol := fmt.Sprintf("test%d", i)
+		addr, _ := testutiltx.NewAddrKey()
+		_, assetID := assetstypes.GetStakerIDAndAssetID(clientChainLzID, nil, addr[:])
+		err := suite.App.AssetsKeeper.RegisterNewTokenAndSetTokenFeeder(suite.Ctx, &oracletypes.OracleInfo{
+			Chain: struct {
+				Name string
+				Desc string
+			}{Name: "Ethereum", Desc: "-"},
+			Token: struct {
+				Name     string `json:"name"`
+				Desc     string
+				Decimal  string `json:"decimal"`
+				Contract string `json:"contract"`
+				AssetID  string `json:"asset_id"`
+			}{
+				Name:     name,
+				Desc:     "_",
+				Contract: "0x",
+				Decimal:  "18",
+				AssetID:  assetID,
+			},
+			AssetID: assetID,
+		})
+		suite.Require().NoError(err)
+		err = suite.App.AssetsKeeper.SetStakingAssetInfo(suite.Ctx, &assetstypes.StakingAssetInfo{
+			AssetBasicInfo: assetstypes.AssetInfo{
+				Name:             name,
+				Symbol:           symbol,
+				Address:          strings.ToLower(addr.Hex()),
+				Decimals:         decimal,
+				LayerZeroChainID: clientChainLzID,
+			},
+			StakingTotalAmount: sdk.ZeroInt(),
+		})
+		suite.Require().NoError(err)
+		assetAddrs = append(assetAddrs, addr)
+		assetIDs = append(assetIDs, assetID)
+	}
+	return assetAddrs, assetIDs
+}
+
+func (suite *BaseTestSuite) DepositAndDelegateToOperators(
+	isAssociate bool, clientChainLzID uint64,
+	assetAddr common.Address, assetDecimal uint32,
 	stakerAddrs []common.Address, operators []sdk.AccAddress, depositAmount, delegateAmount int64) {
-	assetAddr := common.HexToAddress(suite.Assets[0].Address)
-	multiplier := math.NewIntWithDecimal(1, int(suite.Assets[0].Decimals)) // 10^decimals
+	multiplier := math.NewIntWithDecimal(1, int(assetDecimal)) // 10^decimals
 	depositAmountBigInt := sdk.NewInt(depositAmount).Mul(multiplier)
 	delegationAmountBigInt := sdk.NewInt(delegateAmount).Mul(multiplier)
 
@@ -909,7 +894,7 @@ func (suite *BaseTestSuite) DepositAndDelegateToOperators(isAssociate bool, clie
 			// Associate the staker and operator at the same index to satisfy the self-delegation requirement during opt-in.
 			if isAssociate && i == j {
 				err := suite.App.DelegationKeeper.AssociateOperatorWithStaker(suite.Ctx, clientChainLzID, operator, stakerAddr[:])
-				suite.NoError(err)
+				suite.Require().NoError(err)
 			}
 			suite.Deposit(clientChainLzID, stakerAddr, assetAddr, depositAmountBigInt)
 			suite.Delegation(true, clientChainLzID, stakerAddr, assetAddr, operator, delegationAmountBigInt)
@@ -927,7 +912,7 @@ func (suite *BaseTestSuite) DepositAndDelegateIMUAToOperators(stakerAddrs []comm
 		for _, operator := range operators {
 			coins := sdk.NewCoins(sdk.NewCoin(utils.BaseDenom, depositAmountBigInt))
 			err := suite.App.BankKeeper.SendCoins(suite.Ctx, suite.Address[:], stakerAddr[:], coins)
-			suite.NoError(err)
+			suite.Require().NoError(err)
 			suite.Delegation(true, 0, stakerAddr, assetAddr, operator, delegationAmountBigInt)
 		}
 	}

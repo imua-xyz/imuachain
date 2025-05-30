@@ -486,6 +486,14 @@ func (k Keeper) SetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 	return nil
 }
 
+// DeleteDelegationStartingInfo : delete the starting information for the delegation
+func (k Keeper) DeleteDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
+	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	store.Delete(key)
+	return nil
+}
+
 // GetDelegationStartingInfo : get the starting information for the delegation
 func (k Keeper) GetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) (feedistributiontypes.DelegationStartingInfo, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
@@ -497,14 +505,6 @@ func (k Keeper) GetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 	startingInfo := feedistributiontypes.DelegationStartingInfo{}
 	k.cdc.MustUnmarshal(b, &startingInfo)
 	return startingInfo, nil
-}
-
-// DeleteDelegationStartingInfo : delete the starting information for the delegation
-func (k Keeper) DeleteDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
-	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
-	store.Delete(key)
-	return nil
 }
 
 // HasDelegationStartingInfo : checkDelegationStates whether the starting information for the delegation exists.
