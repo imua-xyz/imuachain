@@ -209,6 +209,11 @@ func (r *round) IsQuoting() bool {
 	return r.status == roundStatusOpen
 }
 
+func (r *round) IsRoundEnd(height int64) bool {
+	baseBlock, _, _, _ := r.getPosition(height)
+	return height == baseBlock+r.interval
+}
+
 func (r *round) FinalPrice() (*PriceResult, bool) {
 	if r.a == nil {
 		return nil, false

@@ -71,7 +71,6 @@ func (p Precompile) DepositOrWithdraw(
 			return nil, err
 		}
 	}
-
 	// return the latest asset state of staker
 	return method.Outputs.Pack(true, finalDepositAmount.BigInt())
 }

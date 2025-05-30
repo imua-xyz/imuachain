@@ -23,7 +23,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
-	github.com/imua-xyz/price-feeder v0.2.7
+	// github.com/imua-xyz/price-feeder v0.2.7
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1
 	github.com/pkg/errors v0.9.1
@@ -58,7 +58,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/ledgerwatch/erigon-lib v0.0.0-20230210071639-db0e7ed11263 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 )
 
 require (

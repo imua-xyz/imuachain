@@ -97,7 +97,7 @@ func getNstRootAndPiecesWithParams(version uint64, stakerCount, pieceSize uint32
 		changes = append(changes, &oracletypes.NSTKV{
 			StakerIndex: i,
 			// #nosec G404 - v2 is not supported in current golang version, and it's safe to use v1 in test
-			Balance: rand.Int63n(99999999) + 1,
+			Balance: uint64(rand.Int63n(99999999) + 1),
 		})
 	}
 	nstbc.NstBalanceChanges = changes

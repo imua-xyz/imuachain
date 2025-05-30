@@ -26,7 +26,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type ValidatorIndex struct {
 	// validator is the address of the validator associated with the feeder.
 	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
-	// next_index is the next nonce value to be used for this validator.
+	// next_index is the next piece index which is expected for the validator to submit
 	NextIndex uint32 `protobuf:"varint,2,opt,name=next_index,json=nextIndex,proto3" json:"next_index,omitempty"`
 }
 

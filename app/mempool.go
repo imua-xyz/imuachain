@@ -65,6 +65,7 @@ func (em *ImuaMempool) Insert(_ context.Context, tx sdk.Tx) error {
 	}
 	for _, pieceCached := range piecesIndexCached {
 		if pieceCached.EqualsTo(piece) {
+			// we don't allow the same piece to be included in mempool
 			return errors.New("piece exists in mempool")
 		}
 	}
@@ -79,7 +80,6 @@ func (em *ImuaMempool) Select(ctx context.Context, txList [][]byte) mempool.Iter
 	// Remove all expired transactions. For example, when selecting for block 100,
 	// all transactions belonging to block 99 or earlier should be removed since they're
 	// no longer relevant for the current selection round.
-
 	collectingFeederIDs := em.k.FeederManager.FeederIDsCollectingRawData()
 	if len(collectingFeederIDs) == 0 {
 		// remove all cached pieces since no collectingFeederIDs available

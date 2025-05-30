@@ -7,7 +7,7 @@ option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 message ValidatorIndex {
   // validator is the address of the validator associated with the feeder.
   string validator = 1;
-  // next_index is the next nonce value to be used for this validator.
+  // next_index is the next piece index which is expected for the validator to submit
   uint32 next_index = 2;
 }
 

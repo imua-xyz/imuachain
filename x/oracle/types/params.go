@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -534,16 +535,17 @@ func (f TokenFeeder) validate() error {
 func (p Params) GetTokenIDFromAssetID(assetID string) int {
 	for id, token := range p.Tokens {
 		assetIDs := strings.Split(token.AssetID, ",")
-		for _, aID := range assetIDs {
-			if aID == assetID {
-				return id
-			}
+		if slices.Contains(assetIDs, assetID) {
+			return id
 		}
 	}
 	return 0
 }
 
 func (p Params) GetAssetIDForNSTFromFeederID(feederID uint64) string {
+	if feederID >= uint64(len(p.TokenFeeders)) {
+		return ""
+	}
 	tokenID := p.TokenFeeders[feederID].TokenID
 
 	if tokenID >= uint64(len(p.Tokens)) {
@@ -679,4 +681,33 @@ func (p Params) IsNST(tokenID int) bool {
 	}
 	token := p.Tokens[tokenID]
 	return strings.HasPrefix(strings.ToLower(token.AssetID), NSTIDPrefix)
+}
+
+func (p Params) IsRule2PhasesByFeederID(feederID uint64) bool {
+	if feederID >= uint64(len(p.TokenFeeders)) {
+		return false
+	}
+	// #nosec G115 - ruleID is set from index of slice which is actually type of int
+	ruleID := int(p.TokenFeeders[feederID].RuleID)
+	if ruleID == 0 || ruleID >= len(p.Rules) {
+		return false
+	}
+	rule := p.Rules[ruleID]
+	return p.IsRule2PhasesByRule(rule)
+}
+
+func (p Params) IsRule2PhasesByRule(rule *RuleSource) bool {
+	// just check the format and don't care the verification here, the verification should be done by 'params' not in this memory calculator(feedermanager)
+	if len(rule.SourceIDs) == 1 && rule.SourceIDs[0] == 0 &&
+		rule.Nom != nil && len(rule.Nom.SourceIDs) == 1 {
+		// #nosec G115 - ruleID is set from index of slice which is actually type of int
+		sID := int(rule.Nom.SourceIDs[0])
+		if sID == 0 || sID >= len(p.Sources) {
+			return false
+		}
+		if s := p.Sources[sID]; s.Deterministic && rule.Nom.Minimum == 1 {
+			return true
+		}
+	}
+	return false
 }

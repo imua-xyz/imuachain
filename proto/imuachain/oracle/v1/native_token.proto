@@ -28,7 +28,7 @@ message BalanceInfo {
   uint64 index = 3;
   // beaconchain epoch related to slash_refund
   // uint epoch = 3;
-  int64 balance = 4;
+  uint64 balance = 4;
   // change tells the reason balance changed
   Action change = 5;
 }
@@ -38,7 +38,7 @@ message StakerInfo {
   // staker's address
   string staker_addr = 1;
   // the index of corresponding staker in staker list
-  int64 staker_index = 2;
+  uint32 staker_index = 2;
   // list of validators that this staker corresponding to on beacon chain
   repeated string validator_pubkey_list = 3;
   // list of balances to represets the history of this staker

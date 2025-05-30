@@ -20046,7 +20046,7 @@
                       "title": "staker's address"
                     },
                     "staker_index": {
-                      "type": "string",
+                      "type": "integer",
                       "format": "int64",
                       "title": "the index of corresponding staker in staker list"
                     },
@@ -20079,7 +20079,7 @@
                           },
                           "balance": {
                             "type": "string",
-                            "format": "int64",
+                            "format": "uint64",
                             "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                           },
                           "change": {
@@ -20185,7 +20185,7 @@
                         "title": "staker's address"
                       },
                       "staker_index": {
-                        "type": "string",
+                        "type": "integer",
                         "format": "int64",
                         "title": "the index of corresponding staker in staker list"
                       },
@@ -20218,7 +20218,7 @@
                             },
                             "balance": {
                               "type": "string",
-                              "format": "int64",
+                              "format": "uint64",
                               "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                             },
                             "change": {
@@ -41297,7 +41297,7 @@
         },
         "balance": {
           "type": "string",
-          "format": "int64",
+          "format": "uint64",
           "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
         },
         "change": {
@@ -42993,7 +42993,7 @@
               "title": "staker's address"
             },
             "staker_index": {
-              "type": "string",
+              "type": "integer",
               "format": "int64",
               "title": "the index of corresponding staker in staker list"
             },
@@ -43026,7 +43026,7 @@
                   },
                   "balance": {
                     "type": "string",
-                    "format": "int64",
+                    "format": "uint64",
                     "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                   },
                   "change": {
@@ -43069,7 +43069,7 @@
                 "title": "staker's address"
               },
               "staker_index": {
-                "type": "string",
+                "type": "integer",
                 "format": "int64",
                 "title": "the index of corresponding staker in staker list"
               },
@@ -43102,7 +43102,7 @@
                     },
                     "balance": {
                       "type": "string",
-                      "format": "int64",
+                      "format": "uint64",
                       "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                     },
                     "change": {
@@ -43639,7 +43639,7 @@
           "title": "staker's address"
         },
         "staker_index": {
-          "type": "string",
+          "type": "integer",
           "format": "int64",
           "title": "the index of corresponding staker in staker list"
         },
@@ -43672,7 +43672,7 @@
               },
               "balance": {
                 "type": "string",
-                "format": "int64",
+                "format": "uint64",
                 "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
               },
               "change": {

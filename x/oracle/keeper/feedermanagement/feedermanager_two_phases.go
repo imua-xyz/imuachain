@@ -169,18 +169,18 @@ func (f *FeederManager) resetPhaseTwoMaliciousTx() {
 
 // ProcessRawData verify the submitted piece of rawData with proof against the expected root and cached the result if it passed the verification
 // return (cached rawData piece, error)
-func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) ([]byte, error) {
+func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCreatePrice, isCheckTx bool) (uint32, []byte, error) {
 	if isCheckTx {
 		f = f.getCheckTx()
 	}
 	var r *round
 	var err error
 	if r, err = f.validateMsg(ctx, msg); err != nil {
-		return nil, oracletypes.ErrInvalidMsg.Wrap(err.Error())
+		return 0, nil, oracletypes.ErrInvalidMsg.Wrap(err.Error())
 	}
 	// we skip the verification in simulation mode, this is necessary for caching future pieces in mempool which hlep proposer to ensure including necessary piece to get avoid of missing count
 	if isCheckTx {
-		return nil, nil
+		return 0, nil, nil
 	}
 	// #nosec G115
 	f.phaseTwoCollected(msg.FeederID)
@@ -191,7 +191,7 @@ func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCrea
 	if !ok {
 		validator, _ := oracletypes.ConsAddrStrFromCreator(msg.Creator)
 		f.phaseTwoMaliciousTx[msg.FeederID] = validator
-		return nil, fmt.Errorf("failed to verify piece of index %d provided within message for feederID:%d against root:%s", piece.Index, msg.FeederID, hex.EncodeToString(r.m.RootHash()))
+		return 0, nil, fmt.Errorf("failed to verify piece of index %d provided within message for feederID:%d against root:%s", piece.Index, msg.FeederID, hex.EncodeToString(r.m.RootHash()))
 	}
 	// we don't need to cache the proof for state updating if the merkle tree have collected all rawData
 	if !r.m.Completed() {
@@ -205,6 +205,5 @@ func (f *FeederManager) ProcessRawData(ctx sdk.Context, msg *oracletypes.MsgCrea
 	// persist piece for recovery (with memory-cache update into merkleTree)
 	// save this piece and proof to db for recovery, for nodes without running,
 	// this process only causes additional: two write to stateDB(piece, proof), one read from the stateDB(piece)
-
-	return piece.RawData, nil
+	return piece.Index, piece.RawData, nil
 }

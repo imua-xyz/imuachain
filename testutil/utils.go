@@ -211,7 +211,8 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		Decimal:         18,
 		Active:          true,
 		AssetID:         "0xdac17f958d2ee523a2206206994597c13d831ec7_0x65",
-	})
+	},
+	)
 	oracleDefaultParams.Sources = append(oracleDefaultParams.Sources, &oracletypes.Source{
 		Name: "Chainlink",
 		Entry: &oracletypes.Endpoint{
@@ -238,14 +239,38 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		Decimal:         0,
 		Active:          true,
 		AssetID:         "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48_0x65",
-	})
+	},
+		&oracletypes.Token{
+			Name:            "NSTETH",
+			ChainID:         1,
+			ContractAddress: "0x",
+			Decimal:         0,
+			Active:          true,
+			AssetID:         "nst_0x65",
+		},
+	)
 	oracleDefaultParams.TokenFeeders = append(oracleDefaultParams.TokenFeeders, &oracletypes.TokenFeeder{
-		TokenID:        2,
+		TokenID:        1,
 		RuleID:         1,
 		StartRoundID:   1,
 		StartBaseBlock: 1,
 		Interval:       10,
-	})
+	},
+		&oracletypes.TokenFeeder{
+			TokenID:        2,
+			RuleID:         1,
+			StartRoundID:   1,
+			StartBaseBlock: 1,
+			Interval:       10,
+		},
+		&oracletypes.TokenFeeder{
+			TokenID:        3,
+			RuleID:         1,
+			StartRoundID:   1,
+			StartBaseBlock: 1,
+			Interval:       10,
+		},
+	)
 	oracleGenesis := oracletypes.NewGenesisState(oracleDefaultParams)
 	oracleGenesis.PricesList = []oracletypes.Prices{
 		{TokenID: 1, NextRoundID: 2, PriceList: []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 1}}},

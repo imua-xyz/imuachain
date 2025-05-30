@@ -2,9 +2,9 @@ package keeper
 
 import (
 	"context"
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -42,9 +42,14 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 
 	// goto rawData process which needs no 'aggragation', we just verify the provided piece with recorded root which got consensus
 	if msg.IsPhaseTwo() {
-		cachedRawData, err := ms.ProcessRawData(ctx, msg, ctx.IsCheckTx())
+		cachedIndex, cachedRawData, err := ms.ProcessRawData(ctx, msg, ctx.IsCheckTx())
 		if err == nil {
 			logger.Info("quote of 2nd-phase added rawData piece", append(logQuote, "rootHash", hex.EncodeToString(cachedRawData), "piece-index", msg.Prices[0].Prices[0].DetID)...)
+			ctx.EventManager().EmitEvent(sdk.NewEvent(
+				types.EventTypeCreatePrice,
+				sdk.NewAttribute(types.AttributeKeyNSTPieceUpdate, types.AttributeValueTrue),
+				sdk.NewAttribute(types.AttributeKeyNSTPieceChange, fmt.Sprintf("%d_%d", msg.FeederID, cachedIndex)),
+			))
 			return &types.MsgCreatePriceResponse{}, nil
 		}
 		logger.Error("quote of 2nd-phase for rawData piece failed", append(logQuote, "error", err)...)
@@ -84,13 +89,9 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		roundIDStr := strconv.FormatUint(finalPrice.RoundID, 10)
 		priceStr := finalPrice.Price
 
-		// if price is too long, hash it
-		// this is to prevent the price from being too long and causing the event to be too long
-		// price is also used for 'nst' to describe the balance change, and it will be at least 32 bytes at that case
-		if len(priceStr) >= maxPriceLength {
-			hash := sha256.New()
-			hash.Write([]byte(priceStr))
-			priceStr = base64.StdEncoding.EncodeToString(hash.Sum(nil))
+		if msg.IsPhaseOne() {
+			// fot two-phases aggregation, the price represents for the rootHash of merkleTree derived from rawData, we need to encode it to base64 for identity transfer via websocket
+			priceStr = base64.StdEncoding.EncodeToString([]byte(priceStr))
 		}
 
 		// emit event to tell price is updated for current round of corresponding feederID
@@ -98,7 +99,7 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 			types.EventTypeCreatePrice,
 			sdk.NewAttribute(types.AttributeKeyRoundID, roundIDStr),
 			sdk.NewAttribute(types.AttributeKeyFinalPrice, strings.Join([]string{tokenIDStr, roundIDStr, priceStr, decimalStr}, "_")),
-			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValuePriceUpdatedSuccess)),
+			sdk.NewAttribute(types.AttributeKeyPriceUpdated, types.AttributeValueTrue)),
 		)
 	}
 
