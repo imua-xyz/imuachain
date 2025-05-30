@@ -211,6 +211,12 @@ type round struct {
 
 	// roundBaseBlock is the round base block of current round
 	roundBaseBlock int64
+
+	// roundPhaseTwoCheckingBlock defines the first block when the slashing mechnism require proposer must contain collecting rawdata
+	// We delay the block height for several blocks after first-phase consensus to give proposers time to receive and prepare messages with raw data pieces and proofs
+	// Since proposers are penalized for not including necessary raw data pieces, we provide this buffer to prevent unfair punishment due to overly strict timeouts
+	roundPhaseTwoCheckingBlock uint64
+
 	// roundID is the round ID of current round
 	roundID int64
 	// status indicates the status of current round
@@ -221,6 +227,17 @@ type round struct {
 	cache CacheReader
 	// algo is the aggregation algorithm for current round to get final price
 	algo AggAlgorithm
+
+	// twoPhases indicates if the corresponding tokenfeeder requires 2-phase aggregation
+	twoPhases bool
+
+	m *oracletypes.MerkleTree
+	// cachedProofForBlock keeps added proof cache from current block, used for EndBlock to update state
+	// we don't do any state update during oracle tx executing, so we cached the information before endBlock if any
+	// this will be reset on endBlock after update state
+	cachedProofForBlock oracletypes.Proof
+
+	h common.PostAggregationHandler
 }
 
 type orderedSliceInt64 []int64
@@ -283,4 +300,10 @@ type FeederManager struct {
 	// restSlashing indicates whether it's satisfied to reset slashing
 	// when the slashing params is changed in current block, this will be set to true.
 	resetSlashing bool
+
+	// phaseTwoCollectingFeederIDs map[uint64]struct{}
+	// feederID -> roundID
+	phaseTwoCollectingFeederIDs map[uint64]uint64
+	// feederID->msg.creator
+	phaseTwoMaliciousTx map[uint64]string
 }

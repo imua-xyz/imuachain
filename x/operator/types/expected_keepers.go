@@ -140,6 +140,10 @@ type OperatorHooks interface {
 	AfterSlash(
 		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
 	)
+	// AfterJail This hook is called when an operator is jailed
+	AfterJail(
+		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+	)
 }
 type StakingKeeper interface {
 	IsImuachainValidator(ctx sdk.Context, addr sdk.ConsAddress) bool

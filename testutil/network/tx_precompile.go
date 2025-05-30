@@ -120,6 +120,70 @@ func (n Network) SendPrecompileTx(preCompileName precompile, methodName string, 
 	return nil
 }
 
+func (n Network) SendPrecompileTxWithNonce(preCompileName precompile, methodName string, nonce uint64, args ...interface{}) (uint64, error) {
+	ctx := context.Background()
+
+	ethC := n.Validators[0].JSONRPCClient
+
+	chainID, err := ethC.ChainID(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get chainID, error:%w", err)
+	}
+
+	precompileAddr := precompileAddresses[preCompileName]
+	precompileABI := abis[preCompileName]
+
+	data, err := precompileABI.Pack(methodName, args...)
+	if err != nil {
+		return 0, fmt.Errorf("failed to pack message for %s, error:%w", methodName, err)
+	}
+
+	if nonce == 0 {
+		nonce, err = ethC.NonceAt(ctx, callAddr, nil)
+		if err != nil {
+			return 0, fmt.Errorf("failed to get nonce for address %s: %w", callAddr.Hex(), err)
+		}
+
+	}
+
+	gasPrice, err := ethC.SuggestGasPrice(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get suggested gas price: %w", err)
+	}
+
+	retTx := types.NewTx(&types.LegacyTx{
+		Nonce:    nonce,
+		To:       &precompileAddr,
+		Value:    big.NewInt(0),
+		Gas:      gasLimit,
+		GasPrice: gasPrice,
+		Data:     data,
+	})
+	signer := types.LatestSignerForChainID(chainID)
+	signTx, err := types.SignTx(retTx, signer, sk)
+	if err != nil {
+		return 0, fmt.Errorf("failed to sign transaction: %w", err)
+	}
+
+	fmt.Println("the txID is:", signTx.Hash().String())
+	msg := ethereum.CallMsg{
+		From: callAddr,
+		To:   retTx.To(),
+		Data: retTx.Data(),
+	}
+	_, err = ethC.CallContract(context.Background(), msg, nil)
+	if err != nil {
+		return 0, fmt.Errorf("failed to call contract:%s, error:%w", preCompileName, err)
+	}
+
+	err = ethC.SendTransaction(ctx, signTx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to send transaction, error:%w", err)
+	}
+
+	return nonce + 1, nil
+}
+
 // parseABI parses abi from file
 func parseABI(abiPath string) (abi.ABI, error) {
 	f, err := os.Open(abiPath)

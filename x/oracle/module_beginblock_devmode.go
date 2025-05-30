@@ -12,9 +12,9 @@ import (
 )
 
 // BeginBlock contains the logic that is automatically triggered at the beginning of each block
-func (am AppModule) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
+func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 	logger := am.keeper.Logger(ctx)
-	am.keeper.BeginBlock(ctx)
+	am.keeper.BeginBlock(ctx, req)
 
 	logger.Info("start simulating recovery in BeginBlock", "height", ctx.BlockHeight())
 	// check the result of recovery

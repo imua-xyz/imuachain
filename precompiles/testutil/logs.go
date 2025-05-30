@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"bytes"
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -63,6 +64,16 @@ func CheckLogs(logArgs LogCheckArgs) error {
 		}
 	}
 
+	if len(logArgs.ExpData) != len(ethRes.Logs) {
+		return fmt.Errorf("expected %d data in Ethereum response; got: %d", len(logArgs.ExpData), len(ethRes.Logs))
+	}
+
+	for i, log := range ethRes.Logs {
+		if !bytes.Equal(log.Data, logArgs.ExpData[i]) {
+			return fmt.Errorf("expected data %v; got: %v", logArgs.ExpData[i], log.Data)
+		}
+	}
+
 	return nil
 }
 
@@ -77,6 +88,9 @@ type LogCheckArgs struct {
 	ExpEvents []string
 	// ExpPass is whether the transaction is expected to pass or not.
 	ExpPass bool
+	// ExpData is the data which is expected to be emitted,
+	// corresponding to each event that is emitted.
+	ExpData [][]byte
 	// Res is the response of the transaction.
 	//
 	// NOTE: This does not have to be set when using contracts.CallContractAndCheckLogs.
@@ -114,5 +128,11 @@ func (l LogCheckArgs) WithExpPass(expPass bool) LogCheckArgs {
 // WithRes sets the Res field of LogCheckArgs.
 func (l LogCheckArgs) WithRes(res abci.ResponseDeliverTx) LogCheckArgs {
 	l.Res = res
+	return l
+}
+
+// WithExpData sets the ExpData field of LogCheckArgs.
+func (l LogCheckArgs) WithExpData(expData ...[]byte) LogCheckArgs {
+	l.ExpData = expData
 	return l
 }

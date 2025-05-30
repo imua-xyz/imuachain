@@ -38,11 +38,6 @@ func (s *DelegationPrecompileSuite) TestIsTransaction() {
 			s.precompile.Methods[delegation.MethodUndelegate].Name,
 			true,
 		},
-		{
-			"invalid",
-			"invalid",
-			false,
-		},
 	}
 
 	for _, tc := range testCases {

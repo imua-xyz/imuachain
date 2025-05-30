@@ -23,7 +23,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
-	github.com/imua-xyz/price-feeder v0.2.4
+	// github.com/imua-xyz/price-feeder v0.2.7
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1
 	github.com/pkg/errors v0.9.1
@@ -58,7 +58,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/ledgerwatch/erigon-lib v0.0.0-20230210071639-db0e7ed11263 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 )
 
 require (
@@ -267,15 +266,17 @@ require (
 replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
-	// use Cosmos-SDK fork to enable Ledger functionality
-	github.com/cosmos/cosmos-sdk => github.com/evmos/cosmos-sdk v0.47.5-evmos.2
-
-	//fix cosmos-sdk error
+	// use Cosmos-SDK fork
+	// (1) to enable Ledger functionality
+	// (2) to backport `Copy` feature to state for reverting precompiles
+	// TODO cut a release (after adding security backports) instead of pointing to a commit hash
+	github.com/cosmos/cosmos-sdk => github.com/imua-xyz/cosmos-sdk v0.47.5-evmos.2.0.20250312095401-0035968c59f0
+	// fix cosmos-sdk error
 	github.com/cosmos/gogoproto => github.com/cosmos/gogoproto v1.4.10
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
-	// use imua fork of evmos
-	github.com/evmos/evmos/v16 => github.com/imua-xyz/evmos/v16 v16.0.3-0.20240828081344-d5cfcd34a812
+	// use imua fork of evmos which contains evm and precompile fixes
+	github.com/evmos/evmos/v16 => github.com/imua-xyz/evmos/v16 v16.0.3-0.20250515032007-e21b41cb9b20
 	// Security Advisory https://github.com/advisories/GHSA-h395-qcrw-5vmq
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.9.1
 	// replace broken goleveldb

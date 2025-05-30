@@ -23,11 +23,6 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 		ks.Reset()
 	})
 	BeforeEach(func() {
-		ks.Reset()
-		Expect(ks.ms).ToNot(BeNil())
-		defaultParams = testdata.DefaultParamsForTest()
-		ks.k.SetParams(ks.ctx, defaultParams)
-
 		privVal1 := mock.NewPV()
 		pubKey1, _ := privVal1.GetPubKey()
 
@@ -53,6 +48,11 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 				},
 			}
 		})
+
+		ks.Reset()
+		Expect(ks.ms).ToNot(BeNil())
+		defaultParams = testdata.DefaultParamsForTest()
+		ks.k.SetParams(ks.ctx, defaultParams)
 	})
 
 	Context("Update Chains", func() {
@@ -158,12 +158,12 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 		It("update maxSizePrices", func() {
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), &types.MsgUpdateParams{
 				Params: types.Params{
-					MaxSizePrices: 100,
+					MaxSizePrices: 120,
 				},
 			})
 			Expect(err).Should(BeNil())
 			p := ks.k.GetParams(ks.ctx)
-			Expect(p.MaxSizePrices).Should(BeEquivalentTo(100))
+			Expect(p.MaxSizePrices).Should(BeEquivalentTo(120))
 		})
 	})
 

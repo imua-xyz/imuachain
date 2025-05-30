@@ -14,8 +14,6 @@ import (
 
 type ItemV map[string]*big.Int
 
-const v1RuleID = 1
-
 func (c *caches) CpyForSimulation() *caches {
 	ret := *c
 	msg := *(c.msg)
@@ -87,10 +85,43 @@ func (c *caches) IsDeterministic(sourceID int64) (bool, error) {
 	return sources[sourceID].Deterministic, nil
 }
 
-// RuleV1, we restrict the source to be Chainlink and only that source is acceptable
+// RuleV1:
+// 1. single deterministic source (like chainlink)
+// 2. 2-phase aggregation with single deterministic source
+// we don't verify the source-name to be 'chainlink' or 'beaconchain', it is satisefied as long as
+// all validators agreed on the same source
 func (c *caches) IsRuleV1(feederID int64) bool {
-	ruleID := c.params.params.TokenFeeders[feederID].RuleID
-	return ruleID == v1RuleID && len(c.params.params.Sources) == 2 && c.params.params.Sources[1].Name == oracletypes.SourceChainlinkName
+	if feederID < 0 || feederID >= int64(len(c.params.params.TokenFeeders)) {
+		return false
+	}
+	p := c.params.params
+	// #nosec - G115 ruleID is assigned with slice index
+	ruleID := int(p.TokenFeeders[feederID].RuleID)
+	if ruleID == 0 || ruleID >= len(p.Rules) {
+		return false
+	}
+
+	rule := p.Rules[ruleID]
+	// for v1, only single deterministic source is supported
+	if len(rule.SourceIDs) == 1 {
+		// #nosec G115 - sourceID is assigned with slice index
+		sID := int(rule.SourceIDs[0])
+		if sID > 0 {
+			if sID >= len(p.Sources) {
+				return false
+			}
+			if s := p.Sources[sID]; s.Deterministic {
+				return true
+			}
+		}
+	}
+	return c.params.params.IsRule2PhasesByRule(rule)
+}
+
+// TODO: forward this to cacheParams
+// IsRule2Phases returns whether a tokenfeeder is restricted by 2-phases rule
+func (c *caches) IsRule2PhasesByFeederID(feederID uint64) bool {
+	return c.params.params.IsRule2PhasesByFeederID(feederID)
 }
 
 func (c *caches) GetTokenIDForFeederID(feederID int64) (int64, bool) {
@@ -340,6 +371,19 @@ func (c *caches) GetTokenFeederForFeederID(feederID int64) (tokenFeeder *oraclet
 	return
 }
 
+func (c *caches) GetNSTFeederIDFromClientChainID(clientChainID uint64) (uint64, bool) {
+	for fID, tokenFeeder := range c.params.params.TokenFeeders {
+		if fID == 0 {
+			continue
+		}
+		if ccID, ok := oracletypes.GetClientChainIDFromNSTAssetID(c.params.params.Tokens[tokenFeeder.TokenID].AssetID); ok && ccID == clientChainID {
+			// #nosec G115 - fID is index of slice
+			return uint64(fID), true
+		}
+	}
+	return 0, false
+}
+
 // SkipCommit skip real commit by setting the update flag to false
 func (c *caches) SkipCommit() {
 	c.validators.update = false
@@ -366,6 +410,18 @@ func (c *caches) Commit(ctx sdk.Context, reset bool) (msgUpdated, validatorsUpda
 		c.ResetCaches()
 	}
 	return
+}
+
+func (c *caches) RawDataPieceSize() uint32 {
+	return c.params.params.PieceSizeByte
+}
+
+func (c *caches) IntervalForFeederID(feederID uint64) (uint64, bool) {
+	// TODO: change type of interval to uint32
+	if feederID >= uint64(len(c.params.params.TokenFeeders)) {
+		return 0, false
+	}
+	return c.params.params.TokenFeeders[feederID].Interval, true
 }
 
 func (c *caches) ResetCaches() {

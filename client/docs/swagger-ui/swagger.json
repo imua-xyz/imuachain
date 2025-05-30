@@ -18941,6 +18941,11 @@
                           "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                         }
                       }
+                    },
+                    "piece_size_byte": {
+                      "type": "integer",
+                      "format": "int64",
+                      "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                     }
                   }
                 }
@@ -19683,6 +19688,11 @@
                                 "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                               }
                             }
+                          },
+                          "piece_size_byte": {
+                            "type": "integer",
+                            "format": "int64",
+                            "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                           }
                         },
                         "description": "Params defines the parameters for the module."
@@ -20050,6 +20060,11 @@
                               "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                             }
                           }
+                        },
+                        "piece_size_byte": {
+                          "type": "integer",
+                          "format": "int64",
+                          "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                         }
                       },
                       "description": "Params defines the parameters for the module."
@@ -20134,7 +20149,7 @@
                       "title": "staker's address"
                     },
                     "staker_index": {
-                      "type": "string",
+                      "type": "integer",
                       "format": "int64",
                       "title": "the index of corresponding staker in staker list"
                     },
@@ -20167,7 +20182,7 @@
                           },
                           "balance": {
                             "type": "string",
-                            "format": "int64",
+                            "format": "uint64",
                             "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                           },
                           "change": {
@@ -20273,7 +20288,7 @@
                         "title": "staker's address"
                       },
                       "staker_index": {
-                        "type": "string",
+                        "type": "integer",
                         "format": "int64",
                         "title": "the index of corresponding staker in staker list"
                       },
@@ -20306,7 +20321,7 @@
                             },
                             "balance": {
                               "type": "string",
-                              "format": "int64",
+                              "format": "uint64",
                               "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                             },
                             "change": {
@@ -41486,7 +41501,7 @@
         },
         "balance": {
           "type": "string",
-          "format": "int64",
+          "format": "uint64",
           "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
         },
         "change": {
@@ -41894,6 +41909,11 @@
               "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
             }
           }
+        },
+        "piece_size_byte": {
+          "type": "integer",
+          "format": "int64",
+          "title": "piece_size_byte defines how many bytes one piece of raw data includes"
         }
       },
       "description": "Params defines the parameters for the module."
@@ -42387,6 +42407,11 @@
                         "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                       }
                     }
+                  },
+                  "piece_size_byte": {
+                    "type": "integer",
+                    "format": "int64",
+                    "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                   }
                 },
                 "description": "Params defines the parameters for the module."
@@ -42869,6 +42894,11 @@
                       "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                     }
                   }
+                },
+                "piece_size_byte": {
+                  "type": "integer",
+                  "format": "int64",
+                  "title": "piece_size_byte defines how many bytes one piece of raw data includes"
                 }
               },
               "description": "Params defines the parameters for the module."
@@ -43139,6 +43169,11 @@
                   "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                 }
               }
+            },
+            "piece_size_byte": {
+              "type": "integer",
+              "format": "int64",
+              "title": "piece_size_byte defines how many bytes one piece of raw data includes"
             }
           }
         }
@@ -43162,7 +43197,7 @@
               "title": "staker's address"
             },
             "staker_index": {
-              "type": "string",
+              "type": "integer",
               "format": "int64",
               "title": "the index of corresponding staker in staker list"
             },
@@ -43195,7 +43230,7 @@
                   },
                   "balance": {
                     "type": "string",
-                    "format": "int64",
+                    "format": "uint64",
                     "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                   },
                   "change": {
@@ -43238,7 +43273,7 @@
                 "title": "staker's address"
               },
               "staker_index": {
-                "type": "string",
+                "type": "integer",
                 "format": "int64",
                 "title": "the index of corresponding staker in staker list"
               },
@@ -43271,7 +43306,7 @@
                     },
                     "balance": {
                       "type": "string",
-                      "format": "int64",
+                      "format": "uint64",
                       "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
                     },
                     "change": {
@@ -43688,6 +43723,11 @@
                   "title": "slash_fraction_malicious defines the fraction one validator should be punished for malicious behavior"
                 }
               }
+            },
+            "piece_size_byte": {
+              "type": "integer",
+              "format": "int64",
+              "title": "piece_size_byte defines how many bytes one piece of raw data includes"
             }
           },
           "description": "Params defines the parameters for the module."
@@ -43803,7 +43843,7 @@
           "title": "staker's address"
         },
         "staker_index": {
-          "type": "string",
+          "type": "integer",
           "format": "int64",
           "title": "the index of corresponding staker in staker list"
         },
@@ -43836,7 +43876,7 @@
               },
               "balance": {
                 "type": "string",
-                "format": "int64",
+                "format": "uint64",
                 "title": "beaconchain epoch related to slash_refund\nuint epoch = 3;"
               },
               "change": {

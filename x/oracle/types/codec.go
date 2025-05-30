@@ -14,11 +14,13 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	// TODO: remove this
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgCreatePrice{},
 	)
 	// this line is used by starport scaffolding # 3
 
+	// this method registered sdk.Msg, so we don't need the above one
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 

@@ -16,7 +16,7 @@ import (
 )
 
 func TestQueryStakerInfosPaginated(t *testing.T) {
-	assetID := string(keeper.NSTETHAssetIDMainnet)
+	assetID := string("0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x7595")
 	keeper, ctx := keepertest.OracleKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	msgs := createNStakerInfos(keeper, ctx, assetID, 5)
@@ -82,7 +82,7 @@ func createNStakerInfos(keeper *keeper.Keeper, ctx sdk.Context, assetID string, 
 	for i := 0; i < n; i++ {
 		ret = append(ret, &types.StakerInfo{
 			StakerAddr:          fmt.Sprintf("Staker_%d", i),
-			StakerIndex:         int64(i),
+			StakerIndex:         uint32(i),
 			ValidatorPubkeyList: []string{strconv.Itoa(i + 1)},
 			BalanceList: []*types.BalanceInfo{
 				{

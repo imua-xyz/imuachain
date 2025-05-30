@@ -18,6 +18,7 @@ const (
 	invalidPageLimit
 	failedInAggregation
 	quoteRecorded
+	noOp
 )
 
 // x/oracle module sentinel errors
@@ -33,4 +34,5 @@ var (
 	ErrInvalidPagination                 = sdkerrors.Register(ModuleName, invalidPageLimit, "params for pagination is invalid")
 	ErrFailedInAggregation               = sdkerrors.Register(ModuleName, failedInAggregation, "failed in aggregation")
 	ErrQuoteRecorded                     = sdkerrors.Register(ModuleName, quoteRecorded, "quote recorded")
+	ErrNoOp                              = sdkerrors.Register(ModuleName, noOp, "no operation")
 )

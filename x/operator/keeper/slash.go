@@ -320,6 +320,12 @@ func (k *Keeper) SetJailedState(ctx sdk.Context, consAddr sdk.ConsAddress, chain
 	if err != nil {
 		k.Logger(ctx).Error(err.Error(), chainID)
 	}
+
+	affectedAVSList, err := k.GetImpactfulAVSForOperator(ctx, operatorAddr.String())
+	if err != nil {
+		return
+	}
+	k.hooks.AfterJail(ctx, operatorAddr, affectedAVSList)
 }
 
 // Jail an operator

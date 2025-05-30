@@ -1,0 +1,40 @@
+syntax = "proto3";
+package imuachain.oracle.v1;
+
+option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
+
+// ValidatorIndex represents the next index to be used for a validator of a specified feeder.
+message ValidatorIndex {
+  // validator is the address of the validator associated with the feeder.
+  string validator = 1;
+  // next_index is the next piece index which is expected for the validator to submit
+  uint32 next_index = 2;
+}
+
+// FeederValidatorsIndex stores a list of next indexes for validators of feeders.
+message FeederValidatorsIndex {
+  // validator_index_list is the list of ValidatorIndex entries for the feeders.
+  repeated ValidatorIndex validator_index_list = 1;
+}
+
+// HashNode represents a node in a Merkle tree, containing its index and hash value.
+message HashNode {
+  // index is the position of the node in the Merkle tree.
+  uint32 index = 1;
+  // hash is the hash value of the node.
+  bytes hash = 2;
+}
+
+// FlattenTree represents all hash nodes of a Merkle tree, flattened into a list with their indexes.
+message FlattenTree {
+  // nodes is the list of all HashNode entries in the Merkle tree.
+  repeated HashNode nodes = 1;
+}
+
+// TreeInfo contains the root hash and the number of leaves in a Merkle tree.
+message TreeInfo {
+  // leaf_count is the total number of leaves in the Merkle tree.
+  uint32 leaf_count = 1;
+  // root_hash is the root hash value of the Merkle tree.
+  bytes root_hash = 2;
+}

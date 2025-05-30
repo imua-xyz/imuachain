@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -27,13 +28,15 @@ func TestMsgCreatePrice_ValidateBasic(t *testing.T) {
 			msg: MsgCreatePrice{
 				Creator: sample.AccAddress(),
 			},
+			err: errors.New("prices should not be empty, at least one source"),
 		},
 	}
+	//"prices should not be empty, at least one source"
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.msg.ValidateBasic()
 			if tt.err != nil {
-				require.ErrorIs(t, err, tt.err)
+				require.ErrorContains(t, err, tt.err.Error())
 				return
 			}
 			require.NoError(t, err)

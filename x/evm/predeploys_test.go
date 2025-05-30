@@ -6,6 +6,7 @@ package evm_test
 // 3. CREATE2 can be used to deploy CREATE3 successfully.
 
 import (
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -14,12 +15,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	evmostypes "github.com/evmos/evmos/v16/types"
+	evmosevmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	testutilcontracts "github.com/imua-xyz/imuachain/precompiles/testutil/contracts"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	"github.com/imua-xyz/imuachain/x/evm/testdata"
 	"github.com/imua-xyz/imuachain/x/evm/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -78,8 +83,9 @@ func (suite *KeeperTestSuite) TestPredeploysExist() {
 func (suite *KeeperTestSuite) TestBalanceRetention() {
 	evmParams := suite.App.EvmKeeper.GetParams(suite.Ctx)
 	evmDenom := evmParams.GetEvmDenom()
+	beforeSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, evmDenom).Amount
 	targetBalance := sdkmath.NewInt(100)
-	// set balance > 0 for all of the predeployed address
+	// set balance > 0 for all of the predeployed address, at genesis.
 	for _, predeploy := range types.DefaultPredeploys {
 		addr := predeploy.GetByteAddress()
 		suite.Balances = append(
@@ -90,6 +96,7 @@ func (suite *KeeperTestSuite) TestBalanceRetention() {
 			},
 		)
 	}
+	expectedSupply := beforeSupply.Add(sdkmath.NewInt(int64(len(types.DefaultPredeploys))).Mul(targetBalance))
 	// now redo the genesis
 	suite.SetupTest()
 	// check the state of the predeploys
@@ -118,9 +125,12 @@ func (suite *KeeperTestSuite) TestBalanceRetention() {
 		// check that code exists
 		suite.Require().NotNil(suite.App.EvmKeeper.GetCode(suite.Ctx, predeploy.GetCodeHash()))
 	}
+	afterSupply := suite.App.BankKeeper.GetSupply(suite.Ctx, evmDenom).Amount
+	suite.Require().Equal(expectedSupply, afterSupply)
 }
 
-func (suite *KeeperTestSuite) TestCreate3() {
+// Tests if create2 can be used to deploy another contract successfully.
+func (suite *KeeperTestSuite) TestCreate2Deployment() {
 	// contract to call
 	create2 := common.HexToAddress("0x4e59b44847b379578588920cA78FbF26c0B4956C")
 	// blank salt
@@ -128,17 +138,17 @@ func (suite *KeeperTestSuite) TestCreate3() {
 	// runCode is the code fetched via eth_getCode.
 	// it can be used directly in a predeploy but not to create a new contract, because
 	// it does not have the constructor.
-	runCode := "6080604052600436106100295760003560e01c806350f1c4641461002e578063cdcb760a14610077575b600080fd5b34801561003a57600080fd5b5061004e610049366004610489565b61008a565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200160405180910390f35b61004e6100853660046104fd565b6100ee565b6040517fffffffffffffffffffffffffffffffffffffffff000000000000000000000000606084901b166020820152603481018290526000906054016040516020818303038152906040528051906020012091506100e78261014c565b9392505050565b6040517fffffffffffffffffffffffffffffffffffffffff0000000000000000000000003360601b166020820152603481018390526000906054016040516020818303038152906040528051906020012092506100e78383346102b2565b604080518082018252601081527f67363d3d37363d34f03d5260086018f30000000000000000000000000000000060209182015290517fff00000000000000000000000000000000000000000000000000000000000000918101919091527fffffffffffffffffffffffffffffffffffffffff0000000000000000000000003060601b166021820152603581018290527f21c35dbe1b344a2488cf3321d6ce542f8e9f305544ff09e4993a62319a497c1f60558201526000908190610228906075015b6040516020818303038152906040528051906020012090565b6040517fd69400000000000000000000000000000000000000000000000000000000000060208201527fffffffffffffffffffffffffffffffffffffffff000000000000000000000000606083901b1660228201527f010000000000000000000000000000000000000000000000000000000000000060368201529091506100e79060370161020f565b6000806040518060400160405280601081526020017f67363d3d37363d34f03d5260086018f30000000000000000000000000000000081525090506000858251602084016000f5905073ffffffffffffffffffffffffffffffffffffffff811661037d576040517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152601160248201527f4445504c4f594d454e545f4641494c454400000000000000000000000000000060448201526064015b60405180910390fd5b6103868661014c565b925060008173ffffffffffffffffffffffffffffffffffffffff1685876040516103b091906105d6565b60006040518083038185875af1925050503d80600081146103ed576040519150601f19603f3d011682016040523d82523d6000602084013e6103f2565b606091505b50509050808015610419575073ffffffffffffffffffffffffffffffffffffffff84163b15155b61047f576040517f08c379a000000000000000000000000000000000000000000000000000000000815260206004820152601560248201527f494e495449414c495a4154494f4e5f4641494c454400000000000000000000006044820152606401610374565b5050509392505050565b6000806040838503121561049c57600080fd5b823573ffffffffffffffffffffffffffffffffffffffff811681146104c057600080fd5b946020939093013593505050565b7f4e487b7100000000000000000000000000000000000000000000000000000000600052604160045260246000fd5b6000806040838503121561051057600080fd5b82359150602083013567ffffffffffffffff8082111561052f57600080fd5b818501915085601f83011261054357600080fd5b813581811115610555576105556104ce565b604051601f82017fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0908116603f0116810190838211818310171561059b5761059b6104ce565b816040528281528860208487010111156105b457600080fd5b8260208601602083013760006020848301015280955050505050509250929050565b6000825160005b818110156105f757602081860181015185830152016105dd565b50600092019182525091905056fea2646970667358221220fd377c185926b3110b7e8a544f897646caf36a0e82b2629de851045e2a5f937764736f6c63430008100033"
-	runCodeBytes := common.Hex2Bytes(runCode)
+	runCode := testdata.DeployedContract.BinRuntime
+	runCodeBytes := runCode[:]
 	// initCode includes constructor + some handling / prep + runCode
-	initCode := "608060405234801561001057600080fd5b5061063b806100206000396000f3fe" + runCode
-	initCodeBytes := common.Hex2Bytes(initCode)
-	// create3 destination
-	create3 := common.HexToAddress("0x6aA3D87e99286946161dCA02B97C5806fC5eD46F")
+	initCode := testdata.DeployedContract.Bin
+	initCodeBytes := initCode[:]
+	// destination
+	destination := common.HexToAddress("0xb087e311DbEc3dcE4aDB110FE6ef74F81B78c6DF")
 	// check that this matches the derived create3 destination
 	derived := crypto.CreateAddress2(create2, salt, crypto.Keccak256Hash(initCodeBytes).Bytes())
-	suite.Require().Equal(create3, derived)
-	beforeBalance := suite.App.EvmKeeper.GetBalance(suite.Ctx, create3)
+	suite.Require().Equal(destination.String(), derived.String())
+	beforeBalance := suite.App.EvmKeeper.GetBalance(suite.Ctx, destination)
 	// any address that has fees can call this deterministically
 	addr := testutiltx.GenerateAddress()
 	// evm keeper can mint with impunity. use it to generate gas fees
@@ -154,8 +164,8 @@ func (suite *KeeperTestSuite) TestCreate3() {
 	rsp, err := suite.App.EvmKeeper.ApplyMessage(suite.Ctx, msg, nil, true)
 	suite.Require().NoError(err)
 	suite.Require().False(rsp.Failed())
-	// validate create3 destination
-	acc := suite.App.AccountKeeper.GetAccount(suite.Ctx, create3.Bytes())
+	// validate destination
+	acc := suite.App.AccountKeeper.GetAccount(suite.Ctx, destination.Bytes())
 	suite.Require().NotNil(acc)
 	ethAcc, ok := acc.(evmostypes.EthAccountI)
 	suite.Require().True(ok)
@@ -165,8 +175,99 @@ func (suite *KeeperTestSuite) TestCreate3() {
 	suite.Require().Equal(crypto.Keccak256Hash(runCodeBytes), ethAcc.GetCodeHash())
 	suite.Require().Equal(
 		suite.App.EvmKeeper.GetCode(suite.Ctx, ethAcc.GetCodeHash()),
-		runCodeBytes,
+		[]byte(runCode),
 	)
 	// no funds are generated
-	suite.Require().Equal(beforeBalance, suite.App.EvmKeeper.GetBalance(suite.Ctx, create3))
+	suite.Require().Equal(beforeBalance, suite.App.EvmKeeper.GetBalance(suite.Ctx, destination))
+}
+
+// the predeploys are blocked from receiving funds in app/app.go.
+// however, this block should not deter them from forwarding funds
+// to the contracts they deploy.
+func (suite *KeeperTestSuite) TestBalanceForwarding() {
+	// we will call Create3 predeploy with a random contract init code
+	// and a msg.value > 0. we will then check the deployed contract
+	// has received the value.
+	create3Addr := common.HexToAddress("0x9fBB3DF7C40Da2e5A0dE984fFE2CCB7C47cd0ABf")
+	// destination address
+	txSalt := common.Hash{}
+	unhashedSalt := append(suite.Address[:], txSalt[:]...)
+	salt := crypto.Keccak256Hash(unhashedSalt)
+	proxyRuntimeBytecode := common.FromHex("363d3d37363d34f0")
+	proxyRuntimeBytecodeHash := crypto.Keccak256Hash(proxyRuntimeBytecode)
+	proxyBytecode := common.FromHex("67363d3d37363d34f03d5260086018f3")
+	proxyBytecodeHash := crypto.Keccak256Hash(proxyBytecode)
+	proxyAddress := crypto.CreateAddress2(create3Addr, salt, proxyBytecodeHash.Bytes())
+	destination := crypto.CreateAddress(proxyAddress, 1)
+	// calculate the destination using ethCall
+	method := testdata.Create3FactoryContract.ABI.Methods["getDeployed"]
+	args, err := method.Inputs.Pack(suite.Address, txSalt)
+	suite.Require().NoError(err)
+	args = append(method.ID, args...)
+	packedArgs := hexutil.Bytes(args)
+	txArgs := evmosevmtypes.TransactionArgs{
+		To:   &create3Addr,
+		Data: &packedArgs,
+	}
+	marshalledArgs, err := json.Marshal(txArgs)
+	suite.Require().NoError(err)
+	ret, err := suite.QueryClientEVM.EthCall(sdk.WrapSDKContext(suite.Ctx), &evmosevmtypes.EthCallRequest{
+		Args: marshalledArgs,
+	})
+	suite.Require().NoError(err)
+	derivedDest := common.BytesToAddress(ret.Ret)
+	suite.Require().Equal(destination.String(), derivedDest.String())
+	// at t = 0, the contracts will not exist
+	acc := suite.App.AccountKeeper.GetAccount(suite.Ctx, destination[:])
+	suite.Require().Nil(acc)
+	acc = suite.App.AccountKeeper.GetAccount(suite.Ctx, proxyAddress[:])
+	suite.Require().Nil(acc)
+	// we need the create3 interface to make the callArgs
+	callArgs := testutilcontracts.CallArgs{
+		ContractAddr: create3Addr,
+		ContractABI:  testdata.Create3FactoryContract.ABI,
+		PrivKey:      s.PrivKey,
+	}
+	callArgs = callArgs.
+		WithMethodName("deploy").
+		WithArgs(txSalt, []byte(testdata.DeployedContract.Bin[:])).
+		WithAmount(common.Big1)
+	_, _, err = testutilcontracts.Call(suite.Ctx, suite.App, callArgs)
+	suite.Require().NoError(err)
+	// post deployment, the 2 accounts should exist
+	tests := []struct {
+		Name     string
+		Address  common.Address
+		Balance  *big.Int
+		CodeHash common.Hash
+		Nonce    uint64
+	}{
+		{
+			Name:     "destination",
+			Address:  destination,
+			Balance:  common.Big1,
+			CodeHash: crypto.Keccak256Hash(testdata.DeployedContract.BinRuntime),
+			Nonce:    suite.App.EvmKeeper.GetNewContractNonce(suite.Ctx),
+		},
+		{
+			Name:     "proxy",
+			Address:  proxyAddress,
+			Balance:  common.Big0,
+			CodeHash: proxyRuntimeBytecodeHash,
+			// since the proxy deploys the destination contract,
+			// the nonce of the proxy increases by 1
+			Nonce: suite.App.EvmKeeper.GetNewContractNonce(suite.Ctx) + 1,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.Name, func() {
+			acc = suite.App.AccountKeeper.GetAccount(suite.Ctx, tc.Address[:])
+			suite.Require().NotNil(acc)
+			ethAcc, ok := acc.(evmostypes.EthAccountI)
+			suite.Require().True(ok)
+			suite.Require().Equal(tc.Balance, suite.App.EvmKeeper.GetBalance(suite.Ctx, tc.Address))
+			suite.Require().Equal(tc.CodeHash, ethAcc.GetCodeHash())
+			suite.Require().Equal(tc.Nonce, ethAcc.GetSequence())
+		})
+	}
 }

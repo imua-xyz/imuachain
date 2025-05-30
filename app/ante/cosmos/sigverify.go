@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	kmultisig "github.com/cosmos/cosmos-sdk/crypto/keys/multisig"
@@ -21,7 +22,6 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/imua-xyz/imuachain/app/ante/utils"
-	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 var (
@@ -58,8 +58,13 @@ func NewSetPubKeyDecorator(ak authante.AccountKeeper) SetPubKeyDecorator {
 }
 
 func (spkd SetPubKeyDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	_, isOracle, _, mixed := utils.IsValidOracleTx(tx)
+	// tx should not be mixed with oracle create-price message and other messages
+	if mixed {
+		return ctx, errors.New("mixed tx with oracle create-price message")
+	}
 	// skip publickkey set for oracle create-price message
-	if utils.IsOracleCreatePriceTx(tx) {
+	if isOracle {
 		sigTx, ok := tx.(authsigning.SigVerifiableTx)
 		if !ok {
 			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -173,7 +178,7 @@ func (sgcd SigGasConsumeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 		return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
 	}
 
-	if utils.IsOracleCreatePriceTx(tx) {
+	if _, isOracle, _, _ := utils.IsValidOracleTx(tx); isOracle {
 		return next(ctx, tx, simulate)
 	}
 
@@ -258,39 +263,6 @@ func OnlyLegacyAminoSigners(sigData signing.SignatureData) bool {
 }
 
 func (svd SigVerificationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	if utils.IsOracleCreatePriceTx(tx) {
-		sigTx, ok := tx.(authsigning.SigVerifiableTx)
-		if !ok {
-			return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
-		}
-
-		// stdSigs contains the sequence number, account number, and signatures.
-		// When simulating, this would just be a 0-length slice.
-		sigs, err := sigTx.GetSignaturesV2()
-		if err != nil {
-			return ctx, err
-		}
-		pubKeys, err := sigTx.GetPubKeys()
-		if err != nil {
-			return ctx, err
-		}
-		for i, sig := range sigs {
-			pubKey := pubKeys[i]
-			// TODO: is it necessary to support multi-sign ?
-			data, ok := sig.Data.(*signing.SingleSignatureData)
-			if !ok {
-				return ctx, sdkerrors.ErrTxDecode.Wrap("invalid signature type, expected SignleSignatureData")
-			}
-			bytesToSign, err := svd.signModeHandler.GetSignBytes(data.SignMode, authsigning.SignerData{ChainID: ctx.ChainID()}, tx)
-			if err != nil {
-				return ctx, err
-			}
-			pubKey.VerifySignature(bytesToSign, data.Signature)
-		}
-
-		return next(ctx, tx, simulate)
-	}
-
 	sigTx, ok := tx.(authsigning.SigVerifiableTx)
 	if !ok {
 		return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
@@ -303,8 +275,32 @@ func (svd SigVerificationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simul
 		return ctx, err
 	}
 
-	signerAddrs := sigTx.GetSigners()
+	if _, isOracle, _, _ := utils.IsValidOracleTx(tx); isOracle {
+		pubKeys, err := sigTx.GetPubKeys()
+		if err != nil {
+			return ctx, err
+		}
 
+		for i, sig := range sigs {
+			pubKey := pubKeys[i]
+			// TODO: is it necessary to support multi-sign ?
+			data, ok := sig.Data.(*signing.SingleSignatureData)
+			if !ok {
+				return ctx, sdkerrors.ErrTxDecode.Wrap("invalid signature type, expected SignleSignatureData")
+			}
+			bytesToSign, err := svd.signModeHandler.GetSignBytes(data.SignMode, authsigning.SignerData{ChainID: ctx.ChainID()}, tx)
+			if err != nil {
+				return ctx, err
+			}
+
+			if !simulate && !pubKey.VerifySignature(bytesToSign, data.Signature) {
+				return ctx, sdkerrors.ErrUnauthorized.Wrap("signature verification failed")
+			}
+		}
+		return next(ctx, tx, simulate)
+	}
+
+	signerAddrs := sigTx.GetSigners()
 	// check that signer length and signature length are the same
 	if len(sigs) != len(signerAddrs) {
 		return ctx, sdkerrors.ErrUnauthorized.Wrapf("invalid number of signer;  expected: %d, got %d", len(signerAddrs), len(sigs))
@@ -386,9 +382,47 @@ func NewIncrementSequenceDecorator(ak authante.AccountKeeper, oracleKeeper utils
 
 func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// oracle create-price message dont need to increment sequence, check its nonce instead
-	if utils.IsOracleCreatePriceTx(tx) {
-		for _, msg := range tx.GetMsgs() {
-			msg := msg.(*oracletypes.MsgCreatePrice)
+	if msgs, isOracle, isRawData, _ := utils.IsValidOracleTx(tx); isOracle {
+		msg := msgs[0]
+		// NOTE: we must check startBaseBlock first to prevent ddos by replay history tx
+		expectStartBaseBlock, found := isd.oracleKeeper.LatestRoundBaseBlock(msg.FeederID)
+		if !found || msg.BasedBlock != expectStartBaseBlock {
+			return ctx, fmt.Errorf("invalid startBaseBlock, expect:%d, got:%d, height:%d, isCheckTx:%t", expectStartBaseBlock, msg.BasedBlock, ctx.BlockHeight(), ctx.IsCheckTx())
+		}
+		if isRawData {
+			// TODO(leonz): move this to ValidateBasic
+			if len(msg.Prices) != 1 || len(msg.Prices[0].Prices) == 0 {
+				return ctx, errors.New("invalid raw data price format")
+			}
+			pieceIndexTmp, err := strconv.ParseUint(msg.Prices[0].Prices[0].DetID, 10, 32)
+			pieceIndex := uint32(pieceIndexTmp)
+			if err != nil {
+				return ctx, fmt.Errorf("invalid piece index parsed from DetID, got:%s", msg.Prices[0].Prices[0].DetID)
+			}
+			if nextPieceIndex, found := isd.oracleKeeper.NextPieceIndexByFeederID(ctx, msg.FeederID); found {
+				if pieceIndex < nextPieceIndex {
+					return ctx, fmt.Errorf("piece index must be at least %d, got:%d", nextPieceIndex, pieceIndex)
+				}
+				// #nosec G115  // safe conversion
+				if (ctx.IsCheckTx() && pieceIndex >= nextPieceIndex+uint32(isd.oracleKeeper.GetMaxNonceFromCache())) ||
+					(!ctx.IsCheckTx() && pieceIndex > nextPieceIndex) {
+					return ctx, fmt.Errorf("invalid piece index, nextPieceIndex:%d, got:%d, isCheckTx:%t", nextPieceIndex, pieceIndex, ctx.IsCheckTx())
+				}
+			} else {
+				return ctx, fmt.Errorf("no valid nextPieceIndex for feederID:%d, height:%d, isCheckTx:%t", msg.FeederID, ctx.BlockHeight(), ctx.IsCheckTx())
+			}
+
+			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
+				return ctx, errors.New("invalid address")
+				// this must be called after feeder.nextPieceID checked
+			} else if _, err := isd.oracleKeeper.CheckAndIncreaseToNextPieceIndex(ctx, sdk.ConsAddress(accAddress).String(), msg.FeederID, pieceIndex); err != nil {
+				return ctx, err
+			}
+
+			return next(ctx, tx, simulate)
+		}
+
+		for _, msg := range msgs {
 			if accAddress, err := sdk.AccAddressFromBech32(msg.Creator); err != nil {
 				return ctx, errors.New("invalid address")
 				// #nosec G115  // safe conversion

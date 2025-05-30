@@ -3,8 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -28,6 +26,8 @@ type (
 		assetsKeeper     types.AssetsKeeper
 		types.SlashingKeeper
 		*feedermanagement.FeederManager
+		postHandlers               map[int64]common.PostAggregationHandler
+		cachedNSTStakersEventValue *string
 	}
 )
 
@@ -54,19 +54,20 @@ func NewKeeper(
 	}
 
 	ret := Keeper{
-		cdc:              cdc,
-		storeKey:         storeKey,
-		memKey:           memKey,
-		paramstore:       ps,
-		KeeperDogfood:    sKeeper,
-		delegationKeeper: delegationKeeper,
-		assetsKeeper:     assetsKeeper,
-		authority:        authority,
-		SlashingKeeper:   slashingKeeper,
-		//		fm:               feedermanagement.NewFeederManager(nil),
-		FeederManager: feedermanagement.NewFeederManager(nil),
+		cdc:                        cdc,
+		storeKey:                   storeKey,
+		memKey:                     memKey,
+		paramstore:                 ps,
+		KeeperDogfood:              sKeeper,
+		delegationKeeper:           delegationKeeper,
+		assetsKeeper:               assetsKeeper,
+		authority:                  authority,
+		SlashingKeeper:             slashingKeeper,
+		FeederManager:              feedermanagement.NewFeederManager(nil),
+		postHandlers:               make(map[int64]common.PostAggregationHandler),
+		cachedNSTStakersEventValue: new(string),
 	}
-	ret.SetKeeper(ret)
+	ret.FeederManager.SetKeeper(&ret)
 	return ret
 }
 
@@ -74,8 +75,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// UpdateNativeTokenValidatorInfo it's used to fix the issue of missing interface.
-// it will be removed when merging with the oracle PR.
-func (k Keeper) UpdateNativeTokenValidatorInfo(_ sdk.Context, _, _, _ string, _ sdkmath.Int) error {
-	return nil
+func (k Keeper) FlushCachedNSTStakersEvent(ctx sdk.Context) {
+	if len(*k.cachedNSTStakersEventValue) > 0 {
+		ctx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeCreatePrice,
+			sdk.NewAttribute(types.AttributeKeyNSTStakersChange, *k.cachedNSTStakersEventValue),
+		))
+		*k.cachedNSTStakersEventValue = ""
+	}
 }

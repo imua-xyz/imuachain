@@ -95,6 +95,16 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo,
 ) {
+	h.afterStakingChange(ctx, operator, affectedAVSList)
+}
+
+func (h OperatorHooksWrapper) AfterJail(
+	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo,
+) {
+	h.afterStakingChange(ctx, operator, affectedAVSList)
+}
+
+func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo) {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	for i := range affectedAVSList {

@@ -118,7 +118,7 @@ func DefaultConfig() Config {
 		NumValidators:     4,
 		NativeDenom:       "hua",
 		MinGasPrices:      "10hua",
-		AccountTokens:     sdk.NewInt(150000000),
+		AccountTokens:     sdk.NewInt(1500000000000),
 		DepositedTokens:   sdk.NewInt(110000000),
 		StakingTokens:     sdk.NewInt(20000000),
 

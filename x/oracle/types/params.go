@@ -3,12 +3,18 @@ package types
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
+)
+
+// we don't want the rule set to grow too large
+const (
+	maxRules = 100
 )
 
 var (
@@ -67,6 +73,11 @@ func DefaultParams() Params {
 		Rules: []*RuleSource{
 			// 0 is reserved
 			{},
+			{
+				// all sources math
+				SourceIDs: []uint64{0},
+				Nom:       nil,
+			},
 		},
 		// TokenFeeder describes when a token start to be updated with its price, and the frequency, endTime.
 		TokenFeeders: []*TokenFeeder{
@@ -86,6 +97,7 @@ func DefaultParams() Params {
 			OracleMaliciousJailDuration: 30 * 24 * time.Hour,
 			SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
 		},
+		PieceSizeByte: 48000,
 	}
 }
 
@@ -242,6 +254,9 @@ func (p Params) Validate() error {
 
 // AddSources adds new sources to tell where to fetch prices
 func (p Params) AddSources(sources ...*Source) (Params, error) {
+	if len(sources) == 0 {
+		return p, ErrNoOp
+	}
 	sNames := make(map[string]struct{})
 	for _, source := range p.Sources {
 		sNames[source.Name] = struct{}{}
@@ -261,6 +276,9 @@ func (p Params) AddSources(sources ...*Source) (Params, error) {
 
 // AddChains adds new chains on which tokens are deployed
 func (p Params) AddChains(chains ...*Chain) (Params, error) {
+	if len(chains) == 0 {
+		return p, ErrNoOp
+	}
 	cNames := make(map[string]struct{})
 	for _, chain := range p.Chains {
 		cNames[chain.Name] = struct{}{}
@@ -279,6 +297,9 @@ func (p Params) AddChains(chains ...*Chain) (Params, error) {
 // contractAddress and decimal are only allowed before any tokenFeeder of that token had been started
 // assetID is allowed to be modified no matter any tokenFeeder is started
 func (p Params) UpdateTokens(currentHeight uint64, tokens ...*Token) (Params, error) {
+	if len(tokens) == 0 {
+		return p, ErrNoOp
+	}
 	for _, t := range tokens {
 		update := false
 		for tokenID := 1; tokenID < len(p.Tokens); tokenID++ {
@@ -286,21 +307,26 @@ func (p Params) UpdateTokens(currentHeight uint64, tokens ...*Token) (Params, er
 			token.AssetID = strings.ToLower(token.AssetID)
 			if token.ChainID == t.ChainID && token.Name == t.Name {
 				// modify existing token
-				update = true
 				// update assetID
 				if len(t.AssetID) > 0 {
 					token.AssetID = t.AssetID
+					update = true
 				}
 				// #nosec G115 - tokenID is actually uint since it's index of array
 				if !p.TokenStarted(uint64(tokenID), currentHeight) {
 					// contractAddres is mainly used as a description information
 					if len(t.ContractAddress) > 0 {
 						token.ContractAddress = t.ContractAddress
+						update = true
 					}
 					// update Decimal, token.Decimal is allowed to modified to at least 1
 					if t.Decimal > 0 {
 						token.Decimal = t.Decimal
+						update = true
 					}
+				}
+				if !update {
+					return p, ErrInvalidParams.Wrap("invalid token to update, no valid field set")
 				}
 				// any other modification will be ignored
 				break
@@ -326,22 +352,35 @@ func (p Params) TokenStarted(tokenID, height uint64) bool {
 
 // AddRules adds a new RuleSource defining which sources and how many of the defined source are needed to be valid for a price to be provided
 func (p Params) AddRules(rules ...*RuleSource) (Params, error) {
+	if len(rules) == 0 {
+		return p, ErrNoOp
+	}
+	if len(rules)+len(p.Rules) > maxRules {
+		return p, ErrInvalidParams.Wrap("invalid rules to add, too many rules")
+	}
 	p.Rules = append(p.Rules, rules...)
 	return p, nil
 }
 
 func (p Params) UpdateMaxPriceCount(count int32) (Params, error) {
+	if count == 0 {
+		return p, ErrNoOp
+	}
 	if count < 0 {
 		return p, ErrInvalidParams.Wrap("invalid maxPriceCount")
 	}
-	if count > 0 {
-		p.MaxSizePrices = count
+	if count == p.MaxSizePrices {
+		return p, ErrInvalidParams.Wrap("invalid maxPriceCount, no valid field set")
 	}
+	p.MaxSizePrices = count
 	return p, nil
 }
 
 // UpdateTokenFeeder updates tokenfeeder info, validation first
 func (p Params) UpdateTokenFeeder(tf *TokenFeeder, currentHeight uint64) (Params, error) {
+	if tf == nil {
+		return p, ErrNoOp
+	}
 	tfIDs := p.GetFeederIDsByTokenID(tf.TokenID)
 	if len(tfIDs) == 0 {
 		// first tokenfeeder for this token
@@ -355,7 +394,7 @@ func (p Params) UpdateTokenFeeder(tf *TokenFeeder, currentHeight uint64) (Params
 	if tokenFeeder.StartBaseBlock > currentHeight {
 		// fields can be modified: startBaseBlock, interval, endBlock
 		update := false
-		if tf.StartBaseBlock > 0 {
+		if tf.StartBaseBlock > 0 && tf.StartBaseBlock != tokenFeeder.StartBaseBlock {
 			// Set startBlock to some height in history is not allowed
 			if tf.StartBaseBlock <= currentHeight {
 				return p, ErrInvalidParams.Wrapf("invalid tokenFeeder to update, invalid StartBaseBlock, currentHeight: %d, set: %d", currentHeight, tf.StartBaseBlock)
@@ -363,11 +402,11 @@ func (p Params) UpdateTokenFeeder(tf *TokenFeeder, currentHeight uint64) (Params
 			update = true
 			tokenFeeder.StartBaseBlock = tf.StartBaseBlock
 		}
-		if tf.Interval > 0 {
+		if tf.Interval > 0 && tf.Interval != tokenFeeder.Interval {
 			tokenFeeder.Interval = tf.Interval
 			update = true
 		}
-		if tf.EndBlock > 0 {
+		if tf.EndBlock > 0 && tf.EndBlock != tokenFeeder.EndBlock {
 			// EndBlock must be set to some height in the future
 			if tf.EndBlock <= currentHeight {
 				return p, ErrInvalidParams.Wrapf("invalid tokenFeeder to update, invalid EndBlock, currentHeight: %d, set: %d", currentHeight, tf.EndBlock)
@@ -388,6 +427,9 @@ func (p Params) UpdateTokenFeeder(tf *TokenFeeder, currentHeight uint64) (Params
 		// fields can be modified: endBlock
 		if tf.EndBlock == 0 || tf.EndBlock <= currentHeight {
 			return p, ErrInvalidParams.Wrapf("invalid tokenFeeder to update, invalid EndBlock, currentHeight: %d, set: %d", currentHeight, tf.EndBlock)
+		}
+		if tf.EndBlock == tokenFeeder.EndBlock {
+			return p, ErrInvalidParams.Wrap("invalid tokenFeeder to update, no valid field set")
 		}
 		tokenFeeder.EndBlock = tf.EndBlock
 		p.TokenFeeders[tfIdx] = tokenFeeder
@@ -493,17 +535,24 @@ func (f TokenFeeder) validate() error {
 func (p Params) GetTokenIDFromAssetID(assetID string) int {
 	for id, token := range p.Tokens {
 		assetIDs := strings.Split(token.AssetID, ",")
-		for _, aID := range assetIDs {
-			if aID == assetID {
-				return id
-			}
+		if slices.Contains(assetIDs, assetID) {
+			return id
 		}
 	}
 	return 0
 }
 
-func (p Params) GetAssetIDForNSTFromTokenID(tokenID uint64) string {
-	assetIDs := p.GetAssetIDsFromTokenID(tokenID)
+func (p Params) GetAssetIDForNSTFromFeederID(feederID uint64) string {
+	if feederID >= uint64(len(p.TokenFeeders)) {
+		return ""
+	}
+	tokenID := p.TokenFeeders[feederID].TokenID
+
+	if tokenID >= uint64(len(p.Tokens)) {
+		return ""
+	}
+	assetIDs := strings.Split(p.Tokens[tokenID].AssetID, ",")
+
 	for _, assetID := range assetIDs {
 		if nstChain, ok := strings.CutPrefix(strings.ToLower(assetID), NSTIDPrefix); ok {
 			if NSTChain, ok := NSTChainsInverted[nstChain]; ok {
@@ -512,13 +561,6 @@ func (p Params) GetAssetIDForNSTFromTokenID(tokenID uint64) string {
 		}
 	}
 	return ""
-}
-
-func (p Params) GetAssetIDsFromTokenID(tokenID uint64) []string {
-	if tokenID >= uint64(len(p.Tokens)) {
-		return nil
-	}
-	return strings.Split(p.Tokens[tokenID].AssetID, ",")
 }
 
 func (p Params) IsDeterministicSource(sourceID uint64) bool {
@@ -629,6 +671,43 @@ func (p Params) IsSlashingResetUpdate(params *Params) bool {
 	if p.Slashing.ReportedRoundsWindow != params.Slashing.ReportedRoundsWindow ||
 		p.Slashing.MinReportedPerWindow != params.Slashing.MinReportedPerWindow {
 		return true
+	}
+	return false
+}
+
+func (p Params) IsNST(tokenID int) bool {
+	if tokenID >= len(p.Tokens) {
+		return false
+	}
+	token := p.Tokens[tokenID]
+	return strings.HasPrefix(strings.ToLower(token.AssetID), NSTIDPrefix)
+}
+
+func (p Params) IsRule2PhasesByFeederID(feederID uint64) bool {
+	if feederID >= uint64(len(p.TokenFeeders)) {
+		return false
+	}
+	// #nosec G115 - ruleID is set from index of slice which is actually type of int
+	ruleID := int(p.TokenFeeders[feederID].RuleID)
+	if ruleID == 0 || ruleID >= len(p.Rules) {
+		return false
+	}
+	rule := p.Rules[ruleID]
+	return p.IsRule2PhasesByRule(rule)
+}
+
+func (p Params) IsRule2PhasesByRule(rule *RuleSource) bool {
+	// just check the format and don't care the verification here, the verification should be done by 'params' not in this memory calculator(feedermanager)
+	if len(rule.SourceIDs) == 1 && rule.SourceIDs[0] == 0 &&
+		rule.Nom != nil && len(rule.Nom.SourceIDs) == 1 {
+		// #nosec G115 - ruleID is set from index of slice which is actually type of int
+		sID := int(rule.Nom.SourceIDs[0])
+		if sID == 0 || sID >= len(p.Sources) {
+			return false
+		}
+		if s := p.Sources[sID]; s.Deterministic && rule.Nom.Minimum == 1 {
+			return true
+		}
 	}
 	return false
 }

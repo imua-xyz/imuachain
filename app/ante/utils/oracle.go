@@ -5,18 +5,53 @@ import (
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-// TxSizeLimit limits max size of a create-price tx, this is calculated based on one nativeTokenbalance message of worst case(max size), which will need 576 bytes for balance update
-const TxSizeLimit = 1000
+const (
+	// TxSizeLimitOraclePrice is the max size of oracle price tx without raw data piece
+	TxSizeLimitOraclePrice = 400
+	// TxSizeLimitOracleRawData is the max size of oracle price tx with raw data piece
+	TxSizeLimitOracleRawData = 49600
+)
 
-func IsOracleCreatePriceTx(tx sdk.Tx) bool {
+// IsOraclePhaseTwoTx checks if the tx is a phase two oracle tx which means it includes exactly one oracle message of raw data phase two
+func IsOraclePhaseTwoTx(tx sdk.Tx) bool {
 	msgs := tx.GetMsgs()
-	if len(msgs) == 0 {
+	if len(msgs) != 1 {
 		return false
 	}
+	msg, ok := msgs[0].(*oracletypes.MsgCreatePrice)
+	if !ok {
+		return false
+	}
+	return msg.IsPhaseTwo()
+}
+
+// IsValidOracleTx checks wether the tx is a valid oracle tx
+// return values:
+// isOracle: all messages in the tx are oracle messages and non of them is phase two
+// isPhaseTwo: the tx includes exactly one oracle message and it is phase two
+// mixed:  mixed message types in the tx which has both oracle types and non-oracle types
+func IsValidOracleTx(tx sdk.Tx) (msgOracles []*oracletypes.MsgCreatePrice, isOracle bool, isPhaseTwo bool, mixed bool) {
+	msgs := tx.GetMsgs()
+	if len(msgs) == 0 {
+		return nil, false, false, false
+	}
+
+	hasOracleMsg := false
+	l := len(msgs)
 	for _, msg := range msgs {
-		if _, ok := msg.(*oracletypes.MsgCreatePrice); !ok {
-			return false
+		msgOracle, ok := msg.(*oracletypes.MsgCreatePrice)
+		if ok {
+			msgOracles = append(msgOracles, msgOracle)
+			hasOracleMsg = true
+			if msgOracle.IsPhaseTwo() {
+				if l == 1 {
+					return msgOracles, true, true, false
+				}
+				return nil, false, false, true
+			}
+		} else if hasOracleMsg {
+			return nil, false, false, true
 		}
 	}
-	return true
+	return msgOracles, hasOracleMsg, false, false
 }

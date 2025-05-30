@@ -3,6 +3,7 @@ package utils
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // BankKeeper defines the exposed interface for using functionality of the bank keeper
@@ -27,4 +28,10 @@ type StakingKeeper interface {
 // OracleKeeper defines the exposed interface for using functionality of the oracle keeper
 type OracleKeeper interface {
 	CheckAndIncreaseNonce(ctx sdk.Context, validator string, feederID uint64, nonce uint32) (prevNonce uint32, err error)
+	NextPieceIndexByFeederID(ctx sdk.Context, feederID uint64) (uint32, bool)
+	CheckAndIncreaseToNextPieceIndex(ctx sdk.Context, validator string, feederID uint64, NextPieceIndex uint32) (nextPieceIndex uint32, err error)
+	GetMaxNonceFromCache() int32
+	GetPieceWithProof(msg *oracletypes.MsgCreatePrice) (*oracletypes.PieceWithProof, bool)
+	MinimalProofPathByIndex(feederID uint64, index uint32) []uint32
+	LatestRoundBaseBlock(feederID uint64) (uint64, bool)
 }

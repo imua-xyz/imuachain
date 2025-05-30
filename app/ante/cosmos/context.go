@@ -40,8 +40,8 @@ func (sud SetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate
 	}
 
 	// If the transaction is an OracleCreatePriceTx, we set the gas meter to infinite
-	// NOTE: this works fine with cosmossdk-noopmempool+tendermint-mempool, since tenderminit used gasMeter.Limit() to check the gaswanted of tx insteand of tx.GetGas(), but if works with application mempool, we need to be caution of the tx.GetGas() since oracle create-price tx doesn't really pay.
-	if anteutils.IsOracleCreatePriceTx(tx) {
+	// NOTE: this works fine with cosmossdk-noopmempool+tendermint-mempool, since tendermint used gasMeter.Limit() to check the gaswanted of tx insteand of tx.GetGas(), but if works with application mempool, we need to be caution of the tx.GetGas() since oracle create-price tx doesn't really pay.
+	if _, isOracle, _, _ := anteutils.IsValidOracleTx(tx); isOracle {
 		newCtx = ctx.WithGasMeter(evmostypes.NewInfiniteGasMeterWithLimit(0))
 		return next(newCtx, tx, simulate)
 	}
@@ -51,6 +51,7 @@ func (sud SetUpContextDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate
 	if cp := ctx.ConsensusParams(); cp != nil && cp.Block != nil {
 		// If there exists a maximum block gas limit, we must ensure that the tx
 		// does not exceed it.
+		//#nosec G115
 		if cp.Block.MaxGas > 0 && gasTx.GetGas() > uint64(cp.Block.MaxGas) {
 			return newCtx, sdkerrors.ErrInvalidGasLimit.Wrapf("tx gas limit %d exceeds block max gas %d", gasTx.GetGas(), cp.Block.MaxGas)
 		}

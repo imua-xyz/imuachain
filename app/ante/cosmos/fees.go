@@ -59,8 +59,13 @@ func (dfd DeductFeeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bo
 		return ctx, errorsmod.Wrap(errortypes.ErrTxDecode, "Tx must be a FeeTx")
 	}
 
-	if anteutils.IsOracleCreatePriceTx(tx) {
-		newCtx := ctx.WithPriority(math.MaxInt64)
+	if _, isOracle, isRawData, _ := anteutils.IsValidOracleTx(tx); isOracle {
+		priority := int64(math.MaxInt64)
+		if isRawData {
+			// set lowest priority for rawData tx, we include rawdata tx from imua-mempool to make sure that big raw data piece don't take all the space in a block, and the 'delivered' tx will be removed from consensus-mempoool by 'recheckTx' after commit
+			priority = math.MinInt64
+		}
+		newCtx := ctx.WithPriority(priority)
 		return next(newCtx, tx, simulate)
 	}
 

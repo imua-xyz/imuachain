@@ -105,7 +105,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	srvflags "github.com/evmos/evmos/v16/server/flags"
@@ -394,14 +393,15 @@ func NewImuachainApp(
 
 	eip712.SetEncodingConfig(encodingConfig)
 
+	oKeeper := &oracleKeeper.Keeper{}
 	// Setup Mempool and Proposal Handlers
 	baseAppOptions = append(baseAppOptions, func(app *baseapp.BaseApp) {
-		// NOTE: we use a NoOpMempool here, for oracle create-price, it works fine since we have set a infinitgasmeterwithlimit in the ante handler to avoid the out-of-gas error no matter what the amount/gas is set by tx builder, and we set the highest priority for oracle create-price txs to work properly with tendermint mempool to make sure oracle creat-prie tx will be included in the mempool if received. And if we want to use some other application mempool, we need to take care of the gas limit and gas price in the oracle create-price txs.(we don't need to bother this since tendermint mempool use gasMeter.limit() instead of tx.Gas())
-		mempool := mempool.NoOpMempool{}
+		mempool := NewImuaMempool(oKeeper, encodingConfig.TxConfig.TxDecoder())
 		app.SetMempool(mempool)
 		handler := baseapp.NewDefaultProposalHandler(mempool, app)
 		app.SetPrepareProposal(handler.PrepareProposalHandler())
 		app.SetProcessProposal(handler.ProcessProposalHandler())
+		app.SetTxEncoder(encodingConfig.TxConfig.TxEncoder())
 	})
 	// NOTE we use custom transaction decoder that supports the sdk.Tx interface instead of
 	// sdk.StdTx
@@ -588,6 +588,9 @@ func NewImuachainApp(
 		&app.DelegationKeeper, &app.AssetsKeeper, authAddrString,
 		&app.SlashingKeeper,
 	)
+
+	// set OracleKeeper for mempool
+	*oKeeper = app.OracleKeeper
 
 	// the SDK slashing module is used to slash validators in the case of downtime. it tracks
 	// the validator signature rate and informs the staking keeper to perform the requisite
@@ -1394,9 +1397,16 @@ func (app *ImuachainApp) BlockedAddrs() map[string]bool {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = !allowedReceivingModAcc[acc]
 	}
 
-	// prevent all precompile addresses from receiving or sending tokens
-	// we don't add the Ethereum-inherited Berlin precompiles, since they are
-	// allowed to receive tokens on Eth mainnet.
+	// We prevent precompiles and predeploys from receiving tokens via x/bank messages.
+	// Tokens can still be received via EVM transactions, if a fallback or payable method
+	// exists on the contract. In other words, these blocking is enabled to prevent these
+	// addresses from being used as token sinks.
+
+	// The addresses below are hardcoded and not fetched via the x/evm keeper because
+	// that is initialized much later (after the x/bank keeper).
+
+	// the Ethereum-inherited Berlin precompiles are not included here because
+	// they do not validate `msg.Value` when being called.
 	for _, hexAddr := range imuaevmtypes.ImuachainAvailableEVMExtensions {
 		bech32Addr := sdk.AccAddress(common.HexToAddress(hexAddr).Bytes()).String()
 		blockedAddrs[bech32Addr] = true
