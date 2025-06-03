@@ -75,5 +75,4 @@ func (s *UnknownMethodSuite) TestUnknownMethod() {
 		_, _, err := testutilcontracts.CallContractAndCheckLogs(s.Ctx, s.App, args, logCheckArgs)
 		s.Require().NoError(err, "addr: %s", addr.Hex())
 	}
-
 }

@@ -9,6 +9,28 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 )
 
+var (
+	IMUAChain = ClientChainInfo{
+		Name:               "Imuachain",
+		MetaInfo:           "The (native) Imuachain",
+		ChainId:            0,
+		FinalizationBlocks: 10,
+		LayerZeroChainID:   0,
+		AddressLength:      20,
+	}
+	IMUAToken = StakingAssetInfo{
+		AssetBasicInfo: AssetInfo{
+			Name:             "Native IM token",
+			Symbol:           "IMUA",
+			Address:          "0x0000000000000000000000000000000000000000",
+			Decimals:         18,
+			LayerZeroChainID: 0,
+			MetaInfo:         "IMUA native to Imuachain",
+		},
+		StakingTotalAmount: sdk.ZeroInt(),
+	}
+)
+
 // NewGenesis returns a new genesis state with the given inputs.
 func NewGenesis(
 	params Params, chains []ClientChainInfo,
@@ -30,7 +52,7 @@ func NewGenesis(
 // for any unit / integration tests.
 func DefaultGenesis() *GenesisState {
 	return NewGenesis(
-		DefaultParams(), []ClientChainInfo{}, []StakingAssetInfo{}, []DepositsByStaker{}, []AssetsByOperator{},
+		DefaultParams(), []ClientChainInfo{IMUAChain}, []StakingAssetInfo{IMUAToken}, []DepositsByStaker{}, []AssetsByOperator{},
 	)
 }
 

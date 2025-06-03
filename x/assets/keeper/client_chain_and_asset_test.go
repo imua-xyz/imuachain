@@ -26,30 +26,22 @@ func (suite *StakingAssetsTestSuite) TestGenesisClientChainAndAssetInfo() {
 		AssetBasicInfo:     usdtClientChainAsset,
 		StakingTotalAmount: math.NewIntWithDecimal(201, 6),
 	}
-	defaultGensisState := assetstype.NewGenesis(
-		assetstype.DefaultParams(),
-		[]assetstype.ClientChainInfo{ethClientChain},
-		[]assetstype.StakingAssetInfo{stakingInfo},
-		[]assetstype.DepositsByStaker{},
-		nil,
-	)
 
 	// test the client chains getting
 	clientChains, err := suite.App.AssetsKeeper.GetAllClientChainInfo(suite.Ctx)
 	suite.NoError(err)
-	suite.Contains(clientChains, defaultGensisState.ClientChains[0])
+	suite.Contains(clientChains, ethClientChain)
 
 	chainInfo, err := suite.App.AssetsKeeper.GetClientChainInfoByIndex(suite.Ctx, 101)
 	suite.NoError(err)
-	suite.Equal(clientChains[0], *chainInfo)
+	suite.Equal(ethClientChain, *chainInfo)
 
 	// test the client chain assets getting
 	assets, err := suite.App.AssetsKeeper.GetAllStakingAssetsInfo(suite.Ctx)
 	suite.NoError(err)
-	suite.Contains(assets, defaultGensisState.Tokens[0])
+	suite.Contains(assets, stakingInfo)
 
-	usdtAssetX := defaultGensisState.Tokens[0]
-	usdtAsset := usdtAssetX.AssetBasicInfo
+	usdtAsset := stakingInfo.AssetBasicInfo
 	_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(usdtAsset.LayerZeroChainID, "", usdtAsset.Address)
 	assetInfo, err := suite.App.AssetsKeeper.GetStakingAssetInfo(suite.Ctx, assetID)
 	suite.NoError(err)

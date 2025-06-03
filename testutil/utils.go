@@ -193,10 +193,10 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 				AssetBasicInfo:     suite.Assets[0],
 				StakingTotalAmount: depositAmount.Add(depositAmount2),
 			},
-			//	{
-			//		AssetBasicInfo:     suite.Assets[1],
-			//		StakingTotalAmount: depositAmount.Add(math.NewInt(132)),
-			//	},
+			{
+				AssetBasicInfo:     suite.Assets[1],
+				StakingTotalAmount: sdk.NewInt(0),
+			},
 		}, depositsByStaker, operatorAssets,
 	)
 	genesisState[assetstypes.ModuleName] = app.AppCodec().MustMarshalJSON(assetsGenesis)
@@ -533,6 +533,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 			LayerZeroChainID:   101,
 			AddressLength:      20,
 		},
+		assetstypes.IMUAChain,
 	}
 	suite.Assets = []assetstypes.AssetInfo{
 		{
@@ -543,6 +544,7 @@ func (suite *BaseTestSuite) DoSetupTest() {
 			LayerZeroChainID: suite.ClientChains[0].LayerZeroChainID,
 			MetaInfo:         "Tether USD token",
 		},
+		assetstypes.IMUAToken.AssetBasicInfo,
 	}
 
 	// Initialize an ImuachainApp for test

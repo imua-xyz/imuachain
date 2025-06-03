@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"fmt"
-
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	"cosmossdk.io/math"
@@ -10,14 +9,26 @@ import (
 
 func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 	stakerID := fmt.Sprintf("%s_%s", suite.Address, "0")
-	ethUniAssetID := fmt.Sprintf("%s_%s", "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984", "101")
+	ethUniAssetAddr := "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"
+	err := suite.App.AssetsKeeper.SetStakingAssetInfo(suite.Ctx, &assetstype.StakingAssetInfo{
+		AssetBasicInfo: assetstype.AssetInfo{
+			Name:             "testEthUni",
+			Symbol:           "uni",
+			Address:          ethUniAssetAddr,
+			LayerZeroChainID: 101,
+			Decimals:         18,
+		},
+		StakingTotalAmount: math.NewInt(0),
+	})
+	suite.NoError(err)
+	_, ethUniAssetID := assetstype.GetStakerIDAndAssetIDFromStr(101, "", ethUniAssetAddr)
 	ethUniInitialChangeValue := assetstype.DeltaStakerSingleAsset{
 		TotalDepositAmount: math.NewInt(1000),
 		WithdrawableAmount: math.NewInt(1000),
 	}
 
 	// test the initial storage of statker assets state
-	_, err := suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
+	_, err = suite.App.AssetsKeeper.UpdateStakerAssetState(suite.Ctx, stakerID, ethUniAssetID, ethUniInitialChangeValue)
 	suite.Require().NoError(err)
 
 	// test that the retrieved value is correct
@@ -67,7 +78,7 @@ func (suite *StakingAssetsTestSuite) TestUpdateStakerAssetsState() {
 	suite.Require().True(getInfo.WithdrawableAmount.Equal(math.NewInt(1000)))
 
 	// test the storage of multiple assets state
-	ethUsdtAssetID := fmt.Sprintf("%s_%s", "0xdac17f958d2ee523a2206206994597c13d831ec7", "101")
+	ethUsdtAssetID := suite.AssetIDs[0]
 	ethUsdtInitialChangeValue := assetstype.DeltaStakerSingleAsset{
 		TotalDepositAmount: math.NewInt(2000),
 		WithdrawableAmount: math.NewInt(2000),

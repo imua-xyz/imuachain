@@ -47,9 +47,6 @@ func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slas
 }
 
 func (k *Keeper) CheckSlashParameter(ctx sdk.Context, parameter *types.SlashInputInfo) error {
-	if parameter.SlashProportion.IsNil() || parameter.SlashProportion.IsNegative() {
-		return types.ErrValueIsNilOrZero.Wrapf("Invalid SlashProportion; expected non-nil and non-negative, got: %+v", parameter.SlashProportion)
-	}
 	height := ctx.BlockHeight()
 	if parameter.SlashEventHeight > height {
 		return types.ErrSlashOccurredHeight.Wrapf("slashEventHeight:%d,curHeight:%d", parameter.SlashEventHeight, height)
@@ -252,6 +249,14 @@ func (k Keeper) SlashWithInfractionReason(
 	ctx sdk.Context, addr sdk.AccAddress, infractionHeight, power int64,
 	slashFactor sdk.Dec, infraction stakingtypes.Infraction,
 ) sdkmath.Int {
+	if slashFactor.IsNil() || slashFactor.IsNegative() {
+		k.Logger(ctx).Error("invalid slash factor, expected non-nil and non-negative", "slashFactor", slashFactor)
+		return sdkmath.ZeroInt()
+	} else if slashFactor.IsZero() {
+		k.Logger(ctx).Info("slash factor is zero, do nothing for the slash execution")
+		return sdkmath.ZeroInt()
+	}
+
 	chainID := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
 	if !isAvs {
