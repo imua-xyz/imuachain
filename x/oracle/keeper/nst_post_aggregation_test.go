@@ -18,7 +18,7 @@ import (
 func TestGetStakerListNoCache(t *testing.T) {
 	keeper, ctx := keepertest.OracleKeeper(t)
 	items := createNStakers(keeper, ctx, 10)
-	sl := keeper.GetStakerList(ctx, "0xe_0x1")
+	sl := keeper.GetStakerList(ctx, "0xe_0x1", 0)
 	require.ElementsMatch(t,
 		nullify.Fill(items),
 		nullify.Fill(sl.StakerAddrs),
@@ -31,8 +31,14 @@ func createNStakers(k *keeper.Keeper, ctx sdk.Context, n int) []string {
 	for i := range stakers {
 		sIndex := k.IncreaseLatestStakerIndex(ctx, 1)
 		stakers[i] = &types.Staker{
-			StakerIndex:   sIndex,
-			ValidatorList: []string{hexutil.EncodeUint64(uint64(i))},
+			StakerIndex: sIndex,
+			ValidatorList: []*types.ValidatorDeposit{
+				{
+					ValidatorPubkey: hexutil.EncodeUint64(uint64(i)),
+					Version:         1,
+					DepositAmount:   1000,
+				},
+			},
 		}
 		addr := testutiltx.GenerateAddress().String()
 

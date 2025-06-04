@@ -26,7 +26,7 @@ import (
 // msg(refund or slash on beaconChain): update staker's price, operator's price
 // SetStakerInfosForAsset sets the staker information and balances for a given asset (chainID),
 // and updates the latest staker index and version. Used during aggregation or state sync.
-func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerInfos []*types.StakerInfo, version uint64) {
+func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerInfos []*types.StakerInfo, version types.NSTVersion) {
 	store := ctx.KVStore(k.storeKey)
 
 	lastIndex := uint32(0)
@@ -59,7 +59,8 @@ func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerIn
 
 	// set version for assetID
 	keyVersion := types.NSTVersionKey(chainID)
-	store.Set(keyVersion, types.Uint64Bytes(version))
+	bz := k.cdc.MustMarshal(&version)
+	store.Set(keyVersion, bz)
 }
 
 // GetStakerInfo returns details about a staker for native-restaking under a specific asset (chainID).
@@ -189,15 +190,16 @@ func (k Keeper) GetAllStakerInfosAssets(ctx sdk.Context) ([]types.StakerInfosAss
 			}
 			stakerInfos = append(stakerInfos, stakerInfo)
 		}
-		version, err := types.BytesToUint64(iterator.Value())
+		version := types.NSTVersion{}
+		k.cdc.MustUnmarshal(iterator.Value(), &version)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse version from value: %w", err)
 		}
 		ret = append(ret, types.StakerInfosAssets{
 			// #nosec G115
-			NstVersion:  version,
-			ChainId:     chainID,
-			StakerInfos: stakerInfos,
+			NstVersionInfo: version,
+			ChainId:        chainID,
+			StakerInfos:    stakerInfos,
 		})
 	}
 

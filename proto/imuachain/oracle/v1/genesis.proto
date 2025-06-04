@@ -54,7 +54,7 @@ message StakerInfosAssets {
   // stakerInfos
   repeated StakerInfo staker_infos = 2;
   // nst_version is the version of nst to track validator list changes
-  uint64 nst_version = 3;
+  NSTVersion nst_version_info = 3 [(gogoproto.nullable) = false];
 }
 
 // ValidatorMissedRounds record missed rounds indexes for a validator which consAddr corresponding to the address
