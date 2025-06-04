@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
-	"github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/stretchr/testify/suite"

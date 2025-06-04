@@ -565,11 +565,11 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 	for ; iter.Valid(); iter.Next() {
 		var event feedistributiontypes.OperatorSlashEvent
 		k.cdc.MustUnmarshal(iter.Value(), &event)
-		keys, err := assetstype.ParseJoinedStoreKey(iter.Key(), 3)
+		keys, err := assetstype.ParseJoinedStoreKey(iter.Key(), 4)
 		if err != nil {
 			return err
 		}
-		epochNumberBigEndian, err := hexutil.Decode(keys[2])
+		epochNumberBigEndian, err := hexutil.Decode(keys[3])
 		if err != nil {
 			return err
 		}

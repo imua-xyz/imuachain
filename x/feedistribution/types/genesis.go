@@ -3,6 +3,8 @@ package types
 import (
 	"strings"
 
+	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,11 +28,38 @@ const (
 	EpochNumberHexStr
 )
 
+var IMUARewardToken = AVSRewardAsset{
+	AssetBasicInfo: assetstypes.AssetInfo{
+		Name:             "Native IM token",
+		Symbol:           utils.BaseDenom,
+		Address:          "0x0000000000000000000000000000000000000000",
+		Decimals:         0,
+		LayerZeroChainID: 0,
+		MetaInfo:         "IMUA native to Imuachain",
+	},
+	RewardAssetState: AVSRewardAssetState{
+		RewardPoolBalance:     sdk.ZeroDec(),
+		RewardPoolTotal:       sdk.ZeroDec(),
+		RewardAllocationTotal: sdk.ZeroDec(),
+	},
+}
+
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
+	// Use the test chain ID to generate the dogfood address, so the default genesis is used for testnet.
+	// The AVS address in the genesis file must be updated either manually or via a script when used for mainnet.
+	avsAddrStr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(utils.DefaultChainID))
 	return &GenesisState{
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
+		AllAvsRewardAssets: []AVSAddrAndRewardAssets{
+			{
+				Avs: avsAddrStr,
+				AvsRewardAssets: []AVSRewardAsset{
+					IMUARewardToken,
+				},
+			},
+		},
 	}
 }
 

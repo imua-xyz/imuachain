@@ -126,6 +126,8 @@ var (
 	// operator + '/' + assetID  + epochIdentifier + '/' + epochNumber -> OperatorSlashEvent
 	// key for operator slash fraction, the periods of different epochs will differ when a
 	// slash event occurs, so the slash event should be recorded for all epochs.
+	// todo: We defer implementing the deletion mechanism, as the expected number of slash events
+	// is low and unlikely to lead to significant state accumulation.
 	KeyPrefixOperatorSlashEvent = []byte{prefixOperatorSlashEvent}
 
 	// KeyPrefixStakerOutstandingRewards :

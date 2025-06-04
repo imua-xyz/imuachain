@@ -1,17 +1,21 @@
 package keeper_test
 
 import (
-	"cosmossdk.io/math"
 	"fmt"
+	"strings"
+
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
-	"strings"
 )
 
 type markChangedDelegationsArgs struct {
@@ -159,7 +163,6 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 	var defaultStakerID, defaultAssetID string
 	var defaultArgs markChangedDelegationsArgs
 	var defaultExpectedState map[string]*feedistributiontypes.DelegationChangeInfo
-	fmt.Println("call TestMarkChangedDelegations")
 
 	testcases := []struct {
 		name     string
@@ -296,18 +299,18 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 
 // return the total rewards for stakers and the reward ratio
 func (suite *KeeperTestSuite) calculateExpectedOperatorReward(
-	operatorAssetPower, totalPower, totalStake int64,
+	operatorAssetPower, totalPower, stakerTotalStake,
 	rewardPerEpoch, communityTax, commissionRate sdk.Dec,
-	epochNumber int, avsAddr, rewardAssetSymbol string) (feedistributiontypes.CommonAVSRewardData, feedistributiontypes.CommonAVSRewardData) {
-	fmt.Printf("~~~~calculateExpectedOperatorReward,operatorAssetPower:%d,totalPower:%d,totalStake:%d\r\n", operatorAssetPower, totalPower, totalStake)
+	epochNumber int, avsAddr, rewardAssetSymbol string,
+) (feedistributiontypes.CommonAVSRewardData, feedistributiontypes.CommonAVSRewardData) {
 	totalReward := rewardPerEpoch.MulInt64(int64(epochNumber))
 	proportion := math.LegacyOneDec().Sub(communityTax)
 	totalRewardsExcludeCommunityTax := totalReward.MulTruncate(proportion)
 
-	operatorTotalReward := totalRewardsExcludeCommunityTax.MulTruncate(sdk.NewDec(operatorAssetPower).QuoTruncate(sdk.NewDec(totalPower)))
+	operatorTotalReward := totalRewardsExcludeCommunityTax.MulTruncate(operatorAssetPower.QuoTruncate(totalPower))
 	operatorCommission := operatorTotalReward.MulTruncate(commissionRate)
 	totalRewardForStakers := operatorTotalReward.Sub(operatorCommission)
-	rewardRito := totalRewardForStakers.QuoTruncate(sdk.NewDec(totalStake))
+	rewardRito := totalRewardForStakers.QuoTruncate(stakerTotalStake)
 
 	return feedistributiontypes.CommonAVSRewardData{
 			AVSAddress: avsAddr,
@@ -414,7 +417,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 					mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
 					epochRewardDec := sdk.NewDecFromInt(mintParam.EpochReward)
 					_, rewardRatio := suite.calculateExpectedOperatorReward(
-						suite.Powers[i], suite.TotalPower, suite.Powers[i],
+						sdk.NewDec(suite.Powers[i]), sdk.NewDec(suite.TotalPower), sdk.NewDec(suite.Powers[i]),
 						epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax,
 						sdk.ZeroDec(), 1, suite.DogfoodAVSAddr, utils.BaseDenom,
 					)
@@ -428,8 +431,6 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				for _, newStaker := range suite.testStakerIDs {
 					defaultDelegationRewardState.StakerOutstandingRewards[newStaker] = nil
 				}
-				fmt.Println("the expect distribution state is3")
-				suite.DebugPrintObject(defaultDelegationRewardState)
 				return defaultDelegationRewardState
 			},
 		},
@@ -501,7 +502,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 					}
 					// calculate the reward ratio for each duration without power change
 					_, tmpRewardRatio := suite.calculateExpectedOperatorReward(
-						operatorPower, totalPower, delegationStake,
+						sdk.NewDec(operatorPower), sdk.NewDec(totalPower), sdk.NewDec(delegationStake),
 						epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax,
 						sdk.ZeroDec(), numEpochsNoPowerChange, suite.DogfoodAVSAddr, utils.BaseDenom,
 					)
@@ -566,7 +567,8 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
 				epochRewardDec := sdk.NewDecFromInt(mintParam.EpochReward)
 				_, assetRewardRatio1 := suite.calculateExpectedOperatorReward(
-					operatorAssetPower1, totalPowerAfterDelegations, operatorAssetPower1, epochRewardDec,
+					sdk.NewDec(operatorAssetPower1), sdk.NewDec(totalPowerAfterDelegations),
+					sdk.NewDec(operatorAssetPower1), epochRewardDec,
 					feedistributiontypes.DefaultParams().CommunityTax, testutil.DefaultOperatorCommission.Rate,
 					epochDuration, suite.DogfoodAVSAddr, utils.BaseDenom)
 
@@ -648,7 +650,8 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 
 				// construct the expected states
 				_, assetRewardRatio2 := suite.calculateExpectedOperatorReward(
-					operatorAssetPower2, totalPowerAfterDelegations, operatorAssetPower2, epochRewardDec,
+					sdk.NewDec(operatorAssetPower2), sdk.NewDec(totalPowerAfterDelegations),
+					sdk.NewDec(operatorAssetPower2), epochRewardDec,
 					feedistributiontypes.DefaultParams().CommunityTax, testutil.DefaultOperatorCommission.Rate,
 					epochDuration, suite.DogfoodAVSAddr, utils.BaseDenom)
 				// The expected state for the two test assets should be the same,
@@ -750,7 +753,6 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 				// Create a new asset to test claiming rewards from multiple delegations for one staker.
 				newTokenDecimal := uint32(18)
 				newAssetAddrs, newAssetIDs := suite.RegisterAssets(1, newTokenDecimal)
-				fmt.Println("the new test assetID is:", newAssetIDs[0])
 				// add the new asset into the support list of dogfood
 				assetIDs := []string{suite.AssetIDs[0], newAssetIDs[0]}
 				suite.updateDogfoodAssetsList(assetIDs)
@@ -772,21 +774,32 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 				// construct the expected reward state after claiming
 				mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
 				epochRewardDec := sdk.NewDecFromInt(mintParam.EpochReward)
+
 				// Calculate the reward and ratio for operator asset1 during the first epoch.
-				_, operatorAsset1RewardRatio1 := suite.calculateExpectedOperatorReward(suite.Powers[0], suite.TotalPower, suite.Powers[0], epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+				_, operatorAsset1RewardRatio1 := suite.calculateExpectedOperatorReward(
+					sdk.NewDec(suite.Powers[0]), sdk.NewDec(suite.TotalPower),
+					sdk.NewDec(suite.Powers[0]), epochRewardDec,
+					feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
-				//fmt.Println("operatorAsset1Reward1,operatorAsset1RewardRatio1", operatorAsset1Reward1, operatorAsset1RewardRatio1)
 				// calculate the reward and ratio for the operator asset1 during the next four epochs.
-				_, operatorAsset1RewardRatio2 := suite.calculateExpectedOperatorReward(suite.Powers[0], suite.TotalPower+testutil.DefaultDelegateAmount, suite.Powers[0], epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+				_, operatorAsset1RewardRatio2 := suite.calculateExpectedOperatorReward(
+					sdk.NewDec(suite.Powers[0]), sdk.NewDec(suite.TotalPower+testutil.DefaultDelegateAmount),
+					sdk.NewDec(suite.Powers[0]), epochRewardDec,
+					feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
 					runEpochNumber-1, suite.DogfoodAVSAddr, utils.BaseDenom)
-				//fmt.Println("operatorAsset1Reward2,operatorAsset1RewardRatio2", operatorAsset1Reward2, operatorAsset1RewardRatio2)
 				// calculate the reward and ratio for the operator asset2 during the next four epochs.
 				// this asset is delegated after the first epoch
-				_, operatorAsset2RewardRatio := suite.calculateExpectedOperatorReward(testutil.DefaultDelegateAmount, suite.TotalPower+testutil.DefaultDelegateAmount, testutil.DefaultDelegateAmount, epochRewardDec, feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+				_, operatorAsset2RewardRatio := suite.calculateExpectedOperatorReward(
+					sdk.NewDec(testutil.DefaultDelegateAmount),
+					sdk.NewDec(suite.TotalPower+testutil.DefaultDelegateAmount),
+					sdk.NewDec(testutil.DefaultDelegateAmount), epochRewardDec,
+					feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
 					runEpochNumber-1, suite.DogfoodAVSAddr, utils.BaseDenom)
+
+				// calculate the staker rewards from two delegations
 				stakerDelegation1Rewards := operatorAsset1RewardRatio1.Add(operatorAsset1RewardRatio2).Rewards.MulDecTruncate(sdk.NewDec(suite.Powers[0]))
 				stakerDelegation2Rewards := operatorAsset1RewardRatio2.Rewards.MulDecTruncate(sdk.NewDec(testutil.DefaultDelegateAmount))
-				//fmt.Println("operatorAsset2Reward,operatorAsset2RewardRatio", operatorAsset2Reward, operatorAsset2RewardRatio)
+
 				return testStakerID, expectedDelegationRewardStates{
 					AvsAddr:         suite.DogfoodAVSAddr,
 					EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,
@@ -862,6 +875,157 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 					Rewards:    expectedStates.StakerOutstandingRewards[testStakerID].Rewards,
 				},
 			}, totalClaimedRewards)
+		})
+	}
+}
+
+func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
+	type expectedRewardState struct {
+		commonStates expectedDelegationRewardStates
+		slashEvents  []feedistributiontypes.KeyAndOperatorSlashEvent
+	}
+	testcases := []struct {
+		name     string
+		malleate func() expectedRewardState
+		// In some test cases, the function is already called automatically in `malleate`,
+		// so it may not need to be called again in the main flow.
+		shouldCallTestFunc bool
+		readOnly           bool
+		expPass            bool
+		errContains        string
+	}{
+		{
+			name:               "pass - distribute rewards for a slashed delegation.",
+			shouldCallTestFunc: true,
+			readOnly:           false,
+			expPass:            true,
+			malleate: func() expectedRewardState {
+				testStakerID := suite.StakerIDs[0]
+				testOperator := suite.Operators[0]
+				// deposit and delegate to the first operator from the default staker
+				// This is used to prevent the delegation from dropping below the minimum self-delegation
+				// requirement after slashing.
+				suite.DepositAndDelegateToOperators(false, suite.testClientChainID,
+					common.HexToAddress(suite.Assets[0].Address), suite.Assets[0].Decimals,
+					[]common.Address{common.Address(testOperator)}, []sdk.AccAddress{testOperator},
+					testutil.DefaultDelegateAmount, testutil.DefaultDelegateAmount)
+				operatorPower := suite.Powers[0] + testutil.DefaultDelegateAmount
+				totalPower := suite.TotalPower + testutil.DefaultDelegateAmount
+
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
+
+				slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+
+				slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
+				suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], suite.Ctx.BlockHeight(), operatorPower, slashFactor, slashType)
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
+
+				// undelegate to claim the reward
+				slashPower := sdk.NewDec(operatorPower).Mul(slashFactor)
+				operatorPowerAfterSlash := sdk.NewDec(operatorPower).Sub(slashPower)
+				multiplier := math.NewIntWithDecimal(1, int(suite.Assets[0].Decimals)) // 10^decimals
+				delegationAmountBigInt := operatorPowerAfterSlash.MulInt(multiplier).TruncateInt()
+				_, undelegable, err := suite.App.DelegationKeeper.GetDelegationInfoWithAmount(suite.Ctx, suite.StakerIDs[0], suite.AssetIDs[0], suite.Operators[0].String())
+				suite.Require().NoError(err)
+				suite.Require().Equal(delegationAmountBigInt, undelegable)
+
+				suite.Delegation(false, suite.testClientChainID, common.Address(suite.Operators[0]), common.HexToAddress(suite.Assets[0].Address), suite.Operators[0], delegationAmountBigInt)
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
+
+				// Test case: Use the genesis delegation related to operator1 as the test subject.
+				// add delegation at epoch2, slash operator1 at epoch 2, then undelegate the stake at epoch 3.
+				// The reward will be claimed at the end of epoch 3.
+				// The slash event will increase operator1's period, so the current period should be 4.
+				// The delegation starting info will be deleted because the stake becomes zero after undelegation.
+				mintParam := suite.App.ImmintKeeper.GetParams(suite.Ctx)
+				epochRewardDec := sdk.NewDecFromInt(mintParam.EpochReward)
+				_, rewardRatioEpoch1 := suite.calculateExpectedOperatorReward(
+					sdk.NewDec(suite.Powers[0]), sdk.NewDec(suite.TotalPower),
+					sdk.NewDec(suite.Powers[0]), epochRewardDec,
+					feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+					1, suite.DogfoodAVSAddr, utils.BaseDenom)
+				// The reward ratio caused by the slash event should be zero, as the current rewards are empty —
+				// the rewards for epoch 1 have already been distributed. The reward ratio will be non-zero if
+				// there was no new delegation in epoch 1.
+				rewardRatioForSlash := feedistributiontypes.CommonAVSRewardData{}
+				rewardEpoch1 := rewardRatioEpoch1.Rewards.MulDecTruncate(sdk.NewDec(suite.Powers[0]))
+
+				stakerTotalStake := operatorPowerAfterSlash
+				totalPowerAfterSlash := sdk.NewDec(totalPower).Sub(slashPower).TruncateDec()
+				operatorPowerAfterSlash = operatorPowerAfterSlash.TruncateDec()
+				_, rewardRatioForEpoch2And3 := suite.calculateExpectedOperatorReward(
+					operatorPowerAfterSlash, totalPowerAfterSlash,
+					stakerTotalStake, epochRewardDec,
+					feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
+					2, suite.DogfoodAVSAddr, utils.BaseDenom)
+				rewardForEpoch2And3 := rewardRatioForEpoch2And3.Rewards.MulDecTruncate(stakerTotalStake)
+
+				epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(2))
+				slashEventkey := assetstype.GetJoinedStoreKey(suite.Operators[0].String(), suite.AssetIDs[0], dogfoodtypes.DefaultEpochIdentifier, epochNumberHexStr)
+				commonStates := expectedDelegationRewardStates{
+					AvsAddr:         suite.DogfoodAVSAddr,
+					EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,
+					OperatorAssetStates: map[string]map[string]operatorAssetState{
+						testOperator.String(): {
+							suite.AssetIDs[0]: {
+								DelegationStartingInfos: map[string]*feedistributiontypes.DelegationStartingInfo{
+									testStakerID: nil,
+								},
+								HasCurrentOperatorRewards: true,
+								OperatorCurrentPeriod:     4,
+								OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
+									2: {
+										// it's only referenced by the slash event.
+										ReferenceCount: 1,
+										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+											rewardRatioEpoch1.Add(rewardRatioForSlash),
+										},
+									},
+									3: {
+										// it's only referenced by the current reward
+										ReferenceCount: 1,
+										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+											rewardRatioEpoch1.Add(rewardRatioForSlash).Add(rewardRatioForEpoch2And3),
+										},
+									},
+								},
+							},
+						},
+					},
+					StakerOutstandingRewards: map[string]*feedistributiontypes.StakerOutstandingRewards{
+						testStakerID: {
+							Rewards: rewardEpoch1.Add(rewardForEpoch2And3...),
+						},
+					},
+				}
+				return expectedRewardState{
+					commonStates: commonStates,
+					slashEvents: []feedistributiontypes.KeyAndOperatorSlashEvent{
+						{
+							Key: string(slashEventkey),
+							OperatorSlashEvent: feedistributiontypes.OperatorSlashEvent{
+								OperatorPeriod: 2,
+								Fraction:       slashFactor,
+							},
+						},
+					},
+				}
+			},
+		},
+	}
+	for _, tc := range testcases {
+		tc := tc
+		s.Run(tc.name, func() {
+			s.SetupTest() // Reset state for each test case
+			s.testClientChainID = s.ClientChains[0].LayerZeroChainID
+			expectedStates := tc.malleate()
+
+			// checkDelegationStates the state after unit test
+			suite.checkDelegationStates(&expectedStates.commonStates)
+			// check the slash states
+			allSlashEvents, err := suite.App.DistrKeeper.GetAllOperatorSlashEvent(suite.Ctx)
+			suite.Require().NoError(err)
+			suite.Require().Equal(expectedStates.slashEvents, allSlashEvents)
 		})
 	}
 }

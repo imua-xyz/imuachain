@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
-	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/avs/types"
@@ -12,7 +12,8 @@ import (
 )
 
 func (k Keeper) MarkChangedDelegations(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
-	preDelegatedAmount math.Int, prevAssetState assetstype.OperatorAssetInfo) error {
+	preDelegatedAmount math.Int, prevAssetState assetstype.OperatorAssetInfo,
+) error {
 	// The reason for marking delegations with stake changes for all epochs instead of only the impactful
 	// epochs is that we need to update the operator’s period whenever the delegated stake changes,
 	// regardless of whether the operator is serving any AVSs.
@@ -72,7 +73,6 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 		// increase the period for the operator with changed delegations.
 		cc, writeFunc := ctx.CacheContext()
 		endingPeriod, err := k.IncrementOperatorPeriod(cc, operator, assetID, epochIdentifier, delegationChangeInfo.TotalAmount)
-		fmt.Println("call IncrementOperatorPeriod end~~~~", err, operator, assetID, delegationChangeInfo.TotalAmount)
 		if err != nil {
 			// Just log the error as a reminder; do not return it to avoid interrupting the handling
 			// of other operators.
@@ -193,9 +193,6 @@ func (k Keeper) calculateDelegationRewardsBetween(ctx sdk.Context, startingPerio
 		return nil, feedistributiontypes.ErrNegativeAVSRewards.Wrapf("calculateDelegationRewardsBetween returns negative avs rewards, operator:%s, assetID:%s, EpochIdentifier:%s, startPeriod：%d,endPeriod:%d", operator,
 			assetID, epochIdentifier, startingPeriod, endingPeriod)
 	}
-	fmt.Println("calculateDelegationRewardsBetween starting", startingPeriod, starting)
-	fmt.Println("calculateDelegationRewardsBetween ending", endingPeriod, ending)
-	fmt.Println("calculateDelegationRewardsBetween difference and stake is:", difference, stake)
 	// note: necessary to truncate so we don't allow withdrawing more rewards than owed
 	rewards, err := difference.CalculateRewards(stake)
 	if err != nil {

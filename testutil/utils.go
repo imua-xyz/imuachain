@@ -3,12 +3,13 @@ package testutil
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
-	"strings"
-	"time"
 
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
@@ -726,7 +727,7 @@ func (suite *BaseTestSuite) RegisterOperator(operator string, commission staking
 	suite.Require().NoError(err)
 }
 
-func (suite *BaseTestSuite) Deposit(clientChainLzID uint64, stakerAddr, assetAddr common.Address, amount sdk.Int) (string, string) {
+func (suite *BaseTestSuite) Deposit(clientChainLzID uint64, stakerAddr, assetAddr common.Address, amount math.Int) (string, string) {
 	stakerID, assetID := assetstypes.GetStakerIDAndAssetID(clientChainLzID, stakerAddr[:], assetAddr[:])
 	// staking assets
 	depositParam := &assetskeeper.DepositWithdrawParams{
@@ -741,7 +742,7 @@ func (suite *BaseTestSuite) Deposit(clientChainLzID uint64, stakerAddr, assetAdd
 	return stakerID, assetID
 }
 
-func (suite *BaseTestSuite) Delegation(isDelegation bool, clientChainLzID uint64, staker, assetAddr common.Address, operator sdk.AccAddress, amount sdk.Int) {
+func (suite *BaseTestSuite) Delegation(isDelegation bool, clientChainLzID uint64, staker, assetAddr common.Address, operator sdk.AccAddress, amount math.Int) {
 	param := &delegationtypes.DelegationOrUndelegationParams{
 		ClientChainID:   clientChainLzID,
 		AssetsAddress:   assetAddr[:],
@@ -759,7 +760,7 @@ func (suite *BaseTestSuite) Delegation(isDelegation bool, clientChainLzID uint64
 	suite.Require().NoError(err)
 }
 
-func (suite *BaseTestSuite) RegisterAvs(avsName string, avsAddr common.Address, assetIDs []string, epochIdentifier string, unbondingPeriod uint64) {
+func (suite *BaseTestSuite) RegisterAvs(_ string, avsAddr common.Address, assetIDs []string, epochIdentifier string, unbondingPeriod uint64) {
 	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		Action:          avstypes.RegisterAction,
 		EpochIdentifier: epochIdentifier,
@@ -791,6 +792,7 @@ func (suite *BaseTestSuite) RegisterAVSs(number int, epochIdentifier string) []c
 	}
 	return avsList
 }
+
 func (suite *BaseTestSuite) RegisterOperators(number int) []sdk.AccAddress {
 	operators := make([]sdk.AccAddress, 0)
 	for i := 0; i < number; i++ {
@@ -808,7 +810,6 @@ func (suite *BaseTestSuite) OptIntoAVSs(operators []sdk.AccAddress, avsList []co
 			suite.Require().NoError(err)
 		}
 	}
-	return
 }
 
 func (suite *BaseTestSuite) OptIntoDogfood(operators []sdk.AccAddress) {
@@ -884,7 +885,8 @@ func (suite *BaseTestSuite) RegisterAssets(number int, decimal uint32) ([]common
 func (suite *BaseTestSuite) DepositAndDelegateToOperators(
 	isAssociate bool, clientChainLzID uint64,
 	assetAddr common.Address, assetDecimal uint32,
-	stakerAddrs []common.Address, operators []sdk.AccAddress, depositAmount, delegateAmount int64) {
+	stakerAddrs []common.Address, operators []sdk.AccAddress, depositAmount, delegateAmount int64,
+) {
 	multiplier := math.NewIntWithDecimal(1, int(assetDecimal)) // 10^decimals
 	depositAmountBigInt := sdk.NewInt(depositAmount).Mul(multiplier)
 	delegationAmountBigInt := sdk.NewInt(delegateAmount).Mul(multiplier)

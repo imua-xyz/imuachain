@@ -328,15 +328,8 @@ func (k *Keeper) SetJailedState(ctx sdk.Context, consAddr sdk.ConsAddress, chain
 	handleFunc := func(info *types.OptedInfo) {
 		info.Jailed = jailed
 		height := ctx.BlockHeight()
-		if jailed {
-			// set the jailed height
-			info.JailedHeight = uint64(height)
-			// clear the height of the last unjailing.
-			info.UnjailedHeight = 0
-		} else {
-			// set the unJailed height
-			info.UnjailedHeight = uint64(height)
-		}
+		// append jail or junjail height
+		info.JailToggleHeights = append(info.JailToggleHeights, uint64(height))
 	}
 	err := k.HandleOptedInfo(ctx, operatorAddr.String(), avsAddr, handleFunc)
 	if err != nil {

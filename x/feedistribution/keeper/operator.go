@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
-	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
@@ -11,8 +11,8 @@ import (
 func (k Keeper) isOperatorPeriodInitialized(ctx sdk.Context, operator, assetID, epochIdentifier string) bool {
 	return k.HasOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier)
 }
+
 func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epochIdentifier string) error {
-	fmt.Println("call initializeOperatorPeriod", operator, assetID, epochIdentifier)
 	// initialize the historical rewards
 	// the period in the historical rewards starts from 0
 	err := k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, 0,
@@ -237,17 +237,17 @@ func (k Keeper) RedirectOperatorRewardsToCommunityPool(ctx sdk.Context, operator
 	return nil
 }
 
-func (k Keeper) getOperatorCurrentDelegatedAmount(ctx sdk.Context, operator sdk.AccAddress, assetID string) (sdk.Dec, error) {
+func (k Keeper) getDelegatedAmountAndAssetDecimal(ctx sdk.Context, operator sdk.AccAddress, assetID string) (math.Int, uint32, error) {
 	// the delegation amount doesn't have any change.
 	assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 	if err != nil {
-		return sdk.ZeroDec(), err
+		return math.Int{}, 0, err
 	}
 	operatorAssetInfo, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operator, assetID)
 	if err != nil {
-		return sdk.ZeroDec(), err
+		return math.Int{}, 0, err
 	}
-	return feedistributiontypes.ScaleIntByDecimals(operatorAssetInfo.TotalAmount, assetInfo.AssetBasicInfo.Decimals), nil
+	return operatorAssetInfo.TotalAmount, assetInfo.AssetBasicInfo.Decimals, nil
 }
 
 func (k Keeper) getDelegatedAmountAtPreEpochEnd(ctx sdk.Context, operator, assetID, epochIdentifier string) (sdk.Dec, error) {
@@ -255,15 +255,19 @@ func (k Keeper) getDelegatedAmountAtPreEpochEnd(ctx sdk.Context, operator, asset
 	if k.HasStakeChangedDelegations(ctx, epochIdentifier, operator, assetID) {
 		delegationChangeInfo, err := k.GetStakeChangedDelegations(ctx, epochIdentifier, operator, assetID)
 		if err != nil {
-			return sdk.ZeroDec(), err
+			return sdk.Dec{}, err
 		}
 		return delegationChangeInfo.TotalAmount, nil
 	}
 	operatorAccAddr, err := sdk.AccAddressFromBech32(operator)
 	if err != nil {
-		return sdk.ZeroDec(), err
+		return sdk.Dec{}, err
 	}
-	return k.getOperatorCurrentDelegatedAmount(ctx, operatorAccAddr, assetID)
+	delegatedAmount, decimal, err := k.getDelegatedAmountAndAssetDecimal(ctx, operatorAccAddr, assetID)
+	if err != nil {
+		return sdk.Dec{}, err
+	}
+	return feedistributiontypes.ScaleIntByDecimals(delegatedAmount, decimal), nil
 }
 
 // HandleOperatorSlashEvent handles the slash event for an operator.
@@ -279,7 +283,7 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 	// the slash event will influence all epochs
 	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	for _, slashAsset := range slashAssetsPool {
-		curDelegationAmount, err := k.getOperatorCurrentDelegatedAmount(ctx, operator, slashAsset.AssetID)
+		curDelegationAmount, assetDecimal, err := k.getDelegatedAmountAndAssetDecimal(ctx, operator, slashAsset.AssetID)
 		if err != nil {
 			return err
 		}
@@ -297,8 +301,11 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 				}
 				preDelegationAmount = delegationChangeInfo.TotalAmount
 			} else {
-				// the delegation amount doesn't have any change.
-				preDelegationAmount = curDelegationAmount
+				// The delegation amount remains unchanged. We should use the amount before the slash is executed,
+				// because the rewards being processed are from epochs prior to the slash.
+				// The current delegation amount is after the slash, so we add back the slashed amount.
+				preDelegationAmount = feedistributiontypes.ScaleIntByDecimals(
+					curDelegationAmount.Add(slashAsset.Amount), assetDecimal)
 			}
 			// For a new operator, it will be initialized when rewards are first allocated to it.
 			// Therefore, if a slash occurs during its first active epoch, it might not have been initialized yet.

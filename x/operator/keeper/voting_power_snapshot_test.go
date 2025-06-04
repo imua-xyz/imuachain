@@ -2,11 +2,12 @@ package keeper_test
 
 import (
 	"fmt"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/imua-xyz/imuachain/testutil"
 	"math/big"
 	"sort"
 	"time"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/imua-xyz/imuachain/testutil"
 
 	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
@@ -19,9 +20,7 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-var (
-	operatorNumber = 3
-)
+var operatorNumber = 3
 
 type testHelperInfo struct {
 	depositAmount  sdkmath.Int

@@ -89,8 +89,9 @@ func (k *Keeper) OptIn(
 	optedInfo := &types.OptedInfo{
 		SlashContract: slashContract,
 		// #nosec G701
-		OptedInHeight:  uint64(ctx.BlockHeight()),
-		OptedOutHeight: types.DefaultOptedOutHeight,
+		OptedInHeight:     uint64(ctx.BlockHeight()),
+		OptedOutHeight:    types.DefaultOptedOutHeight,
+		JailToggleHeights: make([]uint64, 0),
 	}
 	err = k.SetOptedInfo(ctx, operatorAddress.String(), avsAddr, optedInfo)
 	if err != nil {

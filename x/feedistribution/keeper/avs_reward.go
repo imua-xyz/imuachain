@@ -264,6 +264,74 @@ func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 	}
 }
 
+// getOverlap returns the number of blocks in the intersection of [start, end] and [epochStart, epochEnd].
+func getOverlap(start, end, epochStart, epochEnd uint64) uint64 {
+	if end < epochStart || start > epochEnd {
+		return 0
+	}
+	s := max(start, epochStart)
+	e := min(end, epochEnd)
+	return e - s + 1
+}
+
+func max(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min(a, b uint64) uint64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// CalcJailedBlocksInEpoch calculates the number of jailed blocks within a given epoch.
+// It traverses the jailToggleHeights slice in reverse to skip toggle events that are completely before the epoch.
+func CalcJailedBlocksInEpoch(jailToggleHeights []uint64, epochStart, epochEnd uint64, jailed bool) (uint64, error) {
+	n := len(jailToggleHeights)
+	totalJailed := uint64(0)
+
+	isOdd := n%2 == 1
+	i := n - 1
+
+	if (isOdd && !jailed) || (!isOdd && jailed) {
+		return 0, operatortypes.ErrInvalidJailStatusOrHeights.Wrapf("CalcJailedBlocksInEpoch,jailed:%v,jailToggleHeights:%d", jailed, n)
+	}
+
+	for i > 0 {
+		var jailStart, jailEnd uint64
+
+		// If toggle list has odd length, the operator is still jailed.
+		// This means there's no recorded unjail height yet, so we treat the current epoch end
+		// as a "virtual" unjail height for the purpose of calculating overlap.
+		// This allows us to reuse the same (jail+1, unjail] pattern as in the paired case.
+		if isOdd && i == n-1 {
+			jailStart = jailToggleHeights[i] + 1
+			jailEnd = epochEnd
+			totalJailed += getOverlap(jailStart, jailEnd, epochStart, epochEnd)
+			i--
+			continue
+		}
+
+		// Handle jail-unjail pairs: (jail+1, unjail]
+		jailEnd = jailToggleHeights[i]
+		jailStart = jailToggleHeights[i-1] + 1
+
+		// Skip if the whole jail interval is before the epoch
+		if jailEnd < epochStart {
+			break
+		}
+
+		totalJailed += getOverlap(jailStart, jailEnd, epochStart, epochEnd)
+		i -= 2
+	}
+
+	return totalJailed, nil
+}
+
 // VotingPowerRatioAfterJail returns the voting power adjustment ratio considering jail.
 // In the IMUA protocol, rewards are distributed on an epoch basis, while jail and unjail actions occur
 // on a block basis. Therefore, when distributing rewards for an epoch, if an operator is jailed, they
@@ -285,40 +353,19 @@ func (k Keeper) VotingPowerRatioAfterJail(ctx sdk.Context, operator, avsAddr str
 	if err != nil {
 		return math.LegacyDec{}, err
 	}
+
 	currentHeight := uint64(ctx.BlockHeight())
 	currentEpochStartHeight := uint64(epochInfo.CurrentEpochStartHeight)
-	currentEpochBlockNumber := currentHeight - currentEpochStartHeight
-	if optedInfo.UnjailedHeight > currentHeight ||
-		optedInfo.JailedHeight > currentHeight ||
-		optedInfo.UnjailedHeight < optedInfo.JailedHeight {
-		return math.LegacyDec{}, feedistributiontypes.ErrInvalidJailOrUnJailHeight.Wrapf("jailed height:%v, unJailed height:%v", optedInfo.JailedHeight, optedInfo.UnjailedHeight)
+	currentEpochBlockNumber := currentHeight - currentEpochStartHeight + 1
+	totalJailed, err := CalcJailedBlocksInEpoch(optedInfo.JailToggleHeights, currentEpochStartHeight, currentHeight, optedInfo.Jailed)
+	if err != nil {
+		return math.LegacyDec{}, err
 	}
-	var effectiveBlockNumber uint64
-	if !optedInfo.Jailed {
-		if optedInfo.UnjailedHeight == operatortypes.DefaultUnJailedHeight ||
-			optedInfo.JailedHeight < currentEpochStartHeight {
-			// The jail and unjail events occurred before the current epoch,
-			// so they won't affect the reward calculation for the current epoch.
-			return math.LegacyNewDec(1), nil
-		}
-		if optedInfo.JailedHeight < currentEpochStartHeight {
-			// the jail event occurred before the current epoch but the unJail event occurred in
-			// the current epoch
-			effectiveBlockNumber = currentHeight - optedInfo.UnjailedHeight
-		} else {
-			// both the jail and unJail events occurred in the current epoch
-			effectiveBlockNumber = currentEpochBlockNumber - (optedInfo.UnjailedHeight - optedInfo.JailedHeight)
-		}
-	} else {
-		if optedInfo.JailedHeight <= currentEpochStartHeight {
-			// the jail event occurred before the current epoch, and the operator hasn't been unJailed.
-			// so the ratio should be zero.
-			return math.LegacyZeroDec(), nil
-		}
-		// the jail event occurred in the current epoch, so the operator can receive some rewards
-		// for the period between the start height of the current epoch and the jailed height.
-		effectiveBlockNumber = optedInfo.JailedHeight - currentEpochStartHeight
+	if totalJailed > currentEpochBlockNumber {
+		return math.LegacyDec{}, operatortypes.ErrInvalidJailedBlockNumber.Wrapf("totalJailed:%d,currentEpochBlockNumber:%d", totalJailed, currentEpochBlockNumber)
 	}
+
+	effectiveBlockNumber := currentEpochBlockNumber - totalJailed
 	ratio := math.LegacyNewDec(int64(effectiveBlockNumber)).QuoInt64(int64(currentEpochBlockNumber)) // #nosec G115
 	return ratio, nil
 }
@@ -366,8 +413,9 @@ func (k Keeper) CommonRewardProportion(
 			if effectiveRatio.LT(math.LegacyZeroDec()) {
 				effectiveRatio = math.LegacyZeroDec()
 			}
-			totalPowerAfterJail.SubMut(votingPowerDec.Mul(math.LegacyNewDec(1).SubMut(effectiveRatio)))
-			votingPowerDec.MulMut(effectiveRatio)
+			effectiveVotingPowerDec := votingPowerDec.Mul(effectiveRatio)
+			totalPowerAfterJail.SubMut(votingPowerDec.Sub(effectiveVotingPowerDec))
+			votingPowerDec = effectiveVotingPowerDec
 			if !isHandleJail {
 				// set the flag when any operator needs to handle a jail event.
 				isHandleJail = true

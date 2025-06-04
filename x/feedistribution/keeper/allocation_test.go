@@ -1,8 +1,11 @@
 package keeper_test
 
 import (
-	"cosmossdk.io/math"
 	"fmt"
+	"strings"
+
+	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -11,7 +14,6 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
-	"strings"
 )
 
 var (
@@ -45,6 +47,7 @@ func addDecCoin(m map[string]sdk.DecCoins, assetSymbol, operator string, amount 
 		m[operator] = sdk.DecCoins{coin}
 	}
 }
+
 func (expectedStates *expectedAllocationStates) addAccumulatedCommission(assetSymbol, operator string, amount sdk.Dec) {
 	addDecCoin(expectedStates.accumulatedCommission, assetSymbol, operator, amount)
 }
@@ -421,14 +424,13 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 			s.prepareTestBase(TestStakerNumber, TestOperatorNumber, 1)
 
 			testAVSAddr, runToEpochNumber := tc.malleate()
-			fmt.Println("call AllocateRewardsByAVS", testAVSAddr, dogfoodtypes.DefaultEpochIdentifier, runToEpochNumber+1, suite.Ctx.BlockHeight())
 			err := suite.App.DistrKeeper.AllocateRewardsByAVS(suite.Ctx, testAVSAddr, dogfoodtypes.DefaultEpochIdentifier)
 			if tc.expPass {
 				s.Require().NoError(err)
 			} else if tc.errContains != "" {
 				s.Require().ErrorContains(err, tc.errContains)
 			}
-			fmt.Println()
+
 			// checkDelegationStates the state after unit test
 			if tc.getExpectedStates != nil {
 				expectedStates := tc.getExpectedStates(runToEpochNumber)

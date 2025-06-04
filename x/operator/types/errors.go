@@ -131,4 +131,13 @@ var (
 		ModuleName, 28,
 		"the operator is opted out or jailed",
 	)
+	ErrInvalidJailStatusOrHeights = errorsmod.Register(
+		ModuleName, 29,
+		"invalid jail status or heights",
+	)
+
+	ErrInvalidJailedBlockNumber = errorsmod.Register(
+		ModuleName, 30,
+		"invalid jailed block number",
+	)
 )

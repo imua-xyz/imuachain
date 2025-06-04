@@ -1,8 +1,9 @@
 package types
 
 import (
-	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"strings"
+
+	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -202,6 +203,22 @@ func (gs GenesisState) ValidateOptedStates(operators map[string]struct{}) (map[s
 				"ValidateOptedStates: the AVS address isn't an ethereum hex address, %+v",
 				state,
 			)
+		}
+		// check whether the number of jail heights matches the status.
+		if (state.OptInfo.Jailed && len(state.OptInfo.JailToggleHeights)%2 != 1) ||
+			(!state.OptInfo.Jailed && len(state.OptInfo.JailToggleHeights)%2 != 0) {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateOptedStates: the number of jail heights doesn't match the status, %+v",
+				state,
+			)
+		}
+		for i := 1; i < len(state.OptInfo.JailToggleHeights); i++ {
+			if state.OptInfo.JailToggleHeights[i] <= state.OptInfo.JailToggleHeights[i-1] {
+				return ErrInvalidGenesisData.Wrapf(
+					"ValidateOptedStates: invalid jail toggle heights, %+v",
+					state,
+				)
+			}
 		}
 		avs[avsAddr] = struct{}{}
 		return nil

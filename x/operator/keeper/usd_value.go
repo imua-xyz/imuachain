@@ -728,7 +728,8 @@ func (k *Keeper) HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 
 func (k *Keeper) SetAllOperatorAssetUSDValues(ctx sdk.Context, usdValues []operatortypes.OperatorAssetUSDValue) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
-	for _, usdValue := range usdValues {
+	for i := range usdValues {
+		usdValue := usdValues[i]
 		bz := k.cdc.MustMarshal(&usdValue.Value)
 		store.Set([]byte(usdValue.Key), bz)
 	}
