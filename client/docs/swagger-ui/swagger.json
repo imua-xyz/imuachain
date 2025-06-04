@@ -20033,9 +20033,42 @@
               "type": "object",
               "properties": {
                 "version": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "version of the staker validator list changes"
+                  "title": "version of the staker validator list changes",
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "title": "version of the nst info (on balance change, on deposit/withdraw)",
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                        },
+                        "deposit_amount": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "accumulated deposit amount"
+                        }
+                      }
+                    },
+                    "feed_version": {
+                      "title": "version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change",
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                        },
+                        "deposit_amount": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "accumulated deposit amount"
+                        }
+                      }
+                    }
+                  }
                 },
                 "staker_info": {
                   "title": "all staker infos under the specified asset",
@@ -20050,10 +20083,24 @@
                       "format": "int64",
                       "title": "the index of corresponding staker in staker list"
                     },
-                    "validator_pubkey_list": {
+                    "validator_list": {
                       "type": "array",
                       "items": {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                          "validator_pubkey": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "string",
+                            "format": "uint64"
+                          },
+                          "deposit_amount": {
+                            "type": "string",
+                            "format": "uint64"
+                          }
+                        },
+                        "title": "ValidatorDeposit defines the version of a validator"
                       },
                       "title": "list of validators that this staker corresponding to on beacon chain"
                     },
@@ -20171,9 +20218,42 @@
               "type": "object",
               "properties": {
                 "version": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "version of the staker validator list changes"
+                  "title": "version of the staker validator list changes",
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "title": "version of the nst info (on balance change, on deposit/withdraw)",
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                        },
+                        "deposit_amount": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "accumulated deposit amount"
+                        }
+                      }
+                    },
+                    "feed_version": {
+                      "title": "version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change",
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                        },
+                        "deposit_amount": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "accumulated deposit amount"
+                        }
+                      }
+                    }
+                  }
                 },
                 "staker_infos": {
                   "type": "array",
@@ -20189,10 +20269,24 @@
                         "format": "int64",
                         "title": "the index of corresponding staker in staker list"
                       },
-                      "validator_pubkey_list": {
+                      "validator_list": {
                         "type": "array",
                         "items": {
-                          "type": "string"
+                          "type": "object",
+                          "properties": {
+                            "validator_pubkey": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "string",
+                              "format": "uint64"
+                            },
+                            "deposit_amount": {
+                              "type": "string",
+                              "format": "uint64"
+                            }
+                          },
+                          "title": "ValidatorDeposit defines the version of a validator"
                         },
                         "title": "list of validators that this staker corresponding to on beacon chain"
                       },
@@ -41473,6 +41567,44 @@
       },
       "title": "n out of m required source"
     },
+    "imuachain.oracle.v1.NSTVersion": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "title": "version of the nst info (on balance change, on deposit/withdraw)",
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "string",
+              "format": "uint64",
+              "title": "version of the nst info (on balance change, on deposit/withdraw)"
+            },
+            "deposit_amount": {
+              "type": "string",
+              "format": "uint64",
+              "title": "accumulated deposit amount"
+            }
+          }
+        },
+        "feed_version": {
+          "title": "version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change",
+          "type": "object",
+          "properties": {
+            "version": {
+              "type": "string",
+              "format": "uint64",
+              "title": "version of the nst info (on balance change, on deposit/withdraw)"
+            },
+            "deposit_amount": {
+              "type": "string",
+              "format": "uint64",
+              "title": "accumulated deposit amount"
+            }
+          }
+        }
+      },
+      "title": "NSTVersion defines the version of native-staking token"
+    },
     "imuachain.oracle.v1.Params": {
       "type": "object",
       "properties": {
@@ -42987,9 +43119,42 @@
       "type": "object",
       "properties": {
         "version": {
-          "type": "string",
-          "format": "uint64",
-          "title": "version of the staker validator list changes"
+          "title": "version of the staker validator list changes",
+          "type": "object",
+          "properties": {
+            "version": {
+              "title": "version of the nst info (on balance change, on deposit/withdraw)",
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                },
+                "deposit_amount": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "accumulated deposit amount"
+                }
+              }
+            },
+            "feed_version": {
+              "title": "version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change",
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                },
+                "deposit_amount": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "accumulated deposit amount"
+                }
+              }
+            }
+          }
         },
         "staker_info": {
           "title": "all staker infos under the specified asset",
@@ -43004,10 +43169,24 @@
               "format": "int64",
               "title": "the index of corresponding staker in staker list"
             },
-            "validator_pubkey_list": {
+            "validator_list": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                  "validator_pubkey": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string",
+                    "format": "uint64"
+                  },
+                  "deposit_amount": {
+                    "type": "string",
+                    "format": "uint64"
+                  }
+                },
+                "title": "ValidatorDeposit defines the version of a validator"
               },
               "title": "list of validators that this staker corresponding to on beacon chain"
             },
@@ -43062,9 +43241,42 @@
       "type": "object",
       "properties": {
         "version": {
-          "type": "string",
-          "format": "uint64",
-          "title": "version of the staker validator list changes"
+          "title": "version of the staker validator list changes",
+          "type": "object",
+          "properties": {
+            "version": {
+              "title": "version of the nst info (on balance change, on deposit/withdraw)",
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                },
+                "deposit_amount": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "accumulated deposit amount"
+                }
+              }
+            },
+            "feed_version": {
+              "title": "version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change",
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "version of the nst info (on balance change, on deposit/withdraw)"
+                },
+                "deposit_amount": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "accumulated deposit amount"
+                }
+              }
+            }
+          }
         },
         "staker_infos": {
           "type": "array",
@@ -43080,10 +43292,24 @@
                 "format": "int64",
                 "title": "the index of corresponding staker in staker list"
               },
-              "validator_pubkey_list": {
+              "validator_list": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "type": "object",
+                  "properties": {
+                    "validator_pubkey": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string",
+                      "format": "uint64"
+                    },
+                    "deposit_amount": {
+                      "type": "string",
+                      "format": "uint64"
+                    }
+                  },
+                  "title": "ValidatorDeposit defines the version of a validator"
                 },
                 "title": "list of validators that this staker corresponding to on beacon chain"
               },
@@ -43650,10 +43876,24 @@
           "format": "int64",
           "title": "the index of corresponding staker in staker list"
         },
-        "validator_pubkey_list": {
+        "validator_list": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "validator_pubkey": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string",
+                "format": "uint64"
+              },
+              "deposit_amount": {
+                "type": "string",
+                "format": "uint64"
+              }
+            },
+            "title": "ValidatorDeposit defines the version of a validator"
           },
           "title": "list of validators that this staker corresponding to on beacon chain"
         },
@@ -43798,6 +44038,23 @@
       },
       "title": "TokenIndex is the pair of tokenName and its index defined in params"
     },
+    "imuachain.oracle.v1.ValidatorDeposit": {
+      "type": "object",
+      "properties": {
+        "validator_pubkey": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "deposit_amount": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "ValidatorDeposit defines the version of a validator"
+    },
     "imuachain.oracle.v1.ValidatorUpdateBlock": {
       "type": "object",
       "properties": {
@@ -43808,6 +44065,22 @@
         }
       },
       "title": "ValidatorUpdateBlock"
+    },
+    "imuachain.oracle.v1.VersionDepositAmount": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "string",
+          "format": "uint64",
+          "title": "version of the nst info (on balance change, on deposit/withdraw)"
+        },
+        "deposit_amount": {
+          "type": "string",
+          "format": "uint64",
+          "title": "accumulated deposit amount"
+        }
+      },
+      "title": "VersionDepositAmount defines the version and deposit amount"
     },
     "imuachain.immint.v1.Params": {
       "type": "object",
