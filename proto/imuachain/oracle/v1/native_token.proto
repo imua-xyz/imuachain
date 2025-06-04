@@ -45,8 +45,23 @@ message StakerInfo {
   repeated BalanceInfo balance_list = 4;
 }
 
-// StakerList tells which stakers are active for one specific native-restaking asset
+// StakerList defines the list of stakers
 message StakerList {
-  // staker's address
+  // list of staker's address
   repeated string staker_addrs = 1;
+}
+
+// Staker defines the basic info of a staker without address and balance history.
+// Used for compact representation when full StakerInfo is not needed.
+message Staker {
+  // staker's index
+  uint32 staker_index = 1;
+  // validtor_list is the list of validators that this staker corresponding to on beacon chain
+  repeated string validator_list= 2;
+}
+
+// Balances defines the list of balanceInfo
+message Balances {
+  // list of balanceInfo
+  repeated BalanceInfo balance_list = 1;
 }

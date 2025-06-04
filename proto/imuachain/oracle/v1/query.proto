@@ -121,7 +121,7 @@ message QueryStakerListRequest {
 // QueryStakerListResponse is response type for Query/StakerList RPC method
 message QueryStakerListResponse {
   // version of the staker validator list changes
-  int64 version = 1;
+  uint64 version = 1;
   // staker list including all stakers of request asset
   StakerList staker_list = 2;
 }
@@ -137,7 +137,7 @@ message QueryStakerInfoRequest {
 // QueryStakerInfoResponse is response type for Query/StakerInfo RCP method
 message QueryStakerInfoResponse {
   // version of the staker validator list changes
-  int64 version = 1;
+  uint64 version = 1;
   // all staker infos under the specified asset
   StakerInfo staker_info = 2;
 }
@@ -146,14 +146,16 @@ message QueryStakerInfoResponse {
 message QueryStakerInfosRequest {
   // asset id for the staker info request for
   string asset_id = 1;
+  // balances_all is the flag to indicate whether all balances are requested
+  bool balances_all = 2;
   // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
 // QueryStakerInfosResponse is response type for Query/StakerInfo RCP method
 message QueryStakerInfosResponse {
   // version of the staker validator list changes
-  int64 version = 1;
+  uint64 version = 1;
   // all staker infos under the specified asset
   repeated StakerInfo staker_infos = 2;
   // pagination defines the pagination in the response.

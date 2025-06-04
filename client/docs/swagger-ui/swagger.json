@@ -20137,7 +20137,7 @@
               "properties": {
                 "version": {
                   "type": "string",
-                  "format": "int64",
+                  "format": "uint64",
                   "title": "version of the staker validator list changes"
                 },
                 "staker_info": {
@@ -20275,7 +20275,7 @@
               "properties": {
                 "version": {
                   "type": "string",
-                  "format": "int64",
+                  "format": "uint64",
                   "title": "version of the staker validator list changes"
                 },
                 "staker_infos": {
@@ -20409,6 +20409,13 @@
             "type": "string"
           },
           {
+            "name": "balances_all",
+            "description": "balances_all is the flag to indicate whether all balances are requested.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
             "name": "pagination.key",
             "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
             "in": "query",
@@ -20464,7 +20471,7 @@
               "properties": {
                 "version": {
                   "type": "string",
-                  "format": "int64",
+                  "format": "uint64",
                   "title": "version of the staker validator list changes"
                 },
                 "staker_list": {
@@ -20476,7 +20483,7 @@
                       "items": {
                         "type": "string"
                       },
-                      "title": "staker's address"
+                      "title": "list of staker's address"
                     }
                   }
                 }
@@ -43185,7 +43192,7 @@
       "properties": {
         "version": {
           "type": "string",
-          "format": "int64",
+          "format": "uint64",
           "title": "version of the staker validator list changes"
         },
         "staker_info": {
@@ -43260,7 +43267,7 @@
       "properties": {
         "version": {
           "type": "string",
-          "format": "int64",
+          "format": "uint64",
           "title": "version of the staker validator list changes"
         },
         "staker_infos": {
@@ -43355,7 +43362,7 @@
       "properties": {
         "version": {
           "type": "string",
-          "format": "int64",
+          "format": "uint64",
           "title": "version of the staker validator list changes"
         },
         "staker_list": {
@@ -43367,7 +43374,7 @@
               "items": {
                 "type": "string"
               },
-              "title": "staker's address"
+              "title": "list of staker's address"
             }
           }
         }
@@ -43907,10 +43914,10 @@
           "items": {
             "type": "string"
           },
-          "title": "staker's address"
+          "title": "list of staker's address"
         }
       },
-      "title": "StakerList tells which stakers are active for one specific native-restaking asset"
+      "title": "StakerList defines the list of stakers"
     },
     "imuachain.oracle.v1.Token": {
       "type": "object",

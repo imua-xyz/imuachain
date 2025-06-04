@@ -1,6 +1,8 @@
 package types
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	// NativeTokenKeyPrefix is the prefix to retrieve all NativeToken
@@ -9,7 +11,99 @@ const (
 	NativeTokenStakerInfoKeyPrefix = NativeTokenKeyPrefix + "stakerInfo/value/"
 	NativeTokenStakerListKeyPrefix = NativeTokenKeyPrefix + "stakerList/value/"
 	NativeTokenVersionKeyPrefix    = NativeTokenKeyPrefix + "version/"
+
+	NSTKeyPrefix                = "NST/"
+	NSTBalancesKeyPrefix        = NSTKeyPrefix + "balance/"
+	NSTStakerAddrKeyPrefix      = NSTKeyPrefix + "stakerAddr/"
+	NSTLastStakerIndexKeyPrefix = NSTKeyPrefix + "lastStakerIndex/"
+	NSTStakerKeyPrefix          = NSTKeyPrefix + "staker/"
+	NSTVersionKeyPrefix         = NSTKeyPrefix + "version/"
 )
+
+var (
+	NSTKeyPrefixB                = []byte(NSTKeyPrefix)
+	NSTBalancesKeyPrefixB        = []byte(NSTBalancesKeyPrefix)
+	NSTStakerAddrKeyPrefixB      = []byte(NSTStakerAddrKeyPrefix)
+	NSTLastStakerIndexKeyPrefixB = []byte(NSTLastStakerIndexKeyPrefix)
+	NSTStakerKeyPrefixB          = []byte(NSTStakerKeyPrefix)
+	NSTVersionKeyPrefixB         = []byte(NSTVersionKeyPrefix)
+)
+
+func NSTStakerAddrKeyChainIDPrefix(chainID uint64) []byte {
+	var key []byte
+	return AppendMultiple(key,
+		NSTStakerAddrKeyPrefixB,
+		Uint64Bytes(chainID),
+		DelimiterForCombinedKeyBytes)
+}
+
+func NSTStakerAddrKey(chainID uint64, stakerIndex uint32) []byte {
+	var key []byte
+	return AppendMultiple(key,
+		NSTStakerAddrKeyPrefixB,
+		Uint64Bytes(chainID),
+		DelimiterForCombinedKeyBytes,
+		Uint32Bytes(stakerIndex),
+	)
+}
+
+func NSTVersionKey(chainID uint64) []byte {
+	var key []byte
+	return AppendMultiple(key,
+		NSTVersionKeyPrefixB,
+		Uint64Bytes(chainID))
+}
+
+func NSTBalancesKeyChainIDPrefix(chainID uint64) []byte {
+	var key []byte
+	return AppendMultiple(
+		key,
+		NSTBalancesKeyPrefixB,
+		Uint64Bytes(chainID),
+		DelimiterForCombinedKeyBytes,
+	)
+}
+
+func NSTBalancesKey(chainID uint64, addr string) []byte {
+	var key []byte
+	return AppendMultiple(
+		key,
+		NSTBalancesKeyPrefixB,
+		Uint64Bytes(chainID),
+		DelimiterForCombinedKeyBytes,
+		[]byte(addr),
+	)
+}
+
+func NSTStakerKeyChainIDPrefix(chainID uint64) []byte {
+	var key []byte
+	return AppendMultiple(
+		key,
+		NSTStakerKeyPrefixB,
+		Uint64Bytes(chainID),
+		DelimiterForCombinedKeyBytes,
+	)
+}
+
+func NSTStakerKey(chainID uint64, addr string) []byte {
+	var key []byte
+	return AppendMultiple(
+		key,
+		NSTStakerKeyPrefixB,
+		Uint64Bytes(chainID),
+		DelimiterForCombinedKeyBytes,
+		[]byte(addr),
+	)
+}
+
+func NSTLatestStakerIndexKey(chainID uint64) []byte {
+	var key []byte
+	return AppendMultiple(
+		key,
+		NSTLastStakerIndexKeyPrefixB,
+		Uint64Bytes(chainID),
+	)
+}
 
 // NativeTokenStakerKeyPrefix returns the prefix for stakerInfo key
 // NativetToken/stakerInfo/value/assetID/

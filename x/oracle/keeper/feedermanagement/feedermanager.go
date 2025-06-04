@@ -21,6 +21,7 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 )
 
+// NewFeederManager creates a new FeederManager with the given KeeperOracle.
 func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	return &FeederManager{
 		k:                           k,
@@ -31,89 +32,101 @@ func NewFeederManager(k common.KeeperOracle) *FeederManager {
 	}
 }
 
+// GetCaches returns the current caches (cs) used by the FeederManager.
+//
 //nolint:revive
 func (f *FeederManager) GetCaches() *caches {
 	return f.cs
 }
 
+// InitCachesForTest initializes the caches for testing with the given submitter, params, and validators.
 func (f *FeederManager) InitCachesForTest(k Submitter, params *oracletypes.Params, validators map[string]*big.Int) {
 	f.cs = newCaches()
 	f.cs.Init(k, params, validators)
 }
 
+// GetParamsFromCache returns the current oracle parameters from the cache.
 func (f *FeederManager) GetParamsFromCache() *oracletypes.Params {
 	return f.cs.params.params
 }
 
+// GetMaxNonceFromCache returns the maximum nonce from the cache.
 func (f *FeederManager) GetMaxNonceFromCache() int32 {
 	return f.cs.GetMaxNonce()
 }
 
+// GetMaxSizePricesFromCache returns the maximum size of prices from the cache.
 func (f *FeederManager) GetMaxSizePricesFromCache() int32 {
 	return f.cs.GetMaxSizePrices()
 }
 
+// GetTokenIDForFeederID returns the tokenID for a given feederID from the cache.
 func (f *FeederManager) GetTokenIDForFeederID(feederID int64) (int64, bool) {
 	return f.cs.GetTokenIDForFeederID(feederID)
 }
 
+// GetDecimalFromFeederID returns the decimal for a given feederID from the cache.
+func (f *FeederManager) GetDecimalFromFeederID(feederID uint64) (int32, error) {
+	return f.cs.GetDecimalFromFeederID(feederID)
+}
+
+// SetKeeper sets the KeeperOracle for the FeederManager.
 func (f *FeederManager) SetKeeper(k common.KeeperOracle) {
 	f.k = k
 }
 
+// SetNilCaches sets the caches to nil (used for resetting state).
 func (f *FeederManager) SetNilCaches() {
 	f.cs = nil
 }
 
-// BeginBlock initializes the caches and slashing records, and set up the rounds
+// BeginBlock initializes caches, slashing records, and sets up rounds at the beginning of a block.
+// If recovery is needed, attempts to recover state; otherwise, initializes caches and flags.
 func (f *FeederManager) BeginBlock(ctx sdk.Context) (recovered bool) {
-	// if the cache is nil and we are not in recovery mode, init the caches
+	// If the cache is nil and we are not in recovery mode, init the caches
 	if f.cs == nil {
 		var err error
 		recovered, err = f.recovery(ctx) // it's safe to panic since this will only happen when the node is starting with something wrong in the store
 		if err != nil {
 			panic(err)
 		}
-		// init feederManager if recovery failed, this should only happen on block_height==1
+		// If recovery failed, initialize caches (should only happen at block_height==1)
 		if !recovered {
 			f.initCaches(ctx)
 			f.SetParamsUpdated()
 			f.SetValidatorsUpdated()
 		}
 		f.initBehaviorRecords(ctx, ctx.BlockHeight())
-		// in recovery mode, snapshot of feederManager is set in the beginblock instead of in the process of replaying endblockInrecovery
-		// TODO: remove this into recovery, and call separately for init mode, that would lead to write updateCheckTx twice, but more clear
+		// In recovery mode, snapshot of feederManager is set in the beginblock instead of in the process of replaying endblockInrecovery
+		// TODO: move this into recovery, and call separately for init mode, that would lead to write updateCheckTx twice, but more clear
 		f.updateCheckTx()
 	}
 	return
 }
 
+// EndBlock handles all end-of-block logic: updating caches, slashing, rounds, nonces, and flags.
 func (f *FeederManager) EndBlock(ctx sdk.Context) {
-	// update params and validator set if necessary in caches and commit all updated information
+	// Update params and validator set if necessary in caches and commit all updated information
 	addedValidators := f.updateAndCommitCaches(ctx)
 
-	// update Slashing related records (reportInfo, missCountBitArray), handle case for 1. resetSlashing, 2. new validators added for validatorset change
+	// Update slashing-related records (reportInfo, missCountBitArray), handle resetSlashing and new validators
 	f.updateBehaviorRecordsForNextBlock(ctx, addedValidators)
 
-	// update rounds including create new rounds based on params change, remove expired rounds
-	// handleQuotingBehavior for ending quotes of rounds
-	// commit state of mature rounds
+	// Update rounds: create new rounds, remove expired rounds, handle quoting behavior, commit mature rounds
 	f.updateAndCommitRounds(ctx)
 
-	// set status to open for rounds before their quoting window
+	// Set status to open for rounds before their quoting window
 	feederIDs := f.prepareRounds(ctx)
-	// remove nonces for closing quoting-window and set nonces for opening quoting-window
+	// Remove nonces for closing quoting-window and set nonces for opening quoting-window
 	f.setupNonces(ctx, feederIDs)
 
 	f.ResetFlags()
-
 	f.resetPhaseTwoCollectingFeederIDs()
-
 	f.resetPhaseTwoMaliciousTx()
-
 	f.updateCheckTx()
 }
 
+// EndBlockInRecovery handles end-of-block logic during recovery mode, using provided params if available.
 func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.Params) {
 	if params != nil {
 		f.SetParamsUpdated()
@@ -127,6 +140,7 @@ func (f *FeederManager) EndBlockInRecovery(ctx sdk.Context, params *oracletypes.
 	// updateCheckTx() is invoked in BeginBlock either in recovery or init mode, so we skip that in EndBlockRecovery
 }
 
+// setupNonces manages the nonces for validators and feederIDs, clearing or initializing as needed for quoting windows.
 func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	logger := f.k.Logger(ctx)
 	height := ctx.BlockHeight()
@@ -155,8 +169,7 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	if len(feederIDs) == 0 {
 		return
 	}
-	// setup nonces for opening quoting windows
-	// items need to be insert into slice in order, so feederIDs is sorted
+	// Setup nonces for opening quoting windows (feederIDs is sorted)
 	sort.Slice(feederIDs, func(i, j int) bool { return feederIDs[i] < feederIDs[j] })
 	validators := f.cs.GetValidators()
 	feederIDsUint64 = make([]uint64, 0, len(feederIDs))
@@ -170,6 +183,7 @@ func (f *FeederManager) setupNonces(ctx sdk.Context, feederIDs []int64) {
 	f.k.AddZeroNonceItemWithFeederIDsForValidators(ctx, feederIDsUint64, validators)
 }
 
+// initBehaviorRecords initializes slashing report info for all validators if the validator set was updated.
 func (f *FeederManager) initBehaviorRecords(ctx sdk.Context, height int64) {
 	if !f.validatorsUpdated {
 		return
@@ -180,36 +194,36 @@ func (f *FeederManager) initBehaviorRecords(ctx sdk.Context, height int64) {
 	}
 }
 
+// updateBehaviorRecordsForNextBlock updates slashing report info for the next block, handling resets and new report info forvalidators.
 func (f *FeederManager) updateBehaviorRecordsForNextBlock(ctx sdk.Context, addedValidators []string) {
 	height := ctx.BlockHeight() + 1
 	if f.resetSlashing {
-		// reset all validators' reportInfo
+		// Reset all validators' reportInfo
 		f.k.ClearAllValidatorReportInfo(ctx)
 		f.k.ClearAllValidatorMissedRoundBitArray(ctx)
 		validators := f.cs.GetValidators()
-		// order does not matter for independent state update
+		// Order does not matter for independent state update
 		for _, validator := range validators {
 			f.k.InitValidatorReportInfo(ctx, validator, height)
 		}
 	} else if f.validatorsUpdated {
-		// order does not matter for independent state update
+		// Add possible new added validator info for slashing tracking, the order does not matter
 		for _, validator := range addedValidators {
-			// add possible new added validator info for slashing tracking
 			f.k.InitValidatorReportInfo(ctx, validator, height)
 		}
 	}
 }
 
-// prepareRounds prepares the rounds for the next block, and returns the feederIDs of the rounds that are open on next block
+// prepareRounds prepares the rounds for the next block and returns the feederIDs of the rounds that will be open.
 func (f *FeederManager) prepareRounds(ctx sdk.Context) []int64 {
 	logger := f.k.Logger(ctx)
 	feederIDs := make([]int64, 0)
 	height := ctx.BlockHeight()
-	// it's safe to range map directly, this is just used to update memory state
+	// It's safe to range map directly, this is just used to update memory state
 	for _, r := range f.rounds {
 		if open := r.PrepareForNextBlock(ctx.BlockHeight()); open {
 			feederIDs = append(feederIDs, r.feederID)
-			// logs might not be displayed in order, it's marked with [mem] to indicate that this is a memory state update
+			// Logs might not be displayed in order, it's marked with [mem] to indicate that this is a memory state update
 			logger.Info("[mem] open quoting window for round",
 				"feederID", r.feederID, "roundID", r.roundID, "basedBlock", r.roundBaseBlock, "height", height)
 		}
@@ -222,7 +236,7 @@ func (f *FeederManager) prepareRounds(ctx sdk.Context) []int64 {
 // forceSeal: 1. params has some modifications related to quoting. 2.validatorSet changed
 // resetSlashing: params has some modifications related to oracle_slashing
 func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators []string) {
-	// update params in caches
+	// Update params in caches
 	if f.paramsUpdated {
 		paramsOld := &oracletypes.Params{}
 		f.cs.Read(paramsOld)
@@ -236,7 +250,7 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators
 		_ = f.cs.AddCache(&params)
 	}
 
-	// update validators
+	// Update validators
 	validatorUpdates := f.k.GetValidatorUpdates(ctx)
 	if len(validatorUpdates) > 0 {
 		f.SetValidatorsUpdated()
@@ -251,11 +265,11 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators
 				activeValidators = append(activeValidators, validatorStr)
 			}
 		}
-		// update validator set information in cache
+		// Update validator set information in cache
 		_ = f.cs.AddCache(ItemV(validatorMap))
 	}
 
-	// commit caches: msgs is exists, params if updated, validatorPowers is updated
+	// Commit caches: msgs if exists, params if updated, validatorPowers if updated
 	_, vUpdated, pUpdated := f.cs.Commit(ctx, false)
 	if vUpdated || pUpdated {
 		f.k.Logger(ctx).Info("update caches", "validatorUpdated", vUpdated, "paramsUpdated", pUpdated)
@@ -269,14 +283,15 @@ func (f *FeederManager) updateAndCommitCaches(ctx sdk.Context) (activeValidators
 	return activeValidators
 }
 
+// commitRoundsInRecovery finalizes all committable rounds in recovery mode, updating only memory state.
 func (f *FeederManager) commitRoundsInRecovery() {
-	// safe to range map directly, this is just used to update memory state, we don't update state in recovery mode
+	// Safe to range map directly, this is just used to update memory state, we don't update state in recovery mode
 	for _, r := range f.rounds {
 		if r.Committable() {
 			r.FinalPrice()
 			r.status = roundStatusClosed
 		}
-		// close all quotingWindow to skip current rounds' 'handleQuotingMisBehavior'
+		// Close all quotingWindow to skip current rounds' 'handleQuotingMisBehavior'
 		if f.forceSeal {
 			r.closeQuotingWindow()
 		}
@@ -399,12 +414,12 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 	return success
 }
 
+// commitRounds finalizes and commits all committable rounds, handles 2-phase aggregation, and emits events.
 func (f *FeederManager) commitRounds(ctx sdk.Context) {
 	logger := f.k.Logger(ctx)
 	height := ctx.BlockHeight()
 	successFeederIDs := make([]string, 0)
-	// it's safe to range map directly since the sate update is independent for each feederID, however we use sortedFeederIDs to keep the order of logs
-	// this can be replaced by map iteration directly when better performance is needed
+	// Use sortedFeederIDs to keep the order of logs (can be replaced by map iteration for performance, it's safe to range map directly since the state update is independent for each feederID)
 	for _, feederID := range f.sortedFeederIDs {
 		if f.processRound(ctx, feederID, height, logger) {
 			successFeederIDs = append(successFeederIDs, strconv.FormatInt(feederID, 10))
@@ -726,13 +741,20 @@ func (f *FeederManager) removeExpiredRounds(ctx sdk.Context) {
 	// the order does not matter when remove item from slice as RemoveNonceWithFeederIDForAll does
 	expiredFeederIDsToRemoveUint64 := make([]uint64, 0)
 	for _, feederID := range expiredFeederIDs {
-		if r := f.rounds[feederID]; r.status != roundStatusClosed {
+		r := f.rounds[feederID]
+		if r.status != roundStatusClosed {
 			r.closeQuotingWindow()
 			// #nosec G115
 			expiredFeederIDsToRemoveUint64 = append(expiredFeederIDsToRemoveUint64, uint64(feederID))
 		}
 		delete(f.rounds, feederID)
 		f.sortedFeederIDs.remove(feederID)
+		// TODO: remove related 2-phases aggregation state
+		if r.m != nil {
+			// #nosec G115
+			f.k.Clear2ndPhase(ctx, uint64(r.feederID), r.m.RootIndex())
+			r.m = nil
+		}
 	}
 	if len(expiredFeederIDsToRemoveUint64) > 0 {
 		f.k.RemoveNonceWithFeederIDsForValidators(ctx, expiredFeederIDsToRemoveUint64, f.cs.GetValidators())
@@ -803,15 +825,18 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		}
 		l := len(ps.Prices)
 		if deterministic {
-			if l > int(f.cs.GetMaxNonce()) {
-				return nil, fmt.Errorf("deterministic source:id_%d must provide no more than %d prices from different DetIDs, got:%d", ps.SourceID, f.cs.GetMaxNonce(), l)
-			}
-			for _, p := range ps.Prices {
-				if len(p.DetID) == 0 {
-					return nil, errors.New("detID of deterministic price must not be empty")
+			if !msg.IsPhaseTwo() {
+				if l > int(f.cs.GetMaxNonce()) {
+					return nil, fmt.Errorf("deterministic source:id_%d must provide no more than %d prices from different DetIDs, got:%d",
+						ps.SourceID, f.cs.GetMaxNonce(), l)
 				}
-				if p.Decimal != decimal {
-					return nil, fmt.Errorf("decimal does not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
+				for _, p := range ps.Prices {
+					if len(p.DetID) == 0 {
+						return nil, errors.New("detID of deteministic price must not be empty")
+					}
+					if p.Decimal != decimal {
+						return nil, fmt.Errorf("decimal not match for feederID:%d, expect:%d, got:%d", msg.FeederID, decimal, p.Decimal)
+					}
 				}
 			}
 		} else {
@@ -835,8 +860,9 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 	// extra check for message as 1st phase for 2-phases aggregation
 	if msg.IsPhaseTwo() {
 		lPrice := len(msg.Prices[0].Prices[0].Price)
-		if lPrice > int(f.cs.RawDataPieceSize()) {
-			return nil, fmt.Errorf("message for 2nd-phase aggregation should have exactly one price with length between 1 and %d", f.cs.RawDataPieceSize())
+		if lPrice == 0 || lPrice > int(f.cs.RawDataPieceSize()) {
+			return nil, fmt.Errorf("message for 2nd-phase aggregation should have exactly one price with length between 1 and %d",
+				f.cs.RawDataPieceSize())
 		}
 	}
 
@@ -853,8 +879,8 @@ func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreateP
 		}
 		// #nosec G115  // maxNonce is positive
 		windowForPhaseTwo := interval - uint64(f.cs.GetMaxNonce())*2
-		if leafCount > windowForPhaseTwo {
-			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have detID less than or equal to %d and be at least 1, got%d",
+		if leafCount == 0 || leafCount > windowForPhaseTwo {
+			return nil, fmt.Errorf("2-phases aggregation for feederID:%d, should have leafCount less than or equal to %d and be at least 1, got%d",
 				msg.FeederID, windowForPhaseTwo, leafCount)
 		}
 	}

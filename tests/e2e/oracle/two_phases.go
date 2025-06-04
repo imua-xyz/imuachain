@@ -29,6 +29,7 @@ func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
 	}
 	s.updateNSTBalance(7, version, c1, stakerAddrStrs, true)
 
+	version = 91
 	s.updateNSTBalance(32, version, c2, stakerAddrStrs, true)
 }
 
@@ -177,7 +178,7 @@ func (s *E2ETestSuite) updateNSTBalance(start uint64, version uint64, stakerCoun
 
 	s.moveToAndCheck(startHeight + int64(3+len(pieces)))
 	//	resStakerInfos, _ := s.network.QueryOracle().StakerInfos(ctx, &oracletypes.QueryStakerInfosRequest{AssetId: network.NativeAssetID})
-	// pick 10 random stakers to check its balance is updated as expected
+	// pick 20 random stakers to check its balance is updated as expected
 	maxSize := 20
 	if int(stakerCount) < maxSize {
 		maxSize = int(stakerCount)
@@ -202,7 +203,9 @@ func (s *E2ETestSuite) sendRawDataRoot(start uint64, root []byte, count uint32) 
 	//	ctx := context.Background()
 	_, ps := priceNST1.generateRealTimeStructs("1", 1)
 	ps.Prices[0].Price = string(root)
-	ps.Prices[0].DetID = strconv.Itoa(int(count))
+	// ps.Prices[0].DetID = strconv.Itoa(int(count))
+	countStr := strconv.Itoa(int(count))
+	ps.Prices[0].Price = string(append(root, countStr...))
 	msg0 := oracletypes.NewMsgCreatePrice2Phase(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, start, 1)
 	msg1 := oracletypes.NewMsgCreatePrice2Phase(creator1.String(), 2, []*oracletypes.PriceSource{&ps}, start, 1)
 	msg2 := oracletypes.NewMsgCreatePrice2Phase(creator2.String(), 2, []*oracletypes.PriceSource{&ps}, start, 1)

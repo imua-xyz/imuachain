@@ -342,7 +342,7 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 			{
 				RoundID: 0,
 				Block:   6,
-				Index:   0,
+				Index:   1,
 				Balance: 32,
 				Change:  oracletypes.Action_ACTION_DEPOSIT,
 			},
@@ -371,13 +371,13 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	s.Require().Equal([]*oracletypes.BalanceInfo{
 		{
 			Block:   6,
-			Index:   0,
+			Index:   1,
 			Balance: 32,
 			Change:  oracletypes.Action_ACTION_DEPOSIT,
 		},
 		{
 			RoundID: 1,
-			Index:   1,
+			Index:   2,
 			Block:   9,
 			Balance: 99,
 			Change:  oracletypes.Action_ACTION_SLASH_REFUND,

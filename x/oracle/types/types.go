@@ -170,6 +170,8 @@ var (
 		ETHChain: NSTETHAssetAddr,
 		SOLChain: NSTSOLAssetAddr,
 	}
+
+	DelimiterForCombinedKeyBytes = []byte{DelimiterForCombinedKey}
 )
 
 func Uint64Bytes(value uint64) []byte {
@@ -214,4 +216,19 @@ func GetClientChainIDFromNSTAssetID(assetID string) (uint64, bool) {
 		}
 	}
 	return 0, false
+}
+
+func NSTAssetIDFromClientChainID(chainID uint64) string {
+	chainIDStr := hexutil.EncodeUint64(chainID)
+	if NSTChain, ok := NSTChainsInverted[chainIDStr]; ok {
+		return fmt.Sprintf("%s_%s", NSTAssetAddr[NSTChain], chainIDStr)
+	}
+	return ""
+}
+
+func AppendMultiple(slice []byte, elems ...[]byte) []byte {
+	for _, elem := range elems {
+		slice = append(slice, elem...)
+	}
+	return slice
 }

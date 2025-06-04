@@ -87,7 +87,6 @@ func getNstRootAndPieces() ([]byte, [][]byte) {
 	return mt.RootHash(), pieces
 }
 
-// func getNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32) ([]byte, [][]byte, []*oracletypes.NSTKV) {
 func getNstRootAndPiecesWithParams(version uint64, stakerCount, pieceSize uint32) (*oracletypes.MerkleTree, []*oracletypes.NSTKV) {
 	nstbc := oracletypes.RawDataNST{
 		Version: version,
@@ -114,7 +113,6 @@ func getNstRootAndPiecesWithParams(version uint64, stakerCount, pieceSize uint32
 	if !ok {
 		panic("derived mt is incorrect")
 	}
-	//	return mt.RootHash(), pieces, changes
 	return mt, changes
 }
 

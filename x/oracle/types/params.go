@@ -542,25 +542,26 @@ func (p Params) GetTokenIDFromAssetID(assetID string) int {
 	return 0
 }
 
-func (p Params) GetAssetIDForNSTFromFeederID(feederID uint64) string {
+func (p Params) GetAssetIDForNSTFromFeederID(feederID uint64) (string, string) {
 	if feederID >= uint64(len(p.TokenFeeders)) {
-		return ""
+		return "", ""
 	}
-	tokenID := p.TokenFeeders[feederID].TokenID
 
+	tokenID := p.TokenFeeders[feederID].TokenID
 	if tokenID >= uint64(len(p.Tokens)) {
-		return ""
+		return "", ""
 	}
+
 	assetIDs := strings.Split(p.Tokens[tokenID].AssetID, ",")
 
 	for _, assetID := range assetIDs {
 		if nstChain, ok := strings.CutPrefix(strings.ToLower(assetID), NSTIDPrefix); ok {
 			if NSTChain, ok := NSTChainsInverted[nstChain]; ok {
-				return fmt.Sprintf("%s_%s", NSTAssetAddr[NSTChain], nstChain)
+				return fmt.Sprintf("%s_%s", NSTAssetAddr[NSTChain], nstChain), nstChain
 			}
 		}
 	}
-	return ""
+	return "", ""
 }
 
 func (p Params) IsDeterministicSource(sourceID uint64) bool {

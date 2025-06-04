@@ -61,10 +61,9 @@ func (p Precompile) DepositOrWithdraw(
 		if depositWithdrawParams.Action == assetstypes.WithdrawNST {
 			opAmount = opAmount.Neg()
 		}
-		_, assetID := assetstypes.GetStakerIDAndAssetID(depositWithdrawParams.ClientChainLzID,
+		stakerID, assetID := assetstypes.GetStakerIDAndAssetID(depositWithdrawParams.ClientChainLzID,
 			depositWithdrawParams.StakerAddress, depositWithdrawParams.AssetsAddress)
-		err = p.assetsKeeper.UpdateNSTValidatorListForStaker(ctx, assetID,
-			hexutil.Encode(depositWithdrawParams.StakerAddress),
+		err = p.assetsKeeper.UpdateNSTValidatorListForStaker(ctx, assetID, stakerID,
 			hexutil.Encode(depositWithdrawParams.ValidatorID),
 			opAmount)
 		if err != nil {
@@ -79,7 +78,7 @@ func (p Precompile) RegisterOrUpdateClientChain(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	method *abi.Method,
-	args []interface{},
+	args []any,
 ) ([]byte, error) {
 	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)

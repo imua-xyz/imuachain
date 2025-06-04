@@ -39,8 +39,6 @@ message GenesisState {
   // information for NST related
   // stakerInfos for each nst token
   repeated StakerInfosAssets staker_infos_assets = 8 [(gogoproto.nullable) = false];
-  // stakerList for each nst token
-  repeated StakerListAssets staker_list_assets = 9 [(gogoproto.nullable) = false];
 
   // information for slashing history
   // ValidatorReportInfo records all the validatorReportInfos
@@ -51,22 +49,12 @@ message GenesisState {
 
 // stakerInfosAssets bond stakerinfos to their related assets id
 message StakerInfosAssets {
-  // asset_id tells the assetid which the stakerInfos belong to
-  string asset_id = 1;
+  // chain_id tells the chainid which the stakerInfos belong to
+  uint64 chain_id = 1;
   // stakerInfos
   repeated StakerInfo staker_infos = 2;
   // nst_version is the version of nst to track validator list changes
-  int64 nst_version = 3;
-}
-
-// stakerListAssets bond stakerList to their related assets id
-message StakerListAssets {
-  // asset_id tells the assetid which the stakerList belong to
-  string asset_id = 1;
-  // stakerList
-  StakerList staker_list = 2;
-  // nst_version is the version of nst to track validator list changes
-  int64 nst_version = 3;
+  uint64 nst_version = 3;
 }
 
 // ValidatorMissedRounds record missed rounds indexes for a validator which consAddr corresponding to the address

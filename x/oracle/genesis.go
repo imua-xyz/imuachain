@@ -1,6 +1,8 @@
 package oracle
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
@@ -32,14 +34,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, elem := range genState.RecentParamsList {
 		k.SetRecentParams(ctx, elem)
 	}
-	// Set all stakerList for assetIDs
-	for _, elem := range genState.StakerListAssets {
-		k.SetStakerList(ctx, elem.AssetId, elem.StakerList)
-	}
 	// Set all stakerInfos for assetIDs
 	for _, elem := range genState.StakerInfosAssets {
-		k.SetStakerInfos(ctx, elem.AssetId, elem.StakerInfos)
-		k.SetNSTVersion(ctx, elem.AssetId, elem.NstVersion)
+		// TODO: update the definition of nstVersion to be uint64
+		// #nosec G115
+		k.SetStakerInfosForAsset(ctx, elem.ChainId, elem.StakerInfos, elem.NstVersion)
 	}
 	// set validatorReportInfos
 	for _, elem := range genState.ValidatorReportInfos {
@@ -84,8 +83,11 @@ func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis.RecentParamsList = k.GetAllRecentParams(ctx)
 
 	// NST related
-	genesis.StakerInfosAssets = k.GetAllStakerInfosAssets(ctx)
-	genesis.StakerListAssets = k.GetAllStakerListAssets(ctx)
+	var err error
+	genesis.StakerInfosAssets, err = k.GetAllStakerInfosAssets(ctx)
+	if err != nil {
+		panic(fmt.Errorf("exporting staker info assets:%w", err))
+	}
 
 	// slashing related
 	reportInfos := make([]types.ValidatorReportInfo, 0)

@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/stretchr/testify/require"
@@ -81,7 +82,7 @@ func createNStakerInfos(keeper *keeper.Keeper, ctx sdk.Context, assetID string, 
 	ret := make([]*types.StakerInfo, 0, n)
 	for i := 0; i < n; i++ {
 		ret = append(ret, &types.StakerInfo{
-			StakerAddr:          fmt.Sprintf("Staker_%d", i),
+			StakerAddr:          fmt.Sprintf("staker_%d", i),
 			StakerIndex:         uint32(i),
 			ValidatorPubkeyList: []string{strconv.Itoa(i + 1)},
 			BalanceList: []*types.BalanceInfo{
@@ -95,6 +96,10 @@ func createNStakerInfos(keeper *keeper.Keeper, ctx sdk.Context, assetID string, 
 			},
 		})
 	}
-	keeper.SetStakerInfos(ctx, assetID, ret)
+	_, chainID, err := assetstypes.ParseID(assetID)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse assetID %s: %v", assetID, err))
+	}
+	keeper.SetStakerInfosForAsset(ctx, chainID, ret, uint64(n))
 	return ret
 }

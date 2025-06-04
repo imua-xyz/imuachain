@@ -28,6 +28,7 @@ type (
 		*feedermanagement.FeederManager
 		postHandlers               map[int64]common.PostAggregationHandler
 		cachedNSTStakersEventValue *string
+		c                          *common.Caches
 	}
 )
 
@@ -66,6 +67,7 @@ func NewKeeper(
 		FeederManager:              feedermanagement.NewFeederManager(nil),
 		postHandlers:               make(map[int64]common.PostAggregationHandler),
 		cachedNSTStakersEventValue: new(string),
+		c:                          common.NewCaches(),
 	}
 	ret.FeederManager.SetKeeper(&ret)
 	return ret

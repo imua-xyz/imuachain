@@ -32,12 +32,12 @@ func IsOraclePhaseTwoTx(tx sdk.Tx) bool {
 // mixed:  mixed message types in the tx which has both oracle types and non-oracle types
 func IsValidOracleTx(tx sdk.Tx) (msgOracles []*oracletypes.MsgCreatePrice, isOracle bool, isPhaseTwo bool, mixed bool) {
 	msgs := tx.GetMsgs()
-	if len(msgs) == 0 {
+	l := len(msgs)
+	if l == 0 {
 		return nil, false, false, false
 	}
 
 	hasOracleMsg := false
-	l := len(msgs)
 	for _, msg := range msgs {
 		msgOracle, ok := msg.(*oracletypes.MsgCreatePrice)
 		if ok {

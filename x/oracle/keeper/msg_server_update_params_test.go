@@ -48,7 +48,6 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 				},
 			}
 		})
-
 		ks.Reset()
 		Expect(ks.ms).ToNot(BeNil())
 		defaultParams = testdata.DefaultParamsForTest()

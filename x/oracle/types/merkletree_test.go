@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -11,7 +10,8 @@ import (
 
 var (
 	emptyHashArr = [32]byte{}
-	emptyHash    = emptyHashArr[:]
+
+	emptyHash = emptyHashArr[:]
 )
 
 func TestMerkleTreePath(t *testing.T) {
@@ -80,9 +80,13 @@ func verifyPiece(t *testing.T, index uint32, mt, mtEmpty *MerkleTree, expectedPa
 	proof := mt.MinimalProofByIndex(index)
 	if !skipCheck {
 		proofPath := mt.MinimalProofPathByIndex(index)
-		for i, p := range proof {
-			require.Equal(t, p.Index, proofPath[i])
-			require.Equal(t, proofPath[i], expectedPath[i])
+		if expectedPath == nil {
+			require.Empty(t, proofPath, "expected empty proof path")
+		} else {
+			for i, p := range proof {
+				require.Equal(t, p.Index, proofPath[i])
+				require.Equal(t, proofPath[i], expectedPath[i])
+			}
 		}
 	}
 
@@ -138,38 +142,28 @@ func GetNstRootAndPiecesWithParams(stakerCount, version uint32, pieceSize uint32
 	if !ok {
 		panic("derived mt is incorrect")
 	}
-	//	return mt.RootHash(), pieces, changes
 	return mt, changes
 }
 
 func test6pieces(t *testing.T) {
 	m, _ := NewMT(20, 6, emptyHash)
-	fmt.Println(len(m.t))
-
+	require.Equal(t, 11, len(m.t))
 	n := m.t[0]
 	for n != nil {
-		fmt.Println("node_index:", n.index)
 		if n.left != nil {
-			fmt.Println("  left sibling:", n.left.index)
 			n = n.parent
 			continue
 		}
 		if n.right != nil {
-			fmt.Println("  right sibling:", n.right.index)
 			n = n.parent
 			continue
 		}
-		fmt.Println("this is root node")
 		break
 	}
 	require.Nil(t, m.t[8])
-	//	fmt.Println(m.t[8] == nil)
 	require.Equal(t, uint32(10), m.t[10].index)
-	//	fmt.Println(m.t[10].index == 10)
 	require.Equal(t, m.t[5].parent, m.t[4].parent)
-	//	fmt.Println(m.t[4].parent == m.t[5].parent)
 	require.Equal(t, uint32(10), m.t[4].parent.index)
-	// fmt.Println(m.t[4].parent.index == 10)
 }
 
 func test5pieces() {
@@ -184,7 +178,89 @@ func test5pieces() {
 			n = n.parent
 			continue
 		}
-		fmt.Println("this is root node")
 		break
+	}
+}
+
+func TestMerkleTreeSinglePiece(t *testing.T) {
+	piece := []byte("single piece test")
+	mt, err := DeriveMT(uint32(len(piece)), piece)
+	require.NoError(t, err)
+	require.Equal(t, uint32(1), mt.leafCount)
+	// Proof path for the only leaf should be empty
+	path := mt.ProofPathFromLeafIndex(0, false)
+	require.Empty(t, path)
+	// Completed should be true
+	_, ok := mt.CollectedPieces()
+	require.True(t, ok)
+	// CompleteRawData should return the original data
+	data, ok := mt.CompleteRawData()
+	require.True(t, ok)
+	require.Equal(t, piece, data)
+}
+
+func TestMerkleTreeInvalidInputs(t *testing.T) {
+	// Zero piece size
+	_, err := DeriveMT(0, []byte("data"))
+	require.Error(t, err)
+	// Empty data
+	_, err = DeriveMT(32, []byte{})
+	require.Error(t, err)
+	// Mismatched leaf count and data size, 3 leaves, but no data
+	_, err = NewMT(32, 3, emptyHash)
+	// Should not error, but tree is empty
+	require.NoError(t, err)
+}
+
+func TestMerkleTreeProofVerificationAllLeaves(t *testing.T) {
+	pieceSize := uint32(16)
+	data := make([]byte, 64)
+	for i := range data {
+		data[i] = byte(i)
+	}
+	mt, err := DeriveMT(pieceSize, data)
+	require.NoError(t, err)
+	mtEmpty, err := NewMT(pieceSize, mt.LeafCount(), mt.RootHash())
+	require.NoError(t, err)
+	for i := uint32(0); i < mt.LeafCount(); i++ {
+		proof := mt.MinimalProofByIndex(i)
+		piece := mt.pieces[i]
+		mtEmpty.VerifyAndCacheOrdered(i, piece, proof)
+		if i == mt.LeafCount()-1 {
+			// Last piece should complete the tree
+			_, completed := mtEmpty.CollectedPieces()
+			require.True(t, completed)
+		} else {
+			_, completed := mtEmpty.CollectedPieces()
+			require.False(t, completed)
+		}
+	}
+}
+
+func TestMerkleTreeGetCopyIndependence(t *testing.T) {
+	pieceSize := uint32(8)
+	data := []byte("abcdefghABCDEFGH")
+	mt, err := DeriveMT(pieceSize, data)
+	require.NoError(t, err)
+	mtCopy := mt.GetCopy()
+	require.NotNil(t, mtCopy)
+	// Modify the copy
+	mtCopy.pieces[0] = []byte{'X'}
+	require.NotEqual(t, mt.pieces[0][0], mtCopy.pieces[0][0])
+}
+
+func TestMerkleTreeMinimalProofPathUniqueness(t *testing.T) {
+	pieceSize := uint32(4)
+	data := []byte("abcdefghijkl")
+	mt, err := DeriveMT(pieceSize, data)
+	require.NoError(t, err)
+	for i := uint32(0); i < mt.LeafCount(); i++ {
+		path := mt.MinimalProofPathByIndex(i)
+		seen := make(map[uint32]struct{})
+		for _, idx := range path {
+			_, exists := seen[idx]
+			require.False(t, exists, "duplicate index in minimal proof path")
+			seen[idx] = struct{}{}
+		}
 	}
 }
