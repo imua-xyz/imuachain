@@ -37,9 +37,7 @@ func (c *Caches) RemoveNSTStakerList(chainID uint64) {
 }
 
 func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]string, error) {
-	if c.nstStakerList == nil {
-		c.nstStakerList = make(map[uint64][]string)
-	}
+	c.ensureInitialized()
 	l := len(indexes)
 	if l == 0 {
 		return nil, nil

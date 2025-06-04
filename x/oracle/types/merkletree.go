@@ -6,7 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	math "math"
+	"math"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
