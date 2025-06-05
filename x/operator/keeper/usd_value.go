@@ -754,11 +754,21 @@ func (k *Keeper) GetAllOperatorAssetUSDValues(ctx sdk.Context) ([]operatortypes.
 }
 
 // UpdateOperatorAssetUSDValue update the operator asset USD value by epoch.
-func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator string) error {
+func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers []string, operator string) error {
 	// check if the epoch is impactful
-	if !k.IsImpactfulEpochForOperator(ctx, epochIdentifier, operator) {
-		// delete the operator asset USD Value
-		return k.DeleteOperatorAssetUSDValueByEpoch(ctx, epochIdentifier, operator)
+	impactfulEpochIdentifiers := make([]string, 0)
+	for _, epochIdentifier := range epochIdentifiers {
+		if !k.IsImpactfulEpochForOperator(ctx, epochIdentifier, operator) {
+			// delete the operator asset USD Value
+			err := k.DeleteOperatorAssetUSDValueByEpoch(ctx, epochIdentifier, operator)
+			if err != nil {
+				ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to delete the asset USD value", "epochIdentifier", epochIdentifier, "operator", operator, "err", err)
+			}
+			// don't handle the error, because failing to delete shouldn't influence the delete and update
+			// for other epoch identifiers
+		} else {
+			impactfulEpochIdentifiers = append(impactfulEpochIdentifiers, epochIdentifier)
+		}
 	}
 	if len(impactfulEpochIdentifiers) == 0 {
 		return nil

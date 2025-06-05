@@ -71,7 +71,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 	assetStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
 	symbolMap := make(map[string]interface{}, len(assets))
-	// checkDelegationStates if the AVS is registered
+	// check if the AVS is registered
 	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrInvalidRewardAssetParameter.Wrapf("AVS not found %s", avsAddr)
 	}
@@ -79,7 +79,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 		if assetInfo.Decimals > assetstype.MaxDecimal {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", assetInfo.Decimals, assetstype.MaxDecimal)
 		}
-		// checkDelegationStates for symbol duplication
+		// check for symbol duplication
 		if _, ok := symbolMap[assetInfo.Symbol]; ok {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated symbol: %s", assetInfo.Symbol)
 		}
@@ -137,7 +137,7 @@ func (k Keeper) IsAVSAllRewardsClaimed(ctx sdk.Context, avsAddr string) bool {
 	for ; iterator.Valid(); iterator.Next() {
 		var avsRewardAsset types.AVSRewardAsset
 		k.cdc.MustUnmarshal(iterator.Value(), &avsRewardAsset)
-		// checkDelegationStates if the reward has been distributed and claimed
+		// check if the reward has been distributed and claimed
 		claimedAmount := avsRewardAsset.RewardAssetState.RewardPoolTotal.Sub(avsRewardAsset.RewardAssetState.RewardPoolBalance)
 		if !avsRewardAsset.RewardAssetState.RewardAllocationTotal.Equal(claimedAmount) {
 			return false

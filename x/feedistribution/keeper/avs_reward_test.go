@@ -147,7 +147,7 @@ func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {
 			} else if tc.errContains != "" {
 				s.Require().ErrorContains(err, tc.errContains)
 			}
-			// checkDelegationStates the state after setting rewards
+			// check the state after setting rewards
 			distributionInfo, err := suite.App.DistrKeeper.GetAVSRewardDistribution(suite.Ctx, testAvs)
 			if !tc.rewardExists {
 				s.Require().ErrorIs(err, feedistributiontypes.ErrNotAVSRewardDistribution)

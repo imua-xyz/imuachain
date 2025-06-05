@@ -189,7 +189,7 @@ func (suite *KeeperTestSuite) CheckLengthOfValidatorUpdates(
 	expected int, powers []int64, msgAndArgs ...interface{},
 ) {
 	suite.Require().Equal(len(powers), expected, "unequal `expected` and `powers` length")
-	// we commit one block and one epoch, to checkDelegationStates after both
+	// we commit one block and one epoch, to check after both
 	suite.Commit()
 	// at one block, no change
 	updates := suite.App.StakingKeeper.GetValidatorUpdates(suite.Ctx)

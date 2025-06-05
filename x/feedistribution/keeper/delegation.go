@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"strconv"
+
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,7 +79,7 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 			// Just log the error as a reminder; do not return it to avoid interrupting the handling
 			// of other operators.
 			ctx.Logger().Error("HandleChangedDelegations, failed to increment the period", "operator",
-				operator, "assetID", assetID, "EpochIdentifier", epochIdentifier, "err", err)
+				operator, "assetID", assetID, "epochIdentifier", epochIdentifier, "err", err)
 			return false, nil
 		}
 		writeFunc()
@@ -88,9 +90,21 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 			// of other operators.
 			ctx.Logger().Error("HandleChangedDelegations, failed to distribute rewards to delegations",
 				"endingPeriod", endingPeriod, "operator", operator, "assetID", assetID,
-				"EpochIdentifier", epochIdentifier, "err", err)
+				"epochIdentifier", epochIdentifier, "err", err)
 			return false, nil
 		}
+		// emit the events for delegation distribution
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				feedistributiontypes.EventTypeDistributeRewardToDelegations,
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochIdentifier, epochIdentifier),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyOperator, operator),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyAssetID, assetID),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyEndingPeriod, strconv.FormatUint(endingPeriod, 10)),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakers, delegationChangeInfo.StakersAsString()),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyPreDelegatedTotalAmount, delegationChangeInfo.TotalAmount.String()),
+			),
+		)
 		return false, nil
 	}
 	return k.IterateStakeChangedDelegations(ctx, false, []byte(epochIdentifier), opFunc)
@@ -169,12 +183,12 @@ func (k Keeper) reinitializeDelegationStartingInfo(
 func (k Keeper) calculateDelegationRewardsBetween(ctx sdk.Context, startingPeriod, endingPeriod uint64, operator, assetID,
 	epochIdentifier string, stake sdk.Dec,
 ) (feedistributiontypes.CommonAVSRewards, error) {
-	// sanity checkDelegationStates
+	// sanity check
 	if startingPeriod > endingPeriod {
 		return nil, feedistributiontypes.ErrInvalidInputParameter.Wrapf("startingPeriod cannot be greater than endingPeriod, start:%d,end:%d", startingPeriod, endingPeriod)
 	}
 
-	// sanity checkDelegationStates
+	// sanity check
 	if stake.IsNegative() {
 		return nil, feedistributiontypes.ErrInvalidInputParameter.Wrapf("stake should not be negative, stake:%s", stake)
 	}
@@ -190,7 +204,7 @@ func (k Keeper) calculateDelegationRewardsBetween(ctx sdk.Context, startingPerio
 	}
 	difference, hasNeg := feedistributiontypes.CommonAVSRewards(ending.CumulativeRewardRatios).SafeSub(starting.CumulativeRewardRatios)
 	if hasNeg {
-		return nil, feedistributiontypes.ErrNegativeAVSRewards.Wrapf("calculateDelegationRewardsBetween returns negative avs rewards, operator:%s, assetID:%s, EpochIdentifier:%s, startPeriod：%d,endPeriod:%d", operator,
+		return nil, feedistributiontypes.ErrNegativeAVSRewards.Wrapf("calculateDelegationRewardsBetween returns negative avs rewards, operator:%s, assetID:%s, epochIdentifier:%s, startPeriod：%d,endPeriod:%d", operator,
 			assetID, epochIdentifier, startingPeriod, endingPeriod)
 	}
 	// note: necessary to truncate so we don't allow withdrawing more rewards than owed
@@ -210,11 +224,11 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 	startingEpochNumber := startingInfo.EpochNumber
 	rewards := make([]feedistributiontypes.CommonAVSRewardData, 0)
 
-	// checkDelegationStates the epoch number
+	// check the epoch number
 	if startingEpochNumber >= currentEpochNumber {
 		return nil, sdk.Dec{}, feedistributiontypes.ErrInvalidInputParameter.Wrapf("calculateDelegationRewards: the epoch number in starting Info is greater than or equal to the current epoch number, startEpochNumber:%d,currentEpochNumber:%d", startingEpochNumber, currentEpochNumber)
 	}
-	// checkDelegationStates the period
+	// check the period
 	startingPeriod := startingInfo.PreviousPeriod
 	stake := startingInfo.Stake
 	if startingPeriod >= endingPeriod {
@@ -245,7 +259,7 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 
 	// TODO: In the implementation of the Cosmos SDK, it checks the stake by comparing it with the current stake
 	// to handle the precision loss caused by truncation.
-	// We don't checkDelegationStates it here because we handle reward distribution per epoch, so the compared value should
+	// We don't check it here because we handle reward distribution per epoch, so the compared value should
 	// be the stake at the time of the last voting power update.
 	// If we want to handle it, the compared stake needs to be saved in the delegation change information,
 	// just like the total delegated amount.
@@ -286,7 +300,7 @@ func (k Keeper) distributeRewardsToDelegation(
 				"operator", operator, "avs", rewardsRawPerAVS.AVSAddress, "err", err)
 			return nil, err
 		}
-		// This checkDelegationStates is from the implementation of the Cosmos SDK.
+		// This check is from the implementation of the Cosmos SDK.
 		// Not sure if this edge case also exists in the Imua protocol,
 		// but adding it here to avoid exceptions.
 		// defensive edge case may happen on the very final digits
@@ -357,7 +371,7 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 				// Just log the error as a reminder; do not return it to avoid interrupting the handling
 				// of other stakers.
 				ctx.Logger().Error("DistributeRewardsToDelegations, failed to initialize the starting info for the  delegation", "endingPeriod", endingPeriod, "delegationKey", delegationKey,
-					"EpochIdentifier", epochInfo.Identifier, "err", err)
+					"epochIdentifier", epochInfo.Identifier, "err", err)
 				continue
 			}
 		} else {
@@ -367,7 +381,7 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 				// Just log the error as a reminder; do not return it to avoid interrupting the handling
 				// of other stakers.
 				ctx.Logger().Error("DistributeRewardsToDelegations, failed to get the starting info for the  delegation", "delegationKey", delegationKey,
-					"EpochIdentifier", epochInfo.Identifier, "err", err)
+					"epochIdentifier", epochInfo.Identifier, "err", err)
 				continue
 			}
 			// distribute the rewards for a delegation.
@@ -376,7 +390,7 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 				// Just log the error as a reminder; do not return it to avoid interrupting the handling
 				// of other stakers.
 				ctx.Logger().Error("DistributeRewardsToDelegations, failed to distribute rewards to the  delegation", "delegationKey", delegationKey,
-					"EpochIdentifier", epochInfo.Identifier, "err", err)
+					"epochIdentifier", epochInfo.Identifier, "err", err)
 				continue
 			}
 		}
@@ -445,4 +459,64 @@ func (k Keeper) ClaimDelegationRewards(ctx sdk.Context, stakerID string) (feedis
 		return nil, err
 	}
 	return totalClaimedRewards, nil
+}
+
+// GetStakerUnclaimedRewards queries the unclaimed rewards for a staker.
+// Unlike ClaimDelegationRewards, it does not trigger a claim operation.
+func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) ([]feedistributiontypes.CommonAVSRewardData, error) {
+	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
+	ret := make([]feedistributiontypes.CommonAVSRewardData, 0)
+	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
+		for i := range allEpochIdentifiers {
+			epochIdentifier := allEpochIdentifiers[i]
+			epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
+			if !exist {
+				return false, feedistributiontypes.ErrEpochNotFound.Wrapf("GetStakerUnclaimedRewards,epochIdentifier:%s", epochIdentifier)
+			}
+			// get the starting info
+			delegationKey := string(assetstype.GetJoinedStoreKey(stakerID, keys.AssetId, keys.OperatorAddr))
+			if !k.HasDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier) {
+				// no rewards for the delegation without starting information.
+				continue
+			}
+			startingInfo, err := k.GetDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier)
+			if err != nil {
+				return false, err
+			}
+			if startingInfo.EpochNumber >= uint64(epochInfo.CurrentEpoch) {
+				// this case shouldn't exist, so return an error
+				return false, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("StakerClaimDelegationReward, epoch number in starting info should be less than the current epoch number, startingEpochNumber:%d, current:%d", startingInfo.EpochNumber, epochInfo.CurrentEpoch)
+			} else if startingInfo.EpochNumber == uint64(epochInfo.CurrentEpoch-1) {
+				// No rewards if the delegation started in the previous epoch,
+				// because the current epoch's reward has not been distributed yet.
+				// It will be distributed at the end of the current epoch.
+				continue
+			}
+			if !startingInfo.Stake.IsPositive() {
+				return false, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("StakerClaimDelegationReward, stake in starting info should be positive, stake:%s", startingInfo.Stake)
+			}
+			// increase the period for the operator before distributing the rewards
+			delegatedAmountAtPreEpoch, err := k.getDelegatedAmountAtPreEpochEnd(ctx, keys.OperatorAddr, keys.AssetId, epochInfo.Identifier)
+			if err != nil {
+				return false, err
+			}
+			endingPeriod, err := k.IncrementOperatorPeriod(ctx, keys.OperatorAddr, keys.AssetId, epochInfo.Identifier, delegatedAmountAtPreEpoch)
+			if err != nil {
+				return false, err
+			}
+			// calculate the rewards
+			allAVSRewardsRaw, _, err := k.calculateDelegationRewards(ctx, endingPeriod, keys.OperatorAddr, keys.AssetId, &epochInfo, startingInfo)
+			if err != nil {
+				return false, err
+			}
+			ret = append(ret, allAVSRewardsRaw...)
+		}
+
+		return false, nil
+	}
+	err := k.delegationKeeper.IterateDelegationsForStaker(ctx, stakerID, opFunc)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }

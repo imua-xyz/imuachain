@@ -46,7 +46,7 @@ type (
 // AVSs can choose between these two methods based on their specific needs.
 func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distribution feedistributiontypes.AVSRewardDistribution) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
-	// checkDelegationStates if the reward asset has been registered by the AVS
+	// check if the reward asset has been registered by the AVS
 	for _, rewardCoin := range distribution.Rewards {
 		if !k.IsAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Denom) {
 			return feedistributiontypes.ErrAVSRewardAssetNotFound.Wrapf("the reward coin isn't registered, AvsAddr:%s denomination:%s", avsAddr, rewardCoin.Denom)
@@ -55,7 +55,7 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
 	for _, operator := range distribution.OperatorRewardProportions {
-		// We don't checkDelegationStates if the operator is jailed here because there might
+		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
 		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.OperatorAddr, avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
@@ -102,7 +102,7 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 // Setting null rewards is allowed, enabling the AVS to disable reward distribution.
 func (k Keeper) SetAVSEpochRewardExclusive(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
-	// checkDelegationStates if the reward asset has been registered by the AVS
+	// check if the reward asset has been registered by the AVS
 	for _, rewardCoin := range rewards {
 		if !k.IsAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Denom) {
 			return feedistributiontypes.ErrAVSRewardAssetNotFound.Wrapf("the reward coin isn't registered, AvsAddr:%s denomination:%s", avsAddr, rewardCoin.Denom)
@@ -145,7 +145,7 @@ func (k Keeper) SetAVSRewardProportionsExclusive(ctx sdk.Context, avsAddr string
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
 	for _, operator := range rewardProportions {
-		// We don't checkDelegationStates if the operator is jailed here because there might
+		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
 		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
@@ -552,7 +552,7 @@ func (k Keeper) AVSRewardAndProportionsByParam(ctx sdk.Context, avsAddr string) 
 	var avsEpochRewardFn AVSEpochRewardFn
 	var operatorRewardProportionsFn OperatorRewardProportionsFn
 	var isDogfood bool
-	// checkDelegationStates if the avs is dogfood
+	// check if the avs is dogfood
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	if dogfoodAVSAddr == avsAddr {
@@ -564,7 +564,7 @@ func (k Keeper) AVSRewardAndProportionsByParam(ctx sdk.Context, avsAddr string) 
 		if err != nil {
 			return false, feedistributiontypes.EpochRewardsAndProportions{}, err
 		}
-		// checkDelegationStates the reward parameter of AVS
+		// check the reward parameter of AVS
 		if param.CustomRewardInflation {
 			avsEpochRewardFn = k.CustomizedEpochRewardFnForAVSs()
 		} else {

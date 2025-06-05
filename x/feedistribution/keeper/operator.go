@@ -212,7 +212,7 @@ func (k Keeper) incrementReferenceCount(ctx sdk.Context, operator, assetID, epoc
 	// This ensures that a period is referenced by at most one delegation and the current rewards,
 	// meaning the count must be less than or equal to 2.
 	// In the Imua protocol, rewards are distributed per epoch, so a period may be referenced
-	// by multiple delegations. Therefore, we do not checkDelegationStates the upper limit of the reference count here.
+	// by multiple delegations. Therefore, we do not check the upper limit of the reference count here.
 	historical.ReferenceCount++
 	return k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period, historical)
 }

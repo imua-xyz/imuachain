@@ -44,10 +44,10 @@ type expectedDelegationRewardStates struct {
 }
 
 func (suite *KeeperTestSuite) checkDelegationStates(expectedStates *expectedDelegationRewardStates) {
-	// checkDelegationStates the states related to the operator asset
+	// check the states related to the operator asset
 	for operator, assetsState := range expectedStates.OperatorAssetStates {
 		for assetID, operatorAssetState := range assetsState {
-			// checkDelegationStates the delegation starting info
+			// check the delegation starting info
 			for stakerID, delegationStartingInfo := range operatorAssetState.DelegationStartingInfos {
 				delegationKey := string(assetstype.GetJoinedStoreKey(stakerID, assetID, operator))
 				actualStartingInfo, err := suite.App.DistrKeeper.GetDelegationStartingInfo(suite.Ctx, delegationKey, expectedStates.EpochIdentifier)
@@ -283,7 +283,7 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 			}
 
 			args, expectedStates := tc.malleate()
-			// checkDelegationStates the state after unit test
+			// check the state after unit test
 			for epochIdentifier, expectedState := range expectedStates {
 				actualState, err := suite.App.DistrKeeper.GetStakeChangedDelegations(suite.Ctx, epochIdentifier, args.operator.String(), args.assetID)
 				if expectedState != nil {
@@ -726,7 +726,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 			suite.updateDogfoodAssetsList(suite.AssetIDs)
 
 			expectedStates := tc.malleate()
-			// checkDelegationStates the state after unit test
+			// check the state after unit test
 			suite.checkDelegationStates(&expectedStates)
 		})
 	}
@@ -866,7 +866,7 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 			} else if tc.errContains != "" {
 				s.Require().ErrorContains(err, tc.errContains)
 			}
-			// checkDelegationStates the state after unit test
+			// check the state after unit test
 			suite.checkDelegationStates(&expectedStates)
 
 			suite.Require().Equal(feedistributiontypes.CommonAVSRewards{
@@ -1020,7 +1020,7 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 			s.testClientChainID = s.ClientChains[0].LayerZeroChainID
 			expectedStates := tc.malleate()
 
-			// checkDelegationStates the state after unit test
+			// check the state after unit test
 			suite.checkDelegationStates(&expectedStates.commonStates)
 			// check the slash states
 			allSlashEvents, err := suite.App.DistrKeeper.GetAllOperatorSlashEvent(suite.Ctx)

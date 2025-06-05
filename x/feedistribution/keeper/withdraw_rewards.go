@@ -14,7 +14,7 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
 			"generalWithdrawFromAVS, the withdraw amount is nil or not positive, amount:%s", withdrawAmount)
 	}
-	// checkDelegationStates and calculate the actual amount withdrawable for an AVS
+	// check and calculate the actual amount withdrawable for an AVS
 	rewardAssetInfo, err := k.GetAVSRewardAssetInfo(ctx, avs, assetID)
 	if err != nil {
 		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, err
@@ -55,7 +55,7 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 	}
 
 	// send the rewards token for dogfood AVS
-	// checkDelegationStates if the avs is dogfood
+	// check if the avs is dogfood
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	var withdrawAmountFromDogfood sdkmath.Int
@@ -195,7 +195,7 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 // Unlike WithdrawOperatorCommission, it only withdraws the IMUA commission from the dogfood AVS.
 // So it can be provided through a cosmos transaction.
 func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccAddress) (sdk.Coins, error) {
-	// checkDelegationStates if the avs is dogfood
+	// check if the avs is dogfood
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	accumulatedCommissions, err := k.GetOperatorAccumulatedCommission(ctx, operator.String(), dogfoodAVSAddr)
