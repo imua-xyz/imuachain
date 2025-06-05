@@ -20192,15 +20192,18 @@
                         "type": "object",
                         "properties": {
                           "validator_pubkey": {
-                            "type": "string"
+                            "type": "string",
+                            "title": "validator's public key on beacon chain"
                           },
                           "version": {
                             "type": "string",
-                            "format": "uint64"
+                            "format": "uint64",
+                            "title": "version of the validator info (on deposit)"
                           },
                           "deposit_amount": {
                             "type": "string",
-                            "format": "uint64"
+                            "format": "uint64",
+                            "title": "deposit amount of the validator"
                           }
                         },
                         "title": "ValidatorDeposit defines the version of a validator"
@@ -20378,15 +20381,18 @@
                           "type": "object",
                           "properties": {
                             "validator_pubkey": {
-                              "type": "string"
+                              "type": "string",
+                              "title": "validator's public key on beacon chain"
                             },
                             "version": {
                               "type": "string",
-                              "format": "uint64"
+                              "format": "uint64",
+                              "title": "version of the validator info (on deposit)"
                             },
                             "deposit_amount": {
                               "type": "string",
-                              "format": "uint64"
+                              "format": "uint64",
+                              "title": "deposit amount of the validator"
                             }
                           },
                           "title": "ValidatorDeposit defines the version of a validator"
@@ -45095,15 +45101,18 @@
                 "type": "object",
                 "properties": {
                   "validator_pubkey": {
-                    "type": "string"
+                    "type": "string",
+                    "title": "validator's public key on beacon chain"
                   },
                   "version": {
                     "type": "string",
-                    "format": "uint64"
+                    "format": "uint64",
+                    "title": "version of the validator info (on deposit)"
                   },
                   "deposit_amount": {
                     "type": "string",
-                    "format": "uint64"
+                    "format": "uint64",
+                    "title": "deposit amount of the validator"
                   }
                 },
                 "title": "ValidatorDeposit defines the version of a validator"
@@ -45218,15 +45227,18 @@
                   "type": "object",
                   "properties": {
                     "validator_pubkey": {
-                      "type": "string"
+                      "type": "string",
+                      "title": "validator's public key on beacon chain"
                     },
                     "version": {
                       "type": "string",
-                      "format": "uint64"
+                      "format": "uint64",
+                      "title": "version of the validator info (on deposit)"
                     },
                     "deposit_amount": {
                       "type": "string",
-                      "format": "uint64"
+                      "format": "uint64",
+                      "title": "deposit amount of the validator"
                     }
                   },
                   "title": "ValidatorDeposit defines the version of a validator"
@@ -45802,15 +45814,18 @@
             "type": "object",
             "properties": {
               "validator_pubkey": {
-                "type": "string"
+                "type": "string",
+                "title": "validator's public key on beacon chain"
               },
               "version": {
                 "type": "string",
-                "format": "uint64"
+                "format": "uint64",
+                "title": "version of the validator info (on deposit)"
               },
               "deposit_amount": {
                 "type": "string",
-                "format": "uint64"
+                "format": "uint64",
+                "title": "deposit amount of the validator"
               }
             },
             "title": "ValidatorDeposit defines the version of a validator"
@@ -45962,15 +45977,18 @@
       "type": "object",
       "properties": {
         "validator_pubkey": {
-          "type": "string"
+          "type": "string",
+          "title": "validator's public key on beacon chain"
         },
         "version": {
           "type": "string",
-          "format": "uint64"
+          "format": "uint64",
+          "title": "version of the validator info (on deposit)"
         },
         "deposit_amount": {
           "type": "string",
-          "format": "uint64"
+          "format": "uint64",
+          "title": "deposit amount of the validator"
         }
       },
       "title": "ValidatorDeposit defines the version of a validator"

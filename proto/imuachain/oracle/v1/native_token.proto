@@ -68,8 +68,11 @@ message Balances {
 
 // ValidatorDeposit defines the version of a validator
 message ValidatorDeposit {
+  // validator's public key on beacon chain
   string validator_pubkey = 1;
+  // version of the validator info (on deposit)
   uint64 version = 2;
+  // deposit amount of the validator
   uint64 deposit_amount = 3;
 }
 

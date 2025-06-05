@@ -365,9 +365,12 @@ func (m *Balances) GetBalanceList() []*BalanceInfo {
 
 // ValidatorDeposit defines the version of a validator
 type ValidatorDeposit struct {
+	// validator's public key on beacon chain
 	ValidatorPubkey string `protobuf:"bytes,1,opt,name=validator_pubkey,json=validatorPubkey,proto3" json:"validator_pubkey,omitempty"`
-	Version         uint64 `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	DepositAmount   uint64 `protobuf:"varint,3,opt,name=deposit_amount,json=depositAmount,proto3" json:"deposit_amount,omitempty"`
+	// version of the validator info (on deposit)
+	Version uint64 `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	// deposit amount of the validator
+	DepositAmount uint64 `protobuf:"varint,3,opt,name=deposit_amount,json=depositAmount,proto3" json:"deposit_amount,omitempty"`
 }
 
 func (m *ValidatorDeposit) Reset()         { *m = ValidatorDeposit{} }
