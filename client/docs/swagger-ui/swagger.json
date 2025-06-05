@@ -23748,15 +23748,13 @@
                   "type": "boolean",
                   "description": "jailed defined whether the operator has been jailed from bonded status or not."
                 },
-                "jailed_height": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "jailed_height is the height at which the operator was jailed.\nIt can be used to handle the impact of jailing on rewards. The default value is 0."
-                },
-                "unjailed_height": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "unjailed_height is the height at which the operator was un‑jailed.\nUsed when calculating reward eligibility windows."
+                "jail_toggle_heights": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uint64"
+                  },
+                  "description": "jail_toggle_heights stores all block heights at which the operator's jail status changed.\nIt always starts with a jail event. Even indices (0, 2, ...) represent jail events,\nand odd indices (1, 3, ...) represent unjail events.\nThis can be used to accurately calculate reward eligibility by excluding jailed periods."
                 }
               },
               "title": "OptedInfo is the opted information about operator"
@@ -45687,15 +45685,13 @@
           "type": "boolean",
           "description": "jailed defined whether the operator has been jailed from bonded status or not."
         },
-        "jailed_height": {
-          "type": "string",
-          "format": "uint64",
-          "description": "jailed_height is the height at which the operator was jailed.\nIt can be used to handle the impact of jailing on rewards. The default value is 0."
-        },
-        "unjailed_height": {
-          "type": "string",
-          "format": "uint64",
-          "description": "unjailed_height is the height at which the operator was un‑jailed.\nUsed when calculating reward eligibility windows."
+        "jail_toggle_heights": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uint64"
+          },
+          "description": "jail_toggle_heights stores all block heights at which the operator's jail status changed.\nIt always starts with a jail event. Even indices (0, 2, ...) represent jail events,\nand odd indices (1, 3, ...) represent unjail events.\nThis can be used to accurately calculate reward eligibility by excluding jailed periods."
         }
       },
       "title": "OptedInfo is the opted information about operator"
