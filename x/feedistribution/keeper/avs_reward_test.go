@@ -302,7 +302,6 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 				// unjail the operator at the second-to-last block of the current epoch.
 				suite.App.OperatorKeeper.Unjail(suite.Ctx, consensusKey.ToConsAddr(), chainIDWithoutRevision)
 				suite.NextBlock()
-
 				return suite.DogfoodAVSAddr
 			},
 			isDogfood: true,

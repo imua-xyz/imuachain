@@ -96,16 +96,16 @@ func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, _ sdk.Dec, affectedAVSList []string,
 	_ []operatortypes.SlashFromAssetsPool,
 ) {
-	h.afterStakingChange(ctx, operator, affectedAVSList)
+	h.afterStakingOrJailChange(ctx, operator, false, affectedAVSList)
 }
 
 func (h OperatorHooksWrapper) AfterJail(
-	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo,
+	ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string,
 ) {
-	h.afterStakingChange(ctx, operator, affectedAVSList)
+	h.afterStakingOrJailChange(ctx, operator, isUnjail, affectedAVSList)
 }
 
-func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo) {
+func (h OperatorHooksWrapper) afterStakingOrJailChange(ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string) {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	for _, avs := range affectedAVSList {
@@ -115,6 +115,11 @@ func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.A
 			if !found || err != nil {
 				ctx.Logger().Error("AfterSlash the consensus key isn't found by the chainIDWithoutRevision and operator address", "operatorAddr", operator, "chainIDWithoutRevision", chainIDWithoutRevision, "err", err)
 				return
+			}
+			if isUnjail {
+				// mark the flag for unjail
+				h.keeper.MarkUpdateValidatorSetFlag(ctx)
+				break
 			}
 			// check if the key is active yet
 			isValidator := false

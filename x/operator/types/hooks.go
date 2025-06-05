@@ -54,9 +54,9 @@ func (hooks MultiOperatorHooks) AfterSlash(
 }
 
 func (hooks MultiOperatorHooks) AfterJail(
-	ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+	ctx sdk.Context, addr sdk.AccAddress, isUnjail bool, affectedAVSList []string,
 ) {
 	for _, hook := range hooks {
-		hook.AfterJail(ctx, addr, affectedAVSList)
+		hook.AfterJail(ctx, addr, isUnjail, affectedAVSList)
 	}
 }

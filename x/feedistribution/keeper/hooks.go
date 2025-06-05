@@ -135,3 +135,7 @@ func (h OperatorHooksWrapper) AfterSlash(
 		return
 	}
 }
+
+func (h OperatorHooksWrapper) AfterJail(_ sdk.Context, _ sdk.AccAddress, _ bool, _ []string) {
+	// do nothing
+}

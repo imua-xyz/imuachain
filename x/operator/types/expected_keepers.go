@@ -144,7 +144,7 @@ type OperatorHooks interface {
 	)
 	// AfterJail This hook is called when an operator is jailed
 	AfterJail(
-		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+		ctx sdk.Context, addr sdk.AccAddress, isUnjail bool, affectedAVSList []string,
 	)
 }
 type StakingKeeper interface {

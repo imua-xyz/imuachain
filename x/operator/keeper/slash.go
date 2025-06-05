@@ -336,11 +336,13 @@ func (k *Keeper) SetJailedState(ctx sdk.Context, consAddr sdk.ConsAddress, chain
 		k.Logger(ctx).Error(err.Error(), chainID)
 	}
 
-	affectedAVSList, err := k.GetImpactfulAVSForOperator(ctx, operatorAddr.String())
+	// TODO: Should jailing by one AVS apply to all AVSs the operator is serving, similar to slashing?
+	// Or should it only affect the AVS that jailed the operator, allowing them to continue serving the others?
+	affectedAVSList, _, err := k.GetImpactfulEpochsAndAVSsForOperator(ctx, operatorAddr.String())
 	if err != nil {
 		return
 	}
-	k.hooks.AfterJail(ctx, operatorAddr, affectedAVSList)
+	k.hooks.AfterJail(ctx, operatorAddr, !jailed, affectedAVSList)
 }
 
 // Jail an operator
