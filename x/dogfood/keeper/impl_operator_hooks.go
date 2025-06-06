@@ -100,12 +100,12 @@ func (h OperatorHooksWrapper) AfterSlash(
 }
 
 func (h OperatorHooksWrapper) AfterJail(
-	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo,
+	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []string,
 ) {
 	h.afterStakingChange(ctx, operator, affectedAVSList)
 }
 
-func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo) {
+func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []string) {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	for i := range affectedAVSList {
