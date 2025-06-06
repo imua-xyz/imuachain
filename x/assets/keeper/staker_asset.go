@@ -3,14 +3,12 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // AllDeposits
@@ -47,6 +45,9 @@ func (k Keeper) AllDeposits(ctx sdk.Context) (deposits []assetstype.DepositsBySt
 }
 
 func (k Keeper) GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInfo []assetstype.DepositByAsset, err error) {
+	if stakerID == "" {
+		return nil, assetstype.ErrInvalidInputParameter.Wrapf("null stakerID")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakerAssetInfos)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(stakerID))
 	defer iterator.Close()
@@ -106,21 +107,13 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 		if err != nil {
 			return nil, errorsmod.Wrap(err, "failed to GetDelegationInfo")
 		}
-		for operator, record := range delegationInfoRecords.DelegationInfos {
-			operatorAssetInfo, err := k.GetOperatorSpecifiedAssetInfo(ctx, sdk.MustAccAddressFromBech32(operator), assetID)
-			if err != nil {
-				return nil, errorsmod.Wrap(err, "failed to GetOperatorSpecifiedAssetInfo")
-			}
-			// the `undelegatableTokens` are currently delegated tokens. they are post-slashing, if any is applied.
+		for _, delegationInfo := range delegationInfoRecords.DelegationInfos {
+			// the `MaxUndelegatableAmount` are currently delegated tokens. they are post-slashing, if any is applied.
 			// this is because slashing is applied to an operator's total amount, of which, the share of a staker is kept
 			// unchanged.
-			undelegatableTokens, err := delegationkeeper.TokensFromShares(record.UndelegatableShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
-			if err != nil {
-				return nil, errorsmod.Wrap(err, "failed to get shares from token")
-			}
 			// this amount is post-slashing, as explained above.
-			info.TotalDepositAmount = info.TotalDepositAmount.Add(undelegatableTokens).Add(record.WaitUndelegationAmount)
-			info.PendingUndelegationAmount = info.PendingUndelegationAmount.Add(record.WaitUndelegationAmount)
+			info.TotalDepositAmount = info.TotalDepositAmount.Add(delegationInfo.DelegationInfo.MaxUndelegatableAmount).Add(delegationInfo.DelegationInfo.DelegationAmounts.WaitUndelegationAmount)
+			info.PendingUndelegationAmount = info.PendingUndelegationAmount.Add(delegationInfo.DelegationInfo.DelegationAmounts.WaitUndelegationAmount)
 		}
 		return info, nil
 	}
@@ -223,13 +216,13 @@ func (k Keeper) GetStakerBalanceByAsset(ctx sdk.Context, stakerID string, assetI
 	totalBalance := stakerAssetInfo.WithdrawableAmount.Add(stakerAssetInfo.PendingUndelegationAmount).Add(delegatedAmount)
 
 	balance = assetstype.StakerBalance{
-		StakerID:           stakerID,
-		AssetID:            assetID,
-		Balance:            totalBalance.BigInt(),
-		Withdrawable:       stakerAssetInfo.WithdrawableAmount.BigInt(),
-		Delegated:          delegatedAmount.BigInt(),
-		PendingUndelegated: stakerAssetInfo.PendingUndelegationAmount.BigInt(),
-		TotalDeposited:     stakerAssetInfo.TotalDepositAmount.BigInt(),
+		StakerId:           stakerID,
+		AssetId:            assetID,
+		Balance:            totalBalance,
+		Withdrawable:       stakerAssetInfo.WithdrawableAmount,
+		Delegated:          delegatedAmount,
+		PendingUndelegated: stakerAssetInfo.PendingUndelegationAmount,
+		TotalDeposited:     stakerAssetInfo.TotalDepositAmount,
 	}
 
 	return balance, nil

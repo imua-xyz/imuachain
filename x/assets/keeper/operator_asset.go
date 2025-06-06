@@ -43,7 +43,7 @@ func (k Keeper) AllOperatorAssets(ctx sdk.Context) (operatorAssets []assetstype.
 	return ret, nil
 }
 
-func (k Keeper) GetOperatorAssetInfos(ctx sdk.Context, operatorAddr sdk.Address, assetsFilter map[string]interface{}) (assetsInfo []assetstype.AssetByID, err error) {
+func (k Keeper) GetOperatorAssetInfos(ctx sdk.Context, operator string, assetsFilter map[string]interface{}) (assetsInfo []assetstype.AssetByID, err error) {
 	ret := make([]assetstype.AssetByID, 0)
 	opFunc := func(assetID string, state *assetstype.OperatorAssetInfo) error {
 		ret = append(ret, assetstype.AssetByID{
@@ -52,7 +52,7 @@ func (k Keeper) GetOperatorAssetInfos(ctx sdk.Context, operatorAddr sdk.Address,
 		})
 		return nil
 	}
-	err = k.IterateAssetsForOperator(ctx, false, operatorAddr.String(), assetsFilter, opFunc)
+	err = k.IterateAssetsForOperator(ctx, false, operator, assetsFilter, opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +136,9 @@ func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Addre
 // if `assetsFilter` is nil, the `opFunc` will handle all assets, it equals to an iterator without filter
 // if `assetsFilter` isn't nil, the `opFunc` will only handle the assets that is in the filter map.
 func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operator string, assetsFilter map[string]interface{}, opFunc func(assetID string, state *assetstype.OperatorAssetInfo) error) error {
+	if _, err := sdk.AccAddressFromBech32(operator); err != nil {
+		return assetstype.ErrInvalidInputParameter.Wrapf("invalid operator address,err:%s", err)
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(operator))
 	defer iterator.Close()

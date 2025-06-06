@@ -176,6 +176,12 @@ func (k *Keeper) IterateUndelegationsByOperator(
 // GetStakerUndelegationRecKeys returns the undelegation record keys corresponding to the provided
 // staker and asset.
 func (k *Keeper) GetStakerUndelegationRecKeys(ctx sdk.Context, stakerID, assetID string) (recordKeyList [][]byte, err error) {
+	if stakerID == "" {
+		return nil, types.ErrInvalidInputParameter.Wrapf("null stakerID")
+	}
+	if assetID == "" {
+		return nil, types.ErrInvalidInputParameter.Wrapf("null assetID")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixStakerUndelegationInfo)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(strings.Join([]string{stakerID, assetID}, "/")))
 	defer iterator.Close()

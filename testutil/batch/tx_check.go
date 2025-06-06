@@ -55,7 +55,7 @@ func (m *Manager) QueryDelegatedAmount(clientChainLzID uint64, stakerAddr, asset
 	if err != nil {
 		return sdkmath.ZeroInt(), err
 	}
-	return delegationInfo.MaxUndelegatableAmount, nil
+	return delegationInfo.SingleDelegationInfo.MaxUndelegatableAmount, nil
 }
 
 func (m *Manager) PrecompileTxOnChainCheck(batchID uint, msgType string) error {

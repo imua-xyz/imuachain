@@ -18310,6 +18310,109 @@
         ]
       }
     },
+    "/imuachain/assets/v1/staker_balance/{staker_id}/{asset_id}": {
+      "get": {
+        "summary": "QueryStakerBalance queries the staker balance for specified asset",
+        "operationId": "QueryStakerBalance",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "staker_balance": {
+                  "title": "staker_balance is the response for QueryStakerBalanceRequest",
+                  "type": "object",
+                  "properties": {
+                    "staker_id": {
+                      "type": "string",
+                      "description": "staker_id is the staker id for which the query is made."
+                    },
+                    "asset_id": {
+                      "type": "string",
+                      "description": "asset_id is the asset for which the query is made."
+                    },
+                    "balance": {
+                      "type": "string",
+                      "title": "balance = withdrawable + delegated + pendingUndelegated"
+                    },
+                    "withdrawable": {
+                      "type": "string",
+                      "title": "withdrawable is the amount that can be withdrawn"
+                    },
+                    "delegated": {
+                      "type": "string",
+                      "title": "delegated is the amount that has been delegated to the operators"
+                    },
+                    "pending_undelegated": {
+                      "type": "string",
+                      "title": "pending_undelegated is the amount that has been undelegated but not been completed"
+                    },
+                    "total_deposited": {
+                      "type": "string",
+                      "title": "total_deposited is the total deposit amount, compared to the balance, it might include slashed amount"
+                    }
+                  }
+                }
+              },
+              "description": "QueryStakerBalanceResponse is the response type for the Query/QueryStakerBalance RPC method."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker_id is the staker id for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset_id is the asset for which the query is made.",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/imslash/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
@@ -20937,20 +21040,41 @@
               "type": "object",
               "properties": {
                 "delegation_infos": {
-                  "type": "object",
-                  "additionalProperties": {
+                  "type": "array",
+                  "items": {
                     "type": "object",
                     "properties": {
-                      "undelegatable_share": {
+                      "operator": {
                         "type": "string",
-                        "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                        "title": "operator is the operator address of this delegation"
                       },
-                      "wait_undelegation_amount": {
-                        "type": "string",
-                        "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                      "delegation_info": {
+                        "title": "delegation_info is the delegation information",
+                        "type": "object",
+                        "properties": {
+                          "delegation_amounts": {
+                            "title": "delegation_amounts is the delegation info recorded in the KVStore",
+                            "type": "object",
+                            "properties": {
+                              "undelegatable_share": {
+                                "type": "string",
+                                "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                              },
+                              "wait_undelegation_amount": {
+                                "type": "string",
+                                "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                              }
+                            },
+                            "description": "DelegationAmounts is the delegation amount response for a single delegation."
+                          },
+                          "max_undelegatable_amount": {
+                            "type": "string",
+                            "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+                          }
+                        }
                       }
                     },
-                    "description": "DelegationAmounts is the delegation amount response for a single delegation."
+                    "title": "DelegationInfoAndOperator includes the SingleDelegationInfo and operator address"
                   },
                   "description": "delegation_infos is the delegation information for each operator."
                 }
@@ -21158,24 +21282,30 @@
             "schema": {
               "type": "object",
               "properties": {
-                "delegation_amounts": {
+                "single_delegation_info": {
+                  "title": "single_delegation_info",
                   "type": "object",
                   "properties": {
-                    "undelegatable_share": {
-                      "type": "string",
-                      "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                    "delegation_amounts": {
+                      "title": "delegation_amounts is the delegation info recorded in the KVStore",
+                      "type": "object",
+                      "properties": {
+                        "undelegatable_share": {
+                          "type": "string",
+                          "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                        },
+                        "wait_undelegation_amount": {
+                          "type": "string",
+                          "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                        }
+                      },
+                      "description": "DelegationAmounts is the delegation amount response for a single delegation."
                     },
-                    "wait_undelegation_amount": {
+                    "max_undelegatable_amount": {
                       "type": "string",
-                      "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                      "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
                     }
-                  },
-                  "description": "DelegationAmounts is the delegation amount response for a single delegation.",
-                  "title": "delegation_amounts is the delegation info recorded in the KVStore"
-                },
-                "max_undelegatable_amount": {
-                  "type": "string",
-                  "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+                  }
                 }
               },
               "title": "SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo"
@@ -41193,6 +41323,46 @@
       },
       "description": "QueryParamsResponse is the response type for the Query/Params RPC\nmethod."
     },
+    "imuachain.assets.v1.QueryStakerBalanceResponse": {
+      "type": "object",
+      "properties": {
+        "staker_balance": {
+          "title": "staker_balance is the response for QueryStakerBalanceRequest",
+          "type": "object",
+          "properties": {
+            "staker_id": {
+              "type": "string",
+              "description": "staker_id is the staker id for which the query is made."
+            },
+            "asset_id": {
+              "type": "string",
+              "description": "asset_id is the asset for which the query is made."
+            },
+            "balance": {
+              "type": "string",
+              "title": "balance = withdrawable + delegated + pendingUndelegated"
+            },
+            "withdrawable": {
+              "type": "string",
+              "title": "withdrawable is the amount that can be withdrawn"
+            },
+            "delegated": {
+              "type": "string",
+              "title": "delegated is the amount that has been delegated to the operators"
+            },
+            "pending_undelegated": {
+              "type": "string",
+              "title": "pending_undelegated is the amount that has been undelegated but not been completed"
+            },
+            "total_deposited": {
+              "type": "string",
+              "title": "total_deposited is the total deposit amount, compared to the balance, it might include slashed amount"
+            }
+          }
+        }
+      },
+      "description": "QueryStakerBalanceResponse is the response type for the Query/QueryStakerBalance RPC method."
+    },
     "imuachain.assets.v1.StakerAssetInfo": {
       "type": "object",
       "properties": {
@@ -41210,6 +41380,40 @@
         }
       },
       "description": "StakerAssetInfo defines the information for a single asset.\nThe type include three states:\nstaker's deposited, withdrawable, and currently unbonding amount."
+    },
+    "imuachain.assets.v1.StakerBalance": {
+      "type": "object",
+      "properties": {
+        "staker_id": {
+          "type": "string",
+          "description": "staker_id is the staker id for which the query is made."
+        },
+        "asset_id": {
+          "type": "string",
+          "description": "asset_id is the asset for which the query is made."
+        },
+        "balance": {
+          "type": "string",
+          "title": "balance = withdrawable + delegated + pendingUndelegated"
+        },
+        "withdrawable": {
+          "type": "string",
+          "title": "withdrawable is the amount that can be withdrawn"
+        },
+        "delegated": {
+          "type": "string",
+          "title": "delegated is the amount that has been delegated to the operators"
+        },
+        "pending_undelegated": {
+          "type": "string",
+          "title": "pending_undelegated is the amount that has been undelegated but not been completed"
+        },
+        "total_deposited": {
+          "type": "string",
+          "title": "total_deposited is the total deposit amount, compared to the balance, it might include slashed amount"
+        }
+      },
+      "title": "StakerBalance is a struct to describe the balance of a staker for a specific asset\nbalance = withdrawable + delegated + pendingUndelegated\npendingUndelegated is the amount of the asset that is during unbonding period and not yet withdrawable\nit would finally be withdrawable after the unbonding period, but the final amount may be less than the pendingUndelegated\nbecause of the penalty during the unbonding period"
     },
     "imuachain.assets.v1.StakingAssetInfo": {
       "type": "object",
@@ -43899,6 +44103,41 @@
       },
       "description": "DelegationAmounts is the delegation amount response for a single delegation."
     },
+    "imuachain.delegation.v1.DelegationInfoAndOperator": {
+      "type": "object",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "title": "operator is the operator address of this delegation"
+        },
+        "delegation_info": {
+          "title": "delegation_info is the delegation information",
+          "type": "object",
+          "properties": {
+            "delegation_amounts": {
+              "title": "delegation_amounts is the delegation info recorded in the KVStore",
+              "type": "object",
+              "properties": {
+                "undelegatable_share": {
+                  "type": "string",
+                  "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                },
+                "wait_undelegation_amount": {
+                  "type": "string",
+                  "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                }
+              },
+              "description": "DelegationAmounts is the delegation amount response for a single delegation."
+            },
+            "max_undelegatable_amount": {
+              "type": "string",
+              "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+            }
+          }
+        }
+      },
+      "title": "DelegationInfoAndOperator includes the SingleDelegationInfo and operator address"
+    },
     "imuachain.delegation.v1.QueryAssociatedOperatorByStakerResponse": {
       "type": "object",
       "properties": {
@@ -43944,30 +44183,52 @@
       "type": "object",
       "properties": {
         "delegation_infos": {
-          "type": "object",
-          "additionalProperties": {
+          "type": "array",
+          "items": {
             "type": "object",
             "properties": {
-              "undelegatable_share": {
+              "operator": {
                 "type": "string",
-                "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                "title": "operator is the operator address of this delegation"
               },
-              "wait_undelegation_amount": {
-                "type": "string",
-                "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+              "delegation_info": {
+                "title": "delegation_info is the delegation information",
+                "type": "object",
+                "properties": {
+                  "delegation_amounts": {
+                    "title": "delegation_amounts is the delegation info recorded in the KVStore",
+                    "type": "object",
+                    "properties": {
+                      "undelegatable_share": {
+                        "type": "string",
+                        "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                      },
+                      "wait_undelegation_amount": {
+                        "type": "string",
+                        "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                      }
+                    },
+                    "description": "DelegationAmounts is the delegation amount response for a single delegation."
+                  },
+                  "max_undelegatable_amount": {
+                    "type": "string",
+                    "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+                  }
+                }
               }
             },
-            "description": "DelegationAmounts is the delegation amount response for a single delegation."
+            "title": "DelegationInfoAndOperator includes the SingleDelegationInfo and operator address"
           },
           "description": "delegation_infos is the delegation information for each operator."
         }
       },
       "description": "QueryDelegationInfoResponse is the response for delegations by staker id and\nasset id."
     },
-    "imuachain.delegation.v1.SingleDelegationInfoResponse": {
+    "imuachain.delegation.v1.SingleDelegationInfo": {
       "type": "object",
       "properties": {
         "delegation_amounts": {
+          "title": "delegation_amounts is the delegation info recorded in the KVStore",
           "type": "object",
           "properties": {
             "undelegatable_share": {
@@ -43979,12 +44240,42 @@
               "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
             }
           },
-          "description": "DelegationAmounts is the delegation amount response for a single delegation.",
-          "title": "delegation_amounts is the delegation info recorded in the KVStore"
+          "description": "DelegationAmounts is the delegation amount response for a single delegation."
         },
         "max_undelegatable_amount": {
           "type": "string",
           "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+        }
+      },
+      "title": "SingleDelegationInfo includes the share, amount and pending undelegation amount"
+    },
+    "imuachain.delegation.v1.SingleDelegationInfoResponse": {
+      "type": "object",
+      "properties": {
+        "single_delegation_info": {
+          "title": "single_delegation_info",
+          "type": "object",
+          "properties": {
+            "delegation_amounts": {
+              "title": "delegation_amounts is the delegation info recorded in the KVStore",
+              "type": "object",
+              "properties": {
+                "undelegatable_share": {
+                  "type": "string",
+                  "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
+                },
+                "wait_undelegation_amount": {
+                  "type": "string",
+                  "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                }
+              },
+              "description": "DelegationAmounts is the delegation amount response for a single delegation."
+            },
+            "max_undelegatable_amount": {
+              "type": "string",
+              "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+            }
+          }
         }
       },
       "title": "SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo"

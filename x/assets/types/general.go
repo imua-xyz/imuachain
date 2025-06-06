@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-	"math/big"
 	"strings"
 
 	"github.com/imua-xyz/imuachain/utils"
@@ -98,7 +97,7 @@ type CreateQueryContext func(height int64, prove bool) (sdk.Context, error)
 // pendingUndelegated is the amount of the asset that is during unbonding period and not yet withdrawable
 // it would finally be withdrawable after the unbonding period, but the final amount may be less than the pendingUndelegated
 // because of the penalty during the unbonding period
-type StakerBalance struct {
+/*type StakerBalance struct {
 	StakerID           string
 	AssetID            string
 	Balance            *big.Int
@@ -106,7 +105,7 @@ type StakerBalance struct {
 	Delegated          *big.Int
 	PendingUndelegated *big.Int
 	TotalDeposited     *big.Int
-}
+}*/
 
 // GetStakerIDAndAssetID stakerID = stakerAddress+'_'+clientChainLzID,assetID =
 // assetAddress+'_'+clientChainLzID

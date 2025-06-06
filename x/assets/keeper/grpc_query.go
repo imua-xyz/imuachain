@@ -90,11 +90,7 @@ func (k Keeper) QueStakerSpecifiedAssetAmount(ctx context.Context, req *assetsty
 // QueOperatorAssetInfos query th state of all assets for an operator specified by operator address
 func (k Keeper) QueOperatorAssetInfos(ctx context.Context, infos *assetstype.QueryOperatorAssetInfos) (*assetstype.QueryOperatorAssetInfosResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	addr, err := sdk.AccAddressFromBech32(infos.OperatorAddr)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	assetInfos, err := k.GetOperatorAssetInfos(c, addr, nil)
+	assetInfos, err := k.GetOperatorAssetInfos(c, infos.OperatorAddr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -109,4 +105,15 @@ func (k Keeper) QueOperatorSpecifiedAssetAmount(ctx context.Context, req *assets
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	return k.GetOperatorSpecifiedAssetInfo(c, addr, strings.ToLower(req.AssetId))
+}
+
+func (k Keeper) QueryStakerBalance(ctx context.Context, req *assetstype.QueryStakerBalanceRequest) (*assetstype.QueryStakerBalanceResponse, error) {
+	c := sdk.UnwrapSDKContext(ctx)
+	stakerBalance, err := k.GetStakerBalanceByAsset(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
+	if err != nil {
+		return nil, err
+	}
+	return &assetstype.QueryStakerBalanceResponse{
+		StakerBalance: &stakerBalance,
+	}, nil
 }

@@ -68,10 +68,19 @@ func (k Keeper) IterateDelegations(ctx sdk.Context, iteratorPrefix []byte, opFun
 // IterateDelegationsForStakerAndAsset processes all operations
 // that require iterating over delegations for a specified staker and asset.
 func (k Keeper) IterateDelegationsForStakerAndAsset(ctx sdk.Context, stakerID string, assetID string, opFunc delegationtype.DelegationOpFunc) error {
+	if stakerID == "" {
+		return delegationtype.ErrInvalidInputParameter.Wrapf("null stakerID")
+	}
+	if assetID == "" {
+		return delegationtype.ErrInvalidInputParameter.Wrapf("null assetID")
+	}
 	return k.IterateDelegations(ctx, delegationtype.IteratorPrefixForStakerAsset(stakerID, assetID), opFunc)
 }
 
 func (k Keeper) IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error {
+	if stakerID == "" {
+		return delegationtype.ErrInvalidInputParameter.Wrapf("null stakerID")
+	}
 	return k.IterateDelegations(ctx, []byte(stakerID), opFunc)
 }
 
@@ -207,9 +216,22 @@ func (k *Keeper) GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, ope
 // GetDelegationInfo query the staker's asset info that has been delegated.
 func (k *Keeper) GetDelegationInfo(ctx sdk.Context, stakerID, assetID string) (*delegationtype.QueryDelegationInfoResponse, error) {
 	var ret delegationtype.QueryDelegationInfoResponse
-	ret.DelegationInfos = make(map[string]*delegationtype.DelegationAmounts)
+	ret.DelegationInfos = make([]*delegationtype.DelegationInfoAndOperator, 0)
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
-		ret.DelegationInfos[keys.OperatorAddr] = amounts
+		// calculate the maximum undelegatable amount
+		singleAmount, err := k.UndelegatableAmount(ctx, assetID, keys.OperatorAddr, amounts)
+		if err != nil {
+			return false, err
+		}
+		ret.DelegationInfos = append(ret.DelegationInfos,
+			&delegationtype.DelegationInfoAndOperator{
+				Operator: keys.OperatorAddr,
+				DelegationInfo: &delegationtype.SingleDelegationInfo{
+					DelegationAmounts:      amounts,
+					MaxUndelegatableAmount: singleAmount,
+				},
+			},
+		)
 		return false, nil
 	}
 	err := k.IterateDelegationsForStakerAndAsset(ctx, stakerID, assetID, opFunc)
