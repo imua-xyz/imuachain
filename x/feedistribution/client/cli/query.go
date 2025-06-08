@@ -9,13 +9,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	"golang.org/x/xerrors"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/spf13/cobra"
 )
@@ -62,7 +60,7 @@ func newAVSCmd(
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
-				return xerrors.Errorf("invalid avs address, err: %s", types.ErrInvalidCliCmdArg)
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid avs address, args[0]: %s", args[0])
 			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -97,10 +95,10 @@ func newOperatorAVSCmd(
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, err := sdk.AccAddressFromBech32(args[0])
 			if err != nil {
-				return xerrors.Errorf("invalid operator address, err: %s", err.Error())
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid operator address, err: %s", err.Error())
 			}
 			if !common.IsHexAddress(args[1]) {
-				return xerrors.Errorf("invalid avs address, err: %s", types.ErrInvalidCliCmdArg)
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid avs address, args[1]: %s", args[1])
 			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -137,16 +135,16 @@ func newOperatorAssetEpochUint64Cmd(
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Validate operator
 			if _, err := sdk.AccAddressFromBech32(args[0]); err != nil {
-				return xerrors.Errorf("invalid operator address, err: %s", err.Error())
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid operator address, err: %s", err.Error())
 			}
 			// Validate asset ID
 			if _, _, err := assetstypes.ValidateID(args[1], false, false); err != nil {
-				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
 			}
 			// Parse final uint64 param (period or epochNumber)
 			number, err := strconv.ParseUint(args[3], 10, 64)
 			if err != nil {
-				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
 			}
 
 			// Setup query
@@ -180,10 +178,10 @@ func newEpochOperatorAssetCmd(
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := sdk.AccAddressFromBech32(args[1]); err != nil {
-				return xerrors.Errorf("invalid operator address, err: %s", err.Error())
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid operator address, err: %s", err.Error())
 			}
 			if _, _, err := assetstypes.ValidateID(args[2], false, false); err != nil {
-				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
 			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -234,10 +232,10 @@ func CmdQueryAVSRewardAsset() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !common.IsHexAddress(args[0]) {
-				return xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidCliCmdArg)
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid avs address,args[0]:%s", args[0])
 			}
 			if _, _, err := assetstypes.ValidateID(args[1], false, false); err != nil {
-				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
 			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -324,10 +322,10 @@ func CmdQueryStakerOutstandingRewards() *cobra.Command {
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, _, err := assetstypes.ValidateID(args[0], false, false); err != nil {
-				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
 			}
 			if !common.IsHexAddress(args[1]) {
-				return xerrors.Errorf("invalid avs address,err:%s", types.ErrInvalidCliCmdArg)
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid avs address,args[1]:%s", args[1])
 			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)
@@ -377,14 +375,14 @@ func CmdQueryDelegationStartingInfo() *cobra.Command {
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, _, err := assetstypes.ValidateID(args[0], false, false); err != nil {
-				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
 			}
 			if _, _, err := assetstypes.ValidateID(args[1], false, false); err != nil {
-				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
 			}
 			_, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
-				return xerrors.Errorf("invalid operator address,err:%s", err.Error())
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid operator address,err:%s", err.Error())
 			}
 
 			clientCtx, err := client.GetClientQueryContext(cmd)

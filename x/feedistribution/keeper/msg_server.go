@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
@@ -31,5 +32,27 @@ func (k Keeper) WithdrawDogfoodCommission(ctx context.Context, req *types.MsgWit
 	}
 	return &types.MsgWithdrawDogfoodCommissionResponse{
 		Amount: withdrawAmount,
+	}, nil
+}
+
+func (k Keeper) ClaimAndWithdrawDogfoodReward(ctx context.Context, req *types.MsgClaimAndWithdrawDogfoodReward) (*types.MsgClaimAndWithdrawDogfoodRewardResponse, error) {
+	c := sdk.UnwrapSDKContext(ctx)
+	stakerAccAddr, err := sdk.AccAddressFromBech32(req.FromAddress)
+	if err != nil {
+		return nil, err
+	}
+	stakerID, _ := assetstype.GetStakerIDAndAssetID(assetstype.ImuachainLzID, stakerAccAddr, nil)
+	claimedRewards, err := k.ClaimDelegationRewards(c, stakerID)
+	if err != nil {
+		return nil, err
+	}
+
+	actualWithdrawReward, err := k.WithdrawRewardFromDogfood(c, stakerID, req.Amount, stakerAccAddr)
+	if err != nil {
+		return nil, err
+	}
+	return &types.MsgClaimAndWithdrawDogfoodRewardResponse{
+		ClaimedRewards:  claimedRewards,
+		WithdrawnAmount: actualWithdrawReward,
 	}, nil
 }

@@ -8,6 +8,8 @@ const (
 	// EventTypeWithdrawRewards : withdraw the reward for a staker
 	EventTypeWithdrawRewards = "withdraw_rewards"
 
+	EventTypeWithdrawDogfoodRewards = "withdraw_dogfood_rewards"
+
 	// EventTypeWithdrawCommission :  withdraw the commission for an operator
 	EventTypeWithdrawCommission             = "withdraw_commission"
 	AttributeKeyAllAVSActualWithdrawAmounts = "all_avs_actual_withdraw_amounts"

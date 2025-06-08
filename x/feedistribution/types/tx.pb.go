@@ -214,11 +214,111 @@ func (m *MsgWithdrawDogfoodCommissionResponse) GetAmount() github_com_cosmos_cos
 	return nil
 }
 
+// MsgClaimAndWithdrawDogfoodReward is used to claim and withdraw the dogfood reward
+type MsgClaimAndWithdrawDogfoodReward struct {
+	// from_address is the address of the staker on IMUA chain (sdk.AccAddress).
+	FromAddress string `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`
+	// amount is the expected claim amount.
+	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
+}
+
+func (m *MsgClaimAndWithdrawDogfoodReward) Reset()         { *m = MsgClaimAndWithdrawDogfoodReward{} }
+func (m *MsgClaimAndWithdrawDogfoodReward) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimAndWithdrawDogfoodReward) ProtoMessage()    {}
+func (*MsgClaimAndWithdrawDogfoodReward) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d864a86f2c8a428a, []int{4}
+}
+func (m *MsgClaimAndWithdrawDogfoodReward) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimAndWithdrawDogfoodReward) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimAndWithdrawDogfoodReward.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimAndWithdrawDogfoodReward) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimAndWithdrawDogfoodReward.Merge(m, src)
+}
+func (m *MsgClaimAndWithdrawDogfoodReward) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimAndWithdrawDogfoodReward) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimAndWithdrawDogfoodReward.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimAndWithdrawDogfoodReward proto.InternalMessageInfo
+
+// MsgClaimAndWithdrawDogfoodRewardResponse is response to claim and withdraw the dogfood reward
+type MsgClaimAndWithdrawDogfoodRewardResponse struct {
+	// claimed_rewards is the claimed rewards
+	ClaimedRewards []CommonAVSRewardData `protobuf:"bytes,1,rep,name=claimed_rewards,json=claimedRewards,proto3" json:"claimed_rewards"`
+	// withdraw_amount is the withdrawn reward
+	WithdrawnAmount github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=withdrawn_amount,json=withdrawnAmount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"withdrawn_amount"`
+}
+
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) Reset() {
+	*m = MsgClaimAndWithdrawDogfoodRewardResponse{}
+}
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimAndWithdrawDogfoodRewardResponse) ProtoMessage()    {}
+func (*MsgClaimAndWithdrawDogfoodRewardResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d864a86f2c8a428a, []int{5}
+}
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimAndWithdrawDogfoodRewardResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimAndWithdrawDogfoodRewardResponse.Merge(m, src)
+}
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimAndWithdrawDogfoodRewardResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimAndWithdrawDogfoodRewardResponse proto.InternalMessageInfo
+
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) GetClaimedRewards() []CommonAVSRewardData {
+	if m != nil {
+		return m.ClaimedRewards
+	}
+	return nil
+}
+
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) GetWithdrawnAmount() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.WithdrawnAmount
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*MsgUpdateParams)(nil), "imuachain.feedistribution.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "imuachain.feedistribution.v1.MsgUpdateParamsResponse")
 	proto.RegisterType((*MsgWithdrawDogfoodCommission)(nil), "imuachain.feedistribution.v1.MsgWithdrawDogfoodCommission")
 	proto.RegisterType((*MsgWithdrawDogfoodCommissionResponse)(nil), "imuachain.feedistribution.v1.MsgWithdrawDogfoodCommissionResponse")
+	proto.RegisterType((*MsgClaimAndWithdrawDogfoodReward)(nil), "imuachain.feedistribution.v1.MsgClaimAndWithdrawDogfoodReward")
+	proto.RegisterType((*MsgClaimAndWithdrawDogfoodRewardResponse)(nil), "imuachain.feedistribution.v1.MsgClaimAndWithdrawDogfoodRewardResponse")
 }
 
 func init() {
@@ -226,42 +326,53 @@ func init() {
 }
 
 var fileDescriptor_d864a86f2c8a428a = []byte{
-	// 556 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0x4d, 0x6b, 0x13, 0x4f,
-	0x18, 0xdf, 0x6d, 0xff, 0xff, 0x42, 0x27, 0x45, 0x71, 0x29, 0x34, 0x09, 0x61, 0x13, 0x42, 0x85,
-	0x58, 0xc8, 0x0e, 0x89, 0xc4, 0x43, 0x14, 0xc1, 0x6d, 0xaf, 0x41, 0x89, 0x88, 0xe0, 0x25, 0x4c,
-	0xb2, 0x9b, 0xc9, 0xa0, 0x33, 0xcf, 0xb2, 0x33, 0x49, 0x13, 0x4f, 0xd2, 0x93, 0xc7, 0x82, 0x67,
-	0xa1, 0x47, 0xf1, 0xd4, 0x83, 0x1f, 0xa2, 0xc7, 0xa2, 0x17, 0x4f, 0xbe, 0x24, 0x62, 0xfd, 0x18,
-	0xb2, 0xbb, 0xd3, 0xa4, 0x8d, 0x34, 0x41, 0x2f, 0xc9, 0xce, 0x3c, 0xcf, 0xef, 0xe5, 0x79, 0x19,
-	0x74, 0x93, 0xf1, 0x3e, 0xe9, 0xf4, 0x08, 0x13, 0xb8, 0xeb, 0xfb, 0x1e, 0x93, 0x2a, 0x64, 0xed,
-	0xbe, 0x62, 0x20, 0xf0, 0xa0, 0x82, 0xd5, 0xd0, 0x09, 0x42, 0x50, 0x60, 0xe5, 0xa6, 0x69, 0xce,
-	0x5c, 0x9a, 0x33, 0xa8, 0x64, 0x6f, 0x10, 0xce, 0x04, 0xe0, 0xf8, 0x37, 0x01, 0x64, 0xed, 0x0e,
-	0x48, 0x0e, 0x12, 0xb7, 0x89, 0xf4, 0xf1, 0xa0, 0xd2, 0xf6, 0x15, 0xa9, 0xe0, 0x0e, 0x30, 0xa1,
-	0xe3, 0x5b, 0x3a, 0xce, 0x25, 0x8d, 0x84, 0xb8, 0xa4, 0x3a, 0x90, 0x49, 0x02, 0xad, 0xf8, 0x84,
-	0x93, 0x83, 0x0e, 0x6d, 0x52, 0xa0, 0x90, 0xdc, 0x47, 0x5f, 0xfa, 0x36, 0x47, 0x01, 0xe8, 0x0b,
-	0x1f, 0x93, 0x80, 0x61, 0x22, 0x04, 0x28, 0x12, 0xd9, 0x3a, 0xc7, 0xdc, 0x5a, 0x58, 0x5f, 0x40,
-	0x42, 0xc2, 0x75, 0x6a, 0xf1, 0xad, 0x89, 0xae, 0x37, 0x24, 0x7d, 0x12, 0x78, 0x44, 0xf9, 0x8f,
-	0xe2, 0x88, 0x75, 0x07, 0xad, 0x93, 0xbe, 0xea, 0x41, 0xc8, 0xd4, 0x28, 0x6d, 0x16, 0xcc, 0xd2,
-	0xba, 0x9b, 0xfe, 0xf8, 0xa1, 0xbc, 0xa9, 0x7d, 0x3d, 0xf0, 0xbc, 0xd0, 0x97, 0xf2, 0xb1, 0x0a,
-	0x99, 0xa0, 0xcd, 0x59, 0xaa, 0xe5, 0xa2, 0xb5, 0x84, 0x3b, 0xbd, 0x52, 0x30, 0x4b, 0xa9, 0xea,
-	0xb6, 0xb3, 0xa8, 0x81, 0x4e, 0xa2, 0xe6, 0xfe, 0x77, 0xf2, 0x25, 0x6f, 0x34, 0x35, 0xb2, 0x7e,
-	0xed, 0xe0, 0xec, 0x78, 0x67, 0xc6, 0x59, 0xcc, 0xa0, 0xad, 0x39, 0x7b, 0x4d, 0x5f, 0x06, 0x20,
-	0xa4, 0x5f, 0x1c, 0xa0, 0x5c, 0x43, 0xd2, 0xa7, 0x4c, 0xf5, 0xbc, 0x90, 0xec, 0xef, 0x01, 0xed,
-	0x02, 0x78, 0xbb, 0xc0, 0x39, 0x93, 0x92, 0x81, 0xb0, 0xee, 0xa2, 0x8d, 0x6e, 0x08, 0xbc, 0x45,
-	0x12, 0xbf, 0x4b, 0x2b, 0x49, 0x45, 0xd9, 0xfa, 0xaa, 0x9e, 0x79, 0x7d, 0x94, 0x37, 0x7e, 0x1d,
-	0xe5, 0x8d, 0xc8, 0xcf, 0x25, 0x9e, 0xe2, 0xa1, 0x89, 0xb6, 0x17, 0x09, 0x9f, 0x1b, 0xb4, 0x7a,
-	0x68, 0x8d, 0x70, 0xe8, 0x0b, 0x95, 0x36, 0x0b, 0xab, 0xa5, 0x54, 0x35, 0xe3, 0x68, 0xdd, 0x68,
-	0x3f, 0x1c, 0xbd, 0x1f, 0xce, 0x2e, 0x30, 0xe1, 0xd6, 0xa2, 0x26, 0xbc, 0xff, 0x9a, 0x2f, 0x51,
-	0xa6, 0x7a, 0xfd, 0xb6, 0xd3, 0x01, 0xae, 0xd7, 0x40, 0xff, 0x95, 0xa5, 0xf7, 0x1c, 0xab, 0x51,
-	0xe0, 0xcb, 0x18, 0x20, 0xdf, 0x9d, 0x1d, 0xef, 0x98, 0x4d, 0xcd, 0x5f, 0xfd, 0xb9, 0x82, 0x56,
-	0x1b, 0x92, 0x5a, 0x0a, 0x6d, 0x5c, 0x9a, 0x64, 0x79, 0xf1, 0x04, 0xe6, 0x3a, 0x9b, 0xad, 0xfd,
-	0x55, 0xfa, 0xb4, 0xce, 0xef, 0x26, 0xca, 0x5c, 0x3d, 0x86, 0xfa, 0x52, 0xd2, 0x2b, 0xb1, 0x59,
-	0xf7, 0xdf, 0xb1, 0xd3, 0x35, 0xd9, 0x3b, 0xf8, 0xf4, 0xe3, 0xcd, 0xca, 0xfd, 0xe2, 0x3d, 0xbc,
-	0xe4, 0xd5, 0xe3, 0x7d, 0xcd, 0xd5, 0xf2, 0x12, 0xb2, 0x56, 0x67, 0xe6, 0xe4, 0xff, 0x57, 0x51,
-	0xc3, 0xdd, 0x87, 0x27, 0x63, 0xdb, 0x3c, 0x1d, 0xdb, 0xe6, 0xb7, 0xb1, 0x6d, 0x1e, 0x4e, 0x6c,
-	0xe3, 0x74, 0x62, 0x1b, 0x9f, 0x27, 0xb6, 0xf1, 0xac, 0x76, 0x61, 0x72, 0x91, 0x50, 0x79, 0x38,
-	0x7a, 0x79, 0x41, 0x71, 0xf8, 0x87, 0x66, 0x3c, 0xcc, 0xf6, 0x5a, 0xfc, 0x0c, 0x6f, 0xff, 0x0e,
-	0x00, 0x00, 0xff, 0xff, 0x14, 0x46, 0x6e, 0x6e, 0x93, 0x04, 0x00, 0x00,
+	// 727 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x55, 0xcf, 0x4b, 0x1b, 0x4f,
+	0x14, 0xcf, 0x46, 0xbf, 0x82, 0xa3, 0xe8, 0xb7, 0x8b, 0x60, 0x12, 0xec, 0x26, 0x2c, 0xb6, 0xa4,
+	0x42, 0x76, 0x88, 0xc5, 0x1e, 0xac, 0x08, 0x59, 0x43, 0xc1, 0x42, 0x68, 0x89, 0xfd, 0x01, 0xbd,
+	0x6c, 0x27, 0xd9, 0x75, 0x32, 0xd4, 0x9d, 0x09, 0x3b, 0x93, 0xa8, 0xed, 0xa5, 0x78, 0x6a, 0x6f,
+	0x42, 0xcf, 0x05, 0x8f, 0xa5, 0x27, 0x0f, 0xfe, 0x11, 0x1e, 0xc5, 0x5e, 0x4a, 0x29, 0xb6, 0xd5,
+	0x82, 0xbd, 0xf7, 0x1f, 0x28, 0xbb, 0x3b, 0x59, 0x35, 0xe2, 0xa6, 0xad, 0xf4, 0x92, 0x64, 0xe7,
+	0xbd, 0xcf, 0xfb, 0x7c, 0x3e, 0x6f, 0xdf, 0xcb, 0x80, 0x6b, 0xc4, 0x6d, 0xa1, 0x7a, 0x03, 0x11,
+	0x0a, 0x97, 0x1d, 0xc7, 0x26, 0x5c, 0x78, 0xa4, 0xd6, 0x12, 0x84, 0x51, 0xd8, 0x2e, 0x42, 0xb1,
+	0x66, 0x34, 0x3d, 0x26, 0x98, 0x3a, 0x11, 0xa5, 0x19, 0x5d, 0x69, 0x46, 0xbb, 0x98, 0xb9, 0x82,
+	0x5c, 0x42, 0x19, 0x0c, 0x3e, 0x43, 0x40, 0x46, 0xab, 0x33, 0xee, 0x32, 0x0e, 0x6b, 0x88, 0x3b,
+	0xb0, 0x5d, 0xac, 0x39, 0x02, 0x15, 0x61, 0x9d, 0x11, 0x2a, 0xe3, 0xe3, 0x32, 0xee, 0x72, 0xec,
+	0x13, 0xb9, 0x1c, 0xcb, 0x40, 0x3a, 0x0c, 0x58, 0xc1, 0x13, 0x0c, 0x1f, 0x64, 0x68, 0x0c, 0x33,
+	0xcc, 0xc2, 0x73, 0xff, 0x97, 0x3c, 0x9d, 0xc0, 0x8c, 0xe1, 0x15, 0x07, 0xa2, 0x26, 0x81, 0x88,
+	0x52, 0x26, 0x90, 0x2f, 0xab, 0x83, 0x81, 0xb1, 0xfe, 0xce, 0x18, 0x09, 0x01, 0x37, 0x62, 0x01,
+	0x4d, 0xe4, 0x21, 0x57, 0xd6, 0xd6, 0xdf, 0x2a, 0x60, 0xb4, 0xc2, 0xf1, 0xc3, 0xa6, 0x8d, 0x84,
+	0x73, 0x3f, 0x88, 0xa8, 0xb7, 0xc0, 0x20, 0x6a, 0x89, 0x06, 0xf3, 0x88, 0x58, 0x4f, 0x29, 0x39,
+	0x25, 0x3f, 0x68, 0xa6, 0xf6, 0x77, 0x0a, 0x63, 0xd2, 0x48, 0xc9, 0xb6, 0x3d, 0x87, 0xf3, 0x25,
+	0xe1, 0x11, 0x8a, 0xab, 0x27, 0xa9, 0xaa, 0x09, 0x06, 0xc2, 0xda, 0xa9, 0x64, 0x4e, 0xc9, 0x0f,
+	0x4d, 0x4f, 0x1a, 0x71, 0x1d, 0x37, 0x42, 0x36, 0xb3, 0x7f, 0xf7, 0x20, 0x9b, 0xa8, 0x4a, 0xe4,
+	0xec, 0xc8, 0xc6, 0xf1, 0xf6, 0xd4, 0x49, 0x4d, 0x3d, 0x0d, 0xc6, 0xbb, 0xe4, 0x55, 0x1d, 0xde,
+	0x64, 0x94, 0x3b, 0x7a, 0x1b, 0x4c, 0x54, 0x38, 0x7e, 0x4c, 0x44, 0xc3, 0xf6, 0xd0, 0x6a, 0x99,
+	0xe1, 0x65, 0xc6, 0xec, 0x05, 0xe6, 0xba, 0x84, 0x73, 0xc2, 0xa8, 0x7a, 0x1b, 0x0c, 0x2f, 0x7b,
+	0xcc, 0xb5, 0x50, 0xa8, 0xb7, 0xa7, 0x93, 0x21, 0x3f, 0x5b, 0x1e, 0xcd, 0xa6, 0x5f, 0x6d, 0x65,
+	0x13, 0x3f, 0xb6, 0xb2, 0x09, 0x5f, 0xcf, 0x99, 0x3a, 0xfa, 0xa6, 0x02, 0x26, 0xe3, 0x88, 0x3b,
+	0x02, 0xd5, 0x06, 0x18, 0x40, 0x2e, 0x6b, 0x51, 0x91, 0x52, 0x72, 0x7d, 0xf9, 0xa1, 0xe9, 0xb4,
+	0x21, 0x79, 0xfd, 0x81, 0x32, 0xe4, 0x40, 0x19, 0x0b, 0x8c, 0x50, 0x73, 0xc6, 0x6f, 0xc2, 0xfb,
+	0x2f, 0xd9, 0x3c, 0x26, 0xa2, 0xd1, 0xaa, 0x19, 0x75, 0xe6, 0xca, 0xb9, 0x91, 0x5f, 0x05, 0x6e,
+	0x3f, 0x83, 0x62, 0xbd, 0xe9, 0xf0, 0x00, 0xc0, 0xdf, 0x1d, 0x6f, 0x4f, 0x29, 0x55, 0x59, 0x5f,
+	0xdf, 0x53, 0x40, 0xae, 0xc2, 0xf1, 0xc2, 0x0a, 0x22, 0x6e, 0x89, 0xda, 0x5d, 0xd2, 0xaa, 0xce,
+	0x2a, 0xf2, 0xec, 0x4b, 0xf5, 0x43, 0x7d, 0x10, 0x79, 0x49, 0x06, 0xb0, 0x39, 0x5f, 0xf0, 0xa7,
+	0x83, 0xec, 0xf5, 0xdf, 0x10, 0xbc, 0x48, 0xc5, 0xfe, 0x4e, 0x01, 0x48, 0x92, 0x45, 0x2a, 0x3a,
+	0xba, 0xe3, 0xba, 0xfc, 0x3a, 0x09, 0xf2, 0xbd, 0x2c, 0x45, 0x9d, 0x7e, 0x0a, 0x46, 0xeb, 0x7e,
+	0xa2, 0x63, 0x5b, 0x5e, 0x10, 0xe1, 0xb2, 0xe5, 0xc5, 0xf8, 0x11, 0xf4, 0x5f, 0x1a, 0xa3, 0xa5,
+	0x47, 0x4b, 0x61, 0xbd, 0x32, 0x12, 0x48, 0xce, 0xe3, 0x88, 0xac, 0x17, 0x06, 0xb8, 0xfa, 0x02,
+	0xfc, 0xbf, 0x2a, 0x25, 0x50, 0x2b, 0xea, 0xc4, 0xbf, 0x79, 0xab, 0xa3, 0x11, 0x53, 0x29, 0x20,
+	0x9a, 0xfe, 0xdc, 0x0f, 0xfa, 0x2a, 0x1c, 0xab, 0x02, 0x0c, 0x9f, 0x59, 0xd4, 0x42, 0xbc, 0xbb,
+	0xae, 0xc5, 0xc9, 0xcc, 0xfc, 0x51, 0x7a, 0xd4, 0xdc, 0x6f, 0x0a, 0x48, 0x5f, 0xbc, 0x65, 0xb3,
+	0x3d, 0x8b, 0x5e, 0x88, 0xcd, 0x98, 0x7f, 0x8f, 0x8d, 0xfe, 0x05, 0xca, 0x1b, 0x1f, 0xbe, 0xbf,
+	0x49, 0xce, 0xeb, 0x73, 0xb0, 0xc7, 0x2d, 0x00, 0x3b, 0x5d, 0xb5, 0xec, 0xb0, 0x98, 0x55, 0x3f,
+	0x71, 0xf1, 0x53, 0x01, 0x57, 0xe3, 0xb7, 0x67, 0xbe, 0xa7, 0xd6, 0x58, 0x7c, 0xe6, 0xce, 0xe5,
+	0xf0, 0x91, 0xdf, 0xbb, 0x81, 0xdf, 0xb2, 0x6e, 0xf6, 0xf4, 0x1b, 0x4c, 0xb0, 0x85, 0xa8, 0x6d,
+	0x9d, 0x73, 0x1e, 0x2e, 0x49, 0xe6, 0xbf, 0x97, 0xfe, 0xbc, 0x99, 0xf7, 0x76, 0x0f, 0x35, 0x65,
+	0xef, 0x50, 0x53, 0xbe, 0x1e, 0x6a, 0xca, 0xe6, 0x91, 0x96, 0xd8, 0x3b, 0xd2, 0x12, 0x1f, 0x8f,
+	0xb4, 0xc4, 0x93, 0x99, 0x53, 0x83, 0xeb, 0xd3, 0x15, 0xd6, 0xd6, 0x9f, 0x9f, 0xe2, 0x5d, 0x3b,
+	0xc7, 0x1c, 0xcc, 0x72, 0x6d, 0x20, 0xb8, 0x5b, 0x6e, 0xfe, 0x0a, 0x00, 0x00, 0xff, 0xff, 0x90,
+	0xd7, 0x50, 0x3d, 0x99, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -281,6 +392,8 @@ type MsgClient interface {
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 	// WithdrawDogfoodCommission withdraws the IMUA commission from dogfood.
 	WithdrawDogfoodCommission(ctx context.Context, in *MsgWithdrawDogfoodCommission, opts ...grpc.CallOption) (*MsgWithdrawDogfoodCommissionResponse, error)
+	// ClaimAndWithdrawDogfoodReward claim and withdraws the IMUA reward from dogfood.
+	ClaimAndWithdrawDogfoodReward(ctx context.Context, in *MsgClaimAndWithdrawDogfoodReward, opts ...grpc.CallOption) (*MsgClaimAndWithdrawDogfoodRewardResponse, error)
 }
 
 type msgClient struct {
@@ -309,6 +422,15 @@ func (c *msgClient) WithdrawDogfoodCommission(ctx context.Context, in *MsgWithdr
 	return out, nil
 }
 
+func (c *msgClient) ClaimAndWithdrawDogfoodReward(ctx context.Context, in *MsgClaimAndWithdrawDogfoodReward, opts ...grpc.CallOption) (*MsgClaimAndWithdrawDogfoodRewardResponse, error) {
+	out := new(MsgClaimAndWithdrawDogfoodRewardResponse)
+	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Msg/ClaimAndWithdrawDogfoodReward", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// UpdateParams defines a (governance) operation for updating the module
@@ -316,6 +438,8 @@ type MsgServer interface {
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	// WithdrawDogfoodCommission withdraws the IMUA commission from dogfood.
 	WithdrawDogfoodCommission(context.Context, *MsgWithdrawDogfoodCommission) (*MsgWithdrawDogfoodCommissionResponse, error)
+	// ClaimAndWithdrawDogfoodReward claim and withdraws the IMUA reward from dogfood.
+	ClaimAndWithdrawDogfoodReward(context.Context, *MsgClaimAndWithdrawDogfoodReward) (*MsgClaimAndWithdrawDogfoodRewardResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -327,6 +451,9 @@ func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateP
 }
 func (*UnimplementedMsgServer) WithdrawDogfoodCommission(ctx context.Context, req *MsgWithdrawDogfoodCommission) (*MsgWithdrawDogfoodCommissionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WithdrawDogfoodCommission not implemented")
+}
+func (*UnimplementedMsgServer) ClaimAndWithdrawDogfoodReward(ctx context.Context, req *MsgClaimAndWithdrawDogfoodReward) (*MsgClaimAndWithdrawDogfoodRewardResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClaimAndWithdrawDogfoodReward not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -369,6 +496,24 @@ func _Msg_WithdrawDogfoodCommission_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ClaimAndWithdrawDogfoodReward_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgClaimAndWithdrawDogfoodReward)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ClaimAndWithdrawDogfoodReward(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/imuachain.feedistribution.v1.Msg/ClaimAndWithdrawDogfoodReward",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ClaimAndWithdrawDogfoodReward(ctx, req.(*MsgClaimAndWithdrawDogfoodReward))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "imuachain.feedistribution.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -380,6 +525,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WithdrawDogfoodCommission",
 			Handler:    _Msg_WithdrawDogfoodCommission_Handler,
+		},
+		{
+			MethodName: "ClaimAndWithdrawDogfoodReward",
+			Handler:    _Msg_ClaimAndWithdrawDogfoodReward_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -516,6 +665,97 @@ func (m *MsgWithdrawDogfoodCommissionResponse) MarshalToSizedBuffer(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgClaimAndWithdrawDogfoodReward) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimAndWithdrawDogfoodReward) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimAndWithdrawDogfoodReward) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Amount.Size()
+		i -= size
+		if _, err := m.Amount.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.FromAddress) > 0 {
+		i -= len(m.FromAddress)
+		copy(dAtA[i:], m.FromAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.FromAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.WithdrawnAmount) > 0 {
+		for iNdEx := len(m.WithdrawnAmount) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.WithdrawnAmount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.ClaimedRewards) > 0 {
+		for iNdEx := len(m.ClaimedRewards) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ClaimedRewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -572,6 +812,42 @@ func (m *MsgWithdrawDogfoodCommissionResponse) Size() (n int) {
 	_ = l
 	if len(m.Amount) > 0 {
 		for _, e := range m.Amount {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgClaimAndWithdrawDogfoodReward) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.FromAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Amount.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.ClaimedRewards) > 0 {
+		for _, e := range m.ClaimedRewards {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if len(m.WithdrawnAmount) > 0 {
+		for _, e := range m.WithdrawnAmount {
 			l = e.Size()
 			n += 1 + l + sovTx(uint64(l))
 		}
@@ -892,6 +1168,240 @@ func (m *MsgWithdrawDogfoodCommissionResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.Amount = append(m.Amount, types.Coin{})
 			if err := m.Amount[len(m.Amount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimAndWithdrawDogfoodReward) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimAndWithdrawDogfoodReward: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimAndWithdrawDogfoodReward: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FromAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Amount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimAndWithdrawDogfoodRewardResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimAndWithdrawDogfoodRewardResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimAndWithdrawDogfoodRewardResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimedRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClaimedRewards = append(m.ClaimedRewards, CommonAVSRewardData{})
+			if err := m.ClaimedRewards[len(m.ClaimedRewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawnAmount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WithdrawnAmount = append(m.WithdrawnAmount, types.Coin{})
+			if err := m.WithdrawnAmount[len(m.WithdrawnAmount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
