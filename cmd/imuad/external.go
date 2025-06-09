@@ -198,6 +198,11 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 }
 
 func startExternalFeeder(binPath, configFile, sourcesConfPath string, logger log.Logger, logPath string) {
+	// validate binary path
+	if _, err := os.Stat(binPath); err != nil {
+		logger.Error("feeder binary not found", "path", binPath, "err", err)
+		return
+	}
 	for retry := 0; ; retry++ {
 		args := []string{
 			"--config", configFile,
@@ -213,7 +218,6 @@ func startExternalFeeder(binPath, configFile, sourcesConfPath string, logger log
 		cmd := exec.Command(binPath, args...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		//		}
 
 		if err := cmd.Start(); err != nil {
 			logger.Error("failed to start external feeder", "err", err)
