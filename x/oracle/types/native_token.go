@@ -12,6 +12,7 @@ func (b *Balances) Append(bi *BalanceInfo) {
 	b.BalanceList = append(b.BalanceList, bi)
 }
 
+// NOTE: This function assumes that the BalanceList/valdiatorList is sorted by version in ascending order.
 // returns: balance at the given version, latest balance, latest version
 func (s *StakerInfo) GetBalanceAtVersion(version uint64) (uint64, uint64, uint64) {
 	if len(s.BalanceList) == 0 || len(s.ValidatorList) == 0 {
