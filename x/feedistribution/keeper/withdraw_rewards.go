@@ -3,7 +3,6 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
@@ -12,9 +11,9 @@ import (
 func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, withdrawAmount sdkmath.Int,
 	imuaReceiptAddr sdk.AccAddress, rewards sdk.DecCoins,
 ) (sdkmath.Int, sdkmath.Int, sdk.DecCoins, sdk.DecCoins, error) {
-	if withdrawAmount.IsNil() || !withdrawAmount.IsPositive() {
+	if withdrawAmount.IsNil() || withdrawAmount.IsNegative() {
 		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
-			"generalWithdrawFromAVS, the withdraw amount is nil or not positive, amount:%s", withdrawAmount)
+			"generalWithdrawFromAVS, the withdraw amount is nil or negative, amount:%s", withdrawAmount)
 	}
 	// check and calculate the actual amount withdrawable for an AVS
 	rewardAssetInfo, err := k.GetAVSRewardAssetInfo(ctx, avs, assetID)
@@ -22,8 +21,18 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, err
 	}
 	rewardDecimalAmount := rewards.AmountOf(rewardAssetInfo.AssetBasicInfo.Symbol)
+	if rewardDecimalAmount.IsZero() {
+		// do nothing if there isn't this asset in the input rewards
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), rewards, sdk.DecCoins{}, nil
+	}
+
 	decimalFactor := sdkmath.NewIntWithDecimal(1, int(rewardAssetInfo.AssetBasicInfo.Decimals)) // #nosec G115
-	withdrawAmountPerAVSDec := sdk.NewDecFromInt(withdrawAmount).QuoInt(decimalFactor)
+	// withdraw all rewards if the input amount is 0
+	withdrawAmountPerAVSDec := rewardDecimalAmount
+	if !withdrawAmount.IsZero() {
+		withdrawAmountPerAVSDec = sdk.NewDecFromInt(withdrawAmount).QuoInt(decimalFactor)
+	}
+
 	if withdrawAmountPerAVSDec.LT(sdkmath.LegacyZeroDec()) {
 		// stop withdrawing the reward
 		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil,
@@ -37,6 +46,10 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 	// and the requested withdraw amount.
 	actualWithdrawAmountDec := sdkmath.LegacyMinDec(rewardAssetInfo.RewardAssetState.RewardPoolBalance,
 		sdkmath.LegacyMinDec(rewardDecimalAmount, withdrawAmountPerAVSDec))
+	if actualWithdrawAmountDec.IsZero() {
+		// do nothing if the actual withdraw amount is zero
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), rewards, sdk.DecCoins{}, nil
+	}
 	// decrease the withdrawing amount from the outstanding reward
 	subReward := sdk.DecCoins{
 		sdk.NewDecCoinFromDec(rewardAssetInfo.AssetBasicInfo.Symbol, actualWithdrawAmountDec),
@@ -95,20 +108,40 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 	amount sdkmath.Int, imuaReceiptAddr sdk.AccAddress,
 ) (sdkmath.Int, sdkmath.Int, error) {
+	if amount.IsNil() || amount.IsNegative() {
+		return sdkmath.Int{}, sdkmath.Int{}, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
+			"WithdrawStakerRewards, the withdraw amount is nil or negative, amount:%s", amount)
+	}
+	// withdraw all rewards if the input amount is 0.
+	isWithdrawAllReward := false
+	if amount.IsZero() {
+		isWithdrawAllReward = true
+	}
+
 	withdrawAmountPerAVS := amount
 	actualTotalWithdrawAmount := sdkmath.ZeroInt()
 	withdrawAmountFromDogfood := sdkmath.ZeroInt()
 	allAVSActualWithdrawAmounts := feedistributiontypes.AllAVSActualWithdrawAmount(
 		make([]feedistributiontypes.ActualWithdrawAmountPerAVS, 0))
-	opFunc := func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, error) {
+	opFunc := func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, bool, error) {
+		if !isWithdrawAllReward && !withdrawAmountPerAVS.IsPositive() {
+			// the expected amount has been withdrawn, stop the iteration.
+			return true, false, nil
+		}
+
 		var err error
-		actualWithdrawAmountInt, amountFromDogfood, endRewards, _, err := k.generalWithdrawFromAVS(
+		actualWithdrawAmountInt, amountFromDogfood, endRewards, subRewards, err := k.generalWithdrawFromAVS(
 			ctx, avs, assetID, withdrawAmountPerAVS, imuaReceiptAddr, rewards.Rewards)
 		if err != nil {
-			return false, err
+			return false, false, err
+		} else if len(subRewards) == 0 {
+			// withdraw nothing from this AVS, continue iterating the other AVSs
+			return false, false, nil
 		}
 		actualTotalWithdrawAmount = actualTotalWithdrawAmount.Add(actualWithdrawAmountInt)
-		withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
+		if !isWithdrawAllReward {
+			withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
+		}
 		allAVSActualWithdrawAmounts = append(allAVSActualWithdrawAmounts, feedistributiontypes.ActualWithdrawAmountPerAVS{
 			Avs:                  avs,
 			ActualWithdrawAmount: actualWithdrawAmountInt,
@@ -118,7 +151,7 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 		if !amountFromDogfood.IsNil() {
 			withdrawAmountFromDogfood = amountFromDogfood
 		}
-		return false, nil
+		return false, true, nil
 	}
 	// iterate to withdraw rewards from multiple AVSs, because different AVSs might
 	// use the same asset as reward.
@@ -148,15 +181,7 @@ func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 	if err != nil {
 		return nil, err
 	}
-	// withdraw all rewards if the amount is nil.
-	if amount.IsNil() {
-		allRewardDecimal := stakerOutstandingRewards.Rewards.AmountOf(utils.BaseDenom)
-		_, avsRewardAsset, err := k.GetAVSRewardAssetBySymbol(ctx, dogfoodAVSAddr, utils.BaseDenom)
-		if err != nil {
-			return nil, err
-		}
-		amount = feedistributiontypes.UnscaleDecToInt(allRewardDecimal, avsRewardAsset.AssetBasicInfo.Decimals)
-	}
+
 	_, amountFromDogfood, endRewards, subRewardDecCoins, err := k.generalWithdrawFromAVS(
 		ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID, amount, imuaReceiptAddr, stakerOutstandingRewards.Rewards)
 	if err != nil {
@@ -186,20 +211,36 @@ func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 	amount sdkmath.Int, operator, imuaReceiptAddr sdk.AccAddress,
 ) (sdkmath.Int, sdkmath.Int, error) {
+	// withdraw all commissions if the input amount is 0.
+	isWithdrawAllCommission := false
+	if amount.IsZero() {
+		isWithdrawAllCommission = true
+	}
 	withdrawAmountPerAVS := amount
 	actualTotalWithdrawAmount := sdkmath.ZeroInt()
 	withdrawAmountFromDogfood := sdkmath.ZeroInt()
 	allAVSActualWithdrawAmounts := feedistributiontypes.AllAVSActualWithdrawAmount(
 		make([]feedistributiontypes.ActualWithdrawAmountPerAVS, 0))
-	opFunc := func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, error) {
+	opFunc := func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, bool, error) {
+		if !isWithdrawAllCommission && !withdrawAmountPerAVS.IsPositive() {
+			// the expected amount has been withdrawn, stop the iteration.
+			return true, false, nil
+		}
+
 		var err error
 		actualWithdrawAmountInt, amountFromDogfood, endCommissions, subCommissions, err := k.generalWithdrawFromAVS(
 			ctx, avs, assetID, withdrawAmountPerAVS, imuaReceiptAddr, commissions.Commission)
 		if err != nil {
-			return false, err
+			return false, false, err
+		} else if len(subCommissions) == 0 {
+			// withdraw nothing from this AVS, continue iterating the other AVSs
+			return false, false, nil
 		}
+
 		actualTotalWithdrawAmount = actualTotalWithdrawAmount.Add(actualWithdrawAmountInt)
-		withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
+		if !isWithdrawAllCommission {
+			withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
+		}
 		allAVSActualWithdrawAmounts = append(allAVSActualWithdrawAmounts, feedistributiontypes.ActualWithdrawAmountPerAVS{
 			Avs:                  avs,
 			ActualWithdrawAmount: actualWithdrawAmountInt,
@@ -212,9 +253,9 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 		// decrease the commission from the operator outstanding rewards.
 		err = k.UpdateOperatorOutstandingRewards(ctx, operator.String(), avs, false, subCommissions)
 		if err != nil {
-			return false, err
+			return false, false, err
 		}
-		return false, nil
+		return false, true, nil
 	}
 	// iterate to withdraw rewards from multiple AVSs, because different AVSs might
 	// use the same asset as reward.
@@ -246,37 +287,37 @@ func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccA
 	if err != nil {
 		return nil, err
 	}
-	commission, remainder := accumulatedCommissions.Commission.TruncateDecimal()
-	// leave remainder to withdraw late
+
+	// withdraw all commissions
+	// use 0 as the input amount to withdraw all commissions.
+	_, amountFromDogfood, endCommissions, subCommissions, err := k.generalWithdrawFromAVS(
+		ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID, sdk.ZeroInt(), operator, accumulatedCommissions.Commission)
+	if err != nil {
+		return nil, err
+	}
+
 	err = k.SetOperatorAccumulatedCommission(ctx, operator.String(), dogfoodAVSAddr,
-		feedistributiontypes.OperatorAccumulatedCommission{Commission: remainder})
+		feedistributiontypes.OperatorAccumulatedCommission{Commission: endCommissions})
 	if err != nil {
 		return nil, err
 	}
 
 	// decrease the commission from the operator outstanding rewards.
 	err = k.UpdateOperatorOutstandingRewards(ctx, operator.String(), dogfoodAVSAddr,
-		false, sdk.NewDecCoinsFromCoins(commission...))
+		false, subCommissions)
 	if err != nil {
 		return nil, err
-	}
-	if !commission.IsZero() {
-		// We currently do not provide a function to set a withdraw address for the operator.
-		// Therefore, the operator's address is used as the recipient address.
-		err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, feedistributiontypes.ModuleName, operator, commission)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeWithdrawCommissionFromDogfood,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyOperator, operator.String()),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyCommissionAmount, commission.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyCommissionAmount, amountFromDogfood.String()),
 		),
 	)
-	return commission, nil
+	subCommissionCoins, _ := subCommissions.TruncateDecimal()
+	return subCommissionCoins, nil
 }
 
 // WithdrawDelegationRewards is an interface used by the ante handler to withdraw rewards for gas fees.

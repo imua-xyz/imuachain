@@ -84,7 +84,7 @@ func (m *MsgClaimAndWithdrawDogfoodReward) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.FromAddress); err != nil {
 		return errorsmod.Wrap(err, "invalid operator address")
 	}
-	if !m.Amount.IsNil() && !m.Amount.IsPositive() {
+	if m.Amount.IsNil() || m.Amount.IsNegative() {
 		return ErrInvalidInputParameter.Wrapf("invalid amount:%v", m.Amount)
 	}
 	return nil

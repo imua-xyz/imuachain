@@ -89,8 +89,8 @@ func CmdClaimAndWithdrawDogfoodReward() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "claim-and-withdraw-dogfood-reward",
 		Short:   "claim and withdraw the dogfood reward for a staker from imua chain",
-		Example: "imua tx feedistribution claim-and-withdraw-dogfood-reward optional(amount)",
-		Args:    cobra.RangeArgs(0, 1),
+		Example: "imua tx feedistribution claim-and-withdraw-dogfood-reward amount(0 to withdraw all rewards)",
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -99,13 +99,11 @@ func CmdClaimAndWithdrawDogfoodReward() *cobra.Command {
 			msg := &types.MsgClaimAndWithdrawDogfoodReward{
 				FromAddress: clientCtx.GetFromAddress().String(),
 			}
-			if len(args) != 0 {
-				amount, ok := sdkmath.NewIntFromString(args[2])
-				if !ok || amount.LTE(sdkmath.ZeroInt()) {
-					return types.ErrInvalidCliCmdArg.Wrapf("invalid input amount: %s", args[2])
-				}
-				msg.Amount = amount
+			amount, ok := sdkmath.NewIntFromString(args[0])
+			if !ok || amount.IsNegative() {
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid input amount: %s", args[0])
 			}
+			msg.Amount = amount
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

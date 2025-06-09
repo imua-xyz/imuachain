@@ -52,6 +52,22 @@ func addressToID(ctx sdk.Context, assetKeeper assetskeeper.Keeper, chainLzID uin
 	return address[:int(chainInfo.AddressLength)], ID, nil
 }
 
+func packErrorOutput(method *abi.Method) ([]byte, error) {
+	switch method.Name {
+	case MethodClaimReward, MethodRegisterRewardToken,
+		MethodUpdateRewardToken, MethodSetAVSRewardDistribution,
+		MethodSetAVSEpochReward, MethodSetOperatorRewardProportions,
+		MethodSetAVSRewardParams, MethodFundAVSReward:
+		return method.Outputs.Pack(false)
+	case MethodWithdrawReward, MethodWithdrawCommission:
+		return method.Outputs.Pack(false, new(big.Int))
+	case MethodWithdrawIMUATokenReward, MethodWithdrawIMUATokenCommission:
+		return method.Outputs.Pack(false, new(big.Int), new(big.Int))
+	default:
+		return nil, fmt.Errorf("packErrorOutput: unsupported reward method %s", method.Name)
+	}
+}
+
 func (p Precompile) ClaimReward(
 	ctx sdk.Context,
 	_ common.Address,
@@ -75,7 +91,7 @@ func (p Precompile) ClaimReward(
 	if err != nil {
 		return nil, err
 	}
-	// todo: the total claimed rewards should be returned to the caller.
+	// todo: the total claimed rewards might be returned to the caller in future.
 	_, err = p.distributionKeeper.ClaimDelegationRewards(ctx, stakerID)
 	if err != nil {
 		return nil, err
@@ -101,7 +117,7 @@ func (p Precompile) WithdrawReward(
 	if err := method.Inputs.Copy(&withdrawRewardArgs, args); err != nil {
 		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgs struct: %s", err)
 	}
-	if withdrawRewardArgs.OpAmount == nil || !(withdrawRewardArgs.OpAmount.Cmp(big.NewInt(0)) == 1) {
+	if withdrawRewardArgs.OpAmount == nil || withdrawRewardArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawReward: invalid withdraw amount:%v", withdrawRewardArgs.OpAmount)
 	}
 	_, stakerID, err := addressToID(ctx, p.assetsKeeper, withdrawRewardArgs.ClientChainLzID, withdrawRewardArgs.StakerAddress)
@@ -115,6 +131,13 @@ func (p Precompile) WithdrawReward(
 	if rewardAssetID == assetstype.ImuachainAssetID {
 		return nil, fmt.Errorf("reward asset is the IMUA token issued by the dogfood AVS,rewardAssetID:%s", rewardAssetID)
 	}
+	if withdrawRewardArgs.DoClaim {
+		_, err = p.distributionKeeper.ClaimDelegationRewards(ctx, stakerID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	actualWithdrawAmount, _, err := p.distributionKeeper.WithdrawStakerRewards(ctx, stakerID, rewardAssetID,
 		sdk.NewIntFromBigInt(withdrawRewardArgs.OpAmount), nil)
 	if err != nil {
@@ -154,6 +177,14 @@ func (p Precompile) WithdrawIMUATokenReward(
 	if err != nil {
 		return nil, err
 	}
+
+	if withdrawIMUATokenRewardArgs.DoClaim {
+		_, err = p.distributionKeeper.ClaimDelegationRewards(ctx, stakerID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	actualWithdrawAmount, withdrawAmountFromDogfood, err := p.distributionKeeper.WithdrawStakerRewards(
 		ctx, stakerID, assetstype.ImuachainAssetID,
 		sdk.NewIntFromBigInt(withdrawIMUATokenRewardArgs.OpAmount), receiptAccAddr)

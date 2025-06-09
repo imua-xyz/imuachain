@@ -653,7 +653,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 	isUpdate bool,
 	keyNumber int,
 	unmarshal func([]byte) (T, error),
-	opFunc func(keys []string, value T) (bool, error),
+	opFunc func(keys []string, value T) (bool, bool, error),
 ) error {
 	store := prefix.NewStore(ctx.KVStore(storeKey), keyPrefix)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
@@ -671,7 +671,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 			return err
 		}
 
-		isBreak, err := opFunc(keys, value)
+		isBreak, isChanged, err := opFunc(keys, value)
 		if err != nil {
 			return err
 		}
@@ -679,7 +679,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 			break
 		}
 
-		if isUpdate {
+		if isUpdate && isChanged {
 			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: value,
@@ -698,7 +698,7 @@ func (k Keeper) IterateStakerOutstandingRewards(
 	ctx sdk.Context,
 	stakerID string,
 	isUpdate bool,
-	opFunc func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, error),
+	opFunc func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, bool, error),
 ) error {
 	return GenericIterateStoreWithUpdate[*feedistributiontypes.StakerOutstandingRewards](
 		ctx,
@@ -713,7 +713,7 @@ func (k Keeper) IterateStakerOutstandingRewards(
 			k.cdc.MustUnmarshal(bz, &r)
 			return &r, nil
 		},
-		func(keys []string, value *feedistributiontypes.StakerOutstandingRewards) (bool, error) {
+		func(keys []string, value *feedistributiontypes.StakerOutstandingRewards) (bool, bool, error) {
 			return opFunc(keys[1], value)
 		},
 	)
@@ -723,7 +723,7 @@ func (k Keeper) IterateStakerOutstandingRewards(
 // and does some external operations.
 // `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
 func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator string, isUpdate bool,
-	opFunc func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, error),
+	opFunc func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, bool, error),
 ) error {
 	return GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorAccumulatedCommission](
 		ctx,
@@ -738,7 +738,7 @@ func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator 
 			k.cdc.MustUnmarshal(bz, &c)
 			return &c, nil
 		},
-		func(keys []string, value *feedistributiontypes.OperatorAccumulatedCommission) (bool, error) {
+		func(keys []string, value *feedistributiontypes.OperatorAccumulatedCommission) (bool, bool, error) {
 			return opFunc(keys[1], value)
 		},
 	)

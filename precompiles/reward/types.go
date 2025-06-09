@@ -20,6 +20,7 @@ type ClaimRewardArgs struct {
 }
 
 type WithdrawRewardArgs struct {
+	DoClaim              bool     `abi:"doClaim"`
 	ClientChainLzID      uint32   `abi:"clientChainLzID"`
 	RewardAssetChainLzID uint32   `abi:"rewardAssetChainLzID"`
 	AssetAddress         []byte   `abi:"assetAddress"`
@@ -28,6 +29,7 @@ type WithdrawRewardArgs struct {
 }
 
 type WithdrawIMUATokenRewardArgs struct {
+	DoClaim         bool     `abi:"doClaim"`
 	ClientChainLzID uint32   `abi:"clientChainLzID"`
 	StakerAddress   []byte   `abi:"stakerAddress"`
 	ReceiptAddress  []byte   `abi:"receiptAddress"`

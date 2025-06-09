@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	"math/big"
 
 	feedistribution "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 
@@ -86,6 +85,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
+	var logError error
 	cc := ctx
 	writeFunc := func() {}
 	if p.IsTransaction(method.Name) {
@@ -120,26 +120,28 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	default:
 		return nil, fmt.Errorf("unsupported reward method %s", method.Name)
 	}
+
 	bz, err = precompileCommonFunc(cc, evm.Origin, contract, stateDB, method, args)
 	if err != nil {
-		ctx.Logger().Error("internal error when calling reward precompile", "module", "reward precompile", "method", method.Name, "err", err)
+		logError = err
 		// for failed cases we expect it returns bool value instead of error
 		// this is a workaround because the error returned by precompile can not be caught in EVM
 		// see https://github.com/imua-xyz/imuachain/issues/70
-		// TODO: The pack value should be different by the method name, but it's fine currently.
-		// Because it should be removed when rebasing onto the PR that fixed the EVM issue.
-		bz, err = method.Outputs.Pack(false, new(big.Int))
+		bz, err = packErrorOutput(method)
+	}
+
+	if logError != nil {
+		ctx.Logger().Error(
+			"return error when calling reward precompile",
+			"module", "reward precompile",
+			"method", method.Name,
+			"err", logError,
+		)
 	} else {
 		writeFunc()
 	}
 
-	if err != nil {
-		ctx.Logger().Error("return error when calling reward precompile", "module", "reward precompile", "method", method.Name, "err", err)
-		return nil, err
-	}
-
 	cost := ctx.GasMeter().GasConsumed() - initialGas
-
 	if !contract.UseGas(cost) {
 		return nil, vm.ErrOutOfGas
 	}
