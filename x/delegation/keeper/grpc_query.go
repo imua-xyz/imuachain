@@ -4,6 +4,9 @@ import (
 	"context"
 	"strings"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )

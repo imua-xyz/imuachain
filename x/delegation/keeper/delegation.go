@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"bytes"
-	"cosmossdk.io/math"
 	"fmt"
+
+	"cosmossdk.io/math"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -158,6 +159,22 @@ func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.D
 		return err
 	}
 
+	// get the previous operator asset state before update
+	var prevAssetState *assetstype.OperatorAssetInfo
+	if k.assetsKeeper.IsOperatorAssetExist(ctx, params.OperatorAddress, assetID) {
+		prevAssetState, err = k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, params.OperatorAddress, assetID)
+		if err != nil {
+			return err
+		}
+	} else {
+		prevAssetState = &assetstype.OperatorAssetInfo{
+			TotalAmount:               math.ZeroInt(),
+			PendingUndelegationAmount: math.ZeroInt(),
+			TotalShare:                math.LegacyZeroDec(),
+			OperatorShare:             math.LegacyZeroDec(),
+		}
+	}
+
 	// remove share
 	removeToken, err := k.RemoveShare(ctx, true, params.OperatorAddress, stakerID, assetID, share)
 	if err != nil {
@@ -209,6 +226,11 @@ func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.D
 	}
 
 	recordKey := r.GetKey()
+	// call the hooks registered by the other modules
+	err = k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress, recordKey, *prevAssetState)
+	if err != nil {
+		return err
+	}
 
 	// Emit event
 	ctx.EventManager().EmitEvent(
@@ -227,8 +249,7 @@ func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.D
 			sdk.NewAttribute(delegationtype.InstantUnbonding, fmt.Sprintf("%t", true)),
 		),
 	)
-
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, recordKey)
+	return nil
 }
 
 // UndelegateFrom handles normal undelegation with a waiting period.
