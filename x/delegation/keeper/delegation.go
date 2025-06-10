@@ -163,6 +163,22 @@ func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.D
 		return err
 	}
 
+	// get the previous operator asset state before update
+	prevAssetState, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, params.OperatorAddress, assetID)
+	if err != nil {
+		return err
+	}
+	preDelegationState, err := k.GetSingleDelegationInfo(ctx, stakerID, assetID, params.OperatorAddress.String())
+	if err != nil {
+		return err
+	}
+	// calculate the previous delegation amount
+	preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+		prevAssetState.TotalShare, prevAssetState.TotalAmount)
+	if err != nil {
+		return err
+	}
+
 	// remove share
 	removeToken, err := k.RemoveShare(ctx, true, params.OperatorAddress, stakerID, assetID, share)
 	if err != nil {
@@ -214,6 +230,12 @@ func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.D
 	}
 
 	recordKey := r.GetKey()
+	// call the hooks registered by the other modules
+	err = k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress,
+		recordKey, preDelegatedAmount, *prevAssetState)
+	if err != nil {
+		return err
+	}
 
 	// Emit event
 	ctx.EventManager().EmitEvent(
@@ -232,8 +254,7 @@ func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.D
 			sdk.NewAttribute(delegationtype.InstantUnbonding, fmt.Sprintf("%t", true)),
 		),
 	)
-
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, recordKey)
+	return nil
 }
 
 // UndelegateFrom handles normal undelegation with a waiting period.
