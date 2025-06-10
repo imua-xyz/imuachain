@@ -20746,6 +20746,835 @@
         ]
       }
     },
+    "/imuachain/feedistribution/v1/accumulated_commission/{operator}/{avs}": {
+      "get": {
+        "summary": "OperatorAccumulatedCommission queries the operator accumulated commission.",
+        "operationId": "OperatorAccumulatedCommission",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator_accumulated_commission": {
+                  "title": "operator_outstanding_rewards is the accumulated commission returned for an operator",
+                  "type": "object",
+                  "properties": {
+                    "commission": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "title": "commission is the commission for an operator"
+                    }
+                  },
+                  "description": "OperatorAccumulatedCommission represents accumulated commission\nfor an operator kept as a running counter, can be withdrawn at any time.\nThe AVS address is implicit within the store key."
+                }
+              },
+              "title": "QueryOperatorAccumulatedCommissionResponse is the response to obtain the operator accumulated commission"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/avs_reward_distribution/{avs}": {
+      "get": {
+        "summary": "AVSRewardDistribution queries the distribution information for an AVS.\nIt returns the total rewards and operator proportions for current epoch.",
+        "operationId": "AVSRewardDistribution",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "avs_reward_distribution": {
+                  "title": "avs_reward_distribution is the reward distribution information returned for the input avs",
+                  "type": "object",
+                  "properties": {
+                    "rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "title": "rewards represents the rewards for one epoch"
+                    },
+                    "operator_reward_proportions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "operator_addr": {
+                            "type": "string",
+                            "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                          },
+                          "reward_proportion": {
+                            "type": "string",
+                            "title": "reward_proportion is the reward proportion of this operator"
+                          }
+                        },
+                        "title": "OperatorRewardProportion is the reward proportion of an operator for one epoch"
+                      },
+                      "description": "operator_reward_proportions represents the reward proportions of all operators\nthat are eligible to be allocated rewards in the current epoch."
+                    },
+                    "rewards_epoch_number": {
+                      "type": "string",
+                      "format": "int64",
+                      "description": "rewards_epoch_number is the epoch number at which the rewards are updated."
+                    },
+                    "proportions_epoch_number": {
+                      "type": "string",
+                      "format": "int64",
+                      "title": "proportions_epoch_number is the epoch number at which the proportions are updated"
+                    }
+                  },
+                  "description": "AVSRewardDistribution represents the reward distribution information of an AVS in\nthe current epoch. It serves as the basis for executing the distribution process.\nIt is determined by the inflation and allocation mechanism configured by the AVS\nor customized through the AVS reward contract."
+                }
+              },
+              "description": "QueryAVSRewardDistributionResponse is the response to obtain the reward distribution information for an AVS."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/community_reward_pool/{avs}": {
+      "get": {
+        "summary": "AVSCommunityPool queries the community reward pool for an AVS.",
+        "operationId": "AVSCommunityPool",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "fee_pool": {
+                  "description": "fee_pool is the fee pool returned for the specified AVS.",
+                  "type": "object",
+                  "properties": {
+                    "community_pool": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "description": "global fee pool for distribution."
+                    }
+                  }
+                }
+              },
+              "description": "QueryAVSCommunityPoolResponse is the response to obtain the community fee pool for an AVS."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/delegation_starting_info/{staker_id}/{asset_id}/{operator}/{epoch_identifier}": {
+      "get": {
+        "summary": "DelegationStartingInfo queries the delegation staring information.",
+        "operationId": "DelegationStartingInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "delegation_starting_info": {
+                  "title": "delegation_starting_info is the return value",
+                  "type": "object",
+                  "properties": {
+                    "previous_period": {
+                      "type": "string",
+                      "format": "uint64",
+                      "description": "previous_period marks the period referenced by this delegation as the starting point.\nIt is used to calculate the rewards for this delegation."
+                    },
+                    "stake": {
+                      "type": "string",
+                      "description": "stake records the initial stake of this delegation.\nThe cumulative rewards are calculated as:\nrewards = stake * (rewardRatioAtEndPeriod - rewardRatioAtStartPeriod)\ndecimal is used here to match `total_amount` in `DelegationChangeInfo`."
+                    },
+                    "epoch_number": {
+                      "type": "string",
+                      "format": "uint64",
+                      "description": "epoch_number is the epoch when the delegation starts.\nIt is used to handle the impact of slash events on rewards."
+                    }
+                  },
+                  "description": "DelegationStartingInfo represents the starting info for a delegation reward\nperiod. It tracks the previous validator period, the delegation's amount of\nstaking token, and the creation epoch information (the epoch_start_height is\nused to check later on if any slashes have occurred).\nIn imua chain, the voting power update and reward distribution are executed\nper epoch, so when using F1 distribution for reward distribution, the smallest\nunit of change in the delegator's stake is the epoch, not the block.\nthe epoch identifier is within the key."
+                }
+              },
+              "description": "QueryDelegationStartingInfoResponse is the response to obtain the delegation starting information."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_identifier",
+            "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/operator_current_rewards/{operator}/{asset_id}/{epoch_identifier}": {
+      "get": {
+        "summary": "OperatorCurrentRewards queries the operator current rewards",
+        "operationId": "OperatorCurrentRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator_current_rewards": {
+                  "title": "operator_current_rewards is the return value",
+                  "type": "object",
+                  "properties": {
+                    "rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "avs_address": {
+                            "type": "string",
+                            "title": "avs_address is the AVS address"
+                          },
+                          "rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "denom": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "type": "string"
+                                }
+                              },
+                              "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                            },
+                            "title": "rewards represents the current rewards or cumulative reward ratios"
+                          }
+                        },
+                        "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                      },
+                      "title": "current rewards"
+                    },
+                    "period": {
+                      "type": "string",
+                      "format": "uint64",
+                      "title": "period is for a validator kept as a running counter"
+                    }
+                  },
+                  "description": "OperatorCurrentRewards represents the current rewards and the current\nperiod for an operator, stored as a running counter that is incremented\neach time the operator's token balance changes. Token changes are checked\non an epoch basis, rather than per block. Similar to OperatorHistoricalRewards,\nfor multiple AVSs with the same epoch configuration, the token changes for the\nrelated operator are consistent. Therefore, they can share a single period.\nHowever, the rewards are still stored separately for each AVS using a 2D array.\nOperator, assetID and epochIdentifier are implicit within the store key."
+                }
+              },
+              "description": "QueryOperatorCurrentRewardsResponse is the response to obtain the operator current rewards."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_identifier",
+            "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/operator_historical_rewards/{operator}/{asset_id}/{epoch_identifier}/{period}": {
+      "get": {
+        "summary": "OperatorHistoricalRewards queries the operator historical rewards",
+        "operationId": "OperatorHistoricalRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator_historical_rewards": {
+                  "title": "operator_historical_rewards is the return value",
+                  "type": "object",
+                  "properties": {
+                    "cumulative_reward_ratios": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "avs_address": {
+                            "type": "string",
+                            "title": "avs_address is the AVS address"
+                          },
+                          "rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "denom": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "type": "string"
+                                }
+                              },
+                              "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                            },
+                            "title": "rewards represents the current rewards or cumulative reward ratios"
+                          }
+                        },
+                        "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                      },
+                      "title": "cumulative_reward_ratios is the reward ratios for multiple AVSs"
+                    },
+                    "reference_count": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "reference_count is for F1 distribution."
+                    }
+                  },
+                  "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zeroeth period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
+                }
+              },
+              "description": "QueryOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_identifier",
+            "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "period",
+            "description": "period",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/operator_outstanding_rewards/{operator}/{avs}": {
+      "get": {
+        "summary": "OperatorOutstandingRewards queries the outstanding rewards for an operator.",
+        "operationId": "OperatorOutstandingRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator_outstanding_rewards": {
+                  "title": "operator_outstanding_rewards is the outstanding rewards returned for an operator",
+                  "type": "object",
+                  "properties": {
+                    "rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "title": "rewards represents the rewards for the operator"
+                    }
+                  },
+                  "description": "OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor an operator inexpensive to track, allows simple sanity checks.\nThe AVS address is implicit within the store key."
+                }
+              },
+              "title": "QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}": {
+      "get": {
+        "summary": "OperatorAccumulatedCommission queries the operator accumulated commission.",
+        "operationId": "OperatorSlashEvent",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator_slash_event": {
+                  "title": "operator_slash_event is the return value",
+                  "type": "object",
+                  "properties": {
+                    "operator_period": {
+                      "type": "string",
+                      "format": "uint64",
+                      "title": "operator_period is the period referenced by the slash event"
+                    },
+                    "fraction": {
+                      "type": "string",
+                      "description": "fraction is the slash fraction."
+                    }
+                  },
+                  "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
+                }
+              },
+              "description": "QueryOperatorSlashEventResponse is the response to obtain the operator slash event."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_identifier",
+            "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_number",
+            "description": "epoch number",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/feedistribution/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
@@ -20760,13 +21589,9 @@
                   "description": "params holds all the parameters of this module.",
                   "type": "object",
                   "properties": {
-                    "epoch_identifier": {
-                      "type": "string",
-                      "title": "epoch_identifier for fee distribution"
-                    },
                     "community_tax": {
                       "type": "string",
-                      "title": "community_tax is the tax defined for allocation"
+                      "title": "community_tax is the tax defined for allocation\nCurrently, use the same community tax for the rewards distribution of all AVSs"
                     }
                   }
                 }
@@ -20808,6 +21633,635 @@
             }
           }
         },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/reward_asset/{avs}/{asset_id}": {
+      "get": {
+        "summary": "AVSRewardAsset queries the specific reward asset for an AVS.",
+        "operationId": "AVSRewardAsset",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "avs_reward_asset": {
+                  "title": "avs_reward_asset is the reward asset returned for the input avs",
+                  "type": "object",
+                  "properties": {
+                    "asset_basic_info": {
+                      "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "title": "name of the asset, like \"Tether USD\""
+                        },
+                        "symbol": {
+                          "type": "string",
+                          "title": "symbol of the asset, like \"USDT\""
+                        },
+                        "address": {
+                          "type": "string",
+                          "title": "address of the asset on the client chain"
+                        },
+                        "decimals": {
+                          "type": "integer",
+                          "format": "int64",
+                          "description": "decimals used in the asset, typically 6 or 18."
+                        },
+                        "layer_zero_chain_id": {
+                          "type": "string",
+                          "format": "uint64",
+                          "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                        },
+                        "imua_chain_index": {
+                          "type": "string",
+                          "format": "uint64",
+                          "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                        },
+                        "meta_info": {
+                          "type": "string",
+                          "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                        }
+                      }
+                    },
+                    "reward_asset_state": {
+                      "title": "reward_asset_state is the state of reward asset",
+                      "type": "object",
+                      "properties": {
+                        "reward_pool_balance": {
+                          "type": "string",
+                          "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+                        },
+                        "reward_pool_total": {
+                          "type": "string",
+                          "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                        },
+                        "reward_allocation_total": {
+                          "type": "string",
+                          "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "description": "QueryAVSRewardAssetResponse is the response to obtain the specific reward asset for an AVS."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset_id is reward asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/reward_assets_by_avs/{avs}": {
+      "get": {
+        "summary": "RewardAssetsByAVS queries all reward assets for an AVS.",
+        "operationId": "RewardAssetsByAVS",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reward_assets": {
+                  "description": "reward_assets is a slice of all reward assets for an AVS, including their information and state.",
+                  "type": "object",
+                  "properties": {
+                    "avs_reward_assets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "asset_basic_info": {
+                            "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "title": "name of the asset, like \"Tether USD\""
+                              },
+                              "symbol": {
+                                "type": "string",
+                                "title": "symbol of the asset, like \"USDT\""
+                              },
+                              "address": {
+                                "type": "string",
+                                "title": "address of the asset on the client chain"
+                              },
+                              "decimals": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "decimals used in the asset, typically 6 or 18."
+                              },
+                              "layer_zero_chain_id": {
+                                "type": "string",
+                                "format": "uint64",
+                                "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                              },
+                              "imua_chain_index": {
+                                "type": "string",
+                                "format": "uint64",
+                                "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                              },
+                              "meta_info": {
+                                "type": "string",
+                                "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                              }
+                            }
+                          },
+                          "reward_asset_state": {
+                            "title": "reward_asset_state is the state of reward asset",
+                            "type": "object",
+                            "properties": {
+                              "reward_pool_balance": {
+                                "type": "string",
+                                "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+                              },
+                              "reward_pool_total": {
+                                "type": "string",
+                                "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                              },
+                              "reward_allocation_total": {
+                                "type": "string",
+                                "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                              }
+                            }
+                          }
+                        },
+                        "title": "AVSRewardAsset defines the information for an asset to be used as a reward for an AVS"
+                      },
+                      "title": "avs_reward_assets is a list of all reward asset for an AVS"
+                    }
+                  },
+                  "title": "AVSRewardAssets represents all reward assets of an AVS"
+                }
+              },
+              "description": "QueryRewardAssetsByAVSResponse is the response for QueryRewardAssetsByAVSRequest."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/reward_param/{avs}": {
+      "get": {
+        "summary": "AVSRewardParam queries the reward param for an AVS.",
+        "operationId": "AVSRewardParam",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "avs_reward_param": {
+                  "title": "avs_reward_param is the reward parameter returned for the input avs",
+                  "type": "object",
+                  "properties": {
+                    "custom_reward_inflation": {
+                      "type": "boolean",
+                      "title": "custom_reward_inflation is the flag to determine whether customizing the reward inflation\nby the precompile contract"
+                    },
+                    "custom_operator_ratio": {
+                      "type": "boolean",
+                      "title": "custom_reward_inflation is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
+                    }
+                  },
+                  "description": "AVSRewardParam represents the reward distribution parameter for all AVSs, The\nAVS can choose different strategies by it. Now it only provides two flags to\nindicate whether using the customized reward inflation and operator reward proportion.\nIn the future the parameters regarding reward inflation might be added here when we\nupgrade the implementation of default reward inflation."
+                }
+              },
+              "description": "QueryAVSRewardParamResponse is the response to obtain the specific reward parameter for an AVS."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/stake_change_delegations/{epoch_identifier}/{operator}/{asset_id}": {
+      "get": {
+        "summary": "StakeChangeDelegations queries the delegations whose stake has changed.",
+        "operationId": "StakeChangeDelegations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "delegation_change_info": {
+                  "description": "delegation_change_info is the delegations whose stake has changed.",
+                  "type": "object",
+                  "properties": {
+                    "staker_delegation_changes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "staker_id": {
+                            "type": "string",
+                            "title": "staker_id is the stakerID"
+                          },
+                          "previous_delegated_amount": {
+                            "type": "string",
+                            "title": "previous_delegated_amount will be used to initialize the starting info for the delegation"
+                          }
+                        },
+                        "description": "StakerDelegationChange includes the staker ID and the delegated amount at the end\nof the previous epoch for stakers whose delegation has changed."
+                      },
+                      "description": "staker_delegation_changes is a slice of staker info with changed delegation stakes."
+                    },
+                    "total_amount": {
+                      "type": "string",
+                      "description": "total_amount is the total delegated amount of the operator's assets at the end of\nthe previous epoch. It will be used to calculate the reward per unit of stake.\nWe use decimal here because we don't want the reward for one unit of stake to be too small.\nIt is equal to the total amount in the operator's asset info divided by 10^decimal.\nThe decimal is stored in the asset information."
+                    }
+                  }
+                }
+              },
+              "description": "QueryStakeChangeDelegationsResponse is the response to obtain the delegations whose stake has changed."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch_identifier",
+            "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/staker_outstanding_rewards/{staker_id}/{avs}": {
+      "get": {
+        "summary": "StakerOutstandingRewards queries the outstanding rewards for a staker.",
+        "operationId": "StakerOutstandingRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "staker_outstanding_rewards": {
+                  "title": "staker_outstanding_rewards is the staker outstanding rewards",
+                  "type": "object",
+                  "properties": {
+                    "rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "title": "rewards represents the rewards for the operator"
+                    }
+                  },
+                  "description": "StakerOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor a staker inexpensive to track, allows simple sanity checks."
+                }
+              },
+              "title": "QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/unclaimed_rewards/{staker_id}": {
+      "get": {
+        "summary": "StakerUnclaimedRewards queries the unclaimed rewards for a staker",
+        "operationId": "StakerUnclaimedRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rewards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "avs_address": {
+                        "type": "string",
+                        "title": "avs_address is the AVS address"
+                      },
+                      "rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "denom": {
+                              "type": "string"
+                            },
+                            "amount": {
+                              "type": "string"
+                            }
+                          },
+                          "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                        },
+                        "title": "rewards represents the current rewards or cumulative reward ratios"
+                      }
+                    },
+                    "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                  },
+                  "title": "unclaimed rewards for all AVSs"
+                }
+              },
+              "description": "QuerStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
         "tags": [
           "Query"
         ]
@@ -24927,63 +26381,6 @@
                 }
               },
               "description": "QueryParamsResponse defines the response type for querying x/consensus parameters."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Query"
-        ]
-      }
-    },
-    "/imuachain/reward/v1/params": {
-      "get": {
-        "summary": "Parameters queries the parameters of the module.",
-        "operationId": "RewardParams",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "params": {
-                  "description": "params holds all the parameters of this module.",
-                  "type": "object"
-                }
-              },
-              "description": "QueryParamsResponse is response type for the Query/Params RPC method."
             }
           },
           "default": {
@@ -44123,19 +45520,868 @@
       },
       "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
+    "cosmos.base.v1beta1.DecCoin": {
+      "type": "object",
+      "properties": {
+        "denom": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "string"
+        }
+      },
+      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+    },
+    "imuachain.feedistribution.v1.AVSRewardAsset": {
+      "type": "object",
+      "properties": {
+        "asset_basic_info": {
+          "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "name of the asset, like \"Tether USD\""
+            },
+            "symbol": {
+              "type": "string",
+              "title": "symbol of the asset, like \"USDT\""
+            },
+            "address": {
+              "type": "string",
+              "title": "address of the asset on the client chain"
+            },
+            "decimals": {
+              "type": "integer",
+              "format": "int64",
+              "description": "decimals used in the asset, typically 6 or 18."
+            },
+            "layer_zero_chain_id": {
+              "type": "string",
+              "format": "uint64",
+              "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+            },
+            "imua_chain_index": {
+              "type": "string",
+              "format": "uint64",
+              "description": "imua_chain_index is the index of the client chain within the imuasystem."
+            },
+            "meta_info": {
+              "type": "string",
+              "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+            }
+          }
+        },
+        "reward_asset_state": {
+          "title": "reward_asset_state is the state of reward asset",
+          "type": "object",
+          "properties": {
+            "reward_pool_balance": {
+              "type": "string",
+              "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+            },
+            "reward_pool_total": {
+              "type": "string",
+              "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+            },
+            "reward_allocation_total": {
+              "type": "string",
+              "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+            }
+          }
+        }
+      },
+      "title": "AVSRewardAsset defines the information for an asset to be used as a reward for an AVS"
+    },
+    "imuachain.feedistribution.v1.AVSRewardAssetState": {
+      "type": "object",
+      "properties": {
+        "reward_pool_balance": {
+          "type": "string",
+          "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+        },
+        "reward_pool_total": {
+          "type": "string",
+          "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+        },
+        "reward_allocation_total": {
+          "type": "string",
+          "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+        }
+      },
+      "title": "AVSRewardAssetState defines the state of an asset to be used as a reward for an AVS"
+    },
+    "imuachain.feedistribution.v1.AVSRewardAssets": {
+      "type": "object",
+      "properties": {
+        "avs_reward_assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_basic_info": {
+                "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "title": "name of the asset, like \"Tether USD\""
+                  },
+                  "symbol": {
+                    "type": "string",
+                    "title": "symbol of the asset, like \"USDT\""
+                  },
+                  "address": {
+                    "type": "string",
+                    "title": "address of the asset on the client chain"
+                  },
+                  "decimals": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "decimals used in the asset, typically 6 or 18."
+                  },
+                  "layer_zero_chain_id": {
+                    "type": "string",
+                    "format": "uint64",
+                    "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                  },
+                  "imua_chain_index": {
+                    "type": "string",
+                    "format": "uint64",
+                    "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                  },
+                  "meta_info": {
+                    "type": "string",
+                    "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                  }
+                }
+              },
+              "reward_asset_state": {
+                "title": "reward_asset_state is the state of reward asset",
+                "type": "object",
+                "properties": {
+                  "reward_pool_balance": {
+                    "type": "string",
+                    "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+                  },
+                  "reward_pool_total": {
+                    "type": "string",
+                    "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                  },
+                  "reward_allocation_total": {
+                    "type": "string",
+                    "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                  }
+                }
+              }
+            },
+            "title": "AVSRewardAsset defines the information for an asset to be used as a reward for an AVS"
+          },
+          "title": "avs_reward_assets is a list of all reward asset for an AVS"
+        }
+      },
+      "title": "AVSRewardAssets represents all reward assets of an AVS"
+    },
+    "imuachain.feedistribution.v1.AVSRewardDistribution": {
+      "type": "object",
+      "properties": {
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "title": "rewards represents the rewards for one epoch"
+        },
+        "operator_reward_proportions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "operator_addr": {
+                "type": "string",
+                "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+              },
+              "reward_proportion": {
+                "type": "string",
+                "title": "reward_proportion is the reward proportion of this operator"
+              }
+            },
+            "title": "OperatorRewardProportion is the reward proportion of an operator for one epoch"
+          },
+          "description": "operator_reward_proportions represents the reward proportions of all operators\nthat are eligible to be allocated rewards in the current epoch."
+        },
+        "rewards_epoch_number": {
+          "type": "string",
+          "format": "int64",
+          "description": "rewards_epoch_number is the epoch number at which the rewards are updated."
+        },
+        "proportions_epoch_number": {
+          "type": "string",
+          "format": "int64",
+          "title": "proportions_epoch_number is the epoch number at which the proportions are updated"
+        }
+      },
+      "description": "AVSRewardDistribution represents the reward distribution information of an AVS in\nthe current epoch. It serves as the basis for executing the distribution process.\nIt is determined by the inflation and allocation mechanism configured by the AVS\nor customized through the AVS reward contract."
+    },
+    "imuachain.feedistribution.v1.AVSRewardParam": {
+      "type": "object",
+      "properties": {
+        "custom_reward_inflation": {
+          "type": "boolean",
+          "title": "custom_reward_inflation is the flag to determine whether customizing the reward inflation\nby the precompile contract"
+        },
+        "custom_operator_ratio": {
+          "type": "boolean",
+          "title": "custom_reward_inflation is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
+        }
+      },
+      "description": "AVSRewardParam represents the reward distribution parameter for all AVSs, The\nAVS can choose different strategies by it. Now it only provides two flags to\nindicate whether using the customized reward inflation and operator reward proportion.\nIn the future the parameters regarding reward inflation might be added here when we\nupgrade the implementation of default reward inflation."
+    },
+    "imuachain.feedistribution.v1.CommonAVSRewardData": {
+      "type": "object",
+      "properties": {
+        "avs_address": {
+          "type": "string",
+          "title": "avs_address is the AVS address"
+        },
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "title": "rewards represents the current rewards or cumulative reward ratios"
+        }
+      },
+      "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+    },
+    "imuachain.feedistribution.v1.DelegationChangeInfo": {
+      "type": "object",
+      "properties": {
+        "staker_delegation_changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "staker_id": {
+                "type": "string",
+                "title": "staker_id is the stakerID"
+              },
+              "previous_delegated_amount": {
+                "type": "string",
+                "title": "previous_delegated_amount will be used to initialize the starting info for the delegation"
+              }
+            },
+            "description": "StakerDelegationChange includes the staker ID and the delegated amount at the end\nof the previous epoch for stakers whose delegation has changed."
+          },
+          "description": "staker_delegation_changes is a slice of staker info with changed delegation stakes."
+        },
+        "total_amount": {
+          "type": "string",
+          "description": "total_amount is the total delegated amount of the operator's assets at the end of\nthe previous epoch. It will be used to calculate the reward per unit of stake.\nWe use decimal here because we don't want the reward for one unit of stake to be too small.\nIt is equal to the total amount in the operator's asset info divided by 10^decimal.\nThe decimal is stored in the asset information."
+        }
+      },
+      "description": "DelegationChangeInfo represents the information about delegation changes in an epoch.\nIt includes the stakers whose delegated stake has changed and the total\ndelegated amount of the operator's assets at the end of the previous epoch."
+    },
+    "imuachain.feedistribution.v1.DelegationStartingInfo": {
+      "type": "object",
+      "properties": {
+        "previous_period": {
+          "type": "string",
+          "format": "uint64",
+          "description": "previous_period marks the period referenced by this delegation as the starting point.\nIt is used to calculate the rewards for this delegation."
+        },
+        "stake": {
+          "type": "string",
+          "description": "stake records the initial stake of this delegation.\nThe cumulative rewards are calculated as:\nrewards = stake * (rewardRatioAtEndPeriod - rewardRatioAtStartPeriod)\ndecimal is used here to match `total_amount` in `DelegationChangeInfo`."
+        },
+        "epoch_number": {
+          "type": "string",
+          "format": "uint64",
+          "description": "epoch_number is the epoch when the delegation starts.\nIt is used to handle the impact of slash events on rewards."
+        }
+      },
+      "description": "DelegationStartingInfo represents the starting info for a delegation reward\nperiod. It tracks the previous validator period, the delegation's amount of\nstaking token, and the creation epoch information (the epoch_start_height is\nused to check later on if any slashes have occurred).\nIn imua chain, the voting power update and reward distribution are executed\nper epoch, so when using F1 distribution for reward distribution, the smallest\nunit of change in the delegator's stake is the epoch, not the block.\nthe epoch identifier is within the key."
+    },
+    "imuachain.feedistribution.v1.FeePool": {
+      "type": "object",
+      "properties": {
+        "community_pool": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "description": "global fee pool for distribution."
+        }
+      },
+      "description": "FeePool is the global fee pool for distribution.\nIt records the rewards accumulated for the community from an AVS.\nThe AVS address is implicit within the store key."
+    },
+    "imuachain.feedistribution.v1.OperatorAccumulatedCommission": {
+      "type": "object",
+      "properties": {
+        "commission": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "title": "commission is the commission for an operator"
+        }
+      },
+      "description": "OperatorAccumulatedCommission represents accumulated commission\nfor an operator kept as a running counter, can be withdrawn at any time.\nThe AVS address is implicit within the store key."
+    },
+    "imuachain.feedistribution.v1.OperatorCurrentRewards": {
+      "type": "object",
+      "properties": {
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the AVS address"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "title": "rewards represents the current rewards or cumulative reward ratios"
+              }
+            },
+            "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+          },
+          "title": "current rewards"
+        },
+        "period": {
+          "type": "string",
+          "format": "uint64",
+          "title": "period is for a validator kept as a running counter"
+        }
+      },
+      "description": "OperatorCurrentRewards represents the current rewards and the current\nperiod for an operator, stored as a running counter that is incremented\neach time the operator's token balance changes. Token changes are checked\non an epoch basis, rather than per block. Similar to OperatorHistoricalRewards,\nfor multiple AVSs with the same epoch configuration, the token changes for the\nrelated operator are consistent. Therefore, they can share a single period.\nHowever, the rewards are still stored separately for each AVS using a 2D array.\nOperator, assetID and epochIdentifier are implicit within the store key."
+    },
+    "imuachain.feedistribution.v1.OperatorHistoricalRewards": {
+      "type": "object",
+      "properties": {
+        "cumulative_reward_ratios": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the AVS address"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "title": "rewards represents the current rewards or cumulative reward ratios"
+              }
+            },
+            "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+          },
+          "title": "cumulative_reward_ratios is the reward ratios for multiple AVSs"
+        },
+        "reference_count": {
+          "type": "integer",
+          "format": "int64",
+          "description": "reference_count is for F1 distribution."
+        }
+      },
+      "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zeroeth period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
+    },
+    "imuachain.feedistribution.v1.OperatorOutstandingRewards": {
+      "type": "object",
+      "properties": {
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "title": "rewards represents the rewards for the operator"
+        }
+      },
+      "description": "OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor an operator inexpensive to track, allows simple sanity checks.\nThe AVS address is implicit within the store key."
+    },
+    "imuachain.feedistribution.v1.OperatorRewardProportion": {
+      "type": "object",
+      "properties": {
+        "operator_addr": {
+          "type": "string",
+          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+        },
+        "reward_proportion": {
+          "type": "string",
+          "title": "reward_proportion is the reward proportion of this operator"
+        }
+      },
+      "title": "OperatorRewardProportion is the reward proportion of an operator for one epoch"
+    },
+    "imuachain.feedistribution.v1.OperatorSlashEvent": {
+      "type": "object",
+      "properties": {
+        "operator_period": {
+          "type": "string",
+          "format": "uint64",
+          "title": "operator_period is the period referenced by the slash event"
+        },
+        "fraction": {
+          "type": "string",
+          "description": "fraction is the slash fraction."
+        }
+      },
+      "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
+    },
     "imuachain.feedistribution.v1.Params": {
       "type": "object",
       "properties": {
-        "epoch_identifier": {
-          "type": "string",
-          "title": "epoch_identifier for fee distribution"
-        },
         "community_tax": {
           "type": "string",
-          "title": "community_tax is the tax defined for allocation"
+          "title": "community_tax is the tax defined for allocation\nCurrently, use the same community tax for the rewards distribution of all AVSs"
         }
       },
       "description": "Params defines the parameters for the module."
+    },
+    "imuachain.feedistribution.v1.QueryAVSCommunityPoolResponse": {
+      "type": "object",
+      "properties": {
+        "fee_pool": {
+          "description": "fee_pool is the fee pool returned for the specified AVS.",
+          "type": "object",
+          "properties": {
+            "community_pool": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "global fee pool for distribution."
+            }
+          }
+        }
+      },
+      "description": "QueryAVSCommunityPoolResponse is the response to obtain the community fee pool for an AVS."
+    },
+    "imuachain.feedistribution.v1.QueryAVSRewardAssetResponse": {
+      "type": "object",
+      "properties": {
+        "avs_reward_asset": {
+          "title": "avs_reward_asset is the reward asset returned for the input avs",
+          "type": "object",
+          "properties": {
+            "asset_basic_info": {
+              "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "name of the asset, like \"Tether USD\""
+                },
+                "symbol": {
+                  "type": "string",
+                  "title": "symbol of the asset, like \"USDT\""
+                },
+                "address": {
+                  "type": "string",
+                  "title": "address of the asset on the client chain"
+                },
+                "decimals": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "decimals used in the asset, typically 6 or 18."
+                },
+                "layer_zero_chain_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                },
+                "imua_chain_index": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                },
+                "meta_info": {
+                  "type": "string",
+                  "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                }
+              }
+            },
+            "reward_asset_state": {
+              "title": "reward_asset_state is the state of reward asset",
+              "type": "object",
+              "properties": {
+                "reward_pool_balance": {
+                  "type": "string",
+                  "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+                },
+                "reward_pool_total": {
+                  "type": "string",
+                  "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                },
+                "reward_allocation_total": {
+                  "type": "string",
+                  "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "QueryAVSRewardAssetResponse is the response to obtain the specific reward asset for an AVS."
+    },
+    "imuachain.feedistribution.v1.QueryAVSRewardDistributionResponse": {
+      "type": "object",
+      "properties": {
+        "avs_reward_distribution": {
+          "title": "avs_reward_distribution is the reward distribution information returned for the input avs",
+          "type": "object",
+          "properties": {
+            "rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "title": "rewards represents the rewards for one epoch"
+            },
+            "operator_reward_proportions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "operator_addr": {
+                    "type": "string",
+                    "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                  },
+                  "reward_proportion": {
+                    "type": "string",
+                    "title": "reward_proportion is the reward proportion of this operator"
+                  }
+                },
+                "title": "OperatorRewardProportion is the reward proportion of an operator for one epoch"
+              },
+              "description": "operator_reward_proportions represents the reward proportions of all operators\nthat are eligible to be allocated rewards in the current epoch."
+            },
+            "rewards_epoch_number": {
+              "type": "string",
+              "format": "int64",
+              "description": "rewards_epoch_number is the epoch number at which the rewards are updated."
+            },
+            "proportions_epoch_number": {
+              "type": "string",
+              "format": "int64",
+              "title": "proportions_epoch_number is the epoch number at which the proportions are updated"
+            }
+          },
+          "description": "AVSRewardDistribution represents the reward distribution information of an AVS in\nthe current epoch. It serves as the basis for executing the distribution process.\nIt is determined by the inflation and allocation mechanism configured by the AVS\nor customized through the AVS reward contract."
+        }
+      },
+      "description": "QueryAVSRewardDistributionResponse is the response to obtain the reward distribution information for an AVS."
+    },
+    "imuachain.feedistribution.v1.QueryAVSRewardParamResponse": {
+      "type": "object",
+      "properties": {
+        "avs_reward_param": {
+          "title": "avs_reward_param is the reward parameter returned for the input avs",
+          "type": "object",
+          "properties": {
+            "custom_reward_inflation": {
+              "type": "boolean",
+              "title": "custom_reward_inflation is the flag to determine whether customizing the reward inflation\nby the precompile contract"
+            },
+            "custom_operator_ratio": {
+              "type": "boolean",
+              "title": "custom_reward_inflation is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
+            }
+          },
+          "description": "AVSRewardParam represents the reward distribution parameter for all AVSs, The\nAVS can choose different strategies by it. Now it only provides two flags to\nindicate whether using the customized reward inflation and operator reward proportion.\nIn the future the parameters regarding reward inflation might be added here when we\nupgrade the implementation of default reward inflation."
+        }
+      },
+      "description": "QueryAVSRewardParamResponse is the response to obtain the specific reward parameter for an AVS."
+    },
+    "imuachain.feedistribution.v1.QueryDelegationStartingInfoResponse": {
+      "type": "object",
+      "properties": {
+        "delegation_starting_info": {
+          "title": "delegation_starting_info is the return value",
+          "type": "object",
+          "properties": {
+            "previous_period": {
+              "type": "string",
+              "format": "uint64",
+              "description": "previous_period marks the period referenced by this delegation as the starting point.\nIt is used to calculate the rewards for this delegation."
+            },
+            "stake": {
+              "type": "string",
+              "description": "stake records the initial stake of this delegation.\nThe cumulative rewards are calculated as:\nrewards = stake * (rewardRatioAtEndPeriod - rewardRatioAtStartPeriod)\ndecimal is used here to match `total_amount` in `DelegationChangeInfo`."
+            },
+            "epoch_number": {
+              "type": "string",
+              "format": "uint64",
+              "description": "epoch_number is the epoch when the delegation starts.\nIt is used to handle the impact of slash events on rewards."
+            }
+          },
+          "description": "DelegationStartingInfo represents the starting info for a delegation reward\nperiod. It tracks the previous validator period, the delegation's amount of\nstaking token, and the creation epoch information (the epoch_start_height is\nused to check later on if any slashes have occurred).\nIn imua chain, the voting power update and reward distribution are executed\nper epoch, so when using F1 distribution for reward distribution, the smallest\nunit of change in the delegator's stake is the epoch, not the block.\nthe epoch identifier is within the key."
+        }
+      },
+      "description": "QueryDelegationStartingInfoResponse is the response to obtain the delegation starting information."
+    },
+    "imuachain.feedistribution.v1.QueryOperatorAccumulatedCommissionResponse": {
+      "type": "object",
+      "properties": {
+        "operator_accumulated_commission": {
+          "title": "operator_outstanding_rewards is the accumulated commission returned for an operator",
+          "type": "object",
+          "properties": {
+            "commission": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "title": "commission is the commission for an operator"
+            }
+          },
+          "description": "OperatorAccumulatedCommission represents accumulated commission\nfor an operator kept as a running counter, can be withdrawn at any time.\nThe AVS address is implicit within the store key."
+        }
+      },
+      "title": "QueryOperatorAccumulatedCommissionResponse is the response to obtain the operator accumulated commission"
+    },
+    "imuachain.feedistribution.v1.QueryOperatorCurrentRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "operator_current_rewards": {
+          "title": "operator_current_rewards is the return value",
+          "type": "object",
+          "properties": {
+            "rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "avs_address": {
+                    "type": "string",
+                    "title": "avs_address is the AVS address"
+                  },
+                  "rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "title": "rewards represents the current rewards or cumulative reward ratios"
+                  }
+                },
+                "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+              },
+              "title": "current rewards"
+            },
+            "period": {
+              "type": "string",
+              "format": "uint64",
+              "title": "period is for a validator kept as a running counter"
+            }
+          },
+          "description": "OperatorCurrentRewards represents the current rewards and the current\nperiod for an operator, stored as a running counter that is incremented\neach time the operator's token balance changes. Token changes are checked\non an epoch basis, rather than per block. Similar to OperatorHistoricalRewards,\nfor multiple AVSs with the same epoch configuration, the token changes for the\nrelated operator are consistent. Therefore, they can share a single period.\nHowever, the rewards are still stored separately for each AVS using a 2D array.\nOperator, assetID and epochIdentifier are implicit within the store key."
+        }
+      },
+      "description": "QueryOperatorCurrentRewardsResponse is the response to obtain the operator current rewards."
+    },
+    "imuachain.feedistribution.v1.QueryOperatorHistoricalRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "operator_historical_rewards": {
+          "title": "operator_historical_rewards is the return value",
+          "type": "object",
+          "properties": {
+            "cumulative_reward_ratios": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "avs_address": {
+                    "type": "string",
+                    "title": "avs_address is the AVS address"
+                  },
+                  "rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "title": "rewards represents the current rewards or cumulative reward ratios"
+                  }
+                },
+                "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+              },
+              "title": "cumulative_reward_ratios is the reward ratios for multiple AVSs"
+            },
+            "reference_count": {
+              "type": "integer",
+              "format": "int64",
+              "description": "reference_count is for F1 distribution."
+            }
+          },
+          "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zeroeth period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
+        }
+      },
+      "description": "QueryOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards."
+    },
+    "imuachain.feedistribution.v1.QueryOperatorOutstandingRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "operator_outstanding_rewards": {
+          "title": "operator_outstanding_rewards is the outstanding rewards returned for an operator",
+          "type": "object",
+          "properties": {
+            "rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "title": "rewards represents the rewards for the operator"
+            }
+          },
+          "description": "OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor an operator inexpensive to track, allows simple sanity checks.\nThe AVS address is implicit within the store key."
+        }
+      },
+      "title": "QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards"
+    },
+    "imuachain.feedistribution.v1.QueryOperatorSlashEventResponse": {
+      "type": "object",
+      "properties": {
+        "operator_slash_event": {
+          "title": "operator_slash_event is the return value",
+          "type": "object",
+          "properties": {
+            "operator_period": {
+              "type": "string",
+              "format": "uint64",
+              "title": "operator_period is the period referenced by the slash event"
+            },
+            "fraction": {
+              "type": "string",
+              "description": "fraction is the slash fraction."
+            }
+          },
+          "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
+        }
+      },
+      "description": "QueryOperatorSlashEventResponse is the response to obtain the operator slash event."
     },
     "imuachain.feedistribution.v1.QueryParamsResponse": {
       "type": "object",
@@ -44144,18 +46390,227 @@
           "description": "params holds all the parameters of this module.",
           "type": "object",
           "properties": {
-            "epoch_identifier": {
-              "type": "string",
-              "title": "epoch_identifier for fee distribution"
-            },
             "community_tax": {
               "type": "string",
-              "title": "community_tax is the tax defined for allocation"
+              "title": "community_tax is the tax defined for allocation\nCurrently, use the same community tax for the rewards distribution of all AVSs"
             }
           }
         }
       },
       "description": "QueryParamsResponse is response type for the Query/Params RPC method."
+    },
+    "imuachain.feedistribution.v1.QueryRewardAssetsByAVSResponse": {
+      "type": "object",
+      "properties": {
+        "reward_assets": {
+          "description": "reward_assets is a slice of all reward assets for an AVS, including their information and state.",
+          "type": "object",
+          "properties": {
+            "avs_reward_assets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "asset_basic_info": {
+                    "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "title": "name of the asset, like \"Tether USD\""
+                      },
+                      "symbol": {
+                        "type": "string",
+                        "title": "symbol of the asset, like \"USDT\""
+                      },
+                      "address": {
+                        "type": "string",
+                        "title": "address of the asset on the client chain"
+                      },
+                      "decimals": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "decimals used in the asset, typically 6 or 18."
+                      },
+                      "layer_zero_chain_id": {
+                        "type": "string",
+                        "format": "uint64",
+                        "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                      },
+                      "imua_chain_index": {
+                        "type": "string",
+                        "format": "uint64",
+                        "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                      },
+                      "meta_info": {
+                        "type": "string",
+                        "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                      }
+                    }
+                  },
+                  "reward_asset_state": {
+                    "title": "reward_asset_state is the state of reward asset",
+                    "type": "object",
+                    "properties": {
+                      "reward_pool_balance": {
+                        "type": "string",
+                        "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+                      },
+                      "reward_pool_total": {
+                        "type": "string",
+                        "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                      },
+                      "reward_allocation_total": {
+                        "type": "string",
+                        "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                      }
+                    }
+                  }
+                },
+                "title": "AVSRewardAsset defines the information for an asset to be used as a reward for an AVS"
+              },
+              "title": "avs_reward_assets is a list of all reward asset for an AVS"
+            }
+          },
+          "title": "AVSRewardAssets represents all reward assets of an AVS"
+        }
+      },
+      "description": "QueryRewardAssetsByAVSResponse is the response for QueryRewardAssetsByAVSRequest."
+    },
+    "imuachain.feedistribution.v1.QueryStakeChangeDelegationsResponse": {
+      "type": "object",
+      "properties": {
+        "delegation_change_info": {
+          "description": "delegation_change_info is the delegations whose stake has changed.",
+          "type": "object",
+          "properties": {
+            "staker_delegation_changes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "staker_id": {
+                    "type": "string",
+                    "title": "staker_id is the stakerID"
+                  },
+                  "previous_delegated_amount": {
+                    "type": "string",
+                    "title": "previous_delegated_amount will be used to initialize the starting info for the delegation"
+                  }
+                },
+                "description": "StakerDelegationChange includes the staker ID and the delegated amount at the end\nof the previous epoch for stakers whose delegation has changed."
+              },
+              "description": "staker_delegation_changes is a slice of staker info with changed delegation stakes."
+            },
+            "total_amount": {
+              "type": "string",
+              "description": "total_amount is the total delegated amount of the operator's assets at the end of\nthe previous epoch. It will be used to calculate the reward per unit of stake.\nWe use decimal here because we don't want the reward for one unit of stake to be too small.\nIt is equal to the total amount in the operator's asset info divided by 10^decimal.\nThe decimal is stored in the asset information."
+            }
+          }
+        }
+      },
+      "description": "QueryStakeChangeDelegationsResponse is the response to obtain the delegations whose stake has changed."
+    },
+    "imuachain.feedistribution.v1.QueryStakerOutstandingRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "staker_outstanding_rewards": {
+          "title": "staker_outstanding_rewards is the staker outstanding rewards",
+          "type": "object",
+          "properties": {
+            "rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "title": "rewards represents the rewards for the operator"
+            }
+          },
+          "description": "StakerOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor a staker inexpensive to track, allows simple sanity checks."
+        }
+      },
+      "title": "QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards"
+    },
+    "imuachain.feedistribution.v1.QueryStakerUnclaimedRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the AVS address"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "title": "rewards represents the current rewards or cumulative reward ratios"
+              }
+            },
+            "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+          },
+          "title": "unclaimed rewards for all AVSs"
+        }
+      },
+      "description": "QuerStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+    },
+    "imuachain.feedistribution.v1.StakerDelegationChange": {
+      "type": "object",
+      "properties": {
+        "staker_id": {
+          "type": "string",
+          "title": "staker_id is the stakerID"
+        },
+        "previous_delegated_amount": {
+          "type": "string",
+          "title": "previous_delegated_amount will be used to initialize the starting info for the delegation"
+        }
+      },
+      "description": "StakerDelegationChange includes the staker ID and the delegated amount at the end\nof the previous epoch for stakers whose delegation has changed."
+    },
+    "imuachain.feedistribution.v1.StakerOutstandingRewards": {
+      "type": "object",
+      "properties": {
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "title": "rewards represents the rewards for the operator"
+        }
+      },
+      "description": "StakerOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor a staker inexpensive to track, allows simple sanity checks."
     },
     "imuachain.delegation.v1.DelegationAmounts": {
       "type": "object",
@@ -47147,20 +49602,6 @@
         }
       },
       "description": "VersionParams contains the ABCI application version."
-    },
-    "imuachain.reward.v1.Params": {
-      "type": "object",
-      "description": "Params defines the parameters for the module."
-    },
-    "imuachain.reward.v1.QueryParamsResponse": {
-      "type": "object",
-      "properties": {
-        "params": {
-          "description": "params holds all the parameters of this module.",
-          "type": "object"
-        }
-      },
-      "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     }
   }
 }
