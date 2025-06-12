@@ -2,7 +2,6 @@ package cli
 
 import (
 	"errors"
-	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -12,6 +11,10 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/imua-xyz/imuachain/x/delegation/types"
+)
+
+const (
+	FlagInstantUnbonding = "instant-unbonding"
 )
 
 func CmdDelegate() *cobra.Command {
@@ -42,20 +45,20 @@ func CmdDelegate() *cobra.Command {
 func CmdUndelegate() *cobra.Command {
 	cmd := &cobra.Command{
 		// TODO: only support native token for now
-		Use:   "undelegate asset-id operator amount instant-unbonding",
+		Use:   "undelegate asset-id operator amount optional(--instant-unbonding true)",
 		Short: "Broadcast a transaction to undelegate amount of native token from the operator",
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			assetID, operatorAddrStr, amount, err := parseArgs(args[:3])
+			assetID, operatorAddrStr, amount, err := parseArgs(args)
 			if err != nil {
 				return err
 			}
-			instantUnbonding, err := strconv.ParseBool(args[3])
+			instantUnbonding, err := cmd.Flags().GetBool(FlagInstantUnbonding)
 			if err != nil {
 				return err
 			}
@@ -65,7 +68,7 @@ func CmdUndelegate() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-
+	cmd.Flags().Bool(FlagInstantUnbonding, false, "indicate whether it's an instant undelegation")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
