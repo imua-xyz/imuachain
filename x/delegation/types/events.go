@@ -31,6 +31,8 @@ const (
 	AttributeKeyUndelegationID       = "undelegation_id"
 	AttributeKeyTxHash               = "tx_hash"
 	AttributeKeyBlockNumber          = "block_number"
+	AttributeKeyInstantUnbonding     = "instant_unbonding"
+	AttributeKeyApplyInstantSlash    = "apply_instant_slash"
 
 	// undelegation matured
 	EventTypeUndelegationMatured          = "undelegation_matured"
@@ -40,7 +42,4 @@ const (
 	// undelegation held back or released
 	EventTypeUndelegationHoldCountChanged = "undelegation_hold_count_changed"
 	AttributeKeyHoldCount                 = "hold_count"
-
-	// instant unbonding
-	InstantUnbonding = "instant_unbonding"
 )

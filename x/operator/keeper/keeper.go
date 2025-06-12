@@ -63,6 +63,8 @@ type OperatorKeeper interface {
 
 	GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (string, int64, error)
 
+	GetInstantUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (bool, string, int64, error)
+
 	OptIn(ctx sdk.Context, operatorAddress sdk.AccAddress, AVSAddr string) error
 
 	OptOut(ctx sdk.Context, OperatorAddress sdk.AccAddress, AVSAddr string) error

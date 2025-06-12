@@ -35,7 +35,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	// the length of client chain address inputted by caller is 32, so we need to check the length and remove the padding according to the actual length.
 	assetAddr, ok := args[1].([]byte)
 	if !ok || assetAddr == nil {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", args[2])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "[]byte", args[1])
 	}
 	// #nosec G115
 	if uint32(len(assetAddr)) < clientChainAddrLength {
@@ -45,7 +45,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 
 	stakerAddr, ok := args[2].([]byte)
 	if !ok || stakerAddr == nil {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", args[3])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "[]byte", args[2])
 	}
 	// #nosec G115
 	if uint32(len(stakerAddr)) < clientChainAddrLength {
@@ -56,7 +56,7 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 	// the input operator address is cosmos accAddress type,so we need to check the length and decode it through Bench32
 	operatorAddr, ok := args[3].([]byte)
 	if !ok || operatorAddr == nil {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "[]byte", args[4])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 3, "[]byte", args[3])
 	}
 	if len(operatorAddr) != types.ImuachainOperatorAddrLength {
 		return nil, fmt.Errorf(imuacmn.ErrInputOperatorAddrLength, len(operatorAddr), types.ImuachainOperatorAddrLength)
@@ -70,8 +70,16 @@ func (p Precompile) GetDelegationParamsFromInputs(ctx sdk.Context, args []interf
 
 	opAmount, ok := args[4].(*big.Int)
 	if !ok || opAmount == nil || !(opAmount.Cmp(big.NewInt(0)) == 1) {
-		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 5, "*big.Int", args[5])
+		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 4, "*big.Int", args[4])
 	}
 	delegationParams.OpAmount = sdkmath.NewIntFromBigInt(opAmount)
+
+	if method == MethodUndelegate {
+		isInstantUnbonding, ok := args[5].(bool)
+		if !ok {
+			return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 5, "bool", args[5])
+		}
+		delegationParams.InstantUnbonding = isInstantUnbonding
+	}
 	return delegationParams, nil
 }

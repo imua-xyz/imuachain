@@ -57,7 +57,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	undelegationAmount := sdkmath.NewIntWithDecimal(10, assetDecimal)
 	suite.prepareDelegation(false, suite.Address, suite.assetAddr, suite.operatorAddr, undelegationAmount)
 	delegationRemaining := delegationAmount.Add(newDelegateAmount).Sub(undelegationAmount)
-	completedEpochId, completedEpochNumber, err := suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	completedEpochId, completedEpochNumber, _, err := suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
 	suite.NoError(err)
 	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, completedEpochId)
 	suite.True(found)

@@ -31,11 +31,11 @@ func (wrapper DelegationHooksWrapper) AfterDelegation(
 
 // AfterUndelegationStarted is called after an undelegation is started.
 func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
-	ctx sdk.Context, operator sdk.AccAddress, recordKey []byte,
+	_ sdk.Context, _ sdk.AccAddress, _ []byte,
 ) error {
 	// Do nothing here because the `GetUnbondingExpiration` function can now
 	// calculate the correct unbonding duration, even for opt-out cases;
 	// therefore, the dogfood module doesn't need to manage the completion of undelegations.
-	// todo: Does the whole hook file and the related code also need to be removed?
+	// todo: remove the whole hook file and the related code in the future?
 	return nil
 }

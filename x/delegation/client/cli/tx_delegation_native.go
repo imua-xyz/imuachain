@@ -2,6 +2,7 @@ package cli
 
 import (
 	"errors"
+	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -41,21 +42,25 @@ func CmdDelegate() *cobra.Command {
 func CmdUndelegate() *cobra.Command {
 	cmd := &cobra.Command{
 		// TODO: only support native token for now
-		Use:   "undelegate asset-id operator amount",
+		Use:   "undelegate asset-id operator amount instant-unbonding",
 		Short: "Broadcast a transaction to undelegate amount of native token from the operator",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			assetID, operatorAddrStr, amount, err := parseArgs(args)
+			assetID, operatorAddrStr, amount, err := parseArgs(args[:3])
+			if err != nil {
+				return err
+			}
+			instantUnbonding, err := strconv.ParseBool(args[3])
 			if err != nil {
 				return err
 			}
 
-			msg := types.NewMsgUndelegation(assetID, clientCtx.GetFromAddress().String(), []types.KeyValue{{Key: operatorAddrStr, Value: &types.ValueField{Amount: amount}}})
+			msg := types.NewMsgUndelegation(instantUnbonding, assetID, clientCtx.GetFromAddress().String(), []types.KeyValue{{Key: operatorAddrStr, Value: &types.ValueField{Amount: amount}}})
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
