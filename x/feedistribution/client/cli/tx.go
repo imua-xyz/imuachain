@@ -26,6 +26,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdUpdateParams(),
 		CmdWithdrawDogfoodCommission(),
+		CmdClaimAndWithdrawDogfoodReward(),
 	)
 	return cmd
 }
