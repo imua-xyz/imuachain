@@ -213,7 +213,12 @@ func (k Keeper) GetStakerBalanceByAsset(ctx sdk.Context, stakerID string, assetI
 		return assetstype.StakerBalance{}, err
 	}
 
-	totalBalance := stakerAssetInfo.WithdrawableAmount.Add(stakerAssetInfo.PendingUndelegationAmount).Add(delegatedAmount)
+	pendingUndelegationFinalAmount, err := k.dk.GetPendingUndelegationFinalAmount(ctx, stakerID, assetID)
+	if err != nil {
+		return assetstype.StakerBalance{}, err
+	}
+
+	totalBalance := stakerAssetInfo.WithdrawableAmount.Add(pendingUndelegationFinalAmount).Add(delegatedAmount)
 
 	balance = assetstype.StakerBalance{
 		StakerId:           stakerID,
