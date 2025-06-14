@@ -117,6 +117,7 @@ func (p Precompile) UpdateAVS(
 		return nil, err
 	}
 	// If avs UpdateAction check CallerAddress
+	// nolint:typecheck
 	if !slices.Contains(previousAVSInfo.Info.AvsOwnerAddresses, avsParams.CallerAddress.String()) {
 		return nil, fmt.Errorf("this caller not qualified to update %s", avsParams.CallerAddress)
 	}
