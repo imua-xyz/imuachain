@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+# check that ALCHEMY_API_KEY is set
+if [ -z "$ALCHEMY_API_KEY" ]; then
+  echo "ALCHEMY_API_KEY is not set"
+  exit 1
+fi
+
 KEYS[0]="dev0"
 KEYS[1]="dev1"
 KEYS[2]="dev2"
@@ -275,8 +281,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	oracle_env_chainlink_content=$(
 		cat <<EOF
 urls:
-  mainnet: https://eth-mainnet.g.alchemy.com/v2/{ALCHEMY_API_KEY}
-  sepolia: https://eth-sepolia.g.alchemy.com/v2/{ALCHEMY_API_KEY}
+  mainnet: https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}
+  sepolia: https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}
 tokens:
   ETHUSDT: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419_mainnet
   AAVEUSDT: 0x547a514d5e3769680Ce22B2361c10Ea13619e8a9_mainnet
@@ -384,12 +390,11 @@ EOF
 	sed -i.bak 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$HOMEDIR"/config/genesis.json
 	sed -i.bak 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$HOMEDIR"/config/genesis.json
 
-	# set custom pruning settings
-	sed -i.bak 's/pruning = "default"/pruning = "custom"/g' "$APP_TOML"
-	sed -i.bak 's/pruning-keep-recent = "0"/pruning-keep-recent = "2"/g' "$APP_TOML"
-	sed -i.bak 's/pruning-interval = "0"/pruning-interval = "10"/g' "$APP_TOML"
+	# set custom pruning settings for localnet
+	sed -i.bak 's/pruning = "default"/pruning = "nothing"/g' "$APP_TOML"
 
 	# make sure the localhost IP is 0.0.0.0
+	sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$CONFIG"
 	sed -i.bak 's/localhost/0.0.0.0/g' "$CONFIG"
 	sed -i.bak 's/localhost/0.0.0.0/g' "$APP_TOML"
 	sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
