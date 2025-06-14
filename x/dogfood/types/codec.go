@@ -20,7 +20,3 @@ var (
 	ModuleRegistry = cdctypes.NewInterfaceRegistry()
 	ModuleCdc      = codec.NewProtoCodec(ModuleRegistry)
 )
-
-func init() {
-	RegisterInterfaces(ModuleRegistry)
-}

@@ -2,8 +2,8 @@
 
 # check that ALCHEMY_API_KEY is set
 if [ -z "$ALCHEMY_API_KEY" ]; then
-  echo "ALCHEMY_API_KEY is not set"
-  exit 1
+	echo "ALCHEMY_API_KEY is not set"
+	exit 1
 fi
 
 KEYS[0]="dev0"
