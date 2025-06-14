@@ -337,7 +337,7 @@ EOF
 	oracle_env_solana_content=$(
 		cat <<EOF
 url:
-  !!str https://solana-mainnet.g.alchemy.com/v2/{ALCHEMY_API_KEY}
+  !!str https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}
 nstid:
   !!str 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x123
 EOF
