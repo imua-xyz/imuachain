@@ -500,7 +500,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			},
 		},
 	}
-	delegationGenesis := delegationtypes.NewGenesis(associations, delegationStates, stakersByOperator, nil)
+	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = app.AppCodec().MustMarshalJSON(delegationGenesis)
 
 	// create a dogfood genesis with just the validator set, that is, the bare

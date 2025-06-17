@@ -67,12 +67,12 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "base, should pass",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  true,
 		},
 		{
 			name:     "invalid staker id",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				invalidStateKey := assetstypes.GetJoinedStoreKey("invalid", assetID, operatorAddress.String())
@@ -84,7 +84,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "duplicate state key",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				gs.DelegationStates = append(gs.DelegationStates, gs.DelegationStates[0])
@@ -95,7 +95,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "invalid asset id",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				invalidStateKey := assetstypes.GetJoinedStoreKey(stakerID, "invalid", operatorAddress.String())
@@ -107,7 +107,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "asset id mismatch",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				stakerID, _ := assetstypes.GetStakerIDAndAssetID(
@@ -122,7 +122,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "nil wrapped undelegatable share",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				gs.DelegationStates[0].States.UndelegatableShare = math.LegacyDec{}
@@ -133,7 +133,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "nil wrapped unbonding amount",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				gs.DelegationStates[0].States.WaitUndelegationAmount = math.Int{}
@@ -144,7 +144,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "negative wrapped undelegatable share",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				gs.DelegationStates[0].States.UndelegatableShare = math.LegacyNewDec(-1)
@@ -155,7 +155,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "invalid operator address",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				invalidStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, "invalid")
@@ -167,7 +167,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "duplicate stakerID in associations",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
 				gs.Associations = make([]types.StakerToOperator, 2)
@@ -182,7 +182,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		},
 		{
 			name:     "one stakerID in associations",
-			genState: types.NewGenesis(nil, delegationStates, stakersByOperator, nil),
+			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  true,
 			malleate: func(gs *types.GenesisState) {
 				gs.Associations = make([]types.StakerToOperator, 1)

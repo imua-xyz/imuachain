@@ -26,7 +26,7 @@ type StateForCheck struct {
 }
 
 func (suite *OperatorTestSuite) prepareOperator() {
-	suite.operatorAddr = sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
+	suite.operatorAddr = testutiltx.GenerateAddress().Bytes()
 	// register operator
 	suite.RegisterOperator(suite.operatorAddr.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()))
 }

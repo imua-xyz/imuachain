@@ -389,11 +389,11 @@ func (k *Keeper) GetUnbondingRelatedAVS(ctx sdk.Context, operatorAddr string) ([
 	return avsList, nil
 }
 
-func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (string, int64, error) {
+func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (string, int64, uint64, error) {
 	// get the impactful AVSs for the operator
 	avsList, err := k.GetUnbondingRelatedAVS(ctx, operator.String())
 	if err != nil {
-		return "", 0, err
+		return "", 0, 0, err
 	}
 	// calculate the maximum unbonding expiration
 	// Using self-definied NullEpochIdentifier and NullEpochNumber as the default unbonding expiration.
@@ -403,24 +403,89 @@ func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress)
 	for _, avs := range avsList {
 		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs.AVSAddr)
 		if err != nil {
-			return "", 0, err
+			return "", 0, 0, err
 		}
 		unbondingDuration := avs.OptOutUnbondingRemaining
 		if unbondingDuration+uint64(epochInfo.CurrentEpoch) > uint64(math.MaxInt64) {
-			return "", 0, xerrors.New("the sum of unbondingDuration and the current epoch number exceeds the int64 range.")
+			return "", 0, 0, xerrors.New("the sum of unbondingDuration and the current epoch number exceeds the int64 range.")
 		}
-		durationSeconds := unbondingDuration * uint64(epochInfo.Duration)
-		// address the case that the unbonding time is the end of current epoch.
-		if unbondingDuration == 0 {
-			durationSeconds = uint64(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).Sub(ctx.BlockTime()))
-		}
-		if durationSeconds > maxDurationSeconds {
+
+		remainingTimeForCurrentEpoch := uint64(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).Sub(ctx.BlockTime()))
+		unbondingDurationSeconds := unbondingDuration*uint64(epochInfo.Duration) + remainingTimeForCurrentEpoch
+		if unbondingDurationSeconds > maxDurationSeconds {
 			retEpochIdentifier = epochInfo.Identifier
 			retEpochNumber = epochInfo.CurrentEpoch + int64(unbondingDuration)
-			maxDurationSeconds = durationSeconds
+			maxDurationSeconds = unbondingDurationSeconds
 		}
 	}
-	return retEpochIdentifier, retEpochNumber, nil
+	return retEpochIdentifier, retEpochNumber, maxDurationSeconds, nil
+}
+
+// GetInstantUnbondingExpiration determines the correct epoch identifier to use for instant undelegations.
+// Instant undelegations are completed at the end of the current epoch, but since an operator might opt into
+// multiple AVSs with different epoch configurations, we must choose the appropriate epoch identifier carefully.
+//
+// Specifically, we select the epoch identifier with the longest remaining time in the current epoch.
+// This ensures that the undelegation completes after all other relevant epochs end, so that voting power updates
+// and reward distributions for the current epoch remain unaffected.
+//
+// For example, suppose the operator has opted into three AVSs with the following epoch identifiers and remaining times:
+//   - AVS1: minute (remaining: 20s)
+//   - AVS2: day (remaining: 7h)
+//   - AVS3: week (remaining: 6h)
+//
+// In this case, "day" should be chosen as the epoch identifier for the undelegation completion,
+// because it has the latest epoch end time among all related AVSs. The instant undelegation will be completed
+// in 7 hours, at the end of the current "day" epoch.
+// The returned epoch number will always correspond to the current epoch of the selected identifier.
+// The first return value indicates whether the calculated instant unbonding duration is less than
+// the non-instant unbonding duration. This value can be used to determine whether a slash should be
+// applied for the submitted instant undelegation.
+func (k Keeper) GetInstantUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (bool, string, int64, error) {
+	// get the impactful AVSs for the operator
+	avsList, err := k.GetImpactfulAVSForOperator(ctx, operator.String())
+	if err != nil {
+		return false, "", 0, err
+	}
+
+	// calculate the maximum instant unbonding expiration
+	// Using self-definied NullEpochIdentifier and NullEpochNumber as the default unbonding expiration.
+	instantEpochIdentifier := epochtypes.NullEpochIdentifier
+	instantEpochNumber := epochtypes.NullEpochNumber
+	maxRemainingTime := uint64(0)
+	handledEpochMap := make(map[string]interface{})
+	for _, avs := range avsList {
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs.AVSAddr)
+		if err != nil {
+			return false, "", 0, err
+		}
+		if _, isHandled := handledEpochMap[epochInfo.Identifier]; !isHandled {
+			handledEpochMap[epochInfo.Identifier] = nil
+		} else {
+			continue
+		}
+
+		// calculate the remaining time of the current epoch
+		remainingTime := uint64(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).Sub(ctx.BlockTime()))
+		if remainingTime > maxRemainingTime {
+			instantEpochIdentifier = epochInfo.Identifier
+			instantEpochNumber = epochInfo.CurrentEpoch
+			maxRemainingTime = remainingTime
+		}
+	}
+
+	// get the expiration for normal undelegation
+	normalUnbondingEpochID, normalUnbondingEpochNumber, unbondingDurationSec, err := k.GetUnbondingExpiration(ctx, operator)
+	if err != nil {
+		return false, "", 0, err
+	}
+
+	if maxRemainingTime < unbondingDurationSec {
+		// Use the chosen completion time and apply a slash for instant unbonding
+		// only if the calculated instant unbonding duration is shorter than the normal unbonding duration.
+		return true, instantEpochIdentifier, instantEpochNumber, nil
+	}
+	return false, normalUnbondingEpochID, normalUnbondingEpochNumber, nil
 }
 
 // GetImpactfulEpochsAndAVSsForOperator gets the impactful epochs and AVSs for an operator.
