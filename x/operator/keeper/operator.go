@@ -442,8 +442,8 @@ func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress)
 // the non-instant unbonding duration. This value can be used to determine whether a slash should be
 // applied for the submitted instant undelegation.
 func (k Keeper) GetInstantUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (bool, string, int64, error) {
-	// get the impactful AVSs for the operator
-	avsList, err := k.GetImpactfulAVSForOperator(ctx, operator.String())
+	// get the related AVSs for the operator
+	avsList, err := k.GetUnbondingRelatedAVS(ctx, operator.String())
 	if err != nil {
 		return false, "", 0, err
 	}
