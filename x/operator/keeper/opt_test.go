@@ -41,7 +41,7 @@ func (suite *OperatorTestSuite) registerOperator(operator string) {
 }
 
 func (suite *OperatorTestSuite) prepareOperator() {
-	suite.operatorAddr = sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
+	suite.operatorAddr = testutiltx.GenerateAddress().Bytes()
 	// register operator
 	suite.registerOperator(suite.operatorAddr.String())
 }

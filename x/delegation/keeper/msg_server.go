@@ -73,21 +73,13 @@ func (k *Keeper) UndelegateAssetFromOperator(
 	combined := fmt.Sprintf("%s-%d", txHash, nonce)
 	uniqueHash := sha256.Sum256([]byte(combined))
 
-	instantUnbonding := msg.InstantUnbonding
 	inputParamsList := newDelegationOrUndelegationParams(
-		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, uniqueHash, instantUnbonding,
+		msg.BaseInfo, assetstypes.ImuachainAssetAddr, assetstypes.ImuachainLzID, uniqueHash, msg.InstantUnbonding,
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, inputParams := range inputParamsList {
-		// Get instant unbonding flag from the message
-		if instantUnbonding {
-			if err := k.InstantUndelegateFrom(cachedCtx, inputParams); err != nil {
-				return nil, err
-			}
-		} else {
-			if err := k.UndelegateFrom(cachedCtx, inputParams); err != nil {
-				return nil, err
-			}
+		if err := k.UndelegateFrom(cachedCtx, inputParams); err != nil {
+			return nil, err
 		}
 	}
 	writeFunc()

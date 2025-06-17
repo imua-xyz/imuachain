@@ -17,12 +17,14 @@ import (
 
 // NewGenesis returns a new genesis state with the given inputs.
 func NewGenesis(
+	params Params,
 	associations []StakerToOperator,
 	delegationStates []DelegationStates,
 	stakersByOperator []StakersByOperator,
 	undelegations []UndelegationAndHoldCount,
 ) *GenesisState {
 	return &GenesisState{
+		Params:            params,
 		Associations:      associations,
 		DelegationStates:  delegationStates,
 		StakersByOperator: stakersByOperator,
@@ -32,7 +34,7 @@ func NewGenesis(
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	return NewGenesis(nil, nil, nil, nil)
+	return NewGenesis(DefaultParams(), nil, nil, nil, nil)
 }
 
 func ValidateIDAndOperator(stakerID, assetID, operator string) error {
@@ -274,6 +276,10 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 	err = gs.ValidateUndelegations()
+	if err != nil {
+		return err
+	}
+	err = gs.Params.Validate()
 	if err != nil {
 		return err
 	}

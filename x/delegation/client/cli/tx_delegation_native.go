@@ -13,6 +13,10 @@ import (
 	"github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
+const (
+	FlagInstantUnbonding = "instant-unbonding"
+)
+
 func CmdDelegate() *cobra.Command {
 	cmd := &cobra.Command{
 		// TODO: only support native token for now
@@ -41,7 +45,7 @@ func CmdDelegate() *cobra.Command {
 func CmdUndelegate() *cobra.Command {
 	cmd := &cobra.Command{
 		// TODO: only support native token for now
-		Use:   "undelegate asset-id operator amount",
+		Use:   "undelegate asset-id operator amount optional(--instant-unbonding true)",
 		Short: "Broadcast a transaction to undelegate amount of native token from the operator",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -54,13 +58,17 @@ func CmdUndelegate() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			instantUnbonding, err := cmd.Flags().GetBool(FlagInstantUnbonding)
+			if err != nil {
+				return err
+			}
 
-			msg := types.NewMsgUndelegation(assetID, clientCtx.GetFromAddress().String(), []types.KeyValue{{Key: operatorAddrStr, Value: &types.ValueField{Amount: amount}}})
+			msg := types.NewMsgUndelegation(instantUnbonding, assetID, clientCtx.GetFromAddress().String(), []types.KeyValue{{Key: operatorAddrStr, Value: &types.ValueField{Amount: amount}}})
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-
+	cmd.Flags().Bool(FlagInstantUnbonding, false, "indicate whether it's an instant undelegation")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
