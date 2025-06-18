@@ -68,9 +68,9 @@ func (k Keeper) UpdateAVSRewardAssetState(ctx sdk.Context, avsAddr, assetID stri
 func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []assetstype.AssetInfo) (err error) {
 	assetStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	symbolStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
-	symbolMap := make(map[string]interface{}, 0)
+	symbolMap := make(map[string]interface{}, len(assets))
 	// checkDelegationStates if the AVS is registered
-	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrInvalidRewardAssetParameter.Wrapf("AVS not found %s", avsAddr)
 	}
 	for _, assetInfo := range assets {
@@ -178,7 +178,7 @@ func (k Keeper) GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol str
 	key := assetstype.GetJoinedStoreKey(avsAddr, symbol)
 	value := store.Get(key)
 	if value == nil {
-		return assetID, types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,assetID:%s", avsAddr, assetID)
+		return assetID, types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,symbol:%s", avsAddr, symbol)
 	}
 	return string(value), nil
 }

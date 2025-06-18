@@ -265,8 +265,8 @@ func (k Keeper) SlashWithInfractionReason(
 	}
 
 	chainID := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
-	if !isAvs {
+	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
+	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)
 		return sdkmath.ZeroInt()
 	}
@@ -299,8 +299,8 @@ func (k Keeper) IsOperatorJailedForChainID(ctx sdk.Context, consAddr sdk.ConsAdd
 		return false
 	}
 
-	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
-	if !isAvs {
+	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
+	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", chainID)
 		return false
 	}
@@ -319,8 +319,8 @@ func (k *Keeper) SetJailedState(ctx sdk.Context, consAddr sdk.ConsAddress, chain
 		return
 	}
 
-	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
-	if !isAvs {
+	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
+	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)
 		return
 	}

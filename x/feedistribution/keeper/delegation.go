@@ -249,6 +249,8 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 	// be the stake at the time of the last voting power update.
 	// If we want to handle it, the compared stake needs to be saved in the delegation change information,
 	// just like the total delegated amount.
+	// It might be unnecessary to address it now, because the precision loss in the reward is likely to be negligible
+	// or acceptable.
 
 	// calculate rewards for final period
 	rewardsBetweenPeriod, err := k.calculateDelegationRewardsBetween(ctx, startingPeriod, endingPeriod, operator, assetID, epochIdentifier, stake)
@@ -343,12 +345,6 @@ func (k Keeper) DistributeRewardsToDelegations(ctx sdk.Context, endingPeriod uin
 		// initialize the delegation without the starting information.
 		delegationKey := string(assetstype.GetJoinedStoreKey(stakerDelegationChange.StakerId, assetID, operator))
 		if !k.HasDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier) {
-			// the previous delegated amount should be zero if the delegation hasn't been initialized
-			// this case shouldn't occur.
-			if !stakerDelegationChange.PreviousDelegatedAmount.IsZero() {
-				ctx.Logger().Error("DistributeRewardsToDelegations, the previous delegated amount is zero and it hasn't been initialized", "delegationKey", delegationKey,
-					"EpochIdentifier", epochInfo.Identifier)
-			}
 			// Delegations that are either created after the operator is initialized,
 			// or created before but within the same epoch as the operator initialization,
 			// will be initialized here, since they won't accumulate rewards for the current epoch.

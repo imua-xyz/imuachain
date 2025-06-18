@@ -139,7 +139,7 @@ func (p Precompile) WithdrawIMUATokenReward(
 
 	var withdrawIMUATokenRewardArgs WithdrawIMUATokenRewardArgs
 	if err := method.Inputs.Copy(&withdrawIMUATokenRewardArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to WithdrawDogfoodRewardArgs struct: %s", err)
+		return nil, fmt.Errorf("error while unpacking args to WithdrawIMUATokenRewardArgs struct: %s", err)
 	}
 	if withdrawIMUATokenRewardArgs.OpAmount == nil || !(withdrawIMUATokenRewardArgs.OpAmount.Cmp(big.NewInt(0)) == 1) {
 		return nil, fmt.Errorf("WithdrawIMUATokenReward: invalid withdraw amount:%v", withdrawIMUATokenRewardArgs.OpAmount)

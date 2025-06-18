@@ -99,7 +99,11 @@ func GenericSetAllItems[T any](
 	store := prefix.NewStore(ctx.KVStore(keeper.storeKey), keyPrefix)
 
 	for _, item := range items {
-		bz := keeper.cdc.MustMarshal(getValue(item))
+		value := getValue(item)
+		if value == nil {
+			return fmt.Errorf("nil value returned for item")
+		}
+		bz := keeper.cdc.MustMarshal(value)
 		store.Set(getKey(item), bz)
 	}
 

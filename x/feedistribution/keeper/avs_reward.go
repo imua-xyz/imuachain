@@ -60,6 +60,14 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
 		}
+		// check if the operator has active USD value
+		optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator.String())
+		if err != nil {
+			return err
+		}
+		if !optedUSDValue.ActiveUSDValue.IsPositive() {
+			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s,ActiveUSDValue:%s", operator, optedUSDValue.ActiveUSDValue)
+		}
 	}
 
 	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)

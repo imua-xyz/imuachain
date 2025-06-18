@@ -332,7 +332,7 @@ func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) 
 func (k *Keeper) isUnbondingRelated(ctx sdk.Context, avsAddr string, optedInfo *operatortypes.OptedInfo) (bool, uint64, error) {
 	unbondingDuration, err := k.avsKeeper.GetAVSUnbondingDuration(ctx, avsAddr)
 	if err != nil {
-		return true, 0, err
+		return false, 0, err
 	}
 	// add AVS currently opting in to the operator's list.
 	if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
@@ -344,14 +344,14 @@ func (k *Keeper) isUnbondingRelated(ctx sdk.Context, avsAddr string, optedInfo *
 	// #nosec G115
 	epochNumber, err := k.GetEpochNumberByOptOutHeight(ctx, avsAddr, int64(optedInfo.OptedOutHeight))
 	if err != nil {
-		return true, unbondingDuration, err
+		return false, unbondingDuration, err
 	}
 	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
 	if err != nil {
-		return true, unbondingDuration, err
+		return false, unbondingDuration, err
 	}
 	if epochInfo.CurrentEpoch < epochNumber {
-		return true, unbondingDuration, xerrors.Errorf("IsUnbondingRelated: current epoch number is less than the retrieved epoch number by opted out height,avsAddr:%s,epochIdentifier:%s,currentEpochNumber:%d,optedOutEpochNumber:%d", avsAddr, epochInfo.Identifier, epochInfo.CurrentEpoch, epochNumber)
+		return false, unbondingDuration, xerrors.Errorf("IsUnbondingRelated: current epoch number is less than the retrieved epoch number by opted out height,avsAddr:%s,epochIdentifier:%s,currentEpochNumber:%d,optedOutEpochNumber:%d", avsAddr, epochInfo.Identifier, epochInfo.CurrentEpoch, epochNumber)
 	}
 	if epochNumber > 0 && uint64(epochNumber)+unbondingDuration >= uint64(epochInfo.CurrentEpoch) {
 		OptOutUnbondingRemaining := uint64(epochNumber) + unbondingDuration - uint64(epochInfo.CurrentEpoch)

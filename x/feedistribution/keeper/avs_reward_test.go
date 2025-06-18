@@ -63,6 +63,13 @@ func (suite *KeeperTestSuite) mintDogfoodTestReward() {
 func (suite *KeeperTestSuite) TestSetAVSRewardParam() {
 	suite.prepareTestBase(1, 1, 1)
 	suite.setRewardParams(suite.testAVSs)
+
+	// Verify the parameters were set correctly
+	for _, avs := range suite.testAVSs {
+		param, err := suite.App.DistrKeeper.GetAVSRewardParam(suite.Ctx, strings.ToLower(avs.String()))
+		suite.Require().NoError(err)
+		suite.Require().Equal(DefaultRewardParameter, *param)
+	}
 }
 
 func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {

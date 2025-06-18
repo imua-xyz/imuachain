@@ -88,7 +88,7 @@ func (k *Keeper) GetSnapshotHeightAndKey(ctx sdk.Context, avsAddr string, height
 
 func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, optOutHeight int64) (int64, error) {
 	if optOutHeight < 0 {
-		return 0, types.ErrParameterInvalid.Wrapf("the opt out height is negative, optOutHeight:%v", optOutHeight)
+		return 0, types.ErrParameterInvalid.Wrapf("GetEpochNumberByOptOutHeight: the opt out height is negative, optOutHeight:%v", optOutHeight)
 	}
 	_, findKey, err := k.GetSnapshotHeightAndKey(ctx, avsAddr, optOutHeight)
 	if err != nil {

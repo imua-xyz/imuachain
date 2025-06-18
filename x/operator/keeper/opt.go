@@ -31,7 +31,7 @@ func (k *Keeper) OptIn(
 		return errorsmod.Wrapf(delegationtypes.ErrOperatorNotExist, "operator is :%s", operatorAddress)
 	}
 	// check that the AVS is registered
-	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
 	// check if operator is in the whitelist
@@ -135,7 +135,7 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 		return delegationtypes.ErrOperatorNotExist
 	}
 	// check that the AVS is registered
-	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
 	// It's not allowed to opt-out if the operator isn't opted-in.

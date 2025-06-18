@@ -199,7 +199,7 @@ func (k *Keeper) GetOperatorPrevConsKeyForChainID(
 		return false, nil, delegationtypes.ErrOperatorNotExist
 	}
 	// check if the chain exists as an AVS
-	if isAvs, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAVS {
 		return false, nil, types.ErrUnknownChainID
 	}
 	found, key := k.getOperatorPrevConsKeyForChainID(ctx, opAccAddr, chainID)
@@ -241,7 +241,7 @@ func (k Keeper) GetOperatorConsKeyForChainID(
 		return false, nil, delegationtypes.ErrOperatorNotExist
 	}
 	// check if the chain exists as an AVS
-	if isAvs, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAVS {
 		return false, nil, types.ErrUnknownChainID
 	}
 	found, key := k.getOperatorConsKeyForChainID(ctx, opAccAddr, chainID)
@@ -271,7 +271,7 @@ func (k Keeper) GetOperatorAddressForChainIDAndConsAddr(
 	ctx sdk.Context, chainID string, consAddr sdk.ConsAddress,
 ) (bool, sdk.AccAddress) {
 	// check if the chain exists as an AVS
-	if isAvs, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAVS {
 		return false, nil
 	}
 	store := ctx.KVStore(k.storeKey)
@@ -328,7 +328,7 @@ func (k Keeper) CompleteOperatorKeyRemovalForChainID(
 		return delegationtypes.ErrOperatorNotExist
 	}
 	// validate chain id
-	if isAvs, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAVS {
 		return types.ErrUnknownChainID
 	}
 	// check if the operator is opting out as we speak
@@ -362,7 +362,7 @@ func (k *Keeper) GetOperatorsForChainID(
 	ctx sdk.Context, chainID string,
 ) ([]sdk.AccAddress, []keytypes.WrappedConsKey) {
 	k.Logger(ctx).Info("GetOperatorsForChainID", "chainID", chainID)
-	if isAvs, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVSByChainID(ctx, chainID); !isAVS {
 		k.Logger(ctx).Info("GetOperatorsForChainID the chainID is not supported by AVS", "chainID", chainID)
 		return nil, nil
 	}
@@ -402,8 +402,8 @@ func (k *Keeper) GetOperatorsForChainID(
 func (k Keeper) GetActiveOperatorsForChainID(
 	ctx sdk.Context, chainID string,
 ) ([]sdk.AccAddress, []keytypes.WrappedConsKey) {
-	isAvs, avsAddrString := k.avsKeeper.IsAVSByChainID(ctx, chainID)
-	if !isAvs {
+	isAVS, avsAddrString := k.avsKeeper.IsAVSByChainID(ctx, chainID)
+	if !isAVS {
 		k.Logger(ctx).Error("GetActiveOperatorsForChainID the chainID is not supported by AVS", "chainID", chainID)
 		return nil, nil
 	}
@@ -427,8 +427,8 @@ func (k Keeper) GetActiveOperatorsForChainID(
 func (k Keeper) ValidatorByConsAddrForChainID(
 	ctx sdk.Context, consAddr sdk.ConsAddress, chainIDWithoutRevision string,
 ) (stakingtypes.Validator, bool) {
-	isAvs, avsAddrStr := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
-	if !isAvs {
+	isAVS, avsAddrStr := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
+	if !isAVS {
 		ctx.Logger().Error("ValidatorByConsAddrForChainID the chainIDWithoutRevision is not supported by AVS", "chainIDWithoutRevision", chainIDWithoutRevision)
 		return stakingtypes.Validator{}, false
 	}
@@ -635,8 +635,8 @@ func (k *Keeper) GetAllOperatorConsKeyRecords(ctx sdk.Context) ([]types.Operator
 func (k Keeper) GetValidatorByConsAddrForChainID(
 	ctx sdk.Context, consAddr sdk.ConsAddress, chainIDWithoutRevision string,
 ) (types.Validator, bool) {
-	isAvs, avsAddrStr := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
-	if !isAvs {
+	isAVS, avsAddrStr := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
+	if !isAVS {
 		ctx.Logger().Error("ValidatorByConsAddrForChainID the chainIDWithoutRevision is not supported by AVS", "chainIDWithoutRevision", chainIDWithoutRevision)
 		return types.Validator{}, false
 	}

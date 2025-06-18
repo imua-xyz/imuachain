@@ -685,7 +685,8 @@ func (suite *BaseTestSuite) RunToEpochEnd(epochIdentifier string) {
 	case epochstypes.WeekEpochID:
 		epochDuration = 7 * 24 * time.Hour
 	default:
-		suite.Failf("invalid epoch identifier", "epochIdentifier", epochIdentifier)
+		suite.Failf("invalid epoch identifier: %s", epochIdentifier)
+		return
 	}
 	// Configure 3 blocks per epoch for testing, so the block duration is epochDuration/3
 	// so starting from the initial block of the epoch, it takes three blocks to

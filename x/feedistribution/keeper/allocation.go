@@ -161,6 +161,8 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			continue
 		} else if assetUSDValue.GT(optedUSDValue.ActiveUSDValue) ||
 			assetUSDValue.IsNegative() {
+			// The opted USD value is the sum of the USD values of multiple assets, so the USD value of
+			// each individual asset must be less than or equal to the opted USD value.
 			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool,assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
 		}
 

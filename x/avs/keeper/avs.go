@@ -176,7 +176,7 @@ func (k Keeper) RegisterAVSWithChainID(
 	avsAddrStr := types.GenerateAVSAddress(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
 	// check that the AVS is registered
-	if isAvs, _ := k.IsAVS(ctx, avsAddrStr); isAvs {
+	if isAVS, _ := k.IsAVS(ctx, avsAddrStr); isAVS {
 		// negligible probability that an independent AVS without this chainID exists
 		return true, avsAddr, nil
 	}
