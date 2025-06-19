@@ -85,11 +85,7 @@ func (p Precompile) Undelegate(
 	}
 	undelegationParams.TxHash = txHash
 
-	if undelegationParams.InstantUnbonding {
-		err = p.delegationKeeper.InstantUndelegateFrom(ctx, undelegationParams)
-	} else {
-		err = p.delegationKeeper.UndelegateFrom(ctx, undelegationParams)
-	}
+	err = p.delegationKeeper.UndelegateFrom(ctx, undelegationParams)
 	if err != nil {
 		return nil, err
 	}

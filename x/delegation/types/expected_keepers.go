@@ -38,7 +38,8 @@ type DelegationHooks interface {
 
 type OperatorKeeper interface {
 	IsOperator(ctx sdk.Context, addr sdk.AccAddress) bool
-	GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (string, int64, error)
+	GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (string, int64, uint64, error)
+	GetInstantUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (bool, string, int64, error)
 }
 
 type AssetsKeeper interface {

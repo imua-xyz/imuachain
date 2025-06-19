@@ -56,23 +56,25 @@ func (suite *OperatorTestSuite) TestAllOperators() {
 
 func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {
 	suite.prepare()
-	epochIdentifier, epochNumber, err := suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	epochIdentifier, epochNumber, _, err := suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
 	suite.NoError(err)
 	suite.Equal(epochsTypes.NullEpochIdentifier, epochIdentifier)
 	suite.Equal(epochsTypes.NullEpochNumber, epochNumber)
 
 	// opts into multiple AVSs
 	testAVSNumber := 4
+	testAVSs := make([]string, 0)
 	for i := 0; i < testAVSNumber; i++ {
 		avsName := fmt.Sprintf("avsTestAddr_%d", i)
 		suite.prepareAvs(avsName, []string{usdtAssetID}, testutil.EpochsForTest[i], defaultUnbondingPeriod)
+		testAVSs = append(testAVSs, suite.avsAddr)
 		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 		suite.NoError(err)
 	}
 	weekEpochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochsTypes.WeekEpochID)
 	suite.True(found)
 
-	epochIdentifier, epochNumber, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	epochIdentifier, epochNumber, _, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
 	suite.NoError(err)
 	suite.Equal(epochsTypes.WeekEpochID, epochIdentifier)
 	suite.Equal(uint64(weekEpochInfo.CurrentEpoch)+defaultUnbondingPeriod, uint64(epochNumber))
@@ -82,11 +84,12 @@ func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {
 	minuteEpochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochsTypes.MinuteEpochID)
 	suite.True(found)
 	avsName := fmt.Sprintf("avsTestAddr_%d", testAVSNumber+1)
-	minuteUnbondingPeriod := defaultUnbondingPeriod*uint64(weekEpochInfo.Duration.Milliseconds()/minuteEpochInfo.Duration.Milliseconds()) + 1
+	//  Adding 1 to defaultUnbondingPeriod is used to account for the current epoch.
+	minuteUnbondingPeriod := (defaultUnbondingPeriod+1)*uint64(weekEpochInfo.Duration.Milliseconds()/minuteEpochInfo.Duration.Milliseconds()) + 1
 	suite.prepareAvs(avsName, []string{usdtAssetID}, epochsTypes.MinuteEpochID, minuteUnbondingPeriod)
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
-	epochIdentifier, epochNumber, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	epochIdentifier, epochNumber, _, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
 	suite.NoError(err)
 	suite.Equal(epochsTypes.MinuteEpochID, epochIdentifier)
 	suite.Equal(uint64(minuteEpochInfo.CurrentEpoch)+minuteUnbondingPeriod, uint64(epochNumber))
@@ -94,7 +97,7 @@ func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {
 	// test the case where the operator opts in and out at same epoch
 	err = suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
-	epochIdentifier, epochNumber, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	epochIdentifier, epochNumber, _, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
 	suite.NoError(err)
 	suite.Equal(epochsTypes.WeekEpochID, epochIdentifier)
 	suite.Equal(uint64(weekEpochInfo.CurrentEpoch)+defaultUnbondingPeriod, uint64(epochNumber))
@@ -105,7 +108,7 @@ func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {
 	suite.CommitAfter(time.Minute + time.Nanosecond)
 	err = suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, suite.avsAddr)
 	suite.NoError(err)
-	epochIdentifier, epochNumber, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	epochIdentifier, epochNumber, _, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
 	suite.NoError(err)
 	suite.Equal(epochsTypes.MinuteEpochID, epochIdentifier)
 	minuteEpochInfo, found = suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochsTypes.MinuteEpochID)
@@ -114,18 +117,25 @@ func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {
 
 	// test the case where the operator has opted out for a period, then it's unbonding duration won't be
 	// the maximum value.
-	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+	// register another operator and opts into the AVS2(day) and AVS3(week) for this case
+	suite.prepareOperator()
+	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, testAVSs[2])
 	suite.NoError(err)
-	suite.CommitAfter(time.Minute + time.Nanosecond)
-	err = suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, suite.avsAddr)
+	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, testAVSs[3])
 	suite.NoError(err)
-	suite.CommitAfter(2*time.Minute + time.Nanosecond)
-	epochIdentifier, epochNumber, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
+	err = suite.App.OperatorKeeper.OptOut(suite.Ctx, suite.operatorAddr, testAVSs[3])
 	suite.NoError(err)
-	suite.Equal(epochsTypes.WeekEpochID, epochIdentifier)
-	weekEpochInfo, found = suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochsTypes.WeekEpochID)
+	runBlockNumber := (defaultUnbondingPeriod + 1) * 7
+	for i := uint64(0); i < runBlockNumber; i++ {
+		suite.NextBlock()
+	}
+	epochIdentifier, epochNumber, _, err = suite.App.OperatorKeeper.GetUnbondingExpiration(suite.Ctx, suite.operatorAddr)
+	suite.NoError(err)
+	suite.Equal(epochsTypes.DayEpochID, epochIdentifier)
+	dayEpochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochsTypes.DayEpochID)
 	suite.True(found)
-	suite.Equal(uint64(weekEpochInfo.CurrentEpoch)+defaultUnbondingPeriod, uint64(epochNumber))
+	suite.Equal(uint64(dayEpochInfo.CurrentEpoch)+defaultUnbondingPeriod, uint64(epochNumber))
 }
 
 // TODO: enable this test when editing operator is implemented. allow for querying
