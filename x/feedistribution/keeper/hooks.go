@@ -128,12 +128,14 @@ func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec, _ []string,
 	slashAssetsPool []operatortypes.SlashFromAssetsPool,
 ) {
-	err := h.keeper.HandleOperatorSlashEvent(ctx, operator, slashProportion, slashAssetsPool)
+	cc, writeFunc := ctx.CacheContext()
+	err := h.keeper.HandleOperatorSlashEvent(cc, operator, slashProportion, slashAssetsPool)
 	if err != nil {
 		ctx.Logger().Error("AfterSlash: failed to handle the slash event", "err", err,
 			"operator", operator, "slashProportion", slashProportion, "slashAssetsPool", slashAssetsPool)
 		return
 	}
+	writeFunc()
 }
 
 func (h OperatorHooksWrapper) AfterJail(_ sdk.Context, _ sdk.AccAddress, _ bool, _ []string) {

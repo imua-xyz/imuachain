@@ -170,7 +170,7 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 		if isUpdate {
 			// collect key values to update
 			updateKeyValues = append(updateKeyValues, utils.KeyValue{
-				Key:   iterator.Key(),
+				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &amounts,
 			})
 			updateAssetIDs = append(updateAssetIDs, assetID)

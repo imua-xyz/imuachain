@@ -168,7 +168,7 @@ func (k *Keeper) IterateUndelegationsByOperator(
 
 		if isUpdate {
 			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
-				Key:   iterator.Key(),
+				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &undelegation,
 			})
 		}

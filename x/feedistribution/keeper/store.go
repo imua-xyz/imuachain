@@ -94,7 +94,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 		}
 		if isUpdate {
 			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
-				Key:   iterator.Key(),
+				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &DelegationChangeInfo,
 			})
 		}
@@ -465,7 +465,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 		}
 		if isUpdate {
 			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
-				Key:   iterator.Key(),
+				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &operatorHistoricalReward,
 			})
 		}
@@ -697,7 +697,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 
 		if isUpdate {
 			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
-				Key:   iterator.Key(),
+				Key:   append([]byte(nil), iterator.Key()...),
 				Value: value,
 			})
 		}

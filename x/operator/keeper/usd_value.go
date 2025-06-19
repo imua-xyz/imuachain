@@ -301,7 +301,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 		}
 		if isUpdate {
 			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
-				Key:   iterator.Key(),
+				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &optedUSDValues,
 			})
 			updatedOperators = append(updatedOperators, keys[1])

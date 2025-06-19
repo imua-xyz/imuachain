@@ -57,11 +57,11 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 	for _, operator := range distribution.OperatorRewardProportions {
 		// We don't checkDelegationStates if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
-		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
+		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.OperatorAddr, avsAddr) {
 			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
 		}
 		// check if the operator has active USD value
-		optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator.String())
+		optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator.OperatorAddr)
 		if err != nil {
 			return err
 		}
