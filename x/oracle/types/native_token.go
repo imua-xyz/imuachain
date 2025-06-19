@@ -1,6 +1,9 @@
 package types
 
-const maxSize = 100
+const (
+	maxSize           = 100
+	WithdrawValidator = "0xFFFFFFFFFFFFFFFF"
+)
 
 func (b *Balances) Append(bi *BalanceInfo) {
 	if len(b.BalanceList) >= maxSize {

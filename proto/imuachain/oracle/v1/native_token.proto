@@ -43,12 +43,21 @@ message StakerInfo {
   repeated ValidatorDeposit validator_list = 3;
   // list of balances to represets the history of this staker
   repeated BalanceInfo balance_list = 4;
+  // latest version to indicate the withdraw happened for this staker
+  uint64 withdraw_version = 5;
+}
+
+message StakerListEntry {
+  // staker's address
+  string staker_addr = 1;
+  // latest version to indicate the withdraw happened for this staker
+  uint64 withdraw_version = 2;
 }
 
 // StakerList defines the list of stakers
 message StakerList {
   // list of staker's address
-  repeated string staker_addrs = 1;
+  repeated StakerListEntry stakers = 1;
 }
 
 // Staker defines the basic info of a staker without address and balance history.
@@ -56,8 +65,10 @@ message StakerList {
 message Staker {
   // staker's index
   uint32 staker_index = 1;
+// latest version to indicate the withdraw happened for this staker
+  uint64 withdraw_version = 2;
   // validtor_list is the list of validators that this staker corresponding to on beacon chain
-  repeated ValidatorDeposit validator_list= 2;
+  repeated ValidatorDeposit validator_list= 3;
 }
 
 // Balances defines the list of balanceInfo
@@ -82,6 +93,8 @@ message NSTVersion {
   VersionDepositAmount version = 1;
   // version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change
   VersionDepositAmount feed_version = 2;
+  uint64 withdraw_version = 3;
+  uint64 feed_withdraw_version = 4;
 }
 
 // VersionDepositAmount defines the version and deposit amount

@@ -3,30 +3,36 @@ package common
 import (
 	"fmt"
 	"slices"
+
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type Caches struct {
-	nstStakerList map[uint64][]string
+	// nstStakerList map[uint64][]string
+	nstStakerList map[uint64][]*types.StakerListEntry
 }
 
 func NewCaches() *Caches {
 	return &Caches{
-		nstStakerList: make(map[uint64][]string),
+		// nstStakerList: make(map[uint64][]string),
+		nstStakerList: make(map[uint64][]*types.StakerListEntry),
 	}
 }
 
 func (c *Caches) ensureInitialized() {
 	if c.nstStakerList == nil {
-		c.nstStakerList = make(map[uint64][]string)
+		c.nstStakerList = make(map[uint64][]*types.StakerListEntry)
 	}
 }
 
-func (c *Caches) GetNSTStakerList(chainID uint64) []string {
+// func (c *Caches) GetNSTStakerList(chainID uint64) []string {
+func (c *Caches) GetNSTStakerList(chainID uint64) []*types.StakerListEntry {
 	c.ensureInitialized()
 	return c.nstStakerList[chainID]
 }
 
-func (c *Caches) SetNSTStakerList(chainID uint64, sl []string) {
+// func (c *Caches) SetNSTStakerList(chainID uint64, sl []string) {
+func (c *Caches) SetNSTStakerList(chainID uint64, sl []*types.StakerListEntry) {
 	c.ensureInitialized()
 	c.nstStakerList[chainID] = sl
 }
@@ -36,21 +42,59 @@ func (c *Caches) RemoveNSTStakerList(chainID uint64) {
 	delete(c.nstStakerList, chainID)
 }
 
+func (c *Caches) UpdateWithdrawVersion(chainID uint64, stakerAddr string, index uint32, withdrawVersion uint64) bool {
+	c.ensureInitialized()
+	sl := c.nstStakerList[chainID]
+	if int(index) >= len(sl) {
+		return false
+	}
+	if sl[index].StakerAddr != stakerAddr {
+		return false
+	}
+	sl[index].WithdrawVersion = withdrawVersion
+	return true
+}
+
 // AddNSTStaker adds a staker to the list for the given chainID at the specified index.
 // NOTE: not concurrent safe, caller must ensure synchronization.
-func (c *Caches) AddNSTStaker(chainID uint64, staker string, index uint32) bool {
+func (c *Caches) AddNSTStaker(chainID uint64, staker types.StakerListEntry, index uint32) bool {
 	if c.nstStakerList == nil {
 		if index > 0 {
 			return false
 		}
-		c.nstStakerList = make(map[uint64][]string)
+		c.nstStakerList = make(map[uint64][]*types.StakerListEntry)
 	}
 	sl := c.nstStakerList[chainID]
 	if int(index) != len(sl) {
 		return false
 	}
-	c.nstStakerList[chainID] = append(sl, staker)
+	c.nstStakerList[chainID] = append(sl, &staker)
 	return true
+}
+
+func (c *Caches) RotateStakerListInCheckTx(chainID uint64, indexes []uint32) (map[uint32]string, error) {
+	// This is a special case for the checkTx phase where we don't want to remove stakers,
+	// but rather just rotate them out of the list.
+	// The indexes are the indexes of the stakers to rotate out.
+	// The function will return a map of the indexes that were rotated out and the staker that replaced them.
+	if c.nstStakerList == nil {
+		return nil, nil
+	}
+	sl := c.nstStakerList[chainID]
+	if len(sl) == 0 {
+		return nil, nil
+	}
+	cpy := make([]*types.StakerListEntry, len(sl))
+	for _, v := range sl {
+		vCpy := *v // Create a copy of the staker entry
+		cpy = append(cpy, &vCpy)
+	}
+	cacheTmp := &Caches{
+		nstStakerList: map[uint64][]*types.StakerListEntry{
+			chainID: cpy,
+		},
+	}
+	return cacheTmp.RotateStakerList(chainID, indexes)
 }
 
 func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]string, error) {
@@ -102,7 +146,7 @@ func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]
 		if int(indexes[i]) > l2-j {
 			break
 		}
-		ret[indexes[i]] = sl[l2-j]
+		ret[indexes[i]] = sl[l2-j].StakerAddr
 		sl[indexes[i]] = sl[l2-j]
 		i++
 	}

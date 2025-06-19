@@ -338,13 +338,13 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 				// #nosec G115
 				nstChainID, found := f.GetNSTChainIDFromFeederID(uint64(r.feederID))
 				if found {
-					feedVersion, updated := f.k.UpdateNSTFeedVersion(ctx, nstChainID)
+					feedVersion, feedWithdrawVersion, updated := f.k.UpdateNSTFeedVersion(ctx, nstChainID)
 					if updated {
 						logger.Info("update nst feed version", "feederID", r.feederID, "updated feedVersion", feedVersion)
 						ctx.EventManager().EmitEvent(sdk.NewEvent(
 							oracletypes.EventTypeCreatePrice,
 							sdk.NewAttribute(oracletypes.AttributeKeyNSTVersionUpdate, oracletypes.AttributeValueTrue),
-							sdk.NewAttribute(oracletypes.AttributeKeyNSTFeedVersion, fmt.Sprintf("%d_%d", r.feederID, feedVersion)),
+							sdk.NewAttribute(oracletypes.AttributeKeyNSTFeedVersion, fmt.Sprintf("%d_%d_%d", r.feederID, feedVersion, feedWithdrawVersion)),
 						))
 					}
 				} else {
