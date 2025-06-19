@@ -14,7 +14,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (k Keeper) Params(ctx context.Context, _ *assetstype.QueryParamsRequest) (*assetstype.QueryParamsResponse, error) {
+func (k Keeper) Params(ctx context.Context, req *assetstype.QueryParamsRequest) (*assetstype.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	params, err := k.GetParams(c)
 	if err != nil {
@@ -26,14 +29,20 @@ func (k Keeper) Params(ctx context.Context, _ *assetstype.QueryParamsRequest) (*
 }
 
 // QueClientChainInfoByIndex query client chain info by clientChainLzID
-func (k Keeper) QueClientChainInfoByIndex(ctx context.Context, info *assetstype.QueryClientChainInfo) (*assetstype.ClientChainInfo, error) {
+func (k Keeper) QueClientChainInfoByIndex(ctx context.Context, req *assetstype.QueryClientChainInfo) (*assetstype.ClientChainInfo, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
-	return k.GetClientChainInfoByIndex(c, info.ChainIndex)
+	return k.GetClientChainInfoByIndex(c, req.ChainIndex)
 }
 
 // QueAllClientChainInfo query all client chain info that have been registered in Imuachain
 // the key of returned map is clientChainLzID, the value is the client chain info.
 func (k Keeper) QueAllClientChainInfo(goCtx context.Context, req *assetstype.QueryAllClientChainInfo) (*assetstype.QueryAllClientChainInfoResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*assetstype.ClientChainInfo, 0)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixClientChainInfo)
@@ -56,13 +65,19 @@ func (k Keeper) QueAllClientChainInfo(goCtx context.Context, req *assetstype.Que
 }
 
 // QueStakingAssetInfo query the specified client chain asset info by inputting assetID
-func (k Keeper) QueStakingAssetInfo(ctx context.Context, info *assetstype.QueryStakingAssetInfo) (*assetstype.StakingAssetInfo, error) {
+func (k Keeper) QueStakingAssetInfo(ctx context.Context, req *assetstype.QueryStakingAssetInfo) (*assetstype.StakingAssetInfo, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
-	return k.GetStakingAssetInfo(c, strings.ToLower(info.AssetId))
+	return k.GetStakingAssetInfo(c, strings.ToLower(req.AssetId))
 }
 
 // QueAllStakingAssetsInfo query the info about all client chain assets that have been registered
-func (k Keeper) QueAllStakingAssetsInfo(ctx context.Context, _ *assetstype.QueryAllStakingAssetsInfo) (*assetstype.QueryAllStakingAssetsInfoResponse, error) {
+func (k Keeper) QueAllStakingAssetsInfo(ctx context.Context, req *assetstype.QueryAllStakingAssetsInfo) (*assetstype.QueryAllStakingAssetsInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	allInfo, err := k.GetAllStakingAssetsInfo(c)
 	if err != nil {
@@ -72,9 +87,12 @@ func (k Keeper) QueAllStakingAssetsInfo(ctx context.Context, _ *assetstype.Query
 }
 
 // QueStakerAssetInfos query th state of all assets for a staker specified by stakerID
-func (k Keeper) QueStakerAssetInfos(ctx context.Context, info *assetstype.QueryStakerAssetInfo) (*assetstype.QueryAssetInfoResponse, error) {
+func (k Keeper) QueStakerAssetInfos(ctx context.Context, req *assetstype.QueryStakerAssetInfo) (*assetstype.QueryAssetInfoResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
-	assetInfos, err := k.GetStakerAssetInfos(c, strings.ToLower(info.StakerId))
+	assetInfos, err := k.GetStakerAssetInfos(c, strings.ToLower(req.StakerId))
 	if err != nil {
 		return nil, err
 	}
@@ -83,14 +101,20 @@ func (k Keeper) QueStakerAssetInfos(ctx context.Context, info *assetstype.QueryS
 
 // QueStakerSpecifiedAssetAmount query the specified asset state of a staker, using stakerID and assetID as query parameters
 func (k Keeper) QueStakerSpecifiedAssetAmount(ctx context.Context, req *assetstype.QuerySpecifiedAssetAmountReq) (*assetstype.StakerAssetInfo, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	return k.GetStakerSpecifiedAssetInfo(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
 }
 
 // QueOperatorAssetInfos query th state of all assets for an operator specified by operator address
-func (k Keeper) QueOperatorAssetInfos(ctx context.Context, infos *assetstype.QueryOperatorAssetInfos) (*assetstype.QueryOperatorAssetInfosResponse, error) {
+func (k Keeper) QueOperatorAssetInfos(ctx context.Context, req *assetstype.QueryOperatorAssetInfos) (*assetstype.QueryOperatorAssetInfosResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
-	assetInfos, err := k.GetOperatorAssetInfos(c, infos.OperatorAddr, nil)
+	assetInfos, err := k.GetOperatorAssetInfos(c, req.OperatorAddr, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +123,9 @@ func (k Keeper) QueOperatorAssetInfos(ctx context.Context, infos *assetstype.Que
 
 // QueOperatorSpecifiedAssetAmount query the specified asset state of an operator, using operator address and assetID as query parameters
 func (k Keeper) QueOperatorSpecifiedAssetAmount(ctx context.Context, req *assetstype.QueryOperatorSpecifiedAssetAmountReq) (*assetstype.OperatorAssetInfo, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	addr, err := sdk.AccAddressFromBech32(req.OperatorAddr)
 	if err != nil {
@@ -108,6 +135,9 @@ func (k Keeper) QueOperatorSpecifiedAssetAmount(ctx context.Context, req *assets
 }
 
 func (k Keeper) QueryStakerBalance(ctx context.Context, req *assetstype.QueryStakerBalanceRequest) (*assetstype.QueryStakerBalanceResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	stakerBalance, err := k.GetStakerBalanceByAsset(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
 	if err != nil {

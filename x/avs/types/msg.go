@@ -60,7 +60,7 @@ func (m *RegisterAVSReq) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *RegisterAVSReq) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -79,7 +79,7 @@ func (m *DeRegisterAVSReq) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *DeRegisterAVSReq) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -98,5 +98,5 @@ func (m *RegisterAVSTaskReq) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *RegisterAVSTaskReq) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

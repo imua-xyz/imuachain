@@ -1,8 +1,6 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -162,18 +160,3 @@ var (
 	// addressed when distributing Imua rewards to stakers with address incompatibility on the chain.
 	KeyPrefixDelegatorWithdrawAddr = []byte{prefixDelegatorWithdrawAddr}
 )
-
-// GetOperatorAccumulatedCommissionKey creates the key for a validator's current commission.
-func GetOperatorAccumulatedCommissionKey(v sdk.ValAddress) []byte {
-	return append(KeyPrefixOperatorAccumulatedCommission, address.MustLengthPrefix(v.Bytes())...)
-}
-
-// GetOperatorOutstandingRewardsKey creates the outstanding rewards key for a validator.
-func GetOperatorOutstandingRewardsKey(valAddr sdk.ValAddress) []byte {
-	return append(KeyPrefixOperatorOutstandingRewards, address.MustLengthPrefix(valAddr.Bytes())...)
-}
-
-// GetStakerOutstandingRewardsKey creates the outstanding rewards key for the staker.
-func GetStakerOutstandingRewardsKey(staker string) []byte {
-	return append(KeyPrefixStakerOutstandingRewards, address.MustLengthPrefix([]byte(staker))...)
-}

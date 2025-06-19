@@ -71,7 +71,7 @@ type AVSKeeper interface {
 // AssetsKeeper represents the expected keeper interface for the assets module.
 type AssetsKeeper interface {
 	GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *assetstype.StakingAssetInfo, err error)
-	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
+	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 }
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.

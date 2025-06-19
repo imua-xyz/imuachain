@@ -47,7 +47,7 @@ func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *MsgUpdateParams) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // ValidateBasic does a sanity check on the provided data.
@@ -76,7 +76,7 @@ func (m *MsgWithdrawDogfoodCommission) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *MsgWithdrawDogfoodCommission) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // ValidateBasic does a sanity check on the provided data.
@@ -108,5 +108,5 @@ func (m *MsgClaimAndWithdrawDogfoodReward) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *MsgClaimAndWithdrawDogfoodReward) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

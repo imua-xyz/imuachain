@@ -46,8 +46,8 @@ var IMUARewardToken = AVSRewardAsset{
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	// Use the test chain ID to generate the dogfood address, so the default genesis is used for testnet.
-	// The AVS address in the genesis file must be updated either manually or via a script when used for mainnet.
+	// Use the default chain ID to generate the dogfood address, the current default genesis is used for mainnet.
+	// The AVS address in the genesis file should be updated either manually or via a script when used for testnet.
 	avsAddrStr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(utils.DefaultChainID))
 	return &GenesisState{
 		// this line is used by starport scaffolding # genesis/types/default

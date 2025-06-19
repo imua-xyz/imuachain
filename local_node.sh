@@ -212,7 +212,10 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# which is more suitable for a live network and not a localnet.
 	jq '.app_state["immint"]["params"]["epoch_identifier"]="minute"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
-	# x/oracle
+	# x/feedistribution
+	# replace the avsAddr with the correct one
+	jq --arg avs "$AVS_ADDRESS" '.app_state["feedistribution"]["all_avs_reward_assets"][0]["avs"] = $avs' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
 	# chain
 	jq '.app_state["oracle"]["params"]["chains"][1]["name"]="Ethereum"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["chains"][1]["desc"]="-"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"

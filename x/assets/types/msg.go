@@ -30,7 +30,7 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *MsgUpdateParams) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -49,7 +49,7 @@ func (m *RegisterClientChainReq) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *RegisterClientChainReq) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -68,5 +68,5 @@ func (m *RegisterAssetReq) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *RegisterAssetReq) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

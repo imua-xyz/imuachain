@@ -4,6 +4,9 @@ import (
 	"context"
 	"strconv"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/avs/types"
 )
@@ -11,17 +14,26 @@ import (
 var _ types.QueryServer = &Keeper{}
 
 func (k Keeper) QueryAVSInfo(ctx context.Context, req *types.QueryAVSInfoReq) (*types.QueryAVSInfoResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	return k.GetAVSInfo(c, req.AVSAddress)
 }
 
 func (k Keeper) QueryAVSTaskInfo(ctx context.Context, req *types.QueryAVSTaskInfoReq) (*types.TaskInfo, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	return k.GetTaskInfo(c, req.TaskId, req.TaskAddress)
 }
 
 // QueryAVSAddressByChainID is an implementation of the QueryAVSAddrByChainID gRPC method
 func (k Keeper) QueryAVSAddressByChainID(ctx context.Context, req *types.QueryAVSAddressByChainIDReq) (*types.QueryAVSAddressByChainIDResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	isChainAvs, avsAddr := k.IsAVSByChainID(c, types.ChainIDWithoutRevision(req.Chain))
 	if !isChainAvs {
@@ -31,6 +43,9 @@ func (k Keeper) QueryAVSAddressByChainID(ctx context.Context, req *types.QueryAV
 }
 
 func (k Keeper) QuerySubmitTaskResult(ctx context.Context, req *types.QuerySubmitTaskResultReq) (*types.QuerySubmitTaskResultResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	id, err := strconv.ParseUint(req.TaskId, 10, 64)
 	if err != nil {
@@ -44,6 +59,9 @@ func (k Keeper) QuerySubmitTaskResult(ctx context.Context, req *types.QuerySubmi
 }
 
 func (k Keeper) QueryChallengeInfo(ctx context.Context, req *types.QueryChallengeInfoReq) (*types.QueryChallengeInfoResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	id, err := strconv.ParseUint(req.TaskId, 10, 64)
 	if err != nil {
