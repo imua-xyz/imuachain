@@ -1,20 +1,15 @@
 package common
 
 import (
-	"fmt"
-	"slices"
-
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 type Caches struct {
-	// nstStakerList map[uint64][]string
 	nstStakerList map[uint64][]*types.StakerListEntry
 }
 
 func NewCaches() *Caches {
 	return &Caches{
-		// nstStakerList: make(map[uint64][]string),
 		nstStakerList: make(map[uint64][]*types.StakerListEntry),
 	}
 }
@@ -25,13 +20,11 @@ func (c *Caches) ensureInitialized() {
 	}
 }
 
-// func (c *Caches) GetNSTStakerList(chainID uint64) []string {
 func (c *Caches) GetNSTStakerList(chainID uint64) []*types.StakerListEntry {
 	c.ensureInitialized()
 	return c.nstStakerList[chainID]
 }
 
-// func (c *Caches) SetNSTStakerList(chainID uint64, sl []string) {
 func (c *Caches) SetNSTStakerList(chainID uint64, sl []*types.StakerListEntry) {
 	c.ensureInitialized()
 	c.nstStakerList[chainID] = sl
@@ -70,100 +63,4 @@ func (c *Caches) AddNSTStaker(chainID uint64, staker types.StakerListEntry, inde
 	}
 	c.nstStakerList[chainID] = append(sl, &staker)
 	return true
-}
-
-func (c *Caches) RotateStakerListInCheckTx(chainID uint64, indexes []uint32) (map[uint32]string, error) {
-	// This is a special case for the checkTx phase where we don't want to remove stakers,
-	// but rather just rotate them out of the list.
-	// The indexes are the indexes of the stakers to rotate out.
-	// The function will return a map of the indexes that were rotated out and the staker that replaced them.
-	if c.nstStakerList == nil {
-		return nil, nil
-	}
-	sl := c.nstStakerList[chainID]
-	if len(sl) == 0 {
-		return nil, nil
-	}
-	cpy := make([]*types.StakerListEntry, len(sl))
-	for _, v := range sl {
-		vCpy := *v // Create a copy of the staker entry
-		cpy = append(cpy, &vCpy)
-	}
-	cacheTmp := &Caches{
-		nstStakerList: map[uint64][]*types.StakerListEntry{
-			chainID: cpy,
-		},
-	}
-	return cacheTmp.RotateStakerList(chainID, indexes)
-}
-
-func (c *Caches) RotateStakerList(chainID uint64, indexes []uint32) (map[uint32]string, error) {
-	c.ensureInitialized()
-	l := len(indexes)
-	if l == 0 {
-		return nil, nil
-	}
-	sl := c.nstStakerList[chainID]
-	l2 := len(sl)
-	if l2 == 0 {
-		return nil, fmt.Errorf("cannot remove stakers from empty list for chainID %d", chainID)
-	}
-	// Sort indexes in ascending order so we can safely remove from the end
-	slices.Sort(indexes)
-	// Remove duplicates from indexes
-	for i := 0; i < l-1; i++ {
-		if indexes[i] == indexes[i+1] {
-			indexes = slices.Delete(indexes, i, i+1)
-			l--
-			i--
-		}
-	}
-	// Validate all indexes are in range
-	if int(indexes[l-1]) >= l2 {
-		return nil, fmt.Errorf("remove index exceeds existing max index, max:%d, remove:%d", l2-1, indexes[l-1])
-	}
-	// ret will map removed index to the staker that replaced it (if any)
-	ret := make(map[uint32]string)
-	removeMap := make(map[uint32]bool)
-	for _, i := range indexes {
-		removeMap[i] = true
-	}
-	// The main loop: for each index to remove, swap in a staker from the end (if not also being removed), then truncate
-	i := 0
-	j := 1
-	for ; j <= l2 && j <= l; j++ {
-		// Skip if the end index is also being removed
-		// #nosec G115
-		if int(indexes[i]) < l2-j && removeMap[uint32(l2-j)] {
-			continue
-		}
-		// If the index to remove is now at the end, just truncate
-		if int(indexes[i]) == l2-j {
-			j++
-			break
-		}
-		// If the index to remove is before the end, swap in the last staker
-		if int(indexes[i]) > l2-j {
-			break
-		}
-		ret[indexes[i]] = sl[l2-j].StakerAddr
-		sl[indexes[i]] = sl[l2-j]
-		i++
-	}
-	// Truncate the slice to remove the last j elements
-	if j > l2 {
-		j = l2
-	} else if j > 0 {
-		j--
-	}
-	sl = sl[:l2-j]
-	if len(sl) == 0 {
-		delete(c.nstStakerList, chainID)
-	} else {
-		c.nstStakerList[chainID] = sl
-	}
-	if len(ret) == 0 {
-		ret = nil
-	}
-	return ret, nil
 }
