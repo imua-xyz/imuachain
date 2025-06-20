@@ -327,8 +327,8 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	}, *res)
 	s.Require().NoError(err2)
 	s.Require().Equal(oracletypes.StakerList{
-		StakerAddrs: []string{
-			stakerAddrStr,
+		Stakers: []*oracletypes.StakerListEntry{
+			{StakerAddr: stakerAddrStr},
 		},
 	}, *resStakerList.StakerList)
 	s.Require().NoError(err3)
