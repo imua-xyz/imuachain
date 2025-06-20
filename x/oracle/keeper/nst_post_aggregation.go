@@ -258,7 +258,7 @@ func (k Keeper) GetStakerList(ctx sdk.Context, assetID string, chainID uint64) t
 			return types.StakerList{}
 		}
 	}
-	if sl := k.c.GetNSTStakerList(chainID); sl != nil {
+	if sl := k.c.GetNSTStakerList(chainID); len(sl) > 0 {
 		return types.StakerList{
 			Stakers: sl,
 		}
@@ -329,9 +329,12 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 
 	stakerInfo := k.GetStakerInfo(ctx, chainID, stakerAddr)
 	// make sure stakerInfo is not empty when the action is not DEPOSIT, stakerAddr != "" means both len(stakerInfo.BalanceList) > 0 and len(stakerInfo.ValidatorList) > 0
-	if action != types.Action_ACTION_DEPOSIT && (stakerInfo.StakerAddr == "" || feedVersion == 0) {
-		return 0, sdkmath.ZeroInt(), fmt.Errorf("staker or balanceList is not found, stakerAddr is empty: %t, balanceList is empty: %t, feedVersion is zero: %t, action: %s",
-			stakerInfo.StakerAddr == "", len(stakerInfo.BalanceList) == 0, feedVersion == 0, action)
+	if action != types.Action_ACTION_DEPOSIT && (stakerInfo.StakerAddr == "") {
+		return 0, sdkmath.ZeroInt(), fmt.Errorf("staker or balanceList is not found, stakerAddr is empty: %t, balanceList is empty: %t, action: %s",
+			stakerInfo.StakerAddr == "", len(stakerInfo.BalanceList) == 0, action)
+	}
+	if action == types.Action_ACTION_SLASH_REFUND && feedVersion == 0 {
+		return 0, sdkmath.ZeroInt(), fmt.Errorf("feedVersion should not be 0 for slash refund action")
 	}
 
 	balanceAtFeedVersion, latestBalance, _ := stakerInfo.GetBalanceAtVersion(feedVersion)
@@ -689,7 +692,6 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 		return err
 	}
 
-	// update all removed stakers' index
 	writeCache()
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,

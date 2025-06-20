@@ -30,11 +30,6 @@ func (c *Caches) SetNSTStakerList(chainID uint64, sl []*types.StakerListEntry) {
 	c.nstStakerList[chainID] = sl
 }
 
-func (c *Caches) RemoveNSTStakerList(chainID uint64) {
-	c.ensureInitialized()
-	delete(c.nstStakerList, chainID)
-}
-
 func (c *Caches) UpdateWithdrawVersion(chainID uint64, stakerAddr string, index uint32, withdrawVersion uint64) bool {
 	c.ensureInitialized()
 	sl := c.nstStakerList[chainID]
