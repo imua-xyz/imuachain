@@ -78,7 +78,7 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/accumulated_commission/{operator}/{avs}";
   }
-  // OperatorAccumulatedCommission queries the operator accumulated commission.
+  // OperatorSlashEvent queries the operator slash event.
   rpc OperatorSlashEvent (QueryOperatorSlashEventRequest) returns (QueryOperatorSlashEventResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}";
@@ -274,7 +274,7 @@ message QueryStakerUnclaimedRewardsRequest {
   string staker_id = 1;
 }
 
-// QuerStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
+// QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
 message QueryStakerUnclaimedRewardsResponse {
   // unclaimed rewards for all AVSs
   repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];

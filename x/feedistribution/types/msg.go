@@ -7,13 +7,15 @@ import (
 
 const (
 	// TypeMsgUpdateParams is the type for the MsgUpdateParams tx.
-	TypeMsgUpdateParams              = "update_params"
-	TypeMsgWithdrawDogfoodCommission = "withdraw_dogfood_commission"
+	TypeMsgUpdateParams                  = "update_params"
+	TypeMsgWithdrawDogfoodCommission     = "withdraw_dogfood_commission"
+	TypeMsgClaimAndWithdrawDogfoodReward = "claim_and_withdraw_dogfood_reward"
 )
 
 var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgWithdrawDogfoodCommission{}
+	_ sdk.Msg = &MsgClaimAndWithdrawDogfoodReward{}
 )
 
 // ValidateBasic does a sanity check on the provided data.
@@ -97,7 +99,7 @@ func (m *MsgClaimAndWithdrawDogfoodReward) Route() string {
 
 // Type returns the transaction type.
 func (m *MsgClaimAndWithdrawDogfoodReward) Type() string {
-	return TypeMsgWithdrawDogfoodCommission
+	return TypeMsgClaimAndWithdrawDogfoodReward
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.

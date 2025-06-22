@@ -780,15 +780,14 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers [
 		var price oracletype.Price
 		var decimal uint32
 		price, err := k.oracleKeeper.GetSpecifiedAssetsPrice(ctx, assetID)
-		if err != nil {
+		if err != nil && !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
 			// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
-			if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
-				ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to get the asset price", "assetID", assetID, "err", err)
-				// don't return error to continue handling the other assets.
-				return nil
-			}
-			// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
+			ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to get the asset price", "assetID", assetID, "err", err)
+			// don't return error to continue handling the other assets.
+			return nil
 		}
+		// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
+
 		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 		if err != nil {
 			ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to get the asset info", "assetID", assetID, "err", err)

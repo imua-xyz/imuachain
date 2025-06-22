@@ -18,8 +18,8 @@ IReward constant REWARD_CONTRACT = IReward(
     }
 
 /// @dev The OperatorRewardProportion struct. it's equal to the OperatorRewardProportion in distribution.proto
-/// @param operator The operator address.
-/// @param amount The amount of the reward coin, it needs to be converted to decimal when using in native module.
+/// @param numerator The numerator of the reward proportion.
+/// @param denominator The denominator of the reward proportion.
     struct OperatorRewardProportion {
         string operator;
         uint256 numerator;
@@ -27,8 +27,8 @@ IReward constant REWARD_CONTRACT = IReward(
     }
 
 /// @dev The AVSRewardDistributionInfo struct. it's equal to the AVSRewardDistribution in distribution.proto
-/// @param operator The operator address.
-/// @param amount The amount of the reward coin, it needs to be converted to decimal when using in native module.
+/// @param rewardCoins The reward coins for the AVS.
+/// @param operatorRewardProportions The operator reward proportions for the AVS.
     struct AVSRewardDistributionInfo {
         RewardCoin[] rewardCoins;
         OperatorRewardProportion[] operatorRewardProportions;

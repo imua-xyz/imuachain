@@ -37,7 +37,7 @@ type AVSRewardParam struct {
 	// custom_reward_inflation is the flag to determine whether customizing the reward inflation
 	// by the precompile contract
 	CustomRewardInflation bool `protobuf:"varint,1,opt,name=custom_reward_inflation,json=customRewardInflation,proto3" json:"custom_reward_inflation,omitempty"`
-	// custom_reward_inflation is the flag to determine whether customizing the operator reward
+	// custom_operator_ratio is the flag to determine whether customizing the operator reward
 	// proportions by the precompile contract
 	CustomOperatorRatio bool `protobuf:"varint,2,opt,name=custom_operator_ratio,json=customOperatorRatio,proto3" json:"custom_operator_ratio,omitempty"`
 }

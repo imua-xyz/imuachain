@@ -1325,7 +1325,7 @@ func (m *QueryStakerUnclaimedRewardsRequest) GetStakerId() string {
 	return ""
 }
 
-// QuerStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
+// QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
 type QueryStakerUnclaimedRewardsResponse struct {
 	// unclaimed rewards for all AVSs
 	Rewards []CommonAVSRewardData `protobuf:"bytes,1,rep,name=rewards,proto3" json:"rewards"`
@@ -1545,7 +1545,7 @@ type QueryClient interface {
 	OperatorCurrentRewards(ctx context.Context, in *QueryOperatorCurrentRewardsRequest, opts ...grpc.CallOption) (*QueryOperatorCurrentRewardsResponse, error)
 	// OperatorAccumulatedCommission queries the operator accumulated commission.
 	OperatorAccumulatedCommission(ctx context.Context, in *OperatorAVSRequest, opts ...grpc.CallOption) (*QueryOperatorAccumulatedCommissionResponse, error)
-	// OperatorAccumulatedCommission queries the operator accumulated commission.
+	// OperatorSlashEvent queries the operator slash event.
 	OperatorSlashEvent(ctx context.Context, in *QueryOperatorSlashEventRequest, opts ...grpc.CallOption) (*QueryOperatorSlashEventResponse, error)
 	// StakerUnclaimedRewards queries the unclaimed rewards for a staker
 	StakerUnclaimedRewards(ctx context.Context, in *QueryStakerUnclaimedRewardsRequest, opts ...grpc.CallOption) (*QueryStakerUnclaimedRewardsResponse, error)
@@ -1723,7 +1723,7 @@ type QueryServer interface {
 	OperatorCurrentRewards(context.Context, *QueryOperatorCurrentRewardsRequest) (*QueryOperatorCurrentRewardsResponse, error)
 	// OperatorAccumulatedCommission queries the operator accumulated commission.
 	OperatorAccumulatedCommission(context.Context, *OperatorAVSRequest) (*QueryOperatorAccumulatedCommissionResponse, error)
-	// OperatorAccumulatedCommission queries the operator accumulated commission.
+	// OperatorSlashEvent queries the operator slash event.
 	OperatorSlashEvent(context.Context, *QueryOperatorSlashEventRequest) (*QueryOperatorSlashEventResponse, error)
 	// StakerUnclaimedRewards queries the unclaimed rewards for a staker
 	StakerUnclaimedRewards(context.Context, *QueryStakerUnclaimedRewardsRequest) (*QueryStakerUnclaimedRewardsResponse, error)

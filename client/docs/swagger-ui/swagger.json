@@ -21477,7 +21477,7 @@
     },
     "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}": {
       "get": {
-        "summary": "OperatorAccumulatedCommission queries the operator accumulated commission.",
+        "summary": "OperatorSlashEvent queries the operator slash event.",
         "operationId": "OperatorSlashEvent",
         "responses": {
           "200": {
@@ -21922,7 +21922,7 @@
                     },
                     "custom_operator_ratio": {
                       "type": "boolean",
-                      "title": "custom_reward_inflation is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
+                      "title": "custom_operator_ratio is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
                     }
                   },
                   "description": "AVSRewardParam represents the reward distribution parameter for all AVSs, The\nAVS can choose different strategies by it. Now it only provides two flags to\nindicate whether using the customized reward inflation and operator reward proportion.\nIn the future the parameters regarding reward inflation might be added here when we\nupgrade the implementation of default reward inflation."
@@ -22216,7 +22216,7 @@
                   "title": "unclaimed rewards for all AVSs"
                 }
               },
-              "description": "QuerStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+              "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
             }
           },
           "default": {
@@ -45741,7 +45741,7 @@
         },
         "custom_operator_ratio": {
           "type": "boolean",
-          "title": "custom_reward_inflation is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
+          "title": "custom_operator_ratio is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
         }
       },
       "description": "AVSRewardParam represents the reward distribution parameter for all AVSs, The\nAVS can choose different strategies by it. Now it only provides two flags to\nindicate whether using the customized reward inflation and operator reward proportion.\nIn the future the parameters regarding reward inflation might be added here when we\nupgrade the implementation of default reward inflation."
@@ -46172,7 +46172,7 @@
             },
             "custom_operator_ratio": {
               "type": "boolean",
-              "title": "custom_reward_inflation is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
+              "title": "custom_operator_ratio is the flag to determine whether customizing the operator reward\nproportions by the precompile contract"
             }
           },
           "description": "AVSRewardParam represents the reward distribution parameter for all AVSs, The\nAVS can choose different strategies by it. Now it only provides two flags to\nindicate whether using the customized reward inflation and operator reward proportion.\nIn the future the parameters regarding reward inflation might be added here when we\nupgrade the implementation of default reward inflation."
@@ -46574,7 +46574,7 @@
           "title": "unclaimed rewards for all AVSs"
         }
       },
-      "description": "QuerStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+      "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
     },
     "imuachain.feedistribution.v1.StakerDelegationChange": {
       "type": "object",

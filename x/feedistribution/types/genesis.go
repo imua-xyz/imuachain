@@ -217,6 +217,8 @@ func (gs GenesisState) ValidateAVSRewardAssets() error {
 func (gs GenesisState) ValidateAVSRewardParams() error {
 	validationFunc := func(_ int, info AVSAddrAndRewardParam) error {
 		// check the avs address
+		// Case sensitivity is not a concern here, as the AVS address is decoded into bytes
+		// before being used as the key in the store
 		if !common.IsHexAddress(info.Avs) {
 			return ErrInvalidGenesisData.Wrapf("ValidateAVSRewardParams: invalid avs address, avsAddr:%s", info.Avs)
 		}
@@ -235,6 +237,8 @@ func (gs GenesisState) ValidateAVSRewardParams() error {
 func (gs GenesisState) ValidateAVSFeePools() error {
 	validationFunc := func(_ int, info AVSAddrAndFeePool) error {
 		// check the avs address
+		// Case sensitivity is not a concern here, as the AVS address is decoded into bytes
+		// before being used as the key in the store
 		if !common.IsHexAddress(info.Avs) {
 			return ErrInvalidGenesisData.Wrapf("ValidateAVSFeePools: invalid avs address, avsAddr:%s", info.Avs)
 		}
@@ -257,6 +261,8 @@ func (gs GenesisState) ValidateAVSRewardDistributions() error {
 	validationFunc := func(_ int, info AVSAddrAndRewardDistribution) error {
 		totalProportion := sdkmath.LegacyZeroDec()
 		// check the avs address
+		// Case sensitivity is not a concern here, as the AVS address is decoded into bytes
+		// before being used as the key in the store
 		if !common.IsHexAddress(info.Avs) {
 			return ErrInvalidGenesisData.Wrapf("ValidateAVSRewardDistributions: invalid avs address, avsAddr:%s", info.Avs)
 		}

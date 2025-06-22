@@ -43,7 +43,7 @@ func (k Keeper) HasStakeChangedDelegations(ctx sdk.Context, epochIdentifier, ope
 
 func (k Keeper) DeleteStakeChangedDelegationsByEpoch(ctx sdk.Context, epochIdentifier string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	iterator := sdk.KVStorePrefixIterator(store, []byte(epochIdentifier))
+	iterator := sdk.KVStorePrefixIterator(store, assetstype.GetJoinedStoreKeyForPrefix(epochIdentifier))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -539,8 +539,11 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(startingEpochNumber))
 	startKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
 	epochNumberHexStr = hexutil.Encode(sdk.Uint64ToBigEndian(endingEpochNumber))
-	endKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
-
+	// make endKey inclusive by appending a nil byte (0x00) – standard pattern in Cosmos-SDK
+	endKey := append(
+		assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr),
+		byte(0x00),
+	)
 	iter := store.Iterator(
 		startKey,
 		endKey,
@@ -595,7 +598,7 @@ func (k Keeper) GetStakerOutstandingRewards(ctx sdk.Context, stakerID,
 	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
 	b := store.Get(key)
 	if b == nil {
-		return feedistributiontypes.StakerOutstandingRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorOutstandingRewards, stakerID:%s,avsAddr:%s", stakerID, avsAddr)
+		return feedistributiontypes.StakerOutstandingRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetStakerOutstandingRewards, stakerID:%s,avsAddr:%s", stakerID, avsAddr)
 	}
 	rewards := feedistributiontypes.StakerOutstandingRewards{}
 	k.cdc.MustUnmarshal(b, &rewards)
@@ -705,7 +708,7 @@ func (k Keeper) IterateStakerOutstandingRewards(
 		k.cdc,
 		k.storeKey,
 		feedistributiontypes.KeyPrefixStakerOutstandingRewards,
-		[]byte(stakerID),
+		assetstype.GetJoinedStoreKeyForPrefix(stakerID),
 		isUpdate,
 		2,
 		func(bz []byte) (*feedistributiontypes.StakerOutstandingRewards, error) {
@@ -730,7 +733,7 @@ func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator 
 		k.cdc,
 		k.storeKey,
 		feedistributiontypes.KeyPrefixOperatorAccumulatedCommission,
-		[]byte(operator),
+		assetstype.GetJoinedStoreKeyForPrefix(operator),
 		isUpdate,
 		2,
 		func(bz []byte) (*feedistributiontypes.OperatorAccumulatedCommission, error) {

@@ -164,7 +164,7 @@ func (p Precompile) WithdrawIMUATokenReward(
 	if err := method.Inputs.Copy(&withdrawIMUATokenRewardArgs, args); err != nil {
 		return nil, fmt.Errorf("error while unpacking args to WithdrawIMUATokenRewardArgs struct: %s", err)
 	}
-	if withdrawIMUATokenRewardArgs.OpAmount == nil || !(withdrawIMUATokenRewardArgs.OpAmount.Cmp(big.NewInt(0)) == 1) {
+	if withdrawIMUATokenRewardArgs.OpAmount == nil || withdrawIMUATokenRewardArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawIMUATokenReward: invalid withdraw amount:%v", withdrawIMUATokenRewardArgs.OpAmount)
 	}
 	if len(withdrawIMUATokenRewardArgs.ReceiptAddress) != common.AddressLength {
@@ -212,7 +212,7 @@ func (p Precompile) WithdrawCommission(
 	if err := method.Inputs.Copy(&withdrawCommissionArgs, args); err != nil {
 		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgs struct: %s", err)
 	}
-	if withdrawCommissionArgs.OpAmount == nil || !(withdrawCommissionArgs.OpAmount.Cmp(big.NewInt(0)) == 1) {
+	if withdrawCommissionArgs.OpAmount == nil || withdrawCommissionArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawCommission: invalid withdraw amount:%v", withdrawCommissionArgs.OpAmount)
 	}
 	if len(withdrawCommissionArgs.OperatorAddress) != common.AddressLength {
@@ -255,7 +255,7 @@ func (p Precompile) WithdrawIMUATokenCommission(
 	if err := method.Inputs.Copy(&withdrawIMUATokenCommissionArgs, args); err != nil {
 		return nil, fmt.Errorf("error while unpacking args to WithdrawIMUATokenCommissionArgs struct: %s", err)
 	}
-	if withdrawIMUATokenCommissionArgs.OpAmount == nil || !(withdrawIMUATokenCommissionArgs.OpAmount.Cmp(big.NewInt(0)) == 1) {
+	if withdrawIMUATokenCommissionArgs.OpAmount == nil || withdrawIMUATokenCommissionArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawIMUATokenCommission: invalid withdraw amount:%v",
 			withdrawIMUATokenCommissionArgs.OpAmount)
 	}

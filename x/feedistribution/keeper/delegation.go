@@ -107,7 +107,7 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 		)
 		return false, nil
 	}
-	return k.IterateStakeChangedDelegations(ctx, false, []byte(epochIdentifier), opFunc)
+	return k.IterateStakeChangedDelegations(ctx, false, assetstype.GetJoinedStoreKeyForPrefix(epochIdentifier), opFunc)
 }
 
 func (k Keeper) initializeDelegationStartingInfo(

@@ -118,14 +118,15 @@ func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) (int, bool) {
 }
 
 func (o *OperatorCurrentRewards) UpdateReward(isIncrease bool, deltaRewards CommonAVSRewardData) error {
-	var isAnyNegative bool
 	if isIncrease {
 		o.Rewards = CommonAVSRewards(o.Rewards).Add(deltaRewards)
 	} else {
-		o.Rewards, isAnyNegative = CommonAVSRewards(o.Rewards).SafeSub(CommonAVSRewards{deltaRewards})
+		newRewards, isAnyNegative := CommonAVSRewards(o.Rewards).SafeSub(CommonAVSRewards{deltaRewards})
 		if isAnyNegative {
-			return ErrNegativeCoinAmount.Wrapf("failed to update the current reward for specific AVS,avsAddr:%s", deltaRewards.AVSAddress)
+			return ErrNegativeCoinAmount.
+				Wrapf("failed to update the current reward for specific AVS, avsAddr:%s", deltaRewards.AVSAddress)
 		}
+		o.Rewards = newRewards
 	}
 	return nil
 }

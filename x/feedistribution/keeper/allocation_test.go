@@ -63,6 +63,9 @@ func (expectedStates *expectedAllocationStates) addOperatorCurrentReward(avsAddr
 	}
 	rewardMap := expectedStates.operatorCurrentReward[operator]
 	if pre, ok := rewardMap[assetID]; ok {
+		if len(pre.Rewards) == 0 {
+			return // or handle the empty case appropriately
+		}
 		pre.Rewards[0].Rewards = pre.Rewards[0].Rewards.Add(coin)
 		rewardMap[assetID] = pre
 	} else {
@@ -80,7 +83,7 @@ func (expectedStates *expectedAllocationStates) addOperatorCurrentReward(avsAddr
 }
 
 func (suite *KeeperTestSuite) prepareTestBase(stakerNumber, operatorNumber, avsNumber int) {
-	suite.Require().GreaterOrEqual(stakerNumber, operatorNumber, "There should be an equal number of stakers and operators, as each pair is associated by index.")
+	suite.Require().GreaterOrEqual(stakerNumber, operatorNumber, "There should be at least as many stakers as operator, as each pair is associated by index.")
 	testClientChainID := suite.ClientChains[0].LayerZeroChainID
 	// create test stakers
 	stakerAddrs, stakerIDs := suite.CreateStakers(stakerNumber, testClientChainID)

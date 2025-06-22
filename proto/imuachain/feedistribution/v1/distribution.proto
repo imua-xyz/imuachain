@@ -19,7 +19,7 @@ message AVSRewardParam {
   // custom_reward_inflation is the flag to determine whether customizing the reward inflation
   // by the precompile contract
   bool custom_reward_inflation = 1;
-  // custom_reward_inflation is the flag to determine whether customizing the operator reward
+  // custom_operator_ratio is the flag to determine whether customizing the operator reward
   // proportions by the precompile contract
   bool custom_operator_ratio = 2;
 }

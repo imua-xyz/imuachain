@@ -407,11 +407,11 @@ func (k Keeper) GetAllOperatorSlashEvent(ctx sdk.Context) ([]feedistributiontype
 }
 
 func (k Keeper) SetAllStakerOutstandingRewards(
-	ctx sdk.Context, allOperatorSlashEvent []feedistributiontypes.KeyAndStakerOutstandingRewards,
+	ctx sdk.Context, allStakerOutstandingRewards []feedistributiontypes.KeyAndStakerOutstandingRewards,
 ) error {
 	return GenericSetAllItems(
 		ctx, k,
-		feedistributiontypes.KeyPrefixStakerOutstandingRewards, allOperatorSlashEvent,
+		feedistributiontypes.KeyPrefixStakerOutstandingRewards, allStakerOutstandingRewards,
 		func(item feedistributiontypes.KeyAndStakerOutstandingRewards) []byte {
 			return []byte(item.Key)
 		},
