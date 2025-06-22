@@ -258,6 +258,12 @@ func (k Keeper) SetAllAVSRewardAssets(ctx sdk.Context, allAVSRewardAssets []type
 	for _, avsRewardAsset := range allAVSRewardAssets {
 		for i := range avsRewardAsset.AvsRewardAssets {
 			rewardAsset := avsRewardAsset.AvsRewardAssets[i]
+
+			// check the decimal
+			if rewardAsset.AssetBasicInfo.Decimals > assetstype.MaxDecimal {
+				return types.ErrInvalidInputParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAsset.AssetBasicInfo.Decimals, assetstype.MaxDecimal)
+			}
+
 			bz := k.cdc.MustMarshal(&rewardAsset)
 			_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(rewardAsset.AssetBasicInfo.LayerZeroChainID,
 				"", rewardAsset.AssetBasicInfo.Address)

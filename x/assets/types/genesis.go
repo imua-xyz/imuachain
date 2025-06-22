@@ -103,6 +103,11 @@ func (gs GenesisState) ValidateTokens(lzIDs map[uint64]struct{}) (map[string]mat
 			)
 		}
 
+		// check the decimal
+		if info.AssetBasicInfo.Decimals > MaxDecimal {
+			return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", info.AssetBasicInfo.Decimals, MaxDecimal)
+		}
+
 		// the initial deposit quantity should be non-negative.
 		// ideally, we should verify that this quantity sums
 		// each staker's deposit, but that is not possible solely inside

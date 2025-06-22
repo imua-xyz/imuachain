@@ -161,6 +161,10 @@ func (gs GenesisState) ValidateAVSRewardAssets() error {
 					"ValidateAVSRewardAssets: contains uppercase characters for reward token %s, address: %s,avsAddr:%s", rewardAssetInfo.AssetBasicInfo.Name, rewardAssetInfo.AssetBasicInfo.Address, info.Avs,
 				)
 			}
+			// check the decimal
+			if rewardAssetInfo.AssetBasicInfo.Decimals > assetstypes.MaxDecimal {
+				return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAssetInfo.AssetBasicInfo.Decimals, assetstypes.MaxDecimal)
+			}
 			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNil() ||
 				rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNegative() {
 				return errorsmod.Wrapf(
