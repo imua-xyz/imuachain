@@ -26,6 +26,7 @@ const (
 	EpochIdentifier
 	PeriodHexStr
 	EpochNumberHexStr
+	BlockHeightHexStr
 )
 
 var IMUARewardToken = AVSRewardAsset{
@@ -133,6 +134,11 @@ func CheckJoinedKey(joinedKey string, keyNumber int, keyTypes []KeyTypeForJoined
 			err = CheckUint64BigEndianHexStr(keys[index])
 			if err != nil {
 				return xerrors.Errorf("invalid epoch number, err:%s,epochNumberHexStr:%s, key:%s", err, keys[index], joinedKey)
+			}
+		case BlockHeightHexStr:
+			err = CheckUint64BigEndianHexStr(keys[index])
+			if err != nil {
+				return xerrors.Errorf("invalid block height, err:%s,BlockHeightHexStr:%s, key:%s", err, keys[index], joinedKey)
 			}
 		}
 	}
@@ -528,8 +534,8 @@ func (gs GenesisState) ValidateOperatorAccumulatedCommissions() error {
 func (gs GenesisState) ValidateOperatorSlashEvents() error {
 	validationFunc := func(_ int, info KeyAndOperatorSlashEvent) error {
 		// check the joined key
-		err := CheckJoinedKey(info.Key, 4,
-			[]KeyTypeForJoinedKey{OperatorAddr, AssetID, EpochIdentifier, EpochNumberHexStr})
+		err := CheckJoinedKey(info.Key, 5,
+			[]KeyTypeForJoinedKey{OperatorAddr, AssetID, EpochIdentifier, EpochNumberHexStr, BlockHeightHexStr})
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorSlashEvents: failed to check the joined key, err:%s", err)
 		}

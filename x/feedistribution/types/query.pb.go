@@ -1341,7 +1341,7 @@ type QueryOperatorSlashEventRequest struct {
 	EpochIdentifier string `protobuf:"bytes,3,opt,name=epoch_identifier,json=epochIdentifier,proto3" json:"epoch_identifier,omitempty"`
 	// epoch number
 	EpochNumber uint64 `protobuf:"varint,4,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
-	// epoch number
+	// block height
 	BlockHeight uint64 `protobuf:"varint,5,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 }
 

@@ -545,8 +545,8 @@ func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochI
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorSlashEvent{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
-			"GetOperatorSlashEvent, operator:%s,epochIdentifier:%s,epochNumber:%d", operator,
-			epochIdentifier, epochNumber)
+			"GetOperatorSlashEvent, operator:%s,epochIdentifier:%s,epochNumber:%d,blockHeight:%d", operator,
+			epochIdentifier, epochNumber, blockHeight)
 	}
 	slashEvent := feedistributiontypes.OperatorSlashEvent{}
 	k.cdc.MustUnmarshal(b, &slashEvent)

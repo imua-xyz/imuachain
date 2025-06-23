@@ -294,7 +294,7 @@ message QueryOperatorSlashEventRequest {
   string epoch_identifier = 3;
   // epoch number
   uint64 epoch_number = 4;
-  // epoch number
+  // block height
   uint64 block_height = 5;
 }
 
