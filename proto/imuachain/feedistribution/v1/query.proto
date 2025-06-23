@@ -233,8 +233,8 @@ message QueryAllOperatorHistoricalRewardsRequest {
   string epoch_identifier = 3;
 }
 
-// OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods.
-message OperatorHistoricalRewardsWithPeriod{
+// OperatorHistoricalRewardsAndPeriod is used for querying the operator historical rewards for all periods.
+message OperatorHistoricalRewardsAndPeriod{
   // period
   uint64 period = 1;
   // operator_historical_rewards represents the historical rewards for the operator.
@@ -244,7 +244,7 @@ message OperatorHistoricalRewardsWithPeriod{
 // QueryAllOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards for all periods.
 message QueryAllOperatorHistoricalRewardsResponse{
   // all_operator_historical_rewards is the return value
-  repeated OperatorHistoricalRewardsWithPeriod all_operator_historical_rewards = 1 [(gogoproto.nullable) = false];
+  repeated OperatorHistoricalRewardsAndPeriod all_operator_historical_rewards = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryStakeChangeDelegationsRequest is the request to obtain the operator current rewards.
@@ -315,8 +315,8 @@ message QueryOperatorSlashEventsRequest {
   string epoch_identifier = 3;
 }
 
-// OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator
-message OperatorSlashEventWithHeight{
+// OperatorSlashEventAndHeight is a struct used for querying all slash events for the specific operator
+message OperatorSlashEventAndHeight{
   // epoch_number is the epoch number within key
   uint64 epoch_number = 1;
   // block_height is the block height within key
@@ -328,7 +328,7 @@ message OperatorSlashEventWithHeight{
 // QueryOperatorSlashEventsResponse is the response to obtain the operator slash events.
 message QueryOperatorSlashEventsResponse{
   // operator_slash_events is the return value
-  repeated OperatorSlashEventWithHeight operator_slash_events = 1 [(gogoproto.nullable) = false];
+  repeated OperatorSlashEventAndHeight operator_slash_events = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryStakerUnclaimedRewardsRequest is the request to obtain the staker unclaimed rewards.

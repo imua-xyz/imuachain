@@ -412,12 +412,12 @@ func (k Keeper) GetOperatorHistoricalReward(ctx sdk.Context, operator, assetID, 
 }
 
 // OperatorRewardsForAllPeriods : get the operator historical rewards for all periods
-func (k Keeper) OperatorRewardsForAllPeriods(ctx sdk.Context, operator, assetID, epochIdentifier string) ([]feedistributiontypes.OperatorHistoricalRewardsWithPeriod, error) {
-	ret := make([]feedistributiontypes.OperatorHistoricalRewardsWithPeriod, 0)
+func (k Keeper) OperatorRewardsForAllPeriods(ctx sdk.Context, operator, assetID, epochIdentifier string) ([]feedistributiontypes.OperatorHistoricalRewardsAndPeriod, error) {
+	ret := make([]feedistributiontypes.OperatorHistoricalRewardsAndPeriod, 0)
 	iterationPrefix := assetstype.GetJoinedStoreKeyForPrefix(operator, assetID, epochIdentifier)
 
 	opFunc := func(_, _, _ string, period uint64, operatorHistoricalReward *feedistributiontypes.OperatorHistoricalRewards) (bool, error) {
-		ret = append(ret, feedistributiontypes.OperatorHistoricalRewardsWithPeriod{
+		ret = append(ret, feedistributiontypes.OperatorHistoricalRewardsAndPeriod{
 			Period:                    period,
 			OperatorHistoricalRewards: *operatorHistoricalReward,
 		})
@@ -555,17 +555,17 @@ func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochI
 
 // GetOperatorSlashEvents : get the operator slash events in distribution module
 func (k Keeper) GetOperatorSlashEvents(ctx sdk.Context, operator, assetID, epochIdentifier string,
-) ([]feedistributiontypes.OperatorSlashEventWithHeight, error) {
+) ([]feedistributiontypes.OperatorSlashEventAndHeight, error) {
 	currentEpochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
 	if !exist {
 		return nil, feedistributiontypes.ErrEpochNotFound.Wrapf("GetOperatorSlashEvents, EpochIdentifier:%s", epochIdentifier)
 	}
-	ret := make([]feedistributiontypes.OperatorSlashEventWithHeight, 0)
+	ret := make([]feedistributiontypes.OperatorSlashEventAndHeight, 0)
 	err := k.IterateOperatorSlashEventsBetween(
 		ctx, operator, assetID, epochIdentifier,
 		uint64(types.InitialEpochNumber), uint64(currentEpochInfo.CurrentEpoch),
 		func(epochNumber, blockHeight uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error) {
-			ret = append(ret, feedistributiontypes.OperatorSlashEventWithHeight{
+			ret = append(ret, feedistributiontypes.OperatorSlashEventAndHeight{
 				EpochNumber:        epochNumber,
 				BlockHeight:        blockHeight,
 				OperatorSlashEvent: event,

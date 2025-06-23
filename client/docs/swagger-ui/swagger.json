@@ -20900,7 +20900,7 @@
                         }
                       }
                     },
-                    "description": "OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods."
+                    "description": "OperatorHistoricalRewardsAndPeriod is used for querying the operator historical rewards for all periods."
                   },
                   "title": "all_operator_historical_rewards is the return value"
                 }
@@ -21756,7 +21756,7 @@
                         }
                       }
                     },
-                    "title": "OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator"
+                    "title": "OperatorSlashEventAndHeight is a struct used for querying all slash events for the specific operator"
                   },
                   "title": "operator_slash_events is the return value"
                 }
@@ -46197,7 +46197,7 @@
       },
       "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zero period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
     },
-    "imuachain.feedistribution.v1.OperatorHistoricalRewardsWithPeriod": {
+    "imuachain.feedistribution.v1.OperatorHistoricalRewardsAndPeriod": {
       "type": "object",
       "properties": {
         "period": {
@@ -46247,7 +46247,7 @@
           }
         }
       },
-      "description": "OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods."
+      "description": "OperatorHistoricalRewardsAndPeriod is used for querying the operator historical rewards for all periods."
     },
     "imuachain.feedistribution.v1.OperatorOutstandingRewards": {
       "type": "object",
@@ -46300,7 +46300,7 @@
       },
       "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
     },
-    "imuachain.feedistribution.v1.OperatorSlashEventWithHeight": {
+    "imuachain.feedistribution.v1.OperatorSlashEventAndHeight": {
       "type": "object",
       "properties": {
         "epoch_number": {
@@ -46329,7 +46329,7 @@
           }
         }
       },
-      "title": "OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator"
+      "title": "OperatorSlashEventAndHeight is a struct used for querying all slash events for the specific operator"
     },
     "imuachain.feedistribution.v1.Params": {
       "type": "object",
@@ -46569,7 +46569,7 @@
                 }
               }
             },
-            "description": "OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods."
+            "description": "OperatorHistoricalRewardsAndPeriod is used for querying the operator historical rewards for all periods."
           },
           "title": "all_operator_historical_rewards is the return value"
         }
@@ -46813,7 +46813,7 @@
                 }
               }
             },
-            "title": "OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator"
+            "title": "OperatorSlashEventAndHeight is a struct used for querying all slash events for the specific operator"
           },
           "title": "operator_slash_events is the return value"
         }
