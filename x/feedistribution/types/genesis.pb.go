@@ -746,7 +746,7 @@ func (m *KeyAndOperatorAccumulatedCommission) GetOperatorAccumulatedCommission()
 
 // KeyAndOperatorSlashEvent is a struct used in the genesis state.
 // It stores the slash event for the operator.
-// The key, which is a combination of the operator,assetID,epochIdentifier and epochNumber, is included within it.
+// The key, which is a combination of the operator,assetID,epochIdentifier,epochNumber and blockHeight, is included within it.
 type KeyAndOperatorSlashEvent struct {
 	// key is is a combination of the operator,assetID,epochIdentifier and epochNumber.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`

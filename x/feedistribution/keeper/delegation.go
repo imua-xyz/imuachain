@@ -194,11 +194,11 @@ func (k Keeper) calculateDelegationRewardsBetween(ctx sdk.Context, startingPerio
 	}
 
 	// return staking * (ending - starting)
-	starting, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, startingPeriod)
+	starting, err := k.GetOperatorHistoricalReward(ctx, operator, assetID, epochIdentifier, startingPeriod)
 	if err != nil {
 		return nil, err
 	}
-	ending, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, endingPeriod)
+	ending, err := k.GetOperatorHistoricalReward(ctx, operator, assetID, epochIdentifier, endingPeriod)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +236,7 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 			startingPeriod, endingPeriod)
 	}
 
-	opFunc := func(_ uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error) {
+	opFunc := func(_, _ uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error) {
 		slashEndingPeriod := event.OperatorPeriod
 		if slashEndingPeriod > startingPeriod {
 			rewardsBetweenPeriod, err := k.calculateDelegationRewardsBetween(ctx, startingPeriod, slashEndingPeriod, operator, assetID, epochIdentifier, stake)

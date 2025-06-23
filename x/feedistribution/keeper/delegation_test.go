@@ -915,9 +915,9 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
 
 				slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
-
 				slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
-				suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], suite.Ctx.BlockHeight(), operatorPower, slashFactor, slashType)
+				slashBlockHeight := suite.Ctx.BlockHeight()
+				suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], slashBlockHeight, operatorPower, slashFactor, slashType)
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
 
 				// undelegate to claim the reward
@@ -961,7 +961,8 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 				rewardForEpoch2And3 := rewardRatioForEpoch2And3.Rewards.MulDecTruncate(stakerTotalStake)
 
 				epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(2))
-				slashEventkey := assetstype.GetJoinedStoreKey(suite.Operators[0].String(), suite.AssetIDs[0], dogfoodtypes.DefaultEpochIdentifier, epochNumberHexStr)
+				blockHeightHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(uint64(slashBlockHeight)))
+				slashEventkey := assetstype.GetJoinedStoreKey(suite.Operators[0].String(), suite.AssetIDs[0], dogfoodtypes.DefaultEpochIdentifier, epochNumberHexStr, blockHeightHexStr)
 				commonStates := expectedDelegationRewardStates{
 					AvsAddr:         suite.DogfoodAVSAddr,
 					EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,

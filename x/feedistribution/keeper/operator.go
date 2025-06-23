@@ -143,7 +143,7 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 	}
 
 	// fetch historical currentRewards for last period
-	historicalReward, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, currentRewards.Period-1)
+	historicalReward, err := k.GetOperatorHistoricalReward(ctx, operator, assetID, epochIdentifier, currentRewards.Period-1)
 	if err != nil {
 		return 0, err
 	}
@@ -182,7 +182,7 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 func (k Keeper) decrementReferenceCount(ctx sdk.Context, operator, assetID, epochIdentifier string,
 	period uint64,
 ) error {
-	historical, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period)
+	historical, err := k.GetOperatorHistoricalReward(ctx, operator, assetID, epochIdentifier, period)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (k Keeper) decrementReferenceCount(ctx sdk.Context, operator, assetID, epoc
 func (k Keeper) incrementReferenceCount(ctx sdk.Context, operator, assetID, epochIdentifier string,
 	period uint64,
 ) error {
-	historical, err := k.GetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, period)
+	historical, err := k.GetOperatorHistoricalReward(ctx, operator, assetID, epochIdentifier, period)
 	if err != nil {
 		return err
 	}
@@ -293,6 +293,11 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			if !exist {
 				return feedistributiontypes.ErrEpochNotFound.Wrapf("HandleOperatorSlashEvent, EpochIdentifier:%s", epochIdentifier)
 			}
+			// For the case where multiple slashes occur within a single epoch, we can still apply the same logic:
+			// the accumulated rewards after the first slash should always be zero, so the reward ratio will be zero
+			// regardless of the preDelegationAmount. We still store the subsequent slashes after the first one to
+			// accurately calculate the stake amount after multiple slashes. Therefore, there's no need to handle
+			// multiple slashes in a single epoch separately.
 			// get the delegation amount at the end of the previous epoch.
 			if k.HasStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID) {
 				delegationChangeInfo, err := k.GetStakeChangedDelegations(ctx, epochInfo.Identifier, operator.String(), slashAsset.AssetID)
@@ -331,7 +336,7 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			if err != nil {
 				return err
 			}
-			err = k.SetOperatorSlashEvent(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, uint64(epochInfo.CurrentEpoch),
+			err = k.SetOperatorSlashEvent(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, uint64(epochInfo.CurrentEpoch), uint64(ctx.BlockHeight()),
 				feedistributiontypes.OperatorSlashEvent{
 					OperatorPeriod: endingPeriod,
 					Fraction:       slashProportion,
@@ -339,14 +344,6 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			if err != nil {
 				return err
 			}
-		}
-	}
-
-	// clear the delegation changes for all epochs
-	for _, epochIdentifier := range allEpochIdentifiers {
-		err := k.DeleteStakeChangedDelegationsByEpoch(ctx, epochIdentifier)
-		if err != nil {
-			return err
 		}
 	}
 	return nil

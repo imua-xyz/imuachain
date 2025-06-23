@@ -10,6 +10,7 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (k Keeper) SetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string,
@@ -392,9 +393,9 @@ func (k Keeper) DeleteOperatorHistoricalRewards(ctx sdk.Context, operator, asset
 	return nil
 }
 
-// GetOperatorHistoricalRewards : get the historical rewards for the specific operator, epochIdentifier, assetID
+// GetOperatorHistoricalReward : get the historical rewards for the specific operator, epochIdentifier, assetID
 // and period.
-func (k Keeper) GetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID, epochIdentifier string,
+func (k Keeper) GetOperatorHistoricalReward(ctx sdk.Context, operator, assetID, epochIdentifier string,
 	period uint64,
 ) (feedistributiontypes.OperatorHistoricalRewards, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
@@ -403,11 +404,31 @@ func (k Keeper) GetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
 	b := store.Get(key)
 	if b == nil {
-		return feedistributiontypes.OperatorHistoricalRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorHistoricalRewards, operator:%s,assetID:%s,epochIdentifier:%s,period:%d", operator, assetID, epochIdentifier, period)
+		return feedistributiontypes.OperatorHistoricalRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorHistoricalReward, operator:%s,assetID:%s,epochIdentifier:%s,period:%d", operator, assetID, epochIdentifier, period)
 	}
-	historicalRewards := feedistributiontypes.OperatorHistoricalRewards{}
-	k.cdc.MustUnmarshal(b, &historicalRewards)
-	return historicalRewards, nil
+	historicalReward := feedistributiontypes.OperatorHistoricalRewards{}
+	k.cdc.MustUnmarshal(b, &historicalReward)
+	return historicalReward, nil
+}
+
+// OperatorRewardsForAllPeriods : get the operator historical rewards for all periods
+func (k Keeper) OperatorRewardsForAllPeriods(ctx sdk.Context, operator, assetID, epochIdentifier string) ([]feedistributiontypes.OperatorHistoricalRewardsWithPeriod, error) {
+	ret := make([]feedistributiontypes.OperatorHistoricalRewardsWithPeriod, 0)
+	iterationPrefix := assetstype.GetJoinedStoreKeyForPrefix(operator, assetID, epochIdentifier)
+
+	opFunc := func(_, _, _ string, period uint64, operatorHistoricalReward *feedistributiontypes.OperatorHistoricalRewards) (bool, error) {
+		ret = append(ret, feedistributiontypes.OperatorHistoricalRewardsWithPeriod{
+			Period:                    period,
+			OperatorHistoricalRewards: *operatorHistoricalReward,
+		})
+		return false, nil
+	}
+
+	err := k.IterateOperatorHistoricalRewards(ctx, false, iterationPrefix, opFunc)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }
 
 // HasOperatorHistoricalRewards : check whether the historical rewards for the specific operator, EpochIdentifier
@@ -500,25 +521,27 @@ func (k Keeper) HasDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 
 // SetOperatorSlashEvent : set the operator slash event in distribution module
 func (k Keeper) SetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	epochNumber uint64, slashEvent feedistributiontypes.OperatorSlashEvent,
+	epochNumber, blockHeight uint64, slashEvent feedistributiontypes.OperatorSlashEvent,
 ) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	bz := k.cdc.MustMarshal(&slashEvent)
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
+	heightHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(blockHeight))
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr, heightHexStr)
 	store.Set(key, bz)
 	return nil
 }
 
 // GetOperatorSlashEvent : get the operator slash event in distribution module
 func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochIdentifier string,
-	epochNumber uint64,
+	epochNumber, blockHeight uint64,
 ) (feedistributiontypes.OperatorSlashEvent, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
+	heightHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(blockHeight))
+	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr, heightHexStr)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorSlashEvent{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
@@ -530,20 +553,43 @@ func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochI
 	return slashEvent, nil
 }
 
+// GetOperatorSlashEvents : get the operator slash events in distribution module
+func (k Keeper) GetOperatorSlashEvents(ctx sdk.Context, operator, assetID, epochIdentifier string,
+) ([]feedistributiontypes.OperatorSlashEventWithHeight, error) {
+	currentEpochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
+	if !exist {
+		return nil, feedistributiontypes.ErrEpochNotFound.Wrapf("GetOperatorSlashEvents, EpochIdentifier:%s", epochIdentifier)
+	}
+	ret := make([]feedistributiontypes.OperatorSlashEventWithHeight, 0)
+	err := k.IterateOperatorSlashEventsBetween(
+		ctx, operator, assetID, epochIdentifier,
+		uint64(types.InitialEpochNumber), uint64(currentEpochInfo.CurrentEpoch),
+		func(epochNumber, blockHeight uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error) {
+			ret = append(ret, feedistributiontypes.OperatorSlashEventWithHeight{
+				EpochNumber:        epochNumber,
+				BlockHeight:        blockHeight,
+				OperatorSlashEvent: event,
+			})
+			return false, nil
+		})
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 // IterateOperatorSlashEventsBetween iterates over slash events between epoch numbers, inclusive
 func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, assetID, epochIdentifier string,
 	startingEpochNumber uint64, endingEpochNumber uint64,
-	handler func(epochNumber uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error),
+	handler func(epochNumber, blockHeight uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error),
 ) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(startingEpochNumber))
 	startKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
-	epochNumberHexStr = hexutil.Encode(sdk.Uint64ToBigEndian(endingEpochNumber))
-	// make endKey inclusive by appending a nil byte (0x00) – standard pattern in Cosmos-SDK
-	endKey := append(
-		assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr),
-		byte(0x00),
-	)
+	// Add 1 to include all slash events in the ending epoch
+	epochNumberHexStr = hexutil.Encode(sdk.Uint64ToBigEndian(endingEpochNumber + 1))
+	endKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
+
 	iter := store.Iterator(
 		startKey,
 		endKey,
@@ -552,7 +598,7 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 	for ; iter.Valid(); iter.Next() {
 		var event feedistributiontypes.OperatorSlashEvent
 		k.cdc.MustUnmarshal(iter.Value(), &event)
-		keys, err := assetstype.ParseJoinedStoreKey(iter.Key(), 4)
+		keys, err := assetstype.ParseJoinedStoreKey(iter.Key(), 5)
 		if err != nil {
 			return err
 		}
@@ -561,7 +607,14 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 			return err
 		}
 		epochNumber := sdk.BigEndianToUint64(epochNumberBigEndian)
-		isStop, err := handler(epochNumber, event)
+
+		blockHeightBigEndian, err := hexutil.Decode(keys[4])
+		if err != nil {
+			return err
+		}
+		blockHeight := sdk.BigEndianToUint64(blockHeightBigEndian)
+
+		isStop, err := handler(epochNumber, blockHeight, event)
 		if err != nil {
 			return err
 		}

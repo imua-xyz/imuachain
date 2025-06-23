@@ -68,6 +68,11 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/operator_historical_rewards/{operator}/{asset_id}/{epoch_identifier}/{period}";
   }
+  // AllOperatorHistoricalRewards queries the operator historical rewards for all periods
+  rpc AllOperatorHistoricalRewards(QueryAllOperatorHistoricalRewardsRequest) returns (QueryAllOperatorHistoricalRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/all_operator_historical_rewards/{operator}/{asset_id}/{epoch_identifier}";
+  }
   // OperatorCurrentRewards queries the operator current rewards
   rpc OperatorCurrentRewards (QueryOperatorCurrentRewardsRequest) returns (QueryOperatorCurrentRewardsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
@@ -82,6 +87,11 @@ service Query {
   rpc OperatorSlashEvent (QueryOperatorSlashEventRequest) returns (QueryOperatorSlashEventResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}";
+  }
+  // OperatorSlashEvents queries the operator slash events.
+  rpc OperatorSlashEvents (QueryOperatorSlashEventsRequest) returns (QueryOperatorSlashEventsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_slash_events/{operator}/{asset_id}/{epoch_identifier}";
   }
   // StakerUnclaimedRewards queries the unclaimed rewards for a staker
   rpc StakerUnclaimedRewards (QueryStakerUnclaimedRewardsRequest) returns (QueryStakerUnclaimedRewardsResponse) {
@@ -213,6 +223,30 @@ message QueryOperatorHistoricalRewardsResponse{
   OperatorHistoricalRewards operator_historical_rewards = 1;
 }
 
+// QueryAllOperatorHistoricalRewardsRequest is the request to obtain the operator historical rewards for all periods.
+message QueryAllOperatorHistoricalRewardsRequest {
+  // operator address
+  string operator = 1;
+  // asset id
+  string asset_id = 2;
+  // epoch identifier
+  string epoch_identifier = 3;
+}
+
+// OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods.
+message OperatorHistoricalRewardsWithPeriod{
+  // period
+  uint64 period = 1;
+  // operator_historical_rewards represents the historical rewards for the operator.
+  OperatorHistoricalRewards operator_historical_rewards = 2 [(gogoproto.nullable) = false];
+}
+
+// QueryAllOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards for all periods.
+message QueryAllOperatorHistoricalRewardsResponse{
+  // all_operator_historical_rewards is the return value
+  repeated OperatorHistoricalRewardsWithPeriod all_operator_historical_rewards = 1 [(gogoproto.nullable) = false];
+}
+
 // QueryStakeChangeDelegationsRequest is the request to obtain the operator current rewards.
 message QueryOperatorCurrentRewardsRequest {
   // operator address
@@ -260,12 +294,41 @@ message QueryOperatorSlashEventRequest {
   string epoch_identifier = 3;
   // epoch number
   uint64 epoch_number = 4;
+  // epoch number
+  uint64 block_height = 5;
 }
 
 // QueryOperatorSlashEventResponse is the response to obtain the operator slash event.
 message QueryOperatorSlashEventResponse{
   // operator_slash_event is the return value
   OperatorSlashEvent operator_slash_event = 1;
+}
+
+// QueryOperatorSlashEventsRequest is the request to obtain all slash events for
+// the specific operator, assetID and epoch identifier.
+message QueryOperatorSlashEventsRequest {
+  // operator address
+  string operator = 1;
+  // asset id
+  string asset_id = 2;
+  // epoch identifier
+  string epoch_identifier = 3;
+}
+
+// OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator
+message OperatorSlashEventWithHeight{
+  // epoch_number is the epoch number within key
+  uint64 epoch_number = 1;
+  // block_height is the block height within key
+  uint64 block_height = 2;
+  // operator_slash_event represents the slash event for the operator.
+  OperatorSlashEvent operator_slash_event = 3 [(gogoproto.nullable) = false];
+}
+
+// QueryOperatorSlashEventsResponse is the response to obtain the operator slash events.
+message QueryOperatorSlashEventsResponse{
+  // operator_slash_events is the return value
+  repeated OperatorSlashEventWithHeight operator_slash_events = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryStakerUnclaimedRewardsRequest is the request to obtain the staker unclaimed rewards.

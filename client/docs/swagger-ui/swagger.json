@@ -20838,6 +20838,138 @@
         ]
       }
     },
+    "/imuachain/feedistribution/v1/all_operator_historical_rewards/{operator}/{asset_id}/{epoch_identifier}": {
+      "get": {
+        "summary": "AllOperatorHistoricalRewards queries the operator historical rewards for all periods",
+        "operationId": "AllOperatorHistoricalRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "all_operator_historical_rewards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "period": {
+                        "type": "string",
+                        "format": "uint64",
+                        "title": "period"
+                      },
+                      "operator_historical_rewards": {
+                        "description": "operator_historical_rewards represents the historical rewards for the operator.",
+                        "type": "object",
+                        "properties": {
+                          "cumulative_reward_ratios": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "avs_address": {
+                                  "type": "string",
+                                  "title": "avs_address is the AVS address"
+                                },
+                                "rewards": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "denom": {
+                                        "type": "string"
+                                      },
+                                      "amount": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                                  },
+                                  "title": "rewards represents the current rewards or cumulative reward ratios"
+                                }
+                              },
+                              "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                            },
+                            "title": "cumulative_reward_ratios is the reward ratios for multiple AVSs"
+                          },
+                          "reference_count": {
+                            "type": "integer",
+                            "format": "int64",
+                            "description": "reference_count is for F1 distribution."
+                          }
+                        }
+                      }
+                    },
+                    "description": "OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods."
+                  },
+                  "title": "all_operator_historical_rewards is the return value"
+                }
+              },
+              "description": "QueryAllOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards for all periods."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_identifier",
+            "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/feedistribution/v1/avs_reward_distribution/{avs}": {
       "get": {
         "summary": "AVSRewardDistribution queries the distribution information for an AVS.\nIt returns the total rewards and operator proportions for current epoch.",
@@ -21307,7 +21439,7 @@
                       "description": "reference_count is for F1 distribution."
                     }
                   },
-                  "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zeroeth period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
+                  "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zero period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
                 }
               },
               "description": "QueryOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards."
@@ -21568,6 +21700,125 @@
             "required": true,
             "type": "string",
             "format": "uint64"
+          },
+          {
+            "name": "block_height",
+            "description": "epoch number.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/operator_slash_events/{operator}/{asset_id}/{epoch_identifier}": {
+      "get": {
+        "summary": "OperatorSlashEvents queries the operator slash events.",
+        "operationId": "OperatorSlashEvents",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator_slash_events": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "epoch_number": {
+                        "type": "string",
+                        "format": "uint64",
+                        "title": "epoch_number is the epoch number within key"
+                      },
+                      "block_height": {
+                        "type": "string",
+                        "format": "uint64",
+                        "title": "block_height is the block height within key"
+                      },
+                      "operator_slash_event": {
+                        "description": "operator_slash_event represents the slash event for the operator.",
+                        "type": "object",
+                        "properties": {
+                          "operator_period": {
+                            "type": "string",
+                            "format": "uint64",
+                            "title": "operator_period is the period referenced by the slash event"
+                          },
+                          "fraction": {
+                            "type": "string",
+                            "description": "fraction is the slash fraction."
+                          }
+                        }
+                      }
+                    },
+                    "title": "OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator"
+                  },
+                  "title": "operator_slash_events is the return value"
+                }
+              },
+              "description": "QueryOperatorSlashEventsResponse is the response to obtain the operator slash events."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "epoch_identifier",
+            "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
           }
         ],
         "tags": [
@@ -45944,7 +46195,59 @@
           "description": "reference_count is for F1 distribution."
         }
       },
-      "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zeroeth period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
+      "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zero period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
+    },
+    "imuachain.feedistribution.v1.OperatorHistoricalRewardsWithPeriod": {
+      "type": "object",
+      "properties": {
+        "period": {
+          "type": "string",
+          "format": "uint64",
+          "title": "period"
+        },
+        "operator_historical_rewards": {
+          "description": "operator_historical_rewards represents the historical rewards for the operator.",
+          "type": "object",
+          "properties": {
+            "cumulative_reward_ratios": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "avs_address": {
+                    "type": "string",
+                    "title": "avs_address is the AVS address"
+                  },
+                  "rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "title": "rewards represents the current rewards or cumulative reward ratios"
+                  }
+                },
+                "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+              },
+              "title": "cumulative_reward_ratios is the reward ratios for multiple AVSs"
+            },
+            "reference_count": {
+              "type": "integer",
+              "format": "int64",
+              "description": "reference_count is for F1 distribution."
+            }
+          }
+        }
+      },
+      "description": "OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods."
     },
     "imuachain.feedistribution.v1.OperatorOutstandingRewards": {
       "type": "object",
@@ -45996,6 +46299,37 @@
         }
       },
       "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
+    },
+    "imuachain.feedistribution.v1.OperatorSlashEventWithHeight": {
+      "type": "object",
+      "properties": {
+        "epoch_number": {
+          "type": "string",
+          "format": "uint64",
+          "title": "epoch_number is the epoch number within key"
+        },
+        "block_height": {
+          "type": "string",
+          "format": "uint64",
+          "title": "block_height is the block height within key"
+        },
+        "operator_slash_event": {
+          "description": "operator_slash_event represents the slash event for the operator.",
+          "type": "object",
+          "properties": {
+            "operator_period": {
+              "type": "string",
+              "format": "uint64",
+              "title": "operator_period is the period referenced by the slash event"
+            },
+            "fraction": {
+              "type": "string",
+              "description": "fraction is the slash fraction."
+            }
+          }
+        }
+      },
+      "title": "OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator"
     },
     "imuachain.feedistribution.v1.Params": {
       "type": "object",
@@ -46180,6 +46514,68 @@
       },
       "description": "QueryAVSRewardParamResponse is the response to obtain the specific reward parameter for an AVS."
     },
+    "imuachain.feedistribution.v1.QueryAllOperatorHistoricalRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "all_operator_historical_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "period": {
+                "type": "string",
+                "format": "uint64",
+                "title": "period"
+              },
+              "operator_historical_rewards": {
+                "description": "operator_historical_rewards represents the historical rewards for the operator.",
+                "type": "object",
+                "properties": {
+                  "cumulative_reward_ratios": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "avs_address": {
+                          "type": "string",
+                          "title": "avs_address is the AVS address"
+                        },
+                        "rewards": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "denom": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                          },
+                          "title": "rewards represents the current rewards or cumulative reward ratios"
+                        }
+                      },
+                      "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                    },
+                    "title": "cumulative_reward_ratios is the reward ratios for multiple AVSs"
+                  },
+                  "reference_count": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "reference_count is for F1 distribution."
+                  }
+                }
+              }
+            },
+            "description": "OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods."
+          },
+          "title": "all_operator_historical_rewards is the return value"
+        }
+      },
+      "description": "QueryAllOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards for all periods."
+    },
     "imuachain.feedistribution.v1.QueryDelegationStartingInfoResponse": {
       "type": "object",
       "properties": {
@@ -46327,7 +46723,7 @@
               "description": "reference_count is for F1 distribution."
             }
           },
-          "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zeroeth period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
+          "description": "OperatorHistoricalRewards represents historical rewards for an operator.\nOperator, assetID, epochIdentifier and period are implicit within the store key.\nCumulative reward ratio is the sum from the zero period\nuntil this period of rewards / tokens, per the spec.\nThe reference count indicates the number of objects\nwhich might need to reference this historical entry at any point.\nReferenceCount =\n   number of outstanding delegations which ended the associated period (and\n   might need to read that record)\n + number of slashes which ended the associated period (and might need to\n read that record)\n + one per validator for the zeroeth period, set on initialization\nIn imua chain, one operator will opt into multiple AVSs, all AVS rewards will\nbe distributed by f1 distribution. For AVSs with the same epoch configuration,\nthe update in delegation stake will be exactly the same, so we can use a single\nreference_count to handle the reward distribution for these AVSs. However, for\nstoring the accumulated reward factors of different AVSs, since different AVSs\nmay have multiple different rewards, to keep the logic clear, we will not store\nall reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional\nslice to store the accumulated reward factors for all AVSs separately."
         }
       },
       "description": "QueryOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards."
@@ -46382,6 +46778,47 @@
         }
       },
       "description": "QueryOperatorSlashEventResponse is the response to obtain the operator slash event."
+    },
+    "imuachain.feedistribution.v1.QueryOperatorSlashEventsResponse": {
+      "type": "object",
+      "properties": {
+        "operator_slash_events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "epoch_number": {
+                "type": "string",
+                "format": "uint64",
+                "title": "epoch_number is the epoch number within key"
+              },
+              "block_height": {
+                "type": "string",
+                "format": "uint64",
+                "title": "block_height is the block height within key"
+              },
+              "operator_slash_event": {
+                "description": "operator_slash_event represents the slash event for the operator.",
+                "type": "object",
+                "properties": {
+                  "operator_period": {
+                    "type": "string",
+                    "format": "uint64",
+                    "title": "operator_period is the period referenced by the slash event"
+                  },
+                  "fraction": {
+                    "type": "string",
+                    "description": "fraction is the slash fraction."
+                  }
+                }
+              }
+            },
+            "title": "OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator"
+          },
+          "title": "operator_slash_events is the return value"
+        }
+      },
+      "description": "QueryOperatorSlashEventsResponse is the response to obtain the operator slash events."
     },
     "imuachain.feedistribution.v1.QueryParamsResponse": {
       "type": "object",

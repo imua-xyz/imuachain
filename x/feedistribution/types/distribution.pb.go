@@ -272,7 +272,7 @@ func (m *CommonAVSRewardData) GetRewards() github_com_cosmos_cosmos_sdk_types.De
 
 // OperatorHistoricalRewards represents historical rewards for an operator.
 // Operator, assetID, epochIdentifier and period are implicit within the store key.
-// Cumulative reward ratio is the sum from the zeroeth period
+// Cumulative reward ratio is the sum from the zero period
 // until this period of rewards / tokens, per the spec.
 // The reference count indicates the number of objects
 // which might need to reference this historical entry at any point.

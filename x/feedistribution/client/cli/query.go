@@ -39,8 +39,10 @@ func GetQueryCmd(_ string) *cobra.Command {
 		CmdQueryOperatorAccumulatedCommission(),
 		CmdQueryOperatorCurrentRewards(),
 		CmdQueryOperatorHistoricalRewards(),
+		CmdQueryAllOperatorHistoricalRewards(),
 		CmdQueryOperatorOutstandingRewards(),
 		CmdQueryOperatorSlashEvent(),
+		CmdQueryOperatorSlashEvents(),
 		CmdQueryStakerOutstandingRewards(),
 		CmdQueryStakeChangeDelegations(),
 		CmdQueryDelegationStartingInfo(),
@@ -123,15 +125,15 @@ func newOperatorAVSCmd(
 }
 
 func newOperatorAssetEpochUint64Cmd(
-	use, short, long string,
-	makeRequest func(string, string, string, uint64) proto.Message,
+	use, short, long string, argsNumber int,
+	makeRequest func(string, string, string, uint64, uint64) proto.Message,
 	queryFunc func(types.QueryClient, context.Context, proto.Message) (proto.Message, error),
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   use,
 		Short: short,
 		Long:  long,
-		Args:  cobra.ExactArgs(4),
+		Args:  cobra.ExactArgs(argsNumber),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Validate operator
 			if _, err := sdk.AccAddressFromBech32(args[0]); err != nil {
@@ -139,21 +141,28 @@ func newOperatorAssetEpochUint64Cmd(
 			}
 			// Validate asset ID
 			if _, _, err := assetstypes.ValidateID(args[1], false, false); err != nil {
-				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
+				return types.ErrInvalidCliCmdArg.Wrapf("error:%s,index:%d", err.Error(), 1)
 			}
 			// Parse final uint64 param (period or epochNumber)
 			number, err := strconv.ParseUint(args[3], 10, 64)
 			if err != nil {
-				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
+				return types.ErrInvalidCliCmdArg.Wrapf("error:%s,index:%d", err.Error(), 3)
 			}
 
+			var blockHeight uint64
+			if argsNumber == 5 {
+				blockHeight, err = strconv.ParseUint(args[4], 10, 64)
+				if err != nil {
+					return types.ErrInvalidCliCmdArg.Wrapf("error:%s,index:%d", err.Error(), 4)
+				}
+			}
 			// Setup query
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
-			req := makeRequest(args[0], args[1], args[2], number)
+			req := makeRequest(args[0], args[1], args[2], number, blockHeight)
 			res, err := queryFunc(queryClient, context.Background(), req)
 			if err != nil {
 				return err
@@ -413,7 +422,8 @@ func CmdQueryOperatorHistoricalRewards() *cobra.Command {
 		"operator-historical-rewards [operator] [assetID] [epochIdentifier] [period]",
 		"get the historical rewards for an operator",
 		"get the historical rewards for an operator",
-		func(operator, assetID, epochID string, period uint64) proto.Message {
+		4,
+		func(operator, assetID, epochID string, period uint64, _ uint64) proto.Message {
 			return &types.QueryOperatorHistoricalRewardsRequest{
 				Operator:        operator,
 				AssetId:         assetID,
@@ -427,21 +437,59 @@ func CmdQueryOperatorHistoricalRewards() *cobra.Command {
 	)
 }
 
+func CmdQueryAllOperatorHistoricalRewards() *cobra.Command {
+	return newEpochOperatorAssetCmd(
+		"all-operator-historical-rewards [epochIdentifier] [operator] [assetID]",
+		"get the operator historical rewards for all periods",
+		"get the operator historical rewards for all periods",
+		func(epochIdentifier, operator, assetID string) proto.Message {
+			return &types.QueryAllOperatorHistoricalRewardsRequest{
+				EpochIdentifier: epochIdentifier,
+				Operator:        operator,
+				AssetId:         assetID,
+			}
+		},
+		func(client types.QueryClient, ctx context.Context, req proto.Message) (proto.Message, error) {
+			return client.AllOperatorHistoricalRewards(ctx, req.(*types.QueryAllOperatorHistoricalRewardsRequest))
+		},
+	)
+}
+
 func CmdQueryOperatorSlashEvent() *cobra.Command {
 	return newOperatorAssetEpochUint64Cmd(
-		"operator-slash-event [operator] [assetID] [epochIdentifier] [epochNumber]",
-		"get the the operator slash event",
-		"get the the operator slash event",
-		func(operator, assetID, epochID string, epochNumber uint64) proto.Message {
+		"operator-slash-event [operator] [assetID] [epochIdentifier] [epochNumber] [blockHeight]",
+		"get the operator slash event",
+		"get the operator slash event",
+		5,
+		func(operator, assetID, epochID string, epochNumber, blockHeight uint64) proto.Message {
 			return &types.QueryOperatorSlashEventRequest{
 				Operator:        operator,
 				AssetId:         assetID,
 				EpochIdentifier: epochID,
 				EpochNumber:     epochNumber,
+				BlockHeight:     blockHeight,
 			}
 		},
 		func(q types.QueryClient, ctx context.Context, req proto.Message) (proto.Message, error) {
 			return q.OperatorSlashEvent(ctx, req.(*types.QueryOperatorSlashEventRequest))
+		},
+	)
+}
+
+func CmdQueryOperatorSlashEvents() *cobra.Command {
+	return newEpochOperatorAssetCmd(
+		"operator-slash-events [epochIdentifier] [operator] [assetID]",
+		"get the operator slash events",
+		"get the operator slash events",
+		func(epochIdentifier, operator, assetID string) proto.Message {
+			return &types.QueryOperatorSlashEventsRequest{
+				EpochIdentifier: epochIdentifier,
+				Operator:        operator,
+				AssetId:         assetID,
+			}
+		},
+		func(client types.QueryClient, ctx context.Context, req proto.Message) (proto.Message, error) {
+			return client.OperatorSlashEvents(ctx, req.(*types.QueryOperatorSlashEventsRequest))
 		},
 	)
 }

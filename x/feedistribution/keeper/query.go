@@ -138,12 +138,25 @@ func (k Keeper) OperatorHistoricalRewards(ctx context.Context, req *types.QueryO
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
-	historicalRewards, err := k.GetOperatorHistoricalRewards(c, req.Operator, strings.ToLower(req.AssetId),
+	historicalRewards, err := k.GetOperatorHistoricalReward(c, req.Operator, strings.ToLower(req.AssetId),
 		req.EpochIdentifier, req.Period)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryOperatorHistoricalRewardsResponse{OperatorHistoricalRewards: &historicalRewards}, nil
+}
+
+// AllOperatorHistoricalRewards queries the operator historical rewards for all periods.
+func (k Keeper) AllOperatorHistoricalRewards(ctx context.Context, req *types.QueryAllOperatorHistoricalRewardsRequest) (*types.QueryAllOperatorHistoricalRewardsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	historicalRewards, err := k.OperatorRewardsForAllPeriods(c, req.Operator, strings.ToLower(req.AssetId), req.EpochIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryAllOperatorHistoricalRewardsResponse{AllOperatorHistoricalRewards: historicalRewards}, nil
 }
 
 // OperatorCurrentRewards queries the operator current rewards.
@@ -180,11 +193,24 @@ func (k Keeper) OperatorSlashEvent(ctx context.Context, req *types.QueryOperator
 	}
 	c := sdk.UnwrapSDKContext(ctx)
 	slashEvent, err := k.GetOperatorSlashEvent(c, req.Operator, strings.ToLower(req.AssetId),
-		req.EpochIdentifier, req.EpochNumber)
+		req.EpochIdentifier, req.EpochNumber, req.BlockHeight)
 	if err != nil {
 		return nil, err
 	}
 	return &types.QueryOperatorSlashEventResponse{OperatorSlashEvent: &slashEvent}, nil
+}
+
+// OperatorSlashEvents queries the operator slash events.
+func (k Keeper) OperatorSlashEvents(ctx context.Context, req *types.QueryOperatorSlashEventsRequest) (*types.QueryOperatorSlashEventsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	slashEvents, err := k.GetOperatorSlashEvents(c, req.Operator, strings.ToLower(req.AssetId), req.EpochIdentifier)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryOperatorSlashEventsResponse{OperatorSlashEvents: slashEvents}, nil
 }
 
 // StakerUnclaimedRewards queries the unclaimed rewards for a staker.

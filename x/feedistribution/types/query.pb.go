@@ -896,6 +896,177 @@ func (m *QueryOperatorHistoricalRewardsResponse) GetOperatorHistoricalRewards() 
 	return nil
 }
 
+// QueryAllOperatorHistoricalRewardsRequest is the request to obtain the operator historical rewards for all periods.
+type QueryAllOperatorHistoricalRewardsRequest struct {
+	// operator address
+	Operator string `protobuf:"bytes,1,opt,name=operator,proto3" json:"operator,omitempty"`
+	// asset id
+	AssetId string `protobuf:"bytes,2,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
+	// epoch identifier
+	EpochIdentifier string `protobuf:"bytes,3,opt,name=epoch_identifier,json=epochIdentifier,proto3" json:"epoch_identifier,omitempty"`
+}
+
+func (m *QueryAllOperatorHistoricalRewardsRequest) Reset() {
+	*m = QueryAllOperatorHistoricalRewardsRequest{}
+}
+func (m *QueryAllOperatorHistoricalRewardsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryAllOperatorHistoricalRewardsRequest) ProtoMessage()    {}
+func (*QueryAllOperatorHistoricalRewardsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{17}
+}
+func (m *QueryAllOperatorHistoricalRewardsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllOperatorHistoricalRewardsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllOperatorHistoricalRewardsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllOperatorHistoricalRewardsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllOperatorHistoricalRewardsRequest.Merge(m, src)
+}
+func (m *QueryAllOperatorHistoricalRewardsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllOperatorHistoricalRewardsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllOperatorHistoricalRewardsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllOperatorHistoricalRewardsRequest proto.InternalMessageInfo
+
+func (m *QueryAllOperatorHistoricalRewardsRequest) GetOperator() string {
+	if m != nil {
+		return m.Operator
+	}
+	return ""
+}
+
+func (m *QueryAllOperatorHistoricalRewardsRequest) GetAssetId() string {
+	if m != nil {
+		return m.AssetId
+	}
+	return ""
+}
+
+func (m *QueryAllOperatorHistoricalRewardsRequest) GetEpochIdentifier() string {
+	if m != nil {
+		return m.EpochIdentifier
+	}
+	return ""
+}
+
+// OperatorHistoricalRewardsWithPeriod is used for querying the operator historical rewards for all periods.
+type OperatorHistoricalRewardsWithPeriod struct {
+	// period
+	Period uint64 `protobuf:"varint,1,opt,name=period,proto3" json:"period,omitempty"`
+	// operator_historical_rewards represents the historical rewards for the operator.
+	OperatorHistoricalRewards OperatorHistoricalRewards `protobuf:"bytes,2,opt,name=operator_historical_rewards,json=operatorHistoricalRewards,proto3" json:"operator_historical_rewards"`
+}
+
+func (m *OperatorHistoricalRewardsWithPeriod) Reset()         { *m = OperatorHistoricalRewardsWithPeriod{} }
+func (m *OperatorHistoricalRewardsWithPeriod) String() string { return proto.CompactTextString(m) }
+func (*OperatorHistoricalRewardsWithPeriod) ProtoMessage()    {}
+func (*OperatorHistoricalRewardsWithPeriod) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{18}
+}
+func (m *OperatorHistoricalRewardsWithPeriod) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OperatorHistoricalRewardsWithPeriod) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OperatorHistoricalRewardsWithPeriod.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OperatorHistoricalRewardsWithPeriod) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorHistoricalRewardsWithPeriod.Merge(m, src)
+}
+func (m *OperatorHistoricalRewardsWithPeriod) XXX_Size() int {
+	return m.Size()
+}
+func (m *OperatorHistoricalRewardsWithPeriod) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorHistoricalRewardsWithPeriod.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OperatorHistoricalRewardsWithPeriod proto.InternalMessageInfo
+
+func (m *OperatorHistoricalRewardsWithPeriod) GetPeriod() uint64 {
+	if m != nil {
+		return m.Period
+	}
+	return 0
+}
+
+func (m *OperatorHistoricalRewardsWithPeriod) GetOperatorHistoricalRewards() OperatorHistoricalRewards {
+	if m != nil {
+		return m.OperatorHistoricalRewards
+	}
+	return OperatorHistoricalRewards{}
+}
+
+// QueryAllOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards for all periods.
+type QueryAllOperatorHistoricalRewardsResponse struct {
+	// all_operator_historical_rewards is the return value
+	AllOperatorHistoricalRewards []OperatorHistoricalRewardsWithPeriod `protobuf:"bytes,1,rep,name=all_operator_historical_rewards,json=allOperatorHistoricalRewards,proto3" json:"all_operator_historical_rewards"`
+}
+
+func (m *QueryAllOperatorHistoricalRewardsResponse) Reset() {
+	*m = QueryAllOperatorHistoricalRewardsResponse{}
+}
+func (m *QueryAllOperatorHistoricalRewardsResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryAllOperatorHistoricalRewardsResponse) ProtoMessage() {}
+func (*QueryAllOperatorHistoricalRewardsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{19}
+}
+func (m *QueryAllOperatorHistoricalRewardsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryAllOperatorHistoricalRewardsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryAllOperatorHistoricalRewardsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryAllOperatorHistoricalRewardsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryAllOperatorHistoricalRewardsResponse.Merge(m, src)
+}
+func (m *QueryAllOperatorHistoricalRewardsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryAllOperatorHistoricalRewardsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryAllOperatorHistoricalRewardsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryAllOperatorHistoricalRewardsResponse proto.InternalMessageInfo
+
+func (m *QueryAllOperatorHistoricalRewardsResponse) GetAllOperatorHistoricalRewards() []OperatorHistoricalRewardsWithPeriod {
+	if m != nil {
+		return m.AllOperatorHistoricalRewards
+	}
+	return nil
+}
+
 // QueryStakeChangeDelegationsRequest is the request to obtain the operator current rewards.
 type QueryOperatorCurrentRewardsRequest struct {
 	// operator address
@@ -910,7 +1081,7 @@ func (m *QueryOperatorCurrentRewardsRequest) Reset()         { *m = QueryOperato
 func (m *QueryOperatorCurrentRewardsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorCurrentRewardsRequest) ProtoMessage()    {}
 func (*QueryOperatorCurrentRewardsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{17}
+	return fileDescriptor_55aff14605a917cf, []int{20}
 }
 func (m *QueryOperatorCurrentRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -970,7 +1141,7 @@ func (m *QueryOperatorCurrentRewardsResponse) Reset()         { *m = QueryOperat
 func (m *QueryOperatorCurrentRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorCurrentRewardsResponse) ProtoMessage()    {}
 func (*QueryOperatorCurrentRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{18}
+	return fileDescriptor_55aff14605a917cf, []int{21}
 }
 func (m *QueryOperatorCurrentRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1019,7 +1190,7 @@ func (m *OperatorAVSRequest) Reset()         { *m = OperatorAVSRequest{} }
 func (m *OperatorAVSRequest) String() string { return proto.CompactTextString(m) }
 func (*OperatorAVSRequest) ProtoMessage()    {}
 func (*OperatorAVSRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{19}
+	return fileDescriptor_55aff14605a917cf, []int{22}
 }
 func (m *OperatorAVSRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1074,7 +1245,7 @@ func (m *QueryOperatorOutstandingRewardsResponse) Reset() {
 func (m *QueryOperatorOutstandingRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorOutstandingRewardsResponse) ProtoMessage()    {}
 func (*QueryOperatorOutstandingRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{20}
+	return fileDescriptor_55aff14605a917cf, []int{23}
 }
 func (m *QueryOperatorOutstandingRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1124,7 +1295,7 @@ func (m *QueryOperatorAccumulatedCommissionResponse) String() string {
 }
 func (*QueryOperatorAccumulatedCommissionResponse) ProtoMessage() {}
 func (*QueryOperatorAccumulatedCommissionResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{21}
+	return fileDescriptor_55aff14605a917cf, []int{24}
 }
 func (m *QueryOperatorAccumulatedCommissionResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1170,13 +1341,15 @@ type QueryOperatorSlashEventRequest struct {
 	EpochIdentifier string `protobuf:"bytes,3,opt,name=epoch_identifier,json=epochIdentifier,proto3" json:"epoch_identifier,omitempty"`
 	// epoch number
 	EpochNumber uint64 `protobuf:"varint,4,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	// epoch number
+	BlockHeight uint64 `protobuf:"varint,5,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 }
 
 func (m *QueryOperatorSlashEventRequest) Reset()         { *m = QueryOperatorSlashEventRequest{} }
 func (m *QueryOperatorSlashEventRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorSlashEventRequest) ProtoMessage()    {}
 func (*QueryOperatorSlashEventRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{22}
+	return fileDescriptor_55aff14605a917cf, []int{25}
 }
 func (m *QueryOperatorSlashEventRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1233,6 +1406,13 @@ func (m *QueryOperatorSlashEventRequest) GetEpochNumber() uint64 {
 	return 0
 }
 
+func (m *QueryOperatorSlashEventRequest) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
+}
+
 // QueryOperatorSlashEventResponse is the response to obtain the operator slash event.
 type QueryOperatorSlashEventResponse struct {
 	// operator_slash_event is the return value
@@ -1243,7 +1423,7 @@ func (m *QueryOperatorSlashEventResponse) Reset()         { *m = QueryOperatorSl
 func (m *QueryOperatorSlashEventResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorSlashEventResponse) ProtoMessage()    {}
 func (*QueryOperatorSlashEventResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{23}
+	return fileDescriptor_55aff14605a917cf, []int{26}
 }
 func (m *QueryOperatorSlashEventResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1279,6 +1459,181 @@ func (m *QueryOperatorSlashEventResponse) GetOperatorSlashEvent() *OperatorSlash
 	return nil
 }
 
+// QueryOperatorSlashEventsRequest is the request to obtain all slash events for
+// the specific operator, assetID and epoch identifier.
+type QueryOperatorSlashEventsRequest struct {
+	// operator address
+	Operator string `protobuf:"bytes,1,opt,name=operator,proto3" json:"operator,omitempty"`
+	// asset id
+	AssetId string `protobuf:"bytes,2,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
+	// epoch identifier
+	EpochIdentifier string `protobuf:"bytes,3,opt,name=epoch_identifier,json=epochIdentifier,proto3" json:"epoch_identifier,omitempty"`
+}
+
+func (m *QueryOperatorSlashEventsRequest) Reset()         { *m = QueryOperatorSlashEventsRequest{} }
+func (m *QueryOperatorSlashEventsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryOperatorSlashEventsRequest) ProtoMessage()    {}
+func (*QueryOperatorSlashEventsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{27}
+}
+func (m *QueryOperatorSlashEventsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryOperatorSlashEventsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryOperatorSlashEventsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryOperatorSlashEventsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOperatorSlashEventsRequest.Merge(m, src)
+}
+func (m *QueryOperatorSlashEventsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryOperatorSlashEventsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOperatorSlashEventsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryOperatorSlashEventsRequest proto.InternalMessageInfo
+
+func (m *QueryOperatorSlashEventsRequest) GetOperator() string {
+	if m != nil {
+		return m.Operator
+	}
+	return ""
+}
+
+func (m *QueryOperatorSlashEventsRequest) GetAssetId() string {
+	if m != nil {
+		return m.AssetId
+	}
+	return ""
+}
+
+func (m *QueryOperatorSlashEventsRequest) GetEpochIdentifier() string {
+	if m != nil {
+		return m.EpochIdentifier
+	}
+	return ""
+}
+
+// OperatorSlashEventWithHeight is a struct used for querying all slash events for the specific operator
+type OperatorSlashEventWithHeight struct {
+	// epoch_number is the epoch number within key
+	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	// block_height is the block height within key
+	BlockHeight uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	// operator_slash_event represents the slash event for the operator.
+	OperatorSlashEvent OperatorSlashEvent `protobuf:"bytes,3,opt,name=operator_slash_event,json=operatorSlashEvent,proto3" json:"operator_slash_event"`
+}
+
+func (m *OperatorSlashEventWithHeight) Reset()         { *m = OperatorSlashEventWithHeight{} }
+func (m *OperatorSlashEventWithHeight) String() string { return proto.CompactTextString(m) }
+func (*OperatorSlashEventWithHeight) ProtoMessage()    {}
+func (*OperatorSlashEventWithHeight) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{28}
+}
+func (m *OperatorSlashEventWithHeight) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OperatorSlashEventWithHeight) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OperatorSlashEventWithHeight.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OperatorSlashEventWithHeight) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorSlashEventWithHeight.Merge(m, src)
+}
+func (m *OperatorSlashEventWithHeight) XXX_Size() int {
+	return m.Size()
+}
+func (m *OperatorSlashEventWithHeight) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorSlashEventWithHeight.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OperatorSlashEventWithHeight proto.InternalMessageInfo
+
+func (m *OperatorSlashEventWithHeight) GetEpochNumber() uint64 {
+	if m != nil {
+		return m.EpochNumber
+	}
+	return 0
+}
+
+func (m *OperatorSlashEventWithHeight) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
+}
+
+func (m *OperatorSlashEventWithHeight) GetOperatorSlashEvent() OperatorSlashEvent {
+	if m != nil {
+		return m.OperatorSlashEvent
+	}
+	return OperatorSlashEvent{}
+}
+
+// QueryOperatorSlashEventsResponse is the response to obtain the operator slash events.
+type QueryOperatorSlashEventsResponse struct {
+	// operator_slash_events is the return value
+	OperatorSlashEvents []OperatorSlashEventWithHeight `protobuf:"bytes,1,rep,name=operator_slash_events,json=operatorSlashEvents,proto3" json:"operator_slash_events"`
+}
+
+func (m *QueryOperatorSlashEventsResponse) Reset()         { *m = QueryOperatorSlashEventsResponse{} }
+func (m *QueryOperatorSlashEventsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryOperatorSlashEventsResponse) ProtoMessage()    {}
+func (*QueryOperatorSlashEventsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{29}
+}
+func (m *QueryOperatorSlashEventsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryOperatorSlashEventsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryOperatorSlashEventsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryOperatorSlashEventsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOperatorSlashEventsResponse.Merge(m, src)
+}
+func (m *QueryOperatorSlashEventsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryOperatorSlashEventsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOperatorSlashEventsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryOperatorSlashEventsResponse proto.InternalMessageInfo
+
+func (m *QueryOperatorSlashEventsResponse) GetOperatorSlashEvents() []OperatorSlashEventWithHeight {
+	if m != nil {
+		return m.OperatorSlashEvents
+	}
+	return nil
+}
+
 // QueryStakerUnclaimedRewardsRequest is the request to obtain the staker unclaimed rewards.
 type QueryStakerUnclaimedRewardsRequest struct {
 	// staker id
@@ -1289,7 +1644,7 @@ func (m *QueryStakerUnclaimedRewardsRequest) Reset()         { *m = QueryStakerU
 func (m *QueryStakerUnclaimedRewardsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryStakerUnclaimedRewardsRequest) ProtoMessage()    {}
 func (*QueryStakerUnclaimedRewardsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{24}
+	return fileDescriptor_55aff14605a917cf, []int{30}
 }
 func (m *QueryStakerUnclaimedRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1335,7 +1690,7 @@ func (m *QueryStakerUnclaimedRewardsResponse) Reset()         { *m = QueryStaker
 func (m *QueryStakerUnclaimedRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStakerUnclaimedRewardsResponse) ProtoMessage()    {}
 func (*QueryStakerUnclaimedRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{25}
+	return fileDescriptor_55aff14605a917cf, []int{31}
 }
 func (m *QueryStakerUnclaimedRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1389,6 +1744,9 @@ func init() {
 	proto.RegisterType((*QueryDelegationStartingInfoResponse)(nil), "imuachain.feedistribution.v1.QueryDelegationStartingInfoResponse")
 	proto.RegisterType((*QueryOperatorHistoricalRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryOperatorHistoricalRewardsRequest")
 	proto.RegisterType((*QueryOperatorHistoricalRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorHistoricalRewardsResponse")
+	proto.RegisterType((*QueryAllOperatorHistoricalRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryAllOperatorHistoricalRewardsRequest")
+	proto.RegisterType((*OperatorHistoricalRewardsWithPeriod)(nil), "imuachain.feedistribution.v1.OperatorHistoricalRewardsWithPeriod")
+	proto.RegisterType((*QueryAllOperatorHistoricalRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryAllOperatorHistoricalRewardsResponse")
 	proto.RegisterType((*QueryOperatorCurrentRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryOperatorCurrentRewardsRequest")
 	proto.RegisterType((*QueryOperatorCurrentRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorCurrentRewardsResponse")
 	proto.RegisterType((*OperatorAVSRequest)(nil), "imuachain.feedistribution.v1.OperatorAVSRequest")
@@ -1396,6 +1754,9 @@ func init() {
 	proto.RegisterType((*QueryOperatorAccumulatedCommissionResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorAccumulatedCommissionResponse")
 	proto.RegisterType((*QueryOperatorSlashEventRequest)(nil), "imuachain.feedistribution.v1.QueryOperatorSlashEventRequest")
 	proto.RegisterType((*QueryOperatorSlashEventResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorSlashEventResponse")
+	proto.RegisterType((*QueryOperatorSlashEventsRequest)(nil), "imuachain.feedistribution.v1.QueryOperatorSlashEventsRequest")
+	proto.RegisterType((*OperatorSlashEventWithHeight)(nil), "imuachain.feedistribution.v1.OperatorSlashEventWithHeight")
+	proto.RegisterType((*QueryOperatorSlashEventsResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorSlashEventsResponse")
 	proto.RegisterType((*QueryStakerUnclaimedRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryStakerUnclaimedRewardsRequest")
 	proto.RegisterType((*QueryStakerUnclaimedRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryStakerUnclaimedRewardsResponse")
 }
@@ -1405,105 +1766,120 @@ func init() {
 }
 
 var fileDescriptor_55aff14605a917cf = []byte{
-	// 1568 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x59, 0xdf, 0x6f, 0x14, 0x45,
-	0x1c, 0xef, 0x5e, 0x6b, 0x29, 0x03, 0x62, 0x19, 0x4b, 0x2d, 0x5b, 0x38, 0x74, 0x04, 0x2c, 0x44,
-	0xba, 0xb4, 0xa0, 0x82, 0x85, 0x84, 0xb6, 0x14, 0xa8, 0xbf, 0x80, 0x6b, 0x40, 0xe3, 0x83, 0x97,
-	0xe9, 0xdd, 0xf4, 0x6e, 0xe5, 0x6e, 0xe7, 0xd8, 0xd9, 0x3d, 0x5a, 0x9a, 0xbe, 0x68, 0x34, 0x46,
-	0x1f, 0xd4, 0x18, 0xe3, 0x93, 0x09, 0xc6, 0x98, 0xf8, 0x68, 0x8c, 0xef, 0x46, 0x9f, 0x78, 0x31,
-	0x92, 0xf8, 0xe2, 0x93, 0x31, 0x60, 0xc2, 0xa3, 0xff, 0x80, 0x0f, 0x66, 0x67, 0x67, 0x7f, 0xdd,
-	0xed, 0xce, 0xcd, 0xb6, 0x09, 0x2f, 0xe4, 0x76, 0x76, 0xbe, 0xdf, 0xef, 0xe7, 0xf3, 0x99, 0xef,
-	0xec, 0xcc, 0x87, 0x82, 0x09, 0xb3, 0xe9, 0xe2, 0x4a, 0x1d, 0x9b, 0x96, 0xb1, 0x42, 0x48, 0xd5,
-	0x64, 0x8e, 0x6d, 0x2e, 0xbb, 0x8e, 0x49, 0x2d, 0xa3, 0x3d, 0x65, 0xdc, 0x74, 0x89, 0xbd, 0x36,
-	0xd9, 0xb2, 0xa9, 0x43, 0xe1, 0xbe, 0x70, 0xe6, 0x64, 0xc7, 0xcc, 0xc9, 0xf6, 0x94, 0xbe, 0x1b,
-	0x37, 0x4d, 0x8b, 0x1a, 0xfc, 0x5f, 0x3f, 0x40, 0x1f, 0xaf, 0x50, 0xd6, 0xa4, 0xcc, 0x4f, 0xd2,
-	0x91, 0x4d, 0x1f, 0xa9, 0xd1, 0x1a, 0xe5, 0x3f, 0x0d, 0xef, 0x97, 0x18, 0xdd, 0x57, 0xa3, 0xb4,
-	0xd6, 0x20, 0x06, 0x6e, 0x99, 0x06, 0xb6, 0x2c, 0xea, 0x60, 0x2f, 0x3f, 0x13, 0x6f, 0x0d, 0x29,
-	0xd6, 0x04, 0x22, 0x3f, 0xe0, 0x88, 0x34, 0xa0, 0x85, 0x6d, 0xdc, 0x14, 0xb9, 0xd1, 0x08, 0x80,
-	0x57, 0x3d, 0x78, 0x57, 0xf8, 0x60, 0x89, 0xdc, 0x74, 0x09, 0x73, 0xd0, 0x3b, 0xe0, 0xc9, 0xc4,
-	0x28, 0x6b, 0x51, 0x8b, 0x11, 0x78, 0x11, 0x0c, 0xfa, 0xc1, 0x63, 0xda, 0xd3, 0xda, 0xc4, 0x8e,
-	0xe9, 0x83, 0x93, 0x32, 0x6d, 0x26, 0xfd, 0xe8, 0xb9, 0xed, 0x77, 0xff, 0x3a, 0xd0, 0xf7, 0xfd,
-	0xc3, 0x1f, 0x8e, 0x6a, 0x25, 0x11, 0x8e, 0x16, 0x81, 0xce, 0xf3, 0xcf, 0x5e, 0x5f, 0x2a, 0x91,
-	0x5b, 0xd8, 0xae, 0xce, 0x32, 0x46, 0x1c, 0x51, 0x1d, 0x0e, 0x83, 0x7e, 0xdc, 0xf6, 0x6b, 0x6c,
-	0x2f, 0x79, 0x3f, 0xe1, 0x5e, 0x30, 0x84, 0xbd, 0x19, 0x65, 0xb3, 0x3a, 0x56, 0xe0, 0xc3, 0xdb,
-	0xf8, 0xf3, 0x62, 0x15, 0xb9, 0x60, 0x3c, 0x35, 0x95, 0x80, 0x7c, 0x1d, 0x0c, 0xe3, 0x36, 0x2b,
-	0xdb, 0xfc, 0x55, 0x99, 0x07, 0x09, 0xf0, 0xcf, 0xcb, 0xc1, 0x77, 0xe4, 0xdb, 0x85, 0xdb, 0x2c,
-	0xf6, 0x8c, 0x8a, 0x00, 0xf0, 0x19, 0x19, 0x88, 0xbb, 0x61, 0x71, 0x31, 0x32, 0x60, 0x71, 0x55,
-	0x72, 0xc2, 0xf2, 0xf3, 0x45, 0xb0, 0xf8, 0x33, 0xc2, 0x60, 0x7f, 0x50, 0x76, 0x9e, 0x36, 0x9b,
-	0xae, 0x65, 0x3a, 0x6b, 0x57, 0x28, 0x6d, 0x84, 0x85, 0xcf, 0x81, 0xa1, 0x15, 0x42, 0xca, 0x2d,
-	0x4a, 0x1b, 0xa2, 0xe0, 0x21, 0x79, 0xc1, 0x0b, 0x84, 0xf0, 0x04, 0xdb, 0x56, 0xfc, 0x1f, 0xe8,
-	0x73, 0x0d, 0xa0, 0x24, 0xb5, 0xf3, 0xb1, 0x90, 0xb0, 0xd0, 0x0d, 0xf0, 0x54, 0x8c, 0x61, 0x3c,
-	0xab, 0xa8, 0x7b, 0x42, 0x91, 0x68, 0x22, 0xfb, 0x9e, 0x90, 0x6f, 0x7c, 0x18, 0x39, 0xa0, 0xc8,
-	0x21, 0xc5, 0x56, 0x88, 0xcd, 0xf9, 0x00, 0x05, 0x9c, 0x12, 0x78, 0x3c, 0xde, 0x03, 0x41, 0x07,
-	0x1f, 0xcb, 0xd3, 0x04, 0xac, 0xb4, 0xd3, 0x8e, 0x3d, 0xa1, 0x6b, 0xe0, 0x20, 0xaf, 0xba, 0xe4,
-	0xe0, 0x1b, 0xc4, 0xbe, 0xec, 0x3a, 0xcc, 0xc1, 0x56, 0xd5, 0xb4, 0x6a, 0x7e, 0x4c, 0xb0, 0x9b,
-	0xe0, 0x38, 0xd8, 0xce, 0xf8, 0x14, 0xaf, 0x7d, 0xfd, 0x1e, 0x19, 0xf2, 0x07, 0x16, 0xab, 0x41,
-	0xeb, 0x14, 0xa2, 0xd6, 0xf9, 0x5a, 0x03, 0x87, 0x7a, 0xe4, 0x15, 0xa4, 0x1c, 0xa0, 0x8b, 0xc4,
-	0x34, 0x9a, 0x24, 0x24, 0x0f, 0x18, 0xbe, 0x28, 0x67, 0x98, 0x59, 0x63, 0x8c, 0x65, 0xbc, 0x41,
-	0x1f, 0x06, 0x0d, 0xc0, 0x63, 0xe7, 0xeb, 0xd8, 0xaa, 0x91, 0xf3, 0xa4, 0x41, 0x6a, 0xfe, 0x47,
-	0x2b, 0x60, 0x7d, 0x04, 0x0c, 0x93, 0x16, 0xad, 0xd4, 0xcb, 0x66, 0x95, 0x58, 0x8e, 0xb9, 0x62,
-	0x12, 0x5b, 0x90, 0x7f, 0x82, 0x8f, 0x2f, 0x86, 0xc3, 0x50, 0x07, 0x43, 0xb4, 0x45, 0x6c, 0xec,
-	0x50, 0x5b, 0x08, 0x11, 0x3e, 0x27, 0xb6, 0x7e, 0x7f, 0x72, 0xeb, 0x7f, 0xaa, 0x81, 0x67, 0xa5,
-	0x40, 0x84, 0x4c, 0x75, 0x30, 0x5a, 0x0d, 0x87, 0xcb, 0x15, 0x3e, 0xaf, 0x6c, 0x5a, 0x2b, 0x54,
-	0x48, 0x34, 0x2d, 0x97, 0x28, 0x4a, 0xe9, 0x97, 0x58, 0xb4, 0x56, 0x68, 0x69, 0xa4, 0x9a, 0x32,
-	0x8a, 0xbe, 0x0d, 0xa4, 0x89, 0x62, 0x96, 0x1c, 0x6c, 0x3b, 0xa6, 0x55, 0xe3, 0x51, 0x2a, 0x0d,
-	0x91, 0xfd, 0xad, 0x4b, 0xe8, 0xd4, 0xdf, 0xa1, 0x53, 0x9a, 0xdc, 0x03, 0xa9, 0x72, 0xa3, 0x2f,
-	0x03, 0xdd, 0xb2, 0x50, 0x0a, 0xdd, 0x2c, 0x30, 0x16, 0xd3, 0x8d, 0x89, 0x29, 0x71, 0xe5, 0x4e,
-	0xaa, 0x2a, 0x97, 0xc8, 0x1f, 0x5b, 0x8d, 0xf8, 0x38, 0xfa, 0x26, 0x68, 0xfc, 0xcb, 0x82, 0xd4,
-	0x25, 0x93, 0x39, 0xd4, 0x36, 0x2b, 0xb8, 0xd1, 0xb1, 0xa3, 0xe2, 0x42, 0x68, 0x92, 0x86, 0xe9,
-	0xd0, 0x2f, 0x4d, 0xa3, 0xfe, 0xf4, 0x96, 0x1c, 0x05, 0x83, 0x2d, 0x62, 0x9b, 0xb4, 0xca, 0x45,
-	0x1c, 0x28, 0x89, 0x27, 0x0f, 0xe3, 0xe1, 0x5e, 0x18, 0x85, 0x7c, 0xb7, 0xc0, 0x78, 0x00, 0xaa,
-	0x5c, 0x0f, 0x67, 0x75, 0x6c, 0xcf, 0x97, 0xe4, 0x0a, 0x66, 0x57, 0xd9, 0x4b, 0xb3, 0x5e, 0x45,
-	0x1b, 0x34, 0x88, 0x9e, 0x77, 0x6d, 0x9b, 0x58, 0xce, 0xa3, 0x16, 0x31, 0x6a, 0xb4, 0x2c, 0x20,
-	0x51, 0xa3, 0x85, 0x4a, 0x55, 0xfc, 0x29, 0x1d, 0x32, 0x9d, 0x54, 0x93, 0xa9, 0x23, 0xff, 0x28,
-	0x4d, 0x1d, 0x47, 0x73, 0x00, 0x06, 0x11, 0xb1, 0x43, 0x5c, 0xa6, 0x47, 0xf7, 0x57, 0xfa, 0x3b,
-	0x0d, 0x3c, 0x97, 0xe0, 0x26, 0xf9, 0x4e, 0xdf, 0x06, 0xfb, 0x42, 0x7e, 0xd9, 0x5f, 0xea, 0x53,
-	0x6a, 0x1c, 0x53, 0xea, 0xe8, 0x34, 0xf3, 0x1d, 0xfa, 0x51, 0x03, 0x47, 0x13, 0x38, 0x67, 0x2b,
-	0x15, 0xb7, 0xe9, 0x36, 0xb0, 0x43, 0xaa, 0xde, 0x15, 0xc1, 0x64, 0x2c, 0x7e, 0x6c, 0xbf, 0xaf,
-	0x81, 0x03, 0x21, 0x56, 0x1c, 0x4d, 0x2d, 0x57, 0xc2, 0xb9, 0x02, 0xee, 0x8c, 0x1a, 0xdc, 0xf4,
-	0x72, 0xfb, 0xa9, 0xec, 0xb5, 0x27, 0x6e, 0x31, 0x01, 0x7a, 0xa9, 0x81, 0x59, 0x7d, 0xa1, 0xcd,
-	0xd7, 0xf0, 0x51, 0x7d, 0x02, 0x9e, 0x01, 0x3b, 0xfd, 0xa9, 0x96, 0xdb, 0x5c, 0x16, 0x5f, 0xd3,
-	0x81, 0xd2, 0x0e, 0x3e, 0xf6, 0x06, 0x1f, 0x42, 0x1f, 0x68, 0xe0, 0x40, 0x26, 0x4e, 0xa1, 0xe8,
-	0x32, 0x18, 0x09, 0x05, 0x65, 0xde, 0xeb, 0x32, 0xf1, 0xde, 0x0b, 0x15, 0x8f, 0xab, 0xa9, 0x18,
-	0xcb, 0x0b, 0x69, 0xd7, 0x18, 0x9a, 0x8d, 0x9f, 0xc8, 0xf6, 0x35, 0xab, 0xd2, 0xc0, 0x66, 0x93,
-	0x54, 0x73, 0xdc, 0x43, 0xd0, 0x6a, 0xfc, 0x2c, 0x4d, 0x49, 0x21, 0xd8, 0x5c, 0x05, 0xdb, 0xa2,
-	0xae, 0xed, 0x9f, 0xd8, 0x31, 0x3d, 0x25, 0x27, 0xe0, 0x2d, 0x2a, 0xb5, 0xa2, 0xcb, 0x1c, 0x76,
-	0xf0, 0xdc, 0x80, 0x67, 0x08, 0x4a, 0x41, 0x9e, 0xe9, 0x9f, 0xc7, 0xc1, 0x63, 0xbc, 0x34, 0xbc,
-	0xa3, 0x81, 0x41, 0xdf, 0x34, 0xc0, 0x1e, 0xba, 0x74, 0x7b, 0x16, 0x7d, 0x2a, 0x47, 0x84, 0x4f,
-	0x06, 0x4d, 0x7d, 0xe4, 0xb9, 0x92, 0xf7, 0xfe, 0xf8, 0xe7, 0x8b, 0xc2, 0x61, 0x78, 0xd0, 0x50,
-	0x70, 0x4d, 0xf0, 0x77, 0x0d, 0xec, 0x4a, 0xde, 0x0a, 0xe1, 0x29, 0x85, 0xc2, 0xa9, 0x46, 0x47,
-	0x3f, 0xbd, 0x89, 0x48, 0x01, 0xfd, 0x52, 0x04, 0xfd, 0x2c, 0x9c, 0x91, 0x43, 0x8f, 0x5f, 0x7c,
-	0x8d, 0x75, 0xdc, 0x66, 0x1b, 0xc6, 0x7a, 0xb0, 0x3f, 0x36, 0xe0, 0xaf, 0x1a, 0xd8, 0xdd, 0x75,
-	0x6f, 0x86, 0x13, 0x0a, 0x17, 0x63, 0x9f, 0xc4, 0x19, 0x05, 0x12, 0x99, 0xf7, 0x72, 0xb4, 0x10,
-	0xf1, 0x78, 0x19, 0x9e, 0x52, 0xe7, 0xc1, 0xca, 0xcb, 0x6b, 0x65, 0xdc, 0x66, 0x3e, 0x1f, 0xf8,
-	0x53, 0x7c, 0x59, 0xf8, 0x2a, 0xe7, 0x60, 0x90, 0x6b, 0x19, 0x12, 0x3e, 0x0e, 0x9d, 0x8d, 0xe0,
-	0x4f, 0xc3, 0xe3, 0x4a, 0xf0, 0x79, 0x23, 0x09, 0xd8, 0xbf, 0x68, 0x60, 0xb8, 0xd3, 0xaa, 0xe5,
-	0x00, 0x3e, 0xa3, 0x06, 0x3c, 0xd5, 0x09, 0xa2, 0x0b, 0x11, 0xf4, 0x19, 0x78, 0x5a, 0x0e, 0xbd,
-	0x12, 0x64, 0x08, 0x1d, 0x2b, 0xa5, 0x0d, 0xc1, 0xe1, 0x37, 0x0d, 0xec, 0x49, 0x35, 0x6b, 0x39,
-	0x88, 0x9c, 0xcb, 0xb3, 0x02, 0x69, 0x76, 0x33, 0xd7, 0x7e, 0xc8, 0xf0, 0xa5, 0x82, 0xcf, 0xbf,
-	0x1a, 0xd0, 0xb3, 0xcf, 0x5a, 0xa8, 0xf8, 0xc1, 0x8e, 0x91, 0x5b, 0x50, 0x20, 0xd7, 0xfb, 0x12,
-	0x81, 0xde, 0x8a, 0x18, 0xbe, 0x0e, 0x5f, 0x95, 0x33, 0x94, 0xdd, 0x36, 0x8c, 0xf5, 0xe0, 0xed,
-	0x86, 0x60, 0xfc, 0x9f, 0x06, 0xc6, 0xb2, 0x7c, 0x20, 0x9c, 0x53, 0x40, 0xdf, 0xc3, 0x00, 0xeb,
-	0xf3, 0x5b, 0xca, 0x21, 0xf8, 0xbf, 0x19, 0xf1, 0x7f, 0x0d, 0xbe, 0x22, 0xe7, 0x9f, 0xed, 0x8a,
-	0x8d, 0xf5, 0xf0, 0x08, 0x0c, 0xe8, 0x7f, 0x52, 0x00, 0xa3, 0xe9, 0x0e, 0x12, 0x9e, 0x53, 0x05,
-	0x9e, 0xe5, 0x82, 0xf5, 0xd9, 0x2d, 0x64, 0x10, 0xc4, 0x1b, 0x11, 0x71, 0x0c, 0xcb, 0x0a, 0xc4,
-	0x03, 0x8b, 0x1b, 0xd9, 0x2c, 0x66, 0xac, 0x77, 0xde, 0x7a, 0x36, 0x92, 0x7d, 0x10, 0x1e, 0x07,
-	0x5f, 0x15, 0xc0, 0x68, 0xba, 0x6f, 0x53, 0x52, 0x43, 0x6a, 0x7c, 0x95, 0xd4, 0x90, 0x9b, 0x52,
-	0xb4, 0x1a, 0xa9, 0xd1, 0x84, 0x37, 0x7a, 0xfc, 0xd7, 0x68, 0x86, 0x7b, 0xed, 0x68, 0x82, 0x80,
-	0x7b, 0x42, 0x91, 0x2e, 0xbd, 0xe0, 0x9d, 0x02, 0xd8, 0x9b, 0xe9, 0xc7, 0xe0, 0x7c, 0x8e, 0x5d,
-	0x9e, 0xe5, 0x6b, 0xf5, 0xf3, 0x5b, 0x4b, 0xb2, 0x09, 0x89, 0x24, 0x0e, 0x35, 0xbd, 0x41, 0x52,
-	0x3b, 0xc9, 0x37, 0xc7, 0xfe, 0x56, 0x4a, 0xf7, 0x62, 0x4a, 0xcd, 0x23, 0xf5, 0xab, 0x4a, 0xcd,
-	0x23, 0x37, 0x9a, 0xb9, 0xb6, 0x52, 0x96, 0x23, 0x55, 0x96, 0xc5, 0x3b, 0x49, 0xf6, 0x4b, 0x6d,
-	0xd0, 0x26, 0x0e, 0x93, 0x4b, 0x39, 0x44, 0x90, 0x3a, 0x3d, 0x54, 0x8a, 0xb4, 0xb8, 0x08, 0x17,
-	0x7a, 0x9c, 0x98, 0xa9, 0x46, 0xb0, 0xfb, 0x24, 0xf9, 0xb8, 0x10, 0x39, 0xeb, 0xc8, 0x9e, 0xc0,
-	0x33, 0x39, 0x40, 0x77, 0x39, 0x3d, 0xfd, 0xec, 0x26, 0xa3, 0x05, 0xcf, 0x5b, 0x11, 0xcf, 0x06,
-	0x7c, 0x57, 0x71, 0xcd, 0x63, 0x46, 0x2d, 0xc7, 0x36, 0x88, 0xdb, 0xc5, 0x0d, 0xf8, 0x50, 0x13,
-	0xe7, 0x4a, 0x97, 0x9b, 0x52, 0x3f, 0x57, 0xb2, 0xbc, 0x9c, 0xfa, 0xb9, 0x92, 0x69, 0xe5, 0x72,
-	0x5d, 0x99, 0xdc, 0x20, 0x49, 0xda, 0x39, 0x3a, 0x77, 0xf9, 0xee, 0xfd, 0xa2, 0x76, 0xef, 0x7e,
-	0x51, 0xfb, 0xfb, 0x7e, 0x51, 0xfb, 0xec, 0x41, 0xb1, 0xef, 0xde, 0x83, 0x62, 0xdf, 0x9f, 0x0f,
-	0x8a, 0x7d, 0x6f, 0xbf, 0x50, 0x33, 0x9d, 0xba, 0xbb, 0x3c, 0x59, 0xa1, 0x4d, 0x5e, 0xe0, 0xd8,
-	0xea, 0xda, 0xed, 0x58, 0xa5, 0xd5, 0xae, 0x5a, 0xce, 0x5a, 0x8b, 0xb0, 0xe5, 0x41, 0xfe, 0xc7,
-	0xa9, 0x13, 0xff, 0x07, 0x00, 0x00, 0xff, 0xff, 0x6e, 0xcd, 0x2b, 0xbd, 0xa6, 0x1b, 0x00, 0x00,
+	// 1803 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x5a, 0xdb, 0x6f, 0x14, 0xd5,
+	0x1f, 0xef, 0xd9, 0x96, 0x52, 0x0e, 0xfc, 0xf8, 0x95, 0x43, 0xa9, 0x65, 0x5b, 0xb6, 0x78, 0xb8,
+	0x58, 0x88, 0x74, 0x69, 0x41, 0x05, 0x0a, 0x86, 0xb6, 0x14, 0x5a, 0x6f, 0xc0, 0x36, 0x80, 0x31,
+	0x86, 0xc9, 0xe9, 0xee, 0x74, 0x77, 0xec, 0xec, 0x9c, 0x65, 0x66, 0x76, 0x69, 0x69, 0xfa, 0x22,
+	0xd1, 0x18, 0x35, 0x5e, 0x62, 0x8c, 0xbe, 0x98, 0x60, 0xd4, 0xc4, 0x47, 0x62, 0x7c, 0xe4, 0x45,
+	0x9f, 0x78, 0x51, 0x49, 0x7c, 0xf1, 0xc9, 0x18, 0x30, 0xc1, 0x37, 0xfe, 0x01, 0x13, 0xcd, 0x9e,
+	0x39, 0x73, 0xdb, 0x9d, 0x39, 0x7b, 0x66, 0x9b, 0xe0, 0x0b, 0xd9, 0x39, 0x97, 0xef, 0xf9, 0x7c,
+	0x3e, 0xe7, 0x7b, 0x6e, 0x1f, 0x0a, 0x47, 0xb4, 0x72, 0x95, 0xe4, 0x4b, 0x44, 0x33, 0xb2, 0x8b,
+	0xaa, 0x5a, 0xd0, 0x2c, 0xdb, 0xd4, 0x16, 0xaa, 0xb6, 0x46, 0x8d, 0x6c, 0x6d, 0x2c, 0x7b, 0xad,
+	0xaa, 0x9a, 0x2b, 0xa3, 0x15, 0x93, 0xda, 0x14, 0x0d, 0x79, 0x2d, 0x47, 0x1b, 0x5a, 0x8e, 0xd6,
+	0xc6, 0xd2, 0xdb, 0x48, 0x59, 0x33, 0x68, 0x96, 0xfd, 0xeb, 0x74, 0x48, 0x0f, 0xe6, 0xa9, 0x55,
+	0xa6, 0x96, 0x13, 0xa4, 0x21, 0x5a, 0xba, 0xaf, 0x48, 0x8b, 0x94, 0xfd, 0xcc, 0xd6, 0x7f, 0xf1,
+	0xd2, 0xa1, 0x22, 0xa5, 0x45, 0x5d, 0xcd, 0x92, 0x8a, 0x96, 0x25, 0x86, 0x41, 0x6d, 0x52, 0x8f,
+	0x6f, 0xf1, 0xda, 0xac, 0x10, 0x6b, 0x08, 0x91, 0xd3, 0xe1, 0x80, 0xb0, 0x43, 0x85, 0x98, 0xa4,
+	0xcc, 0x63, 0xe3, 0x3e, 0x88, 0x2e, 0xd6, 0xe1, 0x5d, 0x60, 0x85, 0x39, 0xf5, 0x5a, 0x55, 0xb5,
+	0x6c, 0x7c, 0x15, 0x6e, 0x0f, 0x95, 0x5a, 0x15, 0x6a, 0x58, 0x2a, 0x3a, 0x07, 0xbb, 0x9d, 0xce,
+	0x03, 0x60, 0x37, 0x18, 0xd9, 0x3c, 0xbe, 0x77, 0x54, 0xa4, 0xcd, 0xa8, 0xd3, 0x7b, 0x6a, 0xd3,
+	0xdd, 0xdf, 0x87, 0x3b, 0xbe, 0x7d, 0x78, 0xfb, 0x20, 0xc8, 0xf1, 0xee, 0x78, 0x0e, 0xa6, 0x59,
+	0xfc, 0xc9, 0xcb, 0xf3, 0x39, 0xf5, 0x3a, 0x31, 0x0b, 0x93, 0x96, 0xa5, 0xda, 0x7c, 0x74, 0xd4,
+	0x0b, 0x3b, 0x49, 0xcd, 0x19, 0x63, 0x53, 0xae, 0xfe, 0x13, 0xed, 0x84, 0x3d, 0xa4, 0xde, 0x42,
+	0xd1, 0x0a, 0x03, 0x29, 0x56, 0xbc, 0x91, 0x7d, 0xcf, 0x15, 0x70, 0x15, 0x0e, 0x46, 0x86, 0xe2,
+	0x90, 0x2f, 0xc3, 0x5e, 0x52, 0xb3, 0x14, 0x93, 0x55, 0x29, 0xac, 0x13, 0x07, 0xff, 0xb4, 0x18,
+	0x7c, 0x43, 0xbc, 0xad, 0xa4, 0x66, 0x05, 0xbe, 0x71, 0x06, 0x42, 0xd6, 0x22, 0x06, 0x71, 0x33,
+	0x2c, 0x26, 0x46, 0x0c, 0x2c, 0xa6, 0x4a, 0x42, 0x58, 0x4e, 0x3c, 0x1f, 0x16, 0xfb, 0xc6, 0x04,
+	0xee, 0x72, 0x87, 0x9d, 0xa6, 0xe5, 0x72, 0xd5, 0xd0, 0xec, 0x95, 0x0b, 0x94, 0xea, 0xde, 0xc0,
+	0xa7, 0x61, 0xcf, 0xa2, 0xaa, 0x2a, 0x15, 0x4a, 0x75, 0x3e, 0xe0, 0x3e, 0xf1, 0x80, 0x67, 0x55,
+	0x95, 0x05, 0xd8, 0xb8, 0xe8, 0xfc, 0xc0, 0x1f, 0x03, 0x88, 0xc3, 0xd4, 0xce, 0x04, 0xba, 0x78,
+	0x03, 0x2d, 0xc1, 0x27, 0x02, 0x0c, 0x83, 0x51, 0xf9, 0xb8, 0x47, 0x24, 0x89, 0x86, 0xa2, 0xef,
+	0xf0, 0xf8, 0x06, 0x8b, 0xb1, 0x0d, 0x33, 0x0c, 0x52, 0x60, 0x86, 0xac, 0x29, 0x07, 0x20, 0x87,
+	0x93, 0x83, 0xff, 0x0b, 0xe6, 0x80, 0x9b, 0xc1, 0x87, 0x92, 0x24, 0x81, 0x95, 0xdb, 0x62, 0x06,
+	0xbe, 0xf0, 0x25, 0xb8, 0x97, 0x8d, 0x3a, 0x6f, 0x93, 0x25, 0xd5, 0x3c, 0x5f, 0xb5, 0x2d, 0x9b,
+	0x18, 0x05, 0xcd, 0x28, 0x3a, 0x7d, 0xdc, 0xd5, 0x84, 0x06, 0xe1, 0x26, 0x8b, 0x35, 0xa9, 0xa7,
+	0xaf, 0x93, 0x23, 0x3d, 0x4e, 0xc1, 0x5c, 0xc1, 0x4d, 0x9d, 0x94, 0x9f, 0x3a, 0x5f, 0x00, 0xb8,
+	0xaf, 0x45, 0x5c, 0x4e, 0xca, 0x86, 0x69, 0x1e, 0x98, 0xfa, 0x8d, 0xb8, 0xe4, 0x2e, 0xc3, 0x67,
+	0xc5, 0x0c, 0x63, 0xc7, 0x18, 0xb0, 0x62, 0x6a, 0xf0, 0xdb, 0x6e, 0x02, 0xb0, 0xbe, 0xd3, 0x25,
+	0x62, 0x14, 0xd5, 0x33, 0xaa, 0xae, 0x16, 0x9d, 0x4d, 0xcb, 0x65, 0x7d, 0x00, 0xf6, 0xaa, 0x15,
+	0x9a, 0x2f, 0x29, 0x5a, 0x41, 0x35, 0x6c, 0x6d, 0x51, 0x53, 0x4d, 0x4e, 0xfe, 0xff, 0xac, 0x7c,
+	0xce, 0x2b, 0x46, 0x69, 0xd8, 0x43, 0x2b, 0xaa, 0x49, 0x6c, 0x6a, 0x72, 0x21, 0xbc, 0xef, 0xd0,
+	0xd2, 0xef, 0x0c, 0x2f, 0xfd, 0x0f, 0x01, 0xdc, 0x23, 0x04, 0xc2, 0x65, 0x2a, 0xc1, 0xfe, 0x82,
+	0x57, 0xac, 0xe4, 0x59, 0x3b, 0x45, 0x33, 0x16, 0x29, 0x97, 0x68, 0x5c, 0x2c, 0x91, 0x1f, 0xd2,
+	0x19, 0x62, 0xce, 0x58, 0xa4, 0xb9, 0xbe, 0x42, 0x44, 0x29, 0xfe, 0xca, 0x95, 0xc6, 0xef, 0x33,
+	0x6f, 0x13, 0xd3, 0xd6, 0x8c, 0x22, 0xeb, 0x25, 0x93, 0x10, 0xf1, 0x7b, 0x5d, 0x48, 0xa7, 0xce,
+	0x06, 0x9d, 0xa2, 0xe4, 0xee, 0x8a, 0x94, 0x1b, 0x7f, 0xea, 0xea, 0x16, 0x87, 0x92, 0xeb, 0x66,
+	0xc0, 0x81, 0x80, 0x6e, 0x16, 0x6f, 0x12, 0x54, 0xee, 0xa8, 0xac, 0x72, 0xa1, 0xf8, 0x81, 0xd9,
+	0x08, 0x96, 0xe3, 0x2f, 0xdd, 0xc4, 0x3f, 0xcf, 0x49, 0xcd, 0x6a, 0x96, 0x4d, 0x4d, 0x2d, 0x4f,
+	0xf4, 0x86, 0x15, 0x15, 0x14, 0x02, 0x08, 0x12, 0xa6, 0x41, 0xbf, 0x28, 0x8d, 0x3a, 0xa3, 0x53,
+	0xb2, 0x1f, 0x76, 0x57, 0x54, 0x53, 0xa3, 0x05, 0x26, 0x62, 0x57, 0x8e, 0x7f, 0xd5, 0x31, 0xee,
+	0x6f, 0x85, 0x91, 0xcb, 0x77, 0x1d, 0x0e, 0xba, 0xa0, 0x94, 0x92, 0xd7, 0xaa, 0x61, 0x79, 0x3e,
+	0x27, 0x56, 0x30, 0x7e, 0x94, 0x9d, 0x34, 0xae, 0x0a, 0xbf, 0x0f, 0xe0, 0x88, 0xb3, 0x43, 0xeb,
+	0xfa, 0x7f, 0x2f, 0x25, 0xbe, 0x03, 0xe0, 0x9e, 0x58, 0x18, 0x57, 0x34, 0xbb, 0x74, 0x81, 0x49,
+	0x1b, 0x90, 0x1c, 0x04, 0x25, 0x47, 0x6b, 0x62, 0x1d, 0x53, 0xeb, 0xd2, 0x71, 0xaa, 0xab, 0x7e,
+	0x3b, 0x11, 0xa9, 0x79, 0x07, 0xc0, 0x03, 0x12, 0x6a, 0xf2, 0x49, 0xff, 0x00, 0xc0, 0x61, 0xa2,
+	0xeb, 0x8a, 0x78, 0xe6, 0x3b, 0x47, 0x36, 0x8f, 0x4f, 0xb6, 0x89, 0xd8, 0x57, 0x8c, 0x63, 0x1f,
+	0x22, 0x02, 0x60, 0xfe, 0x6e, 0xed, 0x36, 0x99, 0xae, 0x9a, 0xa6, 0x6a, 0xd8, 0x8f, 0x3d, 0x0d,
+	0xbc, 0x5d, 0x27, 0x0e, 0x88, 0xbf, 0xeb, 0x78, 0xe2, 0xe5, 0x9d, 0x26, 0x0d, 0x6b, 0xe6, 0xa8,
+	0x9c, 0x72, 0x0d, 0xf1, 0xfb, 0x69, 0x64, 0x39, 0x9e, 0x82, 0xc8, 0xed, 0x11, 0xb8, 0xd1, 0x89,
+	0xf4, 0x68, 0x3e, 0xb2, 0xbf, 0x01, 0xf0, 0xa9, 0x10, 0x37, 0xc1, 0xa1, 0x7d, 0x03, 0x0e, 0x79,
+	0xfc, 0xe2, 0x8f, 0xed, 0x63, 0x72, 0x1c, 0x23, 0xc6, 0x49, 0xd3, 0xd8, 0x3a, 0xfc, 0x1d, 0x80,
+	0x07, 0x43, 0x38, 0x27, 0xf3, 0xf9, 0x6a, 0xb9, 0xaa, 0x13, 0x5b, 0x2d, 0xd4, 0xef, 0x8b, 0x9a,
+	0x65, 0x05, 0xef, 0x70, 0x37, 0x01, 0x1c, 0xf6, 0xb0, 0x12, 0xbf, 0xa9, 0x92, 0xf7, 0xda, 0x72,
+	0xb8, 0x13, 0x72, 0x70, 0xa3, 0x87, 0xdb, 0x45, 0x45, 0xd5, 0xf8, 0x2e, 0xe0, 0xb7, 0x3b, 0x37,
+	0xca, 0xbc, 0x4e, 0xac, 0xd2, 0x4c, 0x8d, 0xcd, 0xe1, 0xe3, 0x3a, 0x0f, 0x9e, 0x84, 0x5b, 0x9c,
+	0xa6, 0x46, 0xb5, 0xbc, 0xc0, 0x8f, 0xd6, 0xae, 0xdc, 0x66, 0x56, 0xf6, 0x0a, 0x2b, 0xaa, 0x37,
+	0x59, 0xd0, 0x69, 0x7e, 0x49, 0x29, 0xa9, 0x5a, 0xb1, 0x64, 0x0f, 0x6c, 0x70, 0x9a, 0xb0, 0xb2,
+	0x59, 0x56, 0x84, 0xdf, 0x02, 0x70, 0x38, 0x96, 0x0a, 0x17, 0x7d, 0x01, 0xf6, 0x79, 0x9a, 0x5b,
+	0xf5, 0x6a, 0x45, 0xad, 0xd7, 0x73, 0xa1, 0x0f, 0xcb, 0x09, 0x1d, 0x88, 0x8b, 0x68, 0x53, 0x19,
+	0xbe, 0x19, 0x8f, 0xe3, 0x31, 0xee, 0x08, 0x3f, 0x03, 0x38, 0xd4, 0x0c, 0xa0, 0xbe, 0xbf, 0x39,
+	0x72, 0x35, 0x89, 0x0e, 0x5a, 0x8b, 0x9e, 0x6a, 0x12, 0x1d, 0x95, 0x62, 0x04, 0xed, 0x6c, 0x4f,
+	0x50, 0xbe, 0xeb, 0x46, 0xc9, 0xfa, 0x39, 0x80, 0xbb, 0xe3, 0x65, 0xf5, 0x2e, 0xed, 0x3b, 0xa2,
+	0xe0, 0xb8, 0xc7, 0xc2, 0x89, 0xa4, 0x78, 0x7c, 0xbd, 0x38, 0xb2, 0xed, 0xcd, 0xc8, 0x2c, 0x3c,
+	0x19, 0xbc, 0xb3, 0x9b, 0x97, 0x8c, 0xbc, 0x4e, 0xb4, 0xb2, 0x5a, 0x48, 0xf0, 0x52, 0xc1, 0xcb,
+	0xc1, 0xdb, 0x76, 0x44, 0x08, 0xce, 0xef, 0x22, 0xdc, 0x18, 0x3e, 0xe8, 0xc6, 0xc4, 0x8c, 0xea,
+	0x2b, 0x9d, 0x1a, 0xfe, 0x73, 0x8f, 0xd8, 0x84, 0x13, 0x71, 0xe3, 0x8c, 0xff, 0x35, 0x0c, 0x37,
+	0xb0, 0xa1, 0xd1, 0x2d, 0x00, 0xbb, 0x1d, 0x5b, 0x01, 0xb5, 0x98, 0xb8, 0x66, 0x57, 0x23, 0x3d,
+	0x96, 0xa0, 0x87, 0x43, 0x06, 0x8f, 0xbd, 0xf3, 0xf0, 0xf6, 0x41, 0xf0, 0xe6, 0xaf, 0x7f, 0x7e,
+	0x92, 0xda, 0x8f, 0xf6, 0x66, 0x25, 0x7c, 0x15, 0xf4, 0x0b, 0x80, 0x5b, 0xc3, 0xef, 0x46, 0x74,
+	0x4c, 0x62, 0xe0, 0x48, 0x2b, 0x24, 0x7d, 0xbc, 0x8d, 0x9e, 0x1c, 0xfa, 0xac, 0x0f, 0xfd, 0x14,
+	0x9a, 0x10, 0x43, 0x0f, 0x3e, 0x8d, 0xb3, 0xab, 0xa4, 0x66, 0xad, 0x65, 0x57, 0xdd, 0x05, 0xbe,
+	0x86, 0x7e, 0x04, 0x70, 0x5b, 0xd3, 0xcb, 0x1a, 0x8d, 0x48, 0x3c, 0x9d, 0x1d, 0x12, 0x27, 0x25,
+	0x48, 0xc4, 0xbe, 0xdc, 0xf1, 0x8c, 0xcf, 0xe3, 0x04, 0x3a, 0x26, 0xcf, 0xc3, 0x52, 0x16, 0x56,
+	0x14, 0x52, 0xb3, 0x1c, 0x3e, 0xe8, 0xfb, 0xe0, 0xb4, 0xb0, 0x59, 0x4e, 0xc0, 0x20, 0xd1, 0x34,
+	0x84, 0x9c, 0x1e, 0x7c, 0xca, 0x87, 0x3f, 0x8e, 0x0e, 0x4b, 0xc1, 0x67, 0x89, 0xc4, 0x61, 0xff,
+	0x00, 0x60, 0x6f, 0xa3, 0x99, 0x93, 0x00, 0xf8, 0x84, 0x1c, 0xf0, 0x48, 0xaf, 0x08, 0x9f, 0xf5,
+	0xa1, 0x4f, 0xa0, 0xe3, 0x62, 0xe8, 0x79, 0x37, 0x82, 0xe7, 0x69, 0x51, 0xaa, 0x73, 0x0e, 0x3f,
+	0x01, 0xb8, 0x23, 0xd2, 0xce, 0x49, 0x40, 0xe4, 0x74, 0x92, 0x19, 0x88, 0x32, 0xa4, 0x12, 0xad,
+	0x87, 0x18, 0xe7, 0x8a, 0xf3, 0x79, 0x04, 0x60, 0x3a, 0xfe, 0x02, 0x86, 0x24, 0x4f, 0x94, 0x00,
+	0xb9, 0x19, 0x09, 0x72, 0xad, 0x6f, 0x96, 0xf8, 0x55, 0x9f, 0xe1, 0xcb, 0xe8, 0x45, 0x31, 0x43,
+	0xd1, 0x15, 0x34, 0xbb, 0xea, 0xd6, 0xae, 0x71, 0xc6, 0x7f, 0x03, 0x38, 0x10, 0xe7, 0x14, 0xa1,
+	0x29, 0x09, 0xf4, 0x2d, 0x2c, 0xb2, 0xf4, 0xf4, 0xba, 0x62, 0x70, 0xfe, 0x57, 0x7c, 0xfe, 0x2f,
+	0xa1, 0x17, 0xc4, 0xfc, 0xe3, 0x7d, 0xb3, 0xec, 0xaa, 0x77, 0x04, 0xba, 0xf4, 0xdf, 0x4b, 0xc1,
+	0xfe, 0x68, 0x8f, 0x09, 0x9d, 0x96, 0x05, 0x1e, 0xe7, 0x93, 0xa5, 0x27, 0xd7, 0x11, 0x81, 0x13,
+	0xd7, 0x7d, 0xe2, 0x04, 0x29, 0x12, 0xc4, 0x5d, 0x13, 0xcc, 0x37, 0x62, 0xac, 0xec, 0x6a, 0xe3,
+	0xb5, 0x6d, 0x2d, 0x9c, 0x07, 0xde, 0x71, 0xf0, 0x59, 0x0a, 0xf6, 0x47, 0x3b, 0x3b, 0x52, 0x6a,
+	0x08, 0xad, 0x31, 0x29, 0x35, 0xc4, 0xb6, 0x15, 0x5e, 0xf6, 0xd5, 0x28, 0xa3, 0xa5, 0x16, 0xff,
+	0x79, 0x12, 0xe3, 0x6f, 0x35, 0x24, 0x81, 0xcb, 0x3d, 0xa4, 0x48, 0x93, 0x5e, 0xe8, 0x56, 0x0a,
+	0xee, 0x8c, 0x7d, 0x89, 0xa3, 0xe9, 0x04, 0xab, 0x3c, 0xce, 0xae, 0x49, 0x9f, 0x59, 0x5f, 0x90,
+	0x36, 0x24, 0x12, 0x38, 0x19, 0xd1, 0x09, 0x12, 0x99, 0x49, 0x8e, 0x97, 0xb3, 0x86, 0xbe, 0x4e,
+	0xc1, 0x21, 0x91, 0x91, 0x82, 0xce, 0xca, 0x6c, 0xf4, 0xad, 0x7d, 0xad, 0xf4, 0xb9, 0x75, 0xc7,
+	0xe1, 0x5a, 0x59, 0xbe, 0x56, 0x25, 0xb4, 0xd8, 0xe2, 0xdc, 0x10, 0x3b, 0x3f, 0xd2, 0x7a, 0xb1,
+	0x1d, 0x27, 0xda, 0xc7, 0x90, 0x5a, 0x63, 0x42, 0xaf, 0x47, 0x6a, 0x8d, 0x89, 0x4d, 0x9a, 0x44,
+	0x3b, 0x4e, 0x9c, 0x9b, 0x23, 0xaf, 0xc6, 0x23, 0x00, 0x77, 0x09, 0x2d, 0x84, 0x36, 0xce, 0xdc,
+	0xd9, 0x04, 0x22, 0x08, 0x5d, 0x12, 0x9c, 0xf3, 0xb5, 0x38, 0x87, 0x66, 0x5a, 0x24, 0x48, 0xa4,
+	0x89, 0xd2, 0x7c, 0xe0, 0xbe, 0x9b, 0xf2, 0x5d, 0x29, 0xff, 0x19, 0x87, 0x4e, 0x26, 0x00, 0xdd,
+	0xe4, 0x92, 0xa4, 0x4f, 0xb5, 0xd9, 0x9b, 0xf3, 0xbc, 0xee, 0xf3, 0xd4, 0xd1, 0x1b, 0x92, 0x73,
+	0x1e, 0x78, 0xe1, 0x26, 0xd8, 0x2d, 0x82, 0xaf, 0xfe, 0x35, 0xf4, 0x0f, 0x80, 0xdb, 0x23, 0x5e,
+	0xd4, 0xa8, 0x3d, 0x3e, 0xde, 0x32, 0x78, 0xbe, 0xdd, 0xee, 0x5c, 0x0f, 0xcd, 0xd7, 0xe3, 0x2a,
+	0x7a, 0x3d, 0xb9, 0x1e, 0x09, 0x16, 0xc0, 0x43, 0xc0, 0x2f, 0x20, 0x4d, 0xcf, 0x6e, 0xf9, 0x0b,
+	0x48, 0xdc, 0xa3, 0x5f, 0xfe, 0x02, 0x12, 0xfb, 0xe6, 0x4f, 0x74, 0xb7, 0xae, 0xba, 0x41, 0xa2,
+	0x2e, 0x5c, 0x53, 0xe7, 0xef, 0xde, 0xcf, 0x80, 0x7b, 0xf7, 0x33, 0xe0, 0x8f, 0xfb, 0x19, 0xf0,
+	0xd1, 0x83, 0x4c, 0xc7, 0xbd, 0x07, 0x99, 0x8e, 0xdf, 0x1e, 0x64, 0x3a, 0x5e, 0x7b, 0xa6, 0xa8,
+	0xd9, 0xa5, 0xea, 0xc2, 0x68, 0x9e, 0x96, 0xd9, 0x00, 0x87, 0x96, 0x57, 0x6e, 0x04, 0x46, 0x5a,
+	0x6e, 0x1a, 0xcb, 0x5e, 0xa9, 0xa8, 0xd6, 0x42, 0x37, 0xfb, 0x3b, 0x87, 0x23, 0xff, 0x06, 0x00,
+	0x00, 0xff, 0xff, 0x00, 0x9d, 0x6c, 0x19, 0xf1, 0x21, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1541,12 +1917,16 @@ type QueryClient interface {
 	DelegationStartingInfo(ctx context.Context, in *QueryDelegationStartingInfoRequest, opts ...grpc.CallOption) (*QueryDelegationStartingInfoResponse, error)
 	// OperatorHistoricalRewards queries the operator historical rewards
 	OperatorHistoricalRewards(ctx context.Context, in *QueryOperatorHistoricalRewardsRequest, opts ...grpc.CallOption) (*QueryOperatorHistoricalRewardsResponse, error)
+	// AllOperatorHistoricalRewards queries the operator historical rewards for all periods
+	AllOperatorHistoricalRewards(ctx context.Context, in *QueryAllOperatorHistoricalRewardsRequest, opts ...grpc.CallOption) (*QueryAllOperatorHistoricalRewardsResponse, error)
 	// OperatorCurrentRewards queries the operator current rewards
 	OperatorCurrentRewards(ctx context.Context, in *QueryOperatorCurrentRewardsRequest, opts ...grpc.CallOption) (*QueryOperatorCurrentRewardsResponse, error)
 	// OperatorAccumulatedCommission queries the operator accumulated commission.
 	OperatorAccumulatedCommission(ctx context.Context, in *OperatorAVSRequest, opts ...grpc.CallOption) (*QueryOperatorAccumulatedCommissionResponse, error)
 	// OperatorSlashEvent queries the operator slash event.
 	OperatorSlashEvent(ctx context.Context, in *QueryOperatorSlashEventRequest, opts ...grpc.CallOption) (*QueryOperatorSlashEventResponse, error)
+	// OperatorSlashEvents queries the operator slash events.
+	OperatorSlashEvents(ctx context.Context, in *QueryOperatorSlashEventsRequest, opts ...grpc.CallOption) (*QueryOperatorSlashEventsResponse, error)
 	// StakerUnclaimedRewards queries the unclaimed rewards for a staker
 	StakerUnclaimedRewards(ctx context.Context, in *QueryStakerUnclaimedRewardsRequest, opts ...grpc.CallOption) (*QueryStakerUnclaimedRewardsResponse, error)
 }
@@ -1658,6 +2038,15 @@ func (c *queryClient) OperatorHistoricalRewards(ctx context.Context, in *QueryOp
 	return out, nil
 }
 
+func (c *queryClient) AllOperatorHistoricalRewards(ctx context.Context, in *QueryAllOperatorHistoricalRewardsRequest, opts ...grpc.CallOption) (*QueryAllOperatorHistoricalRewardsResponse, error) {
+	out := new(QueryAllOperatorHistoricalRewardsResponse)
+	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/AllOperatorHistoricalRewards", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) OperatorCurrentRewards(ctx context.Context, in *QueryOperatorCurrentRewardsRequest, opts ...grpc.CallOption) (*QueryOperatorCurrentRewardsResponse, error) {
 	out := new(QueryOperatorCurrentRewardsResponse)
 	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/OperatorCurrentRewards", in, out, opts...)
@@ -1679,6 +2068,15 @@ func (c *queryClient) OperatorAccumulatedCommission(ctx context.Context, in *Ope
 func (c *queryClient) OperatorSlashEvent(ctx context.Context, in *QueryOperatorSlashEventRequest, opts ...grpc.CallOption) (*QueryOperatorSlashEventResponse, error) {
 	out := new(QueryOperatorSlashEventResponse)
 	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/OperatorSlashEvent", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) OperatorSlashEvents(ctx context.Context, in *QueryOperatorSlashEventsRequest, opts ...grpc.CallOption) (*QueryOperatorSlashEventsResponse, error) {
+	out := new(QueryOperatorSlashEventsResponse)
+	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/OperatorSlashEvents", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1719,12 +2117,16 @@ type QueryServer interface {
 	DelegationStartingInfo(context.Context, *QueryDelegationStartingInfoRequest) (*QueryDelegationStartingInfoResponse, error)
 	// OperatorHistoricalRewards queries the operator historical rewards
 	OperatorHistoricalRewards(context.Context, *QueryOperatorHistoricalRewardsRequest) (*QueryOperatorHistoricalRewardsResponse, error)
+	// AllOperatorHistoricalRewards queries the operator historical rewards for all periods
+	AllOperatorHistoricalRewards(context.Context, *QueryAllOperatorHistoricalRewardsRequest) (*QueryAllOperatorHistoricalRewardsResponse, error)
 	// OperatorCurrentRewards queries the operator current rewards
 	OperatorCurrentRewards(context.Context, *QueryOperatorCurrentRewardsRequest) (*QueryOperatorCurrentRewardsResponse, error)
 	// OperatorAccumulatedCommission queries the operator accumulated commission.
 	OperatorAccumulatedCommission(context.Context, *OperatorAVSRequest) (*QueryOperatorAccumulatedCommissionResponse, error)
 	// OperatorSlashEvent queries the operator slash event.
 	OperatorSlashEvent(context.Context, *QueryOperatorSlashEventRequest) (*QueryOperatorSlashEventResponse, error)
+	// OperatorSlashEvents queries the operator slash events.
+	OperatorSlashEvents(context.Context, *QueryOperatorSlashEventsRequest) (*QueryOperatorSlashEventsResponse, error)
 	// StakerUnclaimedRewards queries the unclaimed rewards for a staker
 	StakerUnclaimedRewards(context.Context, *QueryStakerUnclaimedRewardsRequest) (*QueryStakerUnclaimedRewardsResponse, error)
 }
@@ -1766,6 +2168,9 @@ func (*UnimplementedQueryServer) DelegationStartingInfo(ctx context.Context, req
 func (*UnimplementedQueryServer) OperatorHistoricalRewards(ctx context.Context, req *QueryOperatorHistoricalRewardsRequest) (*QueryOperatorHistoricalRewardsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OperatorHistoricalRewards not implemented")
 }
+func (*UnimplementedQueryServer) AllOperatorHistoricalRewards(ctx context.Context, req *QueryAllOperatorHistoricalRewardsRequest) (*QueryAllOperatorHistoricalRewardsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AllOperatorHistoricalRewards not implemented")
+}
 func (*UnimplementedQueryServer) OperatorCurrentRewards(ctx context.Context, req *QueryOperatorCurrentRewardsRequest) (*QueryOperatorCurrentRewardsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OperatorCurrentRewards not implemented")
 }
@@ -1774,6 +2179,9 @@ func (*UnimplementedQueryServer) OperatorAccumulatedCommission(ctx context.Conte
 }
 func (*UnimplementedQueryServer) OperatorSlashEvent(ctx context.Context, req *QueryOperatorSlashEventRequest) (*QueryOperatorSlashEventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OperatorSlashEvent not implemented")
+}
+func (*UnimplementedQueryServer) OperatorSlashEvents(ctx context.Context, req *QueryOperatorSlashEventsRequest) (*QueryOperatorSlashEventsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OperatorSlashEvents not implemented")
 }
 func (*UnimplementedQueryServer) StakerUnclaimedRewards(ctx context.Context, req *QueryStakerUnclaimedRewardsRequest) (*QueryStakerUnclaimedRewardsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StakerUnclaimedRewards not implemented")
@@ -1981,6 +2389,24 @@ func _Query_OperatorHistoricalRewards_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_AllOperatorHistoricalRewards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryAllOperatorHistoricalRewardsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).AllOperatorHistoricalRewards(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/imuachain.feedistribution.v1.Query/AllOperatorHistoricalRewards",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).AllOperatorHistoricalRewards(ctx, req.(*QueryAllOperatorHistoricalRewardsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_OperatorCurrentRewards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryOperatorCurrentRewardsRequest)
 	if err := dec(in); err != nil {
@@ -2031,6 +2457,24 @@ func _Query_OperatorSlashEvent_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).OperatorSlashEvent(ctx, req.(*QueryOperatorSlashEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_OperatorSlashEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryOperatorSlashEventsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).OperatorSlashEvents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/imuachain.feedistribution.v1.Query/OperatorSlashEvents",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).OperatorSlashEvents(ctx, req.(*QueryOperatorSlashEventsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2102,6 +2546,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_OperatorHistoricalRewards_Handler,
 		},
 		{
+			MethodName: "AllOperatorHistoricalRewards",
+			Handler:    _Query_AllOperatorHistoricalRewards_Handler,
+		},
+		{
 			MethodName: "OperatorCurrentRewards",
 			Handler:    _Query_OperatorCurrentRewards_Handler,
 		},
@@ -2112,6 +2560,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "OperatorSlashEvent",
 			Handler:    _Query_OperatorSlashEvent_Handler,
+		},
+		{
+			MethodName: "OperatorSlashEvents",
+			Handler:    _Query_OperatorSlashEvents_Handler,
 		},
 		{
 			MethodName: "StakerUnclaimedRewards",
@@ -2741,6 +3193,125 @@ func (m *QueryOperatorHistoricalRewardsResponse) MarshalToSizedBuffer(dAtA []byt
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryAllOperatorHistoricalRewardsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllOperatorHistoricalRewardsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllOperatorHistoricalRewardsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.EpochIdentifier) > 0 {
+		i -= len(m.EpochIdentifier)
+		copy(dAtA[i:], m.EpochIdentifier)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.EpochIdentifier)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.AssetId) > 0 {
+		i -= len(m.AssetId)
+		copy(dAtA[i:], m.AssetId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AssetId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Operator) > 0 {
+		i -= len(m.Operator)
+		copy(dAtA[i:], m.Operator)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Operator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OperatorHistoricalRewardsWithPeriod) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OperatorHistoricalRewardsWithPeriod) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OperatorHistoricalRewardsWithPeriod) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.OperatorHistoricalRewards.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if m.Period != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Period))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryAllOperatorHistoricalRewardsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryAllOperatorHistoricalRewardsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryAllOperatorHistoricalRewardsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.AllOperatorHistoricalRewards) > 0 {
+		for iNdEx := len(m.AllOperatorHistoricalRewards) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.AllOperatorHistoricalRewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryOperatorCurrentRewardsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2947,6 +3518,11 @@ func (m *QueryOperatorSlashEventRequest) MarshalToSizedBuffer(dAtA []byte) (int,
 	_ = i
 	var l int
 	_ = l
+	if m.BlockHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.BlockHeight))
+		i--
+		dAtA[i] = 0x28
+	}
 	if m.EpochNumber != 0 {
 		i = encodeVarintQuery(dAtA, i, uint64(m.EpochNumber))
 		i--
@@ -3007,6 +3583,130 @@ func (m *QueryOperatorSlashEventResponse) MarshalToSizedBuffer(dAtA []byte) (int
 		}
 		i--
 		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryOperatorSlashEventsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryOperatorSlashEventsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryOperatorSlashEventsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.EpochIdentifier) > 0 {
+		i -= len(m.EpochIdentifier)
+		copy(dAtA[i:], m.EpochIdentifier)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.EpochIdentifier)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.AssetId) > 0 {
+		i -= len(m.AssetId)
+		copy(dAtA[i:], m.AssetId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AssetId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Operator) > 0 {
+		i -= len(m.Operator)
+		copy(dAtA[i:], m.Operator)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Operator)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OperatorSlashEventWithHeight) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OperatorSlashEventWithHeight) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OperatorSlashEventWithHeight) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.OperatorSlashEvent.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	if m.BlockHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.BlockHeight))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.EpochNumber != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.EpochNumber))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryOperatorSlashEventsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryOperatorSlashEventsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryOperatorSlashEventsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.OperatorSlashEvents) > 0 {
+		for iNdEx := len(m.OperatorSlashEvents) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.OperatorSlashEvents[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
 	}
 	return len(dAtA) - i, nil
 }
@@ -3343,6 +4043,56 @@ func (m *QueryOperatorHistoricalRewardsResponse) Size() (n int) {
 	return n
 }
 
+func (m *QueryAllOperatorHistoricalRewardsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Operator)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.AssetId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.EpochIdentifier)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *OperatorHistoricalRewardsWithPeriod) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Period != 0 {
+		n += 1 + sovQuery(uint64(m.Period))
+	}
+	l = m.OperatorHistoricalRewards.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryAllOperatorHistoricalRewardsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.AllOperatorHistoricalRewards) > 0 {
+		for _, e := range m.AllOperatorHistoricalRewards {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *QueryOperatorCurrentRewardsRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3441,6 +4191,9 @@ func (m *QueryOperatorSlashEventRequest) Size() (n int) {
 	if m.EpochNumber != 0 {
 		n += 1 + sovQuery(uint64(m.EpochNumber))
 	}
+	if m.BlockHeight != 0 {
+		n += 1 + sovQuery(uint64(m.BlockHeight))
+	}
 	return n
 }
 
@@ -3453,6 +4206,59 @@ func (m *QueryOperatorSlashEventResponse) Size() (n int) {
 	if m.OperatorSlashEvent != nil {
 		l = m.OperatorSlashEvent.Size()
 		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryOperatorSlashEventsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Operator)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.AssetId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.EpochIdentifier)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *OperatorSlashEventWithHeight) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EpochNumber != 0 {
+		n += 1 + sovQuery(uint64(m.EpochNumber))
+	}
+	if m.BlockHeight != 0 {
+		n += 1 + sovQuery(uint64(m.BlockHeight))
+	}
+	l = m.OperatorSlashEvent.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryOperatorSlashEventsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.OperatorSlashEvents) > 0 {
+		for _, e := range m.OperatorSlashEvents {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
 	}
 	return n
 }
@@ -5197,6 +6003,338 @@ func (m *QueryOperatorHistoricalRewardsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *QueryAllOperatorHistoricalRewardsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllOperatorHistoricalRewardsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllOperatorHistoricalRewardsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Operator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Operator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochIdentifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EpochIdentifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OperatorHistoricalRewardsWithPeriod) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OperatorHistoricalRewardsWithPeriod: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OperatorHistoricalRewardsWithPeriod: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Period", wireType)
+			}
+			m.Period = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Period |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorHistoricalRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.OperatorHistoricalRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryAllOperatorHistoricalRewardsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryAllOperatorHistoricalRewardsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryAllOperatorHistoricalRewardsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AllOperatorHistoricalRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AllOperatorHistoricalRewards = append(m.AllOperatorHistoricalRewards, OperatorHistoricalRewardsWithPeriod{})
+			if err := m.AllOperatorHistoricalRewards[len(m.AllOperatorHistoricalRewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *QueryOperatorCurrentRewardsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -5859,6 +6997,25 @@ func (m *QueryOperatorSlashEventRequest) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
+			}
+			m.BlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
@@ -5942,6 +7099,357 @@ func (m *QueryOperatorSlashEventResponse) Unmarshal(dAtA []byte) error {
 				m.OperatorSlashEvent = &OperatorSlashEvent{}
 			}
 			if err := m.OperatorSlashEvent.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryOperatorSlashEventsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryOperatorSlashEventsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryOperatorSlashEventsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Operator", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Operator = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AssetId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AssetId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochIdentifier", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EpochIdentifier = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OperatorSlashEventWithHeight) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OperatorSlashEventWithHeight: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OperatorSlashEventWithHeight: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNumber", wireType)
+			}
+			m.EpochNumber = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochNumber |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
+			}
+			m.BlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorSlashEvent", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.OperatorSlashEvent.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryOperatorSlashEventsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryOperatorSlashEventsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryOperatorSlashEventsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorSlashEvents", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OperatorSlashEvents = append(m.OperatorSlashEvents, OperatorSlashEventWithHeight{})
+			if err := m.OperatorSlashEvents[len(m.OperatorSlashEvents)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
