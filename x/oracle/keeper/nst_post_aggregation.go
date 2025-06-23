@@ -144,6 +144,7 @@ func (k Keeper) getStakerInfos(store sdk.KVStore, balancesKeyPrefix, key, value 
 	k.cdc.MustUnmarshal(value, staker)
 
 	var keyBalances []byte
+	fmt.Println("debug(leonz)--->key", string(key))
 	keyBalances = types.AppendMultiple(keyBalances, balancesKeyPrefix, key)
 	value = store.Get(keyBalances)
 
@@ -182,7 +183,8 @@ func (k Keeper) GetAllStakerInfosAssets(ctx sdk.Context) ([]types.StakerInfosAss
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse chainID from key: %w", err)
 		}
-		iteratorStakers := sdk.KVStorePrefixIterator(store, types.NSTStakerKeyChainIDPrefix(chainID))
+		storePrefixStaker := prefix.NewStore(store, types.NSTStakerKeyChainIDPrefix(chainID))
+		iteratorStakers := sdk.KVStorePrefixIterator(storePrefixStaker, []byte{})
 		stakerInfos := make([]*types.StakerInfo, 0)
 		for ; iteratorStakers.Valid(); iteratorStakers.Next() {
 			stakerInfo, err := k.getStakerInfos(store, types.NSTBalancesKeyChainIDPrefix(chainID), iteratorStakers.Key(), iteratorStakers.Value(), true)
