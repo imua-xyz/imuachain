@@ -48,6 +48,17 @@ func DefaultParams() Params {
 	)
 }
 
+// ValidateInflationParam validates the set of params
+func (p Params) ValidateInflationParam() error {
+	if err := ValidateMintDenom(p.MintDenom); err != nil {
+		return err
+	}
+	if err := ValidateEpochReward(p.EpochReward); err != nil {
+		return err
+	}
+	return epochstypes.ValidateEpochIdentifierString(p.EpochIdentifier)
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if err := ValidateMintDenom(p.MintDenom); err != nil {
