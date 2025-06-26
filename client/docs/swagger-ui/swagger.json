@@ -18946,6 +18946,10 @@
                       "type": "integer",
                       "format": "int64",
                       "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+                    },
+                    "epoch_identifier": {
+                      "type": "string",
+                      "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
                     }
                   }
                 }
@@ -19045,6 +19049,30 @@
                       "title": "price list of all history round prices for the token"
                     },
                     "twap": {
+                      "title": "TWAP of the token",
+                      "type": "object",
+                      "properties": {
+                        "epoch": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "epoch of the price"
+                        },
+                        "price": {
+                          "type": "string",
+                          "title": "price with its corresponding source"
+                        },
+                        "decimal": {
+                          "type": "integer",
+                          "format": "int32",
+                          "title": "decimal of the corresponding price"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "title": "timestamp when the price is corresponded"
+                        }
+                      }
+                    },
+                    "accumulated_price": {
                       "type": "object",
                       "properties": {
                         "price": {
@@ -19717,6 +19745,10 @@
                             "type": "integer",
                             "format": "int64",
                             "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+                          },
+                          "epoch_identifier": {
+                            "type": "string",
+                            "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
                           }
                         },
                         "description": "Params defines the parameters for the module."
@@ -20089,6 +20121,10 @@
                           "type": "integer",
                           "format": "int64",
                           "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+                        },
+                        "epoch_identifier": {
+                          "type": "string",
+                          "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
                         }
                       },
                       "description": "Params defines the parameters for the module."
@@ -43844,9 +43880,36 @@
           "type": "integer",
           "format": "int64",
           "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+        },
+        "epoch_identifier": {
+          "type": "string",
+          "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
         }
       },
       "description": "Params defines the parameters for the module."
+    },
+    "imuachain.oracle.v1.PriceEpoch": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "type": "string",
+          "format": "uint64",
+          "title": "epoch of the price"
+        },
+        "price": {
+          "type": "string",
+          "title": "price with its corresponding source"
+        },
+        "decimal": {
+          "type": "integer",
+          "format": "int32",
+          "title": "decimal of the corresponding price"
+        },
+        "timestamp": {
+          "type": "string",
+          "title": "timestamp when the price is corresponded"
+        }
+      }
     },
     "imuachain.oracle.v1.PriceSource": {
       "type": "object",
@@ -43979,6 +44042,30 @@
           "title": "price list of all history round prices for the token"
         },
         "twap": {
+          "title": "TWAP of the token",
+          "type": "object",
+          "properties": {
+            "epoch": {
+              "type": "string",
+              "format": "uint64",
+              "title": "epoch of the price"
+            },
+            "price": {
+              "type": "string",
+              "title": "price with its corresponding source"
+            },
+            "decimal": {
+              "type": "integer",
+              "format": "int32",
+              "title": "decimal of the corresponding price"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "timestamp when the price is corresponded"
+            }
+          }
+        },
+        "accumulated_price": {
           "type": "object",
           "properties": {
             "price": {
@@ -44366,6 +44453,10 @@
                     "type": "integer",
                     "format": "int64",
                     "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+                  },
+                  "epoch_identifier": {
+                    "type": "string",
+                    "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
                   }
                 },
                 "description": "Params defines the parameters for the module."
@@ -44511,6 +44602,30 @@
               "title": "price list of all history round prices for the token"
             },
             "twap": {
+              "title": "TWAP of the token",
+              "type": "object",
+              "properties": {
+                "epoch": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "epoch of the price"
+                },
+                "price": {
+                  "type": "string",
+                  "title": "price with its corresponding source"
+                },
+                "decimal": {
+                  "type": "integer",
+                  "format": "int32",
+                  "title": "decimal of the corresponding price"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "title": "timestamp when the price is corresponded"
+                }
+              }
+            },
+            "accumulated_price": {
               "type": "object",
               "properties": {
                 "price": {
@@ -44877,6 +44992,10 @@
                   "type": "integer",
                   "format": "int64",
                   "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+                },
+                "epoch_identifier": {
+                  "type": "string",
+                  "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
                 }
               },
               "description": "Params defines the parameters for the module."
@@ -45152,6 +45271,10 @@
               "type": "integer",
               "format": "int64",
               "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+            },
+            "epoch_identifier": {
+              "type": "string",
+              "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
             }
           }
         }
@@ -45843,6 +45966,10 @@
               "type": "integer",
               "format": "int64",
               "title": "piece_size_byte defines how many bytes one piece of raw data includes"
+            },
+            "epoch_identifier": {
+              "type": "string",
+              "title": "epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP"
             }
           },
           "description": "Params defines the parameters for the module."
