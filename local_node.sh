@@ -333,12 +333,11 @@ EOF
 	oracle_env_beaconchain_content=$(
 		cat <<EOF
 urls:
-  beaconchain: !!str https://ethereum-holesky-rpc.publicnode.com
-  beaconchain: !!str https://rpc.ankr.com/premium-http/eth_holesky_beacon/${ANKR_API_KEY}
+  beaconchain: !!str https://ethereum-holesky-beacon-api.publicnode.com
   eth: !!str https://eth-holesky.g.alchemy.com/v2/${ALCHEMY_API_KEY}
 nstid:
   !!str 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65
-bootstrap: !!str 0x38674073a3713dd2C46892f1d2C5Dadc5Bb14172
+bootstrap: !!str ${BOOTSTRAP}
 EOF
 	)
 	# Write the YAML content to a file

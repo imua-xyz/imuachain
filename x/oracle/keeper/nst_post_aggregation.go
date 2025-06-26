@@ -613,12 +613,11 @@ func (k Keeper) convertDecimal(ctx sdk.Context, assetID string, amount sdkmath.I
 	return retDec.RoundInt(), nil
 }
 
-func (k Keeper) refreshCachedStakerList(ctx sdk.Context, chainID uint64) types.StakerList {
+func (k Keeper) refreshCachedStakerList(ctx sdk.Context, chainID uint64) {
 	sl := k.getStakerListNoCache(ctx, "", chainID)
 	if len(sl.Stakers) > 0 {
 		k.c.SetNSTStakerList(chainID, sl.Stakers)
 	}
-	return sl
 }
 
 // UpdateNSTBalanceChange processes post-aggregation NST (Native Staking Token) balance changes at the end of a block.

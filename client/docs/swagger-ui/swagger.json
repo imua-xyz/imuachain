@@ -19043,6 +19043,30 @@
                         "title": "price with its specified timestamp and roundid(if from deteministic source)"
                       },
                       "title": "price list of all history round prices for the token"
+                    },
+                    "twap": {
+                      "type": "object",
+                      "properties": {
+                        "price": {
+                          "type": "string",
+                          "title": "price"
+                        },
+                        "decimal": {
+                          "type": "integer",
+                          "format": "int32",
+                          "title": "decimal of the corresponding price"
+                        },
+                        "timestamp": {
+                          "type": "string",
+                          "title": "timestamp when the price is corresponded"
+                        },
+                        "round_id": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "roundid of the price if the source is deteministic"
+                        }
+                      },
+                      "title": "price with its specified timestamp and roundid(if from deteministic source)"
                     }
                   }
                 }
@@ -20170,6 +20194,14 @@
                           "title": "accumulated deposit amount"
                         }
                       }
+                    },
+                    "withdraw_version": {
+                      "type": "string",
+                      "format": "uint64"
+                    },
+                    "feed_withdraw_version": {
+                      "type": "string",
+                      "format": "uint64"
                     }
                   }
                 },
@@ -20251,6 +20283,11 @@
                         "title": "BalanceInfo tells effective-balance for native-restaking asset"
                       },
                       "title": "list of balances to represets the history of this staker"
+                    },
+                    "withdraw_version": {
+                      "type": "string",
+                      "format": "uint64",
+                      "title": "latest version to indicate the withdraw happened for this staker"
                     }
                   }
                 }
@@ -20358,6 +20395,14 @@
                           "title": "accumulated deposit amount"
                         }
                       }
+                    },
+                    "withdraw_version": {
+                      "type": "string",
+                      "format": "uint64"
+                    },
+                    "feed_withdraw_version": {
+                      "type": "string",
+                      "format": "uint64"
                     }
                   }
                 },
@@ -20440,6 +20485,11 @@
                           "title": "BalanceInfo tells effective-balance for native-restaking asset"
                         },
                         "title": "list of balances to represets the history of this staker"
+                      },
+                      "withdraw_version": {
+                        "type": "string",
+                        "format": "uint64",
+                        "title": "latest version to indicate the withdraw happened for this staker"
                       }
                     },
                     "title": "StakerInfo represents all related information for a staker of native-restaking"
@@ -20578,10 +20628,21 @@
                   "title": "staker list including all stakers of request asset",
                   "type": "object",
                   "properties": {
-                    "staker_addrs": {
+                    "stakers": {
                       "type": "array",
                       "items": {
-                        "type": "string"
+                        "type": "object",
+                        "properties": {
+                          "staker_addr": {
+                            "type": "string",
+                            "title": "staker's address"
+                          },
+                          "withdraw_version": {
+                            "type": "string",
+                            "format": "uint64",
+                            "title": "latest version to indicate the withdraw happened for this staker"
+                          }
+                        }
                       },
                       "title": "list of staker's address"
                     }
@@ -43527,6 +43588,14 @@
               "title": "accumulated deposit amount"
             }
           }
+        },
+        "withdraw_version": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "feed_withdraw_version": {
+          "type": "string",
+          "format": "uint64"
         }
       },
       "title": "NSTVersion defines the version of native-staking token"
@@ -43908,6 +43977,30 @@
             "title": "price with its specified timestamp and roundid(if from deteministic source)"
           },
           "title": "price list of all history round prices for the token"
+        },
+        "twap": {
+          "type": "object",
+          "properties": {
+            "price": {
+              "type": "string",
+              "title": "price"
+            },
+            "decimal": {
+              "type": "integer",
+              "format": "int32",
+              "title": "decimal of the corresponding price"
+            },
+            "timestamp": {
+              "type": "string",
+              "title": "timestamp when the price is corresponded"
+            },
+            "round_id": {
+              "type": "string",
+              "format": "uint64",
+              "title": "roundid of the price if the source is deteministic"
+            }
+          },
+          "title": "price with its specified timestamp and roundid(if from deteministic source)"
         }
       },
       "title": "prices of all rounds of a specific token"
@@ -44416,6 +44509,30 @@
                 "title": "price with its specified timestamp and roundid(if from deteministic source)"
               },
               "title": "price list of all history round prices for the token"
+            },
+            "twap": {
+              "type": "object",
+              "properties": {
+                "price": {
+                  "type": "string",
+                  "title": "price"
+                },
+                "decimal": {
+                  "type": "integer",
+                  "format": "int32",
+                  "title": "decimal of the corresponding price"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "title": "timestamp when the price is corresponded"
+                },
+                "round_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "roundid of the price if the source is deteministic"
+                }
+              },
+              "title": "price with its specified timestamp and roundid(if from deteministic source)"
             }
           }
         }
@@ -45079,6 +45196,14 @@
                   "title": "accumulated deposit amount"
                 }
               }
+            },
+            "withdraw_version": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "feed_withdraw_version": {
+              "type": "string",
+              "format": "uint64"
             }
           }
         },
@@ -45160,6 +45285,11 @@
                 "title": "BalanceInfo tells effective-balance for native-restaking asset"
               },
               "title": "list of balances to represets the history of this staker"
+            },
+            "withdraw_version": {
+              "type": "string",
+              "format": "uint64",
+              "title": "latest version to indicate the withdraw happened for this staker"
             }
           }
         }
@@ -45204,6 +45334,14 @@
                   "title": "accumulated deposit amount"
                 }
               }
+            },
+            "withdraw_version": {
+              "type": "string",
+              "format": "uint64"
+            },
+            "feed_withdraw_version": {
+              "type": "string",
+              "format": "uint64"
             }
           }
         },
@@ -45286,6 +45424,11 @@
                   "title": "BalanceInfo tells effective-balance for native-restaking asset"
                 },
                 "title": "list of balances to represets the history of this staker"
+              },
+              "withdraw_version": {
+                "type": "string",
+                "format": "uint64",
+                "title": "latest version to indicate the withdraw happened for this staker"
               }
             },
             "title": "StakerInfo represents all related information for a staker of native-restaking"
@@ -45323,10 +45466,21 @@
           "title": "staker list including all stakers of request asset",
           "type": "object",
           "properties": {
-            "staker_addrs": {
+            "stakers": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "object",
+                "properties": {
+                  "staker_addr": {
+                    "type": "string",
+                    "title": "staker's address"
+                  },
+                  "withdraw_version": {
+                    "type": "string",
+                    "format": "uint64",
+                    "title": "latest version to indicate the withdraw happened for this staker"
+                  }
+                }
               },
               "title": "list of staker's address"
             }
@@ -45873,6 +46027,11 @@
             "title": "BalanceInfo tells effective-balance for native-restaking asset"
           },
           "title": "list of balances to represets the history of this staker"
+        },
+        "withdraw_version": {
+          "type": "string",
+          "format": "uint64",
+          "title": "latest version to indicate the withdraw happened for this staker"
         }
       },
       "title": "StakerInfo represents all related information for a staker of native-restaking"
@@ -45880,15 +46039,40 @@
     "imuachain.oracle.v1.StakerList": {
       "type": "object",
       "properties": {
-        "staker_addrs": {
+        "stakers": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+              "staker_addr": {
+                "type": "string",
+                "title": "staker's address"
+              },
+              "withdraw_version": {
+                "type": "string",
+                "format": "uint64",
+                "title": "latest version to indicate the withdraw happened for this staker"
+              }
+            }
           },
           "title": "list of staker's address"
         }
       },
       "title": "StakerList defines the list of stakers"
+    },
+    "imuachain.oracle.v1.StakerListEntry": {
+      "type": "object",
+      "properties": {
+        "staker_addr": {
+          "type": "string",
+          "title": "staker's address"
+        },
+        "withdraw_version": {
+          "type": "string",
+          "format": "uint64",
+          "title": "latest version to indicate the withdraw happened for this staker"
+        }
+      }
     },
     "imuachain.oracle.v1.Token": {
       "type": "object",
