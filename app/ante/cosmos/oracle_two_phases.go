@@ -19,7 +19,7 @@ func NewOracleTwoPhasesDecorator(oracleKeeper utils.OracleKeeper) OracleTwoPhase
 }
 
 func (otpd OracleTwoPhasesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	msgs, _, isRawData, _ := utils.IsValidOracleTx(tx)
+	msgs, isOracle, isRawData, _ := utils.IsValidOracleTx(tx)
 	if isRawData {
 		pieceWithProof, ok := otpd.ok.GetPieceWithProof(msgs[0])
 		// valid failed when getting pieceWithProof
@@ -34,6 +34,12 @@ func (otpd OracleTwoPhasesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		for i, index := range proofPath {
 			if pieceWithProof.Proof[i].Index != index {
 				return ctx, fmt.Errorf("rawData proofPath didn't include necessary index on position:%d of path:%d", i, index)
+			}
+		}
+	} else if isOracle {
+		for _, msg := range msgs {
+			if !otpd.ok.ValidatePriceSourceDetIDs(msg) {
+				return ctx, fmt.Errorf("duplicated detIDs in msg: %T", msg)
 			}
 		}
 	}

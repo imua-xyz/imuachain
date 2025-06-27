@@ -322,6 +322,8 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 		r.status = roundStatusClosed
 		if !f.cs.IsRuleV1(r.feederID) {
 			logger.Error("We currently only support rules under oracle V1", "feederID", r.feederID)
+			tf := f.cs.params.params.TokenFeeders
+			fmt.Println("debug(leonz)--->", tf)
 			return success
 		}
 
@@ -827,6 +829,39 @@ func (f *FeederManager) SetResetSlashing() {
 // SetForceSeal marks that all rounds should be force sealed.
 func (f *FeederManager) SetForceSeal() {
 	f.forceSeal = true
+}
+
+// ValidatePriceSourceDetIDs validates the price source detIDs
+// we only check the duplicated detIDs for the same sourceID and ignore any other errors
+func (f *FeederManager) ValidatePriceSourceDetIDs(msg *oracletypes.MsgCreatePrice) bool {
+	priceSourceDetIDs := GetPriceSourceDetIDs(msg)
+	if priceSourceDetIDs == nil {
+		return true
+	}
+	if priceSourceDetIDs.FeederID == 0 || priceSourceDetIDs.FeederID >= uint64(len(f.rounds)) {
+		return true
+	}
+	r := f.rounds[int64(priceSourceDetIDs.FeederID)]
+	if r == nil {
+		return true
+	}
+	if r.a == nil || r.a.v == nil || r.a.v.records == nil {
+		return true
+	}
+	for sourceID, detIDs := range priceSourceDetIDs.SourceDetIDs {
+		records, ok := r.a.v.records[priceSourceDetIDs.Validator]
+		if !ok {
+			return true
+		}
+		for _, detID := range detIDs {
+			//#nosec G115
+			if _, ok := records.priceSources[int64(sourceID)].detIDs[detID]; !ok {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // validateMsg validates a MsgCreatePrice against the current state and round configuration.

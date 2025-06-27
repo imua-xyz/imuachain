@@ -450,7 +450,7 @@ func (k Keeper) UpdateNSTFeedVersion(ctx sdk.Context, chainID uint64) (uint64, u
 	}
 	k.cdc.MustUnmarshal(value, &v)
 	if v.FeedVersion.Version >= v.Version.Version && v.FeedWithdrawVersion >= v.WithdrawVersion {
-		return v.FeedVersion.Version, v.WithdrawVersion, false
+		return v.FeedVersion.Version, v.FeedWithdrawVersion, false
 	}
 	v.FeedVersion.Version = v.Version.Version
 	v.FeedVersion.DepositAmount = v.Version.DepositAmount
