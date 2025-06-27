@@ -44,13 +44,16 @@ message PriceTimeRound {
   uint64 round_id = 4 [(gogoproto.customname) = "RoundID"];
 }
 
+// price as twap with its epoch and roundid
 message PriceEpoch {
   // epoch of the price
   uint64 epoch = 1;
+  // roundID of the first price in this epoch
+  uint64 round_id = 2;
   // price with its corresponding source
-  string price = 2;
+  string price = 3;
   // decimal of the corresponding price
-  int32 decimal = 3;
+  int32 decimal = 4;
   // timestamp when the price is corresponded
-  string timestamp = 4;
+  string timestamp = 5;
 }

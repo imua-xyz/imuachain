@@ -19057,6 +19057,11 @@
                           "format": "uint64",
                           "title": "epoch of the price"
                         },
+                        "round_id": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "roundID of the first price in this epoch"
+                        },
                         "price": {
                           "type": "string",
                           "title": "price with its corresponding source"
@@ -43896,6 +43901,11 @@
           "format": "uint64",
           "title": "epoch of the price"
         },
+        "round_id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "roundID of the first price in this epoch"
+        },
         "price": {
           "type": "string",
           "title": "price with its corresponding source"
@@ -43909,7 +43919,8 @@
           "type": "string",
           "title": "timestamp when the price is corresponded"
         }
-      }
+      },
+      "title": "price as twap with its epoch and roundid"
     },
     "imuachain.oracle.v1.PriceSource": {
       "type": "object",
@@ -44049,6 +44060,11 @@
               "type": "string",
               "format": "uint64",
               "title": "epoch of the price"
+            },
+            "round_id": {
+              "type": "string",
+              "format": "uint64",
+              "title": "roundID of the first price in this epoch"
             },
             "price": {
               "type": "string",
@@ -44609,6 +44625,11 @@
                   "type": "string",
                   "format": "uint64",
                   "title": "epoch of the price"
+                },
+                "round_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "roundID of the first price in this epoch"
                 },
                 "price": {
                   "type": "string",
