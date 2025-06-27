@@ -92,4 +92,8 @@ var (
 		ModuleName, 18,
 		"the input client command arguments are invalid",
 	)
+	ErrFailedToSplitRewards = errorsmod.Register(
+		ModuleName, 19,
+		"failed to split the rewards to multiple assets",
+	)
 )

@@ -130,7 +130,12 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 			),
 		)
 		// calculate the remaining  rewards, it will be distributed to the community pool.
-		remaining = remaining.Sub(reward).Add(leftover...)
+		var hasNeg bool
+		remaining, hasNeg = remaining.SafeSub(reward)
+		if hasNeg {
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("reward is greater than the remaining,operator:%s,remaining:%s,reward:%s", operatorProportion.OperatorAddr, remaining, reward)
+		}
+		remaining = remaining.Add(leftover...)
 	}
 	return remaining, nil
 }
@@ -195,7 +200,12 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			if err != nil {
 				return nil, err
 			}
-			remaining = remaining.Sub(assetRewards)
+
+			var hasNeg bool
+			remaining, hasNeg = remaining.SafeSub(assetRewards)
+			if hasNeg {
+				return nil, types.ErrFailedToSplitRewards.Wrapf("asset reward is greater than the remaining,assetID:%s,remaining:%s,assetRewards:%s", assetID, remaining, assetRewards)
+			}
 		} else {
 			ctx.Logger().Error("SplitRewardsToAssetsPool: assetRewards isn't all positive")
 		}

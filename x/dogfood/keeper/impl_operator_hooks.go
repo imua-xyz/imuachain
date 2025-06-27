@@ -110,7 +110,6 @@ func (h OperatorHooksWrapper) afterStakingOrJailChange(ctx sdk.Context, operator
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
 	for _, avs := range affectedAVSList {
 		if avs == dogfoodAVSAddr {
-			// check if the operator is in the current validator set.
 			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)
 			if !found || err != nil {
 				ctx.Logger().Error("AfterSlash the consensus key isn't found by the chainIDWithoutRevision and operator address", "operatorAddr", operator, "chainIDWithoutRevision", chainIDWithoutRevision, "err", err)
@@ -118,9 +117,13 @@ func (h OperatorHooksWrapper) afterStakingOrJailChange(ctx sdk.Context, operator
 			}
 			if isUnjail {
 				// mark the flag for unjail
+				// the validator has been removed from the current active validator set when jailing,
+				// so it shouldn't check if it is active when unjail.
 				h.keeper.MarkUpdateValidatorSetFlag(ctx)
 				break
 			}
+
+			// check if the operator is in the current validator set.
 			// check if the key is active yet
 			isValidator := false
 			_, isValidator = h.keeper.GetImuachainValidator(

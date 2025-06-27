@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	types2 "github.com/imua-xyz/imuachain/x/dogfood/types"
 	"time"
 
 	"github.com/imua-xyz/imuachain/testutil"
@@ -182,4 +185,47 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 		// since initialPowers is sorted by power, we picked the operator with the highest power
 		suite.Equal(initialPowers[i]+int64(addPower), update.Power)
 	}
+
+	// test the slash and jail case
+	// get validators and voting powers
+	lastTotalPower := suite.App.StakingKeeper.GetLastTotalPower(suite.Ctx)
+	allValidators := suite.App.StakingKeeper.GetAllImuachainValidators(suite.Ctx)
+	suite.Require().Equal(len(suite.Operators), len(allValidators))
+
+	var slashOperatorConsAddr sdk.ConsAddress
+	var slashOperatorPower int64
+	expectedValidatorsAfterSlash := make([]types2.ImuachainValidator, 0)
+
+	for _, validator := range allValidators {
+		pubKey, err := validator.ConsPubKey()
+		suite.Require().NoError(err)
+		found, accAddress := suite.App.OperatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+			suite.Ctx, avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()), sdk.GetConsAddress(pubKey),
+		)
+		suite.Require().True(found)
+
+		if suite.Operators[0].String() == accAddress.String() {
+			slashOperatorConsAddr = sdk.GetConsAddress(pubKey)
+			slashOperatorPower = validator.Power
+		} else {
+			expectedValidatorsAfterSlash = append(expectedValidatorsAfterSlash, validator)
+		}
+	}
+	totalPowerAfterSlash := lastTotalPower.Sub(sdk.NewInt(slashOperatorPower))
+
+	// slash and jail the operator 1
+	slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+	slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
+	slashBlockHeight := suite.Ctx.BlockHeight()
+	suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], slashBlockHeight, slashOperatorPower, slashFactor, slashType)
+	suite.App.OperatorKeeper.Jail(suite.Ctx, slashOperatorConsAddr, suite.Ctx.ChainID())
+
+	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
+	suite.App.StakingKeeper.EndBlock(suite.Ctx)
+
+	// check the validators and last total power after slash and jail
+	lastTotalPower = suite.App.StakingKeeper.GetLastTotalPower(suite.Ctx)
+	suite.Require().Equal(totalPowerAfterSlash, lastTotalPower)
+	allValidators = suite.App.StakingKeeper.GetAllImuachainValidators(suite.Ctx)
+	suite.Require().Equal(expectedValidatorsAfterSlash, allValidators)
 }
