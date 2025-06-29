@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	"cosmossdk.io/math"
 	"fmt"
+
+	"cosmossdk.io/math"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -91,10 +92,11 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
-func (k Keeper) EpochMintInfo(ctx sdk.Context) (math.Int, math.LegacyDec, error) {
+func (k Keeper) GetEpochMintInfo(ctx sdk.Context) (math.Int, math.LegacyDec, error) {
 	params := k.GetParams(ctx)
 	blockTimeUnix := ctx.BlockTime().Unix()
 	inflationRatiosNumber := len(params.InflationParams.AnnualInflation)
+
 	if !params.InflationParams.Enable ||
 		params.InflationParams.StartTime < blockTimeUnix ||
 		inflationRatiosNumber == 0 {

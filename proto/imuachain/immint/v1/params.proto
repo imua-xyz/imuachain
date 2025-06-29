@@ -49,5 +49,5 @@ message Params {
   // the reward.
   string epoch_identifier = 3;
   // inflation_params is the parameter for reward inflation.
-  InflationParams inflation_params = 4;
+  InflationParams inflation_params = 4 [(gogoproto.nullable) = false];
 }

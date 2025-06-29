@@ -30,7 +30,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 	params := wrapper.keeper.GetParams(ctx)
 	if strings.Compare(identifier, params.EpochIdentifier) == 0 {
 		logger := wrapper.keeper.Logger(ctx)
-		epochMintAmount, _, err := wrapper.keeper.EpochMintInfo(ctx)
+		epochMintAmount, _, err := wrapper.keeper.GetEpochMintInfo(ctx)
 		if err != nil || epochMintAmount.IsNil() || !epochMintAmount.IsPositive() {
 			logger.Error( // intentionally error log this
 				"AfterEpochEnd",

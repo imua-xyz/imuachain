@@ -20675,6 +20675,73 @@
         ]
       }
     },
+    "/imuachain/immint/v1/epoch_mint_info": {
+      "get": {
+        "summary": "EpochMintInfo queries the mint info for the current epoch.",
+        "operationId": "EpochMintInfo",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "epoch_mint_info": {
+                  "description": "epoch_mint_info holds the mint info for the current epoch.",
+                  "type": "object",
+                  "properties": {
+                    "epoch_mint_amount": {
+                      "type": "string",
+                      "description": "epoch_mint_amount is the reward amount minted for current epoch."
+                    },
+                    "annual_inflation": {
+                      "type": "string",
+                      "description": "annual_inflation is the annual reward inflation used for the current epoch.\nIt will be calculated when inflation parameters are disabled, because it hasn't been\nconfigured in this case."
+                    }
+                  }
+                }
+              },
+              "description": "QueryParamsResponse is response type for the Query/EpochMintInfo RPC method."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/immint/v1/params": {
       "get": {
         "summary": "Parameters queries the parameters of the module.",
@@ -20695,11 +20762,33 @@
                     },
                     "epoch_reward": {
                       "type": "string",
-                      "description": "epoch_reward is the reward minted by the module, per epoch. note that\nthis is in addition to any other fees that are collected, or rewards\nthat are minted."
+                      "description": "epoch_reward is the reward minted by the module, per epoch. note that\nthis is in addition to any other fees that are collected, or rewards\nthat are minted.\nThis will be used when inflation parameter is not enabled or the inflation list is empty.\nIt is useful in cases where a fixed mint amount is preferred over dynamic inflation."
                     },
                     "epoch_identifier": {
                       "type": "string",
                       "description": "epoch_identifier is the epoch identifier used to determine when to mint\nthe reward."
+                    },
+                    "inflation_params": {
+                      "description": "inflation_params is the parameter for reward inflation.",
+                      "type": "object",
+                      "properties": {
+                        "enable": {
+                          "type": "boolean",
+                          "description": "enable indicates whether inflation is enabled. If false,\nthe module will use `epoch_reward` instead."
+                        },
+                        "start_time": {
+                          "type": "string",
+                          "format": "int64",
+                          "description": "start_time is the Unix timestamp (in seconds) when inflation starts.\nTogether with the current time, it determines which inflation rate\nto select from the annual_inflation list."
+                        },
+                        "annual_inflation": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "annual_inflation defines the list of annual inflation rates for staking rewards.\nThe rate is selected based on the time since start_time.\nThis list stores all annual inflation ratios starting from start_time.\nIf the current time exceeds start_time + len(list) * 1 year, the last ratio in\nthe list will be used."
+                        }
+                      }
                     }
                   }
                 }
@@ -44077,6 +44166,41 @@
       },
       "title": "ValidatorUpdateBlock"
     },
+    "imuachain.immint.v1.EpochMintInfo": {
+      "type": "object",
+      "properties": {
+        "epoch_mint_amount": {
+          "type": "string",
+          "description": "epoch_mint_amount is the reward amount minted for current epoch."
+        },
+        "annual_inflation": {
+          "type": "string",
+          "description": "annual_inflation is the annual reward inflation used for the current epoch.\nIt will be calculated when inflation parameters are disabled, because it hasn't been\nconfigured in this case."
+        }
+      },
+      "description": "EpochMintInfo includes the mint amount and annual reward inflation for the current epoch."
+    },
+    "imuachain.immint.v1.InflationParams": {
+      "type": "object",
+      "properties": {
+        "enable": {
+          "type": "boolean",
+          "description": "enable indicates whether inflation is enabled. If false,\nthe module will use `epoch_reward` instead."
+        },
+        "start_time": {
+          "type": "string",
+          "format": "int64",
+          "description": "start_time is the Unix timestamp (in seconds) when inflation starts.\nTogether with the current time, it determines which inflation rate\nto select from the annual_inflation list."
+        },
+        "annual_inflation": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "annual_inflation defines the list of annual inflation rates for staking rewards.\nThe rate is selected based on the time since start_time.\nThis list stores all annual inflation ratios starting from start_time.\nIf the current time exceeds start_time + len(list) * 1 year, the last ratio in\nthe list will be used."
+        }
+      }
+    },
     "imuachain.immint.v1.Params": {
       "type": "object",
       "properties": {
@@ -44086,14 +44210,56 @@
         },
         "epoch_reward": {
           "type": "string",
-          "description": "epoch_reward is the reward minted by the module, per epoch. note that\nthis is in addition to any other fees that are collected, or rewards\nthat are minted."
+          "description": "epoch_reward is the reward minted by the module, per epoch. note that\nthis is in addition to any other fees that are collected, or rewards\nthat are minted.\nThis will be used when inflation parameter is not enabled or the inflation list is empty.\nIt is useful in cases where a fixed mint amount is preferred over dynamic inflation."
         },
         "epoch_identifier": {
           "type": "string",
           "description": "epoch_identifier is the epoch identifier used to determine when to mint\nthe reward."
+        },
+        "inflation_params": {
+          "description": "inflation_params is the parameter for reward inflation.",
+          "type": "object",
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "description": "enable indicates whether inflation is enabled. If false,\nthe module will use `epoch_reward` instead."
+            },
+            "start_time": {
+              "type": "string",
+              "format": "int64",
+              "description": "start_time is the Unix timestamp (in seconds) when inflation starts.\nTogether with the current time, it determines which inflation rate\nto select from the annual_inflation list."
+            },
+            "annual_inflation": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "annual_inflation defines the list of annual inflation rates for staking rewards.\nThe rate is selected based on the time since start_time.\nThis list stores all annual inflation ratios starting from start_time.\nIf the current time exceeds start_time + len(list) * 1 year, the last ratio in\nthe list will be used."
+            }
+          }
         }
       },
       "description": "Params defines the parameters for the module."
+    },
+    "imuachain.immint.v1.QueryEpochMintInfoResponse": {
+      "type": "object",
+      "properties": {
+        "epoch_mint_info": {
+          "description": "epoch_mint_info holds the mint info for the current epoch.",
+          "type": "object",
+          "properties": {
+            "epoch_mint_amount": {
+              "type": "string",
+              "description": "epoch_mint_amount is the reward amount minted for current epoch."
+            },
+            "annual_inflation": {
+              "type": "string",
+              "description": "annual_inflation is the annual reward inflation used for the current epoch.\nIt will be calculated when inflation parameters are disabled, because it hasn't been\nconfigured in this case."
+            }
+          }
+        }
+      },
+      "description": "QueryParamsResponse is response type for the Query/EpochMintInfo RPC method."
     },
     "imuachain.immint.v1.QueryParamsResponse": {
       "type": "object",
@@ -44108,11 +44274,33 @@
             },
             "epoch_reward": {
               "type": "string",
-              "description": "epoch_reward is the reward minted by the module, per epoch. note that\nthis is in addition to any other fees that are collected, or rewards\nthat are minted."
+              "description": "epoch_reward is the reward minted by the module, per epoch. note that\nthis is in addition to any other fees that are collected, or rewards\nthat are minted.\nThis will be used when inflation parameter is not enabled or the inflation list is empty.\nIt is useful in cases where a fixed mint amount is preferred over dynamic inflation."
             },
             "epoch_identifier": {
               "type": "string",
               "description": "epoch_identifier is the epoch identifier used to determine when to mint\nthe reward."
+            },
+            "inflation_params": {
+              "description": "inflation_params is the parameter for reward inflation.",
+              "type": "object",
+              "properties": {
+                "enable": {
+                  "type": "boolean",
+                  "description": "enable indicates whether inflation is enabled. If false,\nthe module will use `epoch_reward` instead."
+                },
+                "start_time": {
+                  "type": "string",
+                  "format": "int64",
+                  "description": "start_time is the Unix timestamp (in seconds) when inflation starts.\nTogether with the current time, it determines which inflation rate\nto select from the annual_inflation list."
+                },
+                "annual_inflation": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "annual_inflation defines the list of annual inflation rates for staking rewards.\nThe rate is selected based on the time since start_time.\nThis list stores all annual inflation ratios starting from start_time.\nIf the current time exceeds start_time + len(list) * 1 year, the last ratio in\nthe list will be used."
+                }
+              }
             }
           }
         }
