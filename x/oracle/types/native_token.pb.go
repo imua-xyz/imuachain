@@ -224,6 +224,7 @@ func (m *StakerInfo) GetWithdrawVersion() uint64 {
 	return 0
 }
 
+// StakerListEntry defines the entry of staker list
 type StakerListEntry struct {
 	// staker's address
 	StakerAddr string `protobuf:"bytes,1,opt,name=staker_addr,json=stakerAddr,proto3" json:"staker_addr,omitempty"`
@@ -504,9 +505,11 @@ type NSTVersion struct {
 	// version of the nst info (on balance change, on deposit/withdraw)
 	Version *VersionDepositAmount `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 	// version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change
-	FeedVersion         *VersionDepositAmount `protobuf:"bytes,2,opt,name=feed_version,json=feedVersion,proto3" json:"feed_version,omitempty"`
-	WithdrawVersion     uint64                `protobuf:"varint,3,opt,name=withdraw_version,json=withdrawVersion,proto3" json:"withdraw_version,omitempty"`
-	FeedWithdrawVersion uint64                `protobuf:"varint,4,opt,name=feed_withdraw_version,json=feedWithdrawVersion,proto3" json:"feed_withdraw_version,omitempty"`
+	FeedVersion *VersionDepositAmount `protobuf:"bytes,2,opt,name=feed_version,json=feedVersion,proto3" json:"feed_version,omitempty"`
+	// latest version to indicate the withdraw happened for this nst
+	WithdrawVersion uint64 `protobuf:"varint,3,opt,name=withdraw_version,json=withdrawVersion,proto3" json:"withdraw_version,omitempty"`
+	// latest version to indicate the withdraw happened for this nst on price-feeder
+	FeedWithdrawVersion uint64 `protobuf:"varint,4,opt,name=feed_withdraw_version,json=feedWithdrawVersion,proto3" json:"feed_withdraw_version,omitempty"`
 }
 
 func (m *NSTVersion) Reset()         { *m = NSTVersion{} }

@@ -80,7 +80,8 @@ func (m *NSTKV) GetBalance() uint64 {
 // RawDataNST represents balance changes of all stakers for a NST
 type RawDataNST struct {
 	// version of stakerList which the raw data corresponding to
-	Version         uint64 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	Version uint64 `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	// withdraw version of the NST
 	WithdrawVersion uint64 `protobuf:"varint,2,opt,name=withdraw_version,json=withdrawVersion,proto3" json:"withdraw_version,omitempty"`
 	// NSTKV use array to describe {staker_indx: balance_change} for all stakers whose balance had changed
 	NstBalanceChanges []*NSTKV `protobuf:"bytes,3,rep,name=nst_balance_changes,json=nstBalanceChanges,proto3" json:"nst_balance_changes,omitempty"`

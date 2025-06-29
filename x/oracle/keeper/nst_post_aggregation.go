@@ -232,13 +232,11 @@ func (k Keeper) getStakerListNoCache(ctx sdk.Context, assetID string, chainID ui
 		stakerKey := types.NSTStakerKey(chainID, stakerAddr)
 		bz := store.Get(stakerKey)
 		if bz == nil {
-			// TODO(leonz): add error handling or logs ?
 			return types.StakerList{}
 		}
 		var staker types.Staker
 		k.cdc.MustUnmarshal(bz, &staker)
 		if int(staker.StakerIndex) != len(stakerList.Stakers) {
-			// TODO(leonz): add error handling or logs ?
 			return types.StakerList{}
 		}
 

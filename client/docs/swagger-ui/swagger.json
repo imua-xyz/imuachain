@@ -20238,11 +20238,13 @@
                     },
                     "withdraw_version": {
                       "type": "string",
-                      "format": "uint64"
+                      "format": "uint64",
+                      "title": "latest version to indicate the withdraw happened for this nst"
                     },
                     "feed_withdraw_version": {
                       "type": "string",
-                      "format": "uint64"
+                      "format": "uint64",
+                      "title": "latest version to indicate the withdraw happened for this nst on price-feeder"
                     }
                   }
                 },
@@ -20439,11 +20441,13 @@
                     },
                     "withdraw_version": {
                       "type": "string",
-                      "format": "uint64"
+                      "format": "uint64",
+                      "title": "latest version to indicate the withdraw happened for this nst"
                     },
                     "feed_withdraw_version": {
                       "type": "string",
-                      "format": "uint64"
+                      "format": "uint64",
+                      "title": "latest version to indicate the withdraw happened for this nst on price-feeder"
                     }
                   }
                 },
@@ -20683,7 +20687,8 @@
                             "format": "uint64",
                             "title": "latest version to indicate the withdraw happened for this staker"
                           }
-                        }
+                        },
+                        "title": "StakerListEntry defines the entry of staker list"
                       },
                       "title": "list of staker's address"
                     }
@@ -43632,11 +43637,13 @@
         },
         "withdraw_version": {
           "type": "string",
-          "format": "uint64"
+          "format": "uint64",
+          "title": "latest version to indicate the withdraw happened for this nst"
         },
         "feed_withdraw_version": {
           "type": "string",
-          "format": "uint64"
+          "format": "uint64",
+          "title": "latest version to indicate the withdraw happened for this nst on price-feeder"
         }
       },
       "title": "NSTVersion defines the version of native-staking token"
@@ -45343,11 +45350,13 @@
             },
             "withdraw_version": {
               "type": "string",
-              "format": "uint64"
+              "format": "uint64",
+              "title": "latest version to indicate the withdraw happened for this nst"
             },
             "feed_withdraw_version": {
               "type": "string",
-              "format": "uint64"
+              "format": "uint64",
+              "title": "latest version to indicate the withdraw happened for this nst on price-feeder"
             }
           }
         },
@@ -45481,11 +45490,13 @@
             },
             "withdraw_version": {
               "type": "string",
-              "format": "uint64"
+              "format": "uint64",
+              "title": "latest version to indicate the withdraw happened for this nst"
             },
             "feed_withdraw_version": {
               "type": "string",
-              "format": "uint64"
+              "format": "uint64",
+              "title": "latest version to indicate the withdraw happened for this nst on price-feeder"
             }
           }
         },
@@ -45624,7 +45635,8 @@
                     "format": "uint64",
                     "title": "latest version to indicate the withdraw happened for this staker"
                   }
-                }
+                },
+                "title": "StakerListEntry defines the entry of staker list"
               },
               "title": "list of staker's address"
             }
@@ -46201,7 +46213,8 @@
                 "format": "uint64",
                 "title": "latest version to indicate the withdraw happened for this staker"
               }
-            }
+            },
+            "title": "StakerListEntry defines the entry of staker list"
           },
           "title": "list of staker's address"
         }
@@ -46220,7 +46233,8 @@
           "format": "uint64",
           "title": "latest version to indicate the withdraw happened for this staker"
         }
-      }
+      },
+      "title": "StakerListEntry defines the entry of staker list"
     },
     "imuachain.oracle.v1.Token": {
       "type": "object",

@@ -47,6 +47,7 @@ message StakerInfo {
   uint64 withdraw_version = 5;
 }
 
+// StakerListEntry defines the entry of staker list
 message StakerListEntry {
   // staker's address
   string staker_addr = 1;
@@ -65,7 +66,7 @@ message StakerList {
 message Staker {
   // staker's index
   uint32 staker_index = 1;
-// latest version to indicate the withdraw happened for this staker
+  // latest version to indicate the withdraw happened for this staker
   uint64 withdraw_version = 2;
   // validtor_list is the list of validators that this staker corresponding to on beacon chain
   repeated ValidatorDeposit validator_list= 3;
@@ -93,7 +94,9 @@ message NSTVersion {
   VersionDepositAmount version = 1;
   // version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change
   VersionDepositAmount feed_version = 2;
+  // latest version to indicate the withdraw happened for this nst
   uint64 withdraw_version = 3;
+  // latest version to indicate the withdraw happened for this nst on price-feeder
   uint64 feed_withdraw_version = 4;
 }
 

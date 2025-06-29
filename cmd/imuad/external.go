@@ -4,10 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
-	"strings"
-	"syscall"
 	"time"
 
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
@@ -34,8 +31,6 @@ const (
 	defaultStatusGRPCAddr = "localhost:50052"
 )
 
-var feederPIDFile = filepath.Join(os.TempDir(), "feeder.pid")
-
 func externalCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "external",
@@ -43,7 +38,6 @@ func externalCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(feederCommand())
-	cmd.AddCommand(feederStopCommand())
 	cmd.AddCommand(feederStatusCommand())
 	return cmd
 }
@@ -104,40 +98,6 @@ func feederCommand() *cobra.Command {
 	return feederCmd
 }
 
-func feederStopCommand() *cobra.Command {
-	feederStopCmd := &cobra.Command{
-		Use:   "feeder-stop",
-		Short: "Stop the feeder subprocess started by --oracle",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			pidData, err := os.ReadFile(feederPIDFile)
-			if err != nil {
-				return fmt.Errorf("failed to read feeder PID file: %w", err)
-			}
-
-			pidStr := strings.TrimSpace(string(pidData))
-			pid, err := strconv.Atoi(pidStr)
-			if err != nil {
-				return fmt.Errorf("invalid PID in file: %s", pidStr)
-			}
-
-			proc, err := os.FindProcess(pid)
-			if err != nil {
-				return fmt.Errorf("failed to find process: %w", err)
-			}
-
-			fmt.Printf("Sending SIGTERM to feeder (PID %d)...\n", pid)
-			if err := proc.Signal(syscall.SIGTERM); err != nil {
-				return fmt.Errorf("failed to send SIGTERM: %w", err)
-			}
-
-			_ = os.Remove(feederPIDFile)
-			fmt.Println("Feeder stopped successfully.")
-			return nil
-		},
-	}
-	return feederStopCmd
-}
-
 func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger log.Logger, logPath string, statusPort int) {
 	go func() {
 		defer func() {
@@ -158,19 +118,20 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 				return
 			}
 
-			if statusPort <= 0 {
-				statusPort = 0
+			if statusPort <= 0 || statusPort > 65535 {
+				logger.Error("invalid status port", "statusPort", statusPort)
+				return
 			}
 			statusPortStr := strconv.Itoa(statusPort)
 
 			cmd := exec.Command(selfPath,
 				"external",
 				"feeder",
-				fmt.Sprintf("--%s", flagConfFile), configFile,
-				fmt.Sprintf("--%s", flagSourcesConfPath), sourcesConfPath,
-				fmt.Sprintf("--%s", flagFeederLogPath), logPath,
-				fmt.Sprintf("--%s", flagFeederMnemonic), mnemonic,
-				fmt.Sprintf("--%s", flagFeederStatusListenPort), statusPortStr,
+				"--"+flagConfFile, configFile,
+				"--"+flagSourcesConfPath, sourcesConfPath,
+				"--"+flagFeederLogPath, logPath,
+				"--"+flagFeederMnemonic, mnemonic,
+				"--"+flagFeederStatusListenPort, statusPortStr,
 			)
 
 			cmd.Stdout = os.Stdout
@@ -182,12 +143,6 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 			}
 
 			logger.Info("feeder subprocess started", "pid", cmd.Process.Pid)
-
-			_ = os.WriteFile(
-				feederPIDFile,
-				[]byte(fmt.Sprintf("%d", cmd.Process.Pid)),
-				0o600,
-			)
 
 			go func() {
 				err := cmd.Wait()
@@ -226,9 +181,6 @@ func startExternalFeeder(binPath, configFile, sourcesConfPath string, logger log
 		}
 
 		logger.Info("external feeder started", "pid", cmd.Process.Pid)
-
-		// write PID file
-		_ = os.WriteFile(feederPIDFile, []byte(fmt.Sprintf("%d", cmd.Process.Pid)), 0o600)
 
 		err := cmd.Wait()
 		logger.Error("external feeder exited", "err", err)
