@@ -98,7 +98,7 @@ func (k Keeper) GetEpochMintInfo(ctx sdk.Context) (math.Int, math.LegacyDec, err
 	inflationRatiosNumber := len(params.InflationParams.AnnualInflation)
 
 	if !params.InflationParams.Enable ||
-		params.InflationParams.StartTime < blockTimeUnix ||
+		params.InflationParams.StartTime > blockTimeUnix ||
 		inflationRatiosNumber == 0 {
 		return params.EpochReward, math.LegacyDec{}, nil
 	}
@@ -121,7 +121,11 @@ func (k Keeper) GetEpochMintInfo(ctx sdk.Context) (math.Int, math.LegacyDec, err
 	if !exist {
 		return math.Int{}, math.LegacyDec{}, types.ErrInvalidParams.Wrapf("invalid epoch identifier:%s", params.EpochIdentifier)
 	}
-	epochNumberInYear := SecondsInYear / int64(epochInfo.Duration.Seconds())
+	epochDurationSeconds := int64(epochInfo.Duration.Seconds())
+	if epochDurationSeconds <= 0 {
+		return math.Int{}, math.LegacyDec{}, types.ErrInvalidParams.Wrapf("invalid epoch duration: %v", epochInfo.Duration)
+	}
+	epochNumberInYear := SecondsInYear / epochDurationSeconds
 	epochMintAmount := annualProvisions.QuoInt64(epochNumberInYear)
 
 	return epochMintAmount.TruncateInt(), inflation, nil

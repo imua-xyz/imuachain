@@ -25,6 +25,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// InflationParams defines parameters used for dynamic annual reward inflation.
 type InflationParams struct {
 	// enable indicates whether inflation is enabled. If false,
 	// the module will use `epoch_reward` instead.

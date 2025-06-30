@@ -27,7 +27,11 @@ func (k Keeper) EpochMintInfo(goCtx context.Context, req *types.QueryEpochMintIn
 		if !exist {
 			return nil, types.ErrInvalidParams.Wrapf("invalid epoch identifier:%s", params.EpochIdentifier)
 		}
-		epochNumberInYear := SecondsInYear / int64(epochInfo.Duration.Seconds())
+		epochDurationSeconds := int64(epochInfo.Duration.Seconds())
+		if epochDurationSeconds <= 0 {
+			return nil, types.ErrInvalidParams.Wrapf("invalid epoch duration: %v", epochInfo.Duration)
+		}
+		epochNumberInYear := SecondsInYear / epochDurationSeconds
 		// calculate the annual inflation ratio
 		totalSupply := k.bankKeeper.GetSupply(ctx, params.MintDenom).Amount
 		annualProvisions := epochMintAmount.Mul(sdk.NewInt(epochNumberInYear))

@@ -85,7 +85,7 @@ func CmdUpdateParams() *cobra.Command {
 		FlagInflationStartTime, 0, "The Unix timestamp (in seconds) when inflation starts",
 	)
 	f.String(
-		FlagInflationStartTime, "", "The annual inflation ratios, example: 0.1,0.2,0.3",
+		FlagInflationRatios, "", "The annual inflation ratios, example: 0.1,0.2,0.3",
 	)
 
 	// transaction level flags from the SDK

@@ -44199,7 +44199,8 @@
           },
           "description": "annual_inflation defines the list of annual inflation rates for staking rewards.\nThe rate is selected based on the time since start_time.\nThis list stores all annual inflation ratios starting from start_time.\nIf the current time exceeds start_time + len(list) * 1 year, the last ratio in\nthe list will be used."
         }
-      }
+      },
+      "description": "InflationParams defines parameters used for dynamic annual reward inflation."
     },
     "imuachain.immint.v1.Params": {
       "type": "object",

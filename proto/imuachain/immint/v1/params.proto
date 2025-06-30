@@ -6,7 +6,7 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/immint/types";
 
-
+// InflationParams defines parameters used for dynamic annual reward inflation.
 message InflationParams {
   // enable indicates whether inflation is enabled. If false,
   // the module will use `epoch_reward` instead.
