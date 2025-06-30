@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
 	pricefeeder "github.com/imua-xyz/price-feeder/external"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -30,6 +34,8 @@ const (
 
 	defaultStatusGRPCAddr = "localhost:50052"
 )
+
+var mnemonicWordRegexp = regexp.MustCompile(`^[a-z]+$`)
 
 func externalCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -105,23 +111,26 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 				logger.Error("feeder panic recovered", "err", r)
 			}
 		}()
-
 		if binPath != "" {
+			if err := validatePath(binPath); err != nil {
+				logger.Error("invalid feeder binary path", "path", binPath, "err", err)
+				return
+			}
 			logger.Info("starting external feeder binary", "path", binPath)
 			startExternalFeeder(binPath, configFile, sourcesConfPath, logger, logPath)
 		} else {
 			logger.Info("starting feeder subprocess via CLI command")
-
 			selfPath, err := os.Executable()
 			if err != nil {
 				logger.Error("cannot determine self binary path", "err", err)
 				return
 			}
 
-			if statusPort <= 0 || statusPort > 65535 {
-				logger.Error("invalid status port", "statusPort", statusPort)
+			if err := validateFeederInputs(configFile, sourcesConfPath, logPath, mnemonic, strconv.Itoa(statusPort)); err != nil {
+				logger.Error("invalid feeder inputs", "err", err)
 				return
 			}
+
 			statusPortStr := strconv.Itoa(statusPort)
 
 			cmd := exec.Command(selfPath,
@@ -207,4 +216,62 @@ func printProto(m proto.Message) {
 		fmt.Printf("failed to print proto message, error:%v", err)
 	}
 	fmt.Println(string(marshaled))
+}
+
+func validatePath(p string) error {
+	if len(p) == 0 {
+		return errors.New("path is empty")
+	}
+	if !filepath.IsAbs(p) {
+		return fmt.Errorf("path %s must be absolute", p)
+	}
+	if strings.ContainsAny(p, ".&|;$<>`\\\"") {
+		return fmt.Errorf("invalid characters in path:%s", p)
+	}
+	return nil
+}
+
+func validateMnemonic(m string) error {
+	words := strings.Fields(m)
+	if len(words) != 12 && len(words) != 24 {
+		return fmt.Errorf("invalid mnemonic length: %d, expected 12 or 24 words", len(words))
+	}
+	for _, word := range words {
+		if !mnemonicWordRegexp.MatchString(word) {
+			return fmt.Errorf("invalid mnemonic word: %s", word)
+		}
+	}
+	return nil
+}
+
+func validatePort(portStr string) error {
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return fmt.Errorf("invalid port: %s, must be a number", portStr)
+	}
+
+	if port < 1024 || port > 65535 {
+		return fmt.Errorf("invalid port: %d, must be in range 1024-65535", port)
+	}
+	return nil
+}
+
+func validateFeederInputs(configFile, sourcesConfPath, logPath, mnemonic, statusPortStr string) error {
+	validators := []struct {
+		name string
+		err  error
+	}{
+		{"configFile", validatePath(configFile)},
+		{"sourcesConfPath", validatePath(sourcesConfPath)},
+		{"logPath", validatePath(logPath)},
+		{"mnemonic", validateMnemonic(mnemonic)},
+		{"statusPortStr", validatePort(statusPortStr)},
+	}
+
+	for _, v := range validators {
+		if v.err != nil {
+			return fmt.Errorf("invalid %s: %w", v.name, v.err)
+		}
+	}
+	return nil
 }
