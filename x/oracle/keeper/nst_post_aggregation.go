@@ -330,7 +330,7 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 
 	stakerInfo := k.GetStakerInfo(ctx, chainID, stakerAddr)
 	// make sure stakerInfo is not empty when the action is not DEPOSIT, stakerAddr != "" means both len(stakerInfo.BalanceList) > 0 and len(stakerInfo.ValidatorList) > 0
-	if action != types.Action_ACTION_DEPOSIT && (stakerInfo.StakerAddr == "") {
+	if action != types.Action_ACTION_DEPOSIT && (stakerInfo.StakerAddr == "" || len(stakerInfo.BalanceList) == 0 || len(stakerInfo.ValidatorList) == 0) {
 		return 0, sdkmath.ZeroInt(), fmt.Errorf("staker or balanceList is not found, stakerAddr is empty: %t, balanceList is empty: %t, action: %s",
 			stakerInfo.StakerAddr == "", len(stakerInfo.BalanceList) == 0, action)
 	}
@@ -664,6 +664,10 @@ func UpdateNSTBalanceChange(ctx sdk.Context, rootHash []byte, rawData []byte, fe
 
 	cc, writeCache := ctx.CacheContext()
 	for _, changeKV := range balanceChanges.NstBalanceChanges {
+		if int(changeKV.StakerIndex) >= len(sl.Stakers) {
+			return fmt.Errorf("staker index %d out of range for staker list length %d", changeKV.StakerIndex, len(sl.Stakers))
+		}
+
 		staker := sl.Stakers[changeKV.StakerIndex]
 		if balanceChanges.WithdrawVersion < staker.WithdrawVersion {
 			// skip balance change update for stakers who had executed withdraw during price feeding

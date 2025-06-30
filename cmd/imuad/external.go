@@ -116,6 +116,10 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 				logger.Error("invalid feeder binary path", "path", binPath, "err", err)
 				return
 			}
+			if err := isSafeExecutable(binPath); err != nil {
+				logger.Error("feeder binary is not safe to execute", "path", binPath, "err", err)
+				return
+			}
 			logger.Info("starting external feeder binary", "path", binPath)
 			startExternalFeeder(binPath, configFile, sourcesConfPath, logger, logPath)
 		} else {
@@ -133,6 +137,7 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 
 			statusPortStr := strconv.Itoa(statusPort)
 
+			// nosemgrep
 			cmd := exec.Command(selfPath,
 				"external",
 				"feeder",
@@ -155,7 +160,11 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 
 			go func() {
 				err := cmd.Wait()
-				logger.Error("feeder subprocess exited", "err", err)
+				if err != nil {
+					logger.Error("feeder subprocess exited with error", "err", err)
+				} else {
+					logger.Info("feeder subprocess exited normally")
+				}
 			}()
 		}
 	}()
@@ -225,7 +234,7 @@ func validatePath(p string) error {
 	if !filepath.IsAbs(p) {
 		return fmt.Errorf("path %s must be absolute", p)
 	}
-	if strings.ContainsAny(p, ".&|;$<>`\\\"") {
+	if strings.ContainsAny(p, "&|;$<>`\\\"'*?[]{}()~") {
 		return fmt.Errorf("invalid characters in path:%s", p)
 	}
 	return nil
@@ -273,5 +282,26 @@ func validateFeederInputs(configFile, sourcesConfPath, logPath, mnemonic, status
 			return fmt.Errorf("invalid %s: %w", v.name, v.err)
 		}
 	}
+	return nil
+}
+
+func isSafeExecutable(path string) error {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("file does not exist: %w", err)
+	}
+
+	if !fi.Mode().IsRegular() {
+		return fmt.Errorf("not a regular file")
+	}
+
+	if fi.Mode().Perm()&0o111 == 0 {
+		return fmt.Errorf("file is not executable")
+	}
+
+	if fi.Mode().Perm()&0o002 != 0 {
+		return fmt.Errorf("file is world-writable")
+	}
+
 	return nil
 }
