@@ -106,9 +106,10 @@ type AggFinalPrice struct {
 type NSTType string
 
 const (
-	NSTIDPrefix         = "nst_"
-	ETHChain    NSTType = "eth"
-	SOLChain    NSTType = "sol"
+	NSTTokenPrefix         = "nst"
+	NSTIDPrefix            = "nst_"
+	ETHChain       NSTType = "eth"
+	SOLChain       NSTType = "sol"
 
 	ETHMainnetChainID  = "0x7595"
 	ETHLocalnetChainID = "0x65"

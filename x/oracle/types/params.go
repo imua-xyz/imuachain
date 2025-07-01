@@ -78,6 +78,16 @@ func DefaultParams() Params {
 				SourceIDs: []uint64{0},
 				Nom:       nil,
 			},
+			{
+				SourceIDs: []uint64{1},
+			},
+			{
+				SourceIDs: []uint64{0},
+				Nom: &NOMSource{
+					SourceIDs: []uint64{1},
+					Minimum:   1,
+				},
+			},
 		},
 		// TokenFeeder describes when a token start to be updated with its price, and the frequency, endTime.
 		TokenFeeders: []*TokenFeeder{
@@ -710,4 +720,13 @@ func (p Params) IsRule2PhasesByRule(rule *RuleSource) bool {
 		}
 	}
 	return false
+}
+
+func (p Params) HasTokenByName(name string, chainID uint64) (int, bool) {
+	for idx, token := range p.Tokens {
+		if token.Name == name && token.ChainID == chainID {
+			return idx, true
+		}
+	}
+	return 0, false
 }

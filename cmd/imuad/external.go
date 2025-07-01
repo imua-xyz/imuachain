@@ -253,7 +253,10 @@ func validatePath(p string) error {
 	return nil
 }
 
-func validateMnemonic(m string) error {
+func validateMnemonic(m string, required bool) error {
+	if !required && len(m) == 0 {
+		return nil
+	}
 	words := strings.Fields(m)
 	if len(words) != 12 && len(words) != 24 {
 		return fmt.Errorf("invalid mnemonic length: %d, expected 12 or 24 words", len(words))
@@ -286,7 +289,7 @@ func validateFeederInputs(configFile, sourcesConfPath, logPath, mnemonic, status
 		{"configFile", validatePath(configFile)},
 		{"sourcesConfPath", validatePath(sourcesConfPath)},
 		{"logPath", validatePath(logPath)},
-		{"mnemonic", validateMnemonic(mnemonic)},
+		{"mnemonic", validateMnemonic(mnemonic, false)},
 		{"statusPortStr", validatePort(statusPortStr)},
 	}
 
