@@ -3,12 +3,13 @@
 ## Introduction
 
 The Imua Protocol contracts form the foundation of a multi-chain restaking ecosystem that works in conjunction with Imuachain. These contracts enable users across different blockchains to participate in restaking without moving their assets to Imuachain directly.
+
 Imuachain serves as the central coordination layer for the protocol, while these client-side contracts handle asset custody and cross-chain communication. Together, they create a unified system where:
 
 1. Assets remain secured on their native chains through specialized custody contracts
 2. Staking operations and delegation decisions are coordinated by Imuachain
 3. Cross-chain messaging enables seamless communication between client chains and Imuachain
-   
+
 This document details the contract addresses, architecture, and workflows that make omni-chain restaking possible through the integration between client-side contracts and Imuachain.
 
 ## Deployed Contract Addresses
