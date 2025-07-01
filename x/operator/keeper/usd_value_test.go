@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	types2 "github.com/imua-xyz/imuachain/x/dogfood/types"
-	"time"
 
 	"github.com/imua-xyz/imuachain/testutil"
 

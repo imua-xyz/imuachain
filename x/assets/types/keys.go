@@ -37,13 +37,6 @@ const (
 	prefixRestakingAssetInfo
 	prefixRestakerAssetInfo
 	prefixOperatorAssetInfo
-	prefixOperatorOptedInMiddlewareAssetInfo
-
-	// unused prefixes for backward compatibility
-	// originally: KeyPrefixReStakerImuaAddr and Reverse
-	_
-	_
-
 	prefixParams
 )
 

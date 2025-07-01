@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+
 	"cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -467,15 +469,21 @@ func (k Keeper) RewardProportionsFnForDogfood() OperatorRewardProportionsFn {
 		totalVotingPower := math.LegacyNewDec(previousTotalPower)
 
 		iterateOperators := func(callback operatorVotingPowerCallback) error {
+			var err error
+			var consensusKey cryptotypes.PubKey
+			var wrappedKey keys.WrappedConsKey
+			var found bool
+			var accAddress sdk.AccAddress
+
 			allValidators := k.StakingKeeper.GetAllImuachainValidators(ctx)
 			for i, val := range allValidators {
-				consensusKey, err := val.ConsPubKey()
+				consensusKey, err = val.ConsPubKey()
 				if err != nil {
 					ctx.Logger().Error("Failed to deserialize public key; skipping", "error", err, "i", i)
 					continue
 				}
-				wrappedKey := keys.NewWrappedConsKeyFromSdkKey(consensusKey)
-				found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+				wrappedKey = keys.NewWrappedConsKeyFromSdkKey(consensusKey)
+				found, accAddress = k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
 					ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
 				)
 				if !found {
