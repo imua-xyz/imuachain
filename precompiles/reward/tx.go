@@ -63,6 +63,8 @@ func packErrorOutput(method *abi.Method) ([]byte, error) {
 		return method.Outputs.Pack(false, new(big.Int))
 	case MethodWithdrawIMUATokenReward, MethodWithdrawIMUATokenCommission:
 		return method.Outputs.Pack(false, new(big.Int), new(big.Int))
+	case MethodIsRegisteredRewardToken:
+		return method.Outputs.Pack(false, false)
 	default:
 		return nil, fmt.Errorf("packErrorOutput: unsupported reward method %s", method.Name)
 	}

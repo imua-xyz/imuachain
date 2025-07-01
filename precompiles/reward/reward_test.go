@@ -15,6 +15,11 @@ func (s *RewardPrecompileTestSuite) TestIsTransaction() {
 			s.precompile.Methods[reward.MethodClaimReward].Name,
 			true,
 		},
+		{
+			reward.MethodIsRegisteredRewardToken,
+			s.precompile.Methods[reward.MethodIsRegisteredRewardToken].Name,
+			false,
+		},
 	}
 
 	for _, tc := range testCases {

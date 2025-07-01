@@ -313,3 +313,19 @@ func (k Keeper) GetAllAVSRewardAssets(ctx sdk.Context) ([]types.AVSAddrAndReward
 	}
 	return ret, nil
 }
+
+func (k Keeper) IsRegisteredRewardAsset(ctx sdk.Context, assetID string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		if err != nil {
+			return false
+		}
+		if keys[1] == assetID {
+			return true
+		}
+	}
+	return false
+}

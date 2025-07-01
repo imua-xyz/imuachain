@@ -1105,10 +1105,6 @@ func local_request_Query_OperatorAccumulatedCommission_0(ctx context.Context, ma
 
 }
 
-var (
-	filter_Query_OperatorSlashEvent_0 = &utilities.DoubleArray{Encoding: map[string]int{"operator": 0, "asset_id": 1, "epoch_identifier": 2, "epoch_number": 3}, Base: []int{1, 1, 2, 3, 4, 0, 0, 0, 0}, Check: []int{0, 1, 1, 1, 1, 2, 3, 4, 5}}
-)
-
 func request_Query_OperatorSlashEvent_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryOperatorSlashEventRequest
 	var metadata runtime.ServerMetadata
@@ -1164,11 +1160,15 @@ func request_Query_OperatorSlashEvent_0(ctx context.Context, marshaler runtime.M
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_number", err)
 	}
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok = pathParams["block_height"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "block_height")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_OperatorSlashEvent_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.BlockHeight, err = runtime.Uint64(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "block_height", err)
 	}
 
 	msg, err := client.OperatorSlashEvent(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -1231,11 +1231,15 @@ func local_request_Query_OperatorSlashEvent_0(ctx context.Context, marshaler run
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_number", err)
 	}
 
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	val, ok = pathParams["block_height"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "block_height")
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_OperatorSlashEvent_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+
+	protoReq.BlockHeight, err = runtime.Uint64(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "block_height", err)
 	}
 
 	msg, err := server.OperatorSlashEvent(ctx, &protoReq)
@@ -2205,7 +2209,7 @@ var (
 
 	pattern_Query_OperatorAccumulatedCommission_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5}, []string{"imuachain", "feedistribution", "v1", "accumulated_commission", "operator", "avs"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_OperatorSlashEvent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7}, []string{"imuachain", "feedistribution", "v1", "operator_slash_event", "operator", "asset_id", "epoch_identifier", "epoch_number"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_OperatorSlashEvent_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6, 1, 0, 4, 1, 5, 7, 1, 0, 4, 1, 5, 8}, []string{"imuachain", "feedistribution", "v1", "operator_slash_event", "operator", "asset_id", "epoch_identifier", "epoch_number", "block_height"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_OperatorSlashEvents_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 1, 0, 4, 1, 5, 5, 1, 0, 4, 1, 5, 6}, []string{"imuachain", "feedistribution", "v1", "operator_slash_events", "operator", "asset_id", "epoch_identifier"}, "", runtime.AssumeColonVerbOpt(false)))
 

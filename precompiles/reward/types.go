@@ -100,6 +100,11 @@ type FundAVSRewardArgs struct {
 	OpAmount             *big.Int       `abi:"opAmount"`
 }
 
+type IsRegisterRewardTokenArgs struct {
+	ClientChainID uint32 `abi:"clientChainID"`
+	Token         []byte `abi:"token"`
+}
+
 type ABIRewardCoins []ABIRewardCoin
 
 type ABIOperatorRewardProportions []ABIOperatorRewardProportion

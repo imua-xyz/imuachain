@@ -93,6 +93,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	}
 	var precompileCommonFunc imuacmn.PrecompileCommonTxFunc
 	switch method.Name {
+	// transactions
 	case MethodClaimReward:
 		precompileCommonFunc = p.ClaimReward
 	case MethodWithdrawReward:
@@ -117,6 +118,9 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		precompileCommonFunc = p.SetAVSRewardParams
 	case MethodFundAVSReward:
 		precompileCommonFunc = p.FundAVSReward
+	// queries
+	case MethodIsRegisteredRewardToken:
+		precompileCommonFunc = p.IsRegisteredRewardToken
 	default:
 		return nil, fmt.Errorf("unsupported reward method %s", method.Name)
 	}
@@ -160,6 +164,8 @@ func (Precompile) IsTransaction(methodName string) bool {
 		MethodSetOperatorRewardProportions, MethodSetAVSRewardParams,
 		MethodFundAVSReward:
 		return true
+	case MethodIsRegisteredRewardToken:
+		return false
 	default:
 		// this panic is safe to perform because the `init` function
 		// below forces developers to add all methods to the switch statement.

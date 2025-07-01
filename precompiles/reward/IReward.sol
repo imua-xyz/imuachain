@@ -204,4 +204,16 @@ interface IReward {
         bytes calldata assetAddress,
         uint256 opAmount
     ) external returns (bool success);
+
+
+    /// QUERIES
+    /// @dev Checks if the reward token is registered, given the chain ID and token address.
+    /// @param clientChainID is the layerZero chainID where the reward token is located.
+    /// @param token is the address of reward token.
+    /// @return success true if the query is successful
+    /// @return isRegistered true if the client chain is registered
+    function isRegisteredRewardToken(
+        uint32 clientChainID,
+        bytes calldata token
+    ) external view returns (bool success, bool isRegistered);
 }

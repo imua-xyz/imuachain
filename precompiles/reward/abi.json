@@ -73,6 +73,37 @@
         "internalType": "bytes",
         "name": "token",
         "type": "bytes"
+      }
+    ],
+    "name": "isRegisteredRewardToken",
+    "outputs":
+    [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isRegistered",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "uint32",
+        "name": "clientChainID",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "token",
+        "type": "bytes"
       },
       {
         "internalType": "uint8",

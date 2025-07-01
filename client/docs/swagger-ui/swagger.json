@@ -21607,7 +21607,7 @@
         ]
       }
     },
-    "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}": {
+    "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}/{block_height}": {
       "get": {
         "summary": "OperatorSlashEvent queries the operator slash event.",
         "operationId": "OperatorSlashEvent",
@@ -21703,9 +21703,9 @@
           },
           {
             "name": "block_height",
-            "description": "block height.",
-            "in": "query",
-            "required": false,
+            "description": "block height",
+            "in": "path",
+            "required": true,
             "type": "string",
             "format": "uint64"
           }
