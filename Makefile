@@ -130,7 +130,7 @@ build-linux:
 	GOOS=linux GOARCH=amd64 LEDGER_ENABLED=false $(MAKE) build
 
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
-	CGO_ENABLED="1" go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+	CGO_ENABLED="1" CGO_CFLAGS="-std=gnu11" go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
 
 $(BUILDDIR)/:
 	mkdir -p $(BUILDDIR)/
@@ -342,17 +342,17 @@ test-e2e:
 	@rm -rf build/.imuad
 	@INITIAL_VERSION=$(INITIAL_VERSION) TARGET_VERSION=$(TARGET_VERSION) \
 	E2E_SKIP_CLEANUP=$(E2E_SKIP_CLEANUP) MOUNT_PATH=$(MOUNT_PATH) CHAIN_ID=$(CHAIN_ID) \
-	go test -v ./tests/e2e -run ^TestIntegrationTestSuite$
+	CGO_ENABLED=1 CGO_CFLAGS="-std=gnu11" go test -v ./tests/e2e -run ^TestIntegrationTestSuite$
 
 run-tests:
 ifneq (,$(shell which tparse 2>/dev/null))
-	TEST_OPTION=$(TEST_OPTION) go test -mod=readonly -json $(ARGS) $(EXTRA_ARGS) $(TEST_PACKAGES) | tparse
+	CGO_ENABLED=1 CGO_CFLAGS="-std=gnu11" TEST_OPTION=$(TEST_OPTION) go test -mod=readonly -json $(ARGS) $(EXTRA_ARGS) $(TEST_PACKAGES) | tparse
 else
-	TEST_OPTION=$(TEST_OPTION) go test -mod=readonly $(ARGS)  $(EXTRA_ARGS) $(TEST_PACKAGES)
+	CGO_ENABLED=1 CGO_CFLAGS="-std=gnu11" TEST_OPTION=$(TEST_OPTION) go test -mod=readonly $(ARGS)  $(EXTRA_ARGS) $(TEST_PACKAGES)
 endif
 
 test-import:
-	@go test ./tests/importer -v --vet=off --run=TestImportBlocks --datadir tmp \
+	CGO_ENABLED=1 CGO_CFLAGS="-std=gnu11" go test ./tests/importer -v --vet=off --run=TestImportBlocks --datadir tmp \
 	--blockchain blockchain
 	rm -rf tests/importer/tmp
 
