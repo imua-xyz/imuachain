@@ -1,0 +1,9 @@
+[allowlist]
+# A description for this set of allowlist rules
+description = "Allowlisted files and secrets"
+
+# Use the 'paths' key to list file paths you want Gitleaks to completely ignore.
+# The paths are treated as regular expressions.
+paths = [
+    'docs/imua-contracts.md',
+]
