@@ -16,39 +16,12 @@ custody and cross-chain communication. Together, they create a unified system wh
 This document details the contract addresses, architecture, and workflows that make omni-chain restaking possible
 through the integration between client-side contracts and Imuachain.
 
-## Deployed Contract Addresses
+## Deployed EVM Contract Addresses
 
-### Sepolia
+Please visit [Deployed Contracts](https://github.com/imua-xyz/imua-contracts/blob/main/script/deployments/deployedContracts.json)
+for detailed addresses.
 
-- **🟢 Bootstrap/ClientChainGateway Proxy: 0x64B5B5A618072C1E4D137f91Af780e3B17A81f3f 🟢**
-- Bootstrap Logic: 0xaa8901063317BF66dfed363468b01A9FD08D1a79
-- ClientChainGateway Logic: 0xF1d902b81aEc0E4944FE6675c32FD21dfBe365ae
-- Vault Beacon: 0xa188242ec78894840E20979B6F5087FeB56a9f19
-- Vault Implementation: 0x8cdCC93823cCBed482cf20b22A78305CF0404DC4
-- Capsule Beacon: 0x1F91eD5F48E5Ad897E71Fa4559Be8fA1851F0696
-- Capsule Implementation: 0xE71771EeC8ba37c8383FaAe6F4D0de7521813442
-- RewardVault Beacon: 0xB058fa6626Fcc56e44A1137a4CE2EFd8BD7f7711
-- RewardVault Implementation: 0xcb6986a0ebF721e9a26C6F9427E58082e87E86F7
-
-### Holesky
-
-- **🟢 Bootstrap/ClientChainGateway Proxy: 0x38674073a3713dd2C46892f1d2C5Dadc5Bb14172 🟢**
-- Bootstrap Logic: 0xCdA750418AFE2d2aD0f1052E8e997a52C2AA6861
-- ClientChainGateway Logic: 0x7944cd287F2Fcd03F4Cdc0B17801e29F1317c386
-- Vault Beacon: 0x9a7bc99d90D5B8D8a47Bd6F8DBb5407fE3b51668
-- Vault Implementation: 0x9A6735c19f293500C24886cC829870cD725a98b6
-- Capsule Beacon: 0xafc8e60Ab69735C5097c47e5E3A7ED5E63ce5001
-- Capsule Implementation: 0x954B9BC52C4394984390065830500006805Db9C9
-- RewardVault Beacon: 0x1b4B4D6abE71a49e7bb13774F3e1cb721a21Af8B
-- RewardVault Implementation: 0x1283b551058bC8303c04B578c9AbA4727714808b
-
-### Imuachain
-
-- Imuachain Gateway: 0xdDf5218Dbff297ADdF17fB7977E2469D774545ED
-- Imuachain Gateway Logic: 0x71C95911E9a5D330f4D621842EC243EE1343292e
-- UTXO Gateway: 0x7c61a871071F91933a11567C14e056982aca93b4
-
-## Contract Architecture
+## EVM Contract Architecture
 
 ### Upgrade Pattern
 
