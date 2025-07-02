@@ -105,6 +105,19 @@ func feederCommand() *cobra.Command {
 }
 
 func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger log.Logger, logPath string, statusPort int) {
+	if binPath != "" {
+		if err := validatePath(binPath, true); err != nil {
+			logger.Error("invalid feeder binary path", "path", binPath, "err", err)
+			return
+		}
+		if err := isSafeExecutable(binPath); err != nil {
+			logger.Error("feeder binary is not safe to execute", "path", binPath, "err", err)
+			return
+		}
+	} else if err := validateFeederInputs(configFile, sourcesConfPath, logPath, mnemonic, strconv.Itoa(statusPort)); err != nil {
+		logger.Error("invalid feeder inputs", "err", err)
+		return
+	}
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -112,14 +125,6 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 			}
 		}()
 		if binPath != "" {
-			if err := validatePath(binPath); err != nil {
-				logger.Error("invalid feeder binary path", "path", binPath, "err", err)
-				return
-			}
-			if err := isSafeExecutable(binPath); err != nil {
-				logger.Error("feeder binary is not safe to execute", "path", binPath, "err", err)
-				return
-			}
 			logger.Info("starting external feeder binary", "path", binPath)
 			startExternalFeeder(binPath, configFile, sourcesConfPath, logger, logPath)
 		} else {
@@ -129,14 +134,7 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 				logger.Error("cannot determine self binary path", "err", err)
 				return
 			}
-
-			if err := validateFeederInputs(configFile, sourcesConfPath, logPath, mnemonic, strconv.Itoa(statusPort)); err != nil {
-				logger.Error("invalid feeder inputs", "err", err)
-				return
-			}
-
 			statusPortStr := strconv.Itoa(statusPort)
-
 			// nosemgrep
 			cmd := exec.Command(selfPath,
 				"external",
@@ -177,11 +175,11 @@ func startExternalFeeder(binPath, configFile, sourcesConfPath string, logger log
 		return
 	}
 	for retry := 0; ; retry++ {
-		if err := validatePath(configFile); err != nil {
+		if err := validatePath(configFile, true); err != nil {
 			logger.Error("invalid config file path", "path", configFile, "err", err)
 			return
 		}
-		if err := validatePath(sourcesConfPath); err != nil {
+		if err := validatePath(sourcesConfPath, true); err != nil {
 			logger.Error("invalid sources config path", "path", sourcesConfPath, "err", err)
 			return
 		}
@@ -190,7 +188,7 @@ func startExternalFeeder(binPath, configFile, sourcesConfPath string, logger log
 			"--sources_path", sourcesConfPath,
 		}
 		if len(logPath) > 0 {
-			if err := validatePath(logPath); err != nil {
+			if err := validatePath(logPath, true); err != nil {
 				logger.Error("invalid log path", "path", logPath, "err", err)
 				return
 			}
@@ -240,7 +238,10 @@ func printProto(m proto.Message) {
 	fmt.Println(string(marshaled))
 }
 
-func validatePath(p string) error {
+func validatePath(p string, required bool) error {
+	if !required && len(p) == 0 {
+		return nil
+	}
 	if len(p) == 0 {
 		return errors.New("path is empty")
 	}
@@ -289,9 +290,9 @@ func validateFeederInputs(configFile, sourcesConfPath, logPath, mnemonic, status
 		name string
 		err  error
 	}{
-		{"configFile", validatePath(configFile)},
-		{"sourcesConfPath", validatePath(sourcesConfPath)},
-		{"logPath", validatePath(logPath)},
+		{"configFile", validatePath(configFile, true)},
+		{"sourcesConfPath", validatePath(sourcesConfPath, true)},
+		{"logPath", validatePath(logPath, false)},
 		{"mnemonic", validateMnemonic(mnemonic, false)},
 		{"statusPortStr", validatePort(statusPortStr, false)},
 	}
