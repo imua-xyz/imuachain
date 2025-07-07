@@ -57,3 +57,17 @@ message PriceEpoch {
   // timestamp when the price is corresponded
   string timestamp = 5;
 }
+
+// PriceAcc is used for price accumulator, which is used to store the latest accumulated price
+message PriceAcc {
+  // price
+  string price = 1;
+  // decimal of the corresponding price
+  int32 decimal = 2;
+  // timestamp when the price is corresponded
+  string timestamp = 3;
+  // roundid of the price if the source is deteministic
+  uint64 last_round_id = 4 [(gogoproto.customname) = "LastRoundID"];
+  // start_round_id is used to indicate the round id of the first price in this accumulator
+  uint64 start_round_id = 5 [(gogoproto.customname) = "StartRoundID"];
+}

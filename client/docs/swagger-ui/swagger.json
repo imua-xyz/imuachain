@@ -19078,6 +19078,7 @@
                       }
                     },
                     "accumulated_price": {
+                      "title": "accumulated price of the token",
                       "type": "object",
                       "properties": {
                         "price": {
@@ -19093,13 +19094,17 @@
                           "type": "string",
                           "title": "timestamp when the price is corresponded"
                         },
-                        "round_id": {
+                        "last_round_id": {
                           "type": "string",
                           "format": "uint64",
                           "title": "roundid of the price if the source is deteministic"
+                        },
+                        "start_round_id": {
+                          "type": "string",
+                          "format": "uint64",
+                          "title": "start_round_id is used to indicate the round id of the first price in this accumulator"
                         }
-                      },
-                      "title": "price with its specified timestamp and roundid(if from deteministic source)"
+                      }
                     }
                   }
                 }
@@ -43989,6 +43994,35 @@
       },
       "description": "Params defines the parameters for the module."
     },
+    "imuachain.oracle.v1.PriceAcc": {
+      "type": "object",
+      "properties": {
+        "price": {
+          "type": "string",
+          "title": "price"
+        },
+        "decimal": {
+          "type": "integer",
+          "format": "int32",
+          "title": "decimal of the corresponding price"
+        },
+        "timestamp": {
+          "type": "string",
+          "title": "timestamp when the price is corresponded"
+        },
+        "last_round_id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "roundid of the price if the source is deteministic"
+        },
+        "start_round_id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "start_round_id is used to indicate the round id of the first price in this accumulator"
+        }
+      },
+      "title": "PriceAcc is used for price accumulator, which is used to store the latest accumulated price"
+    },
     "imuachain.oracle.v1.PriceEpoch": {
       "type": "object",
       "properties": {
@@ -44178,6 +44212,7 @@
           }
         },
         "accumulated_price": {
+          "title": "accumulated price of the token",
           "type": "object",
           "properties": {
             "price": {
@@ -44193,13 +44228,17 @@
               "type": "string",
               "title": "timestamp when the price is corresponded"
             },
-            "round_id": {
+            "last_round_id": {
               "type": "string",
               "format": "uint64",
               "title": "roundid of the price if the source is deteministic"
+            },
+            "start_round_id": {
+              "type": "string",
+              "format": "uint64",
+              "title": "start_round_id is used to indicate the round id of the first price in this accumulator"
             }
-          },
-          "title": "price with its specified timestamp and roundid(if from deteministic source)"
+          }
         }
       },
       "title": "prices of all rounds of a specific token"
@@ -44743,6 +44782,7 @@
               }
             },
             "accumulated_price": {
+              "title": "accumulated price of the token",
               "type": "object",
               "properties": {
                 "price": {
@@ -44758,13 +44798,17 @@
                   "type": "string",
                   "title": "timestamp when the price is corresponded"
                 },
-                "round_id": {
+                "last_round_id": {
                   "type": "string",
                   "format": "uint64",
                   "title": "roundid of the price if the source is deteministic"
+                },
+                "start_round_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "title": "start_round_id is used to indicate the round id of the first price in this accumulator"
                 }
-              },
-              "title": "price with its specified timestamp and roundid(if from deteministic source)"
+              }
             }
           }
         }

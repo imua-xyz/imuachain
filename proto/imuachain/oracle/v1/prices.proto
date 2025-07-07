@@ -17,5 +17,5 @@ message Prices {
   // TWAP of the token
   PriceEpoch twap = 4;
   // accumulated price of the token
-  PriceTimeRound accumulated_price = 5;
+  PriceAcc accumulated_price = 5;
 }
