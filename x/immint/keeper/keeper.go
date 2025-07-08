@@ -114,6 +114,9 @@ func (k Keeper) GetEpochMintInfo(ctx sdk.Context) (math.Int, math.LegacyDec, err
 
 	// calculate the mint amount by the selected inflation and current total supply
 	inflation := params.InflationParams.AnnualInflation[index]
+	if inflation.IsNil() || inflation.IsNegative() {
+		return math.Int{}, math.LegacyDec{}, types.ErrInvalidParams.Wrapf("invalid inflation ratio:%v, index:%d", inflation, index)
+	}
 	totalSupply := k.bankKeeper.GetSupply(ctx, params.MintDenom).Amount
 	annualProvisions := inflation.MulInt(totalSupply)
 	// calculate the amount for one epoch
