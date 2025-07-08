@@ -29,9 +29,6 @@ func (k Keeper) StakerInfos(goCtx context.Context, req *types.QueryStakerInfosRe
 	if err != nil {
 		return stakerInfosResp, err
 	}
-	version := k.GetNSTVersionFromAssetID(ctx, req.AssetId)
-	// #nosec G115
-	stakerInfosResp.Version = version
 	return stakerInfosResp, nil
 }
 
@@ -47,10 +44,13 @@ func (k Keeper) StakerInfo(goCtx context.Context, req *types.QueryStakerInfoRequ
 	if err != nil {
 		return nil, ErrInvalidRequest
 	}
-	stakerInfo := k.GetStakerInfo(ctx, chainID, req.StakerAddr)
 	// #nosec G115
-	version := k.GetNSTVersionFromAssetID(ctx, req.AssetId)
-	return &types.QueryStakerInfoResponse{Version: version, StakerInfo: &stakerInfo}, nil
+	versions, found := k.GetNSTVersionsFromAssetID(ctx, req.AssetId)
+	if !found {
+		return nil, status.Error(codes.NotFound, "versions not found for the given asset ID")
+	}
+	stakerInfo := k.GetStakerInfo(ctx, chainID, req.StakerAddr)
+	return &types.QueryStakerInfoResponse{Version: &versions, StakerInfo: &stakerInfo}, nil
 }
 
 func (k Keeper) StakerList(goCtx context.Context, req *types.QueryStakerListRequest) (*types.QueryStakerListResponse, error) {
@@ -61,8 +61,12 @@ func (k Keeper) StakerList(goCtx context.Context, req *types.QueryStakerListRequ
 		return nil, ErrUnsupportedAsset
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	stakerList := k.GetStakerList(ctx, req.AssetId)
 	//#nosec G115
-	version := k.GetNSTVersionFromAssetID(ctx, req.AssetId)
-	return &types.QueryStakerListResponse{Version: version, StakerList: &stakerList}, nil
+	versions, found := k.GetNSTVersionsFromAssetID(ctx, req.AssetId)
+	if !found {
+		return nil, status.Error(codes.NotFound, "versions not found for the given asset ID")
+	}
+
+	stakerList := k.GetStakerList(ctx, req.AssetId, 0)
+	return &types.QueryStakerListResponse{Version: versions.Version.Version, StakerList: &stakerList}, nil
 }

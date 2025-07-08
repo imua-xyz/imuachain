@@ -1,11 +1,13 @@
 package keeper_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"sort"
 	"time"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/imua-xyz/imuachain/testutil"
 
 	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
@@ -18,10 +20,7 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-var (
-	operatorNumber      = 3
-	blockNumberPerEpoch = int64(3)
-)
+var operatorNumber = 3
 
 type testHelperInfo struct {
 	depositAmount  sdkmath.Int
@@ -47,7 +46,7 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 		stakers[i] = ethAddr
 		operators[i] = ethAddr.Bytes()
 		// register operator
-		suite.registerOperator(operators[i].String())
+		suite.RegisterOperator(operators[i].String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()))
 		// associate the stakers with operators
 		err := suite.App.DelegationKeeper.AssociateOperatorWithStaker(suite.Ctx, suite.clientChainLzID, operators[i], stakers[i].Bytes())
 		suite.NoError(err)
@@ -81,34 +80,22 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 	}
 }
 
-func (suite *OperatorTestSuite) runToEpochEnd() {
-	// the default AVS epoch identifier is day
-	// Configure 3 blocks per epoch for testing, so the block duration is 8 hours
-	// so starting from the initial block of the epoch, it takes three blocks to
-	// reach the epoch’s end block.
-	for i := int64(0); i < blockNumberPerEpoch; i++ {
-		suite.CommitAfter(8 * time.Hour)
-	}
-}
-
 func (suite *OperatorTestSuite) printAllSnapshot(avs string) {
 	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
 	suite.True(found)
 	fmt.Println("epoch", epochInfo.CurrentEpoch, "startHeight", epochInfo.CurrentEpochStartHeight)
 	opFunc := func(height int64, snapshot *types.VotingPowerSnapshot) error {
 		fmt.Println("snapshot height is：", height)
-		bytes, err := json.MarshalIndent(snapshot, " ", " ")
-		suite.NoError(err)
-		fmt.Println(string(bytes))
+		suite.DebugPrintObject(snapshot)
 		return nil
 	}
-	err := suite.App.OperatorKeeper.IterateVotingPowerSnapshot(suite.Ctx, avs, false, opFunc)
+	err := suite.App.OperatorKeeper.IterateVotingPowerSnapshot(suite.Ctx, avs, opFunc)
 	suite.NoError(err)
 }
 
 func (suite *OperatorTestSuite) TestInitializeSnapshot() {
 	helperInfo := suite.prepareForSnapshotTesting(operatorNumber)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
 	suite.True(found)
 	// the height in the snapshot key should be the start height of next epoch.
@@ -147,18 +134,18 @@ func (suite *OperatorTestSuite) TestInitializeSnapshot() {
 
 func (suite *OperatorTestSuite) TestSnapshotVPUnchanged() {
 	suite.prepareForSnapshotTesting(operatorNumber)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	lastChangeHeight := suite.Ctx.BlockHeight()
 	_, initialSnapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, lastChangeHeight)
 	suite.NoError(err)
 	runToEpochNumber := 2
 
 	for i := 0; i < runToEpochNumber; i++ {
-		suite.runToEpochEnd()
+		suite.RunToEpochEnd(epochstypes.DayEpochID)
 		epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochstypes.DayEpochID)
 		suite.True(found)
 		startHeight := epochInfo.CurrentEpochStartHeight
-		endHeight := startHeight + blockNumberPerEpoch - 1
+		endHeight := startHeight + testutil.TestBlockNumberPerEpoch - 1
 		for j := startHeight; j <= endHeight; j++ {
 			snapshotKeyLastHeight, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, j)
 			suite.NoError(err)
@@ -182,14 +169,14 @@ func (suite *OperatorTestSuite) TestSnapshotVPUnchanged() {
 
 func (suite *OperatorTestSuite) TestSnapshotVPChanged() {
 	testHelper := suite.prepareForSnapshotTesting(operatorNumber)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	_, initialSnapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 
 	// change the voting power of the operator at index 0.
 	index := 0
 	suite.prepareDelegation(true, testHelper.stakers[index], usdtAddr, testHelper.operators[index], testHelper.delegateAmount)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	_, snapshotAfterUpdate, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 
@@ -204,33 +191,26 @@ func (suite *OperatorTestSuite) TestSnapshotVPChanged() {
 
 func (suite *OperatorTestSuite) TestSnapshotWithOptOut() {
 	testHelper := suite.prepareForSnapshotTesting(operatorNumber)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 
 	// opt out if the index of operator is 0.
 	index := 0
 	err := suite.App.OperatorKeeper.OptOut(suite.Ctx, testHelper.operators[index], suite.avsAddr)
 	suite.NoError(err)
-	snapshotHelper, err := suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, suite.avsAddr)
-	suite.NoError(err)
-	suite.True(snapshotHelper.HasOptOut)
 
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	_, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 	suite.Equal(operatorNumber-1, len(snapshot.OperatorVotingPowers))
 	votingPower := types.GetSpecifiedVotingPower(testHelper.operators[index].String(), snapshot.OperatorVotingPowers)
 	suite.Nil(votingPower)
 
-	snapshotHelper, err = suite.App.OperatorKeeper.GetSnapshotHelper(suite.Ctx, suite.avsAddr)
-	suite.NoError(err)
-	suite.False(snapshotHelper.HasOptOut)
-
 	// opt all operators out of the AVS.
 	for i := index + 1; i < operatorNumber; i++ {
 		err = suite.App.OperatorKeeper.OptOut(suite.Ctx, testHelper.operators[i], suite.avsAddr)
 		suite.NoError(err)
 	}
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	_, snapshot, err = suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 	suite.Equal(suite.Ctx.BlockHeight(), snapshot.LastChangedHeight)
@@ -239,7 +219,7 @@ func (suite *OperatorTestSuite) TestSnapshotWithOptOut() {
 		votingPower = types.GetSpecifiedVotingPower(testHelper.operators[i].String(), snapshot.OperatorVotingPowers)
 		suite.Nil(votingPower)
 	}
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	key := types.KeyForVotingPowerSnapshot(common.HexToAddress(suite.avsAddr), suite.Ctx.BlockHeight())
 	_, err = suite.App.OperatorKeeper.GetVotingPowerSnapshot(suite.Ctx, key)
 	suite.Error(err)
@@ -247,7 +227,7 @@ func (suite *OperatorTestSuite) TestSnapshotWithOptOut() {
 
 func (suite *OperatorTestSuite) TestSnapshotWithSlash() {
 	testHelper := suite.prepareForSnapshotTesting(operatorNumber)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	_, snapshotBeforeSlash, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 	// run to next block to execute slashing
@@ -287,7 +267,7 @@ func (suite *OperatorTestSuite) TestGenesisSnapshot() {
 	firstBlockHeight := suite.Ctx.BlockHeight()
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
-	for i := int64(0); i < blockNumberPerEpoch; i++ {
+	for i := int64(0); i < testutil.TestBlockNumberPerEpoch; i++ {
 		height, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, dogfoodAVSAddr, firstBlockHeight)
 		suite.NoError(err)
 		suite.Equal(firstBlockHeight, height)
@@ -300,7 +280,7 @@ func (suite *OperatorTestSuite) TestGenesisSnapshot() {
 
 func (suite *OperatorTestSuite) TestSnapshotPruning() {
 	testHelper := suite.prepareForSnapshotTesting(operatorNumber)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	firstSnapshotHeight := suite.Ctx.BlockHeight()
 
 	avsUnbondingDuration, err := suite.App.AVSManagerKeeper.GetAVSUnbondingDuration(suite.Ctx, suite.avsAddr)
@@ -308,12 +288,12 @@ func (suite *OperatorTestSuite) TestSnapshotPruning() {
 
 	runEpochNumber := avsUnbondingDuration + 2
 	for i := uint64(0); i < runEpochNumber; i++ {
-		suite.runToEpochEnd()
+		suite.RunToEpochEnd(epochstypes.DayEpochID)
 	}
 	_, _, err = suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, firstSnapshotHeight)
 	suite.NoError(err)
 
-	key := types.KeyForVotingPowerSnapshot(common.HexToAddress(suite.avsAddr), firstSnapshotHeight+blockNumberPerEpoch)
+	key := types.KeyForVotingPowerSnapshot(common.HexToAddress(suite.avsAddr), firstSnapshotHeight+testutil.TestBlockNumberPerEpoch)
 	_, err = suite.App.OperatorKeeper.GetVotingPowerSnapshot(suite.Ctx, key)
 	suite.Error(err)
 
@@ -321,7 +301,7 @@ func (suite *OperatorTestSuite) TestSnapshotPruning() {
 	index := 0
 	suite.prepareDelegation(true, testHelper.stakers[index], usdtAddr, testHelper.operators[index], testHelper.delegateAmount)
 	for i := uint64(0); i < runEpochNumber; i++ {
-		suite.runToEpochEnd()
+		suite.RunToEpochEnd(epochstypes.DayEpochID)
 	}
 	key = types.KeyForVotingPowerSnapshot(common.HexToAddress(suite.avsAddr), firstSnapshotHeight)
 	_, err = suite.App.OperatorKeeper.GetVotingPowerSnapshot(suite.Ctx, key)
@@ -343,10 +323,10 @@ func (suite *OperatorTestSuite) TestSnapshotPruning() {
 	_, snapshotAfterSlash, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, suite.avsAddr, suite.Ctx.BlockHeight())
 	suite.NoError(err)
 	suite.Equal(suite.Ctx.BlockHeight(), snapshotAfterSlash.LastChangedHeight)
-	suite.runToEpochEnd()
+	suite.RunToEpochEnd(epochstypes.DayEpochID)
 	suite.prepareDelegation(true, testHelper.stakers[index], usdtAddr, testHelper.operators[index], testHelper.delegateAmount)
 	for i := uint64(0); i < runEpochNumber; i++ {
-		suite.runToEpochEnd()
+		suite.RunToEpochEnd(epochstypes.DayEpochID)
 	}
 	key = types.KeyForVotingPowerSnapshot(common.HexToAddress(suite.avsAddr), snapshotAfterSlash.LastChangedHeight)
 	_, err = suite.App.OperatorKeeper.GetVotingPowerSnapshot(suite.Ctx, key)

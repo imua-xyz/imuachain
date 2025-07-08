@@ -74,17 +74,6 @@ func init() {
 		Valid:         true,
 		Deterministic: true,
 	})
-	DefaultGenStateOracle.Params.Rules = append(DefaultGenStateOracle.Params.Rules,
-		&oracletypes.RuleSource{
-			SourceIDs: []uint64{1},
-		},
-		&oracletypes.RuleSource{
-			SourceIDs: []uint64{0},
-			Nom: &oracletypes.NOMSource{
-				SourceIDs: []uint64{1},
-				Minimum:   1,
-			},
-		})
 	DefaultGenStateOracle.Params.TokenFeeders = append(DefaultGenStateOracle.Params.TokenFeeders, &oracletypes.TokenFeeder{
 		TokenID:      1,
 		RuleID:       2,

@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 
+	imuatestutil "github.com/imua-xyz/imuachain/testutil"
+
 	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -364,26 +366,8 @@ func getTestImuachainGenesis(
 	*dogfoodtypes.GenesisState,
 ) {
 	// x/assets
-	clientChains := []assetstypes.ClientChainInfo{
-		{
-			Name:               "ethereum",
-			MetaInfo:           "ethereum blockchain",
-			ChainId:            1,
-			FinalizationBlocks: 10,
-			LayerZeroChainID:   101,
-			AddressLength:      20,
-		},
-	}
-	assets := []assetstypes.AssetInfo{
-		{
-			Name:             "Tether USD",
-			Symbol:           "USDT",
-			Address:          "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-			Decimals:         6,
-			LayerZeroChainID: clientChains[0].LayerZeroChainID,
-			MetaInfo:         "Tether USD token",
-		},
-	}
+	clientChains := imuatestutil.DefaultTestClientChain
+	assets := imuatestutil.DefaultTestStakingAssets
 	_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(
 		clientChains[0].LayerZeroChainID,
 		"", assets[0].Address,
@@ -462,7 +446,7 @@ func getTestImuachainGenesis(
 				},
 			}, depositsByStaker, nil,
 		), operatortypes.NewGenesisState(
-			operatorInfos, nil, nil, nil, nil, nil, nil, nil,
+			operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil,
 		), delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil), dogfoodtypes.NewGenesis(
 			dogfoodtypes.NewParams(
 				dogfoodtypes.DefaultEpochsUntilUnbonded,

@@ -28,6 +28,10 @@ const (
 
 	DefaultOptedOutHeight = uint64(math.MaxUint64)
 
+	DefaultJailedHeight = uint64(0)
+
+	DefaultUnJailedHeight = uint64(0)
+
 	SlashVetoDuration = int64(1000)
 )
 
@@ -63,12 +67,18 @@ const (
 	// the given address is in the process of unbonding their key for the given chainID.
 	BytePrefixForOperatorKeyRemovalForChainID
 
-	// BytePrefixForVotingPowerSnapshot is the prefix to store the voting power snapshot for all AVSs
-	BytePrefixForVotingPowerSnapshot
+	// prefixForVotingPowerSnapshot is the prefix to store the voting power snapshot for all AVSs
+	prefixForVotingPowerSnapshot
 
-	// BytePrefixForSnapshotHelper is the prefix used to store helper information
+	// prefixForSnapshotHelper is the prefix used to store helper information
 	// for voting power snapshot updates.
-	BytePrefixForSnapshotHelper
+	prefixForSnapshotHelper
+
+	// prefixOperatorAssetUSDValue is the prefix used to store the USD value of operator asset
+	prefixOperatorAssetUSDValue
+
+	// prefixAVSAssetListPerEpoch is the prefix used to store the AVS asset list per epoch.
+	prefixAVSAssetListPerEpoch
 )
 
 var (
@@ -107,11 +117,32 @@ var (
 	// the voting power needs to be updated immediately to ensure the slash takes effect for the relevant operator.
 	// In this case, we need to store an additional snapshot at the height where the slash is executed.
 	// AVSAddr+ '/' + Height -> VotingPowerSnapshot
-	KeyPrefixVotingPowerSnapshot = []byte{BytePrefixForVotingPowerSnapshot}
+	KeyPrefixVotingPowerSnapshot = []byte{prefixForVotingPowerSnapshot}
 
 	// KeyPrefixSnapshotHelper key-value:
 	// avsAddr -> SnapshotHelper
-	KeyPrefixSnapshotHelper = []byte{BytePrefixForSnapshotHelper}
+	KeyPrefixSnapshotHelper = []byte{prefixForSnapshotHelper}
+
+	// KeyPrefixOperatorAssetUSDValue key-value:
+	// epochIdentifier + '/' + operator + '/' + assetID  ->  types.DecValueField
+	// It records the USD value of operator asset. It can be used to calculate the voting power
+	// for operators and AVSs. It will also be used for reward distribution because the rewards
+	// need to be split into multiple asset pools, so we need this state to calculate the proportion.
+	// The epochIdentifier is included in the key because AVSs with the same epoch configuration
+	// can use the same state updated per epoch.
+	KeyPrefixOperatorAssetUSDValue = []byte{prefixOperatorAssetUSDValue}
+
+	// KeyPrefixAVSAssetListPerEpoch key-value:
+	// avsAddr -> AVSAssetsPerEpoch
+	// Since the real-time asset list is already stored in AVS information, we only record
+	// the asset list here when the AVS asset list is changed.
+	// If there is no change, we can directly use the asset list from AVS information.
+	// However, if a change occurs, we need to record the asset list before the update,
+	// because the voting power update uses the asset list from the end of the previous epoch,
+	// while the AVS info asset list is updated in real time per block.
+	// This ensures that we obtain the correct asset list at the last voting power update,
+	// which is necessary for reward distribution.
+	KeyPrefixAVSAssetListPerEpoch = []byte{prefixAVSAssetListPerEpoch}
 )
 
 // ModuleAddress is the native module address for EVM

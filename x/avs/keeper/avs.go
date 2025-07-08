@@ -20,9 +20,6 @@ import (
 
 // GetAVSSupportedAssets returns a map of assets supported by the AVS. The avsAddr supplied must be hex.
 func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]interface{}, error) {
-	if !common.IsHexAddress(avsAddr) {
-		return nil, errorsmod.Wrap(types.ErrInvalidAddr, fmt.Sprintf("GetAVSSupportedAssets: key is %s", avsAddr))
-	}
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
 		return nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSSupportedAssets: key is %s", avsAddr))
@@ -39,6 +36,18 @@ func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[str
 	}
 
 	return ret, nil
+}
+
+// GetAVSAssetsList returns a list of assets supported by the AVS. The avsAddr supplied must be hex.
+func (k *Keeper) GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error) {
+	if !common.IsHexAddress(avsAddr) {
+		return nil, errorsmod.Wrap(types.ErrInvalidAddr, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+	}
+	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
+	if err != nil {
+		return nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+	}
+	return avsInfo.Info.AssetIDs, nil
 }
 
 // GetAVSSlashContract returns the address of the contract that will be used to slash the AVS.
@@ -92,6 +101,20 @@ func (k *Keeper) GetEpochEndAVSs(ctx sdk.Context, epochIdentifier string, ending
 	})
 
 	return avsList
+}
+
+// GetEpochsUsedByAllAVSs returns a list of epoch identifiers currently in use by the AVSs.
+func (k *Keeper) GetEpochsUsedByAllAVSs(ctx sdk.Context) []string {
+	epochIdentifiers := make([]string, 0)
+	seen := make(map[string]interface{})
+	k.IterateAVSInfo(ctx, func(_ int64, avsInfo types.AVSInfo) (stop bool) {
+		if _, ok := seen[avsInfo.EpochIdentifier]; !ok {
+			seen[avsInfo.EpochIdentifier] = nil
+			epochIdentifiers = append(epochIdentifiers, avsInfo.EpochIdentifier)
+		}
+		return false
+	})
+	return epochIdentifiers
 }
 
 // GetAVSInfoByTaskAddress returns the AVS  which containing this task address
@@ -156,7 +179,7 @@ func (k Keeper) RegisterAVSWithChainID(
 	avsAddrStr := types.GenerateAVSAddress(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
 	// check that the AVS is registered
-	if isAvs, _ := k.IsAVS(ctx, avsAddrStr); isAvs {
+	if isAVS, _ := k.IsAVS(ctx, avsAddrStr); isAVS {
 		// negligible probability that an independent AVS without this chainID exists
 		return true, avsAddr, nil
 	}

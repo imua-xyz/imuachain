@@ -27,13 +27,13 @@ func (VirtualSlashKeeper) OperatorAssetSlashedProportion(_ sdk.Context, _ sdk.Ac
 
 // DelegationHooks are event hooks triggered by the delegation module
 type DelegationHooks interface {
-	// AfterDelegation we don't want the ability to cancel delegation or undelegation so no return type for
-	// either
-	// for delegation, we only care about the address of the operator to cache the event
-	AfterDelegation(ctx sdk.Context, operator sdk.AccAddress)
+	// AfterDelegation :
+	AfterDelegation(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
+		preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo) error
 	// AfterUndelegationStarted for undelegation, we use the address of the operator to figure out the list of impacted
 	// chains for that operator. and we need the identifier to hold it until confirmed by subscriber
-	AfterUndelegationStarted(ctx sdk.Context, addr sdk.AccAddress, recordKey []byte) error
+	AfterUndelegationStarted(ctx sdk.Context, stakerID, assetID string, addr sdk.AccAddress, recordKey []byte,
+		preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo) error
 }
 
 type OperatorKeeper interface {
@@ -46,10 +46,11 @@ type AssetsKeeper interface {
 	UpdateStakerAssetState(
 		ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset,
 	) (info *assetstype.StakerAssetInfo, err error)
-	UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Address, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (err error)
+	UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (stateBeforeUpdate assetstype.OperatorAssetInfo, err error)
+	UpdateStakingAssetTotalAmount(ctx sdk.Context, assetID string, changeAmount sdkmath.Int) (err error)
 	GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, assetID string) (info *assetstype.StakerAssetInfo, err error)
-	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
-	IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.Address, assetID string) bool
+	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
+	IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) bool
 
 	ClientChainExists(ctx sdk.Context, index uint64) bool
 }

@@ -1,7 +1,6 @@
 syntax = "proto3";
 package imuachain.delegation.v1;
 
-import "amino/amino.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
@@ -41,9 +40,7 @@ message KeyValue {
 
 // DelegationIncOrDecInfo is the delegation increase or decrease info.
 message DelegationIncOrDecInfo {
-  option (cosmos.msg.v1.signer) = "fromAddress";
-  option (amino.name) = "cosmos-sdk/MsgAddOrDecreaseDelegation";
-
+  option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -141,9 +138,13 @@ message MsgUpdateParamsResponse {}
 service Msg {
   option (cosmos.msg.v1.service) = true;
   // DelegateAssetToOperator delegates asset to operator.
-  rpc DelegateAssetToOperator(MsgDelegation) returns (DelegationResponse);
+  rpc DelegateAssetToOperator(MsgDelegation) returns (DelegationResponse){
+    option (google.api.http).post = "/imuachain/delegation/v1/tx/delegate_asset";
+  }
   // UndelegateAssetFromOperator undelegates asset from operator.
-  rpc UndelegateAssetFromOperator(MsgUndelegation) returns (UndelegationResponse);
+  rpc UndelegateAssetFromOperator(MsgUndelegation) returns (UndelegationResponse){
+    option (google.api.http).post = "/imuachain/delegation/v1/tx/undelegate_asset";
+  }
   // UpdateParams updates the parameters of the module.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse) {
     option (google.api.http).post = "/imuachain/delegation/v1/tx/MsgUpdateParams";

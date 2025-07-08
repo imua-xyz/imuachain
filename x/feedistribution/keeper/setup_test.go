@@ -4,6 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/stretchr/testify/suite"
 )
@@ -13,6 +16,14 @@ var s *KeeperTestSuite
 type KeeperTestSuite struct {
 	testutil.BaseTestSuite
 	EpochDuration time.Duration
+
+	// Used for test
+	testOperators []types.AccAddress
+	testAVSs      []common.Address
+	// Use the default EVM-compatible client chain for testing stakers.
+	testStakers       []common.Address
+	testStakerIDs     []string
+	testClientChainID uint64
 }
 
 func TestKeeperTestSuite(t *testing.T) {

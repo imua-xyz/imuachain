@@ -45,7 +45,7 @@ func (k *Keeper) EndBlock(
 		deltaAmount := &types.DeltaDelegationAmounts{
 			WaitUndelegationAmount: recordAmountNeg,
 		}
-		_, err = k.UpdateDelegationState(cc, record.StakerId, record.AssetId, record.OperatorAddr, deltaAmount)
+		_, _, err = k.UpdateDelegationState(cc, record.StakerId, record.AssetId, record.OperatorAddr, deltaAmount)
 		if err != nil {
 			logger.Error("Error in UpdateDelegationState during the delegation's EndBlock execution", "error", err)
 			continue
@@ -94,7 +94,7 @@ func (k *Keeper) EndBlock(
 		}
 
 		// update the operator state
-		err = k.assetsKeeper.UpdateOperatorAssetState(cc, operatorAccAddress, record.AssetId, assetstypes.DeltaOperatorSingleAsset{
+		_, err = k.assetsKeeper.UpdateOperatorAssetState(cc, operatorAccAddress, record.AssetId, assetstypes.DeltaOperatorSingleAsset{
 			PendingUndelegationAmount: recordAmountNeg,
 		})
 		if err != nil {

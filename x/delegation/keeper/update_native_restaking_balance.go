@@ -29,6 +29,10 @@ func (k Keeper) UpdateNSTBalance(
 		if err != nil {
 			return err
 		}
+		err = k.assetsKeeper.UpdateStakingAssetTotalAmount(ctx, assetID, amount)
+		if err != nil {
+			return err
+		}
 	} else if amount.IsNegative() {
 		// If the balance decreases due to the client chain PoS slashing, the decreased amount
 		// will be slashed from the withdrawable amount first, the pending undelegation second,

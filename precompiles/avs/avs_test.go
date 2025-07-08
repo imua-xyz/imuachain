@@ -405,7 +405,7 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 		_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.LayerZeroChainID, "", asset.Address)
 		selfDelegateAmount := big.NewInt(10)
 		minPrecisionSelfDelegateAmount := big.NewInt(0).Mul(selfDelegateAmount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(int64(asset.Decimals)), nil))
-		err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, operatorAddress, assetID, assetstypes.DeltaOperatorSingleAsset{
+		_, err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, operatorAddress, assetID, assetstypes.DeltaOperatorSingleAsset{
 			TotalAmount:   math.NewIntFromBigInt(minPrecisionSelfDelegateAmount),
 			TotalShare:    math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
 			OperatorShare: math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
@@ -571,7 +571,7 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 		_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.LayerZeroChainID, "", asset.Address)
 		selfDelegateAmount := big.NewInt(10)
 		minPrecisionSelfDelegateAmount := big.NewInt(0).Mul(selfDelegateAmount, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(int64(asset.Decimals)), nil))
-		err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, operatorAddress, assetID, assetstypes.DeltaOperatorSingleAsset{
+		_, err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, operatorAddress, assetID, assetstypes.DeltaOperatorSingleAsset{
 			TotalAmount:   math.NewIntFromBigInt(minPrecisionSelfDelegateAmount),
 			TotalShare:    math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),
 			OperatorShare: math.LegacyNewDecFromBigInt(minPrecisionSelfDelegateAmount),

@@ -38,7 +38,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	for _, elem := range genState.StakerInfosAssets {
 		// TODO: update the definition of nstVersion to be uint64
 		// #nosec G115
-		k.SetStakerInfosForAsset(ctx, elem.ChainId, elem.StakerInfos, elem.NstVersion)
+		k.SetStakerInfosForAsset(ctx, elem.ChainId, elem.StakerInfos, elem.NstVersionInfo)
 	}
 	// set validatorReportInfos
 	for _, elem := range genState.ValidatorReportInfos {

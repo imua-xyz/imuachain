@@ -186,8 +186,8 @@ func (s *AssetsPrecompileSuite) TestRunDeposit() {
 				}, stakerAssetInfo)
 
 				// check depositNST successfully updated stakerList in oracle_module
-				stakerList := s.App.OracleKeeper.GetStakerList(s.Ctx, assetID)
-				s.Equal(stakerList.StakerAddrs[0], stakerAddrStr)
+				stakerList := s.App.OracleKeeper.GetStakerList(s.Ctx, assetID, 0)
+				s.Equal(stakerList.Stakers[0].StakerAddr, stakerAddrStr)
 				// check depositNST successfully update stakerInfo with correct validatorPubkey
 				stakerInfo := s.App.OracleKeeper.GetStakerInfo(s.Ctx, s.ClientChains[0].LayerZeroChainID, stakerAddrStr)
 				s.Equal(types.BalanceInfo{
@@ -376,8 +376,8 @@ func (s *AssetsPrecompileSuite) TestRunWithdrawPrincipal() {
 				}, stakerAssetInfo)
 
 				// check depositNST successfully updated stakerList in oracle_module
-				stakerList := s.App.OracleKeeper.GetStakerList(s.Ctx, assetID)
-				s.Equal(len(stakerList.StakerAddrs), 0)
+				stakerList := s.App.OracleKeeper.GetStakerList(s.Ctx, assetID, 0)
+				s.Equal(len(stakerList.Stakers), 0)
 				// check depositNST successfully update stakerInfo with correct validatorPubkey
 				stakerInfo := s.App.OracleKeeper.GetStakerInfo(s.Ctx, s.ClientChains[0].LayerZeroChainID, s.Address.String())
 				s.Equal(0, len(stakerInfo.BalanceList))

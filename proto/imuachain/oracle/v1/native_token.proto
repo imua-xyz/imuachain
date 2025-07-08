@@ -40,15 +40,25 @@ message StakerInfo {
   // the index of corresponding staker in staker list
   uint32 staker_index = 2;
   // list of validators that this staker corresponding to on beacon chain
-  repeated string validator_pubkey_list = 3;
+  repeated ValidatorDeposit validator_list = 3;
   // list of balances to represets the history of this staker
   repeated BalanceInfo balance_list = 4;
+  // latest version to indicate the withdraw happened for this staker
+  uint64 withdraw_version = 5;
+}
+
+// StakerListEntry defines the entry of staker list
+message StakerListEntry {
+  // staker's address
+  string staker_addr = 1;
+  // latest version to indicate the withdraw happened for this staker
+  uint64 withdraw_version = 2;
 }
 
 // StakerList defines the list of stakers
 message StakerList {
   // list of staker's address
-  repeated string staker_addrs = 1;
+  repeated StakerListEntry stakers = 1;
 }
 
 // Staker defines the basic info of a staker without address and balance history.
@@ -56,12 +66,44 @@ message StakerList {
 message Staker {
   // staker's index
   uint32 staker_index = 1;
+  // latest version to indicate the withdraw happened for this staker
+  uint64 withdraw_version = 2;
   // validtor_list is the list of validators that this staker corresponding to on beacon chain
-  repeated string validator_list= 2;
+  repeated ValidatorDeposit validator_list= 3;
 }
 
 // Balances defines the list of balanceInfo
 message Balances {
   // list of balanceInfo
   repeated BalanceInfo balance_list = 1;
+}
+
+// ValidatorDeposit defines the version of a validator
+message ValidatorDeposit {
+  // validator's public key on beacon chain
+  string validator_pubkey = 1;
+  // version of the validator info (on deposit)
+  uint64 version = 2;
+  // deposit amount of the validator
+  uint64 deposit_amount = 3;
+}
+
+// NSTVersion defines the version of native-staking token
+message NSTVersion {
+  // version of the nst info (on balance change, on deposit/withdraw)
+  VersionDepositAmount version = 1;
+  // version of the nst info (on balance change, on deposit/withdraw) based on which price-feeder should submit balance change
+  VersionDepositAmount feed_version = 2;
+  // latest version to indicate the withdraw happened for this nst
+  uint64 withdraw_version = 3;
+  // latest version to indicate the withdraw happened for this nst on price-feeder
+  uint64 feed_withdraw_version = 4;
+}
+
+// VersionDepositAmount defines the version and deposit amount
+message VersionDepositAmount {
+  // version of the nst info (on balance change, on deposit/withdraw)
+  uint64 version = 1;
+  // accumulated deposit amount
+  uint64 deposit_amount = 2;
 }

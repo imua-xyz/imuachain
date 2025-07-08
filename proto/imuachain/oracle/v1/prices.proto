@@ -14,4 +14,8 @@ message Prices {
   uint64 next_round_id = 2 [(gogoproto.customname) = "NextRoundID"];
   // price list of all history round prices for the token
   repeated PriceTimeRound price_list = 3;
+  // TWAP of the token
+  PriceEpoch twap = 4;
+  // accumulated price of the token
+  PriceTimeRound accumulated_price = 5;
 }

@@ -148,6 +148,7 @@ func (k *Keeper) IterateUndelegationsByOperator(
 	iterator := sdk.KVStorePrefixIterator(store, operatorAccAddress)
 	defer iterator.Close()
 
+	updatedKeyValues := make([]utils.KeyValue, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		if heightFilter != nil {
 			keyFields, err := types.ParseUndelegationRecordKey(iterator.Key())
@@ -166,9 +167,15 @@ func (k *Keeper) IterateUndelegationsByOperator(
 		}
 
 		if isUpdate {
-			bz := k.cdc.MustMarshal(&undelegation)
-			store.Set(iterator.Key(), bz)
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+				Key:   append([]byte(nil), iterator.Key()...),
+				Value: &undelegation,
+			})
 		}
+	}
+	for _, updateKeyValue := range updatedKeyValues {
+		bz := k.cdc.MustMarshal(updateKeyValue.Value)
+		store.Set(updateKeyValue.Key, bz)
 	}
 	return nil
 }
@@ -232,6 +239,8 @@ func (k *Keeper) IterateUndelegationsByStakerAndAsset(
 			return err
 		}
 		if isUpdate {
+			// The update store is different from the iterator store,
+			// so it's safe to perform updates during iteration.
 			bz := k.cdc.MustMarshal(&undelegation)
 			undelegationInfoStore.Set(iterator.Value(), bz)
 		}

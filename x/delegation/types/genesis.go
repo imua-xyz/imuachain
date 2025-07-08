@@ -7,8 +7,6 @@ import (
 
 	"github.com/imua-xyz/imuachain/utils"
 
-	errorsmod "cosmossdk.io/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
@@ -73,24 +71,21 @@ func (gs GenesisState) ValidateAssociations() error {
 	for _, association := range gs.Associations {
 		// check operator address
 		if _, err := sdk.AccAddressFromBech32(association.Operator); err != nil {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"invalid operator address for operator %s", association.Operator,
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateAssociations: invalid operator address for operator %s", association.Operator,
 			)
 		}
 		// check staker address
 		if _, _, err := assetstypes.ValidateID(
 			association.StakerId, true, true,
 		); err != nil {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "invalid staker ID %s: %s", association.StakerId, err,
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateAssociations: invalid staker ID %s: %s", association.StakerId, err,
 			)
 		}
 		// check for duplicate stakerIDs
 		if _, ok := associatedStakerIDs[association.StakerId]; ok {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "duplicate staker ID %s", association.StakerId,
-			)
+			return ErrInvalidGenesisData.Wrapf("ValidateAssociations: duplicate staker ID %s", association.StakerId)
 		}
 		associatedStakerIDs[association.StakerId] = struct{}{}
 		// we don't check that this `association.stakerID` features in `gs.Delegations`,
@@ -104,28 +99,26 @@ func (gs GenesisState) ValidateDelegationStates() error {
 	validationFunc := func(_ int, info DelegationStates) error {
 		keys, err := ParseStakerAssetIDAndOperator([]byte(info.Key))
 		if err != nil {
-			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+			return ErrInvalidGenesisData.Wrapf("ValidateDelegationStates: %s", err.Error())
 		}
 
 		err = ValidateIDAndOperator(keys.StakerId, keys.AssetId, keys.OperatorAddr)
 		if err != nil {
-			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+			return ErrInvalidGenesisData.Wrapf("ValidateDelegationStates: %s", err.Error())
 		}
 
 		// check that there is no nil value provided.
 		if info.States.UndelegatableShare.IsNil() || info.States.WaitUndelegationAmount.IsNil() {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"nil delegation state for %s: %+v",
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateDelegationStates: nil delegation state for %s: %+v",
 				info.Key, info,
 			)
 		}
 
 		// check for negative values.
 		if info.States.UndelegatableShare.IsNegative() || info.States.WaitUndelegationAmount.IsNegative() {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"negative delegation state  for %s: %+v",
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateDelegationStates: negative delegation state  for %s: %+v",
 				info.Key, info,
 			)
 		}
@@ -137,7 +130,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 	}
 	_, err := utils.CommonValidation(gs.DelegationStates, seenFieldValueFunc, validationFunc)
 	if err != nil {
-		return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+		return err
 	}
 	return nil
 }
@@ -147,21 +140,19 @@ func (gs GenesisState) ValidateStakerList() error {
 		// validate the key
 		stringList, err := assetstypes.ParseJoinedStoreKey([]byte(stakersByOperator.Key), 2)
 		if err != nil {
-			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerList: %s", err.Error())
 		}
 		// validate the operator address
 		if _, err := sdk.AccAddressFromBech32(stringList[0]); err != nil {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"invalid operator address for operator %s", stringList[0],
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateStakerList: invalid operator address for operator %s", stringList[0],
 			)
 		}
 		// validate the assetID
 		_, assetClientChainID, err := assetstypes.ValidateID(stringList[1], true, false)
 		if err != nil {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"invalid assetID: %s",
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateStakerList: invalid assetID: %s",
 				stringList[1],
 			)
 		}
@@ -169,14 +160,13 @@ func (gs GenesisState) ValidateStakerList() error {
 		stakerValidationFunc := func(_ int, stakerID string) error {
 			_, stakerClientChainID, err := assetstypes.ValidateID(stakerID, true, false)
 			if err != nil {
-				return errorsmod.Wrapf(
-					ErrInvalidGenesisData,
-					"invalid stakerID: %s",
+				return ErrInvalidGenesisData.Wrapf(
+					"ValidateStakerList: invalid stakerID: %s",
 					stakerID,
 				)
 			}
 			if stakerClientChainID != assetClientChainID {
-				return errorsmod.Wrapf(ErrInvalidGenesisData, "the client chain layerZero IDs of the staker and asset are different, key:%s stakerID:%s", stakersByOperator.Key, stakerID)
+				return ErrInvalidGenesisData.Wrapf("ValidateStakerList: the client chain layerZero IDs of the staker and asset are different, key:%s stakerID:%s", stakersByOperator.Key, stakerID)
 			}
 			return nil
 		}
@@ -185,7 +175,7 @@ func (gs GenesisState) ValidateStakerList() error {
 		}
 		_, err = utils.CommonValidation(stakersByOperator.Stakers, seenStakerFunc, stakerValidationFunc)
 		if err != nil {
-			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+			return err
 		}
 		return nil
 	}
@@ -194,7 +184,7 @@ func (gs GenesisState) ValidateStakerList() error {
 	}
 	_, err := utils.CommonValidation(gs.StakersByOperator, seenFieldValueFunc, validationFunc)
 	if err != nil {
-		return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+		return err
 	}
 	return nil
 }
@@ -204,37 +194,26 @@ func (gs GenesisState) ValidateUndelegations() error {
 		undelegation := undelegationRecord.Undelegation
 		err := ValidateIDAndOperator(undelegation.StakerId, undelegation.AssetId, undelegation.OperatorAddr)
 		if err != nil {
-			return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+			return ErrInvalidGenesisData.Wrapf("ValidateUndelegations: %s", err.Error())
 		}
 
 		bytes, err := hex.DecodeString(undelegation.TxHash)
 		if err != nil {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "TxHash isn't a hex string, TxHash: %s",
+			return ErrInvalidGenesisData.Wrapf("ValidateUndelegations: TxHash isn't a hex string, TxHash: %s",
 				undelegation.TxHash,
 			)
 		}
 		if len(bytes) != common.HashLength {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "invalid length of TxHash ,TxHash:%s length: %d, should:%d",
-				undelegation.TxHash, len(bytes), common.HashLength,
-			)
+			return ErrInvalidGenesisData.Wrapf("ValidateUndelegations: invalid length of TxHash ,TxHash:%s length: %d, should:%d", undelegation.TxHash, len(bytes), common.HashLength)
 		}
 		if undelegation.ActualCompletedAmount.GT(undelegation.Amount) {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "the completed amount shouldn't be greater than the submitted amount , undelegationRecord：%v",
-				undelegationRecord,
-			)
+			return ErrInvalidGenesisData.Wrapf("ValidateUndelegations: the completed amount shouldn't be greater than the submitted amount , undelegationRecord：%v", undelegationRecord)
 		}
 		if undelegation.UndelegationId >= gs.LastUndelegationId {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "the undelegationID should be less than the global undelegationID,undelegationID:%d,globalID:%d",
-				undelegation.UndelegationId, gs.LastUndelegationId,
-			)
+			return ErrInvalidGenesisData.Wrapf("ValidateUndelegations: the undelegationID should be less than the global undelegationID,undelegationID:%d,globalID:%d", undelegation.UndelegationId, gs.LastUndelegationId)
 		}
 		if undelegation.CompletedEpochNumber < 0 {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "negative epoch number in the undelegation: %d",
+			return ErrInvalidGenesisData.Wrapf("ValidateUndelegations: negative epoch number in the undelegation: %d",
 				undelegation.CompletedEpochNumber,
 			)
 		}
@@ -243,10 +222,7 @@ func (gs GenesisState) ValidateUndelegations() error {
 			epochsTypes.HourEpochID, epochsTypes.DayEpochID,
 			epochsTypes.WeekEpochID:
 		default:
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData, "invalid epoch identifier in the undelegation: %s",
-				undelegation.CompletedEpochIdentifier,
-			)
+			return ErrInvalidGenesisData.Wrapf("ValidateUndelegations: invalid epoch identifier in the undelegation: %s", undelegation.CompletedEpochIdentifier)
 		}
 		return nil
 	}
@@ -255,7 +231,7 @@ func (gs GenesisState) ValidateUndelegations() error {
 	}
 	_, err := utils.CommonValidation(gs.Undelegations, seenFieldValueFunc, validationFunc)
 	if err != nil {
-		return errorsmod.Wrap(ErrInvalidGenesisData, err.Error())
+		return err
 	}
 	return nil
 }

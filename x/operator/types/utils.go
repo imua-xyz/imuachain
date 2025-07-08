@@ -5,6 +5,8 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 )
 
+const InitialEpochNumber int64 = 1
+
 // ChainIDWithLenKey returns the key with the following format:
 // bytePrefix | len(chainId) | chainId
 // This is similar to Solidity's ABI encoding.

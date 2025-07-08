@@ -31,7 +31,7 @@ func TestPrecompileTestSuite(t *testing.T) {
 
 func (s *RewardPrecompileTestSuite) SetupTest() {
 	s.DoSetupTest()
-	precompile, err := reward.NewPrecompile(s.App.AssetsKeeper, s.App.RewardKeeper, s.App.AuthzKeeper)
+	precompile, err := reward.NewPrecompile(s.App.AssetsKeeper, s.App.DistrKeeper, s.App.AuthzKeeper)
 	s.Require().NoError(err)
 	s.precompile = precompile
 }

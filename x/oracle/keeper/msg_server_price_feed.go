@@ -92,6 +92,8 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 		if msg.IsPhaseOne() {
 			// fot two-phases aggregation, the price represents for the rootHash of merkleTree derived from rawData, we need to encode it to base64 for identity transfer via websocket
 			priceStr = base64.StdEncoding.EncodeToString([]byte(priceStr))
+			// two-phases must from deterministic source, so we can append the detID to roundIDf for events, and finalPrice is finalized on current price, so its deteministic is correct
+			roundIDStr = fmt.Sprintf("%s|%s", roundIDStr, msg.Prices[0].Prices[0].DetID)
 		}
 
 		// emit event to tell price is updated for current round of corresponding feederID

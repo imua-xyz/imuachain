@@ -110,21 +110,40 @@ func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes
 	return &ret, nil
 }
 
-// AllOperators return the list of all operators' detailed information
-func (k *Keeper) AllOperators(ctx sdk.Context) []operatortypes.OperatorDetail {
+// IterateOperators return the list of all operators' detailed information
+func (k *Keeper) IterateOperators(ctx sdk.Context, opFunc func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error)) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
 	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
-	ret := make([]operatortypes.OperatorDetail, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var operatorInfo operatortypes.OperatorInfo
 		operatorAddr := sdk.AccAddress(iterator.Key())
 		k.cdc.MustUnmarshal(iterator.Value(), &operatorInfo)
+		isBreak, err := opFunc(operatorAddr, &operatorInfo)
+		if err != nil {
+			return err
+		}
+		if isBreak {
+			break
+		}
+	}
+	return nil
+}
+
+// AllOperators return the list of all operators' detailed information
+func (k *Keeper) AllOperators(ctx sdk.Context) []operatortypes.OperatorDetail {
+	ret := make([]operatortypes.OperatorDetail, 0)
+	opFunc := func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
 		ret = append(ret, operatortypes.OperatorDetail{
 			OperatorAddress: operatorAddr.String(),
-			OperatorInfo:    operatorInfo,
+			OperatorInfo:    *operatorInfo,
 		})
+		return false, nil
+	}
+	err := k.IterateOperators(ctx, opFunc)
+	if err != nil {
+		ctx.Logger().Error("error when iterating operators", "err", err)
 	}
 	return ret
 }
@@ -207,24 +226,68 @@ func (k *Keeper) IsOptedIn(ctx sdk.Context, operatorAddr, avsAddr string) bool {
 	return optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight
 }
 
-func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr sdk.AccAddress, avsAddr string) bool {
-	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr.String(), avsAddr)
+func (k *Keeper) IsJailed(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
 	if err != nil {
-		// not opted in
 		return false
 	}
-	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight {
-		// opted out
-		return false
-	}
-	if optedInfo.Jailed {
-		// frozen - either temporarily or permanently
-		return false
-	}
-	return true
+	return optedInfo.Jailed
 }
 
-func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) error) error {
+func (k *Keeper) IsOptedOutAndEffective(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
+	if err != nil {
+		return true
+	}
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return true
+	}
+	// The operator will remain active even if it has opted out of the AVS until the voting power
+	// is updated at the end of the epoch.
+	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+		optedInfo.OptedOutHeight < uint64(epochInfo.CurrentEpochStartHeight) {
+		// opted out and the voting power has been updated at the end of epoch
+		return true
+	}
+	return false
+}
+
+func (k *Keeper) IsOptedOutButNotEffective(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	optedInfo, err := k.GetOptedInfo(ctx, operatorAddr, avsAddr)
+	if err != nil {
+		return false
+	}
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return false
+	}
+	// The operator will remain active even if it has opted out of the AVS until the voting power
+	// is updated at the end of the epoch.
+	if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+		optedInfo.OptedOutHeight >= uint64(epochInfo.CurrentEpochStartHeight) {
+		// opted out and the voting power hasn't been updated at the end of epoch
+		return true
+	}
+	return false
+}
+
+// IsActive is used to check if the operator is serving the AVS, the opted out operator will still serve the
+// AVS until the next epoch.
+func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	return !k.IsOptedOutAndEffective(ctx, operatorAddr, avsAddr) && !k.IsJailed(ctx, operatorAddr, avsAddr)
+}
+
+// IsOptedInAndNotJailed checks whether the operator is opted in and not jailed.
+// Compared to `IsActive`, this returns false immediately after the operator opts out.
+// It will be used when updating voting power at the end of an epoch, as we need to exclude
+// operators who have opted out in the current epoch. These operators would still be included
+// if we used `IsActive`, because the voting power update happens before the epoch info is updated.
+func (k *Keeper) IsOptedInAndNotJailed(ctx sdk.Context, operatorAddr, avsAddr string) bool {
+	return k.IsOptedIn(ctx, operatorAddr, avsAddr) && !k.IsJailed(ctx, operatorAddr, avsAddr)
+}
+
+func (k *Keeper) IterateOptInfo(ctx sdk.Context, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error)) error {
 	// get all opted-in info
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
@@ -233,13 +296,12 @@ func (k *Keeper) IterateOptInfo(ctx sdk.Context, isUpdate bool, iteratePrefix []
 	for ; iterator.Valid(); iterator.Next() {
 		var optedInfo operatortypes.OptedInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &optedInfo)
-		err := opFunc(iterator.Key(), &optedInfo)
+		isBreak, err := opFunc(iterator.Key(), &optedInfo)
 		if err != nil {
 			return err
 		}
-		if isUpdate {
-			bz := k.cdc.MustMarshal(&optedInfo)
-			store.Set(iterator.Key(), bz)
+		if isBreak {
+			break
 		}
 	}
 	return nil
@@ -250,64 +312,77 @@ func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) 
 		return nil, operatortypes.ErrParameterInvalid.Wrapf("invalid operator address,err:%s", err)
 	}
 	avsList := make([]string, 0)
-	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
 			keys, err := assetstype.ParseJoinedStoreKey(key, 2)
 			if err != nil {
-				return err
+				return false, err
 			}
 			avsList = append(avsList, keys[1])
 		}
-		return nil
+		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
 	if err != nil {
 		return nil, err
 	}
 	return avsList, nil
 }
 
-func (k *Keeper) GetImpactfulAVSForOperator(ctx sdk.Context, operatorAddr string) ([]operatortypes.ImpactfulAVSInfo, error) {
+func (k *Keeper) isUnbondingRelated(ctx sdk.Context, avsAddr string, optedInfo *operatortypes.OptedInfo) (bool, uint64, error) {
+	unbondingDuration, err := k.avsKeeper.GetAVSUnbondingDuration(ctx, avsAddr)
+	if err != nil {
+		return false, 0, err
+	}
+	// add AVS currently opting in to the operator's list.
+	if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
+		return true, unbondingDuration, nil
+	}
+	// Add AVS that have opted out but are still within the unbonding duration,
+	// and therefore still affect the operator, to the list. This can prevent the operator decrease
+	// the unbonding duration through opt-out
+	// #nosec G115
+	epochNumber, err := k.GetEpochNumberByOptOutHeight(ctx, avsAddr, int64(optedInfo.OptedOutHeight))
+	if err != nil {
+		return false, unbondingDuration, err
+	}
+	epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+	if err != nil {
+		return false, unbondingDuration, err
+	}
+	if epochInfo.CurrentEpoch < epochNumber {
+		return false, unbondingDuration, xerrors.Errorf("IsUnbondingRelated: current epoch number is less than the retrieved epoch number by opted out height,avsAddr:%s,epochIdentifier:%s,currentEpochNumber:%d,optedOutEpochNumber:%d", avsAddr, epochInfo.Identifier, epochInfo.CurrentEpoch, epochNumber)
+	}
+	if epochNumber > 0 && uint64(epochNumber)+unbondingDuration >= uint64(epochInfo.CurrentEpoch) {
+		OptOutUnbondingRemaining := uint64(epochNumber) + unbondingDuration - uint64(epochInfo.CurrentEpoch)
+		return true, OptOutUnbondingRemaining, nil
+	}
+	return false, 0, nil
+}
+
+// GetUnbondingRelatedAVS return the AVSs that still influence the unbonding duration of operator.
+func (k *Keeper) GetUnbondingRelatedAVS(ctx sdk.Context, operatorAddr string) ([]operatortypes.ImpactfulAVSInfo, error) {
 	avsList := make([]operatortypes.ImpactfulAVSInfo, 0)
-	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
 		avsAddr := keys[1]
 		if err != nil {
-			return err
+			return false, err
 		}
-		// add AVS currently opting in to the operator's list.
-		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
-			avsList = append(avsList, operatortypes.ImpactfulAVSInfo{AVSAddr: avsAddr})
-		} else {
-			// Add AVS that have opted out but are still within the unbonding duration,
-			// and therefore still affect the operator, to the list.
-			// #nosec G115
-			epochNumber, err := k.GetEpochNumberByOptOutHeight(ctx, avsAddr, int64(optedInfo.OptedOutHeight))
-			if err != nil {
-				return err
-			}
-			epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
-			if err != nil {
-				return err
-			}
-			if epochInfo.CurrentEpoch < epochNumber {
-				return xerrors.Errorf("GetImpactfulAVSForOperator: current epoch number is less than the retrieved epoch number by opted out height,avsAddr:%s,epochIdentifier:%s,currentEpochNumber:%d,optedOutEpochNumber:%d", avsAddr, epochInfo.Identifier, epochInfo.CurrentEpoch, epochNumber)
-			}
-			unbondingDuration, err := k.avsKeeper.GetAVSUnbondingDuration(ctx, avsAddr)
-			if err != nil {
-				return err
-			}
-			if epochNumber > 0 && uint64(epochNumber)+unbondingDuration >= uint64(epochInfo.CurrentEpoch) {
-				avsList = append(avsList, operatortypes.ImpactfulAVSInfo{
+		isUnbondingRelated, unbondingDuration, err := k.isUnbondingRelated(ctx, avsAddr, optedInfo)
+		if err != nil {
+			return false, err
+		}
+		if isUnbondingRelated {
+			avsList = append(avsList,
+				operatortypes.ImpactfulAVSInfo{
 					AVSAddr:                  avsAddr,
-					HasOptedOut:              true,
-					OptOutUnbondingRemaining: uint64(epochNumber) + unbondingDuration - uint64(epochInfo.CurrentEpoch),
+					OptOutUnbondingRemaining: unbondingDuration,
 				})
-			}
 		}
-		return nil
+		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte(operatorAddr), opFunc)
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +391,7 @@ func (k *Keeper) GetImpactfulAVSForOperator(ctx sdk.Context, operatorAddr string
 
 func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (string, int64, uint64, error) {
 	// get the impactful AVSs for the operator
-	avsList, err := k.GetImpactfulAVSForOperator(ctx, operator.String())
+	avsList, err := k.GetUnbondingRelatedAVS(ctx, operator.String())
 	if err != nil {
 		return "", 0, 0, err
 	}
@@ -330,13 +405,7 @@ func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress)
 		if err != nil {
 			return "", 0, 0, err
 		}
-		unbondingDuration, err := k.avsKeeper.GetAVSUnbondingDuration(ctx, avs.AVSAddr)
-		if err != nil {
-			return "", 0, 0, err
-		}
-		if avs.HasOptedOut {
-			unbondingDuration = avs.OptOutUnbondingRemaining
-		}
+		unbondingDuration := avs.OptOutUnbondingRemaining
 		if unbondingDuration+uint64(epochInfo.CurrentEpoch) > uint64(math.MaxInt64) {
 			return "", 0, 0, xerrors.New("the sum of unbondingDuration and the current epoch number exceeds the int64 range.")
 		}
@@ -373,8 +442,8 @@ func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress)
 // the non-instant unbonding duration. This value can be used to determine whether a slash should be
 // applied for the submitted instant undelegation.
 func (k Keeper) GetInstantUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (bool, string, int64, error) {
-	// get the impactful AVSs for the operator
-	avsList, err := k.GetImpactfulAVSForOperator(ctx, operator.String())
+	// get the related AVSs for the operator
+	avsList, err := k.GetUnbondingRelatedAVS(ctx, operator.String())
 	if err != nil {
 		return false, "", 0, err
 	}
@@ -419,6 +488,84 @@ func (k Keeper) GetInstantUnbondingExpiration(ctx sdk.Context, operator sdk.AccA
 	return false, normalUnbondingEpochID, normalUnbondingEpochNumber, nil
 }
 
+// GetImpactfulEpochsAndAVSsForOperator gets the impactful epochs and AVSs for an operator.
+// In the Imua chain, one operator can opt into multiple AVSs, and different AVSs might have different epoch
+// configurations. This function returns the epochs and AVSs still served by the input operator.
+func (k Keeper) GetImpactfulEpochsAndAVSsForOperator(ctx sdk.Context, operatorAddr string) ([]string, []string, error) {
+	epochsMap := make(map[string]interface{}, 0)
+	epochsList := make([]string, 0)
+	avsList := make([]string, 0)
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
+		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		avsAddr := keys[1]
+		if err != nil {
+			return false, err
+		}
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+		if err != nil {
+			return false, err
+		}
+		// If the operator has opted out of an AVS, check whether the opted-out height is
+		// less than the start height of the current epoch. If yes, the voting power has been
+		// updated, and the operator no longer serves the AVS, so the epoch shouldn't be appended
+		// to the list.
+		if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+			optedInfo.OptedOutHeight < uint64(epochInfo.CurrentEpochStartHeight) {
+			// continue addressing the other AVSs
+			return false, nil
+		}
+		avsList = append(avsList, avsAddr)
+		// filter the epoch using a map, because the multiple AVSs might have the save epoch identifier
+		if _, ok := epochsMap[epochInfo.Identifier]; !ok {
+			epochsMap[epochInfo.Identifier] = nil
+			epochsList = append(epochsList, epochInfo.Identifier)
+		}
+		return false, nil
+	}
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return avsList, epochsList, nil
+}
+
+func (k Keeper) IsImpactfulEpochForOperator(ctx sdk.Context, epochIdentifier, operatorAddr string) bool {
+	var isImpactfulEpoch bool
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
+		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		avsAddr := keys[1]
+		if err != nil {
+			return false, err
+		}
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
+		if err != nil {
+			return false, err
+		}
+
+		// If the operator has opted out of an AVS, check whether the opted-out height is
+		// less than the start height of the current epoch. If yes, the voting power has been
+		// updated, and the operator no longer serves the AVS, so the epoch shouldn't be impactful.
+		if optedInfo.OptedOutHeight != operatortypes.DefaultOptedOutHeight &&
+			optedInfo.OptedOutHeight < uint64(epochInfo.CurrentEpochStartHeight) {
+			// continue addressing the other AVSs
+			return false, nil
+		}
+		if epochInfo.Identifier == epochIdentifier {
+			// the avs is impactful and the epoch identifier is equal to the input identifier
+			// break the iteration and return.
+			isImpactfulEpoch = true
+			return true, nil
+		}
+		return false, nil
+	}
+	err := k.IterateOptInfo(ctx, []byte(operatorAddr), opFunc)
+	if err != nil {
+		return false
+	}
+	return isImpactfulEpoch
+}
+
 func (k *Keeper) SetAllOptedInfo(ctx sdk.Context, optedStates []operatortypes.OptedState) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
 	for i := range optedStates {
@@ -431,14 +578,14 @@ func (k *Keeper) SetAllOptedInfo(ctx sdk.Context, optedStates []operatortypes.Op
 
 func (k *Keeper) GetAllOptedInfo(ctx sdk.Context) ([]operatortypes.OptedState, error) {
 	ret := make([]operatortypes.OptedState, 0)
-	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		ret = append(ret, operatortypes.OptedState{
 			Key:     string(key),
 			OptInfo: *optedInfo,
 		})
-		return nil
+		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte{}, opFunc)
+	err := k.IterateOptInfo(ctx, []byte{}, opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -447,21 +594,53 @@ func (k *Keeper) GetAllOptedInfo(ctx sdk.Context) ([]operatortypes.OptedState, e
 
 func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([]string, error) {
 	operatorList := make([]string, 0)
-	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) error {
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
 			keys, err := assetstype.ParseJoinedStoreKey(key, 2)
 			if err != nil {
-				return err
+				return false, err
 			}
 			if strings.ToLower(avsAddr) == keys[1] {
 				operatorList = append(operatorList, keys[0])
 			}
 		}
-		return nil
+		return false, nil
 	}
-	err := k.IterateOptInfo(ctx, false, []byte{}, opFunc)
+	err := k.IterateOptInfo(ctx, []byte{}, opFunc)
 	if err != nil {
 		return nil, err
 	}
 	return operatorList, nil
+}
+
+// IsUnbondingRelatedAVS checks whether there are no operators whose unbonding duration
+// will be influenced by the AVS. The AVS can be deregistered if the condition is true. .
+func (k *Keeper) IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool {
+	var isUnbondingRelatedAVS bool
+	var err error
+	avsAddr = strings.ToLower(avsAddr)
+	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
+		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		if err != nil {
+			return false, err
+		}
+		if keys[1] == avsAddr {
+			isUnbondingRelatedAVS, _, err = k.isUnbondingRelated(ctx, avsAddr, optedInfo)
+			if err != nil {
+				ctx.Logger().Error("IsUnbondingRelatedAVS: failed to check if the avs is unbonding related", "err", err, "avsAddr", avsAddr, "key", string(key))
+				return true, err
+			}
+			if isUnbondingRelatedAVS {
+				// return true to break the iteration
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	err = k.IterateOptInfo(ctx, []byte{}, opFunc)
+	if err != nil {
+		ctx.Logger().Error("IsUnbondingRelatedAVS: failed to iterate the opt info", "err", err)
+		return true
+	}
+	return isUnbondingRelatedAVS
 }

@@ -16,6 +16,8 @@ message NSTKV {
 message RawDataNST {
   // version of stakerList which the raw data corresponding to
   uint64 version = 1;
+  // withdraw version of the NST
+  uint64 withdraw_version = 2 ;
   // NSTKV use array to describe {staker_indx: balance_change} for all stakers whose balance had changed
-  repeated NSTKV nst_balance_changes = 2;
+  repeated NSTKV nst_balance_changes = 3;
 }

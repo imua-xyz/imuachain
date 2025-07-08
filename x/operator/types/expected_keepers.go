@@ -25,7 +25,7 @@ type AssetsKeeper interface {
 		f func(assetID string, state *assetstype.OperatorAssetInfo) error,
 	) error
 	ClientChainExists(ctx sdk.Context, index uint64) bool
-	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error)
+	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 	GetAllStakingAssetsInfo(ctx sdk.Context) (allAssets []assetstype.StakingAssetInfo, err error)
 }
 
@@ -114,6 +114,7 @@ type AVSKeeper interface {
 	GetAVSEpochInfo(ctx sdk.Context, addr string) (*epochstypes.EpochInfo, error)
 	GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error)
 	IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddr string) (bool, error)
+	GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error)
 }
 
 type SlashKeeper interface {
@@ -138,11 +139,12 @@ type OperatorHooks interface {
 	)
 	// AfterSlash This hook is called when an operator is slashed
 	AfterSlash(
-		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+		ctx sdk.Context, addr sdk.AccAddress, slashProportion sdk.Dec, affectedAVSList []string,
+		slashAssetsPool []SlashFromAssetsPool,
 	)
 	// AfterJail This hook is called when an operator is jailed
 	AfterJail(
-		ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+		ctx sdk.Context, addr sdk.AccAddress, isUnjail bool, affectedAVSList []string,
 	)
 }
 type StakingKeeper interface {

@@ -12,9 +12,11 @@ func RegisterCodec(*codec.LegacyAmino) {
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	// this line is used by starport scaffolding # 3
-
-	registry.RegisterImplementations((*sdk.Msg)(nil),
+	registry.RegisterImplementations(
+		(*sdk.Msg)(nil),
 		&MsgUpdateParams{},
+		&MsgWithdrawDogfoodCommission{},
+		&MsgClaimAndWithdrawDogfoodReward{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

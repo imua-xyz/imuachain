@@ -4,16 +4,14 @@ import (
 	"strings"
 	"time"
 
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/imua-xyz/imuachain/x/epochs/types"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
-	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
-	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -27,59 +25,22 @@ type StateForCheck struct {
 	StakerShare      sdkmath.LegacyDec
 }
 
-func (suite *OperatorTestSuite) registerOperator(operator string) {
-	// register operator
-	registerReq := &operatorTypes.RegisterOperatorReq{
-		FromAddress: operator,
-		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr: operator,
-			ApproveAddr:  operator,
-		},
-	}
-	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
-	suite.NoError(err)
-}
-
 func (suite *OperatorTestSuite) prepareOperator() {
 	suite.operatorAddr = testutiltx.GenerateAddress().Bytes()
 	// register operator
-	suite.registerOperator(suite.operatorAddr.String())
+	suite.RegisterOperator(suite.operatorAddr.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()))
 }
 
 func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Address, amount sdkmath.Int) {
 	suite.assetAddr = assetAddr
 	suite.assetDecimal = uint32(assetDecimal)
 	suite.clientChainLzID = defaultClientChainID
-	suite.stakerID, suite.assetID = assetstypes.GetStakerIDAndAssetID(suite.clientChainLzID, stakerAddr[:], assetAddr[:])
-	// staking assets
-	depositParam := &assetskeeper.DepositWithdrawParams{
-		ClientChainLzID: suite.clientChainLzID,
-		Action:          assetstypes.DepositLST,
-		StakerAddress:   stakerAddr[:],
-		OpAmount:        amount,
-		AssetsAddress:   assetAddr[:],
-	}
-	_, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(suite.Ctx, depositParam)
-	suite.NoError(err)
+	suite.stakerID, suite.assetID = suite.Deposit(suite.clientChainLzID, stakerAddr, assetAddr, amount)
 }
 
 func (suite *OperatorTestSuite) prepareDelegation(isDelegation bool, staker, assetAddr common.Address, operator sdk.AccAddress, amount sdkmath.Int) {
 	suite.delegationAmount = amount
-	param := &delegationtype.DelegationOrUndelegationParams{
-		ClientChainID:   suite.clientChainLzID,
-		AssetsAddress:   assetAddr[:],
-		OperatorAddress: operator,
-		StakerAddress:   staker[:],
-		OpAmount:        amount,
-		TxHash:          common.HexToHash("0x24c4a315d757249c12a7a1d7b6fb96261d49deee26f06a3e1787d008b445c3ac"),
-	}
-	var err error
-	if isDelegation {
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
-	} else {
-		err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, param)
-	}
-	suite.NoError(err)
+	suite.Delegation(isDelegation, suite.clientChainLzID, staker, assetAddr, operator, amount)
 }
 
 func (suite *OperatorTestSuite) prepare() {
@@ -92,14 +53,7 @@ func (suite *OperatorTestSuite) prepare() {
 
 func (suite *OperatorTestSuite) prepareAvs(avsName string, assetIDs []string, epochIdentifier string, unbondingPeriod uint64) {
 	suite.avsAddr = common.BytesToAddress([]byte(avsName)).String()
-	err := suite.App.AVSManagerKeeper.UpdateAVSInfo(suite.Ctx, &avstypes.AVSRegisterOrDeregisterParams{
-		Action:          avstypes.RegisterAction,
-		EpochIdentifier: epochIdentifier,
-		AvsAddress:      common.HexToAddress(suite.avsAddr),
-		AssetIDs:        assetIDs,
-		UnbondingPeriod: unbondingPeriod,
-	})
-	suite.NoError(err)
+	suite.RegisterAvs(avsName, common.HexToAddress(suite.avsAddr), assetIDs, epochIdentifier, unbondingPeriod)
 }
 
 func (suite *OperatorTestSuite) CheckState(expectedState *StateForCheck) {

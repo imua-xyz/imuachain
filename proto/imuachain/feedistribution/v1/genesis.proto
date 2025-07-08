@@ -15,64 +15,145 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  // fee_pool is the global fee pool for distribution.
-  // It holds decimal coins. Once whole those coins can be burned or distributed to the community pool.
-  FeePool fee_pool = 2 [(gogoproto.nullable) = false];
-  // validator_accumulated_commissions represents accumulated commission
-  // for a validator kept as a running counter, can be withdrawn at any time.
-  repeated ValidatorAccumulatedCommissions validator_accumulated_commissions = 3 [(gogoproto.nullable) = false];
-  // validator_current_rewards_list represents current rewards and current
-  // period for a validator kept as a running counter and incremented
-  // each block as long as the validator's tokens remain constant.
-  repeated ValidatorCurrentRewardsList validator_current_rewards_list = 4 [(gogoproto.nullable) = false];
-
-  // validator_outstanding_rewards_list represents outstanding (un-withdrawn) rewards
-  // for a validator inexpensive to track, allows simple sanity checks.
-  repeated ValidatorOutstandingRewardsList validator_outstanding_rewards_list = 5 [(gogoproto.nullable) = false];
-  // staker_outstanding_rewards_list represents outstanding (un-withdrawn) rewards
-  // for a staker inexpensive to track, allows simple sanity checks.
-  repeated StakerOutstandingRewardsList staker_outstanding_rewards_list = 6 [(gogoproto.nullable) = false];
+  // all_avs_reward_assets is the rewards assets for all AVSs.
+  repeated AVSAddrAndRewardAssets all_avs_reward_assets = 2 [(gogoproto.nullable) = false];
+  // all_avs_reward_params is the rewards parameters for all AVSs.
+  repeated AVSAddrAndRewardParam all_avs_reward_params = 3 [(gogoproto.nullable) = false];
+  // all_avs_fee_pools is the fee pools for all AVSs.
+  repeated AVSAddrAndFeePool all_avs_fee_pools = 4 [(gogoproto.nullable) = false];
+  // all_avs_reward_distributions is the reward distributions for all AVSs.
+  repeated AVSAddrAndRewardDistribution all_avs_reward_distributions = 5 [(gogoproto.nullable) = false];
+  // all_operator_outstanding_rewards is the outstanding rewards for all operators.
+  repeated KeyAndOperatorOutstandingRewards all_operator_outstanding_rewards = 6 [(gogoproto.nullable) = false];
+  // all_delegation_change_infos is the delegation changes for all epochs and operators.
+  repeated KeyAndDelegationChangeInfo all_delegation_change_infos = 7 [(gogoproto.nullable) = false];
+  // all_delegation_change_infos is the delegation starting information for all epochs.
+  repeated KeyAndDelegationStartingInfo all_delegation_starting_infos = 8 [(gogoproto.nullable) = false];
+  // all_operator_historical_rewards is the operator historical rewards information for all periods.
+  repeated KeyAndOperatorHistoricalRewards all_operator_historical_rewards = 9 [(gogoproto.nullable) = false];
+  // all_operator_current_rewards is the operator current rewards information for all epochs.
+  repeated KeyAndOperatorCurrentRewards all_operator_current_rewards = 10 [(gogoproto.nullable) = false];
+  // all_operator_accumulated_commission is the accumulated commissions for all operators.
+  repeated KeyAndOperatorAccumulatedCommission all_operator_accumulated_commission = 11 [(gogoproto.nullable) = false];
+  // all_operator_slash_events is the slash events for all operators.
+  repeated KeyAndOperatorSlashEvent all_operator_slash_events = 12 [(gogoproto.nullable) = false];
+  // all_staker_outstanding_rewards is the outstanding rewards for all stakers.
+  repeated KeyAndStakerOutstandingRewards all_staker_outstanding_rewards = 13 [(gogoproto.nullable) = false];
 }
 
-// ValidatorAccumulatedCommissions is helper structure to store
-// the validator accumulated commissions for the genesis state.
-message ValidatorAccumulatedCommissions {
-  // val_addr is the address of validator
-  string val_addr = 1;
-
-  // ValidatorAccumulatedCommission represents accumulated commission
-  // for a validator kept as a running counter, can be withdrawn at any time.
-  ValidatorAccumulatedCommission commission = 2;
+// AVSAddrAndRewardAssets is a struct to be used in the genesis state.
+// It is used to store the avs and its reward assets state.
+message AVSAddrAndRewardAssets {
+  // avs is the address of avs
+  string avs = 1;
+  // avs_reward_assets is a list of all reward asset for an AVS
+  repeated AVSRewardAsset avs_reward_assets = 2 [(gogoproto.nullable) = false];
 }
 
-// ValidatorCurrentRewardsList is helper structure to store the validator current rewards  for the genesis state.
-message ValidatorCurrentRewardsList {
-  // val_addr is the address of validator
-  string val_addr = 1;
-
-  // ValidatorCurrentRewards represents current rewards and current
-  // period for a validator kept as a running counter and incremented
-  // each block as long as the validator's tokens remain constant.
-  ValidatorCurrentRewards current_rewards = 2;
+// AVSAddrAndRewardAssets is a struct to be used in the genesis state.
+// It is used to store the avs and its reward parameter.
+message AVSAddrAndRewardParam {
+  // avs is the address of avs
+  string avs = 1;
+  // avs_reward_param is the reward parameter for an AVS
+  AVSRewardParam avs_reward_param = 2 [(gogoproto.nullable) = false];
 }
 
-// ValidatorOutstandingRewardsList is a helper structure to store
-// the validator outstanding rewards for the genesis state.
-message ValidatorOutstandingRewardsList {
-  // val_addr is the address of validator
-  string val_addr = 1;
-
-  // ValidatorOutstandingRewards represents outstanding (un-withdrawn) rewards
-  // for a validator inexpensive to track, allows simple sanity checks.
-  ValidatorOutstandingRewards outstanding_rewards = 2;
+// AVSAddrAndFeePool is a struct to be used in the genesis state.
+// It is used to store the avs and its fee pool.
+message AVSAddrAndFeePool {
+  // avs is the address of avs
+  string avs = 1;
+  // avs_fee_pool is the fee pool for an AVS
+  FeePool avs_fee_pool = 2 [(gogoproto.nullable) = false];
 }
 
-// StakerOutstandingRewardsList is helper structure to store the staker outstanding rewards  for the genesis state.
-message StakerOutstandingRewardsList {
-  // staker_addr is the address of staker
-  string staker_addr = 1;
-
-  // StakerOutstandingRewards represents outstanding (un-withdrawn) rewards
-  // for a staker inexpensive to track, allows simple sanity checks.
-  StakerOutstandingRewards staker_outstanding_rewards = 2;
+// AVSAddrAndRewardDistribution is a struct to be used in the genesis state.
+// It is used to store the avs and its reward distribution.
+message AVSAddrAndRewardDistribution {
+  // avs is the address of avs
+  string avs = 1;
+  // avs_fee_pool is the reward distribution for an AVS
+  AVSRewardDistribution avs_reward_distribution = 2 [(gogoproto.nullable) = false];
 }
+
+// KeyAndOperatorOutstandingRewards is a struct used in the genesis state.
+// It stores the outstanding rewards for a specific operator and AVS.
+// The key, which is a combination of the operator and AVS, is included within it.
+message KeyAndOperatorOutstandingRewards {
+  // key is is a combination of the operator and AVS
+  string key = 1;
+  // operator_outstanding_rewards represents the outstanding rewards for the operator.
+  OperatorOutstandingRewards operator_outstanding_rewards = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndDelegationChangeInfo is a struct used in the genesis state.
+// It stores the delegation changes for the current epoch.
+// The key, which is a combination of the epochIdentifier, operator and assetID, is included within it.
+message KeyAndDelegationChangeInfo{
+  // key is is a combination of the epochIdentifier, operator and assetID
+  string key = 1;
+  // delegation_change_info represents the delegation changes for the current epoch.
+  DelegationChangeInfo delegation_change_info = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndDelegationStartingInfo is a struct used in the genesis state.
+// It stores the delegation starting information for multiple epochs.
+// The key, which is a combination of the delegation key and the epochIdentifier, is included within it.
+message KeyAndDelegationStartingInfo{
+  // key is is a combination of the delegation key and epoch identifier.
+  string key = 1;
+  // delegation_starting_info represents the starting information for the delegation.
+  DelegationStartingInfo delegation_starting_info = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndOperatorHistoricalRewards is a struct used in the genesis state.
+// It stores the operator historical rewards information for multiple periods.
+// The key, which is a combination of the operator,assetID,epochIdentifier and period, is included within it.
+message KeyAndOperatorHistoricalRewards{
+  // key is is a combination of the operator,assetID,epochIdentifier and period.
+  string key = 1;
+  // operator_historical_rewards represents the historical rewards for the operator.
+  OperatorHistoricalRewards operator_historical_rewards = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndOperatorCurrentRewards is a struct used in the genesis state.
+// It stores the operator current rewards information for multiple epochs.
+// The key, which is a combination of the operator,assetID and epochIdentifier, is included within it.
+message KeyAndOperatorCurrentRewards{
+  // key is is a combination of the operator,assetID and epochIdentifier.
+  string key = 1;
+  // operator_current_rewards represents the current rewards for the operator.
+  OperatorCurrentRewards operator_current_rewards = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndOperatorAccumulatedCommission is a struct used in the genesis state.
+// It stores the operator accumulated commission for the operator.
+// The key, which is a combination of the operator and avs, is included within it.
+message KeyAndOperatorAccumulatedCommission{
+  // key is is a combination of the operator and avs.
+  string key = 1;
+  // operator_current_rewards represents the accumulated commission for the operator.
+  OperatorAccumulatedCommission operator_accumulated_commission = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndOperatorSlashEvent is a struct used in the genesis state.
+// It stores the slash event for the operator.
+// The key, which is a combination of the operator,assetID,epochIdentifier,epochNumber and blockHeight, is included within it.
+message KeyAndOperatorSlashEvent{
+  // key is is a combination of the operator,assetID,epochIdentifier and epochNumber.
+  string key = 1;
+  // operator_slash_event represents the slash event for the operator.
+  OperatorSlashEvent operator_slash_event = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndStakerOutstandingRewards is a struct used in the genesis state.
+// It stores the outstanding rewards for the staker.
+// The key, which is a combination of the stakerID and avsAddr, is included within it.
+message KeyAndStakerOutstandingRewards{
+  // key is is a combination of the stakerID and avsAddr.
+  string key = 1;
+  // staker_outstanding_rewards represents the outstanding rewards for the staker.
+  StakerOutstandingRewards staker_outstanding_rewards = 2 [(gogoproto.nullable) = false];
+}
+

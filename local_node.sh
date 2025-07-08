@@ -133,6 +133,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["assets"]["tokens"][1]["staking_total_amount"]="500000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	jq '.app_state["assets"]["tokens"][2]["asset_basic_info"]["name"]="nsteth"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["assets"]["tokens"][2]["asset_basic_info"]["decimals"]="6"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["tokens"][2]["asset_basic_info"]["meta_info"]="eth native token"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["tokens"][2]["asset_basic_info"]["address"]="0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["tokens"][2]["asset_basic_info"]["layer_zero_chain_id"]="101"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -184,6 +185,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["operator"]["operator_usd_values"][0]["opted_usd_value"]["self_usd_value"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operator_usd_values"][0]["opted_usd_value"]["total_usd_value"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operator_usd_values"][0]["opted_usd_value"]["active_usd_value"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["operator"]["operator_asset_usd_values"][0]["key"]="minute/'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["operator"]["operator_asset_usd_values"][0]["value"]["amount"]="4000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# x/delegation
 	jq '.app_state["delegation"]["delegation_states"][0]["key"]="'"$LOCAL_ADDRESS_HEX"'_0x65/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -210,7 +213,10 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# which is more suitable for a live network and not a localnet.
 	jq '.app_state["immint"]["params"]["epoch_identifier"]="minute"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
-	# x/oracle
+	# x/feedistribution
+	# replace the avsAddr with the correct one
+	jq --arg avs "$AVS_ADDRESS" '.app_state["feedistribution"]["all_avs_reward_assets"][0]["avs"] = $avs' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
 	# chain
 	jq '.app_state["oracle"]["params"]["chains"][1]["name"]="Ethereum"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["chains"][1]["desc"]="-"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -225,7 +231,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["oracle"]["params"]["tokens"][2]["name"]="NSTETH"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["tokens"][2]["chain_id"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["tokens"][2]["contract_address"]="0x"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["oracle"]["params"]["tokens"][2]["decimal"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["params"]["tokens"][2]["decimal"]="9"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["tokens"][2]["active"]=true' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["tokens"][2]["asset_id"]="nst_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
@@ -261,7 +267,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["oracle"]["params"]["token_feeders"][2]["token_id"]="2"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["token_feeders"][2]["rule_id"]="3"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["token_feeders"][2]["start_round_id"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["oracle"]["params"]["token_feeders"][2]["start_base_block"]="20"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["params"]["token_feeders"][2]["start_base_block"]="10"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["token_feeders"][2]["interval"]="10"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["token_feeders"][2]["end_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["piece_size_byte"]="32"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -281,8 +287,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	oracle_env_chainlink_content=$(
 		cat <<EOF
 urls:
-  mainnet: https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}
-  sepolia: https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}
+  mainnet: !!str https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}
+  sepolia: !!str https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}
 tokens:
   ETHUSDT: 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419_mainnet
   AAVEUSDT: 0x547a514d5e3769680Ce22B2361c10Ea13619e8a9_mainnet
@@ -313,6 +319,8 @@ imua:
   grpc: 127.0.0.1:9090
   ws: !!str ws://127.0.0.1:26657/websocket
   rpc: !!str http://127.0.0.1:26657
+status:
+  grpc: 50052
 #debugger:
 #  grpc: !!str :50051
 EOF
@@ -324,10 +332,12 @@ EOF
 	# generate oracle_env_beaconchain.yaml
 	oracle_env_beaconchain_content=$(
 		cat <<EOF
-url:
-  !!str https://ethereum-holesky-rpc.publicnode.com
+urls:
+  beaconchain: !!str https://ethereum-holesky-beacon-api.publicnode.com
+  eth: !!str https://eth-holesky.g.alchemy.com/v2/${ALCHEMY_API_KEY}
 nstid:
   !!str 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65
+bootstrap: !!str ${BOOTSTRAP}
 EOF
 	)
 	# Write the YAML content to a file
@@ -340,6 +350,7 @@ url:
   !!str https://solana-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}
 nstid:
   !!str 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x123
+bootstrap: !!str 0x38674073a3713dd2C46892f1d2C5Dadc5Bb14172
 EOF
 	)
 	# Write the YAML content to a file
@@ -419,4 +430,8 @@ EOF
 fi
 
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
-imuad start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true
+# imuad start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true --oracle
+imuad start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true --oracle --feeder_log_path "$HOMEDIR/logs"
+
+# imuad start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true --oracle --feeder_bin /Users/linqing/workplace/github.com/leonz/imua-xyz/price-feeder/build/price-feeder
+# imuad start --metrics "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001hua --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --json-rpc.enable true --home "$HOMEDIR" --chain-id "$CHAINID" --grpc.enable true --oracle --feeder_bin /Users/linqing/workplace/github.com/leonz/imua-xyz/price-feeder/build/price-feeder --feeder_log_path "$HOMEDIR/logs"

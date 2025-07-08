@@ -177,7 +177,7 @@ func (pv *priceValidator) TryAddPriceSources(pSs []*priceSource) (updated map[in
 	if len(updated) > 0 {
 		return updated, added, nil
 	}
-	return nil, nil, fmt.Errorf("failed to add priceSource listi, error:%s", es)
+	return nil, nil, fmt.Errorf("failed to add priceSource list, error:%s", es)
 }
 
 func (pv *priceValidator) ApplyAddedPriceSources(psMap map[int64]*priceSource) {

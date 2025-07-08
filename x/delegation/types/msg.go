@@ -44,7 +44,7 @@ func NewMsgDelegation(
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *MsgDelegation) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -60,7 +60,7 @@ func (m *MsgUndelegation) ValidateBasic() error {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *MsgUndelegation) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 
 // new message to delegate asset to operator
@@ -117,7 +117,7 @@ func (msg *MsgUpdateParams) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (msg *MsgUpdateParams) GetSignBytes() []byte {
-	return nil
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
 }
 
 // ValidateBasic does a sanity check on the provided data.

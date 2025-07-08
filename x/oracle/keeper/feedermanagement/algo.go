@@ -104,9 +104,10 @@ func (a *AggMedian) Add(price *PriceResult) bool {
 	if a.t == notSet {
 		a.t = notNumber
 		a.finalString = price.Price
+		a.decimal = price.Decimal
 		return true
 	}
-	if a.finalString != price.Price {
+	if a.finalString != price.Price || a.decimal != price.Decimal {
 		return false
 	}
 	return true
@@ -117,21 +118,20 @@ func (a *AggMedian) GetResult() *PriceResult {
 	if a.t == notSet {
 		return nil
 	}
+
+	decimal := a.decimal
+	result := ""
 	if a.t == number {
-		// when a.t is set to number, the length of a.list must be bigger than 0, so the Median() must return a non-nil result
-		result := BigIntList(a.list).Median().String()
-		decimal := a.decimal
-		return &PriceResult{
-			Price:   result,
-			Decimal: decimal,
+		result = BigIntList(a.list).Median().String()
+	} else {
+		if len(a.finalString) == 0 {
+			return nil
 		}
+		result = a.finalString
 	}
-	if len(a.finalString) == 0 {
-		return nil
-	}
-	result := a.finalString
 	return &PriceResult{
-		Price: result,
+		Price:   result,
+		Decimal: decimal,
 	}
 }
 

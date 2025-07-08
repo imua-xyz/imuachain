@@ -34,9 +34,10 @@ type (
 		storeKey       storetypes.StoreKey
 		operatorKeeper types.OperatorKeeper
 		// other keepers
-		assetsKeeper types.AssetsKeeper
-		epochsKeeper types.EpochsKeeper
-		evmKeeper    types.EVMKeeper
+		assetsKeeper       types.AssetsKeeper
+		epochsKeeper       types.EpochsKeeper
+		evmKeeper          types.EVMKeeper
+		distributionKeeper types.DistributionKeeper
 	}
 )
 
@@ -47,14 +48,16 @@ func NewKeeper(
 	assetKeeper types.AssetsKeeper,
 	epochsKeeper types.EpochsKeeper,
 	evmKeeper types.EVMKeeper,
+	distributionKeeper types.DistributionKeeper,
 ) Keeper {
 	return Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		operatorKeeper: operatorKeeper,
-		assetsKeeper:   assetKeeper,
-		epochsKeeper:   epochsKeeper,
-		evmKeeper:      evmKeeper,
+		cdc:                cdc,
+		storeKey:           storeKey,
+		operatorKeeper:     operatorKeeper,
+		assetsKeeper:       assetKeeper,
+		epochsKeeper:       epochsKeeper,
+		evmKeeper:          evmKeeper,
+		distributionKeeper: distributionKeeper,
 	}
 }
 
@@ -157,8 +160,12 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 
 		// If avs DeRegisterAction check UnbondingPeriod
 		// #nosec G115
-		if epoch.CurrentEpoch-int64(avsInfo.GetInfo().StartingEpoch) <= int64(avsInfo.Info.AvsUnbondingPeriod) {
-			return errorsmod.Wrap(types.ErrUnbondingPeriod, fmt.Sprintf("not qualified to deregister %s", avsInfo))
+		if k.operatorKeeper.IsUnbondingRelatedAVS(ctx, params.AvsAddress.String()) {
+			return types.ErrCannotDeregister.Wrapf("The AVS still influences the unbonding duration of operators. avs:%s", params.AvsAddress)
+		}
+
+		if !k.distributionKeeper.IsAVSAllRewardsClaimed(ctx, params.AvsAddress.String()) {
+			return types.ErrCannotDeregister.Wrapf("There are some rewards remaining to be distributed and claimed. avs:%s", params.AvsAddress)
 		}
 
 		// If avs DeRegisterAction check avsname
@@ -202,9 +209,18 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			avs.WhitelistAddresses = params.WhitelistAddresses
 		}
 		if params.AssetIDs != nil {
+			preAVSAssetIDs := avs.AssetIDs
 			avs.AssetIDs = params.AssetIDs
 			if err := k.ValidateAssetIDs(ctx, params.AssetIDs); err != nil {
 				return err
+			}
+			// Save the asset list at the time of the last voting power update
+			// if the asset list has changed, it will be used in the reward distribution.
+			if !k.operatorKeeper.HasAVSAssetsPerEpoch(ctx, params.AvsAddress.String()) {
+				err := k.operatorKeeper.SetAVSAssetsPerEpoch(ctx, params.AvsAddress.String(), preAVSAssetIDs)
+				if err != nil {
+					return err
+				}
 			}
 		}
 

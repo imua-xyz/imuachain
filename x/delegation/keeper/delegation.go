@@ -108,7 +108,7 @@ func (k *Keeper) delegateTo(
 		deltaOperatorAsset.OperatorShare = share
 	}
 
-	err = k.assetsKeeper.UpdateOperatorAssetState(ctx, params.OperatorAddress, assetID, deltaOperatorAsset)
+	prevAssetState, err := k.assetsKeeper.UpdateOperatorAssetState(ctx, params.OperatorAddress, assetID, deltaOperatorAsset)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (k *Keeper) delegateTo(
 	deltaAmount := &delegationtype.DeltaDelegationAmounts{
 		UndelegatableShare: share,
 	}
-	_, err = k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
+	_, preDelegationState, err := k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
 	if err != nil {
 		return err
 	}
@@ -126,8 +126,17 @@ func (k *Keeper) delegateTo(
 	}
 
 	if notGenesis {
+		// calculate the previous delegation amount
+		preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+			prevAssetState.TotalShare, prevAssetState.TotalAmount)
+		if err != nil {
+			return err
+		}
 		// call the hooks registered by the other modules
-		k.Hooks().AfterDelegation(ctx, params.OperatorAddress)
+		err = k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, preDelegatedAmount, prevAssetState)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -149,6 +158,22 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 
 	// verify the undelegation amount
 	share, err := k.ValidateUndelegationAmount(ctx, params.OperatorAddress, stakerID, assetID, params.OpAmount)
+	if err != nil {
+		return err
+	}
+
+	// get the previous operator asset state before update
+	prevAssetState, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, params.OperatorAddress, assetID)
+	if err != nil {
+		return err
+	}
+	preDelegationState, err := k.GetSingleDelegationInfo(ctx, stakerID, assetID, params.OperatorAddress.String())
+	if err != nil {
+		return err
+	}
+	// calculate the previous delegation amount
+	preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+		prevAssetState.TotalShare, prevAssetState.TotalAmount)
 	if err != nil {
 		return err
 	}
@@ -214,6 +239,13 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 
 	recordKey := r.GetKey()
+	// call the hooks registered by the other modules
+	err = k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress,
+		recordKey, preDelegatedAmount, *prevAssetState)
+	if err != nil {
+		return err
+	}
+
 	// emit an event to track the undelegation record identifiers.
 	// for the ImuachainAssetID undelegation, this event is used to track asset state as well.
 	// for other undelegations, it is instead tracked from the staker asset state.
@@ -235,9 +267,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 			sdk.NewAttribute(delegationtype.AttributeKeyApplyInstantSlash, fmt.Sprintf("%t", applySlash)),
 		),
 	)
-
-	// call the hooks registered by the other modules
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, recordKey)
+	return nil
 }
 
 // AssociateOperatorWithStaker marks that a staker is claiming to be associated with an operator.
@@ -279,7 +309,7 @@ func (k *Keeper) AssociateOperatorWithStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// increase the share of new marked operator
 		if keys.OperatorAddr == operatorAddress.String() {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
+			_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare,
 			})
 		}
@@ -326,7 +356,7 @@ func (k *Keeper) DissociateOperatorFromStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// decrease the share of old operator
 		if keys.OperatorAddr == associatedOperator {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
+			_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare.Neg(),
 			})
 		}

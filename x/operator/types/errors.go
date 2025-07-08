@@ -122,8 +122,22 @@ var (
 		"failed to clear voting power snapshot",
 	)
 
-	ErrEpochIdentifierNotExist = errorsmod.Register(
+	ErrIsJailed = errorsmod.Register(
 		ModuleName, 27,
-		"the epoch identifier doesn't exist",
+		"the operator is jailed",
+	)
+
+	ErrIsOptedOutOrJailed = errorsmod.Register(
+		ModuleName, 28,
+		"the operator is opted out or jailed",
+	)
+	ErrInvalidJailStatusOrHeights = errorsmod.Register(
+		ModuleName, 29,
+		"invalid jail status or heights",
+	)
+
+	ErrInvalidJailedBlockNumber = errorsmod.Register(
+		ModuleName, 30,
+		"invalid jailed block number",
 	)
 )

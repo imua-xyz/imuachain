@@ -53,6 +53,10 @@ localnet-setup
 sim_log_file
 tests/**/tmp/*
 yarn.lock
+.env*
+!.env.example
+.envrc
+switch-env.sh
 
 # Vagrant
 .vagrant/

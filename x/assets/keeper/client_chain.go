@@ -59,23 +59,18 @@ func (k Keeper) GetClientChainInfoByIndex(ctx sdk.Context, index uint64) (info *
 }
 
 // IterateAllClientChains iterates all client chains, and the `opFunc` will be called for
-// each client chain. As for the `isUpdate`, it a flag to indicate if the client chain
-// info handled by the `opFunc` will be restored.
-func (k Keeper) IterateAllClientChains(ctx sdk.Context, isUpdate bool, opFunc func(clientChain *assetstype.ClientChainInfo) error) error {
+// each client chain.
+func (k Keeper) IterateAllClientChains(ctx sdk.Context, opFunc func(clientChain *assetstype.ClientChainInfo) error) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixClientChainInfo)
 	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
+
 	for ; iterator.Valid(); iterator.Next() {
 		var clientChain assetstype.ClientChainInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &clientChain)
 		err := opFunc(&clientChain)
 		if err != nil {
 			return err
-		}
-		if isUpdate {
-			// store the updated state
-			bz := k.cdc.MustMarshal(&clientChain)
-			store.Set(iterator.Key(), bz)
 		}
 	}
 	return nil
@@ -87,7 +82,7 @@ func (k Keeper) GetAllClientChainInfo(ctx sdk.Context) (infos []assetstype.Clien
 		ret = append(ret, *clientChain)
 		return nil
 	}
-	err = k.IterateAllClientChains(ctx, false, opFunc)
+	err = k.IterateAllClientChains(ctx, opFunc)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +96,7 @@ func (k Keeper) GetAllClientChainID(ctx sdk.Context) ([]uint32, error) {
 		ret = append(ret, uint32(clientChain.LayerZeroChainID))
 		return nil
 	}
-	err := k.IterateAllClientChains(ctx, false, opFunc)
+	err := k.IterateAllClientChains(ctx, opFunc)
 	if err != nil {
 		return nil, err
 	}
