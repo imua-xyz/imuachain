@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"google.golang.org/grpc/codes"
@@ -17,6 +19,18 @@ func (k *Keeper) QuerySingleDelegationInfo(ctx context.Context, req *delegationt
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.OperatorAddr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	delegationInfo, delegatedAmount, err := k.GetDelegationInfoWithAmount(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.OperatorAddr)
 	if err != nil {
 		return nil, err
@@ -34,6 +48,14 @@ func (k *Keeper) QueryDelegationInfo(ctx context.Context, req *delegationtype.De
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	return k.GetDelegationInfo(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
 }
 
@@ -42,6 +64,14 @@ func (k *Keeper) QueryUndelegations(ctx context.Context, req *delegationtype.Und
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	undelegations, err := k.GetStakerUndelegationRecords(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
 	if err != nil {
 		return nil, err
@@ -56,6 +86,9 @@ func (k *Keeper) QueryUndelegationsByEpochInfo(ctx context.Context, req *delegat
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	if req.EpochNumber < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "negative epoch number:%d", req.EpochNumber)
+	}
 	undelegations, err := k.GetUnCompletableUndelegations(c, req.EpochIdentifier, req.EpochNumber)
 	if err != nil {
 		return nil, err
@@ -70,6 +103,14 @@ func (k Keeper) QueryUndelegationHoldCount(ctx context.Context, req *delegationt
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	recordKey, err := k.GetUndelegationRecKey(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.UndelegationId)
 	if err != nil {
 		return nil, err
@@ -83,6 +124,10 @@ func (k Keeper) QueryAssociatedOperatorByStaker(ctx context.Context, req *delega
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
 	operator, err := k.GetAssociatedOperator(c, strings.ToLower(req.StakerId))
 	if err != nil {
 		return nil, err
@@ -111,6 +156,14 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	stakers, err := k.GetStakersByOperator(c, req.Operator, strings.ToLower(req.AssetId))
 	if err != nil {
 		return nil, err

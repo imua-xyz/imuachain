@@ -70,6 +70,10 @@ func (k Keeper) QueStakingAssetInfo(ctx context.Context, req *assetstype.QuerySt
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	return k.GetStakingAssetInfo(c, strings.ToLower(req.AssetId))
 }
 
@@ -92,6 +96,10 @@ func (k Keeper) QueStakerAssetInfos(ctx context.Context, req *assetstype.QuerySt
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
 	assetInfos, err := k.GetStakerAssetInfos(c, strings.ToLower(req.StakerId))
 	if err != nil {
 		return nil, err
@@ -105,6 +113,14 @@ func (k Keeper) QueStakerSpecifiedAssetAmount(ctx context.Context, req *assetsty
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	return k.GetStakerSpecifiedAssetInfo(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
 }
 
@@ -129,7 +145,11 @@ func (k Keeper) QueOperatorSpecifiedAssetAmount(ctx context.Context, req *assets
 	c := sdk.UnwrapSDKContext(ctx)
 	addr, err := sdk.AccAddressFromBech32(req.OperatorAddr)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
 	}
 	return k.GetOperatorSpecifiedAssetInfo(c, addr, strings.ToLower(req.AssetId))
 }
@@ -139,6 +159,14 @@ func (k Keeper) QueryStakerBalance(ctx context.Context, req *assetstype.QuerySta
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	stakerBalance, err := k.GetStakerBalanceByAsset(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId))
 	if err != nil {
 		return nil, err
