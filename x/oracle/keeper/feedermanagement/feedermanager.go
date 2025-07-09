@@ -829,9 +829,9 @@ func (f *FeederManager) SetForceSeal() {
 	f.forceSeal = true
 }
 
-// ValidatePriceSourceDetIDs validates the price source detIDs
+// DuplicatedPriceSourceDetIDs validates the price source detIDs against duplicates
 // we only check the duplicated detIDs for the same sourceID and ignore any other errors
-func (f *FeederManager) ValidatePriceSourceDetIDs(msg *oracletypes.MsgCreatePrice) bool {
+func (f *FeederManager) DuplicatedPriceSourceDetIDs(msg *oracletypes.MsgCreatePrice) bool {
 	priceSourceDetIDs := GetPriceSourceDetIDs(msg)
 	if priceSourceDetIDs == nil {
 		return true
@@ -863,6 +863,78 @@ func (f *FeederManager) ValidatePriceSourceDetIDs(msg *oracletypes.MsgCreatePric
 	}
 	return false
 }
+
+// // ValidatePriceSourceDetIDs validates the price source detIDs
+// // we only check the duplicated detIDs for the same sourceID and ignore any other errors
+// func (f *FeederManager) DuplicatedPriceSourceDetIDs(msg *oracletypes.MsgCreatePrice) bool {
+// 	priceSourceDetIDs := GetPriceSourceDetIDs(msg)
+// 	if priceSourceDetIDs == nil {
+// 		return false
+// 	}
+// <<<<<<< HEAD
+// 	if priceSourceDetIDs.FeederID == 0 || priceSourceDetIDs.FeederID > uint64(len(f.rounds)) {
+// 		return true
+// ||||||| parent of 6f619bcc (refactor)
+// 	if priceSourceDetIDs.FeederID == 0 || priceSourceDetIDs.FeederID >= uint64(len(f.rounds)) {
+// 		return true
+// =======
+// 	if priceSourceDetIDs.FeederID == 0 || priceSourceDetIDs.FeederID >= uint64(len(f.rounds)) {
+// 		return false
+// >>>>>>> 6f619bcc (refactor)
+// 	}
+// 	//#nosec G115
+// 	r := f.rounds[int64(priceSourceDetIDs.FeederID)]
+// 	if r == nil {
+// 		return false
+// 	}
+// 	if r.a == nil || r.a.v == nil || r.a.v.records == nil {
+// 		return false
+// 	}
+// 	for sourceID, detIDs := range priceSourceDetIDs.SourceDetIDs {
+// <<<<<<< HEAD
+// 		records := r.a.v.records[priceSourceDetIDs.Validator]
+// 		if records == nil {
+// 			return true
+// 		}
+// 		psRec := records.priceSources[int64(sourceID)]
+// 		if psRec == nil {
+// 			return true
+// ||||||| parent of 6f619bcc (refactor)
+// 		records, ok := r.a.v.records[priceSourceDetIDs.Validator]
+// 		if !ok {
+// 			return true
+// =======
+// 		records, ok := r.a.v.records[priceSourceDetIDs.Validator]
+// 		if !ok {
+// 			return false
+// >>>>>>> 6f619bcc (refactor)
+// 		}
+// 		for _, detID := range detIDs {
+// <<<<<<< HEAD
+// 			if _, seen := psRec.detIDs[detID]; !seen {
+// 				return true
+// ||||||| parent of 6f619bcc (refactor)
+// 			//#nosec G115
+// 			if _, ok := records.priceSources[int64(sourceID)].detIDs[detID]; !ok {
+// 				return true
+// =======
+// 			//#nosec G115
+// 			if _, ok := records.priceSources[int64(sourceID)].detIDs[detID]; !ok {
+// 				return false
+// >>>>>>> 6f619bcc (refactor)
+// 			}
+// 		}
+// 	}
+// <<<<<<< HEAD
+// 	return false
+// ||||||| parent of 6f619bcc (refactor)
+//
+// 	return false
+// =======
+//
+// 	return true
+// >>>>>>> 6f619bcc (refactor)
+// }
 
 // validateMsg validates a MsgCreatePrice against the current state and round configuration.
 func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreatePrice) (*round, error) {

@@ -38,7 +38,7 @@ func (otpd OracleTwoPhasesDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 		}
 	} else if isOracle {
 		for _, msg := range msgs {
-			if !otpd.ok.ValidatePriceSourceDetIDs(msg) {
+			if otpd.ok.DuplicatedPriceSourceDetIDs(msg) {
 				return ctx, fmt.Errorf("duplicated detIDs in msg: %T", msg)
 			}
 		}
