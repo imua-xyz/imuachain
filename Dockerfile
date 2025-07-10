@@ -1,12 +1,12 @@
 # This is the published docker image for imuachain.
 
-FROM golang:1.21.12-alpine3.19 AS build-env
+FROM golang:1.23.11-alpine3.21 AS build-env
 
 WORKDIR /go/src/github.com/imua-xyz/imuachain
 
 COPY go.mod go.sum ./
 
-RUN apk add --no-cache ca-certificates=20241121-r1 build-base~=0.5 git~=2.43 linux-headers~=6.5
+RUN apk add --no-cache ca-certificates=20241121-r1 build-base=0.5-r3 git=2.47.3-r0 linux-headers=6.6-r1
 
 RUN --mount=type=bind,target=. --mount=type=secret,id=GITHUB_TOKEN \
     git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/".insteadOf "https://github.com/"; \
