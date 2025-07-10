@@ -539,7 +539,6 @@ func (k *Keeper) AggregateOperatorUSDValue(
 		// get the total USD value of asset
 		totalUSDValue, err := k.GetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID)
 		if err != nil {
-			ctx.Logger().Error("AggregateOperatorUSDValue: failed to get the operator asset USD value", "err", err, "epochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
 			// continue handling the other assets
 			continue
 		}
