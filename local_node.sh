@@ -55,6 +55,12 @@ command -v bc >/dev/null 2>&1 || {
 	exit 1
 }
 
+# check that ALCHEMY_API_KEY is set
+if [ -z "$ALCHEMY_API_KEY" ]; then
+  echo "ALCHEMY_API_KEY is not set"
+  exit 1
+fi
+
 # used to exit on first error (any non-zero exit code)
 set -e
 
