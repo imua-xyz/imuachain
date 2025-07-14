@@ -119,4 +119,8 @@ var (
 		ModuleName, 28,
 		"Resource not found",
 	)
+	ErrNoOptedInOperators = errorsmod.Register(
+		ModuleName, 29,
+		"No operators have opted in to the AVS yet",
+	)
 )
