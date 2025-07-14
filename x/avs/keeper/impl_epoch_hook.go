@@ -38,8 +38,11 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 		for key, value := range groupedTasks {
 			taskAddr, taskID, _ := parseGroupKey(key)
 			avsInfo := wrapper.keeper.GetAVSInfoByTaskAddress(ctx, taskAddr)
+			if avsInfo.AvsAddress == "" {
+				ctx.Logger().Error("Failed to update task result statistics, no AVS address found for task address!", "task address", taskAddr, "task id", taskID)
+				continue
+			}
 			avsAddr := avsInfo.AvsAddress
-
 			taskInfo, err := wrapper.keeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddr)
 			if err != nil {
 				// Log the error and continue to the next task, and this should be an 'impossible' case, since we retrieved the taskID and taskAddr from the taskResList
