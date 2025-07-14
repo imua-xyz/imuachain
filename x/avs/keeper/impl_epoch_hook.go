@@ -77,6 +77,10 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 				// Handle the error gracefully, continue to the next
 				// continue
 			}
+			if taskInfo == nil {
+				// The task didn't opt-in yet, skip
+				continue
+			}
 			diff := types.Difference(taskInfo.OptInOperators, signedOperatorList)
 			taskInfo.SignedOperators = signedOperatorList
 			// If a signature is submitted only once, it is counted as NoSignedOperators
