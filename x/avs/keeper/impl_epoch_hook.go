@@ -35,68 +35,59 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 	// TODO:There should be a retry mechanism or compensation mechanism to handle cases of failure
 	if len(taskResList) != 0 {
 		groupedTasks := wrapper.keeper.GroupTasksByIDAndAddress(taskResList)
-		for _, value := range groupedTasks {
+		for key, value := range groupedTasks {
+			taskAddr, taskID, _ := parseGroupKey(key)
+			avsInfo := wrapper.keeper.GetAVSInfoByTaskAddress(ctx, taskAddr)
+			avsAddr := avsInfo.AvsAddress
+
+			taskInfo, err := wrapper.keeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddr)
+			if err != nil {
+				// Log the error and continue to the next task, and this should be an 'impossible' case, since we retrieved the taskID and taskAddr from the taskResList
+				ctx.Logger().Error("Failed to update task result statistics, GetTaskInfo call failed!", "task address", taskAddr, "task id", taskID, "error", err)
+				continue
+			}
+			taskPowerTotal, err := wrapper.keeper.operatorKeeper.GetAVSUSDValue(ctx, avsAddr)
+			if err != nil || taskPowerTotal.IsZero() {
+				// Log the error and continue to the next task, and this is also an 'impossible' case, since a valid task must have a non-zero total power
+				ctx.Logger().Error("Failed to update task result statistics, GetAVSUSDValue call failed!", "avs address", avsAddr, "error", err)
+				continue
+			}
+
 			var signedOperatorList []string
-			var taskID uint64
-			var taskAddr string
-			var avsAddr string
 			var operatorPowers []*types.OperatorActivePowerInfo
 			operatorPowerTotal := sdkmath.LegacyZeroDec()
 			for _, res := range value {
 				// Find signed operators
 				if res.BlsSignature != nil && res.TaskResponseHash != "" || res.TaskResponse != nil {
 					signedOperatorList = append(signedOperatorList, res.OperatorAddress)
-					if avsAddr == "" {
-						avsInfo := wrapper.keeper.GetAVSInfoByTaskAddress(ctx, res.TaskContractAddress)
-						avsAddr = avsInfo.AvsAddress
-					}
-					if taskID == 0 {
-						taskID = res.TaskId
-					}
-					if taskAddr == "" {
-						taskAddr = res.TaskContractAddress
-					}
 					power, err := wrapper.keeper.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, res.OperatorAddress)
+					activePower := sdkmath.LegacyZeroDec()
 					if err != nil || power.ActiveUSDValue.IsNegative() {
-						ctx.Logger().Error("Failed to update task result statistics,GetOperatorOptedUSDValue call failed!", "task result", taskAddr, "error", err)
-						// Handle the error gracefully, continue to the next
-						// continue
+						// Log the error and and use 0 as the active power for this operator
+						ctx.Logger().Error("Failed to get optedUSDValue for operator, skip this one", "operator", res.OperatorAddress, "avsAddr", avsAddr, "error", err)
+					} else {
+						activePower = power.ActiveUSDValue
 					}
-
 					operatorSelfPower := &types.OperatorActivePowerInfo{
 						OperatorAddress: res.OperatorAddress,
-						SelfActivePower: power.ActiveUSDValue,
+						SelfActivePower: activePower,
 					}
 					operatorPowers = append(operatorPowers, operatorSelfPower)
-					operatorPowerTotal = operatorPowerTotal.Add(power.ActiveUSDValue)
+					operatorPowerTotal = operatorPowerTotal.Add(activePower)
 				}
 			}
-			taskInfo, err := wrapper.keeper.GetTaskInfo(ctx, strconv.FormatUint(taskID, 10), taskAddr)
-			if err != nil {
-				ctx.Logger().Error("Failed to update task result statistics,GetTaskInfo call failed!", "task result", taskAddr, "error", err)
-				// Handle the error gracefully, continue to the next
-				// continue
-			}
+
 			diff := types.Difference(taskInfo.OptInOperators, signedOperatorList)
 			taskInfo.SignedOperators = signedOperatorList
 			// If a signature is submitted only once, it is counted as NoSignedOperators
 			taskInfo.NoSignedOperators = diff
 			taskInfo.OperatorActivePower = &types.OperatorActivePowerList{OperatorPowerList: operatorPowers}
-			// Calculate actual threshold
-			taskPowerTotal, err := wrapper.keeper.operatorKeeper.GetAVSUSDValue(ctx, avsAddr)
 
-			if err != nil || taskPowerTotal.IsZero() || operatorPowerTotal.IsZero() {
-				ctx.Logger().Error("Failed to update task result statistics,GetAVSUSDValue call failed!", "task result", taskAddr, "error", err)
-				// Handle the error gracefully, continue to the next
-				// continue
-			}
 			taskInfo.TaskTotalPower = taskPowerTotal
 			// Update the taskInfo in the state
 			err = wrapper.keeper.SetTaskInfo(ctx, taskInfo)
 			if err != nil {
 				ctx.Logger().Error("Failed to update task result statistics,SetTaskInfo call failed!", "task result", taskAddr, "error", err)
-				// Handle the error gracefully, continue to the next
-				// continue
 			}
 		}
 	}
