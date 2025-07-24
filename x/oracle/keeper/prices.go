@@ -57,6 +57,7 @@ func (k Keeper) GetPrices(
 	}
 	for ; i < nextRoundID; i++ {
 		b := store.Get(types.PricesRoundKey(i))
+		fmt.Println("debug(-leonz-->)", i, b == nil)
 		v := &types.PriceTimeRound{}
 		if b != nil {
 			k.cdc.MustUnmarshal(b, v)
