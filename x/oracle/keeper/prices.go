@@ -89,10 +89,10 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 		decimal = uint8(price.Decimal) // #nosec G115
 	} else {
 		// #nosec G115
-		p, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
+		latestPrice, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
 		if found {
-			v, _ = sdkmath.NewIntFromString(p.Price)
-			decimal = uint8(p.Decimal) // #nosec G115
+			v, _ = sdkmath.NewIntFromString(latestPrice.Price)
+			decimal = uint8(latestPrice.Decimal) // #nosec G115
 		}
 	}
 	// for tokens really have 0 price, it should be removed from assets support, not here to provide zero price
@@ -132,10 +132,10 @@ func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]any) 
 			decimal = uint8(price.Decimal) // #nosec G115
 		} else {
 			// #nosec G115
-			p, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
+			latestPrice, found := k.GetPriceTRLatest(ctx, uint64(tokenID))
 			if found {
-				v, _ = sdkmath.NewIntFromString(p.Price)
-				decimal = uint8(p.Decimal) // #nosec G115
+				v, _ = sdkmath.NewIntFromString(latestPrice.Price)
+				decimal = uint8(latestPrice.Decimal) // #nosec G115
 			}
 		}
 		if v.IsNil() || v.LTE(sdkmath.ZeroInt()) {

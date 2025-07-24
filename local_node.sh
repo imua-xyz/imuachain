@@ -107,7 +107,6 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	echo "the local operator address is $LOCAL_ADDRESS_IM"
 	echo "the dogfood AVS address is $AVS_ADDRESS"
 
-#	jq '.genesis_time="2025-07-03T12:49:15.426631Z"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	# Change parameter token denominations to hua
 	jq '.app_state["crisis"]["constant_fee"]["denom"]="hua"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="hua"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
