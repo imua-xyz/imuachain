@@ -799,3 +799,23 @@ func (k Keeper) IterateOperatorAccumulatedCommissions(ctx sdk.Context, operator 
 		},
 	)
 }
+
+// GetStakerAllOutstandingRewards : get the outstanding rewards from all AVSs for the staker
+func (k Keeper) GetStakerAllOutstandingRewards(ctx sdk.Context, stakerID string,
+) (feedistributiontypes.CommonAVSRewards, error) {
+	allAVSRewards := make(feedistributiontypes.CommonAVSRewards, 0)
+	opFunc := func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, bool, error) {
+		allAVSRewards = append(allAVSRewards, feedistributiontypes.CommonAVSRewardData{
+			AVSAddress: avs,
+			Rewards:    rewards.Rewards,
+		})
+		return false, true, nil
+	}
+	// iterate to withdraw rewards from multiple AVSs, because different AVSs might
+	// use the same asset as reward.
+	err := k.IterateStakerOutstandingRewards(ctx, stakerID, false, opFunc)
+	if err != nil {
+		return nil, err
+	}
+	return allAVSRewards, nil
+}

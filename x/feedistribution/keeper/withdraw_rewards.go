@@ -121,8 +121,6 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 	withdrawAmountPerAVS := amount
 	actualTotalWithdrawAmount := sdkmath.ZeroInt()
 	withdrawAmountFromDogfood := sdkmath.ZeroInt()
-	allAVSActualWithdrawAmounts := feedistributiontypes.AllAVSActualWithdrawAmount(
-		make([]feedistributiontypes.ActualWithdrawAmountPerAVS, 0))
 	opFunc := func(avs string, rewards *feedistributiontypes.StakerOutstandingRewards) (bool, bool, error) {
 		if !isWithdrawAllReward && !withdrawAmountPerAVS.IsPositive() {
 			// the expected amount has been withdrawn, stop the iteration.
@@ -142,15 +140,21 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 		if !isWithdrawAllReward {
 			withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
 		}
-		allAVSActualWithdrawAmounts = append(allAVSActualWithdrawAmounts, feedistributiontypes.ActualWithdrawAmountPerAVS{
-			Avs:                  avs,
-			ActualWithdrawAmount: actualWithdrawAmountInt,
-		})
+
 		// Update the input rewards; they will be saved to the KV store if the withdrawal is successful.
 		rewards.Rewards = endRewards
 		if !amountFromDogfood.IsNil() {
 			withdrawAmountFromDogfood = amountFromDogfood
 		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				feedistributiontypes.EventTypeWithdrawRewardFromAVS,
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avs),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subRewards.String()),
+			),
+		)
 		return false, true, nil
 	}
 	// iterate to withdraw rewards from multiple AVSs, because different AVSs might
@@ -164,7 +168,6 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 			feedistributiontypes.EventTypeWithdrawRewards,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAssetID, assetID),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyAllAVSActualWithdrawAmounts, allAVSActualWithdrawAmounts.String()),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyTotalWithdrawAmount, actualTotalWithdrawAmount.String()),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawAmountFromDogfood, withdrawAmountFromDogfood.String()),
 		),
@@ -182,7 +185,7 @@ func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 		return nil, err
 	}
 
-	_, amountFromDogfood, endRewards, subRewardDecCoins, err := k.generalWithdrawFromAVS(
+	_, _, endRewards, subRewardDecCoins, err := k.generalWithdrawFromAVS(
 		ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID, amount, imuaReceiptAddr, stakerOutstandingRewards.Rewards)
 	if err != nil {
 		return nil, err
@@ -196,11 +199,13 @@ func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 	subRewardCoins, _ := subRewardDecCoins.TruncateDecimal()
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			feedistributiontypes.EventTypeWithdrawDogfoodRewards,
+			feedistributiontypes.EventTypeWithdrawRewardFromAVS,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawAmountFromDogfood, amountFromDogfood.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, dogfoodAVSAddr),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subRewardDecCoins.String()),
 		),
 	)
+
 	return subRewardCoins, nil
 }
 
@@ -219,8 +224,6 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 	withdrawAmountPerAVS := amount
 	actualTotalWithdrawAmount := sdkmath.ZeroInt()
 	withdrawAmountFromDogfood := sdkmath.ZeroInt()
-	allAVSActualWithdrawAmounts := feedistributiontypes.AllAVSActualWithdrawAmount(
-		make([]feedistributiontypes.ActualWithdrawAmountPerAVS, 0))
 	opFunc := func(avs string, commissions *feedistributiontypes.OperatorAccumulatedCommission) (bool, bool, error) {
 		if !isWithdrawAllCommission && !withdrawAmountPerAVS.IsPositive() {
 			// the expected amount has been withdrawn, stop the iteration.
@@ -241,10 +244,7 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 		if !isWithdrawAllCommission {
 			withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
 		}
-		allAVSActualWithdrawAmounts = append(allAVSActualWithdrawAmounts, feedistributiontypes.ActualWithdrawAmountPerAVS{
-			Avs:                  avs,
-			ActualWithdrawAmount: actualWithdrawAmountInt,
-		})
+
 		// Update the input commission; they will be saved to the KV store if the withdrawal is successful.
 		commissions.Commission = endCommissions
 		if !amountFromDogfood.IsNil() {
@@ -255,6 +255,15 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 		if err != nil {
 			return false, false, err
 		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				feedistributiontypes.EventTypeWithdrawCommissionFromAVS,
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyOperator, operator.String()),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avs),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subCommissions.String()),
+			),
+		)
 		return false, true, nil
 	}
 	// iterate to withdraw rewards from multiple AVSs, because different AVSs might
@@ -268,7 +277,6 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 			feedistributiontypes.EventTypeWithdrawCommission,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyOperator, operator.String()),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAssetID, assetID),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyAllAVSActualWithdrawAmounts, allAVSActualWithdrawAmounts.String()),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyTotalWithdrawAmount, actualTotalWithdrawAmount.String()),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawAmountFromDogfood, withdrawAmountFromDogfood.String()),
 		),
@@ -290,7 +298,7 @@ func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccA
 
 	// withdraw all commissions
 	// use 0 as the input amount to withdraw all commissions.
-	_, amountFromDogfood, endCommissions, subCommissions, err := k.generalWithdrawFromAVS(
+	_, _, endCommissions, subCommissions, err := k.generalWithdrawFromAVS(
 		ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID, sdk.ZeroInt(), operator, accumulatedCommissions.Commission)
 	if err != nil {
 		return nil, err
@@ -308,14 +316,15 @@ func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccA
 	if err != nil {
 		return nil, err
 	}
-
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			feedistributiontypes.EventTypeWithdrawCommissionFromDogfood,
+			feedistributiontypes.EventTypeWithdrawCommissionFromAVS,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyOperator, operator.String()),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyCommissionAmount, amountFromDogfood.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, dogfoodAVSAddr),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subCommissions.String()),
 		),
 	)
+
 	subCommissionCoins, _ := subCommissions.TruncateDecimal()
 	return subCommissionCoins, nil
 }

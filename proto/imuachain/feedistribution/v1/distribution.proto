@@ -242,7 +242,7 @@ message AVSRewardAssetState {
   ];
   // reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
   // each time an AVS deposits/withdraws funds into/from the treasury. The difference between it and
-  // reward_pool_balance represents the total amount claimed by stakers and operators.
+  // reward_pool_balance represents the total amount withdrawn by stakers and operators.
   string reward_pool_total = 2  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

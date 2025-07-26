@@ -35,9 +35,7 @@ const (
 	AttributeKeyApplyInstantSlash    = "apply_instant_slash"
 
 	// undelegation matured
-	EventTypeUndelegationMatured          = "undelegation_matured"
-	AttributeKeyWithdrawableAmount        = "withdrawable_amount"
-	AttributeKeyPendingUndelegationAmount = "pending_undelegation_amount"
+	EventTypeUndelegationMatured = "undelegation_matured"
 
 	// undelegation held back or released
 	EventTypeUndelegationHoldCountChanged = "undelegation_hold_count_changed"

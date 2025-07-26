@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -432,4 +433,104 @@ func (k Keeper) GetAllStakerOutstandingRewards(ctx sdk.Context) ([]feedistributi
 			}
 		},
 	)
+}
+
+func (k Keeper) NormalizeRewardDecCoins(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
+	for i := range rewards {
+		// get the decimal of reward asset
+		_, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, rewards[i].Denom)
+		if err != nil {
+			return nil, err
+		}
+		rewards[i].Amount = feedistributiontypes.TruncateSDKDec(rewards[i].Amount, assetInfo.AssetBasicInfo.Decimals)
+	}
+	return rewards, nil
+}
+
+func (k Keeper) BatchNormalizeRewardDecimals(ctx sdk.Context, rewards feedistributiontypes.CommonAVSRewards) (feedistributiontypes.CommonAVSRewards, error) {
+	for i := range rewards {
+		normalized, err := k.NormalizeRewardDecCoins(ctx, rewards[i].AVSAddress, rewards[i].Rewards)
+		if err != nil {
+			return nil, err
+		}
+		rewards[i].Rewards = normalized
+	}
+	return rewards, nil
+}
+
+func (k Keeper) DecCoinsToRewardInfos(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) ([]feedistributiontypes.RewardInfo, error) {
+	rewardInfos := make([]feedistributiontypes.RewardInfo, len(rewards))
+	for i := range rewards {
+		// get the decimal of reward asset
+		assetID, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, rewards[i].Denom)
+		if err != nil {
+			return nil, err
+		}
+		decimal := assetInfo.AssetBasicInfo.Decimals
+		rewardAmount := feedistributiontypes.UnscaleDecToInt(rewards[i].Amount, decimal)
+		rewardInfos[i] = feedistributiontypes.RewardInfo{
+			TokenId: assetID,
+			Decimal: decimal,
+			Amount:  rewardAmount,
+		}
+	}
+	return rewardInfos, nil
+}
+
+// MergeStakerRewards merges outstanding and unclaimed rewards by AVS address,
+// and returns a list of StakerRewardsPerAVS.
+//
+// Each AVS address will have its corresponding outstanding and unclaimed rewards
+// grouped under the same StakerRewardsPerAVS entry.
+func (k Keeper) MergeStakerRewards(
+	ctx sdk.Context, outstandingRewards, unclaimedRewards []feedistributiontypes.CommonAVSRewardData,
+) ([]feedistributiontypes.StakerRewardsPerAVS, error) {
+	// Create a map to aggregate rewards by AVS address
+	rewardMap := make(map[string]feedistributiontypes.StakerRewardsPerAVS)
+
+	// Process outstanding rewards
+	for _, data := range outstandingRewards {
+		// Convert DecCoins to RewardInfo
+		rewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.Rewards)
+		if err != nil {
+			return nil, err
+		}
+		// assign to outstanding_rewards
+		entry, exists := rewardMap[data.AVSAddress]
+		if !exists {
+			entry = feedistributiontypes.StakerRewardsPerAVS{
+				AVSAddress: data.AVSAddress,
+			}
+		}
+		entry.OutstandingRewards = rewardInfos
+		rewardMap[data.AVSAddress] = entry
+	}
+
+	// Process unclaimed rewards
+	for _, data := range unclaimedRewards {
+		// Convert DecCoins to RewardInfo
+		rewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.Rewards)
+		if err != nil {
+			return nil, err
+		}
+		entry, exists := rewardMap[data.AVSAddress]
+		if !exists {
+			// Initialize the entry if it doesn't exist
+			entry = feedistributiontypes.StakerRewardsPerAVS{
+				AVSAddress: data.AVSAddress,
+			}
+		}
+		// assign to unclaimed_rewards
+		entry.UnclaimedRewards = rewardInfos
+		rewardMap[data.AVSAddress] = entry
+	}
+
+	// Convert the aggregated map into a slice
+	var result []feedistributiontypes.StakerRewardsPerAVS
+	for _, v := range rewardMap {
+		result = append(result, v)
+	}
+	// sort the slice by avs address
+	sort.Slice(result, func(i, j int) bool { return result[i].AVSAddress < result[j].AVSAddress })
+	return result, nil
 }

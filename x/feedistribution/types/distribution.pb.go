@@ -831,7 +831,7 @@ type AVSRewardAssetState struct {
 	RewardPoolBalance github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=reward_pool_balance,json=rewardPoolBalance,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_pool_balance"`
 	// reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
 	// each time an AVS deposits/withdraws funds into/from the treasury. The difference between it and
-	// reward_pool_balance represents the total amount claimed by stakers and operators.
+	// reward_pool_balance represents the total amount withdrawn by stakers and operators.
 	RewardPoolTotal github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=reward_pool_total,json=rewardPoolTotal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_pool_total"`
 	// reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`
 	// because AVS is allowed to accumulate debt and repay it by funding the reward pool later.

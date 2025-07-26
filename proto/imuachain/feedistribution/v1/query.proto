@@ -3,6 +3,7 @@ package imuachain.feedistribution.v1;
 
 import "amino/amino.proto";
 import "cosmos/query/v1/query.proto";
+import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "imuachain/feedistribution/v1/distribution.proto";
@@ -21,6 +22,11 @@ service Query {
   rpc AVSRewardAsset(QueryAVSRewardAssetRequest) returns (QueryAVSRewardAssetResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/reward_asset/{avs}/{asset_id}";
+  }
+  // AVSRewardAssetBySymbol queries the AVS reward asset by the symbol.
+  rpc AVSRewardAssetBySymbol(QueryAVSRewardAssetBySymbolRequest) returns (QueryAVSRewardAssetBySymbolResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_asset_by_symbol/{avs}/{symbol}";
   }
   // RewardAssetsByAVS queries all reward assets for an AVS.
   rpc RewardAssetsByAVS(AVSRequest) returns (QueryRewardAssetsByAVSResponse) {
@@ -98,6 +104,11 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/unclaimed_rewards/{staker_id}";
   }
+  // StakerAllRewards queries all rewards for a staker including claimed and unclaimed rewards
+  rpc StakerAllRewards (QueryStakerAllRewardsRequest) returns (QueryStakerAllRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/all_rewards/{staker_id}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -122,6 +133,20 @@ message QueryAVSRewardAssetRequest {
 
 // QueryAVSRewardAssetResponse is the response to obtain the specific reward asset for an AVS.
 message QueryAVSRewardAssetResponse{
+  // avs_reward_asset is the reward asset returned for the input avs
+  AVSRewardAsset avs_reward_asset = 1;
+}
+
+// QueryAVSRewardAssetBySymbolRequest is the request to obtain the specific reward asset for an AVS and symbol.
+message QueryAVSRewardAssetBySymbolRequest {
+  // avs address
+  string avs = 1;
+  // symbol is reward asset symbol
+  string symbol = 2;
+}
+
+// QueryAVSRewardAssetBySymbolResponse is the response to obtain the specific reward asset for an AVS and symbol.
+message QueryAVSRewardAssetBySymbolResponse{
   // avs_reward_asset is the reward asset returned for the input avs
   AVSRewardAsset avs_reward_asset = 1;
 }
@@ -341,4 +366,48 @@ message QueryStakerUnclaimedRewardsRequest {
 message QueryStakerUnclaimedRewardsResponse {
   // unclaimed rewards for all AVSs
   repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStakerUnclaimedRewardsRequest is the request to obtain the staker unclaimed rewards.
+message QueryStakerAllRewardsRequest {
+  // staker id
+  string staker_id = 1;
+}
+
+// RewardInfo represents a reward amount for a specific token,
+// including its identifier, decimal precision, and the actual amount.
+message RewardInfo {
+  // token_id is the unique identifier of the reward token.
+  string token_id = 1;
+
+  // decimal specifies the number of decimal places for the reward asset,
+  // which is provided during registration.
+  uint32 decimal = 2;
+
+  // amount is the reward amount
+  string amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+
+// StakerRewardsPerAVS is the response type representing a staker's rewards from a specific AVS.
+message StakerRewardsPerAVS {
+  // avs_address is the address of the AVS (Actively Validated Service).
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
+
+  // outstanding_rewards represents rewards that have been claimed but not yet withdrawn.
+  repeated RewardInfo outstanding_rewards = 2 [(gogoproto.nullable) = false];
+
+  // unclaimed_rewards represents rewards that have not yet been accounted or distributed.
+  repeated RewardInfo unclaimed_rewards = 3 [(gogoproto.nullable) = false];
+}
+
+
+// QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
+message QueryStakerAllRewardsResponse {
+  // rewards is the total rewards for all AVSs
+  repeated StakerRewardsPerAVS rewards = 1 [(gogoproto.nullable) = false];
 }

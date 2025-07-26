@@ -674,15 +674,6 @@ func (k *Keeper) SetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 	setValue := operatortypes.DecValueField{Amount: amount}
 	bz := k.cdc.MustMarshal(&setValue)
 	store.Set(key, bz)
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			operatortypes.EventTypeUpdateOperatorAssetUSDValue,
-			sdk.NewAttribute(operatortypes.AttributeKeyEpochIdentifier, epochIdentifier),
-			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operator),
-			sdk.NewAttribute(operatortypes.AttributeKeyAssetID, assetID),
-			sdk.NewAttribute(operatortypes.AttributeKeyTotalUSDValue, amount.String()),
-		),
-	)
 	return nil
 }
 
@@ -694,13 +685,6 @@ func (k *Keeper) DeleteOperatorAssetUSDValueByEpoch(ctx sdk.Context, epochIdenti
 	for ; iterator.Valid(); iterator.Next() {
 		store.Delete(iterator.Key())
 	}
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			operatortypes.EventTypeDeleteOperatorAssetUSDValueByEpoch,
-			sdk.NewAttribute(operatortypes.AttributeKeyEpochIdentifier, epochIdentifier),
-			sdk.NewAttribute(operatortypes.AttributeKeyOperator, operator),
-		),
-	)
 	return nil
 }
 

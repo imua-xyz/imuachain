@@ -110,7 +110,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 			sdk.NewEvent(
 				types.EventTypeNewAVSRewardAsset,
 				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
-				sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+				sdk.NewAttribute(types.AttributeKeyAssetID, assetID),
 				sdk.NewAttribute(assetstype.AttributeKeyName, assetInfo.Name),
 				sdk.NewAttribute(assetstype.AttributeKeySymbol, assetInfo.Symbol),
 				sdk.NewAttribute(assetstype.AttributeKeyAddress, assetInfo.Address),
@@ -216,7 +216,7 @@ func (k Keeper) UpdateAVSRewardAssetMetaInfo(ctx sdk.Context, avsAddr, assetID s
 		sdk.NewEvent(
 			types.EventTypeUpdatedRewardAssetMetaInfo,
 			sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
-			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(types.AttributeKeyAssetID, assetID),
 			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, metainfo),
 		),
 	)

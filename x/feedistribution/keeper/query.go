@@ -27,6 +27,19 @@ func (k Keeper) AVSRewardAsset(ctx context.Context, req *types.QueryAVSRewardAss
 	return &types.QueryAVSRewardAssetResponse{AvsRewardAsset: assetInfo}, nil
 }
 
+// AVSRewardAssetBySymbol queries the specific AVS reward asset by the symbol.
+func (k Keeper) AVSRewardAssetBySymbol(ctx context.Context, req *types.QueryAVSRewardAssetBySymbolRequest) (*types.QueryAVSRewardAssetBySymbolResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	_, assetInfo, err := k.GetAVSRewardAssetBySymbol(c, strings.ToLower(req.Avs), req.Symbol)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryAVSRewardAssetBySymbolResponse{AvsRewardAsset: assetInfo}, nil
+}
+
 // RewardAssetsByAVS queries all reward assets for an AVS.
 func (k Keeper) RewardAssetsByAVS(ctx context.Context, req *types.AVSRequest) (*types.QueryRewardAssetsByAVSResponse, error) {
 	if req == nil {
@@ -85,10 +98,16 @@ func (k Keeper) OperatorOutstandingRewards(ctx context.Context, req *types.Opera
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
-	outstandingRewards, err := k.GetOperatorOutstandingRewards(c, req.Operator, strings.ToLower(req.Avs))
+	avsAddr := strings.ToLower(req.Avs)
+	outstandingRewards, err := k.GetOperatorOutstandingRewards(c, req.Operator, avsAddr)
 	if err != nil {
 		return nil, err
 	}
+	normalizedRewards, err := k.NormalizeRewardDecCoins(c, avsAddr, outstandingRewards.Rewards)
+	if err != nil {
+		return nil, err
+	}
+	outstandingRewards.Rewards = normalizedRewards
 	return &types.QueryOperatorOutstandingRewardsResponse{OperatorOutstandingRewards: &outstandingRewards}, nil
 }
 
@@ -98,10 +117,16 @@ func (k Keeper) StakerOutstandingRewards(ctx context.Context, req *types.QuerySt
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
-	outstandingRewards, err := k.GetStakerOutstandingRewards(c, strings.ToLower(req.StakerId), strings.ToLower(req.Avs))
+	avsAddr := strings.ToLower(req.Avs)
+	outstandingRewards, err := k.GetStakerOutstandingRewards(c, strings.ToLower(req.StakerId), avsAddr)
 	if err != nil {
 		return nil, err
 	}
+	normalizedRewards, err := k.NormalizeRewardDecCoins(c, avsAddr, outstandingRewards.Rewards)
+	if err != nil {
+		return nil, err
+	}
+	outstandingRewards.Rewards = normalizedRewards
 	return &types.QueryStakerOutstandingRewardsResponse{StakerOutstandingRewards: &outstandingRewards}, nil
 }
 
@@ -179,10 +204,16 @@ func (k Keeper) OperatorAccumulatedCommission(ctx context.Context, req *types.Op
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
-	commission, err := k.GetOperatorAccumulatedCommission(c, req.Operator, strings.ToLower(req.Avs))
+	avsAddr := strings.ToLower(req.Avs)
+	commission, err := k.GetOperatorAccumulatedCommission(c, req.Operator, avsAddr)
 	if err != nil {
 		return nil, err
 	}
+	normalizedCommission, err := k.NormalizeRewardDecCoins(c, avsAddr, commission.Commission)
+	if err != nil {
+		return nil, err
+	}
+	commission.Commission = normalizedCommission
 	return &types.QueryOperatorAccumulatedCommissionResponse{OperatorAccumulatedCommission: &commission}, nil
 }
 
@@ -223,5 +254,36 @@ func (k Keeper) StakerUnclaimedRewards(ctx context.Context, req *types.QueryStak
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryStakerUnclaimedRewardsResponse{Rewards: unclaimedRewards}, nil
+	normalizedRewards, err := k.BatchNormalizeRewardDecimals(c, unclaimedRewards)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryStakerUnclaimedRewardsResponse{Rewards: normalizedRewards}, nil
+}
+
+func (k Keeper) StakerAllRewards(
+	ctx context.Context,
+	req *types.QueryStakerAllRewardsRequest,
+) (*types.QueryStakerAllRewardsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+
+	outstandingRewards, err := k.GetStakerAllOutstandingRewards(c, strings.ToLower(req.StakerId))
+	if err != nil {
+		return nil, err
+	}
+	unclaimedRewards, err := k.GetStakerUnclaimedRewards(c, strings.ToLower(req.StakerId))
+	if err != nil {
+		return nil, err
+	}
+	stakerAllRewards, err := k.MergeStakerRewards(c, outstandingRewards, unclaimedRewards)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryStakerAllRewardsResponse{
+		Rewards: stakerAllRewards,
+	}, nil
 }

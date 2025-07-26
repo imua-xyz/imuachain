@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"strconv"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -207,12 +206,11 @@ func (k Keeper) SetAVSRewardParam(ctx sdk.Context, avsAddr string, param feedist
 	store.Set(common.HexToAddress(avsAddr).Bytes(), bz)
 
 	// emit event for indexers
-	paramEvent := fmt.Sprintf("CustomRewardInflation:%v,CustomOperatorRatio:%v", param.CustomRewardInflation, param.CustomOperatorRatio)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeAVSRewardParamSet,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avsAddr),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyAVSRewardParam, paramEvent),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyAVSRewardParam, param.ToEventString()),
 		),
 	)
 	return nil
