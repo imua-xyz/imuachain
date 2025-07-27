@@ -22,7 +22,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState types.GenesisState) {
 
 // ExportGenesis returns the module's exported genesis
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	genesis := types.DefaultGenesis()
+	genesis := types.GenesisState{}
 	genesis.Params = k.GetParams(ctx)
-	return genesis
+	return &genesis
 }

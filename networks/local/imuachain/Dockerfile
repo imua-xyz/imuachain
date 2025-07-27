@@ -1,5 +1,5 @@
-FROM golang:1.21.12-alpine3.19 AS build
-RUN apk add --no-cache build-base~=0.5 git~=2.43 linux-headers~=6.5
+FROM golang:1.23.11-alpine3.21 AS build
+RUN apk add --no-cache build-base=~0.5 git=~2.47.3 linux-headers=~6.6
 # Set working directory for the build
 WORKDIR /go/work
 # Add source files
@@ -9,13 +9,14 @@ COPY . ./
 RUN LEDGER_ENABLED=false make build
 
 #####################################
-FROM alpine:3.19 AS run
-RUN apk add --no-cache libstdc++~=13.2 \
-	bash~=5.2 \
-	curl~=8.12.1-r0 \
-	jq~=1.7 \
-    && addgroup -g 1000 imua \
-    && adduser -S -h /home/imua -D imua -u 1000 -G imua
+FROM alpine:3.21 AS run
+RUN apk add --no-cache \
+    libstdc++=~14.2.0 \
+    bash=~5.2.37 \
+    curl=~8.12.1 \
+    jq=~1.7.1 \
+ && addgroup -g 1000 imua \
+ && adduser -S -h /home/imua -D imua -u 1000 -G imua
 EXPOSE 26656 26657 1317 9090 8545 8546
 USER imua
 CMD ["start", "--log_format", "plain", "--chain-id", "imuachainlocalnet_232-1", "--metrics", "--json-rpc.api", "eth,txpool,personal,net,debug,web3", "--api.enable", "--json-rpc.enable", "true", "--minimum-gas-prices", "0.0001hua"]

@@ -1176,6 +1176,8 @@ github.com/imua-xyz/cosmos-sdk v0.47.5-evmos.2.0.20250312095401-0035968c59f0 h1:
 github.com/imua-xyz/cosmos-sdk v0.47.5-evmos.2.0.20250312095401-0035968c59f0/go.mod h1:EHwCeN9IXonsjKcjpS12MqeStdZvIdxt3VYXhus3G3c=
 github.com/imua-xyz/evmos/v16 v16.0.3-0.20250515032007-e21b41cb9b20 h1:OvRREovoBRCGwSkaGiEzgpOSjLhGeldeWBPWcJH8oWA=
 github.com/imua-xyz/evmos/v16 v16.0.3-0.20250515032007-e21b41cb9b20/go.mod h1:aPzVlrI2p5Jb0tETC15f4CVRYwzChGy+Wp6SebGc6tE=
+github.com/imua-xyz/price-feeder v0.2.8 h1:fLxmtBN0zdpe0XpXu1zurCPP/nYCtGpc6PG3k1Q83RU=
+github.com/imua-xyz/price-feeder v0.2.8/go.mod h1:z3oRSlLZ59UgzmlKr4Vhw9WGB42AOS8uXr6/bQ7UoVA=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
@@ -1252,8 +1254,6 @@ github.com/ledgerwatch/erigon-lib v0.0.0-20230210071639-db0e7ed11263 h1:LGEzZvf3
 github.com/ledgerwatch/erigon-lib v0.0.0-20230210071639-db0e7ed11263/go.mod h1:OXgMDuUo2lZ3NpH29ZvMYbk+LxFd5ffDl2Z2mGMuY/I=
 github.com/leodido/go-urn v1.2.4 h1:XlAE/cm/ms7TE/VMVoduSpNBoyc2dOxHs5MZSwAN63Q=
 github.com/leodido/go-urn v1.2.4/go.mod h1:7ZrI8mTSeBSHl/UaRyKQW1qZeMgak41ANeCNaVckg+4=
-github.com/leonz789/price-feeder v0.0.0-20250629150533-749113c62e2a h1:2z/krlOqh/H3vsEjFiN9mCeD6zLEzOIx+rMV8M/ewiI=
-github.com/leonz789/price-feeder v0.0.0-20250629150533-749113c62e2a/go.mod h1:z3oRSlLZ59UgzmlKr4Vhw9WGB42AOS8uXr6/bQ7UoVA=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/libp2p/go-buffer-pool v0.1.0 h1:oK4mSFcQz7cTQIfqbe4MIj9gLW+mnanjyFtc6cdF0Y8=

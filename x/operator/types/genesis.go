@@ -503,9 +503,11 @@ func (gs GenesisState) ValidateOperatorKeyRemovals(operators map[string]struct{}
 }
 
 func (gs GenesisState) ValidateOperatorAssetUSDValues(operators map[string]struct{}) error {
-	if len(gs.OperatorUSDValues) != 0 && len(gs.OperatorAssetUsdValues) == 0 {
+	// TODO: The asset USD values might be empty during the testnet upgrade from V8 to V9.
+	// So this check is temporarily disabled. It will be enabled after the upgrade.
+	/*	if len(gs.OperatorUSDValues) != 0 && len(gs.OperatorAssetUsdValues) == 0 {
 		return ErrInvalidGenesisData.Wrap("ValidateOperatorAssetUSDValues: the USD value of the operator's asset can't be empty.")
-	}
+	}*/
 	validationFunc := func(_ int, usdValue OperatorAssetUSDValue) error {
 		stringList, err := assetstypes.ParseJoinedStoreKey([]byte(usdValue.Key), 3)
 		if err != nil {

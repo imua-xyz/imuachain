@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
+
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -21,6 +23,11 @@ type (
 		// the address capable of executing a MsgUpdateParams message, typically x/gov.
 		authority string
 	}
+)
+
+const (
+	// SecondsInYear Assume 1 year = 365 days (ignores leap years)
+	SecondsInYear = 365 * 24 * 60 * 60 // = 31_536_000
 )
 
 func NewKeeper(
@@ -83,4 +90,46 @@ func (k Keeper) AddCollectedFees(ctx sdk.Context, fees sdk.Coins) error {
 // GetAuthority returns the authority address that can execute MsgUpdateParams.
 func (k Keeper) GetAuthority() string {
 	return k.authority
+}
+
+func (k Keeper) GetEpochMintInfo(ctx sdk.Context) (math.Int, math.LegacyDec, error) {
+	params := k.GetParams(ctx)
+	blockTimeUnix := ctx.BlockTime().Unix()
+	inflationRatiosNumber := len(params.InflationParams.AnnualInflation)
+
+	if !params.InflationParams.Enable ||
+		params.InflationParams.StartTime > blockTimeUnix ||
+		inflationRatiosNumber == 0 {
+		return params.EpochReward, math.LegacyDec{}, nil
+	}
+
+	// select the correct annual inflation ratio
+	durFromStartTime := blockTimeUnix - params.InflationParams.StartTime
+	index := durFromStartTime / SecondsInYear
+	if index >= int64(inflationRatiosNumber) {
+		// If the current time exceeds start_time + len(list) * 1 year, the last ratio in
+		// the list will always be used.
+		index = int64(inflationRatiosNumber) - 1
+	}
+
+	// calculate the mint amount by the selected inflation and current total supply
+	inflation := params.InflationParams.AnnualInflation[index]
+	if inflation.IsNil() || inflation.IsNegative() {
+		return math.Int{}, math.LegacyDec{}, types.ErrInvalidParams.Wrapf("invalid inflation ratio:%v, index:%d", inflation, index)
+	}
+	totalSupply := k.bankKeeper.GetSupply(ctx, params.MintDenom).Amount
+	annualProvisions := inflation.MulInt(totalSupply)
+	// calculate the amount for one epoch
+	epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, params.EpochIdentifier)
+	if !exist {
+		return math.Int{}, math.LegacyDec{}, types.ErrInvalidParams.Wrapf("invalid epoch identifier:%s", params.EpochIdentifier)
+	}
+	epochDurationSeconds := int64(epochInfo.Duration.Seconds())
+	if epochDurationSeconds <= 0 {
+		return math.Int{}, math.LegacyDec{}, types.ErrInvalidParams.Wrapf("invalid epoch duration: %v", epochInfo.Duration)
+	}
+	epochNumberInYear := SecondsInYear / epochDurationSeconds
+	epochMintAmount := annualProvisions.QuoInt64(epochNumberInYear)
+
+	return epochMintAmount.TruncateInt(), inflation, nil
 }

@@ -49,8 +49,9 @@ var (
 )
 
 const (
-	InvalidTaskID    = 0
-	BLSMessageToSign = "BLS12-381 Signed Message\nChainIDWithoutRevision: %s\nAccAddressBech32: %s"
+	InvalidTaskID        = 0
+	BLSMessageToSign     = "BLS12-381 Signed Message\nChainIDWithoutRevision: %s\nAccAddressBech32: %s"
+	DelimiterForGroupKey = "_"
 )
 
 type AVSRegisterOrDeregisterParams struct {

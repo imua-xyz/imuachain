@@ -115,4 +115,12 @@ var (
 		ModuleName, 27,
 		" The response was submitted too soon.",
 	)
+	ErrNotFound = errorsmod.Register(
+		ModuleName, 28,
+		"Resource not found",
+	)
+	ErrNoOptedInOperators = errorsmod.Register(
+		ModuleName, 29,
+		"No operators have opted in to the AVS yet",
+	)
 )

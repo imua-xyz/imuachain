@@ -286,6 +286,10 @@ func (k Keeper) CreateAVSTask(ctx sdk.Context, params *types.TaskInfoParams) (ui
 	if err != nil {
 		return types.InvalidTaskID, errorsmod.Wrap(err, "CreateAVSTask: failed to get opt-in operators")
 	}
+
+	if len(operatorList) == 0 {
+		return types.InvalidTaskID, errorsmod.Wrap(types.ErrNoOptedInOperators, fmt.Sprintf("CreateAVSTask: no valid opted-in operators for AVS: %s", avsInfo.AvsAddress))
+	}
 	params.TaskID = k.GetTaskID(ctx, common.HexToAddress(params.TaskContractAddress.String()))
 	task := &types.TaskInfo{
 		Name:                  params.TaskName,

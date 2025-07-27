@@ -48,12 +48,28 @@ func DefaultParams() Params {
 	)
 }
 
+// ValidateInflationParam validates the set of params
+func (p Params) ValidateInflationParam() error {
+	if p.InflationParams.StartTime < 0 {
+		return fmt.Errorf("negative start time: %d", p.InflationParams.StartTime)
+	}
+	for index, inflationRatio := range p.InflationParams.AnnualInflation {
+		if inflationRatio.IsNil() || inflationRatio.IsNegative() {
+			return fmt.Errorf("invalid inflation ratio: %s,index:%d", inflationRatio, index)
+		}
+	}
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if err := ValidateMintDenom(p.MintDenom); err != nil {
 		return err
 	}
 	if err := ValidateEpochReward(p.EpochReward); err != nil {
+		return err
+	}
+	if err := p.ValidateInflationParam(); err != nil {
 		return err
 	}
 	return epochstypes.ValidateEpochIdentifierString(p.EpochIdentifier)

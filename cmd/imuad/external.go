@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	sdkserver "github.com/cosmos/cosmos-sdk/server"
@@ -148,6 +150,18 @@ func launchFeeder(configFile, sourcesConfPath, binPath, mnemonic string, logger 
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 
+			sig := make(chan os.Signal, 1)
+			signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+			go func() {
+				<-sig
+				if cmd.Process != nil {
+					if err := cmd.Process.Kill(); err != nil {
+						logger.Error("failed to kill process", "pid", cmd.Process.Pid, "err", err)
+					} else {
+						logger.Info("feeder subprocess terminated by signal", "pid", cmd.Process.Pid)
+					}
+				}
+			}()
 			if err := cmd.Start(); err != nil {
 				logger.Error("failed to start feeder subprocess", "err", err)
 				return

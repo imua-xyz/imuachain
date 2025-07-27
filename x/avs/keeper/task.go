@@ -269,7 +269,7 @@ func (k Keeper) IterateResultInfo(ctx sdk.Context, fn func(index int64, info typ
 func (k Keeper) GroupTasksByIDAndAddress(tasks []types.TaskResultInfo) map[string][]types.TaskResultInfo {
 	taskMap := make(map[string][]types.TaskResultInfo)
 	for _, task := range tasks {
-		key := task.TaskContractAddress + "_" + strconv.FormatUint(task.TaskId, 10)
+		key := task.TaskContractAddress + types.DelimiterForGroupKey + strconv.FormatUint(task.TaskId, 10)
 		taskMap[key] = append(taskMap[key], task)
 	}
 
@@ -385,4 +385,17 @@ func (k *Keeper) GetAllChallengeInfos(ctx sdk.Context) ([]types.ChallengeInfo, e
 		})
 	}
 	return ret, nil
+}
+
+func parseGroupKey(key string) (string, uint64, error) {
+	parts := strings.Split(key, types.DelimiterForGroupKey)
+	if len(parts) != 2 {
+		return "", 0, fmt.Errorf("invalid group key format: %s", key)
+	}
+	taskAddr := parts[0]
+	taskID, err := strconv.ParseUint(parts[1], 10, 64)
+	if err != nil {
+		return "", 0, fmt.Errorf("invalid task ID in group key: %s", key)
+	}
+	return taskAddr, taskID, nil
 }
