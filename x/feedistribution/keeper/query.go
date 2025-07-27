@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -20,6 +22,13 @@ func (k Keeper) AVSRewardAsset(ctx context.Context, req *types.QueryAVSRewardAss
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
 	assetInfo, err := k.GetAVSRewardAssetInfo(c, strings.ToLower(req.Avs), strings.ToLower(req.AssetId))
 	if err != nil {
 		return nil, err
@@ -59,6 +68,9 @@ func (k Keeper) AVSRewardParam(ctx context.Context, req *types.AVSRequest) (*typ
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
 	rewardParam, err := k.GetAVSRewardParam(c, req.Avs)
 	if err != nil {
 		return nil, err
@@ -72,6 +84,9 @@ func (k Keeper) AVSCommunityPool(ctx context.Context, req *types.AVSRequest) (*t
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
 	feePool, err := k.GetAVSFeePool(c, req.Avs)
 	if err != nil {
 		return nil, err
@@ -85,6 +100,9 @@ func (k Keeper) AVSRewardDistribution(ctx context.Context, req *types.AVSRequest
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
 	avsRewardDistribution, err := k.GetAVSRewardDistribution(c, req.Avs)
 	if err != nil {
 		return nil, err
@@ -98,6 +116,13 @@ func (k Keeper) OperatorOutstandingRewards(ctx context.Context, req *types.Opera
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
+	_, err := sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	avsAddr := strings.ToLower(req.Avs)
 	outstandingRewards, err := k.GetOperatorOutstandingRewards(c, req.Operator, avsAddr)
 	if err != nil {
@@ -117,6 +142,13 @@ func (k Keeper) StakerOutstandingRewards(ctx context.Context, req *types.QuerySt
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
 	avsAddr := strings.ToLower(req.Avs)
 	outstandingRewards, err := k.GetStakerOutstandingRewards(c, strings.ToLower(req.StakerId), avsAddr)
 	if err != nil {
@@ -136,6 +168,14 @@ func (k Keeper) StakeChangeDelegations(ctx context.Context, req *types.QueryStak
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, err := sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	stakeChangeDelegations, err := k.GetStakeChangedDelegations(c, req.EpochIdentifier, req.Operator, strings.ToLower(req.AssetId))
 	if err != nil {
 		return nil, err
@@ -149,6 +189,18 @@ func (k Keeper) DelegationStartingInfo(ctx context.Context, req *types.QueryDele
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	delegationKey := assetstype.GetJoinedStoreKey(strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.Operator)
 	delegationStartingInfo, err := k.GetDelegationStartingInfo(c, string(delegationKey), req.EpochIdentifier)
 	if err != nil {
@@ -163,6 +215,14 @@ func (k Keeper) OperatorHistoricalRewards(ctx context.Context, req *types.QueryO
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	historicalRewards, err := k.GetOperatorHistoricalReward(c, req.Operator, strings.ToLower(req.AssetId),
 		req.EpochIdentifier, req.Period)
 	if err != nil {
@@ -177,6 +237,14 @@ func (k Keeper) AllOperatorHistoricalRewards(ctx context.Context, req *types.Que
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	historicalRewards, err := k.OperatorRewardsForAllPeriods(c, req.Operator, strings.ToLower(req.AssetId), req.EpochIdentifier)
 	if err != nil {
 		return nil, err
@@ -190,6 +258,14 @@ func (k Keeper) OperatorCurrentRewards(ctx context.Context, req *types.QueryOper
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	currentRewards, err := k.GetOperatorCurrentRewards(c, req.Operator, strings.ToLower(req.AssetId),
 		req.EpochIdentifier)
 	if err != nil {
@@ -204,6 +280,13 @@ func (k Keeper) OperatorAccumulatedCommission(ctx context.Context, req *types.Op
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, err := sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
 	avsAddr := strings.ToLower(req.Avs)
 	commission, err := k.GetOperatorAccumulatedCommission(c, req.Operator, avsAddr)
 	if err != nil {
@@ -223,6 +306,10 @@ func (k Keeper) OperatorSlashEvent(ctx context.Context, req *types.QueryOperator
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
 	slashEvent, err := k.GetOperatorSlashEvent(c, req.Operator, strings.ToLower(req.AssetId),
 		req.EpochIdentifier, req.EpochNumber, req.BlockHeight)
 	if err != nil {
@@ -237,6 +324,14 @@ func (k Keeper) OperatorSlashEvents(ctx context.Context, req *types.QueryOperato
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	slashEvents, err := k.GetOperatorSlashEvents(c, req.Operator, strings.ToLower(req.AssetId), req.EpochIdentifier)
 	if err != nil {
 		return nil, err
@@ -250,6 +345,10 @@ func (k Keeper) StakerUnclaimedRewards(ctx context.Context, req *types.QueryStak
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
 	unclaimedRewards, err := k.GetStakerUnclaimedRewards(c, strings.ToLower(req.StakerId))
 	if err != nil {
 		return nil, err

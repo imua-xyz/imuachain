@@ -31,6 +31,9 @@ var _ types.QueryServer = &Keeper{}
 func (k *Keeper) QueryOperatorInfo(
 	ctx context.Context, req *types.GetOperatorInfoReq,
 ) (*types.OperatorInfo, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
 	return k.OperatorInfo(c, req.OperatorAddr)
 }
@@ -39,6 +42,9 @@ func (k *Keeper) QueryOperatorInfo(
 func (k *Keeper) QueryAllOperators(
 	goCtx context.Context, req *types.QueryAllOperatorsRequest,
 ) (*types.QueryAllOperatorsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]string, 0)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatorInfo)
@@ -61,6 +67,9 @@ func (k *Keeper) QueryOperatorConsKeyForChainID(
 	goCtx context.Context,
 	req *types.QueryOperatorConsKeyRequest,
 ) (*types.QueryOperatorConsKeyResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	addr, err := sdk.AccAddressFromBech32(req.OperatorAccAddr)
 	if err != nil {
@@ -88,6 +97,9 @@ func (k Keeper) QueryOperatorConsAddressForChainID(
 	goCtx context.Context,
 	req *types.QueryOperatorConsAddressRequest,
 ) (*types.QueryOperatorConsAddressResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	addr, err := sdk.AccAddressFromBech32(req.OperatorAccAddr)
 	if err != nil {
@@ -115,6 +127,9 @@ func (k Keeper) QueryAllOperatorConsKeysByChainID(
 	goCtx context.Context,
 	req *types.QueryAllOperatorConsKeysByChainIDRequest,
 ) (*types.QueryAllOperatorConsKeysByChainIDResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorConsKeyPair, 0)
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(req.Chain)
@@ -152,6 +167,9 @@ func (k Keeper) QueryAllOperatorConsAddrsByChainID(
 	goCtx context.Context,
 	req *types.QueryAllOperatorConsAddrsByChainIDRequest,
 ) (*types.QueryAllOperatorConsAddrsByChainIDResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorConsAddrPair, 0)
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(req.Chain)
@@ -188,7 +206,17 @@ func (k Keeper) QueryAllOperatorConsAddrsByChainID(
 }
 
 func (k *Keeper) QueryOperatorUSDValue(ctx context.Context, req *types.QueryOperatorUSDValueRequest) (*types.QueryOperatorUSDValueResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.AvsAddress) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AvsAddress)
+	}
+	_, err := sdk.AccAddressFromBech32(req.OperatorAddr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	optedUSDValues, err := k.GetOperatorOptedUSDValue(c, req.AvsAddress, req.OperatorAddr)
 	if err != nil {
 		return nil, err
@@ -199,7 +227,13 @@ func (k *Keeper) QueryOperatorUSDValue(ctx context.Context, req *types.QueryOper
 }
 
 func (k *Keeper) QueryAVSUSDValue(ctx context.Context, req *types.QueryAVSUSDValueRequest) (*types.DecValueField, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.AVSAddress) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AVSAddress)
+	}
 	usdValue, err := k.GetAVSUSDValue(c, req.AVSAddress)
 	if err != nil {
 		return nil, err
@@ -210,14 +244,18 @@ func (k *Keeper) QueryAVSUSDValue(ctx context.Context, req *types.QueryAVSUSDVal
 }
 
 func (k *Keeper) QueryOperatorSlashInfo(goCtx context.Context, req *types.QueryOperatorSlashInfoRequest) (*types.QueryOperatorSlashInfoResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorSlashInfoByID, 0)
 
-	if _, err := sdk.AccAddressFromBech32(req.OperatorAddr); err != nil {
-		return nil, types.ErrParameterInvalid.Wrapf("invalid operator address,err:%s", err)
+	_, err := sdk.AccAddressFromBech32(req.OperatorAddr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
 	if !common.IsHexAddress(req.AvsAddress) {
-		return nil, types.ErrParameterInvalid.Wrapf("invalid avs address, not evm addr")
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AvsAddress)
 	}
 
 	slashPrefix := utils.AppendMany(types.KeyPrefixOperatorSlashInfo, assetstype.GetJoinedStoreKeyForPrefix(req.OperatorAddr, strings.ToLower(req.AvsAddress)))
@@ -246,7 +284,13 @@ func (k *Keeper) QueryOperatorSlashInfo(goCtx context.Context, req *types.QueryO
 }
 
 func (k *Keeper) QueryAllOperatorsWithOptInAVS(goCtx context.Context, req *types.QueryAllOperatorsByOptInAVSRequest) (*types.QueryAllOperatorsByOptInAVSResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
 	operatorList, err := k.GetOptedInOperatorListByAVS(ctx, req.Avs)
 	if err != nil {
 		return nil, err
@@ -257,6 +301,9 @@ func (k *Keeper) QueryAllOperatorsWithOptInAVS(goCtx context.Context, req *types
 }
 
 func (k *Keeper) QueryAllAVSsByOperator(goCtx context.Context, req *types.QueryAllAVSsByOperatorRequest) (*types.QueryAllAVSsByOperatorResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	avsList, err := k.GetOptedInAVSForOperator(ctx, req.Operator)
 	if err != nil {
@@ -268,11 +315,20 @@ func (k *Keeper) QueryAllAVSsByOperator(goCtx context.Context, req *types.QueryA
 }
 
 func (k *Keeper) QueryOptInfo(goCtx context.Context, req *types.QueryOptInfoRequest) (*types.OptedInfo, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if !common.IsHexAddress(req.AvsAddress) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AvsAddress)
+	}
 	return k.GetOptedInfo(ctx, req.OperatorAddr, req.AvsAddress)
 }
 
 func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest) (*types.QueryValidatorsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 	vals := make([]types.Validator, 0)
 	var chainIDWithoutRevision string
@@ -356,6 +412,9 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 }
 
 func (k *Keeper) QuerySnapshotHelper(goCtx context.Context, req *types.QuerySnapshotHelperRequest) (*types.SnapshotHelper, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	snapshotHelper, err := k.GetSnapshotHelper(ctx, req.Avs)
 	if err != nil {
@@ -365,6 +424,9 @@ func (k *Keeper) QuerySnapshotHelper(goCtx context.Context, req *types.QuerySnap
 }
 
 func (k *Keeper) QuerySpecifiedSnapshot(goCtx context.Context, req *types.QuerySpecifiedSnapshotRequest) (*types.VotingPowerSnapshotKeyHeight, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	findHeight, snapshot, err := k.LoadVotingPowerSnapshot(ctx, req.Avs, req.Height)
 	if err != nil {
@@ -377,8 +439,11 @@ func (k *Keeper) QuerySpecifiedSnapshot(goCtx context.Context, req *types.QueryS
 }
 
 func (k *Keeper) QueryAllSnapshot(goCtx context.Context, req *types.QueryAllSnapshotRequest) (*types.QueryAllSnapshotResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
 	if !common.IsHexAddress(req.Avs) {
-		return nil, fmt.Errorf("invalid AVS address format: %s", req.Avs)
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.VotingPowerSnapshotKeyHeight, 0)
