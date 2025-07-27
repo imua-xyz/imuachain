@@ -6,7 +6,7 @@ WORKDIR /go/src/github.com/imua-xyz/imuachain
 
 COPY go.mod go.sum ./
 
-RUN apk add --no-cache ca-certificates=~20241121 build-base=~0.5 git=~2.47.3 linux-headers=~6.6
+RUN apk add --no-cache ca-certificates=~20250619 build-base=~0.5 git=~2.47.3 linux-headers=~6.6
 
 RUN --mount=type=bind,target=. --mount=type=secret,id=GITHUB_TOKEN \
     git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/".insteadOf "https://github.com/"; \
@@ -24,7 +24,7 @@ COPY --from=build-env /go/src/github.com/imua-xyz/imuachain/build/imuad /usr/bin
 COPY --from=build-env /go/bin/toml-cli /usr/bin/toml-cli
 
 RUN apk add --no-cache \
-	ca-certificates=~20241121 \
+	ca-certificates=~20250619 \
 	libstdc++=~14.2.0 \
 	jq=~1.7.1 \
 	curl=~8.12.1 \
