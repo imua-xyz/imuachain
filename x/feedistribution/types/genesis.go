@@ -171,6 +171,11 @@ func (gs GenesisState) ValidateAVSRewardAssets() error {
 			if rewardAssetInfo.AssetBasicInfo.Decimals > assetstypes.MaxDecimal {
 				return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAssetInfo.AssetBasicInfo.Decimals, assetstypes.MaxDecimal)
 			}
+			// check the symbol
+			err := sdk.ValidateDenom(rewardAssetInfo.AssetBasicInfo.Symbol)
+			if err != nil {
+				return ErrInvalidGenesisData.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", rewardAssetInfo.AssetBasicInfo.Symbol, err)
+			}
 			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNil() ||
 				rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNegative() {
 				return errorsmod.Wrapf(

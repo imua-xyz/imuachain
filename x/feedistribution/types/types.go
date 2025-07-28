@@ -14,11 +14,13 @@ type DeltaAVSRewardAssetState AVSRewardAssetState
 
 type OperatorRewardProportions []OperatorRewardProportion
 
-type CommonAVSRewards []CommonAVSRewardData
-type EpochRewardsAndProportions struct {
-	Rewards                   sdk.DecCoins
-	OperatorRewardProportions []OperatorRewardProportion
-}
+type (
+	CommonAVSRewards           []CommonAVSRewardData
+	EpochRewardsAndProportions struct {
+		Rewards                   sdk.DecCoins
+		OperatorRewardProportions []OperatorRewardProportion
+	}
+)
 
 // String implements the Stringer interface for OperatorRewardProportions. It returns a
 // human-readable representation of operator reward proportions

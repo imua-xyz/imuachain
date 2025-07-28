@@ -21271,6 +21271,258 @@
         ]
       }
     },
+    "/imuachain/feedistribution/v1/all_rewards/{staker_id}": {
+      "get": {
+        "summary": "StakerAllRewards queries all rewards for a staker including claimed and unclaimed rewards",
+        "operationId": "StakerAllRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rewards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "avs_address": {
+                        "type": "string",
+                        "description": "avs_address is the address of the AVS (Actively Validated Service)."
+                      },
+                      "outstanding_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token_id": {
+                              "type": "string",
+                              "description": "token_id is the unique identifier of the reward token."
+                            },
+                            "decimal": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "title": "amount is the reward amount"
+                            }
+                          },
+                          "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                        },
+                        "description": "outstanding_rewards represents rewards that have been claimed but not yet withdrawn."
+                      },
+                      "unclaimed_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "token_id": {
+                              "type": "string",
+                              "description": "token_id is the unique identifier of the reward token."
+                            },
+                            "decimal": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "title": "amount is the reward amount"
+                            }
+                          },
+                          "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                        },
+                        "description": "unclaimed_rewards represents rewards that have not yet been accounted or distributed."
+                      }
+                    },
+                    "description": "StakerRewardsPerAVS is the response type representing a staker's rewards from a specific AVS."
+                  },
+                  "title": "rewards is the total rewards for all AVSs"
+                }
+              },
+              "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/avs_reward_asset_by_symbol/{avs}/{symbol}": {
+      "get": {
+        "summary": "AVSRewardAssetBySymbol queries the AVS reward asset by the symbol.",
+        "operationId": "AVSRewardAssetBySymbol",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "avs_reward_asset": {
+                  "title": "avs_reward_asset is the reward asset returned for the input avs",
+                  "type": "object",
+                  "properties": {
+                    "asset_basic_info": {
+                      "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "title": "name of the asset, like \"Tether USD\""
+                        },
+                        "symbol": {
+                          "type": "string",
+                          "title": "symbol of the asset, like \"USDT\""
+                        },
+                        "address": {
+                          "type": "string",
+                          "title": "address of the asset on the client chain"
+                        },
+                        "decimals": {
+                          "type": "integer",
+                          "format": "int64",
+                          "description": "decimals used in the asset, typically 6 or 18."
+                        },
+                        "layer_zero_chain_id": {
+                          "type": "string",
+                          "format": "uint64",
+                          "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                        },
+                        "imua_chain_index": {
+                          "type": "string",
+                          "format": "uint64",
+                          "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                        },
+                        "meta_info": {
+                          "type": "string",
+                          "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                        }
+                      }
+                    },
+                    "reward_asset_state": {
+                      "title": "reward_asset_state is the state of reward asset",
+                      "type": "object",
+                      "properties": {
+                        "reward_pool_balance": {
+                          "type": "string",
+                          "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+                        },
+                        "reward_pool_total": {
+                          "type": "string",
+                          "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
+                        },
+                        "reward_allocation_total": {
+                          "type": "string",
+                          "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "description": "QueryAVSRewardAssetBySymbolResponse is the response to obtain the specific reward asset for an AVS and symbol."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "avs",
+            "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "description": "symbol is reward asset symbol",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/feedistribution/v1/avs_reward_distribution/{avs}": {
       "get": {
         "summary": "AVSRewardDistribution queries the distribution information for an AVS.\nIt returns the total rewards and operator proportions for current epoch.",
@@ -22251,7 +22503,7 @@
                         },
                         "reward_pool_total": {
                           "type": "string",
-                          "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                          "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
                         },
                         "reward_allocation_total": {
                           "type": "string",
@@ -22386,7 +22638,7 @@
                               },
                               "reward_pool_total": {
                                 "type": "string",
-                                "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                                "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
                               },
                               "reward_allocation_total": {
                                 "type": "string",
@@ -46703,7 +46955,7 @@
             },
             "reward_pool_total": {
               "type": "string",
-              "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+              "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
             },
             "reward_allocation_total": {
               "type": "string",
@@ -46723,7 +46975,7 @@
         },
         "reward_pool_total": {
           "type": "string",
-          "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+          "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
         },
         "reward_allocation_total": {
           "type": "string",
@@ -46787,7 +47039,7 @@
                   },
                   "reward_pool_total": {
                     "type": "string",
-                    "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                    "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
                   },
                   "reward_allocation_total": {
                     "type": "string",
@@ -47239,6 +47491,73 @@
       },
       "description": "QueryAVSCommunityPoolResponse is the response to obtain the community fee pool for an AVS."
     },
+    "imuachain.feedistribution.v1.QueryAVSRewardAssetBySymbolResponse": {
+      "type": "object",
+      "properties": {
+        "avs_reward_asset": {
+          "title": "avs_reward_asset is the reward asset returned for the input avs",
+          "type": "object",
+          "properties": {
+            "asset_basic_info": {
+              "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "name of the asset, like \"Tether USD\""
+                },
+                "symbol": {
+                  "type": "string",
+                  "title": "symbol of the asset, like \"USDT\""
+                },
+                "address": {
+                  "type": "string",
+                  "title": "address of the asset on the client chain"
+                },
+                "decimals": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "decimals used in the asset, typically 6 or 18."
+                },
+                "layer_zero_chain_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                },
+                "imua_chain_index": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                },
+                "meta_info": {
+                  "type": "string",
+                  "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                }
+              }
+            },
+            "reward_asset_state": {
+              "title": "reward_asset_state is the state of reward asset",
+              "type": "object",
+              "properties": {
+                "reward_pool_balance": {
+                  "type": "string",
+                  "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+                },
+                "reward_pool_total": {
+                  "type": "string",
+                  "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
+                },
+                "reward_allocation_total": {
+                  "type": "string",
+                  "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "QueryAVSRewardAssetBySymbolResponse is the response to obtain the specific reward asset for an AVS and symbol."
+    },
     "imuachain.feedistribution.v1.QueryAVSRewardAssetResponse": {
       "type": "object",
       "properties": {
@@ -47293,7 +47612,7 @@
                 },
                 "reward_pool_total": {
                   "type": "string",
-                  "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                  "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
                 },
                 "reward_allocation_total": {
                   "type": "string",
@@ -47765,7 +48084,7 @@
                       },
                       "reward_pool_total": {
                         "type": "string",
-                        "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount claimed by stakers and operators."
+                        "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
                       },
                       "reward_allocation_total": {
                         "type": "string",
@@ -47817,6 +48136,72 @@
         }
       },
       "description": "QueryStakeChangeDelegationsResponse is the response to obtain the delegations whose stake has changed."
+    },
+    "imuachain.feedistribution.v1.QueryStakerAllRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "description": "avs_address is the address of the AVS (Actively Validated Service)."
+              },
+              "outstanding_rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "token_id": {
+                      "type": "string",
+                      "description": "token_id is the unique identifier of the reward token."
+                    },
+                    "decimal": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "title": "amount is the reward amount"
+                    }
+                  },
+                  "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                },
+                "description": "outstanding_rewards represents rewards that have been claimed but not yet withdrawn."
+              },
+              "unclaimed_rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "token_id": {
+                      "type": "string",
+                      "description": "token_id is the unique identifier of the reward token."
+                    },
+                    "decimal": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "title": "amount is the reward amount"
+                    }
+                  },
+                  "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                },
+                "description": "unclaimed_rewards represents rewards that have not yet been accounted or distributed."
+              }
+            },
+            "description": "StakerRewardsPerAVS is the response type representing a staker's rewards from a specific AVS."
+          },
+          "title": "rewards is the total rewards for all AVSs"
+        }
+      },
+      "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
     },
     "imuachain.feedistribution.v1.QueryStakerOutstandingRewardsResponse": {
       "type": "object",
@@ -47883,6 +48268,25 @@
       },
       "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
     },
+    "imuachain.feedistribution.v1.RewardInfo": {
+      "type": "object",
+      "properties": {
+        "token_id": {
+          "type": "string",
+          "description": "token_id is the unique identifier of the reward token."
+        },
+        "decimal": {
+          "type": "integer",
+          "format": "int64",
+          "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+        },
+        "amount": {
+          "type": "string",
+          "title": "amount is the reward amount"
+        }
+      },
+      "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+    },
     "imuachain.feedistribution.v1.StakerDelegationChange": {
       "type": "object",
       "properties": {
@@ -47918,6 +48322,62 @@
         }
       },
       "description": "StakerOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor a staker inexpensive to track, allows simple sanity checks."
+    },
+    "imuachain.feedistribution.v1.StakerRewardsPerAVS": {
+      "type": "object",
+      "properties": {
+        "avs_address": {
+          "type": "string",
+          "description": "avs_address is the address of the AVS (Actively Validated Service)."
+        },
+        "outstanding_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "token_id": {
+                "type": "string",
+                "description": "token_id is the unique identifier of the reward token."
+              },
+              "decimal": {
+                "type": "integer",
+                "format": "int64",
+                "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+              },
+              "amount": {
+                "type": "string",
+                "title": "amount is the reward amount"
+              }
+            },
+            "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+          },
+          "description": "outstanding_rewards represents rewards that have been claimed but not yet withdrawn."
+        },
+        "unclaimed_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "token_id": {
+                "type": "string",
+                "description": "token_id is the unique identifier of the reward token."
+              },
+              "decimal": {
+                "type": "integer",
+                "format": "int64",
+                "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+              },
+              "amount": {
+                "type": "string",
+                "title": "amount is the reward amount"
+              }
+            },
+            "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+          },
+          "description": "unclaimed_rewards represents rewards that have not yet been accounted or distributed."
+        }
+      },
+      "description": "StakerRewardsPerAVS is the response type representing a staker's rewards from a specific AVS."
     },
     "imuachain.delegation.v1.DelegationAmounts": {
       "type": "object",

@@ -526,7 +526,7 @@ func (k Keeper) MergeStakerRewards(
 	}
 
 	// Convert the aggregated map into a slice
-	var result []feedistributiontypes.StakerRewardsPerAVS
+	result := make([]feedistributiontypes.StakerRewardsPerAVS, 0)
 	for _, v := range rewardMap {
 		result = append(result, v)
 	}
