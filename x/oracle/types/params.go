@@ -9,6 +9,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"gopkg.in/yaml.v2"
 )
 
@@ -68,6 +69,11 @@ func DefaultParams() Params {
 			{
 				Name: "0 position is reserved",
 			},
+			{
+				Name:  "Chainlink",
+				Entry: &Endpoint{},
+				Valid: true,
+			},
 		},
 		// rules defines price from which sources are accepted, could be used to proof malicious
 		Rules: []*RuleSource{
@@ -107,7 +113,8 @@ func DefaultParams() Params {
 			OracleMaliciousJailDuration: 30 * 24 * time.Hour,
 			SlashFractionMalicious:      sdkmath.LegacyNewDec(1).Quo(sdkmath.LegacyNewDec(10)),
 		},
-		PieceSizeByte: 48000,
+		PieceSizeByte:   48000,
+		EpochIdentifier: epochstypes.DayEpochID,
 	}
 }
 
