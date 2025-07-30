@@ -102,14 +102,9 @@ func (d *DelegationChangeInfo) DelegationChangesByStaker() map[string]sdk.Dec {
 	return ret
 }
 
-// HasAVSReward checks whether the avs reward exists, return the index if it exists
-func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) (int, bool) {
-	for index, avsReward := range o.Rewards {
-		if avsAddr == avsReward.AVSAddress {
-			return index, true
-		}
-	}
-	return 0, false
+// HasAVSReward checks whether the avs reward exists.
+func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) bool {
+	return CommonAVSRewards(o.Rewards).RewardsOf(avsAddr) != nil
 }
 
 func (o *OperatorCurrentRewards) UpdateReward(isIncrease bool, deltaRewards CommonAVSRewardData) error {
@@ -400,6 +395,15 @@ func (crs CommonAVSRewards) CalculateRewards(delegatedAmount sdk.Dec) (CommonAVS
 		})
 	}
 	return ret, nil
+}
+
+func (crs CommonAVSRewards) RewardsOf(avsAddr string) sdk.DecCoins {
+	for _, avsRewards := range crs {
+		if avsAddr == avsRewards.AVSAddress {
+			return avsRewards.Rewards
+		}
+	}
+	return nil
 }
 
 func ScaleIntByDecimals(amount sdkmath.Int, decimals uint32) sdk.Dec {

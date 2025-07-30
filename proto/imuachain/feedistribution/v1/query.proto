@@ -59,6 +59,11 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/staker_outstanding_rewards/{staker_id}/{avs}";
   }
+  // StakerAllOutstandingRewards queries all outstanding rewards for a staker.
+  rpc StakerAllOutstandingRewards(QueryStakerAllOutstandingRewardsRequest) returns (QueryStakerAllOutstandingRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_all_outstanding_rewards/{staker_id}";
+  }
   // StakeChangeDelegations queries the delegations whose stake has changed.
   rpc StakeChangeDelegations(QueryStakeChangeDelegationsRequest) returns (QueryStakeChangeDelegationsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
@@ -194,6 +199,19 @@ message QueryStakerOutstandingRewardsRequest {
 message QueryStakerOutstandingRewardsResponse{
   // staker_outstanding_rewards is the staker outstanding rewards
   StakerOutstandingRewards staker_outstanding_rewards = 1;
+}
+
+// QueryStakerAllOutstandingRewardsRequest is the request to obtain all outstanding rewards for a staker.
+message QueryStakerAllOutstandingRewardsRequest {
+  // staker id
+  string staker_id = 1;
+}
+
+
+// QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards
+message QueryStakerAllOutstandingRewardsResponse{
+  // rewards: outstanding rewards for all AVSs
+  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryStakeChangeDelegationsRequest is the request to obtain the delegations whose stake has changed.

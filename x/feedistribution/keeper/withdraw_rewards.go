@@ -153,6 +153,7 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
 				sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avs),
 				sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subRewards.String()),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endRewards.String()),
 			),
 		)
 		return false, true, nil
@@ -203,6 +204,7 @@ func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, dogfoodAVSAddr),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subRewardDecCoins.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endRewards.String()),
 		),
 	)
 

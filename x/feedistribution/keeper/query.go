@@ -169,6 +169,28 @@ func (k Keeper) StakerOutstandingRewards(ctx context.Context, req *types.QuerySt
 	return &types.QueryStakerOutstandingRewardsResponse{StakerOutstandingRewards: &outstandingRewards}, nil
 }
 
+// StakerAllOutstandingRewards queries all outstanding rewards for a staker.
+func (k Keeper) StakerAllOutstandingRewards(ctx context.Context, req *types.QueryStakerAllOutstandingRewardsRequest) (*types.QueryStakerAllOutstandingRewardsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+
+	outstandingRewards, err := k.GetStakerAllOutstandingRewards(c, strings.ToLower(req.StakerId))
+	if err != nil {
+		return nil, err
+	}
+	normalizedRewards, err := k.BatchNormalizeRewardDecimals(c, outstandingRewards)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryStakerAllOutstandingRewardsResponse{Rewards: normalizedRewards}, nil
+}
+
 // StakeChangeDelegations queries the delegations whose stake has changed.
 func (k Keeper) StakeChangeDelegations(ctx context.Context, req *types.QueryStakeChangeDelegationsRequest) (*types.QueryStakeChangeDelegationsResponse, error) {
 	if req == nil {
