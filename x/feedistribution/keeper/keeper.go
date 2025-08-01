@@ -351,29 +351,29 @@ func (k Keeper) GetAllOperatorCurrentRewards(ctx sdk.Context) ([]feedistribution
 	)
 }
 
-func (k Keeper) SetAllOperatorAccumulatedCommission(
-	ctx sdk.Context, allOperatorAccumulatedCommission []feedistributiontypes.KeyAndOperatorAccumulatedCommission,
+func (k Keeper) SetAllOperatorCommission(
+	ctx sdk.Context, allOperatorCommission []feedistributiontypes.KeyAndOperatorCommission,
 ) error {
 	return GenericSetAllItems(
 		ctx, k,
-		feedistributiontypes.KeyPrefixOperatorAccumulatedCommission, allOperatorAccumulatedCommission,
-		func(item feedistributiontypes.KeyAndOperatorAccumulatedCommission) []byte {
+		feedistributiontypes.KeyPrefixOperatorCommission, allOperatorCommission,
+		func(item feedistributiontypes.KeyAndOperatorCommission) []byte {
 			return []byte(item.Key)
 		},
-		func(item feedistributiontypes.KeyAndOperatorAccumulatedCommission) codec.ProtoMarshaler {
-			return &item.OperatorAccumulatedCommission
+		func(item feedistributiontypes.KeyAndOperatorCommission) codec.ProtoMarshaler {
+			return &item.OperatorCommission
 		},
 	)
 }
 
-func (k Keeper) GetAllOperatorAccumulatedCommission(ctx sdk.Context) ([]feedistributiontypes.KeyAndOperatorAccumulatedCommission, error) {
+func (k Keeper) GetAllOperatorCommission(ctx sdk.Context) ([]feedistributiontypes.KeyAndOperatorCommission, error) {
 	return GenericGetAllItems(
-		ctx, k, feedistributiontypes.KeyPrefixOperatorAccumulatedCommission,
-		func() codec.ProtoMarshaler { return &feedistributiontypes.OperatorAccumulatedCommission{} },
-		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndOperatorAccumulatedCommission {
-			return feedistributiontypes.KeyAndOperatorAccumulatedCommission{
-				Key:                           string(key),
-				OperatorAccumulatedCommission: *value.(*feedistributiontypes.OperatorAccumulatedCommission),
+		ctx, k, feedistributiontypes.KeyPrefixOperatorCommission,
+		func() codec.ProtoMarshaler { return &feedistributiontypes.OperatorCommission{} },
+		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndOperatorCommission {
+			return feedistributiontypes.KeyAndOperatorCommission{
+				Key:                string(key),
+				OperatorCommission: *value.(*feedistributiontypes.OperatorCommission),
 			}
 		},
 	)
@@ -407,29 +407,29 @@ func (k Keeper) GetAllOperatorSlashEvent(ctx sdk.Context) ([]feedistributiontype
 	)
 }
 
-func (k Keeper) SetAllStakerOutstandingRewards(
-	ctx sdk.Context, allStakerOutstandingRewards []feedistributiontypes.KeyAndStakerOutstandingRewards,
+func (k Keeper) SetAllStakerClaimedRewards(
+	ctx sdk.Context, allStakerClaimedRewards []feedistributiontypes.KeyAndStakerClaimedRewards,
 ) error {
 	return GenericSetAllItems(
 		ctx, k,
-		feedistributiontypes.KeyPrefixStakerOutstandingRewards, allStakerOutstandingRewards,
-		func(item feedistributiontypes.KeyAndStakerOutstandingRewards) []byte {
+		feedistributiontypes.KeyPrefixStakerClaimedRewards, allStakerClaimedRewards,
+		func(item feedistributiontypes.KeyAndStakerClaimedRewards) []byte {
 			return []byte(item.Key)
 		},
-		func(item feedistributiontypes.KeyAndStakerOutstandingRewards) codec.ProtoMarshaler {
-			return &item.StakerOutstandingRewards
+		func(item feedistributiontypes.KeyAndStakerClaimedRewards) codec.ProtoMarshaler {
+			return &item.StakerClaimedRewards
 		},
 	)
 }
 
-func (k Keeper) GetAllStakerOutstandingRewards(ctx sdk.Context) ([]feedistributiontypes.KeyAndStakerOutstandingRewards, error) {
+func (k Keeper) GetAllStakerOutstandingRewards(ctx sdk.Context) ([]feedistributiontypes.KeyAndStakerClaimedRewards, error) {
 	return GenericGetAllItems(
-		ctx, k, feedistributiontypes.KeyPrefixStakerOutstandingRewards,
-		func() codec.ProtoMarshaler { return &feedistributiontypes.StakerOutstandingRewards{} },
-		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndStakerOutstandingRewards {
-			return feedistributiontypes.KeyAndStakerOutstandingRewards{
-				Key:                      string(key),
-				StakerOutstandingRewards: *value.(*feedistributiontypes.StakerOutstandingRewards),
+		ctx, k, feedistributiontypes.KeyPrefixStakerClaimedRewards,
+		func() codec.ProtoMarshaler { return &feedistributiontypes.KeyAndStakerClaimedRewards{} },
+		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndStakerClaimedRewards {
+			return feedistributiontypes.KeyAndStakerClaimedRewards{
+				Key:                  string(key),
+				StakerClaimedRewards: *value.(*feedistributiontypes.StakerClaimedRewards),
 			}
 		},
 	)
@@ -443,6 +443,22 @@ func (k Keeper) NormalizeRewardDecCoins(ctx sdk.Context, avsAddr string, rewards
 			return nil, err
 		}
 		rewards[i].Amount = feedistributiontypes.TruncateSDKDec(rewards[i].Amount, assetInfo.AssetBasicInfo.Decimals)
+	}
+	return rewards, nil
+}
+
+func (k Keeper) BatchNormalizeClaimedRewardDecimals(ctx sdk.Context, rewards []feedistributiontypes.StakerClaimedRewardsPerAVS) ([]feedistributiontypes.StakerClaimedRewardsPerAVS, error) {
+	for i := range rewards {
+		normalizedOutstandingRewards, err := k.NormalizeRewardDecCoins(ctx, rewards[i].AVSAddress, rewards[i].ClaimedRewards.OutstandingRewards)
+		if err != nil {
+			return nil, err
+		}
+		normalizedWithdrawnRewards, err := k.NormalizeRewardDecCoins(ctx, rewards[i].AVSAddress, rewards[i].ClaimedRewards.WithdrawnRewards)
+		if err != nil {
+			return nil, err
+		}
+		rewards[i].ClaimedRewards.OutstandingRewards = normalizedOutstandingRewards
+		rewards[i].ClaimedRewards.WithdrawnRewards = normalizedWithdrawnRewards
 	}
 	return rewards, nil
 }
@@ -483,26 +499,33 @@ func (k Keeper) DecCoinsToRewardInfos(ctx sdk.Context, avsAddr string, rewards s
 // Each AVS address will have its corresponding outstanding and unclaimed rewards
 // grouped under the same StakerRewardsPerAVS entry.
 func (k Keeper) MergeStakerRewards(
-	ctx sdk.Context, outstandingRewards, unclaimedRewards []feedistributiontypes.CommonAVSRewardData,
+	ctx sdk.Context,
+	claimedRewards []feedistributiontypes.StakerClaimedRewardsPerAVS,
+	unclaimedRewards []feedistributiontypes.CommonAVSRewardData,
 ) ([]feedistributiontypes.StakerRewardsPerAVS, error) {
 	// Create a map to aggregate rewards by AVS address
 	rewardMap := make(map[string]feedistributiontypes.StakerRewardsPerAVS)
 
 	// Process outstanding rewards
-	for _, data := range outstandingRewards {
+	for _, data := range claimedRewards {
 		// Convert DecCoins to RewardInfo
-		rewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.Rewards)
+		outstandingRewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.ClaimedRewards.OutstandingRewards)
 		if err != nil {
 			return nil, err
 		}
-		// assign to outstanding_rewards
+		withdrawnRewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.ClaimedRewards.WithdrawnRewards)
+		if err != nil {
+			return nil, err
+		}
+		// assign to outstanding and withdrawn rewards
 		entry, exists := rewardMap[data.AVSAddress]
 		if !exists {
 			entry = feedistributiontypes.StakerRewardsPerAVS{
 				AVSAddress: data.AVSAddress,
 			}
 		}
-		entry.OutstandingRewards = rewardInfos
+		entry.OutstandingRewards = outstandingRewardInfos
+		entry.WithdrawnRewards = withdrawnRewardInfos
 		rewardMap[data.AVSAddress] = entry
 	}
 

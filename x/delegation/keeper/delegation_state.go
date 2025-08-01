@@ -198,8 +198,8 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
 			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
 			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, opAddr),
-			sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmount, deltaAmounts.WaitUndelegationAmount.String()),
-			sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShare, deltaAmounts.UndelegatableShare.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmountDelta, deltaAmounts.WaitUndelegationAmount.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShareDelta, deltaAmounts.UndelegatableShare.String()),
 		),
 	)
 
@@ -398,8 +398,8 @@ func (k *Keeper) SetStakerShareToZero(ctx sdk.Context, operator, assetID string,
 					sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
 					sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
 					sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
-					sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmount, delegationState.WaitUndelegationAmount.String()),
-					sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShare, delegationState.UndelegatableShare.String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmountDelta, sdk.ZeroDec().String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShareDelta, delegationState.UndelegatableShare.Neg().String()),
 				),
 			)
 		}

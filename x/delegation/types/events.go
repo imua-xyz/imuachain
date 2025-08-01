@@ -7,12 +7,12 @@ const (
 	AttributeKeyAmount           = "amount"
 
 	// delegation state
-	EventTypeDelegationStateUpdated    = "delegation_state_updated"
-	AttributeKeyStakerID               = "staker_id"
-	AttributeKeyAssetID                = "asset_id"
-	AttributeKeyOperatorAddr           = "operator"
-	AttributeKeyUndelegatableShare     = "undelegatable_share"
-	AttributeKeyWaitUndelegationAmount = "wait_undelegation_amount"
+	EventTypeDelegationStateUpdated         = "delegation_state_updated"
+	AttributeKeyStakerID                    = "staker_id"
+	AttributeKeyAssetID                     = "asset_id"
+	AttributeKeyOperatorAddr                = "operator"
+	AttributeKeyUndelegatableShareDelta     = "undelegatable_share_delta"
+	AttributeKeyWaitUndelegationAmountDelta = "wait_undelegation_amount_delta"
 
 	// operator + asset -> staker
 	EventTypeStakerAppended    = "staker_appended"

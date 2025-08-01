@@ -303,7 +303,7 @@ func (k Keeper) distributeRewardsToDelegation(
 			)
 		}
 		// move the rewards to staker from the operator outstanding rewards.
-		err = k.UpdateStakerOutstandingRewards(ctx, stakerID, rewardsRawPerAVS.AVSAddress, true, rewards)
+		err = k.IncreaseStakerOutstandingRewards(ctx, stakerID, rewardsRawPerAVS.AVSAddress, rewards)
 		if err != nil {
 			return nil, err
 		}

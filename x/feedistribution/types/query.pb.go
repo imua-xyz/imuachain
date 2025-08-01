@@ -548,26 +548,26 @@ func (m *QueryRewardAssetsByAVSResponse) GetRewardAssets() *AVSRewardAssets {
 	return nil
 }
 
-// QueryStakerOutstandingRewardsRequest is the request to obtain the outstanding rewards for a staker.
-type QueryStakerOutstandingRewardsRequest struct {
+// QueryStakerClaimedRewardsRequest is the request to obtain the claimed rewards for a staker.
+type QueryStakerClaimedRewardsRequest struct {
 	// staker id
 	StakerId string `protobuf:"bytes,1,opt,name=staker_id,json=stakerId,proto3" json:"staker_id,omitempty"`
 	// avs address
 	Avs string `protobuf:"bytes,2,opt,name=avs,proto3" json:"avs,omitempty"`
 }
 
-func (m *QueryStakerOutstandingRewardsRequest) Reset()         { *m = QueryStakerOutstandingRewardsRequest{} }
-func (m *QueryStakerOutstandingRewardsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryStakerOutstandingRewardsRequest) ProtoMessage()    {}
-func (*QueryStakerOutstandingRewardsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryStakerClaimedRewardsRequest) Reset()         { *m = QueryStakerClaimedRewardsRequest{} }
+func (m *QueryStakerClaimedRewardsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryStakerClaimedRewardsRequest) ProtoMessage()    {}
+func (*QueryStakerClaimedRewardsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_55aff14605a917cf, []int{11}
 }
-func (m *QueryStakerOutstandingRewardsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryStakerClaimedRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryStakerOutstandingRewardsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryStakerClaimedRewardsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryStakerOutstandingRewardsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryStakerClaimedRewardsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -577,50 +577,50 @@ func (m *QueryStakerOutstandingRewardsRequest) XXX_Marshal(b []byte, determinist
 		return b[:n], nil
 	}
 }
-func (m *QueryStakerOutstandingRewardsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryStakerOutstandingRewardsRequest.Merge(m, src)
+func (m *QueryStakerClaimedRewardsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryStakerClaimedRewardsRequest.Merge(m, src)
 }
-func (m *QueryStakerOutstandingRewardsRequest) XXX_Size() int {
+func (m *QueryStakerClaimedRewardsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryStakerOutstandingRewardsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryStakerOutstandingRewardsRequest.DiscardUnknown(m)
+func (m *QueryStakerClaimedRewardsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryStakerClaimedRewardsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryStakerOutstandingRewardsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryStakerClaimedRewardsRequest proto.InternalMessageInfo
 
-func (m *QueryStakerOutstandingRewardsRequest) GetStakerId() string {
+func (m *QueryStakerClaimedRewardsRequest) GetStakerId() string {
 	if m != nil {
 		return m.StakerId
 	}
 	return ""
 }
 
-func (m *QueryStakerOutstandingRewardsRequest) GetAvs() string {
+func (m *QueryStakerClaimedRewardsRequest) GetAvs() string {
 	if m != nil {
 		return m.Avs
 	}
 	return ""
 }
 
-// QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards
-type QueryStakerOutstandingRewardsResponse struct {
-	// staker_outstanding_rewards is the staker outstanding rewards
-	StakerOutstandingRewards *StakerOutstandingRewards `protobuf:"bytes,1,opt,name=staker_outstanding_rewards,json=stakerOutstandingRewards,proto3" json:"staker_outstanding_rewards,omitempty"`
+// QueryStakerClaimedRewardsResponse is the response to obtain the staker claimed rewards
+type QueryStakerClaimedRewardsResponse struct {
+	// staker_claimed_rewards is the staker claimed rewards
+	StakerClaimedRewards *StakerClaimedRewards `protobuf:"bytes,1,opt,name=staker_claimed_rewards,json=stakerClaimedRewards,proto3" json:"staker_claimed_rewards,omitempty"`
 }
 
-func (m *QueryStakerOutstandingRewardsResponse) Reset()         { *m = QueryStakerOutstandingRewardsResponse{} }
-func (m *QueryStakerOutstandingRewardsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryStakerOutstandingRewardsResponse) ProtoMessage()    {}
-func (*QueryStakerOutstandingRewardsResponse) Descriptor() ([]byte, []int) {
+func (m *QueryStakerClaimedRewardsResponse) Reset()         { *m = QueryStakerClaimedRewardsResponse{} }
+func (m *QueryStakerClaimedRewardsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryStakerClaimedRewardsResponse) ProtoMessage()    {}
+func (*QueryStakerClaimedRewardsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_55aff14605a917cf, []int{12}
 }
-func (m *QueryStakerOutstandingRewardsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryStakerClaimedRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryStakerOutstandingRewardsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryStakerClaimedRewardsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryStakerOutstandingRewardsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryStakerClaimedRewardsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -630,45 +630,43 @@ func (m *QueryStakerOutstandingRewardsResponse) XXX_Marshal(b []byte, determinis
 		return b[:n], nil
 	}
 }
-func (m *QueryStakerOutstandingRewardsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryStakerOutstandingRewardsResponse.Merge(m, src)
+func (m *QueryStakerClaimedRewardsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryStakerClaimedRewardsResponse.Merge(m, src)
 }
-func (m *QueryStakerOutstandingRewardsResponse) XXX_Size() int {
+func (m *QueryStakerClaimedRewardsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryStakerOutstandingRewardsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryStakerOutstandingRewardsResponse.DiscardUnknown(m)
+func (m *QueryStakerClaimedRewardsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryStakerClaimedRewardsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryStakerOutstandingRewardsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryStakerClaimedRewardsResponse proto.InternalMessageInfo
 
-func (m *QueryStakerOutstandingRewardsResponse) GetStakerOutstandingRewards() *StakerOutstandingRewards {
+func (m *QueryStakerClaimedRewardsResponse) GetStakerClaimedRewards() *StakerClaimedRewards {
 	if m != nil {
-		return m.StakerOutstandingRewards
+		return m.StakerClaimedRewards
 	}
 	return nil
 }
 
-// QueryStakerAllOutstandingRewardsRequest is the request to obtain all outstanding rewards for a staker.
-type QueryStakerAllOutstandingRewardsRequest struct {
+// QueryStakerAllClaimedRewardsRequest is the request to obtain all claimed rewards for a staker.
+type QueryStakerAllClaimedRewardsRequest struct {
 	// staker id
 	StakerId string `protobuf:"bytes,1,opt,name=staker_id,json=stakerId,proto3" json:"staker_id,omitempty"`
 }
 
-func (m *QueryStakerAllOutstandingRewardsRequest) Reset() {
-	*m = QueryStakerAllOutstandingRewardsRequest{}
-}
-func (m *QueryStakerAllOutstandingRewardsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryStakerAllOutstandingRewardsRequest) ProtoMessage()    {}
-func (*QueryStakerAllOutstandingRewardsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryStakerAllClaimedRewardsRequest) Reset()         { *m = QueryStakerAllClaimedRewardsRequest{} }
+func (m *QueryStakerAllClaimedRewardsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryStakerAllClaimedRewardsRequest) ProtoMessage()    {}
+func (*QueryStakerAllClaimedRewardsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_55aff14605a917cf, []int{13}
 }
-func (m *QueryStakerAllOutstandingRewardsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryStakerAllClaimedRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryStakerAllOutstandingRewardsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryStakerAllClaimedRewardsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryStakerAllOutstandingRewardsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryStakerAllClaimedRewardsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -678,45 +676,46 @@ func (m *QueryStakerAllOutstandingRewardsRequest) XXX_Marshal(b []byte, determin
 		return b[:n], nil
 	}
 }
-func (m *QueryStakerAllOutstandingRewardsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryStakerAllOutstandingRewardsRequest.Merge(m, src)
+func (m *QueryStakerAllClaimedRewardsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryStakerAllClaimedRewardsRequest.Merge(m, src)
 }
-func (m *QueryStakerAllOutstandingRewardsRequest) XXX_Size() int {
+func (m *QueryStakerAllClaimedRewardsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryStakerAllOutstandingRewardsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryStakerAllOutstandingRewardsRequest.DiscardUnknown(m)
+func (m *QueryStakerAllClaimedRewardsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryStakerAllClaimedRewardsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryStakerAllOutstandingRewardsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryStakerAllClaimedRewardsRequest proto.InternalMessageInfo
 
-func (m *QueryStakerAllOutstandingRewardsRequest) GetStakerId() string {
+func (m *QueryStakerAllClaimedRewardsRequest) GetStakerId() string {
 	if m != nil {
 		return m.StakerId
 	}
 	return ""
 }
 
-// QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards
-type QueryStakerAllOutstandingRewardsResponse struct {
-	// rewards: outstanding rewards for all AVSs
-	Rewards []CommonAVSRewardData `protobuf:"bytes,1,rep,name=rewards,proto3" json:"rewards"`
+// StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified
+// staker and AVS
+type StakerClaimedRewardsPerAVS struct {
+	// avs_address is the AVS address
+	AVSAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
+	// claimed_rewards represents the claimed rewards
+	ClaimedRewards StakerClaimedRewards `protobuf:"bytes,2,opt,name=claimed_rewards,json=claimedRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"claimed_rewards"`
 }
 
-func (m *QueryStakerAllOutstandingRewardsResponse) Reset() {
-	*m = QueryStakerAllOutstandingRewardsResponse{}
-}
-func (m *QueryStakerAllOutstandingRewardsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryStakerAllOutstandingRewardsResponse) ProtoMessage()    {}
-func (*QueryStakerAllOutstandingRewardsResponse) Descriptor() ([]byte, []int) {
+func (m *StakerClaimedRewardsPerAVS) Reset()         { *m = StakerClaimedRewardsPerAVS{} }
+func (m *StakerClaimedRewardsPerAVS) String() string { return proto.CompactTextString(m) }
+func (*StakerClaimedRewardsPerAVS) ProtoMessage()    {}
+func (*StakerClaimedRewardsPerAVS) Descriptor() ([]byte, []int) {
 	return fileDescriptor_55aff14605a917cf, []int{14}
 }
-func (m *QueryStakerAllOutstandingRewardsResponse) XXX_Unmarshal(b []byte) error {
+func (m *StakerClaimedRewardsPerAVS) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryStakerAllOutstandingRewardsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *StakerClaimedRewardsPerAVS) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryStakerAllOutstandingRewardsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_StakerClaimedRewardsPerAVS.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -726,19 +725,72 @@ func (m *QueryStakerAllOutstandingRewardsResponse) XXX_Marshal(b []byte, determi
 		return b[:n], nil
 	}
 }
-func (m *QueryStakerAllOutstandingRewardsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryStakerAllOutstandingRewardsResponse.Merge(m, src)
+func (m *StakerClaimedRewardsPerAVS) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StakerClaimedRewardsPerAVS.Merge(m, src)
 }
-func (m *QueryStakerAllOutstandingRewardsResponse) XXX_Size() int {
+func (m *StakerClaimedRewardsPerAVS) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryStakerAllOutstandingRewardsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryStakerAllOutstandingRewardsResponse.DiscardUnknown(m)
+func (m *StakerClaimedRewardsPerAVS) XXX_DiscardUnknown() {
+	xxx_messageInfo_StakerClaimedRewardsPerAVS.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryStakerAllOutstandingRewardsResponse proto.InternalMessageInfo
+var xxx_messageInfo_StakerClaimedRewardsPerAVS proto.InternalMessageInfo
 
-func (m *QueryStakerAllOutstandingRewardsResponse) GetRewards() []CommonAVSRewardData {
+func (m *StakerClaimedRewardsPerAVS) GetAVSAddress() string {
+	if m != nil {
+		return m.AVSAddress
+	}
+	return ""
+}
+
+func (m *StakerClaimedRewardsPerAVS) GetClaimedRewards() StakerClaimedRewards {
+	if m != nil {
+		return m.ClaimedRewards
+	}
+	return StakerClaimedRewards{}
+}
+
+// QueryStakerAllClaimedRewardsResponse is the response to obtain all claimed rewards for a staker.
+type QueryStakerAllClaimedRewardsResponse struct {
+	// rewards: claimed rewards for all AVSs
+	Rewards []StakerClaimedRewardsPerAVS `protobuf:"bytes,1,rep,name=rewards,proto3" json:"rewards"`
+}
+
+func (m *QueryStakerAllClaimedRewardsResponse) Reset()         { *m = QueryStakerAllClaimedRewardsResponse{} }
+func (m *QueryStakerAllClaimedRewardsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryStakerAllClaimedRewardsResponse) ProtoMessage()    {}
+func (*QueryStakerAllClaimedRewardsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{15}
+}
+func (m *QueryStakerAllClaimedRewardsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryStakerAllClaimedRewardsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryStakerAllClaimedRewardsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryStakerAllClaimedRewardsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryStakerAllClaimedRewardsResponse.Merge(m, src)
+}
+func (m *QueryStakerAllClaimedRewardsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryStakerAllClaimedRewardsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryStakerAllClaimedRewardsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryStakerAllClaimedRewardsResponse proto.InternalMessageInfo
+
+func (m *QueryStakerAllClaimedRewardsResponse) GetRewards() []StakerClaimedRewardsPerAVS {
 	if m != nil {
 		return m.Rewards
 	}
@@ -759,7 +811,7 @@ func (m *QueryStakeChangeDelegationsRequest) Reset()         { *m = QueryStakeCh
 func (m *QueryStakeChangeDelegationsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryStakeChangeDelegationsRequest) ProtoMessage()    {}
 func (*QueryStakeChangeDelegationsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{15}
+	return fileDescriptor_55aff14605a917cf, []int{16}
 }
 func (m *QueryStakeChangeDelegationsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -819,7 +871,7 @@ func (m *QueryStakeChangeDelegationsResponse) Reset()         { *m = QueryStakeC
 func (m *QueryStakeChangeDelegationsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStakeChangeDelegationsResponse) ProtoMessage()    {}
 func (*QueryStakeChangeDelegationsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{16}
+	return fileDescriptor_55aff14605a917cf, []int{17}
 }
 func (m *QueryStakeChangeDelegationsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -871,7 +923,7 @@ func (m *QueryDelegationStartingInfoRequest) Reset()         { *m = QueryDelegat
 func (m *QueryDelegationStartingInfoRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryDelegationStartingInfoRequest) ProtoMessage()    {}
 func (*QueryDelegationStartingInfoRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{17}
+	return fileDescriptor_55aff14605a917cf, []int{18}
 }
 func (m *QueryDelegationStartingInfoRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -938,7 +990,7 @@ func (m *QueryDelegationStartingInfoResponse) Reset()         { *m = QueryDelega
 func (m *QueryDelegationStartingInfoResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryDelegationStartingInfoResponse) ProtoMessage()    {}
 func (*QueryDelegationStartingInfoResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{18}
+	return fileDescriptor_55aff14605a917cf, []int{19}
 }
 func (m *QueryDelegationStartingInfoResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -990,7 +1042,7 @@ func (m *QueryOperatorHistoricalRewardsRequest) Reset()         { *m = QueryOper
 func (m *QueryOperatorHistoricalRewardsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorHistoricalRewardsRequest) ProtoMessage()    {}
 func (*QueryOperatorHistoricalRewardsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{19}
+	return fileDescriptor_55aff14605a917cf, []int{20}
 }
 func (m *QueryOperatorHistoricalRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1059,7 +1111,7 @@ func (m *QueryOperatorHistoricalRewardsResponse) Reset() {
 func (m *QueryOperatorHistoricalRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorHistoricalRewardsResponse) ProtoMessage()    {}
 func (*QueryOperatorHistoricalRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{20}
+	return fileDescriptor_55aff14605a917cf, []int{21}
 }
 func (m *QueryOperatorHistoricalRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1111,7 +1163,7 @@ func (m *QueryAllOperatorHistoricalRewardsRequest) Reset() {
 func (m *QueryAllOperatorHistoricalRewardsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryAllOperatorHistoricalRewardsRequest) ProtoMessage()    {}
 func (*QueryAllOperatorHistoricalRewardsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{21}
+	return fileDescriptor_55aff14605a917cf, []int{22}
 }
 func (m *QueryAllOperatorHistoricalRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1173,7 +1225,7 @@ func (m *OperatorHistoricalRewardsAndPeriod) Reset()         { *m = OperatorHist
 func (m *OperatorHistoricalRewardsAndPeriod) String() string { return proto.CompactTextString(m) }
 func (*OperatorHistoricalRewardsAndPeriod) ProtoMessage()    {}
 func (*OperatorHistoricalRewardsAndPeriod) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{22}
+	return fileDescriptor_55aff14605a917cf, []int{23}
 }
 func (m *OperatorHistoricalRewardsAndPeriod) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1230,7 +1282,7 @@ func (m *QueryAllOperatorHistoricalRewardsResponse) String() string {
 }
 func (*QueryAllOperatorHistoricalRewardsResponse) ProtoMessage() {}
 func (*QueryAllOperatorHistoricalRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{23}
+	return fileDescriptor_55aff14605a917cf, []int{24}
 }
 func (m *QueryAllOperatorHistoricalRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1280,7 +1332,7 @@ func (m *QueryOperatorCurrentRewardsRequest) Reset()         { *m = QueryOperato
 func (m *QueryOperatorCurrentRewardsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorCurrentRewardsRequest) ProtoMessage()    {}
 func (*QueryOperatorCurrentRewardsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{24}
+	return fileDescriptor_55aff14605a917cf, []int{25}
 }
 func (m *QueryOperatorCurrentRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1340,7 +1392,7 @@ func (m *QueryOperatorCurrentRewardsResponse) Reset()         { *m = QueryOperat
 func (m *QueryOperatorCurrentRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorCurrentRewardsResponse) ProtoMessage()    {}
 func (*QueryOperatorCurrentRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{25}
+	return fileDescriptor_55aff14605a917cf, []int{26}
 }
 func (m *QueryOperatorCurrentRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1389,7 +1441,7 @@ func (m *OperatorAVSRequest) Reset()         { *m = OperatorAVSRequest{} }
 func (m *OperatorAVSRequest) String() string { return proto.CompactTextString(m) }
 func (*OperatorAVSRequest) ProtoMessage()    {}
 func (*OperatorAVSRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{26}
+	return fileDescriptor_55aff14605a917cf, []int{27}
 }
 func (m *OperatorAVSRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1444,7 +1496,7 @@ func (m *QueryOperatorOutstandingRewardsResponse) Reset() {
 func (m *QueryOperatorOutstandingRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorOutstandingRewardsResponse) ProtoMessage()    {}
 func (*QueryOperatorOutstandingRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{27}
+	return fileDescriptor_55aff14605a917cf, []int{28}
 }
 func (m *QueryOperatorOutstandingRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1480,28 +1532,24 @@ func (m *QueryOperatorOutstandingRewardsResponse) GetOperatorOutstandingRewards(
 	return nil
 }
 
-// QueryOperatorAccumulatedCommissionResponse is the response to obtain the operator accumulated commission
-type QueryOperatorAccumulatedCommissionResponse struct {
-	// operator_outstanding_rewards is the accumulated commission returned for an operator
-	OperatorAccumulatedCommission *OperatorAccumulatedCommission `protobuf:"bytes,1,opt,name=operator_accumulated_commission,json=operatorAccumulatedCommission,proto3" json:"operator_accumulated_commission,omitempty"`
+// QueryOperatorCommissionResponse is the response to obtain the operator commission
+type QueryOperatorCommissionResponse struct {
+	// operator_commission is the commission returned for an operator
+	OperatorCommission *OperatorCommission `protobuf:"bytes,1,opt,name=operator_commission,json=operatorCommission,proto3" json:"operator_commission,omitempty"`
 }
 
-func (m *QueryOperatorAccumulatedCommissionResponse) Reset() {
-	*m = QueryOperatorAccumulatedCommissionResponse{}
+func (m *QueryOperatorCommissionResponse) Reset()         { *m = QueryOperatorCommissionResponse{} }
+func (m *QueryOperatorCommissionResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryOperatorCommissionResponse) ProtoMessage()    {}
+func (*QueryOperatorCommissionResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_55aff14605a917cf, []int{29}
 }
-func (m *QueryOperatorAccumulatedCommissionResponse) String() string {
-	return proto.CompactTextString(m)
-}
-func (*QueryOperatorAccumulatedCommissionResponse) ProtoMessage() {}
-func (*QueryOperatorAccumulatedCommissionResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{28}
-}
-func (m *QueryOperatorAccumulatedCommissionResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryOperatorCommissionResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryOperatorAccumulatedCommissionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryOperatorCommissionResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryOperatorAccumulatedCommissionResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryOperatorCommissionResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -1511,21 +1559,21 @@ func (m *QueryOperatorAccumulatedCommissionResponse) XXX_Marshal(b []byte, deter
 		return b[:n], nil
 	}
 }
-func (m *QueryOperatorAccumulatedCommissionResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOperatorAccumulatedCommissionResponse.Merge(m, src)
+func (m *QueryOperatorCommissionResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryOperatorCommissionResponse.Merge(m, src)
 }
-func (m *QueryOperatorAccumulatedCommissionResponse) XXX_Size() int {
+func (m *QueryOperatorCommissionResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryOperatorAccumulatedCommissionResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOperatorAccumulatedCommissionResponse.DiscardUnknown(m)
+func (m *QueryOperatorCommissionResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryOperatorCommissionResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOperatorAccumulatedCommissionResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryOperatorCommissionResponse proto.InternalMessageInfo
 
-func (m *QueryOperatorAccumulatedCommissionResponse) GetOperatorAccumulatedCommission() *OperatorAccumulatedCommission {
+func (m *QueryOperatorCommissionResponse) GetOperatorCommission() *OperatorCommission {
 	if m != nil {
-		return m.OperatorAccumulatedCommission
+		return m.OperatorCommission
 	}
 	return nil
 }
@@ -1548,7 +1596,7 @@ func (m *QueryOperatorSlashEventRequest) Reset()         { *m = QueryOperatorSla
 func (m *QueryOperatorSlashEventRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorSlashEventRequest) ProtoMessage()    {}
 func (*QueryOperatorSlashEventRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{29}
+	return fileDescriptor_55aff14605a917cf, []int{30}
 }
 func (m *QueryOperatorSlashEventRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1622,7 +1670,7 @@ func (m *QueryOperatorSlashEventResponse) Reset()         { *m = QueryOperatorSl
 func (m *QueryOperatorSlashEventResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorSlashEventResponse) ProtoMessage()    {}
 func (*QueryOperatorSlashEventResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{30}
+	return fileDescriptor_55aff14605a917cf, []int{31}
 }
 func (m *QueryOperatorSlashEventResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1673,7 +1721,7 @@ func (m *QueryOperatorSlashEventsRequest) Reset()         { *m = QueryOperatorSl
 func (m *QueryOperatorSlashEventsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorSlashEventsRequest) ProtoMessage()    {}
 func (*QueryOperatorSlashEventsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{31}
+	return fileDescriptor_55aff14605a917cf, []int{32}
 }
 func (m *QueryOperatorSlashEventsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1737,7 +1785,7 @@ func (m *OperatorSlashEventAndHeight) Reset()         { *m = OperatorSlashEventA
 func (m *OperatorSlashEventAndHeight) String() string { return proto.CompactTextString(m) }
 func (*OperatorSlashEventAndHeight) ProtoMessage()    {}
 func (*OperatorSlashEventAndHeight) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{32}
+	return fileDescriptor_55aff14605a917cf, []int{33}
 }
 func (m *OperatorSlashEventAndHeight) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1797,7 +1845,7 @@ func (m *QueryOperatorSlashEventsResponse) Reset()         { *m = QueryOperatorS
 func (m *QueryOperatorSlashEventsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryOperatorSlashEventsResponse) ProtoMessage()    {}
 func (*QueryOperatorSlashEventsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{33}
+	return fileDescriptor_55aff14605a917cf, []int{34}
 }
 func (m *QueryOperatorSlashEventsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1843,7 +1891,7 @@ func (m *QueryStakerUnclaimedRewardsRequest) Reset()         { *m = QueryStakerU
 func (m *QueryStakerUnclaimedRewardsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryStakerUnclaimedRewardsRequest) ProtoMessage()    {}
 func (*QueryStakerUnclaimedRewardsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{34}
+	return fileDescriptor_55aff14605a917cf, []int{35}
 }
 func (m *QueryStakerUnclaimedRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1889,7 +1937,7 @@ func (m *QueryStakerUnclaimedRewardsResponse) Reset()         { *m = QueryStaker
 func (m *QueryStakerUnclaimedRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStakerUnclaimedRewardsResponse) ProtoMessage()    {}
 func (*QueryStakerUnclaimedRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{35}
+	return fileDescriptor_55aff14605a917cf, []int{36}
 }
 func (m *QueryStakerUnclaimedRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1935,7 +1983,7 @@ func (m *QueryStakerAllRewardsRequest) Reset()         { *m = QueryStakerAllRewa
 func (m *QueryStakerAllRewardsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryStakerAllRewardsRequest) ProtoMessage()    {}
 func (*QueryStakerAllRewardsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{36}
+	return fileDescriptor_55aff14605a917cf, []int{37}
 }
 func (m *QueryStakerAllRewardsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1987,7 +2035,7 @@ func (m *RewardInfo) Reset()         { *m = RewardInfo{} }
 func (m *RewardInfo) String() string { return proto.CompactTextString(m) }
 func (*RewardInfo) ProtoMessage()    {}
 func (*RewardInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{37}
+	return fileDescriptor_55aff14605a917cf, []int{38}
 }
 func (m *RewardInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2036,15 +2084,17 @@ type StakerRewardsPerAVS struct {
 	AVSAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
 	// outstanding_rewards represents rewards that have been claimed but not yet withdrawn.
 	OutstandingRewards []RewardInfo `protobuf:"bytes,2,rep,name=outstanding_rewards,json=outstandingRewards,proto3" json:"outstanding_rewards"`
+	// withdrawn_rewards represents rewards that have been withdrawn.
+	WithdrawnRewards []RewardInfo `protobuf:"bytes,3,rep,name=withdrawn_rewards,json=withdrawnRewards,proto3" json:"withdrawn_rewards"`
 	// unclaimed_rewards represents rewards that have not yet been accounted or distributed.
-	UnclaimedRewards []RewardInfo `protobuf:"bytes,3,rep,name=unclaimed_rewards,json=unclaimedRewards,proto3" json:"unclaimed_rewards"`
+	UnclaimedRewards []RewardInfo `protobuf:"bytes,4,rep,name=unclaimed_rewards,json=unclaimedRewards,proto3" json:"unclaimed_rewards"`
 }
 
 func (m *StakerRewardsPerAVS) Reset()         { *m = StakerRewardsPerAVS{} }
 func (m *StakerRewardsPerAVS) String() string { return proto.CompactTextString(m) }
 func (*StakerRewardsPerAVS) ProtoMessage()    {}
 func (*StakerRewardsPerAVS) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{38}
+	return fileDescriptor_55aff14605a917cf, []int{39}
 }
 func (m *StakerRewardsPerAVS) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2087,6 +2137,13 @@ func (m *StakerRewardsPerAVS) GetOutstandingRewards() []RewardInfo {
 	return nil
 }
 
+func (m *StakerRewardsPerAVS) GetWithdrawnRewards() []RewardInfo {
+	if m != nil {
+		return m.WithdrawnRewards
+	}
+	return nil
+}
+
 func (m *StakerRewardsPerAVS) GetUnclaimedRewards() []RewardInfo {
 	if m != nil {
 		return m.UnclaimedRewards
@@ -2104,7 +2161,7 @@ func (m *QueryStakerAllRewardsResponse) Reset()         { *m = QueryStakerAllRew
 func (m *QueryStakerAllRewardsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryStakerAllRewardsResponse) ProtoMessage()    {}
 func (*QueryStakerAllRewardsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_55aff14605a917cf, []int{39}
+	return fileDescriptor_55aff14605a917cf, []int{40}
 }
 func (m *QueryStakerAllRewardsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2152,10 +2209,11 @@ func init() {
 	proto.RegisterType((*QueryAVSCommunityPoolResponse)(nil), "imuachain.feedistribution.v1.QueryAVSCommunityPoolResponse")
 	proto.RegisterType((*QueryAVSRewardDistributionResponse)(nil), "imuachain.feedistribution.v1.QueryAVSRewardDistributionResponse")
 	proto.RegisterType((*QueryRewardAssetsByAVSResponse)(nil), "imuachain.feedistribution.v1.QueryRewardAssetsByAVSResponse")
-	proto.RegisterType((*QueryStakerOutstandingRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryStakerOutstandingRewardsRequest")
-	proto.RegisterType((*QueryStakerOutstandingRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryStakerOutstandingRewardsResponse")
-	proto.RegisterType((*QueryStakerAllOutstandingRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryStakerAllOutstandingRewardsRequest")
-	proto.RegisterType((*QueryStakerAllOutstandingRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryStakerAllOutstandingRewardsResponse")
+	proto.RegisterType((*QueryStakerClaimedRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryStakerClaimedRewardsRequest")
+	proto.RegisterType((*QueryStakerClaimedRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryStakerClaimedRewardsResponse")
+	proto.RegisterType((*QueryStakerAllClaimedRewardsRequest)(nil), "imuachain.feedistribution.v1.QueryStakerAllClaimedRewardsRequest")
+	proto.RegisterType((*StakerClaimedRewardsPerAVS)(nil), "imuachain.feedistribution.v1.StakerClaimedRewardsPerAVS")
+	proto.RegisterType((*QueryStakerAllClaimedRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryStakerAllClaimedRewardsResponse")
 	proto.RegisterType((*QueryStakeChangeDelegationsRequest)(nil), "imuachain.feedistribution.v1.QueryStakeChangeDelegationsRequest")
 	proto.RegisterType((*QueryStakeChangeDelegationsResponse)(nil), "imuachain.feedistribution.v1.QueryStakeChangeDelegationsResponse")
 	proto.RegisterType((*QueryDelegationStartingInfoRequest)(nil), "imuachain.feedistribution.v1.QueryDelegationStartingInfoRequest")
@@ -2169,7 +2227,7 @@ func init() {
 	proto.RegisterType((*QueryOperatorCurrentRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorCurrentRewardsResponse")
 	proto.RegisterType((*OperatorAVSRequest)(nil), "imuachain.feedistribution.v1.OperatorAVSRequest")
 	proto.RegisterType((*QueryOperatorOutstandingRewardsResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorOutstandingRewardsResponse")
-	proto.RegisterType((*QueryOperatorAccumulatedCommissionResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorAccumulatedCommissionResponse")
+	proto.RegisterType((*QueryOperatorCommissionResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorCommissionResponse")
 	proto.RegisterType((*QueryOperatorSlashEventRequest)(nil), "imuachain.feedistribution.v1.QueryOperatorSlashEventRequest")
 	proto.RegisterType((*QueryOperatorSlashEventResponse)(nil), "imuachain.feedistribution.v1.QueryOperatorSlashEventResponse")
 	proto.RegisterType((*QueryOperatorSlashEventsRequest)(nil), "imuachain.feedistribution.v1.QueryOperatorSlashEventsRequest")
@@ -2188,142 +2246,145 @@ func init() {
 }
 
 var fileDescriptor_55aff14605a917cf = []byte{
-	// 2156 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x5a, 0x5f, 0x6c, 0x1c, 0x47,
-	0x19, 0xcf, 0x9c, 0x53, 0x3b, 0xf9, 0xd2, 0x16, 0x67, 0x9c, 0x18, 0xe7, 0xec, 0xd8, 0x65, 0x48,
-	0x82, 0x13, 0x11, 0x5f, 0xed, 0xb6, 0x34, 0xa9, 0x13, 0x94, 0x3b, 0xc7, 0x89, 0xaf, 0x40, 0x93,
-	0x9e, 0x9b, 0x80, 0x00, 0xf5, 0x34, 0xbe, 0x5d, 0xdf, 0xad, 0x7c, 0xb7, 0x73, 0xdd, 0xdd, 0xbb,
-	0xc6, 0xb5, 0xee, 0x85, 0x40, 0x85, 0x04, 0x08, 0x10, 0x42, 0x91, 0x90, 0x90, 0x8a, 0x00, 0x89,
-	0xc7, 0x0a, 0xf5, 0xad, 0x4f, 0xf0, 0x80, 0xf2, 0x52, 0xb5, 0x82, 0x17, 0xc4, 0x43, 0x84, 0x12,
-	0xa4, 0x3c, 0xf6, 0x81, 0x57, 0x24, 0xd0, 0xce, 0xce, 0xfe, 0xb9, 0xbd, 0xdd, 0xb9, 0xd9, 0xb3,
-	0x1a, 0x5e, 0x92, 0xdb, 0xd9, 0x99, 0x6f, 0x7e, 0xbf, 0xdf, 0x7c, 0xf3, 0xcd, 0xec, 0x2f, 0x81,
-	0x45, 0xa3, 0xd5, 0xa1, 0xb5, 0x06, 0x35, 0xcc, 0xc2, 0xb6, 0xae, 0x6b, 0x86, 0xed, 0x58, 0xc6,
-	0x56, 0xc7, 0x31, 0x98, 0x59, 0xe8, 0x2e, 0x17, 0xde, 0xea, 0xe8, 0xd6, 0xee, 0x52, 0xdb, 0x62,
-	0x0e, 0xc3, 0x73, 0x41, 0xcf, 0xa5, 0x58, 0xcf, 0xa5, 0xee, 0x72, 0xfe, 0x28, 0x6d, 0x19, 0x26,
-	0x2b, 0xf0, 0x3f, 0xbd, 0x01, 0xf9, 0xd9, 0x1a, 0xb3, 0x5b, 0xcc, 0xf6, 0x82, 0xc4, 0xa2, 0xe5,
-	0x4f, 0x78, 0x2f, 0xab, 0xfc, 0xa9, 0xe0, 0x3d, 0x88, 0x57, 0xc7, 0xea, 0xac, 0xce, 0xbc, 0x76,
-	0xf7, 0x97, 0x68, 0x9d, 0xab, 0x33, 0x56, 0x6f, 0xea, 0x05, 0xda, 0x36, 0x0a, 0xd4, 0x34, 0x99,
-	0x43, 0xdd, 0xa9, 0xfd, 0x31, 0x05, 0x29, 0x8d, 0x3e, 0xb0, 0xde, 0x80, 0xb3, 0xd2, 0x01, 0x6d,
-	0x6a, 0xd1, 0x96, 0x88, 0x4d, 0x8e, 0x01, 0x7e, 0xdd, 0x45, 0x7e, 0x93, 0x37, 0x56, 0xf4, 0xb7,
-	0x3a, 0xba, 0xed, 0x90, 0x37, 0x61, 0xaa, 0xaf, 0xd5, 0x6e, 0x33, 0xd3, 0xd6, 0xf1, 0x75, 0x18,
-	0xf7, 0x06, 0xcf, 0xa0, 0xe7, 0xd0, 0xe2, 0x91, 0x95, 0x53, 0x4b, 0x32, 0xd9, 0x96, 0xbc, 0xd1,
-	0xa5, 0xc3, 0xf7, 0x1f, 0x2c, 0x1c, 0xf8, 0xc3, 0xe3, 0xf7, 0xcf, 0xa1, 0x8a, 0x18, 0x4e, 0xca,
-	0x90, 0xe7, 0xf1, 0x8b, 0xb7, 0x37, 0x2b, 0xfa, 0xdb, 0xd4, 0xd2, 0x8a, 0xb6, 0xad, 0x3b, 0x62,
-	0x76, 0x3c, 0x09, 0x63, 0xb4, 0xeb, 0xcd, 0x71, 0xb8, 0xe2, 0xfe, 0xc4, 0x27, 0xe0, 0x10, 0x75,
-	0x7b, 0x54, 0x0d, 0x6d, 0x26, 0xc7, 0x9b, 0x27, 0xf8, 0x73, 0x59, 0x23, 0x1d, 0x98, 0x4d, 0x0c,
-	0x25, 0x20, 0xdf, 0x86, 0x49, 0xda, 0xb5, 0xab, 0x16, 0x7f, 0x55, 0xe5, 0x83, 0x04, 0xf8, 0x2f,
-	0xcb, 0xc1, 0xc7, 0xe2, 0x3d, 0x4b, 0xbb, 0x76, 0xe4, 0x99, 0xbc, 0x06, 0x24, 0x61, 0xda, 0xd2,
-	0xee, 0xe6, 0x6e, 0x6b, 0x8b, 0x35, 0xd3, 0x99, 0x4c, 0xc3, 0xb8, 0xcd, 0xbb, 0x08, 0x1e, 0xe2,
-	0x89, 0xf4, 0xe0, 0x8b, 0xd2, 0x78, 0x9f, 0x31, 0x9d, 0x79, 0x00, 0xde, 0x23, 0x05, 0xf6, 0xa0,
-	0xca, 0x7c, 0x6d, 0x53, 0x60, 0xf1, 0x45, 0xce, 0x08, 0xcb, 0x8b, 0x17, 0xc2, 0xe2, 0xcf, 0x84,
-	0xc2, 0x49, 0x7f, 0xda, 0x35, 0xd6, 0x6a, 0x75, 0x4c, 0xc3, 0xd9, 0xbd, 0xc9, 0x22, 0x7a, 0x5c,
-	0x81, 0x43, 0xdb, 0xba, 0x5e, 0x6d, 0x33, 0xd6, 0x14, 0x13, 0x9e, 0x96, 0x4f, 0x78, 0x4d, 0xd7,
-	0x79, 0x80, 0x89, 0x6d, 0xef, 0x07, 0xf9, 0x39, 0x8a, 0xaf, 0xe4, 0xd5, 0xc8, 0x90, 0x60, 0xa2,
-	0x1d, 0xf8, 0x7c, 0x84, 0x61, 0x34, 0xaa, 0x98, 0xf7, 0x05, 0x45, 0xa2, 0x7d, 0xd1, 0x8f, 0x07,
-	0x7c, 0xa3, 0xcd, 0xc4, 0x81, 0x79, 0x0e, 0x29, 0xb2, 0x42, 0x76, 0xc9, 0x03, 0x28, 0xe0, 0x54,
-	0xe0, 0x99, 0x68, 0x0e, 0xf8, 0x1b, 0xf2, 0x7c, 0x96, 0x24, 0xb0, 0x2b, 0x4f, 0x5b, 0x91, 0x27,
-	0x72, 0x0b, 0x4e, 0xf1, 0x59, 0x37, 0x1d, 0xba, 0xa3, 0x5b, 0x37, 0x3a, 0x8e, 0xed, 0x50, 0x53,
-	0x33, 0xcc, 0xba, 0x37, 0xc6, 0x2f, 0x0e, 0x78, 0x16, 0x0e, 0xdb, 0xbc, 0x8b, 0xbb, 0x1b, 0xbd,
-	0x1c, 0x39, 0xe4, 0x35, 0x94, 0x35, 0x3f, 0x75, 0x72, 0x61, 0xea, 0xfc, 0x1a, 0xc1, 0xe9, 0x21,
-	0x71, 0x05, 0x29, 0x07, 0xf2, 0x22, 0x30, 0x0b, 0x3b, 0x09, 0xc9, 0x7d, 0x86, 0x5f, 0x91, 0x33,
-	0x4c, 0x9d, 0x63, 0xc6, 0x4e, 0x79, 0x43, 0xae, 0xc1, 0x97, 0x22, 0xf0, 0x8a, 0xcd, 0xe6, 0x68,
-	0xcc, 0x49, 0x0f, 0x16, 0x87, 0xc7, 0x11, 0x4c, 0x5f, 0x87, 0x89, 0x90, 0xd6, 0xd8, 0xe2, 0x91,
-	0x95, 0x65, 0x39, 0x2d, 0x37, 0xf9, 0x99, 0x19, 0xe6, 0x10, 0x75, 0x68, 0xe9, 0xa0, 0x5b, 0x56,
-	0x2b, 0x7e, 0x1c, 0xf2, 0xae, 0x9f, 0xc7, 0x7c, 0xfe, 0xb5, 0x06, 0x35, 0xeb, 0xfa, 0x55, 0xbd,
-	0xa9, 0xd7, 0xbd, 0xa3, 0xc4, 0xa7, 0x70, 0x16, 0x26, 0xf5, 0x36, 0xab, 0x35, 0xaa, 0x86, 0xa6,
-	0x9b, 0x8e, 0xb1, 0x6d, 0xe8, 0x96, 0x60, 0xf2, 0x39, 0xde, 0x5e, 0x0e, 0x9a, 0x71, 0x1e, 0x0e,
-	0xb1, 0xb6, 0x6e, 0x51, 0x87, 0x59, 0x62, 0x3d, 0x83, 0xe7, 0xbe, 0x82, 0x3c, 0xd6, 0x5f, 0x90,
-	0x7f, 0x8a, 0x44, 0x29, 0x4b, 0x03, 0x22, 0x34, 0x68, 0xc0, 0xb4, 0x16, 0x34, 0x57, 0x6b, 0xbc,
-	0x5f, 0xd5, 0x30, 0xb7, 0x99, 0x58, 0xe9, 0x15, 0xb9, 0x24, 0x61, 0x48, 0x6f, 0x8a, 0xb2, 0xb9,
-	0xcd, 0x2a, 0xc7, 0xb4, 0x84, 0x56, 0xf2, 0x5b, 0x5f, 0x9a, 0x70, 0xcc, 0xa6, 0x43, 0x2d, 0xc7,
-	0x30, 0xeb, 0x7c, 0x94, 0x4a, 0x5e, 0xa7, 0x9f, 0x40, 0x7d, 0x3a, 0x8d, 0xc5, 0x74, 0x4a, 0x92,
-	0xfb, 0x60, 0xa2, 0xdc, 0xe4, 0x97, 0xbe, 0x6e, 0x69, 0x28, 0x85, 0x6e, 0x26, 0xcc, 0x44, 0x74,
-	0xb3, 0x45, 0x97, 0xa8, 0x72, 0x2f, 0xaa, 0x2a, 0xd7, 0x17, 0x3f, 0xb2, 0x1a, 0xd1, 0x76, 0xf2,
-	0x1b, 0x7f, 0xff, 0xde, 0x10, 0xa4, 0x36, 0x0c, 0xdb, 0x61, 0x96, 0x51, 0xa3, 0xcd, 0xd8, 0xf6,
-	0x88, 0x0a, 0x81, 0x24, 0x09, 0x13, 0xd3, 0x2f, 0x49, 0xa3, 0xb1, 0xe4, 0x94, 0x9c, 0x86, 0xf1,
-	0xb6, 0x6e, 0x19, 0x4c, 0xe3, 0x22, 0x1e, 0xac, 0x88, 0x27, 0x17, 0xe3, 0x99, 0x61, 0x18, 0x85,
-	0x7c, 0x6f, 0xc3, 0xac, 0x0f, 0xaa, 0xda, 0x08, 0x7a, 0xc5, 0xaa, 0xcc, 0xcb, 0x72, 0x05, 0xd3,
-	0x67, 0x39, 0xc1, 0xd2, 0x5e, 0x91, 0x1f, 0x23, 0x51, 0x20, 0xdc, 0xd2, 0xf0, 0x7f, 0x97, 0x92,
-	0x7c, 0x88, 0x80, 0xa4, 0xc2, 0x28, 0x9a, 0xda, 0x4d, 0xae, 0x6c, 0x44, 0x71, 0x14, 0x55, 0x1c,
-	0xf7, 0xe4, 0x32, 0xe6, 0xf6, 0x25, 0xa3, 0xa8, 0x6d, 0x12, 0x31, 0x3f, 0x44, 0x70, 0x56, 0x41,
-	0x4c, 0xb1, 0xe6, 0x3f, 0x41, 0xb0, 0x40, 0x9b, 0xcd, 0xaa, 0x7c, 0xe1, 0xdd, 0x3a, 0x7c, 0x65,
-	0x44, 0xc4, 0x81, 0x60, 0x02, 0xfa, 0x1c, 0x95, 0xe0, 0x0a, 0x6b, 0xb5, 0xdf, 0x65, 0xad, 0x63,
-	0x59, 0xba, 0xe9, 0x3c, 0xf1, 0x24, 0x08, 0x6a, 0x4e, 0x1a, 0x90, 0xb0, 0xe6, 0x04, 0xda, 0xd5,
-	0xbc, 0x2e, 0xb1, 0x1d, 0xf3, 0xa2, 0x9a, 0x70, 0xb1, 0xf8, 0xd3, 0x2c, 0xb1, 0x9d, 0x94, 0x00,
-	0xfb, 0x23, 0x22, 0xd7, 0x52, 0x99, 0x1e, 0x83, 0xf7, 0x8e, 0xdf, 0x23, 0x71, 0xb0, 0xfb, 0x91,
-	0x24, 0xe7, 0xf1, 0x3b, 0x30, 0x17, 0xf0, 0x4b, 0xbf, 0x7b, 0x5c, 0x50, 0xe3, 0x98, 0x30, 0x4f,
-	0x9e, 0xa5, 0xbe, 0x23, 0x7f, 0x44, 0x70, 0xae, 0x0f, 0x67, 0xb1, 0x56, 0xeb, 0xb4, 0x3a, 0x4d,
-	0xea, 0xe8, 0x9a, 0x7b, 0xee, 0x1b, 0xb6, 0x1d, 0xbd, 0x88, 0xde, 0x45, 0xb0, 0x10, 0x60, 0xa5,
-	0x61, 0xd7, 0x6a, 0x2d, 0xe8, 0x2b, 0xe0, 0xae, 0xaa, 0xc1, 0x4d, 0x9e, 0xee, 0x24, 0x93, 0xbd,
-	0x26, 0xf7, 0x91, 0xb8, 0xa2, 0xfa, 0x51, 0x36, 0x9b, 0xd4, 0x6e, 0xac, 0x77, 0xf9, 0x1a, 0x3e,
-	0xa9, 0xd3, 0xe0, 0x0b, 0xf0, 0xb4, 0xd7, 0xd5, 0xec, 0xb4, 0xb6, 0xc4, 0xc1, 0x7a, 0xb0, 0x72,
-	0x84, 0xb7, 0xbd, 0xc6, 0x9b, 0xdc, 0x2e, 0x5b, 0x4d, 0x56, 0xdb, 0xa9, 0x36, 0x74, 0xa3, 0xde,
-	0x70, 0x66, 0x9e, 0xf2, 0xba, 0xf0, 0xb6, 0x0d, 0xde, 0x44, 0x7e, 0x80, 0x60, 0x21, 0x95, 0x8a,
-	0x10, 0x7d, 0x0b, 0x8e, 0x05, 0x9a, 0xdb, 0xee, 0xeb, 0xaa, 0xee, 0xbe, 0x17, 0x42, 0x3f, 0xaf,
-	0x26, 0x74, 0x24, 0x2e, 0x66, 0x03, 0x6d, 0xe4, 0x6e, 0x3a, 0x8e, 0x27, 0x58, 0x11, 0x3e, 0x42,
-	0x30, 0x3b, 0x08, 0xa0, 0x68, 0x6a, 0x9e, 0x5a, 0x03, 0x9a, 0xa3, 0xe1, 0x9a, 0xe7, 0x06, 0x34,
-	0xc7, 0x8d, 0x14, 0x3d, 0xc7, 0x46, 0xd3, 0x53, 0x14, 0xdd, 0x24, 0x55, 0xef, 0x21, 0x78, 0x2e,
-	0x5d, 0x55, 0xb1, 0xbc, 0x36, 0x1c, 0x4f, 0x82, 0xe3, 0x1f, 0x0a, 0x17, 0xb3, 0xe2, 0x09, 0xe4,
-	0x12, 0xc0, 0xa6, 0x06, 0x81, 0xd9, 0xa4, 0x18, 0xbd, 0xaf, 0x5b, 0xb7, 0xcc, 0x5a, 0x93, 0x1a,
-	0x2d, 0x5d, 0xcb, 0xf2, 0xc9, 0x71, 0x27, 0x7a, 0xd3, 0x4e, 0x08, 0xf1, 0xd9, 0x7d, 0x6d, 0xac,
-	0xc2, 0x5c, 0xff, 0xc7, 0x4e, 0x16, 0xd8, 0xf7, 0x10, 0x80, 0xd7, 0xdf, 0xbd, 0x60, 0xba, 0x89,
-	0xeb, 0xb0, 0x1d, 0xdd, 0x0c, 0xbb, 0x4e, 0xf0, 0xe7, 0xb2, 0x86, 0x67, 0x60, 0x42, 0xd3, 0x6b,
-	0x46, 0x8b, 0x7a, 0x76, 0xc9, 0x33, 0x15, 0xff, 0x11, 0xbf, 0x01, 0xe3, 0xb4, 0xc5, 0x3a, 0x22,
-	0x67, 0x0e, 0x97, 0x2e, 0xb9, 0xf8, 0xfe, 0xf1, 0x60, 0xe1, 0x4c, 0xdd, 0x70, 0x1a, 0x9d, 0xad,
-	0xa5, 0x1a, 0x6b, 0x09, 0xe3, 0x4d, 0xfc, 0x75, 0xde, 0xd6, 0x76, 0x0a, 0xce, 0x6e, 0x5b, 0xb7,
-	0x97, 0xca, 0xa6, 0xf3, 0xd7, 0x0f, 0xce, 0x83, 0xf0, 0xe5, 0xca, 0xa6, 0x53, 0x11, 0xb1, 0xc8,
-	0xf7, 0x73, 0x30, 0xe5, 0x51, 0x12, 0x7c, 0x6e, 0xea, 0xee, 0x01, 0x84, 0x0b, 0x70, 0xc4, 0xfd,
-	0xfa, 0xa7, 0x9a, 0x66, 0xe9, 0xb6, 0x30, 0x46, 0x4a, 0xcf, 0x3e, 0x7c, 0xb0, 0x00, 0xc5, 0xdb,
-	0x9b, 0x45, 0xaf, 0xb5, 0x02, 0xb4, 0x6b, 0x8b, 0xdf, 0xb8, 0x0a, 0x53, 0x49, 0xe7, 0x48, 0x8e,
-	0xcb, 0xbf, 0x28, 0x97, 0x3f, 0x94, 0x26, 0xc8, 0xeb, 0x81, 0x53, 0x03, 0x7f, 0x07, 0x8e, 0x76,
-	0xfc, 0xf5, 0x0e, 0xc2, 0x8f, 0x8d, 0x14, 0x7e, 0xb2, 0x13, 0x4b, 0x1c, 0x62, 0x09, 0xdb, 0x65,
-	0x70, 0x75, 0x47, 0xcc, 0xa8, 0x04, 0x4d, 0x63, 0x19, 0xb5, 0xf2, 0x97, 0xd3, 0xf0, 0x14, 0x9f,
-	0x14, 0xbf, 0x87, 0x60, 0xdc, 0xb3, 0x0e, 0xf1, 0x90, 0x4a, 0x30, 0xe8, 0x5c, 0xe6, 0x97, 0x33,
-	0x8c, 0xf0, 0xc8, 0x90, 0xe5, 0x1f, 0x3e, 0x7e, 0xff, 0x1c, 0xfa, 0xde, 0xdf, 0xfe, 0xf5, 0x8b,
-	0xdc, 0x19, 0x7c, 0xaa, 0xa0, 0xe0, 0x9d, 0xe2, 0x8f, 0x11, 0x3c, 0xdb, 0x6f, 0xa6, 0xe0, 0x0b,
-	0x0a, 0x13, 0x27, 0xda, 0x9d, 0xf9, 0x8b, 0x23, 0x8c, 0x14, 0xd0, 0x37, 0x42, 0xe8, 0x97, 0xf1,
-	0xaa, 0x1c, 0x7a, 0xd4, 0x2f, 0x2a, 0xec, 0xd1, 0xae, 0xdd, 0x2b, 0xec, 0xf9, 0x07, 0x46, 0x0f,
-	0xff, 0x1b, 0xc1, 0x74, 0xb2, 0xf7, 0x88, 0xaf, 0x64, 0xc6, 0x17, 0xb3, 0x41, 0xf3, 0xc5, 0x7d,
-	0x44, 0x10, 0x4c, 0xdf, 0x08, 0x99, 0x96, 0xf1, 0x75, 0x39, 0xd3, 0xb8, 0x43, 0x5a, 0xdd, 0xda,
-	0xad, 0x7a, 0x36, 0xab, 0xcf, 0xdb, 0x7b, 0xea, 0xe1, 0x3f, 0x23, 0x38, 0x3a, 0x60, 0xb2, 0xe1,
-	0x45, 0x05, 0x17, 0xcd, 0x23, 0x76, 0x49, 0x81, 0x58, 0xaa, 0x89, 0x47, 0xd6, 0x43, 0x4e, 0xaf,
-	0xe0, 0x0b, 0xea, 0xab, 0x67, 0xbb, 0x84, 0x68, 0xd7, 0xf6, 0xd8, 0xe0, 0x0f, 0xa2, 0xc9, 0xc8,
-	0x73, 0x3b, 0x03, 0x83, 0x4c, 0xc9, 0xd7, 0x67, 0xfa, 0x92, 0xcb, 0x21, 0xfc, 0x15, 0xfc, 0xbc,
-	0x12, 0x7c, 0xbe, 0x7d, 0x04, 0xec, 0x3f, 0x21, 0x98, 0x8c, 0xfb, 0xba, 0x19, 0x80, 0xaf, 0xaa,
-	0x01, 0x4f, 0xb4, 0x8d, 0xc9, 0xb5, 0x10, 0xfa, 0x2a, 0xbe, 0x28, 0x87, 0x5e, 0xf3, 0x23, 0x04,
-	0xf6, 0x36, 0xf3, 0x13, 0x09, 0x7f, 0x84, 0xe0, 0x78, 0xa2, 0xb3, 0x9b, 0x81, 0x48, 0xa6, 0xed,
-	0x95, 0xe4, 0x4d, 0x67, 0xaa, 0x02, 0x29, 0x26, 0xb6, 0xe0, 0xf3, 0x29, 0x82, 0x7c, 0xfa, 0x67,
-	0x0c, 0x56, 0xbc, 0x98, 0x45, 0xc8, 0xad, 0x2b, 0x90, 0x1b, 0xfe, 0x7d, 0x46, 0xbe, 0x15, 0x32,
-	0xfc, 0x06, 0xfe, 0x9a, 0x9c, 0xa1, 0xec, 0x43, 0xae, 0xb0, 0xe7, 0xbf, 0xed, 0x09, 0xc6, 0xff,
-	0x41, 0x30, 0x93, 0x66, 0x1a, 0xe3, 0x92, 0x02, 0xfa, 0x21, 0x6e, 0x79, 0x7e, 0x6d, 0x5f, 0x31,
-	0x04, 0xff, 0x6f, 0x86, 0xfc, 0xbf, 0x8e, 0x5f, 0x95, 0xf3, 0x4f, 0xb7, 0xd0, 0x0b, 0x7b, 0xc1,
-	0x9d, 0xcc, 0xa7, 0x7f, 0x37, 0x07, 0xb3, 0x12, 0xc3, 0x1a, 0xaf, 0x2b, 0xa3, 0x97, 0x19, 0xe7,
-	0xf9, 0x6b, 0xfb, 0x0d, 0x23, 0x74, 0xb8, 0x15, 0xea, 0xf0, 0x2a, 0xde, 0x50, 0xd2, 0x81, 0xfb,
-	0x3e, 0x72, 0x2d, 0xf0, 0x8f, 0x72, 0x30, 0x9d, 0xec, 0x56, 0x2b, 0x1d, 0x7e, 0x52, 0xc7, 0x5d,
-	0xe9, 0xf0, 0x93, 0x5b, 0xe5, 0xa4, 0x19, 0xd2, 0xa6, 0xb8, 0xaa, 0x40, 0xdb, 0xb7, 0xd3, 0x43,
-	0x4b, 0xd7, 0x2e, 0xec, 0xc5, 0x3f, 0x01, 0x7b, 0xfd, 0xbb, 0x21, 0xb8, 0x0a, 0xdc, 0xcb, 0xc1,
-	0x74, 0xb2, 0x47, 0xac, 0xa4, 0x86, 0xd4, 0x64, 0x57, 0x52, 0x43, 0x6e, 0x80, 0x93, 0x3b, 0xa1,
-	0x1a, 0x2d, 0xbc, 0x33, 0xe4, 0x1f, 0xc7, 0x53, 0x9c, 0xf2, 0xd8, 0x56, 0xf0, 0xb9, 0xf7, 0x29,
-	0x32, 0xa0, 0x17, 0x7e, 0x2f, 0x07, 0x27, 0x52, 0x5d, 0x3d, 0xbc, 0x96, 0xa1, 0xd6, 0xa5, 0x19,
-	0xbf, 0xf9, 0xab, 0xfb, 0x0b, 0x32, 0x82, 0x44, 0x12, 0x53, 0x34, 0x39, 0x41, 0x12, 0x33, 0xc9,
-	0xb3, 0x85, 0x7b, 0xf8, 0x77, 0x39, 0x98, 0x93, 0x79, 0xb2, 0x58, 0xa5, 0x14, 0x28, 0x38, 0xe4,
-	0xf9, 0xeb, 0xfb, 0x8e, 0x23, 0xb4, 0xb2, 0x43, 0xad, 0x1a, 0x78, 0x7b, 0xc8, 0xe9, 0x29, 0x37,
-	0x91, 0x95, 0xf5, 0xe2, 0x15, 0x27, 0xd9, 0x13, 0x55, 0xda, 0x63, 0x52, 0xdf, 0x58, 0x69, 0x8f,
-	0xc9, 0x0d, 0xdf, 0x4c, 0x15, 0x27, 0xcd, 0x19, 0x56, 0x57, 0xe3, 0x53, 0x04, 0x27, 0xa5, 0x76,
-	0xe4, 0x08, 0x37, 0x8f, 0x8d, 0x0c, 0x22, 0x48, 0x1d, 0x57, 0x52, 0x09, 0xb5, 0xb8, 0x8e, 0xd7,
-	0x87, 0x24, 0x48, 0xa2, 0x21, 0x3b, 0x78, 0xed, 0xf8, 0x55, 0x2e, 0x74, 0xb8, 0x43, 0x53, 0x08,
-	0x5f, 0xca, 0x00, 0x7a, 0xc0, 0x71, 0xcd, 0x5f, 0x1e, 0x71, 0xb4, 0xe0, 0xf9, 0x2e, 0x0a, 0x89,
-	0xee, 0xe1, 0x5d, 0xc5, 0x45, 0x8f, 0xf8, 0x65, 0x19, 0xca, 0x45, 0xd4, 0x43, 0xec, 0x15, 0xf6,
-	0xa2, 0x7e, 0x61, 0x0f, 0xff, 0x17, 0xc1, 0x54, 0x82, 0x5d, 0x87, 0x47, 0xe3, 0x17, 0x6c, 0x8b,
-	0xaf, 0x8e, 0x3a, 0x5c, 0xe8, 0x63, 0x84, 0xf2, 0xbc, 0x89, 0xbf, 0x9b, 0x5d, 0x9e, 0x0c, 0x1b,
-	0xe2, 0x31, 0x12, 0x17, 0x92, 0x01, 0x53, 0x4f, 0xfd, 0x42, 0x92, 0x66, 0x29, 0xaa, 0x5f, 0x48,
-	0x52, 0x1d, 0xc5, 0x4c, 0x5f, 0x1c, 0x03, 0x36, 0x55, 0xdf, 0xd5, 0xeb, 0x63, 0x04, 0x93, 0x71,
-	0x9b, 0x09, 0xbf, 0x92, 0xe5, 0xba, 0x18, 0x63, 0xb7, 0x3a, 0xd2, 0x58, 0xc1, 0xab, 0x14, 0xf2,
-	0x7a, 0x19, 0xbf, 0x34, 0xfc, 0x2c, 0x48, 0x60, 0x54, 0xba, 0x71, 0xff, 0xe1, 0x3c, 0xfa, 0xe4,
-	0xe1, 0x3c, 0xfa, 0xe7, 0xc3, 0x79, 0xf4, 0xb3, 0x47, 0xf3, 0x07, 0x3e, 0x79, 0x34, 0x7f, 0xe0,
-	0xef, 0x8f, 0xe6, 0x0f, 0x7c, 0xfb, 0xa5, 0x88, 0x37, 0xe9, 0x86, 0x3e, 0x7f, 0x67, 0xf7, 0x9d,
-	0xc8, 0x1c, 0x77, 0x06, 0x66, 0xe1, 0x76, 0xe5, 0xd6, 0x38, 0xff, 0x9f, 0x7a, 0x2f, 0xfc, 0x2f,
-	0x00, 0x00, 0xff, 0xff, 0x95, 0x5f, 0x65, 0x24, 0xce, 0x28, 0x00, 0x00,
+	// 2200 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x5a, 0xcf, 0x6f, 0x5c, 0x47,
+	0x1d, 0xcf, 0xac, 0x5d, 0x3b, 0xf9, 0xa6, 0x4d, 0x9d, 0xb1, 0xe3, 0x3a, 0x6b, 0x63, 0xb7, 0x43,
+	0x12, 0x9c, 0x42, 0xbc, 0xb5, 0xdb, 0xaa, 0x4e, 0x9d, 0x94, 0xec, 0xda, 0x71, 0x62, 0x21, 0x9a,
+	0x64, 0x5d, 0xa2, 0x0a, 0x50, 0x57, 0xe3, 0x7d, 0xcf, 0xbb, 0x4f, 0xde, 0x7d, 0xb3, 0x7d, 0xef,
+	0xed, 0x26, 0xae, 0xb5, 0x12, 0x82, 0x52, 0x21, 0x41, 0x05, 0x08, 0x55, 0x91, 0x38, 0x15, 0x01,
+	0x12, 0xe2, 0xd4, 0x43, 0x6f, 0x3d, 0xc1, 0x29, 0x97, 0xa8, 0x15, 0x5c, 0x10, 0x87, 0x00, 0x09,
+	0x28, 0x17, 0x24, 0x0e, 0xfd, 0x03, 0x40, 0x6f, 0x66, 0xde, 0xef, 0x1f, 0x7e, 0x6f, 0x2d, 0xd2,
+	0x4b, 0xeb, 0x99, 0x37, 0xf3, 0x9d, 0xcf, 0xe7, 0x33, 0xdf, 0xf9, 0xf5, 0xd9, 0xc0, 0xbc, 0xd6,
+	0xee, 0xd2, 0x7a, 0x93, 0x6a, 0x7a, 0x69, 0x5b, 0x55, 0x15, 0xcd, 0xb4, 0x0c, 0x6d, 0xab, 0x6b,
+	0x69, 0x4c, 0x2f, 0xf5, 0x16, 0x4b, 0x6f, 0x77, 0x55, 0x63, 0x77, 0xa1, 0x63, 0x30, 0x8b, 0xe1,
+	0x19, 0xb7, 0xe5, 0x42, 0xa8, 0xe5, 0x42, 0x6f, 0xb1, 0x78, 0x9c, 0xb6, 0x35, 0x9d, 0x95, 0xf8,
+	0x7f, 0x45, 0x87, 0xe2, 0x74, 0x9d, 0x99, 0x6d, 0x66, 0x8a, 0x20, 0xa1, 0x68, 0xc5, 0x93, 0xe2,
+	0x63, 0x8d, 0x97, 0x4a, 0xa2, 0x20, 0x3f, 0x4d, 0x34, 0x58, 0x83, 0x89, 0x7a, 0xfb, 0x2f, 0x59,
+	0x3b, 0xd3, 0x60, 0xac, 0xd1, 0x52, 0x4b, 0xb4, 0xa3, 0x95, 0xa8, 0xae, 0x33, 0x8b, 0xda, 0x43,
+	0x3b, 0x7d, 0x4a, 0xa9, 0x34, 0x02, 0x60, 0x45, 0x87, 0xb3, 0xa9, 0x1d, 0x3a, 0xd4, 0xa0, 0x6d,
+	0x19, 0x9b, 0x4c, 0x00, 0xbe, 0x61, 0x23, 0xbf, 0xce, 0x2b, 0xab, 0xea, 0xdb, 0x5d, 0xd5, 0xb4,
+	0xc8, 0x5b, 0x30, 0x1e, 0xa8, 0x35, 0x3b, 0x4c, 0x37, 0x55, 0x7c, 0x05, 0x46, 0x44, 0xe7, 0x29,
+	0xf4, 0x2c, 0x9a, 0x3f, 0xba, 0x74, 0x6a, 0x21, 0x4d, 0xb6, 0x05, 0xd1, 0xbb, 0x72, 0xe4, 0xee,
+	0xfd, 0xb9, 0x43, 0xbf, 0x7b, 0xf4, 0xd1, 0xf3, 0xa8, 0x2a, 0xbb, 0x93, 0x0d, 0x28, 0xf2, 0xf8,
+	0xe5, 0x9b, 0x9b, 0x55, 0xf5, 0x16, 0x35, 0x94, 0xb2, 0x69, 0xaa, 0x96, 0x1c, 0x1d, 0x8f, 0xc1,
+	0x10, 0xed, 0x89, 0x31, 0x8e, 0x54, 0xed, 0x3f, 0xf1, 0x49, 0x38, 0x4c, 0xed, 0x16, 0x35, 0x4d,
+	0x99, 0x2a, 0xf0, 0xea, 0x51, 0x5e, 0xde, 0x50, 0x48, 0x17, 0xa6, 0x63, 0x43, 0x49, 0xc8, 0x37,
+	0x61, 0x8c, 0xf6, 0xcc, 0x9a, 0xc1, 0x3f, 0xd5, 0x78, 0x27, 0x09, 0xfe, 0x6b, 0xe9, 0xe0, 0x43,
+	0xf1, 0x8e, 0xd1, 0x9e, 0xe9, 0x2b, 0x93, 0xd7, 0x81, 0xc4, 0x0c, 0x5b, 0xd9, 0xdd, 0xdc, 0x6d,
+	0x6f, 0xb1, 0x56, 0x32, 0x93, 0x49, 0x18, 0x31, 0x79, 0x13, 0xc9, 0x43, 0x96, 0x48, 0x1f, 0xbe,
+	0x9c, 0x1a, 0xef, 0xff, 0x4c, 0x67, 0x16, 0x80, 0xb7, 0x48, 0x80, 0x1d, 0x55, 0x99, 0xcf, 0x6d,
+	0x02, 0x2c, 0x3e, 0xc9, 0x39, 0x61, 0x89, 0x78, 0x1e, 0x2c, 0x5e, 0x26, 0x14, 0xbe, 0xe4, 0x0c,
+	0xbb, 0xca, 0xda, 0xed, 0xae, 0xae, 0x59, 0xbb, 0xd7, 0x99, 0x4f, 0x8f, 0x4b, 0x70, 0x78, 0x5b,
+	0x55, 0x6b, 0x1d, 0xc6, 0x5a, 0x72, 0xc0, 0xd3, 0xe9, 0x03, 0xae, 0xab, 0x2a, 0x0f, 0x30, 0xba,
+	0x2d, 0xfe, 0x20, 0x3f, 0x47, 0xe1, 0x99, 0x5c, 0xf3, 0x75, 0x71, 0x07, 0xda, 0x81, 0x67, 0x7c,
+	0x0c, 0xfd, 0x51, 0xe5, 0xb8, 0x2f, 0x66, 0x24, 0x1a, 0x88, 0x7e, 0xc2, 0xe5, 0xeb, 0xaf, 0x26,
+	0x16, 0xcc, 0x72, 0x48, 0xbe, 0x19, 0x32, 0x2b, 0x02, 0xa0, 0x84, 0x53, 0x85, 0xa7, 0xfc, 0x39,
+	0xe0, 0x2c, 0xc8, 0x73, 0x79, 0x92, 0xc0, 0xac, 0x3e, 0x69, 0xf8, 0x4a, 0xe4, 0x06, 0x3c, 0xcb,
+	0x47, 0xdd, 0xb4, 0xe8, 0x8e, 0x6a, 0xac, 0xb6, 0xa8, 0xd6, 0x56, 0x15, 0xd1, 0xde, 0xd9, 0x18,
+	0xf0, 0x34, 0x1c, 0x31, 0xf9, 0x67, 0x7b, 0x25, 0x8a, 0xfc, 0x38, 0x2c, 0x2a, 0x36, 0x14, 0x27,
+	0x6d, 0x0a, 0x5e, 0xda, 0xbc, 0x8f, 0xe0, 0xb9, 0x94, 0x98, 0x92, 0x4c, 0x13, 0x26, 0x65, 0xd0,
+	0xba, 0x68, 0x20, 0x65, 0x76, 0x58, 0x2d, 0xa5, 0xb3, 0x8a, 0x8d, 0x3d, 0x61, 0xc6, 0xd4, 0x92,
+	0x8a, 0x5c, 0x65, 0xa2, 0x4b, 0xb9, 0xd5, 0xca, 0xcf, 0x92, 0xfc, 0x0b, 0x41, 0x31, 0x6e, 0xc8,
+	0xeb, 0xaa, 0x51, 0xbe, 0xb9, 0x89, 0x4b, 0x70, 0xd4, 0x4e, 0x14, 0xaa, 0x28, 0x86, 0x6a, 0xca,
+	0x35, 0x54, 0x39, 0xf6, 0xe0, 0xfe, 0x9c, 0xbd, 0xc0, 0xca, 0xa2, 0xb6, 0x0a, 0xb4, 0x67, 0xca,
+	0xbf, 0xf1, 0x07, 0x08, 0x9e, 0x0e, 0xf3, 0x2e, 0x0c, 0xca, 0xbb, 0xb2, 0x6c, 0x6f, 0xb6, 0xbf,
+	0xff, 0xdb, 0xdc, 0x57, 0x1b, 0x9a, 0xd5, 0xec, 0x6e, 0x2d, 0xd4, 0x59, 0x5b, 0x1e, 0x40, 0xf2,
+	0x7f, 0xe7, 0x4c, 0x65, 0xa7, 0x64, 0xed, 0x76, 0x54, 0x73, 0x61, 0x4d, 0xad, 0xaf, 0x32, 0x4d,
+	0x37, 0xc5, 0xde, 0x7c, 0xac, 0x1e, 0xd4, 0xea, 0x7b, 0x08, 0x4e, 0xa5, 0x8b, 0x25, 0xa7, 0xef,
+	0x4d, 0x18, 0xf5, 0xe6, 0x6b, 0x68, 0xfe, 0xe8, 0xd2, 0x72, 0x7e, 0xdc, 0x42, 0xbc, 0xca, 0xb0,
+	0x8d, 0xbe, 0xea, 0x84, 0x23, 0xef, 0x39, 0x6b, 0x93, 0x77, 0x59, 0x6d, 0x52, 0xbd, 0xa1, 0xae,
+	0xa9, 0x2d, 0xb5, 0x21, 0x8e, 0x47, 0x67, 0xba, 0xce, 0xc2, 0x98, 0xda, 0x61, 0xf5, 0x66, 0x4d,
+	0x53, 0x54, 0xdd, 0xd2, 0xb6, 0x35, 0xd5, 0x90, 0xb3, 0xf6, 0x34, 0xaf, 0xdf, 0x70, 0xab, 0x71,
+	0x11, 0x0e, 0xb3, 0x8e, 0x6a, 0x50, 0x8b, 0x19, 0x32, 0x4f, 0xdd, 0x72, 0xe0, 0x90, 0x19, 0x0a,
+	0x1e, 0x32, 0x3f, 0x45, 0xfe, 0xc4, 0x89, 0x01, 0xe2, 0x65, 0xb2, 0xe2, 0x56, 0xd7, 0xea, 0xbc,
+	0x5d, 0x4d, 0xd3, 0xb7, 0x59, 0xb6, 0x4c, 0xf6, 0x42, 0x8a, 0x21, 0x36, 0xf4, 0x6d, 0x56, 0x9d,
+	0x50, 0x62, 0x6a, 0xc9, 0xaf, 0x1d, 0x69, 0xbc, 0x3e, 0x9b, 0x16, 0x35, 0x2c, 0x4d, 0x6f, 0xf0,
+	0x5e, 0x59, 0xd6, 0x6b, 0xf2, 0xa9, 0x1a, 0xd0, 0x69, 0x28, 0xa4, 0x53, 0x9c, 0xdc, 0xc3, 0xb1,
+	0x72, 0x93, 0x0f, 0x1c, 0xdd, 0x92, 0x50, 0x4a, 0xdd, 0x74, 0x98, 0xf2, 0xe9, 0x66, 0xca, 0x26,
+	0x7e, 0xe5, 0x5e, 0xca, 0xaa, 0x5c, 0x20, 0xbe, 0x6f, 0x36, 0xfc, 0xf5, 0xe4, 0x57, 0x08, 0x4e,
+	0x73, 0x5c, 0xd7, 0x24, 0xa9, 0xab, 0x9a, 0x69, 0x31, 0x43, 0xab, 0xd3, 0x56, 0x68, 0x2b, 0xf0,
+	0x0b, 0x81, 0x52, 0x12, 0x26, 0xa4, 0x5f, 0x9c, 0x46, 0x43, 0xf1, 0x29, 0x39, 0x09, 0x23, 0x1d,
+	0xd5, 0xd0, 0x98, 0xc2, 0x45, 0x1c, 0xae, 0xca, 0x92, 0x8d, 0xf1, 0xcc, 0x7e, 0x18, 0xa5, 0x7c,
+	0xb7, 0x60, 0xda, 0x01, 0x55, 0x6b, 0xba, 0xad, 0x42, 0xbb, 0xe8, 0x2b, 0xe9, 0x0a, 0x26, 0x8f,
+	0x72, 0x92, 0x25, 0x7d, 0x22, 0x3f, 0x41, 0x30, 0x2f, 0x0e, 0xcf, 0x56, 0xeb, 0x8b, 0x97, 0x92,
+	0x7c, 0x82, 0x80, 0x24, 0xc2, 0x28, 0xeb, 0xca, 0x75, 0xae, 0xac, 0x4f, 0x71, 0xe4, 0x57, 0x1c,
+	0xf7, 0xd3, 0x65, 0x2c, 0x1c, 0x48, 0x46, 0xb9, 0xb7, 0xa5, 0x88, 0xf9, 0x09, 0x82, 0xb3, 0x19,
+	0xc4, 0x94, 0x73, 0xfe, 0x3e, 0x82, 0x39, 0xda, 0x6a, 0xd5, 0xd2, 0x27, 0xde, 0xde, 0x8e, 0x2f,
+	0x0d, 0x88, 0xd8, 0x15, 0x4c, 0x42, 0x9f, 0xa1, 0x29, 0xb8, 0xbc, 0xbd, 0xda, 0x69, 0xb2, 0xda,
+	0x35, 0x0c, 0x55, 0xb7, 0x1e, 0x7b, 0x12, 0xb8, 0x7b, 0x4e, 0x12, 0x10, 0x6f, 0xcf, 0x71, 0xb5,
+	0xab, 0x8b, 0x26, 0xa1, 0x15, 0xf3, 0x52, 0x36, 0xe1, 0x42, 0xf1, 0x27, 0x59, 0x6c, 0x3d, 0xa9,
+	0x00, 0x76, 0x7a, 0xf8, 0xae, 0xda, 0x69, 0x7a, 0x44, 0xef, 0x53, 0xbf, 0x45, 0xf0, 0x95, 0x00,
+	0xb7, 0x6b, 0x5d, 0xcb, 0xb4, 0xa8, 0xae, 0x68, 0x7a, 0x23, 0xcc, 0xef, 0x1d, 0x98, 0x71, 0xf9,
+	0x31, 0xaf, 0x59, 0x88, 0xe3, 0x72, 0x36, 0x8e, 0x31, 0xe3, 0x14, 0x59, 0xe2, 0x37, 0xf2, 0x2e,
+	0x82, 0xb9, 0xe0, 0x1c, 0xb0, 0x76, 0x5b, 0x33, 0x4d, 0xff, 0x8d, 0x9a, 0xc2, 0xb8, 0xa7, 0xbf,
+	0xfb, 0x59, 0xc2, 0x7a, 0x21, 0xa3, 0xf4, 0x5e, 0x58, 0xcc, 0x22, 0x75, 0xe4, 0x2e, 0x92, 0x17,
+	0x69, 0xa7, 0xfd, 0x66, 0x8b, 0x9a, 0xcd, 0xcb, 0x3d, 0x3e, 0x2b, 0x8f, 0x6b, 0x7f, 0x7f, 0x0e,
+	0x9e, 0x14, 0x4d, 0xf5, 0x6e, 0x7b, 0x4b, 0x1e, 0x95, 0xc3, 0xd5, 0xa3, 0xbc, 0xee, 0x75, 0x5e,
+	0x65, 0x37, 0xd9, 0x6a, 0xb1, 0xfa, 0x4e, 0xad, 0xa9, 0x6a, 0x8d, 0xa6, 0x35, 0xf5, 0x84, 0x68,
+	0xc2, 0xeb, 0xae, 0xf2, 0x2a, 0xf2, 0xc3, 0xb0, 0xa2, 0x7e, 0x2a, 0x52, 0xd1, 0x2d, 0x98, 0x70,
+	0x15, 0x35, 0xed, 0xcf, 0x35, 0xd5, 0xfe, 0x9e, 0x4f, 0x52, 0x5f, 0x5c, 0x57, 0x52, 0xaf, 0x8e,
+	0xfc, 0x20, 0x19, 0xc7, 0x63, 0x5c, 0xe3, 0xf7, 0x10, 0x4c, 0x47, 0x01, 0x94, 0x75, 0x45, 0xa8,
+	0x15, 0xd1, 0x1c, 0xed, 0xaf, 0x79, 0x21, 0xa2, 0x39, 0x6e, 0x26, 0xe8, 0x39, 0x34, 0x98, 0x9e,
+	0x72, 0x1b, 0x8d, 0x53, 0xf5, 0x0e, 0x92, 0x6f, 0xaf, 0x58, 0x55, 0xe5, 0xf4, 0x9a, 0x70, 0x22,
+	0x0e, 0x8e, 0xb3, 0xcd, 0x9f, 0xcf, 0x8b, 0xc7, 0x95, 0x4b, 0x02, 0x1b, 0x8f, 0x02, 0x33, 0x49,
+	0xd9, 0x7f, 0x03, 0x37, 0xbe, 0xa5, 0xd7, 0xf3, 0x3f, 0x98, 0x6e, 0x07, 0x1e, 0x5d, 0xd1, 0x10,
+	0x92, 0xde, 0x8d, 0xf0, 0x33, 0x62, 0x31, 0x9d, 0x90, 0xbd, 0xce, 0x99, 0xee, 0xbd, 0xab, 0xa9,
+	0x45, 0xc3, 0xef, 0x87, 0x15, 0x98, 0x09, 0xbe, 0x60, 0xf2, 0xc0, 0xbe, 0x83, 0x00, 0x44, 0x7b,
+	0xfb, 0xca, 0x68, 0x27, 0xae, 0xc5, 0x76, 0x54, 0xdd, 0x6b, 0x3a, 0xca, 0xcb, 0x1b, 0x0a, 0x9e,
+	0x82, 0x51, 0x45, 0xad, 0x6b, 0x6d, 0x2a, 0x4c, 0x9d, 0xa7, 0xaa, 0x4e, 0x11, 0xbf, 0x01, 0x23,
+	0xb4, 0xcd, 0xba, 0x32, 0x67, 0x8e, 0x54, 0x2e, 0xd8, 0xf8, 0xfe, 0x7a, 0x7f, 0xee, 0x4c, 0x86,
+	0xd7, 0xd9, 0x86, 0x6e, 0xfd, 0xe9, 0xe3, 0x73, 0x20, 0xdd, 0xc3, 0x0d, 0xdd, 0xaa, 0xca, 0x58,
+	0xe4, 0x1f, 0x05, 0x18, 0x17, 0x94, 0x0e, 0xf8, 0xf4, 0xac, 0xc1, 0x78, 0xdc, 0xc9, 0x50, 0xe0,
+	0xf2, 0xcf, 0xa7, 0xcb, 0xef, 0x49, 0xe3, 0xe6, 0x75, 0xe4, 0x1c, 0xc0, 0xdf, 0x81, 0xe3, 0xb7,
+	0x34, 0xab, 0xa9, 0x18, 0xf4, 0x96, 0xee, 0x86, 0x1f, 0x1a, 0x28, 0xfc, 0x98, 0x1b, 0xc8, 0x17,
+	0xbc, 0xab, 0x87, 0x5f, 0xce, 0xc3, 0x83, 0x05, 0xef, 0x86, 0xb2, 0x92, 0x18, 0xd2, 0x79, 0x8a,
+	0xa6, 0xce, 0x80, 0xe9, 0x1a, 0x33, 0x61, 0xa1, 0x74, 0x5d, 0x7a, 0xf7, 0x34, 0x3c, 0xc1, 0x07,
+	0xc5, 0x1f, 0x22, 0x18, 0x11, 0xee, 0x29, 0xde, 0x67, 0x9b, 0x89, 0x9a, 0xb7, 0xc5, 0xc5, 0x1c,
+	0x3d, 0x04, 0x19, 0xb2, 0xf8, 0xa3, 0x47, 0x1f, 0x3d, 0x8f, 0xbe, 0xff, 0xe7, 0x7f, 0xfe, 0xa2,
+	0x70, 0x06, 0x9f, 0x2a, 0x65, 0xb0, 0x8f, 0xf1, 0xa7, 0x08, 0x8e, 0x05, 0xfd, 0x24, 0xbc, 0x9c,
+	0x61, 0xe0, 0x58, 0xc7, 0xb7, 0x78, 0x7e, 0x80, 0x9e, 0x12, 0xfa, 0x55, 0x0f, 0xfa, 0x45, 0xbc,
+	0x92, 0x0e, 0xdd, 0x6f, 0x99, 0x95, 0xf6, 0x68, 0xcf, 0xec, 0x97, 0xf6, 0x9c, 0xd3, 0xa8, 0x8f,
+	0x3f, 0x47, 0x30, 0x19, 0x6f, 0xbf, 0xe2, 0x4b, 0xb9, 0xf1, 0x85, 0x9c, 0xe0, 0x62, 0xf9, 0x00,
+	0x11, 0x24, 0xd3, 0x37, 0x3c, 0xa6, 0x1b, 0xf8, 0x4a, 0x3a, 0xd3, 0xb0, 0x49, 0x5c, 0xdb, 0xda,
+	0xad, 0x09, 0xa7, 0xd9, 0xe1, 0x2d, 0x4a, 0x7d, 0xfc, 0x47, 0x04, 0xc7, 0x23, 0x3e, 0x23, 0x9e,
+	0xcf, 0x60, 0x24, 0x0a, 0x62, 0x17, 0x32, 0x10, 0x4b, 0xf4, 0x31, 0xc9, 0x65, 0x8f, 0xd3, 0xab,
+	0x78, 0x39, 0xfb, 0xec, 0x99, 0x36, 0x21, 0xda, 0x33, 0x05, 0x1b, 0xfc, 0xb1, 0x3f, 0x19, 0x79,
+	0x6e, 0xe7, 0x60, 0x90, 0x2b, 0xf9, 0x02, 0xbe, 0x37, 0xb9, 0xe8, 0xc1, 0x5f, 0xc2, 0x2f, 0x64,
+	0x82, 0xcf, 0x97, 0x8f, 0x84, 0xfd, 0x07, 0x04, 0x63, 0x61, 0x6b, 0x3b, 0x07, 0xf0, 0x95, 0x6c,
+	0xc0, 0x63, 0x9d, 0x73, 0xb2, 0xee, 0x41, 0x5f, 0xc1, 0xe7, 0xd3, 0xa1, 0xd7, 0x9d, 0x08, 0xae,
+	0xc3, 0xcf, 0x9c, 0x44, 0xc2, 0xf7, 0x10, 0x9c, 0x88, 0x35, 0xb7, 0x73, 0x10, 0xc9, 0xb5, 0xbc,
+	0xe2, 0xec, 0xf9, 0x5c, 0xbb, 0x40, 0x82, 0x8f, 0x2f, 0xf9, 0xfc, 0x07, 0x41, 0x31, 0xf9, 0xd5,
+	0x83, 0x33, 0xde, 0xfa, 0x7c, 0xe4, 0x2e, 0x67, 0x20, 0xb7, 0xff, 0x73, 0x8e, 0xbc, 0xe9, 0x31,
+	0xfc, 0x26, 0xfe, 0x46, 0x3a, 0xc3, 0xb4, 0x77, 0x5f, 0x69, 0xcf, 0xf9, 0xda, 0x97, 0x8c, 0xff,
+	0x8d, 0x60, 0x22, 0xce, 0x93, 0xc5, 0xaf, 0x65, 0x40, 0x9e, 0xf2, 0x63, 0x41, 0xf1, 0xeb, 0x03,
+	0xf7, 0x97, 0x9c, 0x37, 0x3d, 0xce, 0x57, 0xf1, 0x7a, 0x3a, 0xe7, 0xf8, 0x5f, 0x10, 0x4a, 0x7b,
+	0xee, 0x05, 0xcf, 0xa1, 0xfb, 0x39, 0x82, 0x67, 0x12, 0x2c, 0x6d, 0x5c, 0xce, 0x8c, 0x38, 0xe9,
+	0xb7, 0x83, 0x62, 0xe5, 0x20, 0x21, 0x24, 0xef, 0x1b, 0x1e, 0xef, 0x75, 0xbc, 0x96, 0x89, 0x37,
+	0x6d, 0xb5, 0xd2, 0xb8, 0xe3, 0x1f, 0x17, 0x60, 0x32, 0xde, 0xbc, 0xce, 0x74, 0xb8, 0xa5, 0x1a,
+	0xf0, 0xc5, 0xf2, 0x01, 0x22, 0x48, 0xca, 0x2d, 0x8f, 0x32, 0xc5, 0xb5, 0x0c, 0x94, 0x1d, 0x77,
+	0xdd, 0x73, 0x78, 0xcd, 0xd2, 0x5e, 0xf8, 0xfd, 0xd8, 0x0f, 0x66, 0xbb, 0x7b, 0xd4, 0xdf, 0x29,
+	0xc0, 0x64, 0xbc, 0x65, 0x9c, 0x49, 0x8d, 0x54, 0xcf, 0x3d, 0x93, 0x1a, 0xe9, 0x7e, 0x38, 0xb9,
+	0xed, 0xa9, 0xd1, 0xc6, 0x3b, 0xfb, 0xfc, 0xfe, 0x9f, 0x60, 0x9c, 0x87, 0x52, 0xdf, 0xe1, 0x1e,
+	0x50, 0x24, 0xa2, 0x17, 0xfe, 0xb0, 0x00, 0x27, 0x13, 0x4d, 0x3e, 0xbc, 0x9a, 0x63, 0x2f, 0x4b,
+	0xf2, 0x81, 0x8b, 0x6b, 0x07, 0x0b, 0x32, 0x80, 0x44, 0x29, 0x1e, 0x69, 0x7c, 0x82, 0xc4, 0x66,
+	0x92, 0x70, 0x89, 0xfb, 0xf8, 0x37, 0x05, 0x98, 0x49, 0xb3, 0x68, 0xf1, 0x7a, 0x96, 0xe3, 0x6c,
+	0x7f, 0xc3, 0xbc, 0x78, 0xe5, 0xc0, 0x71, 0xa4, 0x56, 0xa6, 0xa7, 0x55, 0x13, 0x6f, 0xef, 0x73,
+	0x3a, 0xa6, 0x7b, 0xca, 0x99, 0xf5, 0xe2, 0x3b, 0x4e, 0xbc, 0x45, 0x9a, 0x69, 0x8d, 0xa5, 0xda,
+	0xc8, 0x99, 0xd6, 0x58, 0xba, 0xff, 0x9b, 0x6b, 0xc7, 0x49, 0x32, 0x8a, 0xb3, 0xab, 0x71, 0x0f,
+	0x79, 0xf6, 0xaf, 0xe7, 0x50, 0x0e, 0x70, 0x9d, 0xb8, 0x98, 0x87, 0x79, 0xc4, 0x75, 0xcd, 0x7d,
+	0xed, 0x13, 0xdd, 0xa3, 0x97, 0x86, 0x5f, 0x16, 0x3c, 0x3e, 0x9e, 0x5f, 0x84, 0x2f, 0xe4, 0x40,
+	0x17, 0x31, 0x63, 0x73, 0x71, 0x8b, 0xfa, 0x9f, 0xe4, 0x3d, 0xe4, 0x91, 0xdb, 0xc3, 0xbb, 0x19,
+	0xa7, 0xd4, 0x67, 0xa5, 0xe5, 0xd8, 0x0c, 0xfc, 0xf6, 0x62, 0xbf, 0xb4, 0xe7, 0xb7, 0x12, 0xfb,
+	0xf8, 0xbf, 0x08, 0xc6, 0x63, 0x9c, 0x3c, 0x3c, 0x18, 0x3f, 0x37, 0xe9, 0x5f, 0x1b, 0xb4, 0xbb,
+	0xd4, 0x47, 0xf3, 0xe4, 0x79, 0x0b, 0x7f, 0x37, 0xbf, 0x3c, 0x39, 0xd2, 0xfd, 0x11, 0x92, 0xd7,
+	0x8d, 0x88, 0xdf, 0x97, 0xfd, 0xba, 0x91, 0xe4, 0x36, 0x66, 0xbf, 0x6e, 0x24, 0x9a, 0x8d, 0xb9,
+	0xde, 0x0b, 0x11, 0x93, 0x29, 0x70, 0xb1, 0xfa, 0x14, 0xc1, 0x58, 0xd8, 0x24, 0xc2, 0xaf, 0xe6,
+	0xb9, 0x04, 0x86, 0xd8, 0xad, 0x0c, 0xd4, 0x57, 0xf2, 0xaa, 0x78, 0xbc, 0x5e, 0xc1, 0x2f, 0xef,
+	0xbf, 0xd3, 0xc7, 0x30, 0xaa, 0x5c, 0xbb, 0xfb, 0x60, 0x16, 0x7d, 0xf6, 0x60, 0x16, 0xfd, 0xfd,
+	0xc1, 0x2c, 0xfa, 0xd9, 0xc3, 0xd9, 0x43, 0x9f, 0x3d, 0x9c, 0x3d, 0xf4, 0x97, 0x87, 0xb3, 0x87,
+	0xbe, 0xfd, 0xb2, 0xcf, 0xb6, 0xb4, 0x43, 0x9f, 0xbb, 0xbd, 0xfb, 0x8e, 0x6f, 0x8c, 0xdb, 0x91,
+	0x51, 0xb8, 0x93, 0xb9, 0x35, 0xc2, 0xff, 0xa9, 0xe1, 0x8b, 0xff, 0x0b, 0x00, 0x00, 0xff, 0xff,
+	0xa1, 0xa3, 0xcd, 0x31, 0x8f, 0x29, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -2355,10 +2416,10 @@ type QueryClient interface {
 	AVSRewardDistribution(ctx context.Context, in *AVSRequest, opts ...grpc.CallOption) (*QueryAVSRewardDistributionResponse, error)
 	// OperatorOutstandingRewards queries the outstanding rewards for an operator.
 	OperatorOutstandingRewards(ctx context.Context, in *OperatorAVSRequest, opts ...grpc.CallOption) (*QueryOperatorOutstandingRewardsResponse, error)
-	// StakerOutstandingRewards queries the outstanding rewards for a staker.
-	StakerOutstandingRewards(ctx context.Context, in *QueryStakerOutstandingRewardsRequest, opts ...grpc.CallOption) (*QueryStakerOutstandingRewardsResponse, error)
-	// StakerAllOutstandingRewards queries all outstanding rewards for a staker.
-	StakerAllOutstandingRewards(ctx context.Context, in *QueryStakerAllOutstandingRewardsRequest, opts ...grpc.CallOption) (*QueryStakerAllOutstandingRewardsResponse, error)
+	// StakerClaimedRewards queries the claimed rewards for a staker.
+	StakerClaimedRewards(ctx context.Context, in *QueryStakerClaimedRewardsRequest, opts ...grpc.CallOption) (*QueryStakerClaimedRewardsResponse, error)
+	// StakerAllClaimedRewards queries all claimed rewards for a staker.
+	StakerAllClaimedRewards(ctx context.Context, in *QueryStakerAllClaimedRewardsRequest, opts ...grpc.CallOption) (*QueryStakerAllClaimedRewardsResponse, error)
 	// StakeChangeDelegations queries the delegations whose stake has changed.
 	StakeChangeDelegations(ctx context.Context, in *QueryStakeChangeDelegationsRequest, opts ...grpc.CallOption) (*QueryStakeChangeDelegationsResponse, error)
 	// DelegationStartingInfo queries the delegation staring information.
@@ -2369,8 +2430,8 @@ type QueryClient interface {
 	AllOperatorHistoricalRewards(ctx context.Context, in *QueryAllOperatorHistoricalRewardsRequest, opts ...grpc.CallOption) (*QueryAllOperatorHistoricalRewardsResponse, error)
 	// OperatorCurrentRewards queries the operator current rewards
 	OperatorCurrentRewards(ctx context.Context, in *QueryOperatorCurrentRewardsRequest, opts ...grpc.CallOption) (*QueryOperatorCurrentRewardsResponse, error)
-	// OperatorAccumulatedCommission queries the operator accumulated commission.
-	OperatorAccumulatedCommission(ctx context.Context, in *OperatorAVSRequest, opts ...grpc.CallOption) (*QueryOperatorAccumulatedCommissionResponse, error)
+	// OperatorCommission queries the operator commission.
+	OperatorCommission(ctx context.Context, in *OperatorAVSRequest, opts ...grpc.CallOption) (*QueryOperatorCommissionResponse, error)
 	// OperatorSlashEvent queries the operator slash event.
 	OperatorSlashEvent(ctx context.Context, in *QueryOperatorSlashEventRequest, opts ...grpc.CallOption) (*QueryOperatorSlashEventResponse, error)
 	// OperatorSlashEvents queries the operator slash events.
@@ -2461,18 +2522,18 @@ func (c *queryClient) OperatorOutstandingRewards(ctx context.Context, in *Operat
 	return out, nil
 }
 
-func (c *queryClient) StakerOutstandingRewards(ctx context.Context, in *QueryStakerOutstandingRewardsRequest, opts ...grpc.CallOption) (*QueryStakerOutstandingRewardsResponse, error) {
-	out := new(QueryStakerOutstandingRewardsResponse)
-	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/StakerOutstandingRewards", in, out, opts...)
+func (c *queryClient) StakerClaimedRewards(ctx context.Context, in *QueryStakerClaimedRewardsRequest, opts ...grpc.CallOption) (*QueryStakerClaimedRewardsResponse, error) {
+	out := new(QueryStakerClaimedRewardsResponse)
+	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/StakerClaimedRewards", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) StakerAllOutstandingRewards(ctx context.Context, in *QueryStakerAllOutstandingRewardsRequest, opts ...grpc.CallOption) (*QueryStakerAllOutstandingRewardsResponse, error) {
-	out := new(QueryStakerAllOutstandingRewardsResponse)
-	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/StakerAllOutstandingRewards", in, out, opts...)
+func (c *queryClient) StakerAllClaimedRewards(ctx context.Context, in *QueryStakerAllClaimedRewardsRequest, opts ...grpc.CallOption) (*QueryStakerAllClaimedRewardsResponse, error) {
+	out := new(QueryStakerAllClaimedRewardsResponse)
+	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/StakerAllClaimedRewards", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2524,9 +2585,9 @@ func (c *queryClient) OperatorCurrentRewards(ctx context.Context, in *QueryOpera
 	return out, nil
 }
 
-func (c *queryClient) OperatorAccumulatedCommission(ctx context.Context, in *OperatorAVSRequest, opts ...grpc.CallOption) (*QueryOperatorAccumulatedCommissionResponse, error) {
-	out := new(QueryOperatorAccumulatedCommissionResponse)
-	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/OperatorAccumulatedCommission", in, out, opts...)
+func (c *queryClient) OperatorCommission(ctx context.Context, in *OperatorAVSRequest, opts ...grpc.CallOption) (*QueryOperatorCommissionResponse, error) {
+	out := new(QueryOperatorCommissionResponse)
+	err := c.cc.Invoke(ctx, "/imuachain.feedistribution.v1.Query/OperatorCommission", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2588,10 +2649,10 @@ type QueryServer interface {
 	AVSRewardDistribution(context.Context, *AVSRequest) (*QueryAVSRewardDistributionResponse, error)
 	// OperatorOutstandingRewards queries the outstanding rewards for an operator.
 	OperatorOutstandingRewards(context.Context, *OperatorAVSRequest) (*QueryOperatorOutstandingRewardsResponse, error)
-	// StakerOutstandingRewards queries the outstanding rewards for a staker.
-	StakerOutstandingRewards(context.Context, *QueryStakerOutstandingRewardsRequest) (*QueryStakerOutstandingRewardsResponse, error)
-	// StakerAllOutstandingRewards queries all outstanding rewards for a staker.
-	StakerAllOutstandingRewards(context.Context, *QueryStakerAllOutstandingRewardsRequest) (*QueryStakerAllOutstandingRewardsResponse, error)
+	// StakerClaimedRewards queries the claimed rewards for a staker.
+	StakerClaimedRewards(context.Context, *QueryStakerClaimedRewardsRequest) (*QueryStakerClaimedRewardsResponse, error)
+	// StakerAllClaimedRewards queries all claimed rewards for a staker.
+	StakerAllClaimedRewards(context.Context, *QueryStakerAllClaimedRewardsRequest) (*QueryStakerAllClaimedRewardsResponse, error)
 	// StakeChangeDelegations queries the delegations whose stake has changed.
 	StakeChangeDelegations(context.Context, *QueryStakeChangeDelegationsRequest) (*QueryStakeChangeDelegationsResponse, error)
 	// DelegationStartingInfo queries the delegation staring information.
@@ -2602,8 +2663,8 @@ type QueryServer interface {
 	AllOperatorHistoricalRewards(context.Context, *QueryAllOperatorHistoricalRewardsRequest) (*QueryAllOperatorHistoricalRewardsResponse, error)
 	// OperatorCurrentRewards queries the operator current rewards
 	OperatorCurrentRewards(context.Context, *QueryOperatorCurrentRewardsRequest) (*QueryOperatorCurrentRewardsResponse, error)
-	// OperatorAccumulatedCommission queries the operator accumulated commission.
-	OperatorAccumulatedCommission(context.Context, *OperatorAVSRequest) (*QueryOperatorAccumulatedCommissionResponse, error)
+	// OperatorCommission queries the operator commission.
+	OperatorCommission(context.Context, *OperatorAVSRequest) (*QueryOperatorCommissionResponse, error)
 	// OperatorSlashEvent queries the operator slash event.
 	OperatorSlashEvent(context.Context, *QueryOperatorSlashEventRequest) (*QueryOperatorSlashEventResponse, error)
 	// OperatorSlashEvents queries the operator slash events.
@@ -2642,11 +2703,11 @@ func (*UnimplementedQueryServer) AVSRewardDistribution(ctx context.Context, req 
 func (*UnimplementedQueryServer) OperatorOutstandingRewards(ctx context.Context, req *OperatorAVSRequest) (*QueryOperatorOutstandingRewardsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OperatorOutstandingRewards not implemented")
 }
-func (*UnimplementedQueryServer) StakerOutstandingRewards(ctx context.Context, req *QueryStakerOutstandingRewardsRequest) (*QueryStakerOutstandingRewardsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StakerOutstandingRewards not implemented")
+func (*UnimplementedQueryServer) StakerClaimedRewards(ctx context.Context, req *QueryStakerClaimedRewardsRequest) (*QueryStakerClaimedRewardsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StakerClaimedRewards not implemented")
 }
-func (*UnimplementedQueryServer) StakerAllOutstandingRewards(ctx context.Context, req *QueryStakerAllOutstandingRewardsRequest) (*QueryStakerAllOutstandingRewardsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method StakerAllOutstandingRewards not implemented")
+func (*UnimplementedQueryServer) StakerAllClaimedRewards(ctx context.Context, req *QueryStakerAllClaimedRewardsRequest) (*QueryStakerAllClaimedRewardsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StakerAllClaimedRewards not implemented")
 }
 func (*UnimplementedQueryServer) StakeChangeDelegations(ctx context.Context, req *QueryStakeChangeDelegationsRequest) (*QueryStakeChangeDelegationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StakeChangeDelegations not implemented")
@@ -2663,8 +2724,8 @@ func (*UnimplementedQueryServer) AllOperatorHistoricalRewards(ctx context.Contex
 func (*UnimplementedQueryServer) OperatorCurrentRewards(ctx context.Context, req *QueryOperatorCurrentRewardsRequest) (*QueryOperatorCurrentRewardsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OperatorCurrentRewards not implemented")
 }
-func (*UnimplementedQueryServer) OperatorAccumulatedCommission(ctx context.Context, req *OperatorAVSRequest) (*QueryOperatorAccumulatedCommissionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method OperatorAccumulatedCommission not implemented")
+func (*UnimplementedQueryServer) OperatorCommission(ctx context.Context, req *OperatorAVSRequest) (*QueryOperatorCommissionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OperatorCommission not implemented")
 }
 func (*UnimplementedQueryServer) OperatorSlashEvent(ctx context.Context, req *QueryOperatorSlashEventRequest) (*QueryOperatorSlashEventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OperatorSlashEvent not implemented")
@@ -2827,38 +2888,38 @@ func _Query_OperatorOutstandingRewards_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_StakerOutstandingRewards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryStakerOutstandingRewardsRequest)
+func _Query_StakerClaimedRewards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryStakerClaimedRewardsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).StakerOutstandingRewards(ctx, in)
+		return srv.(QueryServer).StakerClaimedRewards(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/imuachain.feedistribution.v1.Query/StakerOutstandingRewards",
+		FullMethod: "/imuachain.feedistribution.v1.Query/StakerClaimedRewards",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).StakerOutstandingRewards(ctx, req.(*QueryStakerOutstandingRewardsRequest))
+		return srv.(QueryServer).StakerClaimedRewards(ctx, req.(*QueryStakerClaimedRewardsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_StakerAllOutstandingRewards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryStakerAllOutstandingRewardsRequest)
+func _Query_StakerAllClaimedRewards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryStakerAllClaimedRewardsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).StakerAllOutstandingRewards(ctx, in)
+		return srv.(QueryServer).StakerAllClaimedRewards(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/imuachain.feedistribution.v1.Query/StakerAllOutstandingRewards",
+		FullMethod: "/imuachain.feedistribution.v1.Query/StakerAllClaimedRewards",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).StakerAllOutstandingRewards(ctx, req.(*QueryStakerAllOutstandingRewardsRequest))
+		return srv.(QueryServer).StakerAllClaimedRewards(ctx, req.(*QueryStakerAllClaimedRewardsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2953,20 +3014,20 @@ func _Query_OperatorCurrentRewards_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_OperatorAccumulatedCommission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Query_OperatorCommission_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(OperatorAVSRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).OperatorAccumulatedCommission(ctx, in)
+		return srv.(QueryServer).OperatorCommission(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/imuachain.feedistribution.v1.Query/OperatorAccumulatedCommission",
+		FullMethod: "/imuachain.feedistribution.v1.Query/OperatorCommission",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).OperatorAccumulatedCommission(ctx, req.(*OperatorAVSRequest))
+		return srv.(QueryServer).OperatorCommission(ctx, req.(*OperatorAVSRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -3080,12 +3141,12 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_OperatorOutstandingRewards_Handler,
 		},
 		{
-			MethodName: "StakerOutstandingRewards",
-			Handler:    _Query_StakerOutstandingRewards_Handler,
+			MethodName: "StakerClaimedRewards",
+			Handler:    _Query_StakerClaimedRewards_Handler,
 		},
 		{
-			MethodName: "StakerAllOutstandingRewards",
-			Handler:    _Query_StakerAllOutstandingRewards_Handler,
+			MethodName: "StakerAllClaimedRewards",
+			Handler:    _Query_StakerAllClaimedRewards_Handler,
 		},
 		{
 			MethodName: "StakeChangeDelegations",
@@ -3108,8 +3169,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_OperatorCurrentRewards_Handler,
 		},
 		{
-			MethodName: "OperatorAccumulatedCommission",
-			Handler:    _Query_OperatorAccumulatedCommission_Handler,
+			MethodName: "OperatorCommission",
+			Handler:    _Query_OperatorCommission_Handler,
 		},
 		{
 			MethodName: "OperatorSlashEvent",
@@ -3502,7 +3563,7 @@ func (m *QueryRewardAssetsByAVSResponse) MarshalToSizedBuffer(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryStakerOutstandingRewardsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryStakerClaimedRewardsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3512,12 +3573,12 @@ func (m *QueryStakerOutstandingRewardsRequest) Marshal() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *QueryStakerOutstandingRewardsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryStakerClaimedRewardsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryStakerOutstandingRewardsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryStakerClaimedRewardsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -3539,7 +3600,7 @@ func (m *QueryStakerOutstandingRewardsRequest) MarshalToSizedBuffer(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryStakerOutstandingRewardsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryStakerClaimedRewardsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3549,19 +3610,19 @@ func (m *QueryStakerOutstandingRewardsResponse) Marshal() (dAtA []byte, err erro
 	return dAtA[:n], nil
 }
 
-func (m *QueryStakerOutstandingRewardsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryStakerClaimedRewardsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryStakerOutstandingRewardsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryStakerClaimedRewardsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.StakerOutstandingRewards != nil {
+	if m.StakerClaimedRewards != nil {
 		{
-			size, err := m.StakerOutstandingRewards.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.StakerClaimedRewards.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -3574,7 +3635,7 @@ func (m *QueryStakerOutstandingRewardsResponse) MarshalToSizedBuffer(dAtA []byte
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryStakerAllOutstandingRewardsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryStakerAllClaimedRewardsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3584,12 +3645,12 @@ func (m *QueryStakerAllOutstandingRewardsRequest) Marshal() (dAtA []byte, err er
 	return dAtA[:n], nil
 }
 
-func (m *QueryStakerAllOutstandingRewardsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryStakerAllClaimedRewardsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryStakerAllOutstandingRewardsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryStakerAllClaimedRewardsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -3604,7 +3665,7 @@ func (m *QueryStakerAllOutstandingRewardsRequest) MarshalToSizedBuffer(dAtA []by
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryStakerAllOutstandingRewardsResponse) Marshal() (dAtA []byte, err error) {
+func (m *StakerClaimedRewardsPerAVS) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -3614,12 +3675,52 @@ func (m *QueryStakerAllOutstandingRewardsResponse) Marshal() (dAtA []byte, err e
 	return dAtA[:n], nil
 }
 
-func (m *QueryStakerAllOutstandingRewardsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *StakerClaimedRewardsPerAVS) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryStakerAllOutstandingRewardsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *StakerClaimedRewardsPerAVS) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.ClaimedRewards.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.AVSAddress) > 0 {
+		i -= len(m.AVSAddress)
+		copy(dAtA[i:], m.AVSAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AVSAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryStakerAllClaimedRewardsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryStakerAllClaimedRewardsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryStakerAllClaimedRewardsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -4160,7 +4261,7 @@ func (m *QueryOperatorOutstandingRewardsResponse) MarshalToSizedBuffer(dAtA []by
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryOperatorAccumulatedCommissionResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryOperatorCommissionResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -4170,19 +4271,19 @@ func (m *QueryOperatorAccumulatedCommissionResponse) Marshal() (dAtA []byte, err
 	return dAtA[:n], nil
 }
 
-func (m *QueryOperatorAccumulatedCommissionResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryOperatorCommissionResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryOperatorAccumulatedCommissionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryOperatorCommissionResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.OperatorAccumulatedCommission != nil {
+	if m.OperatorCommission != nil {
 		{
-			size, err := m.OperatorAccumulatedCommission.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.OperatorCommission.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -4581,6 +4682,20 @@ func (m *StakerRewardsPerAVS) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintQuery(dAtA, i, uint64(size))
 			}
 			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.WithdrawnRewards) > 0 {
+		for iNdEx := len(m.WithdrawnRewards) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.WithdrawnRewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
 			dAtA[i] = 0x1a
 		}
 	}
@@ -4801,7 +4916,7 @@ func (m *QueryRewardAssetsByAVSResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryStakerOutstandingRewardsRequest) Size() (n int) {
+func (m *QueryStakerClaimedRewardsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4818,20 +4933,20 @@ func (m *QueryStakerOutstandingRewardsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryStakerOutstandingRewardsResponse) Size() (n int) {
+func (m *QueryStakerClaimedRewardsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.StakerOutstandingRewards != nil {
-		l = m.StakerOutstandingRewards.Size()
+	if m.StakerClaimedRewards != nil {
+		l = m.StakerClaimedRewards.Size()
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
 
-func (m *QueryStakerAllOutstandingRewardsRequest) Size() (n int) {
+func (m *QueryStakerAllClaimedRewardsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -4844,7 +4959,22 @@ func (m *QueryStakerAllOutstandingRewardsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryStakerAllOutstandingRewardsResponse) Size() (n int) {
+func (m *StakerClaimedRewardsPerAVS) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.AVSAddress)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = m.ClaimedRewards.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryStakerAllClaimedRewardsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -5082,14 +5212,14 @@ func (m *QueryOperatorOutstandingRewardsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryOperatorAccumulatedCommissionResponse) Size() (n int) {
+func (m *QueryOperatorCommissionResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.OperatorAccumulatedCommission != nil {
-		l = m.OperatorAccumulatedCommission.Size()
+	if m.OperatorCommission != nil {
+		l = m.OperatorCommission.Size()
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
@@ -5259,6 +5389,12 @@ func (m *StakerRewardsPerAVS) Size() (n int) {
 	}
 	if len(m.OutstandingRewards) > 0 {
 		for _, e := range m.OutstandingRewards {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if len(m.WithdrawnRewards) > 0 {
+		for _, e := range m.WithdrawnRewards {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -6252,7 +6388,7 @@ func (m *QueryRewardAssetsByAVSResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryStakerOutstandingRewardsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryStakerClaimedRewardsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6275,10 +6411,10 @@ func (m *QueryStakerOutstandingRewardsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryStakerOutstandingRewardsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryStakerClaimedRewardsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryStakerOutstandingRewardsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryStakerClaimedRewardsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6366,7 +6502,7 @@ func (m *QueryStakerOutstandingRewardsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryStakerOutstandingRewardsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryStakerClaimedRewardsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6389,15 +6525,15 @@ func (m *QueryStakerOutstandingRewardsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryStakerOutstandingRewardsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryStakerClaimedRewardsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryStakerOutstandingRewardsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryStakerClaimedRewardsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StakerOutstandingRewards", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerClaimedRewards", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -6424,10 +6560,10 @@ func (m *QueryStakerOutstandingRewardsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.StakerOutstandingRewards == nil {
-				m.StakerOutstandingRewards = &StakerOutstandingRewards{}
+			if m.StakerClaimedRewards == nil {
+				m.StakerClaimedRewards = &StakerClaimedRewards{}
 			}
-			if err := m.StakerOutstandingRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.StakerClaimedRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -6452,7 +6588,7 @@ func (m *QueryStakerOutstandingRewardsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryStakerAllOutstandingRewardsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryStakerAllClaimedRewardsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6475,10 +6611,10 @@ func (m *QueryStakerAllOutstandingRewardsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryStakerAllOutstandingRewardsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryStakerAllClaimedRewardsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryStakerAllOutstandingRewardsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryStakerAllClaimedRewardsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6534,7 +6670,7 @@ func (m *QueryStakerAllOutstandingRewardsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryStakerAllOutstandingRewardsResponse) Unmarshal(dAtA []byte) error {
+func (m *StakerClaimedRewardsPerAVS) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6557,10 +6693,125 @@ func (m *QueryStakerAllOutstandingRewardsResponse) Unmarshal(dAtA []byte) error 
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryStakerAllOutstandingRewardsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: StakerClaimedRewardsPerAVS: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryStakerAllOutstandingRewardsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: StakerClaimedRewardsPerAVS: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AVSAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AVSAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimedRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ClaimedRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryStakerAllClaimedRewardsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryStakerAllClaimedRewardsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryStakerAllClaimedRewardsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -6592,7 +6843,7 @@ func (m *QueryStakerAllOutstandingRewardsResponse) Unmarshal(dAtA []byte) error 
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Rewards = append(m.Rewards, CommonAVSRewardData{})
+			m.Rewards = append(m.Rewards, StakerClaimedRewardsPerAVS{})
 			if err := m.Rewards[len(m.Rewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -8129,7 +8380,7 @@ func (m *QueryOperatorOutstandingRewardsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryOperatorAccumulatedCommissionResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryOperatorCommissionResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -8152,15 +8403,15 @@ func (m *QueryOperatorAccumulatedCommissionResponse) Unmarshal(dAtA []byte) erro
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryOperatorAccumulatedCommissionResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryOperatorCommissionResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryOperatorAccumulatedCommissionResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryOperatorCommissionResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OperatorAccumulatedCommission", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorCommission", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -8187,10 +8438,10 @@ func (m *QueryOperatorAccumulatedCommissionResponse) Unmarshal(dAtA []byte) erro
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.OperatorAccumulatedCommission == nil {
-				m.OperatorAccumulatedCommission = &OperatorAccumulatedCommission{}
+			if m.OperatorCommission == nil {
+				m.OperatorCommission = &OperatorCommission{}
 			}
-			if err := m.OperatorAccumulatedCommission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.OperatorCommission.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -9315,6 +9566,40 @@ func (m *StakerRewardsPerAVS) Unmarshal(dAtA []byte) error {
 			}
 			iNdEx = postIndex
 		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field WithdrawnRewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.WithdrawnRewards = append(m.WithdrawnRewards, RewardInfo{})
+			if err := m.WithdrawnRewards[len(m.WithdrawnRewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field UnclaimedRewards", wireType)
 			}

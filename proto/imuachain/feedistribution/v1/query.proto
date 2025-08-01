@@ -54,15 +54,15 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/operator_outstanding_rewards/{operator}/{avs}";
   }
-  // StakerOutstandingRewards queries the outstanding rewards for a staker.
-  rpc StakerOutstandingRewards(QueryStakerOutstandingRewardsRequest) returns (QueryStakerOutstandingRewardsResponse) {
+  // StakerClaimedRewards queries the claimed rewards for a staker.
+  rpc StakerClaimedRewards(QueryStakerClaimedRewardsRequest) returns (QueryStakerClaimedRewardsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_outstanding_rewards/{staker_id}/{avs}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_claimed_rewards/{staker_id}/{avs}";
   }
-  // StakerAllOutstandingRewards queries all outstanding rewards for a staker.
-  rpc StakerAllOutstandingRewards(QueryStakerAllOutstandingRewardsRequest) returns (QueryStakerAllOutstandingRewardsResponse) {
+  // StakerAllClaimedRewards queries all claimed rewards for a staker.
+  rpc StakerAllClaimedRewards(QueryStakerAllClaimedRewardsRequest) returns (QueryStakerAllClaimedRewardsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_all_outstanding_rewards/{staker_id}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_all_claimed_rewards/{staker_id}";
   }
   // StakeChangeDelegations queries the delegations whose stake has changed.
   rpc StakeChangeDelegations(QueryStakeChangeDelegationsRequest) returns (QueryStakeChangeDelegationsResponse) {
@@ -89,10 +89,10 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/operator_current_rewards/{operator}/{asset_id}/{epoch_identifier}";
   }
-  // OperatorAccumulatedCommission queries the operator accumulated commission.
-  rpc OperatorAccumulatedCommission (OperatorAVSRequest) returns (QueryOperatorAccumulatedCommissionResponse) {
+  // OperatorCommission queries the operator commission.
+  rpc OperatorCommission (OperatorAVSRequest) returns (QueryOperatorCommissionResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/feedistribution/v1/accumulated_commission/{operator}/{avs}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/commission/{operator}/{avs}";
   }
   // OperatorSlashEvent queries the operator slash event.
   rpc OperatorSlashEvent (QueryOperatorSlashEventRequest) returns (QueryOperatorSlashEventResponse) {
@@ -186,8 +186,8 @@ message QueryRewardAssetsByAVSResponse {
   AVSRewardAssets reward_assets = 1;
 }
 
-// QueryStakerOutstandingRewardsRequest is the request to obtain the outstanding rewards for a staker.
-message QueryStakerOutstandingRewardsRequest {
+// QueryStakerClaimedRewardsRequest is the request to obtain the claimed rewards for a staker.
+message QueryStakerClaimedRewardsRequest {
   // staker id
   string staker_id = 1;
   // avs address
@@ -195,23 +195,36 @@ message QueryStakerOutstandingRewardsRequest {
 }
 
 
-// QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards
-message QueryStakerOutstandingRewardsResponse{
-  // staker_outstanding_rewards is the staker outstanding rewards
-  StakerOutstandingRewards staker_outstanding_rewards = 1;
+// QueryStakerClaimedRewardsResponse is the response to obtain the staker claimed rewards
+message QueryStakerClaimedRewardsResponse{
+  // staker_claimed_rewards is the staker claimed rewards
+  StakerClaimedRewards staker_claimed_rewards = 1;
 }
 
-// QueryStakerAllOutstandingRewardsRequest is the request to obtain all outstanding rewards for a staker.
-message QueryStakerAllOutstandingRewardsRequest {
+// QueryStakerAllClaimedRewardsRequest is the request to obtain all claimed rewards for a staker.
+message QueryStakerAllClaimedRewardsRequest {
   // staker id
   string staker_id = 1;
 }
 
 
-// QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards
-message QueryStakerAllOutstandingRewardsResponse{
-  // rewards: outstanding rewards for all AVSs
-  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
+// StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified
+// staker and AVS
+message StakerClaimedRewardsPerAVS {
+  // avs_address is the AVS address
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
+  // claimed_rewards represents the claimed rewards
+  StakerClaimedRewards claimed_rewards = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// QueryStakerAllClaimedRewardsResponse is the response to obtain all claimed rewards for a staker.
+message QueryStakerAllClaimedRewardsResponse{
+  // rewards: claimed rewards for all AVSs
+  repeated StakerClaimedRewardsPerAVS rewards = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryStakeChangeDelegationsRequest is the request to obtain the delegations whose stake has changed.
@@ -321,10 +334,10 @@ message QueryOperatorOutstandingRewardsResponse{
   OperatorOutstandingRewards operator_outstanding_rewards = 1;
 }
 
-// QueryOperatorAccumulatedCommissionResponse is the response to obtain the operator accumulated commission
-message QueryOperatorAccumulatedCommissionResponse{
-  // operator_outstanding_rewards is the accumulated commission returned for an operator
-  OperatorAccumulatedCommission operator_accumulated_commission = 1;
+// QueryOperatorCommissionResponse is the response to obtain the operator commission
+message QueryOperatorCommissionResponse{
+  // operator_commission is the commission returned for an operator
+  OperatorCommission operator_commission = 1;
 }
 
 // QueryOperatorSlashEventRequest is the request to obtain the operator slash event.
@@ -419,8 +432,11 @@ message StakerRewardsPerAVS {
   // outstanding_rewards represents rewards that have been claimed but not yet withdrawn.
   repeated RewardInfo outstanding_rewards = 2 [(gogoproto.nullable) = false];
 
+  // withdrawn_rewards represents rewards that have been withdrawn.
+  repeated RewardInfo withdrawn_rewards = 3 [(gogoproto.nullable) = false];
+
   // unclaimed_rewards represents rewards that have not yet been accounted or distributed.
-  repeated RewardInfo unclaimed_rewards = 3 [(gogoproto.nullable) = false];
+  repeated RewardInfo unclaimed_rewards = 4 [(gogoproto.nullable) = false];
 }
 
 

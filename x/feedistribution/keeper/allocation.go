@@ -96,7 +96,7 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 		}
 		rewardsForStakers := reward
 		commission := reward.MulDecTruncate(ops.GetCommission().Rate)
-		err = k.UpdateOperatorAccumulatedCommission(ctx, operatorProportion.OperatorAddr, avsAddr, true, commission)
+		err = k.IncreaseOperatorCommission(ctx, operatorProportion.OperatorAddr, avsAddr, commission)
 		if err != nil {
 			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to distribute the commission to the operator,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}

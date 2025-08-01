@@ -10,7 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type DeltaAVSRewardAssetState AVSRewardAssetState
+type (
+	DeltaAVSRewardAssetState AVSRewardAssetState
+)
 
 type OperatorRewardProportions []OperatorRewardProportion
 
