@@ -882,9 +882,11 @@ func (suite *BaseTestSuite) RegisterAssets(number int, decimal uint32) ([]common
 			AssetID: assetID,
 		})
 		suite.Require().NoError(err)
+		pOracle := suite.App.OracleKeeper.GetParams(suite.Ctx)
+		tokensSize := len(pOracle.Tokens) - 1
 		// set price to 1 for the newly registered asset
 		prices := oracletypes.Prices{
-			TokenID:     uint64(i + 5), // assuming token IDs start from 1
+			TokenID:     uint64(i + tokensSize), // assuming token IDs start from 1
 			NextRoundID: 2,
 			PriceList:   []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 1}},
 		}

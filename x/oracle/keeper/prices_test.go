@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -44,7 +43,6 @@ func TestPricesGet(t *testing.T) {
 	rst, found := keeper.GetPrices(ctx, 1)
 	require.True(t, found)
 	pRes := testdata.P1
-	fmt.Println("--->", pRes, rst)
 	rst.PriceList = rst.PriceList[1:]
 	require.Equal(t, pRes, rst)
 }
