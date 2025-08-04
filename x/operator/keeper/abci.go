@@ -13,27 +13,14 @@ import (
 // the end of epoch.
 func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier string, epochNumber int64, isForSlash bool) error {
 	// get assets supported by the AVS
-	// the mock keeper returns all registered assets.
-	avsAssetsList, getAVSAssetsErr := k.avsKeeper.GetAVSAssetsList(ctx, avsAddr)
-	// check if self USD value is more than the minimum self delegation.
-	minimumSelfDelegation, getSelfDelegationErr := k.avsKeeper.GetAVSMinimumSelfDelegation(ctx, avsAddr)
-	// set the voting power to zero if an error is returned, which may prevent malicious behavior
-	// where errors are intentionally triggered to avoid updating the voting power.
-	if getAVSAssetsErr != nil || len(avsAssetsList) == 0 || getSelfDelegationErr != nil {
-		ctx.Logger().Error("UpdateVotingPower the assets list supported by AVS is nil or can't get AVS info", "getAVSAssetsErr", getAVSAssetsErr, "getSelfDelegationErr", getSelfDelegationErr)
-		// using cache context to ensure the atomicity of the operation.
-		cc, writeFunc := ctx.CacheContext()
-		// clear the voting power regarding this AVS if there isn't any assets supported by it.
-		err := k.DeleteAllOperatorsUSDValueForAVS(cc, avsAddr)
-		if err != nil {
-			return err
-		}
-		err = k.DeleteAVSUSDValue(cc, avsAddr)
-		if err != nil {
-			return err
-		}
-		writeFunc()
-		return nil
+	avsAssetsList, err := k.avsKeeper.GetAVSAssetsList(ctx, avsAddr)
+	if err != nil {
+		return err
+	}
+	// get minimum self delegation amount
+	minimumSelfDelegation, err := k.avsKeeper.GetAVSMinimumSelfDelegation(ctx, avsAddr)
+	if err != nil {
+		return err
 	}
 
 	// update the voting power of operators and AVS
@@ -70,6 +57,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		}
 		optedUSDValues.SelfUSDValue = stakingInfo.SelfStaking
 		optedUSDValues.TotalUSDValue = stakingInfo.Staking
+		// check if self USD value is more than the minimum self delegation.
 		if stakingInfo.SelfStaking.GTE(minimumSelfDelegation) {
 			optedUSDValues.ActiveUSDValue = stakingInfo.Staking
 			avsVotingPower = avsVotingPower.Add(optedUSDValues.TotalUSDValue)
@@ -93,7 +81,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	cc, writeFunc := ctx.CacheContext()
 	// iterate all operators of the AVS to update their voting power
 	// and calculate the voting power for AVS
-	err := k.IterateOperatorUSDValuesForAVS(cc, avsAddr, true, opFunc)
+	err = k.IterateOperatorUSDValuesForAVS(cc, avsAddr, true, opFunc)
 	if err != nil {
 		return err
 	}
