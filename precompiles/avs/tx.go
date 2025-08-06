@@ -232,6 +232,18 @@ func (p Precompile) Challenge(
 	if !ok || (callerAddress == common.Address{}) {
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 0, "common.Address", callerAddress)
 	}
+
+	// SECURITY: Validate that the caller address is a valid AVS address
+	// Convert common.Address to string for AVS validation
+	callerAddrStr := callerAddress.String()
+	isValidAVS, err := p.avsKeeper.IsAVS(ctx, callerAddrStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate AVS address: %w", err)
+	}
+	if !isValidAVS {
+		return nil, fmt.Errorf("caller address %s is not a valid AVS address", callerAddrStr)
+	}
+
 	challengeParams.CallerAddress = callerAddress[:]
 
 	taskID, ok := args[1].(uint64)
@@ -244,6 +256,21 @@ func (p Precompile) Challenge(
 	if !ok || (taskAddress == common.Address{}) {
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 2, "common.Address", taskAddress)
 	}
+
+	// SECURITY: Validate that the task address is associated with a valid AVS
+	// Get AVS info by task address to ensure the task belongs to a registered AVS
+	avsInfo := p.avsKeeper.GetAVSInfoByTaskAddress(ctx, taskAddress.String())
+	if avsInfo.AvsAddress == "" {
+		return nil, fmt.Errorf("task address %s is not associated with any registered AVS", taskAddress.String())
+	}
+
+	// SECURITY: Validate that the caller AVS is authorized to submit challenges for this task
+	// The caller AVS should be the owner of the task (i.e., the AVS that created the task)
+	if avsInfo.AvsAddress != callerAddrStr {
+		return nil, fmt.Errorf("caller AVS %s is not authorized to submit challenges for task %s owned by AVS %s",
+			callerAddrStr, taskAddress.String(), avsInfo.AvsAddress)
+	}
+
 	challengeParams.TaskContractAddress = taskAddress
 
 	actualThreshold, ok := args[3].(uint8)
@@ -270,7 +297,7 @@ func (p Precompile) Challenge(
 	}
 
 	challengeParams.EligibleSlashOperators = eligibleSlashOperators
-	err := p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
+	err = p.avsKeeper.RaiseAndResolveChallenge(ctx, challengeParams)
 	if err != nil {
 		return nil, err
 	}
