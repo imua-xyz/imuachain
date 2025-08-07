@@ -56,4 +56,6 @@ const (
 
 	EventTypeDeleteOperatorAssetUSDValueByEpoch = "delete_operator_asset_usd_value_by_epoch"
 	AttributeKeyEpochIdentifier                 = "epoch_identifier"
+
+	EventTypeEditOperator = "edit_operator"
 )

@@ -118,3 +118,18 @@ func (msgServer *MsgServerImpl) UpdateCommissionRate(
 	}
 	return &types.UpdateCommissionRateResponse{}, nil
 }
+
+// EditOperator is an implementation of the msg server for the operator module.
+func (msgServer *MsgServerImpl) EditOperator(
+	goCtx context.Context, req *types.EditOperatorReq,
+) (*types.EditOperatorResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	accAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+	if err := msgServer.keeper.EditOperator(ctx, accAddr, req.OperatorMetaInfo); err != nil {
+		return nil, err
+	}
+	return &types.EditOperatorResponse{}, nil
+}

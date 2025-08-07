@@ -78,6 +78,11 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 				"operator address %s has approve address %s", address, op.OperatorInfo.ApproveAddr,
 			)
 		}
+		if err := op.OperatorInfo.ValidateBasic(); err != nil {
+			return nil, ErrInvalidGenesisData.Wrapf(
+				"ValidateOperators: invalid operator info for operator %s: %s", address, err,
+			)
+		}
 		operators[address] = struct{}{}
 		if op.OperatorInfo.ClientChainEarningsAddr != nil {
 			lzIDs := make(map[uint64]struct{}, len(op.OperatorInfo.ClientChainEarningsAddr.EarningInfoList))

@@ -99,6 +99,35 @@ func (k *Keeper) RegisterOperator(
 	return nil
 }
 
+// EditOperator edits an operator's meta info.
+func (k *Keeper) EditOperator(
+	ctx sdk.Context, opAccAddr sdk.AccAddress, metaInfo string,
+) error {
+	info, err := k.OperatorInfo(ctx, opAccAddr.String())
+	if err != nil {
+		return err
+	}
+	// this prevents resetting to the same name as well
+	if has, err := k.HasOperatorName(ctx, metaInfo); err != nil {
+		return err
+	} else if has {
+		return errorsmod.Wrap(
+			operatortypes.ErrOperatorNameAlreadyExists,
+			fmt.Sprintf("EditOperator: operator name already exists, name: %s", metaInfo),
+		)
+	}
+	info.OperatorMetaInfo = metaInfo
+	k.setOperatorInfo(ctx, opAccAddr, info)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeEditOperator,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyMetaInfo, metaInfo),
+		),
+	)
+	return nil
+}
+
 // setOperatorInfo is used to store the operator's information on the chain.
 // It does not validate the operator info.
 // It is used by `RegisterOperator` and `UpdateCommissionRate`.

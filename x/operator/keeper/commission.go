@@ -3,6 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // ValidateAndUpdateCommissionRate validates the commission rate and updates the operator info.
@@ -39,5 +40,13 @@ func (k Keeper) ValidateAndUpdateCommissionRate(
 	operatorInfo.Commission.CommissionRates.Rate = rate
 	operatorInfo.Commission.UpdateTime = ctx.BlockTime()
 	k.setOperatorInfo(ctx, addr, operatorInfo)
+	// inform the indexer
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeEditOperator,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, addr.String()),
+			sdk.NewAttribute(stakingtypes.AttributeKeyCommissionRate, rate.String()),
+		),
+	)
 	return nil
 }
