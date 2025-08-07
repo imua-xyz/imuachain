@@ -120,6 +120,9 @@ func (k *Keeper) EditOperator(
 		)
 	}
 	info.OperatorMetaInfo = metaInfo
+	if err := info.ValidateBasic(); err != nil {
+		return err
+	}
 	k.setOperatorInfo(ctx, opAccAddr, info)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
