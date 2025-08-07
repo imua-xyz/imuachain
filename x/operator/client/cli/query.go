@@ -69,6 +69,7 @@ func GetQueryCmd() *cobra.Command {
 		QuerySnapshotHelper(),
 		QueryAllSnapshot(),
 		QuerySpecifiedSnapshot(),
+		QueryParams(),
 	)
 	return cmd
 }
@@ -567,6 +568,30 @@ func QuerySpecifiedSnapshot() *cobra.Command {
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// QueryParams queries the parameters of the operator module
+func QueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query-params",
+		Short: "Get the parameters of the operator module",
+		Long:  "Get the parameters of the operator module",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := operatortypes.NewQueryClient(clientCtx)
+			res, err := queryClient.QueryParams(context.Background(), &operatortypes.QueryParamsRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

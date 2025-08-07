@@ -21,6 +21,8 @@ const (
 	TypeUpdateCommissionRateReq = "update_commission_rate"
 	// TypeEditOperatorReq is the type for the EditOperatorReq message.
 	TypeEditOperatorReq = "edit_operator"
+	// TypeUpdateParamsReq is the type for the UpdateParamsReq message.
+	TypeUpdateParamsReq = "update_params"
 )
 
 // interface guards
@@ -237,5 +239,34 @@ func (m *EditOperatorReq) Type() string {
 
 // GetSignBytes returns the bytes all expected signers must sign over.
 func (m *EditOperatorReq) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
+	}
+	return m.Params.Validate()
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *MsgUpdateParams) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *MsgUpdateParams) Type() string {
+	return TypeUpdateParamsReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *MsgUpdateParams) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

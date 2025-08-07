@@ -4,8 +4,11 @@ import (
 	context "context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	"github.com/imua-xyz/imuachain/utils"
 	"github.com/imua-xyz/imuachain/x/operator/types"
+	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type MsgServerImpl struct {
@@ -132,4 +135,39 @@ func (msgServer *MsgServerImpl) EditOperator(
 		return nil, err
 	}
 	return &types.EditOperatorResponse{}, nil
+}
+
+// UpdateParams is an implementation of the msg server for the operator module.
+func (msgServer *MsgServerImpl) UpdateParams(
+	goCtx context.Context, req *types.MsgUpdateParams,
+) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if utils.IsMainnet(ctx.ChainID()) && msgServer.keeper.authority != req.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf(
+			"invalid authority; expected %s, got %s",
+			msgServer.keeper.authority, req.Authority,
+		)
+	}
+	logger := msgServer.keeper.Logger(ctx)
+	logger.Info(
+		"UpdateParams request",
+		"authority", msgServer.keeper.authority,
+		"params.Authority", req.Authority,
+	)
+	// check new params are valid
+	if err := req.Params.Validate(); err != nil {
+		return nil, err
+	}
+	// update params
+	msgServer.keeper.SetParams(ctx, req.Params)
+	// emit event
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeUpdateParams,
+			sdk.NewAttribute(operatortypes.AttributeKeyAuthority, msgServer.keeper.authority),
+			sdk.NewAttribute(operatortypes.AttributeKeyMinCommissionRate, req.Params.MinCommissionRate.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyMinCommissionUpdateInterval, req.Params.MinCommissionUpdateInterval.String()),
+		),
+	)
+	return &types.MsgUpdateParamsResponse{}, nil
 }

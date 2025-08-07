@@ -10,6 +10,7 @@ import "google/api/annotations.proto";
 import "imuachain/operator/v1/tx.proto";
 import "imuachain/operator/v1/validator.proto";
 import "tendermint/crypto/keys.proto";
+import "imuachain/operator/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
 
@@ -269,6 +270,15 @@ message QueryAllSnapshotResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryParamsRequest is the request to obtain the parameters of the module.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response to obtain the parameters of the module.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
 // Query defines the gRPC querier service.
 service Query {
   // QueryOperatorInfo queries the operator information.
@@ -364,6 +374,11 @@ service Query {
   rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/operator/v1/validator/{validator_acc_addr}/{chain}";
+  }
+
+  // QueryParams queries the parameters of the module.
+  rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/imuachain/operator/v1/params";
   }
 }
 

@@ -58,4 +58,9 @@ const (
 	AttributeKeyEpochIdentifier                 = "epoch_identifier"
 
 	EventTypeEditOperator = "edit_operator"
+
+	EventTypeUpdateParams                   = "update_params"
+	AttributeKeyAuthority                   = "authority"
+	AttributeKeyMinCommissionRate           = "min_commission_rate"
+	AttributeKeyMinCommissionUpdateInterval = "min_commission_update_interval"
 )

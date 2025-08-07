@@ -210,7 +210,7 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 			},
 		},
 	}
-	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil)
+	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams())
 	genesisState[operatortypes.ModuleName] = codec.MustMarshalJSON(operatorGenesis)
 	// x/delegation
 	singleStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operator.String())

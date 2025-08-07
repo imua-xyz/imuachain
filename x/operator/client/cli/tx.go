@@ -3,6 +3,7 @@ package cli
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
@@ -43,6 +44,7 @@ func NewTxCmd() *cobra.Command {
 		CmdSetConsKey(),
 		CmdEditOperator(),
 		CmdUpdateCommissionRate(),
+		CmdUpdateParams(),
 	)
 	return txCmd
 }
@@ -306,6 +308,39 @@ func CmdUpdateCommissionRate() *cobra.Command {
 			msg := &types.UpdateCommissionRateReq{
 				Address:        clientCtx.GetFromAddress().String(),
 				CommissionRate: commissionRate,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdUpdateParams returns a CLI command handler for creating a MsgUpdateParams transaction.
+func CmdUpdateParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-params <min-commission-rate> <min-commission-update-interval>",
+		Short: "update the parameters of the operator module",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			minCommissionRate, err := sdk.NewDecFromStr(args[0])
+			if err != nil {
+				return err
+			}
+			minCommissionUpdateInterval, err := time.ParseDuration(args[1])
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgUpdateParams{
+				Authority: clientCtx.GetFromAddress().String(),
+				Params: types.Params{
+					MinCommissionRate:           minCommissionRate,
+					MinCommissionUpdateInterval: minCommissionUpdateInterval,
+				},
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
