@@ -158,8 +158,8 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			return errorsmod.Wrap(types.ErrCallerAddressUnauthorized, fmt.Sprintf("this caller not qualified to deregister %s", params.CallerAddress))
 		}
 
-		taskPowerTotal, err := k.operatorKeeper.GetAVSUSDValue(ctx, params.AvsAddress.String())
-		if err == nil && taskPowerTotal.IsPositive() {
+		power, err := k.operatorKeeper.GetAVSUSDValue(ctx, params.AvsAddress.String())
+		if err == nil && power.IsPositive() {
 			return types.ErrCannotDeregister.Wrapf("The AVS still has voting power. avs:%s", params.AvsAddress)
 		}
 		// If avs DeRegisterAction check UnbondingPeriod
