@@ -301,7 +301,7 @@ func CmdUpdateCommissionRate() *cobra.Command {
 			}
 			// validate the commission rate
 			if commissionRate.IsNegative() {
-				return errorsmod.Wrap(types.ErrCliCmdInputArg, "commission rate is not negative")
+				return errorsmod.Wrap(types.ErrCliCmdInputArg, "commission rate cannot be negative")
 			}
 			// 0 may also be supported, if minCommissionRate is 0
 			// but that is stateful and we do not have access to state here.

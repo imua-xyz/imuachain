@@ -12,7 +12,7 @@ func (k Keeper) GetParams(ctx sdk.Context) operatortypes.Params {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(operatortypes.KeyForParams())
 	if bz == nil {
-		k.Logger(ctx).Error("params not found, using default params")
+		k.Logger(ctx).Info("params not found, using default params")
 		return operatortypes.DefaultParams()
 	}
 	var params operatortypes.Params
@@ -21,6 +21,7 @@ func (k Keeper) GetParams(ctx sdk.Context) operatortypes.Params {
 }
 
 // SetParams sets the params for the operator module.
+// Calling functions must ensure that the params are valid.
 func (k Keeper) SetParams(ctx sdk.Context, params operatortypes.Params) {
 	store := ctx.KVStore(k.storeKey)
 	bz := k.cdc.MustMarshal(&params)

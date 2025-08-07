@@ -11,6 +11,9 @@ import (
 
 func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) []abci.ValidatorUpdate {
 	// set the params
+	if err := state.Params.Validate(); err != nil {
+		panic(errorsmod.Wrap(err, "invalid params"))
+	}
 	k.SetParams(ctx, state.Params)
 	// set the operators
 	for i := range state.Operators {
