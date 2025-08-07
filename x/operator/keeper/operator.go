@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
@@ -26,7 +27,7 @@ import (
 // name (meta info)
 // commission, subject to limits and once within 24 hours.
 // client chain earnings addresses (maybe append only?)
-func (k *Keeper) SetOperatorInfo(
+func (k *Keeper) RegisterOperator(
 	ctx sdk.Context, addr string, info *operatortypes.OperatorInfo,
 ) (err error) {
 	if info == nil {
@@ -53,7 +54,9 @@ func (k *Keeper) SetOperatorInfo(
 		)
 	}
 	// TODO: add minimum commission rate module parameter and check that commission exceeds it.
-	info.Commission.UpdateTime = ctx.BlockTime()
+	if info.Commission.UpdateTime.Equal(time.Time{}) {
+		info.Commission.UpdateTime = ctx.BlockTime()
+	}
 
 	if info.ClientChainEarningsAddr != nil {
 		for _, data := range info.ClientChainEarningsAddr.EarningInfoList {
@@ -71,13 +74,7 @@ func (k *Keeper) SetOperatorInfo(
 			}
 		}
 	}
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
-	bz := k.cdc.MustMarshal(info)
-	store.Set(opAccAddr, bz)
-
-	// TODO validate operator name does not already exist
-
+	k.setOperatorInfo(ctx, opAccAddr, info)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			operatortypes.EventTypeRegisterOperator,
@@ -90,8 +87,18 @@ func (k *Keeper) SetOperatorInfo(
 			// TODO: add ClientChainEarningsAddr.EarningInfoList to the event
 		),
 	)
-
 	return nil
+}
+
+// setOperatorInfo is used to store the operator's information on the chain.
+// It does not validate the operator info.
+// It is used by `RegisterOperator` and `UpdateCommissionRate`.
+func (k *Keeper) setOperatorInfo(
+	ctx sdk.Context, opAccAddr sdk.AccAddress, info *operatortypes.OperatorInfo,
+) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
+	bz := k.cdc.MustMarshal(info)
+	store.Set(opAccAddr, bz)
 }
 
 func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error) {

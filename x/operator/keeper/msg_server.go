@@ -21,7 +21,7 @@ var _ types.MsgServer = &MsgServerImpl{}
 // RegisterOperator is an implementation of the msg server for the operator module.
 func (msgServer *MsgServerImpl) RegisterOperator(goCtx context.Context, req *types.RegisterOperatorReq) (*types.RegisterOperatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := msgServer.keeper.SetOperatorInfo(ctx, req.FromAddress, req.Info); err != nil {
+	if err := msgServer.keeper.RegisterOperator(ctx, req.FromAddress, req.Info); err != nil {
 		return nil, err
 	}
 	return &types.RegisterOperatorResponse{}, nil
@@ -100,4 +100,21 @@ func (msgServer *MsgServerImpl) SetConsKey(goCtx context.Context, req *types.Set
 		return nil, err
 	}
 	return &types.SetConsKeyResponse{}, nil
+}
+
+// UpdateCommissionRate is an implementation of the msg server for the operator module.
+func (msgServer *MsgServerImpl) UpdateCommissionRate(
+	goCtx context.Context, req *types.UpdateCommissionRateReq,
+) (*types.UpdateCommissionRateResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	accAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+	if err := msgServer.keeper.ValidateAndUpdateCommissionRate(
+		ctx, accAddr, req.CommissionRate,
+	); err != nil {
+		return nil, err
+	}
+	return &types.UpdateCommissionRateResponse{}, nil
 }

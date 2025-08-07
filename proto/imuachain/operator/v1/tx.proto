@@ -312,6 +312,24 @@ message SetConsKeyReq {
 // SetConsKeyResponse is the response to SetConsKeyReq.
 message SetConsKeyResponse {}
 
+// UpdateCommissionReq is the request to update the operator's commission.
+message UpdateCommissionRateReq {
+  option (cosmos.msg.v1.signer) = "address";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  // address is the operator address
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // commission_rate is the new commission rate.
+  string commission_rate = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// UpdateCommissionRateResponse is the response to a update commission rate request.
+message UpdateCommissionRateResponse {}
+
 // Msg defines the operator Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
@@ -334,5 +352,10 @@ service Msg {
   // OptOutOfAVS opts an operator out of an AVS.
   rpc OptOutOfAVS(OptOutOfAVSReq) returns (OptOutOfAVSResponse) {
     option (google.api.http).post = "/imuachain/operator/v1/tx/opt_out_of_avs";
+  }
+
+  // UpdateCommissionRate updates the operator's commission rate.
+  rpc UpdateCommissionRate(UpdateCommissionRateReq) returns (UpdateCommissionRateResponse) {
+    option (google.api.http).post = "/imuachain/operator/v1/tx/update_commission_rate";
   }
 }

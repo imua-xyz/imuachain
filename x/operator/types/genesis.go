@@ -23,6 +23,7 @@ func NewGenesisState(
 	prevConsKeys []PrevConsKey,
 	operatorKeyRemovals []OperatorKeyRemoval,
 	operatorAssetUSDValues []OperatorAssetUSDValue,
+	params Params,
 ) *GenesisState {
 	return &GenesisState{
 		Operators:              operators,
@@ -34,12 +35,13 @@ func NewGenesisState(
 		PreConsKeys:            prevConsKeys,
 		OperatorKeyRemovals:    operatorKeyRemovals,
 		OperatorAssetUsdValues: operatorAssetUSDValues,
+		Params:                 params,
 	}
 }
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	return NewGenesisState(nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return NewGenesisState(nil, nil, nil, nil, nil, nil, nil, nil, nil, DefaultParams())
 }
 
 // ValidateOperators rationale for the validation:
@@ -50,6 +52,8 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 	// - no duplicate addresses in `gs.Operators`.
 	// - correct bech32 format for each address in `gs.Operators`
 	// - no `chainID` duplicates for earnings addresses list in `gs.Operators`.
+	// - commission rate for each operator is valid and is >= the minimum commission rate.
+	minCommissionRate := gs.Params.MinCommissionRate
 	operators := make(map[string]struct{}, len(gs.Operators))
 	for _, op := range gs.Operators {
 		address := op.OperatorAddress
@@ -104,6 +108,12 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 		if err := op.OperatorInfo.Commission.Validate(); err != nil {
 			return nil, ErrInvalidGenesisData.Wrapf(
 				"ValidateOperators: invalid commission for operator %s: %s", address, err,
+			)
+		}
+		if op.OperatorInfo.Commission.CommissionRates.Rate.LT(minCommissionRate) {
+			return nil, ErrInvalidGenesisData.Wrapf(
+				"ValidateOperators: commission rate for operator %s is less than the minimum commission rate: %s < %s",
+				address, op.OperatorInfo.Commission.CommissionRates.Rate.String(), minCommissionRate.String(),
 			)
 		}
 	}
@@ -547,6 +557,10 @@ func (gs GenesisState) ValidateOperatorAssetUSDValues(operators map[string]struc
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
+	// validate the params first because we use the value later
+	if err := gs.Params.Validate(); err != nil {
+		return err
+	}
 	operators, err := gs.ValidateOperators()
 	if err != nil {
 		return err
