@@ -28,7 +28,8 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 	key := hexutil.Encode(ed25519.GenPrivKey().PubKey().Bytes())
 	accAddress1 := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 	accAddress2 := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-	newGen := &types.GenesisState{}
+	params := types.DefaultParams()
+	newGen := &types.GenesisState{Params: params}
 
 	testCases := []struct {
 		name     string
@@ -54,6 +55,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						OperatorAddress: "invalid",
 					},
 				},
+				Params: params,
 			},
 			expPass: false,
 		},
@@ -68,6 +70,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						OperatorAddress: accAddress1.String(),
 					},
 				},
+				Params: params,
 			},
 			expPass: false,
 		},
@@ -94,6 +97,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						},
 					},
 				},
+				Params: params,
 			},
 			expPass: false,
 		},
@@ -110,6 +114,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						OperatorAddress: "invalid",
 					},
 				},
+				Params: params,
 			},
 			expPass: false,
 		},
@@ -126,6 +131,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						OperatorAddress: accAddress2.String(),
 					},
 				},
+				Params: params,
 			},
 			expPass: false,
 		},
@@ -160,6 +166,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						},
 					},
 				},
+				Params: params,
 			},
 			expPass: false,
 		},
@@ -182,6 +189,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						},
 					},
 				},
+				Params: params,
 			},
 			expPass: false,
 		},
@@ -216,6 +224,85 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 						},
 					},
 				},
+				Params: params,
+			},
+			expPass: false,
+		},
+		{
+			name: "invalid genesis due to negative duration",
+			genState: &types.GenesisState{
+				Operators: []types.OperatorDetail{
+					{
+						OperatorAddress: accAddress1.String(),
+					},
+				},
+				OperatorRecords: []types.OperatorConsKeyRecord{
+					{
+						OperatorAddress: accAddress1.String(),
+						Chains: []types.ChainDetails{
+							{
+								ChainID:      utils.TestnetChainID,
+								ConsensusKey: key,
+							},
+						},
+					},
+				},
+				Params: types.NewParams(
+					types.DefaultMinCommissionUpdateInterval*-1,
+					types.DefaultMinCommissionRate,
+				),
+			},
+			expPass: false,
+		},
+		{
+			name: "invalid genesis due to negative rate",
+			genState: &types.GenesisState{
+				Operators: []types.OperatorDetail{
+					{
+						OperatorAddress: accAddress1.String(),
+					},
+				},
+				OperatorRecords: []types.OperatorConsKeyRecord{
+					{
+						OperatorAddress: accAddress1.String(),
+						Chains: []types.ChainDetails{
+							{
+								ChainID:      utils.TestnetChainID,
+								ConsensusKey: key,
+							},
+						},
+					},
+				},
+				Params: types.NewParams(
+					types.DefaultMinCommissionUpdateInterval,
+					types.DefaultMinCommissionRate.Neg(),
+				),
+			},
+			expPass: false,
+		},
+		{
+			name: "invalid genesis due to nil rate",
+			genState: &types.GenesisState{
+				Operators: []types.OperatorDetail{
+					{
+						OperatorAddress: accAddress1.String(),
+					},
+				},
+				OperatorRecords: []types.OperatorConsKeyRecord{
+					{
+						OperatorAddress: accAddress1.String(),
+						Chains: []types.ChainDetails{
+							{
+								ChainID:      utils.TestnetChainID,
+								ConsensusKey: key,
+							},
+						},
+					},
+				},
+				Params: types.NewParams(
+					types.DefaultMinCommissionUpdateInterval,
+					sdk.Dec{},
+				),
 			},
 			expPass: false,
 		},

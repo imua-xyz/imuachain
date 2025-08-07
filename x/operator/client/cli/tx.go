@@ -267,7 +267,7 @@ func CmdEditOperator() *cobra.Command {
 			}
 			// validate the meta info in CLI to save tx
 			metaInfo := args[1]
-			if len(metaInfo) > stakingtypes.MaxIdentityLength {
+			if len(metaInfo) > stakingtypes.MaxMonikerLength {
 				return errorsmod.Wrap(types.ErrCliCmdInputArg, "meta info is too long")
 			}
 			if metaInfo == "" {

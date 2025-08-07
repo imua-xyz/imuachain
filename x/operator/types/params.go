@@ -40,9 +40,11 @@ func DefaultParams() Params {
 
 // Validate validates the set of params.
 func (p Params) Validate() error {
-	if err := ValidatePositiveDuration(p.MinCommissionUpdateInterval); err != nil {
+	// 0 duration is allowed to change commission at will
+	if err := ValidateNonNegativeDuration(p.MinCommissionUpdateInterval); err != nil {
 		return fmt.Errorf("min commission update interval: %w", err)
 	}
+	// 0 rate is allowed to permit operators with no commission
 	if err := ValidateNonNegativeDec(p.MinCommissionRate); err != nil {
 		return fmt.Errorf("min commission rate: %w", err)
 	}
@@ -59,10 +61,10 @@ func (p Params) String() string {
 	return string(out)
 }
 
-// ValidatePositiveDuration checks if the duration is positive.
-func ValidatePositiveDuration(duration time.Duration) error {
-	if duration <= 0 {
-		return fmt.Errorf("duration must be positive")
+// ValidateNonNegativeDuration checks if the duration is non-negative.
+func ValidateNonNegativeDuration(duration time.Duration) error {
+	if duration < 0 {
+		return fmt.Errorf("duration must be non-negative")
 	}
 	return nil
 }

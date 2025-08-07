@@ -719,9 +719,10 @@ func (suite *BaseTestSuite) RegisterOperator(operator string, commission staking
 	registerReq := &operatortypes.RegisterOperatorReq{
 		FromAddress: operator,
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr: operator,
-			ApproveAddr:  operator,
-			Commission:   commission,
+			EarningsAddr:     operator,
+			ApproveAddr:      operator,
+			OperatorMetaInfo: operator,
+			Commission:       commission,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)

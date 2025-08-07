@@ -221,7 +221,7 @@ func (m *EditOperatorReq) ValidateBasic() error {
 	if m.OperatorMetaInfo == "" {
 		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is empty")
 	}
-	if len(m.OperatorMetaInfo) > stakingtypes.MaxIdentityLength {
+	if len(m.OperatorMetaInfo) > stakingtypes.MaxMonikerLength {
 		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is too long")
 	}
 	return nil

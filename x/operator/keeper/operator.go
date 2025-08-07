@@ -33,6 +33,12 @@ func (k *Keeper) RegisterOperator(
 	if info == nil {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator info is nil")
 	}
+	if err := info.ValidateBasic(); err != nil {
+		return errorsmod.Wrap(err, "SetOperatorInfo: operator info is invalid")
+	}
+	if info.Commission.UpdateTime.Equal(time.Time{}) {
+		info.Commission.UpdateTime = ctx.BlockTime()
+	}
 	// #nosec G703 // already validated in `ValidateBasic`
 	opAccAddr, err := sdk.AccAddressFromBech32(addr)
 	if err != nil {
@@ -46,18 +52,13 @@ func (k *Keeper) RegisterOperator(
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator address does not match approve address")
 	}
 	// if already registered, this request should go to EditOperator.
-	// TODO: EditOperator needs to be implemented.
 	if k.IsOperator(ctx, opAccAddr) {
 		return errorsmod.Wrap(
 			operatortypes.ErrOperatorAlreadyExists,
 			fmt.Sprintf("SetOperatorInfo: operator already exists, address: %s", opAccAddr),
 		)
 	}
-	// TODO: add minimum commission rate module parameter and check that commission exceeds it.
-	if info.Commission.UpdateTime.Equal(time.Time{}) {
-		info.Commission.UpdateTime = ctx.BlockTime()
-	}
-
+	// check if the operator name already exists
 	if has, err := k.HasOperatorName(ctx, info.OperatorMetaInfo); err != nil {
 		return errorsmod.Wrap(err, "SetOperatorInfo: error occurred when checking operator name")
 	} else if has {
@@ -66,7 +67,7 @@ func (k *Keeper) RegisterOperator(
 			fmt.Sprintf("SetOperatorInfo: operator name already exists, name: %s", info.OperatorMetaInfo),
 		)
 	}
-
+	// check if the client chain earning addresses are valid
 	if info.ClientChainEarningsAddr != nil {
 		for _, data := range info.ClientChainEarningsAddr.EarningInfoList {
 			if data.ClientChainEarningAddr == "" {
@@ -83,7 +84,9 @@ func (k *Keeper) RegisterOperator(
 			}
 		}
 	}
+	// unchecked data storage
 	k.setOperatorInfo(ctx, opAccAddr, info)
+	// event for the indexer
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			operatortypes.EventTypeRegisterOperator,
