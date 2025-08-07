@@ -142,7 +142,7 @@ func (k *Keeper) setOperatorInfo(
 // HasOperatorName checks if the operator name already exists.
 func (k *Keeper) HasOperatorName(ctx sdk.Context, name string) (bool, error) {
 	res := false
-	opFunc := func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
+	opFunc := func(_ sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
 		if operatorInfo.OperatorMetaInfo == name {
 			res = true
 			// stop, no error

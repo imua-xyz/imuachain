@@ -8,7 +8,6 @@ import (
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/utils"
 	"github.com/imua-xyz/imuachain/x/operator/types"
-	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 type MsgServerImpl struct {
@@ -163,10 +162,10 @@ func (msgServer *MsgServerImpl) UpdateParams(
 	// emit event
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
-			operatortypes.EventTypeUpdateParams,
-			sdk.NewAttribute(operatortypes.AttributeKeyAuthority, msgServer.keeper.authority),
-			sdk.NewAttribute(operatortypes.AttributeKeyMinCommissionRate, req.Params.MinCommissionRate.String()),
-			sdk.NewAttribute(operatortypes.AttributeKeyMinCommissionUpdateInterval, req.Params.MinCommissionUpdateInterval.String()),
+			types.EventTypeUpdateParams,
+			sdk.NewAttribute(types.AttributeKeyAuthority, msgServer.keeper.authority),
+			sdk.NewAttribute(types.AttributeKeyMinCommissionRate, req.Params.MinCommissionRate.String()),
+			sdk.NewAttribute(types.AttributeKeyMinCommissionUpdateInterval, req.Params.MinCommissionUpdateInterval.String()),
 		),
 	)
 	return &types.MsgUpdateParamsResponse{}, nil

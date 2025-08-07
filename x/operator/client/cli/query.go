@@ -579,7 +579,7 @@ func QueryParams() *cobra.Command {
 		Short: "Get the parameters of the operator module",
 		Long:  "Get the parameters of the operator module",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err
