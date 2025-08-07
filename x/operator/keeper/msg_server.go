@@ -3,7 +3,6 @@ package keeper
 import (
 	context "context"
 
-	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/x/operator/types"
@@ -44,7 +43,7 @@ func (msgServer *MsgServerImpl) OptIntoAVS(goCtx context.Context, req *types.Opt
 	accAddr, _ := sdk.AccAddressFromBech32(req.FromAddress)
 	if !isChainAvs {
 		if len(req.PublicKeyJSON) > 0 {
-			return nil, errorsmod.Wrap(types.ErrInvalidPubKey, "public key is not required for non-chain AVS")
+			return nil, types.ErrInvalidPubKey.Wrap("public key is not required for non-chain AVS")
 		}
 		err = msgServer.keeper.OptIn(ctx, accAddr, req.AvsAddress)
 		if err != nil {
@@ -53,7 +52,7 @@ func (msgServer *MsgServerImpl) OptIntoAVS(goCtx context.Context, req *types.Opt
 	} else {
 		key := keytypes.NewWrappedConsKeyFromJSON(req.PublicKeyJSON)
 		if key == nil {
-			return nil, errorsmod.Wrap(types.ErrInvalidPubKey, "invalid public key")
+			return nil, types.ErrInvalidPubKey.Wrap("invalid public key")
 		}
 		err = msgServer.keeper.OptInWithConsKey(ctx, accAddr, req.AvsAddress, key)
 		if err != nil {
@@ -84,18 +83,18 @@ func (msgServer *MsgServerImpl) OptOutOfAVS(goCtx context.Context, req *types.Op
 // SetConsKey is an implementation of the msg server for the operator module.
 func (msgServer *MsgServerImpl) SetConsKey(goCtx context.Context, req *types.SetConsKeyReq) (*types.SetConsKeyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	chainID, isAvs := msgServer.keeper.avsKeeper.GetChainIDByAVSAddr(ctx, req.AvsAddress)
-	if !isAvs {
-		return nil, errorsmod.Wrap(types.ErrNoSuchAvs, "AVS not found")
+	chainID, isAVS := msgServer.keeper.avsKeeper.GetChainIDByAVSAddr(ctx, req.AvsAddress)
+	if !isAVS {
+		return nil, types.ErrNoSuchAvs.Wrap("AVS not found")
 	}
 	// #nosec G703 // already validated
 	accAddr, _ := sdk.AccAddressFromBech32(req.Address)
-	if !msgServer.keeper.IsActive(ctx, accAddr, req.AvsAddress) {
-		return nil, errorsmod.Wrap(types.ErrNotOptedIn, "operator is not active")
+	if !msgServer.keeper.IsOptedInAndNotJailed(ctx, accAddr.String(), req.AvsAddress) {
+		return nil, types.ErrIsOptedOutOrJailed
 	}
 	wrappedKey := keytypes.NewWrappedConsKeyFromJSON(req.PublicKeyJSON)
 	if wrappedKey == nil {
-		return nil, errorsmod.Wrap(types.ErrInvalidPubKey, "invalid public key")
+		return nil, types.ErrInvalidPubKey.Wrap("invalid public key")
 	}
 	if err := msgServer.keeper.SetOperatorConsKeyForChainID(ctx, accAddr, chainID, wrappedKey); err != nil {
 		return nil, err

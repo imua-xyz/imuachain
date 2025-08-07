@@ -2,11 +2,11 @@ package keeper_test
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper"
@@ -82,9 +82,16 @@ func createNStakerInfos(keeper *keeper.Keeper, ctx sdk.Context, assetID string, 
 	ret := make([]*types.StakerInfo, 0, n)
 	for i := 0; i < n; i++ {
 		ret = append(ret, &types.StakerInfo{
-			StakerAddr:          fmt.Sprintf("staker_%d", i),
-			StakerIndex:         uint32(i),
-			ValidatorPubkeyList: []string{strconv.Itoa(i + 1)},
+			StakerAddr:  fmt.Sprintf("staker_%d", i),
+			StakerIndex: uint32(i),
+			// ValidatorPubkeyList: []string{strconv.Itoa(i + 1)},
+			ValidatorList: []*types.ValidatorDeposit{
+				{
+					ValidatorPubkey: hexutil.EncodeUint64(uint64(i + 1)),
+					Version:         1,
+					DepositAmount:   1000,
+				},
+			},
 			BalanceList: []*types.BalanceInfo{
 				{
 					RoundID: 0,
@@ -100,6 +107,16 @@ func createNStakerInfos(keeper *keeper.Keeper, ctx sdk.Context, assetID string, 
 	if err != nil {
 		panic(fmt.Sprintf("Failed to parse assetID %s: %v", assetID, err))
 	}
-	keeper.SetStakerInfosForAsset(ctx, chainID, ret, uint64(n))
+	// keeper.SetStakerInfosForAsset(ctx, chainID, ret, uint64(n))
+	keeper.SetStakerInfosForAsset(ctx, chainID, ret, types.NSTVersion{
+		Version: &types.VersionDepositAmount{
+			Version:       uint64(n),
+			DepositAmount: 1000,
+		},
+		FeedVersion: &types.VersionDepositAmount{
+			Version:       1,
+			DepositAmount: 10,
+		},
+	})
 	return ret
 }

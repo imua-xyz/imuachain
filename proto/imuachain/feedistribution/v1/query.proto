@@ -2,8 +2,10 @@ syntax = "proto3";
 package imuachain.feedistribution.v1;
 
 import "amino/amino.proto";
+import "cosmos/query/v1/query.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/feedistribution/v1/distribution.proto";
 import "imuachain/feedistribution/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
@@ -12,7 +14,89 @@ option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/params";
+  }
+  // AVSRewardAsset queries the specific reward asset for an AVS.
+  rpc AVSRewardAsset(QueryAVSRewardAssetRequest) returns (QueryAVSRewardAssetResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/reward_asset/{avs}/{asset_id}";
+  }
+  // RewardAssetsByAVS queries all reward assets for an AVS.
+  rpc RewardAssetsByAVS(AVSRequest) returns (QueryRewardAssetsByAVSResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/reward_assets_by_avs/{avs}";
+  }
+  // AVSRewardParam queries the reward param for an AVS.
+  rpc AVSRewardParam(AVSRequest) returns (QueryAVSRewardParamResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/reward_param/{avs}";
+  }
+  // AVSCommunityPool queries the community reward pool for an AVS.
+  rpc AVSCommunityPool(AVSRequest) returns (QueryAVSCommunityPoolResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/community_reward_pool/{avs}";
+  }
+  // AVSRewardDistribution queries the distribution information for an AVS.
+  // It returns the total rewards and operator proportions for current epoch.
+  rpc AVSRewardDistribution(AVSRequest) returns (QueryAVSRewardDistributionResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_distribution/{avs}";
+  }
+  // OperatorOutstandingRewards queries the outstanding rewards for an operator.
+  rpc OperatorOutstandingRewards(OperatorAVSRequest) returns (QueryOperatorOutstandingRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_outstanding_rewards/{operator}/{avs}";
+  }
+  // StakerOutstandingRewards queries the outstanding rewards for a staker.
+  rpc StakerOutstandingRewards(QueryStakerOutstandingRewardsRequest) returns (QueryStakerOutstandingRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_outstanding_rewards/{staker_id}/{avs}";
+  }
+  // StakeChangeDelegations queries the delegations whose stake has changed.
+  rpc StakeChangeDelegations(QueryStakeChangeDelegationsRequest) returns (QueryStakeChangeDelegationsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/stake_change_delegations/{epoch_identifier}/{operator}/{asset_id}";
+  }
+  // DelegationStartingInfo queries the delegation staring information.
+  rpc DelegationStartingInfo(QueryDelegationStartingInfoRequest) returns (QueryDelegationStartingInfoResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/delegation_starting_info/{staker_id}/{asset_id}/{operator}/{epoch_identifier}";
+  }
+  // OperatorHistoricalRewards queries the operator historical rewards
+  rpc OperatorHistoricalRewards(QueryOperatorHistoricalRewardsRequest) returns (QueryOperatorHistoricalRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_historical_rewards/{operator}/{asset_id}/{epoch_identifier}/{period}";
+  }
+  // AllOperatorHistoricalRewards queries the operator historical rewards for all periods
+  rpc AllOperatorHistoricalRewards(QueryAllOperatorHistoricalRewardsRequest) returns (QueryAllOperatorHistoricalRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/all_operator_historical_rewards/{operator}/{asset_id}/{epoch_identifier}";
+  }
+  // OperatorCurrentRewards queries the operator current rewards
+  rpc OperatorCurrentRewards (QueryOperatorCurrentRewardsRequest) returns (QueryOperatorCurrentRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_current_rewards/{operator}/{asset_id}/{epoch_identifier}";
+  }
+  // OperatorAccumulatedCommission queries the operator accumulated commission.
+  rpc OperatorAccumulatedCommission (OperatorAVSRequest) returns (QueryOperatorAccumulatedCommissionResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/accumulated_commission/{operator}/{avs}";
+  }
+  // OperatorSlashEvent queries the operator slash event.
+  rpc OperatorSlashEvent (QueryOperatorSlashEventRequest) returns (QueryOperatorSlashEventResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}/{block_height}";
+  }
+  // OperatorSlashEvents queries the operator slash events.
+  rpc OperatorSlashEvents (QueryOperatorSlashEventsRequest) returns (QueryOperatorSlashEventsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_slash_events/{operator}/{asset_id}/{epoch_identifier}";
+  }
+  // StakerUnclaimedRewards queries the unclaimed rewards for a staker
+  rpc StakerUnclaimedRewards (QueryStakerUnclaimedRewardsRequest) returns (QueryStakerUnclaimedRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/unclaimed_rewards/{staker_id}";
   }
 }
 
@@ -26,4 +110,235 @@ message QueryParamsResponse {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+}
+
+// QueryAVSRewardAssetRequest is the request to obtain the specific reward asset for an AVS.
+message QueryAVSRewardAssetRequest {
+  // avs address
+  string avs = 1;
+  // asset_id is reward asset id
+  string asset_id = 2;
+}
+
+// QueryAVSRewardAssetResponse is the response to obtain the specific reward asset for an AVS.
+message QueryAVSRewardAssetResponse{
+  // avs_reward_asset is the reward asset returned for the input avs
+  AVSRewardAsset avs_reward_asset = 1;
+}
+
+// AVSRequest is a generic request message that contains only the AVS address.
+message AVSRequest {
+  // avs address
+  string avs = 1;
+}
+
+// QueryAVSRewardParamResponse is the response to obtain the specific reward parameter for an AVS.
+message QueryAVSRewardParamResponse{
+  // avs_reward_param is the reward parameter returned for the input avs
+  AVSRewardParam avs_reward_param = 1;
+}
+
+// QueryAVSCommunityPoolResponse is the response to obtain the community fee pool for an AVS.
+message QueryAVSCommunityPoolResponse{
+  // fee_pool is the fee pool returned for the specified AVS.
+  FeePool fee_pool = 1;
+}
+
+// QueryAVSRewardDistributionResponse is the response to obtain the reward distribution information for an AVS.
+message QueryAVSRewardDistributionResponse{
+  // avs_reward_distribution is the reward distribution information returned for the input avs
+  AVSRewardDistribution avs_reward_distribution = 1;
+}
+
+// QueryRewardAssetsByAVSResponse is the response for QueryRewardAssetsByAVSRequest.
+message QueryRewardAssetsByAVSResponse {
+  // reward_assets is a slice of all reward assets for an AVS, including their information and state.
+  AVSRewardAssets reward_assets = 1;
+}
+
+// QueryStakerOutstandingRewardsRequest is the request to obtain the outstanding rewards for a staker.
+message QueryStakerOutstandingRewardsRequest {
+  // staker id
+  string staker_id = 1;
+  // avs address
+  string avs = 2;
+}
+
+
+// QueryStakerOutstandingRewardsResponse is the response to obtain the staker outstanding rewards
+message QueryStakerOutstandingRewardsResponse{
+  // staker_outstanding_rewards is the staker outstanding rewards
+  StakerOutstandingRewards staker_outstanding_rewards = 1;
+}
+
+// QueryStakeChangeDelegationsRequest is the request to obtain the delegations whose stake has changed.
+message QueryStakeChangeDelegationsRequest {
+  // epoch identifier
+  string epoch_identifier = 1;
+  // operator address
+  string operator = 2;
+  // asset id
+  string asset_id = 3;
+}
+
+// QueryStakeChangeDelegationsResponse is the response to obtain the delegations whose stake has changed.
+message QueryStakeChangeDelegationsResponse{
+  // delegation_change_info is the delegations whose stake has changed.
+  DelegationChangeInfo delegation_change_info = 1;
+}
+
+// QueryDelegationStartingInfoRequest is the request to obtain the delegation starting information.
+message QueryDelegationStartingInfoRequest {
+  // staker id
+  string staker_id = 1;
+  // asset id
+  string asset_id = 2;
+  // operator address
+  string operator = 3;
+  // epoch identifier
+  string epoch_identifier = 4;
+}
+
+// QueryDelegationStartingInfoResponse is the response to obtain the delegation starting information.
+message QueryDelegationStartingInfoResponse{
+  // delegation_starting_info is the return value
+  DelegationStartingInfo delegation_starting_info = 1;
+}
+
+// QueryOperatorHistoricalRewardsRequest is the request to obtain the operator historical rewards.
+message QueryOperatorHistoricalRewardsRequest {
+  // operator address
+  string operator = 1;
+  // asset id
+  string asset_id = 2;
+  // epoch identifier
+  string epoch_identifier = 3;
+  // period
+  uint64 period = 4;
+}
+
+// QueryOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards.
+message QueryOperatorHistoricalRewardsResponse{
+  // operator_historical_rewards is the return value
+  OperatorHistoricalRewards operator_historical_rewards = 1;
+}
+
+// QueryAllOperatorHistoricalRewardsRequest is the request to obtain the operator historical rewards for all periods.
+message QueryAllOperatorHistoricalRewardsRequest {
+  // operator address
+  string operator = 1;
+  // asset id
+  string asset_id = 2;
+  // epoch identifier
+  string epoch_identifier = 3;
+}
+
+// OperatorHistoricalRewardsAndPeriod is used for querying the operator historical rewards for all periods.
+message OperatorHistoricalRewardsAndPeriod{
+  // period
+  uint64 period = 1;
+  // operator_historical_rewards represents the historical rewards for the operator.
+  OperatorHistoricalRewards operator_historical_rewards = 2 [(gogoproto.nullable) = false];
+}
+
+// QueryAllOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards for all periods.
+message QueryAllOperatorHistoricalRewardsResponse{
+  // all_operator_historical_rewards is the return value
+  repeated OperatorHistoricalRewardsAndPeriod all_operator_historical_rewards = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStakeChangeDelegationsRequest is the request to obtain the operator current rewards.
+message QueryOperatorCurrentRewardsRequest {
+  // operator address
+  string operator = 1;
+  // asset id
+  string asset_id = 2;
+  // epoch identifier
+  string epoch_identifier = 3;
+}
+
+// QueryOperatorCurrentRewardsResponse is the response to obtain the operator current rewards.
+message QueryOperatorCurrentRewardsResponse{
+  // operator_current_rewards is the return value
+  OperatorCurrentRewards operator_current_rewards = 1;
+}
+
+// OperatorAVSRequest is a generic request that includes both operator and AVS addresses.
+// used for QueryOperatorOutstandingRewards and QueryOperatorAccumulatedCommission
+message OperatorAVSRequest {
+  // operator address
+  string operator = 1;
+  // avs address
+  string avs = 2;
+}
+
+// QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards
+message QueryOperatorOutstandingRewardsResponse{
+  // operator_outstanding_rewards is the outstanding rewards returned for an operator
+  OperatorOutstandingRewards operator_outstanding_rewards = 1;
+}
+
+// QueryOperatorAccumulatedCommissionResponse is the response to obtain the operator accumulated commission
+message QueryOperatorAccumulatedCommissionResponse{
+  // operator_outstanding_rewards is the accumulated commission returned for an operator
+  OperatorAccumulatedCommission operator_accumulated_commission = 1;
+}
+
+// QueryOperatorSlashEventRequest is the request to obtain the operator slash event.
+message QueryOperatorSlashEventRequest {
+  // operator address
+  string operator = 1;
+  // asset id
+  string asset_id = 2;
+  // epoch identifier
+  string epoch_identifier = 3;
+  // epoch number
+  uint64 epoch_number = 4;
+  // block height
+  uint64 block_height = 5;
+}
+
+// QueryOperatorSlashEventResponse is the response to obtain the operator slash event.
+message QueryOperatorSlashEventResponse{
+  // operator_slash_event is the return value
+  OperatorSlashEvent operator_slash_event = 1;
+}
+
+// QueryOperatorSlashEventsRequest is the request to obtain all slash events for
+// the specific operator, assetID and epoch identifier.
+message QueryOperatorSlashEventsRequest {
+  // operator address
+  string operator = 1;
+  // asset id
+  string asset_id = 2;
+  // epoch identifier
+  string epoch_identifier = 3;
+}
+
+// OperatorSlashEventAndHeight is a struct used for querying all slash events for the specific operator
+message OperatorSlashEventAndHeight{
+  // epoch_number is the epoch number within key
+  uint64 epoch_number = 1;
+  // block_height is the block height within key
+  uint64 block_height = 2;
+  // operator_slash_event represents the slash event for the operator.
+  OperatorSlashEvent operator_slash_event = 3 [(gogoproto.nullable) = false];
+}
+
+// QueryOperatorSlashEventsResponse is the response to obtain the operator slash events.
+message QueryOperatorSlashEventsResponse{
+  // operator_slash_events is the return value
+  repeated OperatorSlashEventAndHeight operator_slash_events = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStakerUnclaimedRewardsRequest is the request to obtain the staker unclaimed rewards.
+message QueryStakerUnclaimedRewardsRequest {
+  // staker id
+  string staker_id = 1;
+}
+
+// QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
+message QueryStakerUnclaimedRewardsResponse {
+  // unclaimed rewards for all AVSs
+  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
 }

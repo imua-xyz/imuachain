@@ -39,6 +39,8 @@ message GenesisState {
   // operator_key_removal is a list of operator with the given address
   // is in the process of unbonding their key for the given chainID.
   repeated OperatorKeyRemoval operator_key_removals = 8 [(gogoproto.nullable) = false];
+  // operator_asset_usd_value is a list of all operator asset USD values
+  repeated OperatorAssetUSDValue operator_asset_usd_values = 9 [(gogoproto.nullable) = false];
 }
 
 // OperatorDetail is helper structure to store the operator information for the genesis state.
@@ -67,6 +69,16 @@ message AVSUSDValue {
   // avs_addr
   string avs_addr = 1 [(gogoproto.customname) = "AVSAddr"];
   // value is the USD value for the AVS address
+  DecValueField value = 2 [(gogoproto.nullable) = false];
+}
+
+// OperatorAssetUSDValue is helper structure to store the operator asset USD value for
+// the genesis state. It's corresponding to the kvStore `KeyPrefixOperatorAssetUSDValue`
+message OperatorAssetUSDValue {
+  // key is used for storing the operator asset USD value,
+  // which is a combination of the epochIdentifier, operator address and assetID.
+  string key = 1;
+  // value is the USD value of the operator asset, as an sdk.LegacyDec.
   DecValueField value = 2 [(gogoproto.nullable) = false];
 }
 
@@ -179,4 +191,10 @@ message AssetDetails {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+}
+
+// AVSAssetsPerEpoch is used to store the AVS asset list per epoch.
+message AVSAssetsPerEpoch {
+  // asset_ids is the assets list supported by the AVS.
+  repeated string asset_ids = 1 [(gogoproto.customname) = "AssetIDs"];
 }

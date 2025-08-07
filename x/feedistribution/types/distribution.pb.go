@@ -5,11 +5,13 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
 	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
+	types1 "github.com/imua-xyz/imuachain/x/assets/types"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -26,9 +28,251 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// ValidatorHistoricalRewards represents historical rewards for a validator.
-// Height is implicit within the store key.
-// Cumulative reward ratio is the sum from the zeroeth period
+// AVSRewardParam represents the reward distribution parameter for all AVSs, The
+// AVS can choose different strategies by it. Now it only provides two flags to
+// indicate whether using the customized reward inflation and operator reward proportion.
+// In the future the parameters regarding reward inflation might be added here when we
+// upgrade the implementation of default reward inflation.
+type AVSRewardParam struct {
+	// custom_reward_inflation is the flag to determine whether customizing the reward inflation
+	// by the precompile contract
+	CustomRewardInflation bool `protobuf:"varint,1,opt,name=custom_reward_inflation,json=customRewardInflation,proto3" json:"custom_reward_inflation,omitempty"`
+	// custom_operator_ratio is the flag to determine whether customizing the operator reward
+	// proportions by the precompile contract
+	CustomOperatorRatio bool `protobuf:"varint,2,opt,name=custom_operator_ratio,json=customOperatorRatio,proto3" json:"custom_operator_ratio,omitempty"`
+}
+
+func (m *AVSRewardParam) Reset()         { *m = AVSRewardParam{} }
+func (m *AVSRewardParam) String() string { return proto.CompactTextString(m) }
+func (*AVSRewardParam) ProtoMessage()    {}
+func (*AVSRewardParam) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{0}
+}
+func (m *AVSRewardParam) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AVSRewardParam) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AVSRewardParam.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AVSRewardParam) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AVSRewardParam.Merge(m, src)
+}
+func (m *AVSRewardParam) XXX_Size() int {
+	return m.Size()
+}
+func (m *AVSRewardParam) XXX_DiscardUnknown() {
+	xxx_messageInfo_AVSRewardParam.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AVSRewardParam proto.InternalMessageInfo
+
+func (m *AVSRewardParam) GetCustomRewardInflation() bool {
+	if m != nil {
+		return m.CustomRewardInflation
+	}
+	return false
+}
+
+func (m *AVSRewardParam) GetCustomOperatorRatio() bool {
+	if m != nil {
+		return m.CustomOperatorRatio
+	}
+	return false
+}
+
+// OperatorRewardProportion is the reward proportion of an operator for one epoch
+type OperatorRewardProportion struct {
+	// operator_addr is the operator address,its type should be a sdk.AccAddress
+	OperatorAddr string `protobuf:"bytes,1,opt,name=operator_addr,json=operatorAddr,proto3" json:"operator_addr,omitempty"`
+	// reward_proportion is the reward proportion of this operator
+	RewardProportion github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=reward_proportion,json=rewardProportion,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_proportion"`
+}
+
+func (m *OperatorRewardProportion) Reset()         { *m = OperatorRewardProportion{} }
+func (m *OperatorRewardProportion) String() string { return proto.CompactTextString(m) }
+func (*OperatorRewardProportion) ProtoMessage()    {}
+func (*OperatorRewardProportion) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{1}
+}
+func (m *OperatorRewardProportion) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OperatorRewardProportion) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OperatorRewardProportion.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OperatorRewardProportion) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorRewardProportion.Merge(m, src)
+}
+func (m *OperatorRewardProportion) XXX_Size() int {
+	return m.Size()
+}
+func (m *OperatorRewardProportion) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorRewardProportion.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OperatorRewardProportion proto.InternalMessageInfo
+
+func (m *OperatorRewardProportion) GetOperatorAddr() string {
+	if m != nil {
+		return m.OperatorAddr
+	}
+	return ""
+}
+
+// AVSRewardDistribution represents the reward distribution information of an AVS in
+// the current epoch. It serves as the basis for executing the distribution process.
+// It is determined by the inflation and allocation mechanism configured by the AVS
+// or customized through the AVS reward contract.
+type AVSRewardDistribution struct {
+	// rewards represents the rewards for one epoch
+	Rewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=rewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"rewards"`
+	// operator_reward_proportions represents the reward proportions of all operators
+	// that are eligible to be allocated rewards in the current epoch.
+	OperatorRewardProportions []OperatorRewardProportion `protobuf:"bytes,2,rep,name=operator_reward_proportions,json=operatorRewardProportions,proto3" json:"operator_reward_proportions"`
+	// rewards_epoch_number is the epoch number at which the rewards are updated.
+	RewardsEpochNumber int64 `protobuf:"varint,3,opt,name=rewards_epoch_number,json=rewardsEpochNumber,proto3" json:"rewards_epoch_number,omitempty"`
+	// proportions_epoch_number is the epoch number at which the proportions are updated
+	ProportionsEpochNumber int64 `protobuf:"varint,4,opt,name=proportions_epoch_number,json=proportionsEpochNumber,proto3" json:"proportions_epoch_number,omitempty"`
+}
+
+func (m *AVSRewardDistribution) Reset()         { *m = AVSRewardDistribution{} }
+func (m *AVSRewardDistribution) String() string { return proto.CompactTextString(m) }
+func (*AVSRewardDistribution) ProtoMessage()    {}
+func (*AVSRewardDistribution) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{2}
+}
+func (m *AVSRewardDistribution) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AVSRewardDistribution) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AVSRewardDistribution.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AVSRewardDistribution) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AVSRewardDistribution.Merge(m, src)
+}
+func (m *AVSRewardDistribution) XXX_Size() int {
+	return m.Size()
+}
+func (m *AVSRewardDistribution) XXX_DiscardUnknown() {
+	xxx_messageInfo_AVSRewardDistribution.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AVSRewardDistribution proto.InternalMessageInfo
+
+func (m *AVSRewardDistribution) GetRewards() github_com_cosmos_cosmos_sdk_types.DecCoins {
+	if m != nil {
+		return m.Rewards
+	}
+	return nil
+}
+
+func (m *AVSRewardDistribution) GetOperatorRewardProportions() []OperatorRewardProportion {
+	if m != nil {
+		return m.OperatorRewardProportions
+	}
+	return nil
+}
+
+func (m *AVSRewardDistribution) GetRewardsEpochNumber() int64 {
+	if m != nil {
+		return m.RewardsEpochNumber
+	}
+	return 0
+}
+
+func (m *AVSRewardDistribution) GetProportionsEpochNumber() int64 {
+	if m != nil {
+		return m.ProportionsEpochNumber
+	}
+	return 0
+}
+
+// CommonAVSRewardData is a common struct used to record the current rewards and cumulative
+// reward ratios of a specified AVS for the operator.
+type CommonAVSRewardData struct {
+	// avs_address is the AVS address
+	AVSAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
+	// rewards represents the current rewards or cumulative reward ratios
+	Rewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,2,rep,name=rewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"rewards"`
+}
+
+func (m *CommonAVSRewardData) Reset()         { *m = CommonAVSRewardData{} }
+func (m *CommonAVSRewardData) String() string { return proto.CompactTextString(m) }
+func (*CommonAVSRewardData) ProtoMessage()    {}
+func (*CommonAVSRewardData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{3}
+}
+func (m *CommonAVSRewardData) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CommonAVSRewardData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CommonAVSRewardData.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CommonAVSRewardData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CommonAVSRewardData.Merge(m, src)
+}
+func (m *CommonAVSRewardData) XXX_Size() int {
+	return m.Size()
+}
+func (m *CommonAVSRewardData) XXX_DiscardUnknown() {
+	xxx_messageInfo_CommonAVSRewardData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CommonAVSRewardData proto.InternalMessageInfo
+
+func (m *CommonAVSRewardData) GetAVSAddress() string {
+	if m != nil {
+		return m.AVSAddress
+	}
+	return ""
+}
+
+func (m *CommonAVSRewardData) GetRewards() github_com_cosmos_cosmos_sdk_types.DecCoins {
+	if m != nil {
+		return m.Rewards
+	}
+	return nil
+}
+
+// OperatorHistoricalRewards represents historical rewards for an operator.
+// Operator, assetID, epochIdentifier and period are implicit within the store key.
+// Cumulative reward ratio is the sum from the zero period
 // until this period of rewards / tokens, per the spec.
 // The reference count indicates the number of objects
 // which might need to reference this historical entry at any point.
@@ -39,25 +283,34 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 //	+ number of slashes which ended the associated period (and might need to
 //	read that record)
 //	+ one per validator for the zeroeth period, set on initialization
-type ValidatorHistoricalRewards struct {
-	// cumulative_reward_ratio is the  ratio defined
-	CumulativeRewardRatio github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=cumulative_reward_ratio,json=cumulativeRewardRatio,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"cumulative_reward_ratio"`
-	// reference_count is for F1 distribution, not enabled for current version.
+//
+// In imua chain, one operator will opt into multiple AVSs, all AVS rewards will
+// be distributed by f1 distribution. For AVSs with the same epoch configuration,
+// the update in delegation stake will be exactly the same, so we can use a single
+// reference_count to handle the reward distribution for these AVSs. However, for
+// storing the accumulated reward factors of different AVSs, since different AVSs
+// may have multiple different rewards, to keep the logic clear, we will not store
+// all reward factors for all AVSs in a single slice. Instead, we will use a two-dimensional
+// slice to store the accumulated reward factors for all AVSs separately.
+type OperatorHistoricalRewards struct {
+	// cumulative_reward_ratios is the reward ratios for multiple AVSs
+	CumulativeRewardRatios []CommonAVSRewardData `protobuf:"bytes,1,rep,name=cumulative_reward_ratios,json=cumulativeRewardRatios,proto3" json:"cumulative_reward_ratios"`
+	// reference_count is for F1 distribution.
 	ReferenceCount uint32 `protobuf:"varint,2,opt,name=reference_count,json=referenceCount,proto3" json:"reference_count,omitempty"`
 }
 
-func (m *ValidatorHistoricalRewards) Reset()         { *m = ValidatorHistoricalRewards{} }
-func (m *ValidatorHistoricalRewards) String() string { return proto.CompactTextString(m) }
-func (*ValidatorHistoricalRewards) ProtoMessage()    {}
-func (*ValidatorHistoricalRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{0}
+func (m *OperatorHistoricalRewards) Reset()         { *m = OperatorHistoricalRewards{} }
+func (m *OperatorHistoricalRewards) String() string { return proto.CompactTextString(m) }
+func (*OperatorHistoricalRewards) ProtoMessage()    {}
+func (*OperatorHistoricalRewards) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{4}
 }
-func (m *ValidatorHistoricalRewards) XXX_Unmarshal(b []byte) error {
+func (m *OperatorHistoricalRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ValidatorHistoricalRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OperatorHistoricalRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ValidatorHistoricalRewards.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OperatorHistoricalRewards.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -67,54 +320,59 @@ func (m *ValidatorHistoricalRewards) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *ValidatorHistoricalRewards) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValidatorHistoricalRewards.Merge(m, src)
+func (m *OperatorHistoricalRewards) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorHistoricalRewards.Merge(m, src)
 }
-func (m *ValidatorHistoricalRewards) XXX_Size() int {
+func (m *OperatorHistoricalRewards) XXX_Size() int {
 	return m.Size()
 }
-func (m *ValidatorHistoricalRewards) XXX_DiscardUnknown() {
-	xxx_messageInfo_ValidatorHistoricalRewards.DiscardUnknown(m)
+func (m *OperatorHistoricalRewards) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorHistoricalRewards.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ValidatorHistoricalRewards proto.InternalMessageInfo
+var xxx_messageInfo_OperatorHistoricalRewards proto.InternalMessageInfo
 
-func (m *ValidatorHistoricalRewards) GetCumulativeRewardRatio() github_com_cosmos_cosmos_sdk_types.DecCoins {
+func (m *OperatorHistoricalRewards) GetCumulativeRewardRatios() []CommonAVSRewardData {
 	if m != nil {
-		return m.CumulativeRewardRatio
+		return m.CumulativeRewardRatios
 	}
 	return nil
 }
 
-func (m *ValidatorHistoricalRewards) GetReferenceCount() uint32 {
+func (m *OperatorHistoricalRewards) GetReferenceCount() uint32 {
 	if m != nil {
 		return m.ReferenceCount
 	}
 	return 0
 }
 
-// ValidatorCurrentRewards represents current rewards and current
-// period for a validator kept as a running counter and incremented
-// each block as long as the validator's tokens remain constant.
-type ValidatorCurrentRewards struct {
+// OperatorCurrentRewards represents the current rewards and the current
+// period for an operator, stored as a running counter that is incremented
+// each time the operator's token balance changes. Token changes are checked
+// on an epoch basis, rather than per block. Similar to OperatorHistoricalRewards,
+// for multiple AVSs with the same epoch configuration, the token changes for the
+// related operator are consistent. Therefore, they can share a single period.
+// However, the rewards are still stored separately for each AVS using a 2D array.
+// Operator, assetID and epochIdentifier are implicit within the store key.
+type OperatorCurrentRewards struct {
 	// current rewards
-	Rewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=rewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"rewards"`
+	Rewards []CommonAVSRewardData `protobuf:"bytes,1,rep,name=rewards,proto3" json:"rewards"`
 	// period is for a validator kept as a running counter
 	Period uint64 `protobuf:"varint,2,opt,name=period,proto3" json:"period,omitempty"`
 }
 
-func (m *ValidatorCurrentRewards) Reset()         { *m = ValidatorCurrentRewards{} }
-func (m *ValidatorCurrentRewards) String() string { return proto.CompactTextString(m) }
-func (*ValidatorCurrentRewards) ProtoMessage()    {}
-func (*ValidatorCurrentRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{1}
+func (m *OperatorCurrentRewards) Reset()         { *m = OperatorCurrentRewards{} }
+func (m *OperatorCurrentRewards) String() string { return proto.CompactTextString(m) }
+func (*OperatorCurrentRewards) ProtoMessage()    {}
+func (*OperatorCurrentRewards) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{5}
 }
-func (m *ValidatorCurrentRewards) XXX_Unmarshal(b []byte) error {
+func (m *OperatorCurrentRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ValidatorCurrentRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OperatorCurrentRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ValidatorCurrentRewards.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OperatorCurrentRewards.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -124,51 +382,53 @@ func (m *ValidatorCurrentRewards) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *ValidatorCurrentRewards) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValidatorCurrentRewards.Merge(m, src)
+func (m *OperatorCurrentRewards) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorCurrentRewards.Merge(m, src)
 }
-func (m *ValidatorCurrentRewards) XXX_Size() int {
+func (m *OperatorCurrentRewards) XXX_Size() int {
 	return m.Size()
 }
-func (m *ValidatorCurrentRewards) XXX_DiscardUnknown() {
-	xxx_messageInfo_ValidatorCurrentRewards.DiscardUnknown(m)
+func (m *OperatorCurrentRewards) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorCurrentRewards.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ValidatorCurrentRewards proto.InternalMessageInfo
+var xxx_messageInfo_OperatorCurrentRewards proto.InternalMessageInfo
 
-func (m *ValidatorCurrentRewards) GetRewards() github_com_cosmos_cosmos_sdk_types.DecCoins {
+func (m *OperatorCurrentRewards) GetRewards() []CommonAVSRewardData {
 	if m != nil {
 		return m.Rewards
 	}
 	return nil
 }
 
-func (m *ValidatorCurrentRewards) GetPeriod() uint64 {
+func (m *OperatorCurrentRewards) GetPeriod() uint64 {
 	if m != nil {
 		return m.Period
 	}
 	return 0
 }
 
-// ValidatorAccumulatedCommission represents accumulated commission
-// for a validator kept as a running counter, can be withdrawn at any time.
-type ValidatorAccumulatedCommission struct {
-	// commission is the commission for a validator
-	Commission github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=commission,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"commission"`
+// StakerDelegationChange includes the staker ID and the delegated amount at the end
+// of the previous epoch for stakers whose delegation has changed.
+type StakerDelegationChange struct {
+	// staker_id is the stakerID
+	StakerId string `protobuf:"bytes,1,opt,name=staker_id,json=stakerId,proto3" json:"staker_id,omitempty"`
+	// previous_delegated_amount will be used to initialize the starting info for the delegation
+	PreviousDelegatedAmount github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=previous_delegated_amount,json=previousDelegatedAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"previous_delegated_amount"`
 }
 
-func (m *ValidatorAccumulatedCommission) Reset()         { *m = ValidatorAccumulatedCommission{} }
-func (m *ValidatorAccumulatedCommission) String() string { return proto.CompactTextString(m) }
-func (*ValidatorAccumulatedCommission) ProtoMessage()    {}
-func (*ValidatorAccumulatedCommission) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{2}
+func (m *StakerDelegationChange) Reset()         { *m = StakerDelegationChange{} }
+func (m *StakerDelegationChange) String() string { return proto.CompactTextString(m) }
+func (*StakerDelegationChange) ProtoMessage()    {}
+func (*StakerDelegationChange) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{6}
 }
-func (m *ValidatorAccumulatedCommission) XXX_Unmarshal(b []byte) error {
+func (m *StakerDelegationChange) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ValidatorAccumulatedCommission) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *StakerDelegationChange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ValidatorAccumulatedCommission.Marshal(b, m, deterministic)
+		return xxx_messageInfo_StakerDelegationChange.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -178,44 +438,216 @@ func (m *ValidatorAccumulatedCommission) XXX_Marshal(b []byte, deterministic boo
 		return b[:n], nil
 	}
 }
-func (m *ValidatorAccumulatedCommission) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValidatorAccumulatedCommission.Merge(m, src)
+func (m *StakerDelegationChange) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StakerDelegationChange.Merge(m, src)
 }
-func (m *ValidatorAccumulatedCommission) XXX_Size() int {
+func (m *StakerDelegationChange) XXX_Size() int {
 	return m.Size()
 }
-func (m *ValidatorAccumulatedCommission) XXX_DiscardUnknown() {
-	xxx_messageInfo_ValidatorAccumulatedCommission.DiscardUnknown(m)
+func (m *StakerDelegationChange) XXX_DiscardUnknown() {
+	xxx_messageInfo_StakerDelegationChange.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ValidatorAccumulatedCommission proto.InternalMessageInfo
+var xxx_messageInfo_StakerDelegationChange proto.InternalMessageInfo
 
-func (m *ValidatorAccumulatedCommission) GetCommission() github_com_cosmos_cosmos_sdk_types.DecCoins {
+func (m *StakerDelegationChange) GetStakerId() string {
+	if m != nil {
+		return m.StakerId
+	}
+	return ""
+}
+
+// DelegationChangeInfo represents the information about delegation changes in an epoch.
+// It includes the stakers whose delegated stake has changed and the total
+// delegated amount of the operator's assets at the end of the previous epoch.
+type DelegationChangeInfo struct {
+	// staker_delegation_changes is a slice of staker info with changed delegation stakes.
+	StakerDelegationChanges []StakerDelegationChange `protobuf:"bytes,1,rep,name=staker_delegation_changes,json=stakerDelegationChanges,proto3" json:"staker_delegation_changes"`
+	// total_amount is the total delegated amount of the operator's assets at the end of
+	// the previous epoch. It will be used to calculate the reward per unit of stake.
+	// We use decimal here because we don't want the reward for one unit of stake to be too small.
+	// It is equal to the total amount in the operator's asset info divided by 10^decimal.
+	// The decimal is stored in the asset information.
+	TotalAmount github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=total_amount,json=totalAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"total_amount"`
+}
+
+func (m *DelegationChangeInfo) Reset()         { *m = DelegationChangeInfo{} }
+func (m *DelegationChangeInfo) String() string { return proto.CompactTextString(m) }
+func (*DelegationChangeInfo) ProtoMessage()    {}
+func (*DelegationChangeInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{7}
+}
+func (m *DelegationChangeInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DelegationChangeInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DelegationChangeInfo.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DelegationChangeInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DelegationChangeInfo.Merge(m, src)
+}
+func (m *DelegationChangeInfo) XXX_Size() int {
+	return m.Size()
+}
+func (m *DelegationChangeInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_DelegationChangeInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DelegationChangeInfo proto.InternalMessageInfo
+
+func (m *DelegationChangeInfo) GetStakerDelegationChanges() []StakerDelegationChange {
+	if m != nil {
+		return m.StakerDelegationChanges
+	}
+	return nil
+}
+
+// DelegationStartingInfo represents the starting info for a delegation reward
+// period. It tracks the previous validator period, the delegation's amount of
+// staking token, and the creation epoch information (the epoch_start_height is
+// used to check later on if any slashes have occurred).
+// In imua chain, the voting power update and reward distribution are executed
+// per epoch, so when using F1 distribution for reward distribution, the smallest
+// unit of change in the delegator's stake is the epoch, not the block.
+// the epoch identifier is within the key.
+type DelegationStartingInfo struct {
+	// previous_period marks the period referenced by this delegation as the starting point.
+	// It is used to calculate the rewards for this delegation.
+	PreviousPeriod uint64 `protobuf:"varint,1,opt,name=previous_period,json=previousPeriod,proto3" json:"previous_period,omitempty"`
+	// stake records the initial stake of this delegation.
+	// The cumulative rewards are calculated as:
+	// rewards = stake * (rewardRatioAtEndPeriod - rewardRatioAtStartPeriod)
+	// decimal is used here to match `total_amount` in `DelegationChangeInfo`.
+	Stake github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=stake,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"stake"`
+	// epoch_number is the epoch when the delegation starts.
+	// It is used to handle the impact of slash events on rewards.
+	EpochNumber uint64 `protobuf:"varint,3,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+}
+
+func (m *DelegationStartingInfo) Reset()         { *m = DelegationStartingInfo{} }
+func (m *DelegationStartingInfo) String() string { return proto.CompactTextString(m) }
+func (*DelegationStartingInfo) ProtoMessage()    {}
+func (*DelegationStartingInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{8}
+}
+func (m *DelegationStartingInfo) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DelegationStartingInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DelegationStartingInfo.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DelegationStartingInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DelegationStartingInfo.Merge(m, src)
+}
+func (m *DelegationStartingInfo) XXX_Size() int {
+	return m.Size()
+}
+func (m *DelegationStartingInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_DelegationStartingInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DelegationStartingInfo proto.InternalMessageInfo
+
+func (m *DelegationStartingInfo) GetPreviousPeriod() uint64 {
+	if m != nil {
+		return m.PreviousPeriod
+	}
+	return 0
+}
+
+func (m *DelegationStartingInfo) GetEpochNumber() uint64 {
+	if m != nil {
+		return m.EpochNumber
+	}
+	return 0
+}
+
+// OperatorAccumulatedCommission represents accumulated commission
+// for an operator kept as a running counter, can be withdrawn at any time.
+// The AVS address is implicit within the store key.
+type OperatorAccumulatedCommission struct {
+	// commission is the commission for an operator
+	Commission github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=commission,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"commission"`
+}
+
+func (m *OperatorAccumulatedCommission) Reset()         { *m = OperatorAccumulatedCommission{} }
+func (m *OperatorAccumulatedCommission) String() string { return proto.CompactTextString(m) }
+func (*OperatorAccumulatedCommission) ProtoMessage()    {}
+func (*OperatorAccumulatedCommission) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{9}
+}
+func (m *OperatorAccumulatedCommission) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OperatorAccumulatedCommission) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OperatorAccumulatedCommission.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OperatorAccumulatedCommission) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorAccumulatedCommission.Merge(m, src)
+}
+func (m *OperatorAccumulatedCommission) XXX_Size() int {
+	return m.Size()
+}
+func (m *OperatorAccumulatedCommission) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorAccumulatedCommission.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OperatorAccumulatedCommission proto.InternalMessageInfo
+
+func (m *OperatorAccumulatedCommission) GetCommission() github_com_cosmos_cosmos_sdk_types.DecCoins {
 	if m != nil {
 		return m.Commission
 	}
 	return nil
 }
 
-// ValidatorOutstandingRewards represents outstanding (un-withdrawn) rewards
-// for a validator inexpensive to track, allows simple sanity checks.
-type ValidatorOutstandingRewards struct {
-	// rewards represents the rewards for the validator
+// OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards
+// for an operator inexpensive to track, allows simple sanity checks.
+// The AVS address is implicit within the store key.
+type OperatorOutstandingRewards struct {
+	// rewards represents the rewards for the operator
 	Rewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=rewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"rewards"`
 }
 
-func (m *ValidatorOutstandingRewards) Reset()         { *m = ValidatorOutstandingRewards{} }
-func (m *ValidatorOutstandingRewards) String() string { return proto.CompactTextString(m) }
-func (*ValidatorOutstandingRewards) ProtoMessage()    {}
-func (*ValidatorOutstandingRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{3}
+func (m *OperatorOutstandingRewards) Reset()         { *m = OperatorOutstandingRewards{} }
+func (m *OperatorOutstandingRewards) String() string { return proto.CompactTextString(m) }
+func (*OperatorOutstandingRewards) ProtoMessage()    {}
+func (*OperatorOutstandingRewards) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{10}
 }
-func (m *ValidatorOutstandingRewards) XXX_Unmarshal(b []byte) error {
+func (m *OperatorOutstandingRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *ValidatorOutstandingRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *OperatorOutstandingRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_ValidatorOutstandingRewards.Marshal(b, m, deterministic)
+		return xxx_messageInfo_OperatorOutstandingRewards.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -225,19 +657,19 @@ func (m *ValidatorOutstandingRewards) XXX_Marshal(b []byte, deterministic bool) 
 		return b[:n], nil
 	}
 }
-func (m *ValidatorOutstandingRewards) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ValidatorOutstandingRewards.Merge(m, src)
+func (m *OperatorOutstandingRewards) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorOutstandingRewards.Merge(m, src)
 }
-func (m *ValidatorOutstandingRewards) XXX_Size() int {
+func (m *OperatorOutstandingRewards) XXX_Size() int {
 	return m.Size()
 }
-func (m *ValidatorOutstandingRewards) XXX_DiscardUnknown() {
-	xxx_messageInfo_ValidatorOutstandingRewards.DiscardUnknown(m)
+func (m *OperatorOutstandingRewards) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorOutstandingRewards.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ValidatorOutstandingRewards proto.InternalMessageInfo
+var xxx_messageInfo_OperatorOutstandingRewards proto.InternalMessageInfo
 
-func (m *ValidatorOutstandingRewards) GetRewards() github_com_cosmos_cosmos_sdk_types.DecCoins {
+func (m *OperatorOutstandingRewards) GetRewards() github_com_cosmos_cosmos_sdk_types.DecCoins {
 	if m != nil {
 		return m.Rewards
 	}
@@ -255,7 +687,7 @@ func (m *StakerOutstandingRewards) Reset()         { *m = StakerOutstandingRewar
 func (m *StakerOutstandingRewards) String() string { return proto.CompactTextString(m) }
 func (*StakerOutstandingRewards) ProtoMessage()    {}
 func (*StakerOutstandingRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{4}
+	return fileDescriptor_0f6c992ffbed4713, []int{11}
 }
 func (m *StakerOutstandingRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -291,8 +723,60 @@ func (m *StakerOutstandingRewards) GetRewards() github_com_cosmos_cosmos_sdk_typ
 	return nil
 }
 
+// OperatorSlashEvent represents an operator slash event.
+// operator, height and epochIdentifier are implicit within the store key.
+// This is needed to calculate appropriate amount of staking tokens
+// for delegations which are withdrawn after a slash has occurred.
+type OperatorSlashEvent struct {
+	// operator_period is the period referenced by the slash event
+	OperatorPeriod uint64 `protobuf:"varint,1,opt,name=operator_period,json=operatorPeriod,proto3" json:"operator_period,omitempty"`
+	// fraction is the slash fraction.
+	Fraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=fraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"fraction"`
+}
+
+func (m *OperatorSlashEvent) Reset()         { *m = OperatorSlashEvent{} }
+func (m *OperatorSlashEvent) String() string { return proto.CompactTextString(m) }
+func (*OperatorSlashEvent) ProtoMessage()    {}
+func (*OperatorSlashEvent) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{12}
+}
+func (m *OperatorSlashEvent) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *OperatorSlashEvent) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_OperatorSlashEvent.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *OperatorSlashEvent) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_OperatorSlashEvent.Merge(m, src)
+}
+func (m *OperatorSlashEvent) XXX_Size() int {
+	return m.Size()
+}
+func (m *OperatorSlashEvent) XXX_DiscardUnknown() {
+	xxx_messageInfo_OperatorSlashEvent.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_OperatorSlashEvent proto.InternalMessageInfo
+
+func (m *OperatorSlashEvent) GetOperatorPeriod() uint64 {
+	if m != nil {
+		return m.OperatorPeriod
+	}
+	return 0
+}
+
 // FeePool is the global fee pool for distribution.
-// It holds decimal coins. Once whole those coins can be burned or distributed to the community pool.
+// It records the rewards accumulated for the community from an AVS.
+// The AVS address is implicit within the store key.
 type FeePool struct {
 	// global fee pool for distribution.
 	CommunityPool github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=community_pool,json=communityPool,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"community_pool"`
@@ -302,7 +786,7 @@ func (m *FeePool) Reset()         { *m = FeePool{} }
 func (m *FeePool) String() string { return proto.CompactTextString(m) }
 func (*FeePool) ProtoMessage()    {}
 func (*FeePool) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{5}
+	return fileDescriptor_0f6c992ffbed4713, []int{13}
 }
 func (m *FeePool) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -338,13 +822,180 @@ func (m *FeePool) GetCommunityPool() github_com_cosmos_cosmos_sdk_types.DecCoins
 	return nil
 }
 
+// AVSRewardAssetState defines the state of an asset to be used as a reward for an AVS
+type AVSRewardAssetState struct {
+	// reward_pool_balance is the asset balance of reward pool. It gets updated each time
+	// an AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.
+	// We use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,
+	// and we also use it when handling the distribution with F1.
+	RewardPoolBalance github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,1,opt,name=reward_pool_balance,json=rewardPoolBalance,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_pool_balance"`
+	// reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
+	// each time an AVS deposits/withdraws funds into/from the treasury. The difference between it and
+	// reward_pool_balance represents the total amount claimed by stakers and operators.
+	RewardPoolTotal github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=reward_pool_total,json=rewardPoolTotal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_pool_total"`
+	// reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`
+	// because AVS is allowed to accumulate debt and repay it by funding the reward pool later.
+	// The claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains
+	// in deficit for an extended period, preventing stakers and operators from claiming their rewards,
+	// they may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility
+	// to ensure its reward pool remains sufficiently funded.
+	// the debt is the difference between `reward_allocation_total` and `reward_pool_total`
+	RewardAllocationTotal github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,3,opt,name=reward_allocation_total,json=rewardAllocationTotal,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_allocation_total"`
+}
+
+func (m *AVSRewardAssetState) Reset()         { *m = AVSRewardAssetState{} }
+func (m *AVSRewardAssetState) String() string { return proto.CompactTextString(m) }
+func (*AVSRewardAssetState) ProtoMessage()    {}
+func (*AVSRewardAssetState) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{14}
+}
+func (m *AVSRewardAssetState) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AVSRewardAssetState) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AVSRewardAssetState.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AVSRewardAssetState) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AVSRewardAssetState.Merge(m, src)
+}
+func (m *AVSRewardAssetState) XXX_Size() int {
+	return m.Size()
+}
+func (m *AVSRewardAssetState) XXX_DiscardUnknown() {
+	xxx_messageInfo_AVSRewardAssetState.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AVSRewardAssetState proto.InternalMessageInfo
+
+// AVSRewardAsset defines the information for an asset to be used as a reward for an AVS
+type AVSRewardAsset struct {
+	// asset_basic_info is the basic information of the asset.
+	// The symbol field will be used as the `denom` field of `DecCoin`.
+	AssetBasicInfo types1.AssetInfo `protobuf:"bytes,1,opt,name=asset_basic_info,json=assetBasicInfo,proto3" json:"asset_basic_info"`
+	// reward_asset_state is the state of reward asset
+	RewardAssetState AVSRewardAssetState `protobuf:"bytes,2,opt,name=reward_asset_state,json=rewardAssetState,proto3" json:"reward_asset_state"`
+}
+
+func (m *AVSRewardAsset) Reset()         { *m = AVSRewardAsset{} }
+func (m *AVSRewardAsset) String() string { return proto.CompactTextString(m) }
+func (*AVSRewardAsset) ProtoMessage()    {}
+func (*AVSRewardAsset) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{15}
+}
+func (m *AVSRewardAsset) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AVSRewardAsset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AVSRewardAsset.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AVSRewardAsset) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AVSRewardAsset.Merge(m, src)
+}
+func (m *AVSRewardAsset) XXX_Size() int {
+	return m.Size()
+}
+func (m *AVSRewardAsset) XXX_DiscardUnknown() {
+	xxx_messageInfo_AVSRewardAsset.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AVSRewardAsset proto.InternalMessageInfo
+
+func (m *AVSRewardAsset) GetAssetBasicInfo() types1.AssetInfo {
+	if m != nil {
+		return m.AssetBasicInfo
+	}
+	return types1.AssetInfo{}
+}
+
+func (m *AVSRewardAsset) GetRewardAssetState() AVSRewardAssetState {
+	if m != nil {
+		return m.RewardAssetState
+	}
+	return AVSRewardAssetState{}
+}
+
+// AVSRewardAssets represents all reward assets of an AVS
+type AVSRewardAssets struct {
+	// avs_reward_assets is a list of all reward asset for an AVS
+	AvsRewardAssets []AVSRewardAsset `protobuf:"bytes,1,rep,name=avs_reward_assets,json=avsRewardAssets,proto3" json:"avs_reward_assets"`
+}
+
+func (m *AVSRewardAssets) Reset()         { *m = AVSRewardAssets{} }
+func (m *AVSRewardAssets) String() string { return proto.CompactTextString(m) }
+func (*AVSRewardAssets) ProtoMessage()    {}
+func (*AVSRewardAssets) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{16}
+}
+func (m *AVSRewardAssets) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AVSRewardAssets) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AVSRewardAssets.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AVSRewardAssets) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AVSRewardAssets.Merge(m, src)
+}
+func (m *AVSRewardAssets) XXX_Size() int {
+	return m.Size()
+}
+func (m *AVSRewardAssets) XXX_DiscardUnknown() {
+	xxx_messageInfo_AVSRewardAssets.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AVSRewardAssets proto.InternalMessageInfo
+
+func (m *AVSRewardAssets) GetAvsRewardAssets() []AVSRewardAsset {
+	if m != nil {
+		return m.AvsRewardAssets
+	}
+	return nil
+}
+
 func init() {
-	proto.RegisterType((*ValidatorHistoricalRewards)(nil), "imuachain.feedistribution.v1.ValidatorHistoricalRewards")
-	proto.RegisterType((*ValidatorCurrentRewards)(nil), "imuachain.feedistribution.v1.ValidatorCurrentRewards")
-	proto.RegisterType((*ValidatorAccumulatedCommission)(nil), "imuachain.feedistribution.v1.ValidatorAccumulatedCommission")
-	proto.RegisterType((*ValidatorOutstandingRewards)(nil), "imuachain.feedistribution.v1.ValidatorOutstandingRewards")
+	proto.RegisterType((*AVSRewardParam)(nil), "imuachain.feedistribution.v1.AVSRewardParam")
+	proto.RegisterType((*OperatorRewardProportion)(nil), "imuachain.feedistribution.v1.OperatorRewardProportion")
+	proto.RegisterType((*AVSRewardDistribution)(nil), "imuachain.feedistribution.v1.AVSRewardDistribution")
+	proto.RegisterType((*CommonAVSRewardData)(nil), "imuachain.feedistribution.v1.CommonAVSRewardData")
+	proto.RegisterType((*OperatorHistoricalRewards)(nil), "imuachain.feedistribution.v1.OperatorHistoricalRewards")
+	proto.RegisterType((*OperatorCurrentRewards)(nil), "imuachain.feedistribution.v1.OperatorCurrentRewards")
+	proto.RegisterType((*StakerDelegationChange)(nil), "imuachain.feedistribution.v1.StakerDelegationChange")
+	proto.RegisterType((*DelegationChangeInfo)(nil), "imuachain.feedistribution.v1.DelegationChangeInfo")
+	proto.RegisterType((*DelegationStartingInfo)(nil), "imuachain.feedistribution.v1.DelegationStartingInfo")
+	proto.RegisterType((*OperatorAccumulatedCommission)(nil), "imuachain.feedistribution.v1.OperatorAccumulatedCommission")
+	proto.RegisterType((*OperatorOutstandingRewards)(nil), "imuachain.feedistribution.v1.OperatorOutstandingRewards")
 	proto.RegisterType((*StakerOutstandingRewards)(nil), "imuachain.feedistribution.v1.StakerOutstandingRewards")
+	proto.RegisterType((*OperatorSlashEvent)(nil), "imuachain.feedistribution.v1.OperatorSlashEvent")
 	proto.RegisterType((*FeePool)(nil), "imuachain.feedistribution.v1.FeePool")
+	proto.RegisterType((*AVSRewardAssetState)(nil), "imuachain.feedistribution.v1.AVSRewardAssetState")
+	proto.RegisterType((*AVSRewardAsset)(nil), "imuachain.feedistribution.v1.AVSRewardAsset")
+	proto.RegisterType((*AVSRewardAssets)(nil), "imuachain.feedistribution.v1.AVSRewardAssets")
 }
 
 func init() {
@@ -352,47 +1003,91 @@ func init() {
 }
 
 var fileDescriptor_0f6c992ffbed4713 = []byte{
-	// 472 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x94, 0xbf, 0x6b, 0x14, 0x41,
-	0x14, 0xc7, 0x6f, 0x54, 0x12, 0x18, 0x49, 0xc4, 0x45, 0xcd, 0x71, 0x86, 0x4d, 0xb8, 0xc6, 0xa0,
-	0x64, 0x87, 0x53, 0x04, 0x5b, 0x73, 0x22, 0x76, 0xca, 0x06, 0x2c, 0x6c, 0x8e, 0xd9, 0xd9, 0x97,
-	0xcb, 0x23, 0xbb, 0xf3, 0x96, 0x99, 0xd9, 0x35, 0x27, 0xd8, 0x5b, 0x88, 0x5a, 0xda, 0xdb, 0x04,
-	0x2b, 0xff, 0x8c, 0x94, 0xa9, 0xc4, 0x4a, 0xe5, 0xae, 0xf0, 0xdf, 0x90, 0xfd, 0x71, 0xeb, 0xa1,
-	0xf5, 0x61, 0x9a, 0xdd, 0x79, 0x0f, 0xde, 0x7c, 0x3e, 0xdf, 0x29, 0x1e, 0x17, 0x98, 0xe6, 0x52,
-	0x1d, 0x4a, 0xd4, 0xe2, 0x00, 0x20, 0x46, 0xeb, 0x0c, 0x46, 0xb9, 0x43, 0xd2, 0xa2, 0x18, 0x88,
-	0xc5, 0x3a, 0xc8, 0x0c, 0x39, 0xf2, 0x36, 0xdb, 0x81, 0xe0, 0xaf, 0x81, 0xa0, 0x18, 0xf4, 0xae,
-	0xca, 0x14, 0x35, 0x89, 0xea, 0x5b, 0x0f, 0xf4, 0x7c, 0x45, 0x36, 0x25, 0x2b, 0x22, 0x69, 0x41,
-	0x14, 0x83, 0x08, 0x9c, 0x1c, 0x08, 0x45, 0xd8, 0x5c, 0xd8, 0xbb, 0x36, 0xa6, 0x31, 0x55, 0x47,
-	0x51, 0x9e, 0xea, 0x6e, 0xff, 0x2b, 0xe3, 0xbd, 0xe7, 0x32, 0xc1, 0x58, 0x3a, 0x32, 0x4f, 0xd0,
-	0x3a, 0x32, 0xa8, 0x64, 0x12, 0xc2, 0x4b, 0x69, 0x62, 0xeb, 0xbd, 0x63, 0x7c, 0x43, 0xe5, 0x69,
-	0x9e, 0x48, 0x87, 0x05, 0x8c, 0x4c, 0xd5, 0x1e, 0x19, 0xe9, 0x90, 0xba, 0x6c, 0xfb, 0xe2, 0xce,
-	0xe5, 0xbb, 0x9b, 0x41, 0xcd, 0x0d, 0x4a, 0x6e, 0xd0, 0x70, 0x83, 0x47, 0xa0, 0x86, 0x84, 0x7a,
-	0xef, 0xc1, 0xe9, 0xf7, 0xad, 0xce, 0xe7, 0x1f, 0x5b, 0x77, 0xc6, 0xe8, 0x0e, 0xf3, 0x28, 0x50,
-	0x94, 0x8a, 0xc6, 0xb3, 0xfe, 0xed, 0xda, 0xf8, 0x48, 0xb8, 0x49, 0x06, 0x76, 0x3e, 0x63, 0x4f,
-	0x7e, 0x7d, 0xb9, 0xcd, 0xc2, 0xeb, 0x7f, 0xb0, 0xb5, 0x4c, 0x58, 0x42, 0xbd, 0x5b, 0xfc, 0x8a,
-	0x81, 0x03, 0x30, 0xa0, 0x15, 0x8c, 0x14, 0xe5, 0xda, 0x75, 0x2f, 0x6c, 0xb3, 0x9d, 0xb5, 0x70,
-	0xbd, 0x6d, 0x0f, 0xcb, 0x6e, 0xff, 0x13, 0xe3, 0x1b, 0x6d, 0xb0, 0x61, 0x6e, 0x0c, 0x68, 0x37,
-	0x4f, 0x95, 0xf1, 0xd5, 0x3a, 0x89, 0x5d, 0x72, 0x88, 0x39, 0xc6, 0xbb, 0xc1, 0x57, 0x32, 0x30,
-	0x48, 0x71, 0x65, 0x7b, 0x29, 0x6c, 0xaa, 0xfe, 0x47, 0xc6, 0xfd, 0xd6, 0xf2, 0xa1, 0x6a, 0x32,
-	0x43, 0x3c, 0xa4, 0x34, 0x45, 0x6b, 0x91, 0xb4, 0x57, 0x70, 0xae, 0xda, 0x6a, 0xc9, 0xbe, 0x0b,
-	0xa4, 0xfe, 0x7b, 0xc6, 0x6f, 0xb6, 0x6a, 0x4f, 0x73, 0x67, 0x9d, 0xd4, 0x31, 0xea, 0xf1, 0x7f,
-	0x7b, 0xc4, 0xfe, 0x5b, 0xc6, 0xbb, 0xfb, 0x4e, 0x1e, 0xc1, 0xf9, 0xd0, 0x79, 0xc3, 0xf8, 0xea,
-	0x63, 0x80, 0x67, 0x44, 0x89, 0xf7, 0x9a, 0xaf, 0x97, 0x4f, 0x97, 0x6b, 0x74, 0x93, 0x51, 0x46,
-	0x94, 0x2c, 0x59, 0x62, 0xad, 0xa5, 0x95, 0xf8, 0xbd, 0xfd, 0x93, 0xa9, 0xcf, 0x4e, 0xa7, 0x3e,
-	0x3b, 0x9b, 0xfa, 0xec, 0xe7, 0xd4, 0x67, 0x1f, 0x66, 0x7e, 0xe7, 0x6c, 0xe6, 0x77, 0xbe, 0xcd,
-	0xfc, 0xce, 0x8b, 0xfb, 0x0b, 0xd7, 0x97, 0x5b, 0x65, 0xf7, 0x78, 0xf2, 0x6a, 0x61, 0x1f, 0x1d,
-	0xff, 0xb3, 0x91, 0x2a, 0x62, 0xb4, 0x52, 0x6d, 0x88, 0x7b, 0xbf, 0x03, 0x00, 0x00, 0xff, 0xff,
-	0x86, 0x15, 0x95, 0x43, 0xbb, 0x04, 0x00, 0x00,
+	// 1180 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x57, 0xcf, 0x6f, 0xdc, 0xc4,
+	0x17, 0xcf, 0x24, 0xf9, 0xf6, 0xc7, 0x4b, 0xb2, 0x69, 0x26, 0xc9, 0x66, 0x93, 0xf6, 0xbb, 0x09,
+	0x3e, 0xd0, 0x08, 0xc8, 0x9a, 0x04, 0xa8, 0x7a, 0x80, 0xc3, 0x6e, 0x52, 0x44, 0x2e, 0x6d, 0xf0,
+	0xa2, 0x0a, 0x71, 0xc0, 0x9a, 0xb5, 0x27, 0xbb, 0x56, 0x6d, 0xcf, 0x76, 0x66, 0x6c, 0x12, 0x54,
+	0x4e, 0x5c, 0x38, 0x20, 0xc4, 0xad, 0xff, 0x42, 0xc5, 0x05, 0x0e, 0x95, 0xe8, 0x1f, 0x80, 0x44,
+	0x8f, 0x55, 0x4f, 0x88, 0x43, 0x40, 0xc9, 0x81, 0x23, 0x07, 0xfe, 0x01, 0x34, 0xe3, 0xb1, 0xd7,
+	0x49, 0xd3, 0xf0, 0xa3, 0x69, 0xc5, 0x65, 0xd7, 0xf3, 0x3e, 0x7e, 0xef, 0x7d, 0xe6, 0xbd, 0x37,
+	0x6f, 0x9e, 0xc1, 0x0e, 0xa2, 0x84, 0x78, 0x3d, 0x12, 0xc4, 0xf6, 0x36, 0xa5, 0x7e, 0x20, 0x24,
+	0x0f, 0x3a, 0x89, 0x0c, 0x58, 0x6c, 0xa7, 0xab, 0x76, 0x79, 0xdd, 0xe8, 0x73, 0x26, 0x19, 0xbe,
+	0x54, 0x28, 0x34, 0x8e, 0x28, 0x34, 0xd2, 0xd5, 0x85, 0x29, 0x12, 0x05, 0x31, 0xb3, 0xf5, 0x6f,
+	0xa6, 0xb0, 0x50, 0xf7, 0x98, 0x88, 0x98, 0xb0, 0x3b, 0x44, 0x50, 0x3b, 0x5d, 0xed, 0x50, 0x49,
+	0x56, 0x6d, 0x8f, 0x05, 0xc6, 0xe0, 0xc2, 0x7c, 0x86, 0xbb, 0x7a, 0x65, 0x67, 0x0b, 0x03, 0xcd,
+	0x74, 0x59, 0x97, 0x65, 0x72, 0xf5, 0x64, 0xa4, 0x03, 0x06, 0x36, 0x11, 0x82, 0x4a, 0xa1, 0x98,
+	0xca, 0x9d, 0x0c, 0xb5, 0xee, 0x40, 0xa5, 0x79, 0xb3, 0xed, 0xd0, 0x4f, 0x08, 0xf7, 0xb7, 0x08,
+	0x27, 0x11, 0xbe, 0x02, 0x73, 0x5e, 0x22, 0x24, 0x8b, 0x5c, 0xae, 0xa5, 0x6e, 0x10, 0x6f, 0x87,
+	0x44, 0x31, 0xae, 0xa1, 0x25, 0xb4, 0x7c, 0xce, 0x99, 0xcd, 0xe0, 0x4c, 0x67, 0x33, 0x07, 0xf1,
+	0x1a, 0x18, 0xc0, 0x65, 0x7d, 0xca, 0x89, 0x64, 0xdc, 0xe5, 0x0a, 0xa9, 0x0d, 0x6b, 0xad, 0xe9,
+	0x0c, 0xbc, 0x61, 0x30, 0x47, 0x41, 0xd6, 0x0f, 0x08, 0x6a, 0x85, 0x24, 0xe3, 0xc0, 0x59, 0x9f,
+	0x71, 0x6d, 0xf0, 0x1d, 0x98, 0x28, 0x2c, 0x11, 0xdf, 0xe7, 0xda, 0xfd, 0xf9, 0x56, 0xed, 0xf1,
+	0xfd, 0x95, 0x19, 0xb3, 0xef, 0xa6, 0xef, 0x73, 0x2a, 0x44, 0x5b, 0xf2, 0x20, 0xee, 0x3a, 0xe3,
+	0xf9, 0xeb, 0x4a, 0x8c, 0x03, 0x98, 0x32, 0x1b, 0xe8, 0x17, 0x36, 0x35, 0x97, 0xf3, 0xad, 0xb7,
+	0x1f, 0xee, 0x2d, 0x0e, 0xfd, 0xbc, 0xb7, 0xf8, 0x72, 0x37, 0x90, 0xbd, 0xa4, 0xd3, 0xf0, 0x58,
+	0x64, 0x22, 0x69, 0xfe, 0x56, 0x84, 0x7f, 0xcb, 0x96, 0xbb, 0x7d, 0x2a, 0x1a, 0x1b, 0xd4, 0x7b,
+	0x7c, 0x7f, 0x05, 0x8c, 0xc3, 0x0d, 0xea, 0x39, 0x17, 0xf8, 0x11, 0xa6, 0xd6, 0x1f, 0xc3, 0x30,
+	0x5b, 0x44, 0x71, 0xa3, 0x94, 0x63, 0xdc, 0x87, 0xb3, 0xd9, 0xdb, 0xa2, 0x86, 0x96, 0x46, 0x96,
+	0xc7, 0xd6, 0x2e, 0x35, 0x8c, 0x25, 0x95, 0xdf, 0x86, 0xc9, 0xaf, 0x32, 0xbb, 0xce, 0x82, 0xb8,
+	0x75, 0x55, 0x11, 0xfb, 0xe6, 0x97, 0xc5, 0x57, 0xff, 0x1e, 0x31, 0xa5, 0x23, 0xee, 0xfd, 0xf6,
+	0xdd, 0x2b, 0xc8, 0xc9, 0xdd, 0xe0, 0x3b, 0x70, 0x71, 0x10, 0xff, 0xa3, 0xfb, 0x17, 0xb5, 0x61,
+	0xcd, 0xe2, 0x4a, 0xe3, 0xa4, 0xb2, 0x6c, 0x3c, 0x2d, 0x25, 0xad, 0x51, 0xc5, 0xcf, 0x99, 0x67,
+	0x4f, 0xc1, 0x05, 0x7e, 0x1d, 0x66, 0x0c, 0x11, 0x97, 0xf6, 0x99, 0xd7, 0x73, 0xe3, 0x24, 0xea,
+	0x50, 0x5e, 0x1b, 0x59, 0x42, 0xcb, 0x23, 0x0e, 0x36, 0xd8, 0x35, 0x05, 0x5d, 0xd7, 0x08, 0xbe,
+	0x0a, 0xb5, 0x12, 0xbf, 0xc3, 0x5a, 0xa3, 0x5a, 0xab, 0x5a, 0xc2, 0x4b, 0x9a, 0xd6, 0x03, 0x04,
+	0xd3, 0xeb, 0x2c, 0x8a, 0x58, 0x3c, 0x88, 0x3d, 0x91, 0x04, 0xdb, 0x30, 0x46, 0x52, 0xa1, 0x4b,
+	0x86, 0x0a, 0x61, 0xaa, 0xa6, 0xb2, 0xbf, 0xb7, 0x08, 0xcd, 0x9b, 0x6d, 0x53, 0x31, 0x0e, 0x90,
+	0x54, 0x98, 0xe7, 0x72, 0x92, 0x86, 0x5f, 0x48, 0x92, 0xac, 0xef, 0x11, 0xcc, 0xe7, 0x41, 0x7e,
+	0x2f, 0x10, 0x92, 0xf1, 0xc0, 0x23, 0xa1, 0x63, 0x52, 0x78, 0x1b, 0x6a, 0x5e, 0x12, 0x25, 0xea,
+	0x5c, 0xa5, 0x34, 0x4f, 0xa2, 0x3e, 0x4b, 0x79, 0x15, 0xad, 0x9e, 0x9c, 0xbf, 0x63, 0xa2, 0x62,
+	0x52, 0x57, 0x1d, 0x18, 0xce, 0x30, 0x7d, 0x0e, 0x05, 0xbe, 0x0c, 0x93, 0x9c, 0x6e, 0x53, 0x4e,
+	0x63, 0x8f, 0xba, 0x1e, 0x4b, 0x62, 0xa9, 0x8f, 0xca, 0x84, 0x53, 0x29, 0xc4, 0xeb, 0x4a, 0x6a,
+	0x7d, 0x8e, 0xa0, 0x9a, 0x33, 0x5f, 0x4f, 0x38, 0xa7, 0xb1, 0xcc, 0x69, 0xbf, 0x7f, 0xb4, 0xd6,
+	0xff, 0x35, 0xcb, 0xa2, 0x98, 0xab, 0x70, 0xa6, 0x4f, 0x79, 0xc0, 0x7c, 0xcd, 0x66, 0xd4, 0x31,
+	0x2b, 0xeb, 0x5b, 0x04, 0xd5, 0xb6, 0x24, 0xb7, 0x28, 0xdf, 0xa0, 0x21, 0xed, 0xea, 0x06, 0xb4,
+	0xde, 0x23, 0x71, 0x97, 0xe2, 0x8b, 0x70, 0x5e, 0x68, 0xc4, 0x0d, 0xfc, 0x2c, 0xf7, 0xce, 0xb9,
+	0x4c, 0xb0, 0xe9, 0xe3, 0x1d, 0x98, 0xef, 0x73, 0x9a, 0x06, 0x2c, 0x11, 0xae, 0x9f, 0x69, 0x52,
+	0xdf, 0x25, 0x51, 0xb1, 0xe1, 0x67, 0xed, 0x0d, 0x73, 0xb9, 0xf9, 0x8d, 0xdc, 0x7a, 0x53, 0x1b,
+	0xb7, 0x7e, 0x47, 0x30, 0x73, 0x94, 0xeb, 0x66, 0xbc, 0xcd, 0x70, 0x0a, 0xf3, 0x86, 0xaf, 0x5f,
+	0xc0, 0xae, 0xa7, 0xf1, 0x3c, 0x8e, 0x6f, 0x9e, 0x1c, 0xc7, 0xe3, 0x03, 0x61, 0x42, 0x39, 0x27,
+	0x8e, 0x45, 0x05, 0x76, 0x61, 0x5c, 0x32, 0x49, 0xc2, 0xd3, 0xdc, 0xfd, 0x98, 0xb6, 0x68, 0x76,
+	0xfc, 0x00, 0x41, 0x75, 0xe0, 0xb6, 0x2d, 0x09, 0x97, 0x41, 0xdc, 0xd5, 0x7b, 0xbe, 0x0c, 0x93,
+	0x45, 0x1a, 0x4c, 0x7e, 0x91, 0xce, 0x6f, 0x25, 0x17, 0x6f, 0x69, 0x29, 0x76, 0xe0, 0x7f, 0x9a,
+	0xff, 0xa9, 0xb0, 0xcb, 0x4c, 0xe1, 0x97, 0x60, 0xfc, 0x89, 0xd6, 0x34, 0xea, 0x8c, 0xd1, 0x52,
+	0x67, 0xb9, 0x8b, 0xe0, 0xff, 0x79, 0x91, 0x37, 0x3d, 0x73, 0x64, 0xa8, 0xaf, 0x0a, 0x36, 0x10,
+	0x42, 0xf5, 0xf5, 0x14, 0xc0, 0x2b, 0x56, 0xcf, 0xb9, 0xb5, 0x97, 0x3c, 0x59, 0x5f, 0x21, 0x58,
+	0xc8, 0x99, 0xdd, 0x48, 0xa4, 0x90, 0x24, 0xf6, 0xd5, 0xd5, 0x67, 0xce, 0xcb, 0x0b, 0xbf, 0x6e,
+	0xac, 0x2f, 0x11, 0xd4, 0xb2, 0x02, 0xfc, 0x4f, 0xd0, 0xb9, 0x8b, 0x00, 0xe7, 0xf1, 0x69, 0x87,
+	0x44, 0xf4, 0xae, 0xa5, 0x34, 0x96, 0xaa, 0xe0, 0x8a, 0x4b, 0xf1, 0x70, 0xc1, 0xe5, 0x62, 0x53,
+	0x70, 0x1f, 0xc2, 0xb9, 0x6d, 0x4e, 0xbc, 0x53, 0x9b, 0x15, 0x0a, 0x6b, 0xd6, 0x17, 0x08, 0xce,
+	0xbe, 0x4b, 0xe9, 0x16, 0x63, 0x21, 0xfe, 0x0c, 0x2a, 0x2a, 0xa7, 0x49, 0x1c, 0xc8, 0x5d, 0xb7,
+	0xcf, 0x58, 0xf8, 0x9c, 0xc3, 0x33, 0x51, 0x78, 0x53, 0xee, 0xad, 0x83, 0x61, 0x98, 0x2e, 0xda,
+	0x6e, 0x53, 0xcd, 0x84, 0x6d, 0x49, 0x24, 0xc5, 0x21, 0x4c, 0xe7, 0x13, 0x03, 0x63, 0xa1, 0xdb,
+	0x21, 0x21, 0x89, 0x3d, 0x6a, 0x2e, 0xd0, 0x67, 0x8b, 0x83, 0x19, 0xc5, 0x94, 0xfb, 0x56, 0x66,
+	0x16, 0xf7, 0x06, 0xf3, 0x99, 0xf2, 0xa6, 0x5b, 0xc7, 0xa9, 0xc4, 0x7c, 0x72, 0xe0, 0xeb, 0x03,
+	0x65, 0x14, 0x4b, 0x98, 0x33, 0x9e, 0x48, 0x18, 0x32, 0x2f, 0x6b, 0xb1, 0x99, 0xbf, 0x91, 0x53,
+	0xf0, 0x37, 0x9b, 0x19, 0x6f, 0x16, 0xb6, 0xb5, 0x57, 0xeb, 0x47, 0x54, 0x1a, 0xad, 0x75, 0x94,
+	0xf1, 0x75, 0xb8, 0xa0, 0x47, 0x70, 0xb7, 0x43, 0x44, 0xe0, 0xa9, 0xc1, 0x9a, 0xe9, 0xe8, 0x8e,
+	0xad, 0xd5, 0x4b, 0x2d, 0x3e, 0x9b, 0xd2, 0x55, 0x67, 0xd7, 0x5a, 0xaa, 0x63, 0x9a, 0x66, 0x5e,
+	0xd1, 0x50, 0x4b, 0x29, 0xeb, 0x3e, 0x4a, 0x01, 0xe7, 0x1b, 0xd3, 0x66, 0x85, 0x4a, 0xa3, 0x8e,
+	0xe1, 0x5f, 0x5e, 0xbe, 0xc7, 0xe4, 0xdf, 0x38, 0x31, 0xe3, 0xed, 0x40, 0x6e, 0xdd, 0x86, 0xc9,
+	0xc3, 0xaf, 0x0b, 0xfc, 0x31, 0x4c, 0xa9, 0x19, 0xab, 0xec, 0x3d, 0x3f, 0xe3, 0xaf, 0xfd, 0x13,
+	0xc7, 0xc6, 0xe7, 0x24, 0x49, 0x45, 0xd9, 0x7e, 0xab, 0x7d, 0x6f, 0xbf, 0x8e, 0x1e, 0xee, 0xd7,
+	0xd1, 0xa3, 0xfd, 0x3a, 0xfa, 0x75, 0xbf, 0x8e, 0xbe, 0x3e, 0xa8, 0x0f, 0x3d, 0x3a, 0xa8, 0x0f,
+	0xfd, 0x74, 0x50, 0x1f, 0xfa, 0xe8, 0xad, 0x52, 0x9e, 0x94, 0xb3, 0x95, 0x9d, 0xdd, 0x4f, 0x4b,
+	0x5f, 0x66, 0x3b, 0x4f, 0x7c, 0x9b, 0xe9, 0xd4, 0x75, 0xce, 0xe8, 0x4f, 0x9e, 0x37, 0xfe, 0x0c,
+	0x00, 0x00, 0xff, 0xff, 0xbe, 0x51, 0x79, 0x63, 0xc5, 0x0d, 0x00, 0x00,
 }
 
-func (this *ValidatorHistoricalRewards) Equal(that interface{}) bool {
+func (this *AVSRewardParam) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*ValidatorHistoricalRewards)
+	that1, ok := that.(*AVSRewardParam)
 	if !ok {
-		that2, ok := that.(ValidatorHistoricalRewards)
+		that2, ok := that.(AVSRewardParam)
 		if ok {
 			that1 = &that2
 		} else {
@@ -404,11 +1099,140 @@ func (this *ValidatorHistoricalRewards) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if len(this.CumulativeRewardRatio) != len(that1.CumulativeRewardRatio) {
+	if this.CustomRewardInflation != that1.CustomRewardInflation {
 		return false
 	}
-	for i := range this.CumulativeRewardRatio {
-		if !this.CumulativeRewardRatio[i].Equal(&that1.CumulativeRewardRatio[i]) {
+	if this.CustomOperatorRatio != that1.CustomOperatorRatio {
+		return false
+	}
+	return true
+}
+func (this *OperatorRewardProportion) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*OperatorRewardProportion)
+	if !ok {
+		that2, ok := that.(OperatorRewardProportion)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.OperatorAddr != that1.OperatorAddr {
+		return false
+	}
+	if !this.RewardProportion.Equal(that1.RewardProportion) {
+		return false
+	}
+	return true
+}
+func (this *AVSRewardDistribution) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*AVSRewardDistribution)
+	if !ok {
+		that2, ok := that.(AVSRewardDistribution)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if len(this.Rewards) != len(that1.Rewards) {
+		return false
+	}
+	for i := range this.Rewards {
+		if !this.Rewards[i].Equal(&that1.Rewards[i]) {
+			return false
+		}
+	}
+	if len(this.OperatorRewardProportions) != len(that1.OperatorRewardProportions) {
+		return false
+	}
+	for i := range this.OperatorRewardProportions {
+		if !this.OperatorRewardProportions[i].Equal(&that1.OperatorRewardProportions[i]) {
+			return false
+		}
+	}
+	if this.RewardsEpochNumber != that1.RewardsEpochNumber {
+		return false
+	}
+	if this.ProportionsEpochNumber != that1.ProportionsEpochNumber {
+		return false
+	}
+	return true
+}
+func (this *CommonAVSRewardData) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*CommonAVSRewardData)
+	if !ok {
+		that2, ok := that.(CommonAVSRewardData)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.AVSAddress != that1.AVSAddress {
+		return false
+	}
+	if len(this.Rewards) != len(that1.Rewards) {
+		return false
+	}
+	for i := range this.Rewards {
+		if !this.Rewards[i].Equal(&that1.Rewards[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (this *OperatorHistoricalRewards) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*OperatorHistoricalRewards)
+	if !ok {
+		that2, ok := that.(OperatorHistoricalRewards)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if len(this.CumulativeRewardRatios) != len(that1.CumulativeRewardRatios) {
+		return false
+	}
+	for i := range this.CumulativeRewardRatios {
+		if !this.CumulativeRewardRatios[i].Equal(&that1.CumulativeRewardRatios[i]) {
 			return false
 		}
 	}
@@ -417,14 +1241,14 @@ func (this *ValidatorHistoricalRewards) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *ValidatorCurrentRewards) Equal(that interface{}) bool {
+func (this *OperatorCurrentRewards) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*ValidatorCurrentRewards)
+	that1, ok := that.(*OperatorCurrentRewards)
 	if !ok {
-		that2, ok := that.(ValidatorCurrentRewards)
+		that2, ok := that.(OperatorCurrentRewards)
 		if ok {
 			that1 = &that2
 		} else {
@@ -449,14 +1273,103 @@ func (this *ValidatorCurrentRewards) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *ValidatorAccumulatedCommission) Equal(that interface{}) bool {
+func (this *StakerDelegationChange) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*ValidatorAccumulatedCommission)
+	that1, ok := that.(*StakerDelegationChange)
 	if !ok {
-		that2, ok := that.(ValidatorAccumulatedCommission)
+		that2, ok := that.(StakerDelegationChange)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.StakerId != that1.StakerId {
+		return false
+	}
+	if !this.PreviousDelegatedAmount.Equal(that1.PreviousDelegatedAmount) {
+		return false
+	}
+	return true
+}
+func (this *DelegationChangeInfo) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*DelegationChangeInfo)
+	if !ok {
+		that2, ok := that.(DelegationChangeInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if len(this.StakerDelegationChanges) != len(that1.StakerDelegationChanges) {
+		return false
+	}
+	for i := range this.StakerDelegationChanges {
+		if !this.StakerDelegationChanges[i].Equal(&that1.StakerDelegationChanges[i]) {
+			return false
+		}
+	}
+	if !this.TotalAmount.Equal(that1.TotalAmount) {
+		return false
+	}
+	return true
+}
+func (this *DelegationStartingInfo) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*DelegationStartingInfo)
+	if !ok {
+		that2, ok := that.(DelegationStartingInfo)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.PreviousPeriod != that1.PreviousPeriod {
+		return false
+	}
+	if !this.Stake.Equal(that1.Stake) {
+		return false
+	}
+	if this.EpochNumber != that1.EpochNumber {
+		return false
+	}
+	return true
+}
+func (this *OperatorAccumulatedCommission) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*OperatorAccumulatedCommission)
+	if !ok {
+		that2, ok := that.(OperatorAccumulatedCommission)
 		if ok {
 			that1 = &that2
 		} else {
@@ -478,14 +1391,14 @@ func (this *ValidatorAccumulatedCommission) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *ValidatorOutstandingRewards) Equal(that interface{}) bool {
+func (this *OperatorOutstandingRewards) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*ValidatorOutstandingRewards)
+	that1, ok := that.(*OperatorOutstandingRewards)
 	if !ok {
-		that2, ok := that.(ValidatorOutstandingRewards)
+		that2, ok := that.(OperatorOutstandingRewards)
 		if ok {
 			that1 = &that2
 		} else {
@@ -536,6 +1449,33 @@ func (this *StakerOutstandingRewards) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *OperatorSlashEvent) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*OperatorSlashEvent)
+	if !ok {
+		that2, ok := that.(OperatorSlashEvent)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.OperatorPeriod != that1.OperatorPeriod {
+		return false
+	}
+	if !this.Fraction.Equal(that1.Fraction) {
+		return false
+	}
+	return true
+}
 func (this *FeePool) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -565,7 +1505,93 @@ func (this *FeePool) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (m *ValidatorHistoricalRewards) Marshal() (dAtA []byte, err error) {
+func (this *AVSRewardAssetState) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*AVSRewardAssetState)
+	if !ok {
+		that2, ok := that.(AVSRewardAssetState)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.RewardPoolBalance.Equal(that1.RewardPoolBalance) {
+		return false
+	}
+	if !this.RewardPoolTotal.Equal(that1.RewardPoolTotal) {
+		return false
+	}
+	if !this.RewardAllocationTotal.Equal(that1.RewardAllocationTotal) {
+		return false
+	}
+	return true
+}
+func (this *AVSRewardAsset) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*AVSRewardAsset)
+	if !ok {
+		that2, ok := that.(AVSRewardAsset)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.AssetBasicInfo.Equal(&that1.AssetBasicInfo) {
+		return false
+	}
+	if !this.RewardAssetState.Equal(&that1.RewardAssetState) {
+		return false
+	}
+	return true
+}
+func (this *AVSRewardAssets) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*AVSRewardAssets)
+	if !ok {
+		that2, ok := that.(AVSRewardAssets)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if len(this.AvsRewardAssets) != len(that1.AvsRewardAssets) {
+		return false
+	}
+	for i := range this.AvsRewardAssets {
+		if !this.AvsRewardAssets[i].Equal(&that1.AvsRewardAssets[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (m *AVSRewardParam) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -575,25 +1601,127 @@ func (m *ValidatorHistoricalRewards) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ValidatorHistoricalRewards) MarshalTo(dAtA []byte) (int, error) {
+func (m *AVSRewardParam) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ValidatorHistoricalRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *AVSRewardParam) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.ReferenceCount != 0 {
-		i = encodeVarintDistribution(dAtA, i, uint64(m.ReferenceCount))
+	if m.CustomOperatorRatio {
+		i--
+		if m.CustomOperatorRatio {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
 		i--
 		dAtA[i] = 0x10
 	}
-	if len(m.CumulativeRewardRatio) > 0 {
-		for iNdEx := len(m.CumulativeRewardRatio) - 1; iNdEx >= 0; iNdEx-- {
+	if m.CustomRewardInflation {
+		i--
+		if m.CustomRewardInflation {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OperatorRewardProportion) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OperatorRewardProportion) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OperatorRewardProportion) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.RewardProportion.Size()
+		i -= size
+		if _, err := m.RewardProportion.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.OperatorAddr) > 0 {
+		i -= len(m.OperatorAddr)
+		copy(dAtA[i:], m.OperatorAddr)
+		i = encodeVarintDistribution(dAtA, i, uint64(len(m.OperatorAddr)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *AVSRewardDistribution) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AVSRewardDistribution) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AVSRewardDistribution) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ProportionsEpochNumber != 0 {
+		i = encodeVarintDistribution(dAtA, i, uint64(m.ProportionsEpochNumber))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.RewardsEpochNumber != 0 {
+		i = encodeVarintDistribution(dAtA, i, uint64(m.RewardsEpochNumber))
+		i--
+		dAtA[i] = 0x18
+	}
+	if len(m.OperatorRewardProportions) > 0 {
+		for iNdEx := len(m.OperatorRewardProportions) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.CumulativeRewardRatio[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.OperatorRewardProportions[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.Rewards) > 0 {
+		for iNdEx := len(m.Rewards) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Rewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -607,7 +1735,7 @@ func (m *ValidatorHistoricalRewards) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
-func (m *ValidatorCurrentRewards) Marshal() (dAtA []byte, err error) {
+func (m *CommonAVSRewardData) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -617,12 +1745,98 @@ func (m *ValidatorCurrentRewards) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ValidatorCurrentRewards) MarshalTo(dAtA []byte) (int, error) {
+func (m *CommonAVSRewardData) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ValidatorCurrentRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *CommonAVSRewardData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Rewards) > 0 {
+		for iNdEx := len(m.Rewards) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Rewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.AVSAddress) > 0 {
+		i -= len(m.AVSAddress)
+		copy(dAtA[i:], m.AVSAddress)
+		i = encodeVarintDistribution(dAtA, i, uint64(len(m.AVSAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OperatorHistoricalRewards) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OperatorHistoricalRewards) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OperatorHistoricalRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ReferenceCount != 0 {
+		i = encodeVarintDistribution(dAtA, i, uint64(m.ReferenceCount))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.CumulativeRewardRatios) > 0 {
+		for iNdEx := len(m.CumulativeRewardRatios) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.CumulativeRewardRatios[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OperatorCurrentRewards) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OperatorCurrentRewards) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OperatorCurrentRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -649,7 +1863,7 @@ func (m *ValidatorCurrentRewards) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *ValidatorAccumulatedCommission) Marshal() (dAtA []byte, err error) {
+func (m *StakerDelegationChange) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -659,12 +1873,142 @@ func (m *ValidatorAccumulatedCommission) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ValidatorAccumulatedCommission) MarshalTo(dAtA []byte) (int, error) {
+func (m *StakerDelegationChange) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ValidatorAccumulatedCommission) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *StakerDelegationChange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.PreviousDelegatedAmount.Size()
+		i -= size
+		if _, err := m.PreviousDelegatedAmount.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.StakerId) > 0 {
+		i -= len(m.StakerId)
+		copy(dAtA[i:], m.StakerId)
+		i = encodeVarintDistribution(dAtA, i, uint64(len(m.StakerId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DelegationChangeInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DelegationChangeInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DelegationChangeInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.TotalAmount.Size()
+		i -= size
+		if _, err := m.TotalAmount.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.StakerDelegationChanges) > 0 {
+		for iNdEx := len(m.StakerDelegationChanges) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.StakerDelegationChanges[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DelegationStartingInfo) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DelegationStartingInfo) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DelegationStartingInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.EpochNumber != 0 {
+		i = encodeVarintDistribution(dAtA, i, uint64(m.EpochNumber))
+		i--
+		dAtA[i] = 0x18
+	}
+	{
+		size := m.Stake.Size()
+		i -= size
+		if _, err := m.Stake.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if m.PreviousPeriod != 0 {
+		i = encodeVarintDistribution(dAtA, i, uint64(m.PreviousPeriod))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *OperatorAccumulatedCommission) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OperatorAccumulatedCommission) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OperatorAccumulatedCommission) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -686,7 +2030,7 @@ func (m *ValidatorAccumulatedCommission) MarshalToSizedBuffer(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
-func (m *ValidatorOutstandingRewards) Marshal() (dAtA []byte, err error) {
+func (m *OperatorOutstandingRewards) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -696,12 +2040,12 @@ func (m *ValidatorOutstandingRewards) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *ValidatorOutstandingRewards) MarshalTo(dAtA []byte) (int, error) {
+func (m *OperatorOutstandingRewards) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ValidatorOutstandingRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *OperatorOutstandingRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -760,6 +2104,44 @@ func (m *StakerOutstandingRewards) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
+func (m *OperatorSlashEvent) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *OperatorSlashEvent) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *OperatorSlashEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Fraction.Size()
+		i -= size
+		if _, err := m.Fraction.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if m.OperatorPeriod != 0 {
+		i = encodeVarintDistribution(dAtA, i, uint64(m.OperatorPeriod))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *FeePool) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -797,6 +2179,139 @@ func (m *FeePool) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *AVSRewardAssetState) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AVSRewardAssetState) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AVSRewardAssetState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.RewardAllocationTotal.Size()
+		i -= size
+		if _, err := m.RewardAllocationTotal.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.RewardPoolTotal.Size()
+		i -= size
+		if _, err := m.RewardPoolTotal.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size := m.RewardPoolBalance.Size()
+		i -= size
+		if _, err := m.RewardPoolBalance.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *AVSRewardAsset) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AVSRewardAsset) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AVSRewardAsset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.RewardAssetState.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	{
+		size, err := m.AssetBasicInfo.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintDistribution(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
+}
+
+func (m *AVSRewardAssets) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AVSRewardAssets) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AVSRewardAssets) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.AvsRewardAssets) > 0 {
+		for iNdEx := len(m.AvsRewardAssets) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.AvsRewardAssets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintDistribution(dAtA []byte, offset int, v uint64) int {
 	offset -= sovDistribution(v)
 	base := offset
@@ -808,14 +2323,90 @@ func encodeVarintDistribution(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *ValidatorHistoricalRewards) Size() (n int) {
+func (m *AVSRewardParam) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.CumulativeRewardRatio) > 0 {
-		for _, e := range m.CumulativeRewardRatio {
+	if m.CustomRewardInflation {
+		n += 2
+	}
+	if m.CustomOperatorRatio {
+		n += 2
+	}
+	return n
+}
+
+func (m *OperatorRewardProportion) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.OperatorAddr)
+	if l > 0 {
+		n += 1 + l + sovDistribution(uint64(l))
+	}
+	l = m.RewardProportion.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	return n
+}
+
+func (m *AVSRewardDistribution) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Rewards) > 0 {
+		for _, e := range m.Rewards {
+			l = e.Size()
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	if len(m.OperatorRewardProportions) > 0 {
+		for _, e := range m.OperatorRewardProportions {
+			l = e.Size()
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	if m.RewardsEpochNumber != 0 {
+		n += 1 + sovDistribution(uint64(m.RewardsEpochNumber))
+	}
+	if m.ProportionsEpochNumber != 0 {
+		n += 1 + sovDistribution(uint64(m.ProportionsEpochNumber))
+	}
+	return n
+}
+
+func (m *CommonAVSRewardData) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.AVSAddress)
+	if l > 0 {
+		n += 1 + l + sovDistribution(uint64(l))
+	}
+	if len(m.Rewards) > 0 {
+		for _, e := range m.Rewards {
+			l = e.Size()
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *OperatorHistoricalRewards) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.CumulativeRewardRatios) > 0 {
+		for _, e := range m.CumulativeRewardRatios {
 			l = e.Size()
 			n += 1 + l + sovDistribution(uint64(l))
 		}
@@ -826,7 +2417,7 @@ func (m *ValidatorHistoricalRewards) Size() (n int) {
 	return n
 }
 
-func (m *ValidatorCurrentRewards) Size() (n int) {
+func (m *OperatorCurrentRewards) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -844,7 +2435,56 @@ func (m *ValidatorCurrentRewards) Size() (n int) {
 	return n
 }
 
-func (m *ValidatorAccumulatedCommission) Size() (n int) {
+func (m *StakerDelegationChange) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.StakerId)
+	if l > 0 {
+		n += 1 + l + sovDistribution(uint64(l))
+	}
+	l = m.PreviousDelegatedAmount.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	return n
+}
+
+func (m *DelegationChangeInfo) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.StakerDelegationChanges) > 0 {
+		for _, e := range m.StakerDelegationChanges {
+			l = e.Size()
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	l = m.TotalAmount.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	return n
+}
+
+func (m *DelegationStartingInfo) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.PreviousPeriod != 0 {
+		n += 1 + sovDistribution(uint64(m.PreviousPeriod))
+	}
+	l = m.Stake.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	if m.EpochNumber != 0 {
+		n += 1 + sovDistribution(uint64(m.EpochNumber))
+	}
+	return n
+}
+
+func (m *OperatorAccumulatedCommission) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -859,7 +2499,7 @@ func (m *ValidatorAccumulatedCommission) Size() (n int) {
 	return n
 }
 
-func (m *ValidatorOutstandingRewards) Size() (n int) {
+func (m *OperatorOutstandingRewards) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -889,6 +2529,20 @@ func (m *StakerOutstandingRewards) Size() (n int) {
 	return n
 }
 
+func (m *OperatorSlashEvent) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.OperatorPeriod != 0 {
+		n += 1 + sovDistribution(uint64(m.OperatorPeriod))
+	}
+	l = m.Fraction.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	return n
+}
+
 func (m *FeePool) Size() (n int) {
 	if m == nil {
 		return 0
@@ -904,13 +2558,56 @@ func (m *FeePool) Size() (n int) {
 	return n
 }
 
+func (m *AVSRewardAssetState) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.RewardPoolBalance.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	l = m.RewardPoolTotal.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	l = m.RewardAllocationTotal.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	return n
+}
+
+func (m *AVSRewardAsset) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.AssetBasicInfo.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	l = m.RewardAssetState.Size()
+	n += 1 + l + sovDistribution(uint64(l))
+	return n
+}
+
+func (m *AVSRewardAssets) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.AvsRewardAssets) > 0 {
+		for _, e := range m.AvsRewardAssets {
+			l = e.Size()
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	return n
+}
+
 func sovDistribution(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozDistribution(x uint64) (n int) {
 	return sovDistribution(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *ValidatorHistoricalRewards) Unmarshal(dAtA []byte) error {
+func (m *AVSRewardParam) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -933,15 +2630,221 @@ func (m *ValidatorHistoricalRewards) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ValidatorHistoricalRewards: wiretype end group for non-group")
+			return fmt.Errorf("proto: AVSRewardParam: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ValidatorHistoricalRewards: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: AVSRewardParam: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CustomRewardInflation", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.CustomRewardInflation = bool(v != 0)
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CustomOperatorRatio", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.CustomOperatorRatio = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OperatorRewardProportion) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OperatorRewardProportion: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OperatorRewardProportion: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CumulativeRewardRatio", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorAddr", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OperatorAddr = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardProportion", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RewardProportion.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AVSRewardDistribution) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AVSRewardDistribution: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AVSRewardDistribution: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Rewards", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -968,8 +2871,280 @@ func (m *ValidatorHistoricalRewards) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CumulativeRewardRatio = append(m.CumulativeRewardRatio, types.DecCoin{})
-			if err := m.CumulativeRewardRatio[len(m.CumulativeRewardRatio)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Rewards = append(m.Rewards, types.DecCoin{})
+			if err := m.Rewards[len(m.Rewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorRewardProportions", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OperatorRewardProportions = append(m.OperatorRewardProportions, OperatorRewardProportion{})
+			if err := m.OperatorRewardProportions[len(m.OperatorRewardProportions)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardsEpochNumber", wireType)
+			}
+			m.RewardsEpochNumber = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.RewardsEpochNumber |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ProportionsEpochNumber", wireType)
+			}
+			m.ProportionsEpochNumber = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ProportionsEpochNumber |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CommonAVSRewardData) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CommonAVSRewardData: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CommonAVSRewardData: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AVSAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AVSAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Rewards", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Rewards = append(m.Rewards, types.DecCoin{})
+			if err := m.Rewards[len(m.Rewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OperatorHistoricalRewards) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OperatorHistoricalRewards: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OperatorHistoricalRewards: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CumulativeRewardRatios", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CumulativeRewardRatios = append(m.CumulativeRewardRatios, CommonAVSRewardData{})
+			if err := m.CumulativeRewardRatios[len(m.CumulativeRewardRatios)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1013,7 +3188,7 @@ func (m *ValidatorHistoricalRewards) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ValidatorCurrentRewards) Unmarshal(dAtA []byte) error {
+func (m *OperatorCurrentRewards) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1036,10 +3211,10 @@ func (m *ValidatorCurrentRewards) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ValidatorCurrentRewards: wiretype end group for non-group")
+			return fmt.Errorf("proto: OperatorCurrentRewards: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ValidatorCurrentRewards: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OperatorCurrentRewards: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1071,7 +3246,7 @@ func (m *ValidatorCurrentRewards) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Rewards = append(m.Rewards, types.DecCoin{})
+			m.Rewards = append(m.Rewards, CommonAVSRewardData{})
 			if err := m.Rewards[len(m.Rewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1116,7 +3291,7 @@ func (m *ValidatorCurrentRewards) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ValidatorAccumulatedCommission) Unmarshal(dAtA []byte) error {
+func (m *StakerDelegationChange) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1139,10 +3314,366 @@ func (m *ValidatorAccumulatedCommission) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ValidatorAccumulatedCommission: wiretype end group for non-group")
+			return fmt.Errorf("proto: StakerDelegationChange: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ValidatorAccumulatedCommission: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: StakerDelegationChange: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakerId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PreviousDelegatedAmount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.PreviousDelegatedAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DelegationChangeInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DelegationChangeInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DelegationChangeInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerDelegationChanges", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.StakerDelegationChanges = append(m.StakerDelegationChanges, StakerDelegationChange{})
+			if err := m.StakerDelegationChanges[len(m.StakerDelegationChanges)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalAmount", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TotalAmount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DelegationStartingInfo) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DelegationStartingInfo: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DelegationStartingInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PreviousPeriod", wireType)
+			}
+			m.PreviousPeriod = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PreviousPeriod |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Stake", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Stake.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNumber", wireType)
+			}
+			m.EpochNumber = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochNumber |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *OperatorAccumulatedCommission) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OperatorAccumulatedCommission: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OperatorAccumulatedCommission: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1200,7 +3731,7 @@ func (m *ValidatorAccumulatedCommission) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *ValidatorOutstandingRewards) Unmarshal(dAtA []byte) error {
+func (m *OperatorOutstandingRewards) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1223,10 +3754,10 @@ func (m *ValidatorOutstandingRewards) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: ValidatorOutstandingRewards: wiretype end group for non-group")
+			return fmt.Errorf("proto: OperatorOutstandingRewards: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: ValidatorOutstandingRewards: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: OperatorOutstandingRewards: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1368,6 +3899,109 @@ func (m *StakerOutstandingRewards) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *OperatorSlashEvent) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: OperatorSlashEvent: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: OperatorSlashEvent: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorPeriod", wireType)
+			}
+			m.OperatorPeriod = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.OperatorPeriod |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fraction", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Fraction.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *FeePool) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1428,6 +4062,358 @@ func (m *FeePool) Unmarshal(dAtA []byte) error {
 			}
 			m.CommunityPool = append(m.CommunityPool, types.DecCoin{})
 			if err := m.CommunityPool[len(m.CommunityPool)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AVSRewardAssetState) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AVSRewardAssetState: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AVSRewardAssetState: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardPoolBalance", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RewardPoolBalance.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardPoolTotal", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RewardPoolTotal.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardAllocationTotal", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RewardAllocationTotal.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AVSRewardAsset) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AVSRewardAsset: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AVSRewardAsset: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AssetBasicInfo", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.AssetBasicInfo.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardAssetState", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.RewardAssetState.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *AVSRewardAssets) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AVSRewardAssets: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AVSRewardAssets: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AvsRewardAssets", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AvsRewardAssets = append(m.AvsRewardAssets, AVSRewardAsset{})
+			if err := m.AvsRewardAssets[len(m.AvsRewardAssets)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

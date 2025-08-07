@@ -34,7 +34,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 		// applied within this block. however, for clarity, it is highlighted that unbonding
 		// takes N epochs + 1 block to complete.
 		wrapper.keeper.MarkUpdateValidatorSetFlag(ctx)
-		ctx.Logger().Info("mark epoch end", "height", ctx.BlockHeight(), "identifier", identifier, "epoch", epoch)
+		wrapper.keeper.Logger(ctx).Info("mark epoch end", "height", ctx.BlockHeight(), "identifier", identifier, "epoch", epoch)
 		// find the opt outs that mature when this epoch ends, and move them to pending.
 		optOuts := wrapper.keeper.GetOptOutsToFinish(ctx, epoch)
 		wrapper.keeper.SetPendingOptOuts(ctx, types.AccountAddresses{List: optOuts})

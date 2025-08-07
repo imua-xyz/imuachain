@@ -45,17 +45,18 @@ func (hooks MultiOperatorHooks) AfterOperatorKeyRemovalInitiated(
 }
 
 func (hooks MultiOperatorHooks) AfterSlash(
-	ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+	ctx sdk.Context, addr sdk.AccAddress, slashProportion sdk.Dec, affectedAVSList []string,
+	slashAssetsPool []SlashFromAssetsPool,
 ) {
 	for _, hook := range hooks {
-		hook.AfterSlash(ctx, addr, affectedAVSList)
+		hook.AfterSlash(ctx, addr, slashProportion, affectedAVSList, slashAssetsPool)
 	}
 }
 
 func (hooks MultiOperatorHooks) AfterJail(
-	ctx sdk.Context, addr sdk.AccAddress, affectedAVSList []ImpactfulAVSInfo,
+	ctx sdk.Context, addr sdk.AccAddress, isUnjail bool, affectedAVSList []string,
 ) {
 	for _, hook := range hooks {
-		hook.AfterJail(ctx, addr, affectedAVSList)
+		hook.AfterJail(ctx, addr, isUnjail, affectedAVSList)
 	}
 }

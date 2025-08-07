@@ -49,10 +49,6 @@ import (
 
 	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 
-	"github.com/imua-xyz/imuachain/x/reward"
-	rewardKeeper "github.com/imua-xyz/imuachain/x/reward/keeper"
-	rewardTypes "github.com/imua-xyz/imuachain/x/reward/types"
-
 	// increases or decreases block gas limit based on usage
 	"github.com/evmos/evmos/v16/x/feemarket"
 	feemarketkeeper "github.com/evmos/evmos/v16/x/feemarket/keeper"
@@ -265,7 +261,6 @@ var (
 		assets.AppModuleBasic{},
 		operator.AppModuleBasic{},
 		delegation.AppModuleBasic{},
-		reward.AppModuleBasic{},
 		imslash.AppModuleBasic{},
 		avs.AppModuleBasic{},
 		oracle.AppModuleBasic{},
@@ -349,7 +344,6 @@ type ImuachainApp struct {
 	// imua assets module keepers
 	AssetsKeeper     assetsKeeper.Keeper
 	DelegationKeeper delegationKeeper.Keeper
-	RewardKeeper     rewardKeeper.Keeper
 	OperatorKeeper   operatorKeeper.Keeper
 	ImSlashKeeper    slashKeeper.Keeper
 	AVSManagerKeeper avsManagerKeeper.Keeper
@@ -435,7 +429,6 @@ func NewImuachainApp(
 		// Imuachain module keys
 		assetsTypes.StoreKey,
 		delegationTypes.StoreKey,
-		rewardTypes.StoreKey,
 		imslashtypes.StoreKey,
 		operatorTypes.StoreKey,
 		avsManagerTypes.StoreKey,
@@ -572,11 +565,7 @@ func NewImuachainApp(
 		authAddrString,        // authority to edit params
 	)
 
-	// these two modules aren't finalized yet.
-	app.RewardKeeper = rewardKeeper.NewKeeper(
-		appCodec, keys[rewardTypes.StoreKey], app.AssetsKeeper,
-		app.AVSManagerKeeper, authAddrString,
-	)
+	// this modules aren't finalized yet.
 	app.ImSlashKeeper = slashKeeper.NewKeeper(
 		appCodec, keys[imslashtypes.StoreKey], app.AssetsKeeper, authAddrString,
 	)
@@ -691,6 +680,7 @@ func NewImuachainApp(
 		app.AssetsKeeper,
 		app.EpochsKeeper,
 		app.EvmKeeper,
+		&app.DistrKeeper,
 	)
 	// operator registry, which handles vote power (and this requires delegation keeper).
 	// this keeper is initialized after the avs keeper because it depends on the avs keeper
@@ -707,7 +697,7 @@ func NewImuachainApp(
 	)
 	// the fee distribution keeper is used to allocate reward to imualidators on epoch-basis,
 	// and it'll interact with other modules, like delegation for voting power, mint and inflation and etc.
-	// this keeper is initialized after the StakingKeeper  because it depends on the StakingKeeper
+	// this keeper is initialized after the StakingKeeper because it depends on the StakingKeeper
 	app.DistrKeeper = distrkeeper.NewKeeper(
 		appCodec, logger,
 		authtypes.FeeCollectorName,
@@ -717,6 +707,10 @@ func NewImuachainApp(
 		app.AccountKeeper,
 		app.StakingKeeper,
 		app.EpochsKeeper,
+		&app.OperatorKeeper,
+		&app.AVSManagerKeeper,
+		app.AssetsKeeper,
+		&app.DelegationKeeper,
 	)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(
@@ -782,19 +776,25 @@ func NewImuachainApp(
 
 	// set the hooks at the end, after all modules are instantiated.
 	(&app.OperatorKeeper).SetHooks(
-		app.StakingKeeper.OperatorHooks(),
+		operatorTypes.NewMultiOperatorHooks(
+			app.StakingKeeper.OperatorHooks(),
+			app.DistrKeeper.OperatorHooks(), // it's fine to be before or after the dogfood hook
+		),
 	)
 
 	(&app.DelegationKeeper).SetHooks(
-		app.StakingKeeper.DelegationHooks(),
+		delegationTypes.NewMultiDelegationHooks(
+			app.StakingKeeper.DelegationHooks(),
+			app.DistrKeeper.DelegationHooks(), // it's fine to be before or after the dogfood hook
+		),
 	)
 
 	(&app.EpochsKeeper).SetHooks(
 		epochstypes.NewMultiEpochHooks(
+			app.ImmintKeeper.EpochsHooks(),     // must come before the distribution keeper.
 			app.DistrKeeper.EpochsHooks(),      // come first for using the voting power of last epoch
 			app.OperatorKeeper.EpochsHooks(),   // must come before staking keeper so it can set the USD value
 			app.StakingKeeper.EpochsHooks(),    // at this point, the order is irrelevant.
-			app.ImmintKeeper.EpochsHooks(),     // however, this may change once we have distribution
 			app.AVSManagerKeeper.EpochsHooks(), // no-op for now
 		),
 	)
@@ -822,7 +822,7 @@ func NewImuachainApp(
 			app.DelegationKeeper,
 			app.AssetsKeeper,
 			app.ImSlashKeeper,
-			app.RewardKeeper,
+			app.DistrKeeper,
 			app.AVSManagerKeeper,
 		),
 	)
@@ -904,7 +904,6 @@ func NewImuachainApp(
 		assets.NewAppModule(appCodec, app.AssetsKeeper),
 		operator.NewAppModule(appCodec, app.OperatorKeeper),
 		delegation.NewAppModule(appCodec, app.DelegationKeeper),
-		reward.NewAppModule(appCodec, app.RewardKeeper),
 		imslash.NewAppModule(appCodec, app.ImSlashKeeper),
 		avs.NewAppModule(appCodec, app.AVSManagerKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
@@ -945,7 +944,6 @@ func NewImuachainApp(
 		assetsTypes.ModuleName,
 		operatorTypes.ModuleName,
 		delegationTypes.ModuleName,
-		rewardTypes.ModuleName,
 		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
@@ -979,7 +977,6 @@ func NewImuachainApp(
 		imminttypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		assetsTypes.ModuleName,
-		rewardTypes.ModuleName,
 		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
@@ -1000,7 +997,7 @@ func NewImuachainApp(
 		authz.ModuleName,
 		feemarkettypes.ModuleName,
 		genutiltypes.ModuleName, // after feemarket
-		epochstypes.ModuleName,  // must be before dogfood and immint
+		epochstypes.ModuleName,  // must be before dogfood, immint and distribution
 		evmtypes.ModuleName,     // must be before avs, since dogfood calls avs which calls this
 		imminttypes.ModuleName,
 		assetsTypes.ModuleName,
@@ -1022,9 +1019,8 @@ func NewImuachainApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		upgradetypes.ModuleName, // no-op since we don't call SetInitVersionMap
-		rewardTypes.ModuleName,  // not fully implemented yet
 		imslashtypes.ModuleName, // not fully implemented yet
-		distrtypes.ModuleName,
+		distrtypes.ModuleName,   // must be after the epoch
 		// must be the last module after others have been set up, so that it can check
 		// the invariants (if configured to do so).
 		crisistypes.ModuleName,
@@ -1116,7 +1112,7 @@ func (app *ImuachainApp) setAnteHandler(txConfig client.TxConfig, maxGasWanted u
 		ExtensionOptionChecker: evmostypes.HasDynamicFeeExtensionOption,
 		StakingKeeper:          app.StakingKeeper,
 		FeegrantKeeper:         app.FeeGrantKeeper,
-		DistributionKeeper:     app.RewardKeeper,
+		DistributionKeeper:     app.DistrKeeper,
 		IBCKeeper:              app.IBCKeeper,
 		SignModeHandler:        txConfig.SignModeHandler(),
 		SigGasConsumer:         ante.SigVerificationGasConsumer,

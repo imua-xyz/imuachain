@@ -58,7 +58,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, data *types.GenesisState) {
 			// #nosec G703 // already validated
 			accAddress, _ := sdk.AccAddressFromBech32(assets.Operator)
 			infoAsChange := types.DeltaOperatorSingleAsset(assetInfo.Info)
-			err := k.UpdateOperatorAssetState(ctx, accAddress, assetInfo.AssetID, infoAsChange)
+			_, err := k.UpdateOperatorAssetState(ctx, accAddress, assetInfo.AssetID, infoAsChange)
 			if err != nil {
 				panic(errorsmod.Wrap(err, "failed to set operator asset info"))
 			}

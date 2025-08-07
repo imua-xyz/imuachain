@@ -17,13 +17,26 @@ import (
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
+type methodMeta struct {
+	action         assetstypes.CrossChainOpType
+	hasValidatorID bool
+	isNST          bool
+}
+
+var methodMetaMap = map[string]methodMeta{
+	MethodDepositLST:  {assetstypes.DepositLST, false, false},
+	MethodWithdrawLST: {assetstypes.WithdrawLST, false, false},
+	MethodWithdrawNST: {assetstypes.WithdrawNST, false, true},
+	MethodDepositNST:  {assetstypes.DepositNST, true, true},
+}
+
 // oracleInfo: '[tokenName],[chainName],[tokenDecimal](,[interval],[contract](,[ChainDesc:{...}],[TokenDesc:{...}]))'
 var (
 	tokenDescMatcher = regexp.MustCompile(`TokenDesc:{(.+?)}`)
 	chainDescMatcher = regexp.MustCompile(`ChainDesc:{(.+?)}`)
 )
 
-func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, args []interface{}) (*assetskeeper.DepositWithdrawParams, error) {
+func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, args []any) (*assetskeeper.DepositWithdrawParams, error) {
 	ta := NewTypedArgs(args)
 	if err := ta.RequireLen(len(p.ABI.Methods[method.Name].Inputs)); err != nil {
 		return nil, err
@@ -56,39 +69,32 @@ func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, a
 		OpAmount:        sdkmath.NewIntFromBigInt(opAmount),
 	}
 
-	switch method.Name {
-	case MethodDepositLST, MethodWithdrawLST:
+	meta, ok := methodMetaMap[method.Name]
+	if !ok {
+		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
+	}
+
+	if meta.hasValidatorID {
+		validatorID, err := ta.GetRequiredBytes(1)
+		if err != nil {
+			return nil, err
+		}
+		params.ValidatorID = validatorID
+	}
+	if meta.isNST {
+		params.AssetsAddress = assetstypes.GenerateNSTAddr(info.AddressLength)
+	} else {
 		assetAddr, err := ta.GetRequiredBytesPrefix(1, info.AddressLength)
 		if err != nil {
 			return nil, err
 		}
-
 		params.AssetsAddress = assetAddr
-		if method.Name == MethodDepositLST {
-			params.Action = assetstypes.DepositLST
-		} else {
-			params.Action = assetstypes.WithdrawLST
-		}
-	case MethodDepositNST, MethodWithdrawNST:
-		params.ValidatorID, err = ta.GetRequiredBytes(1) // In NST case, the second parameter is validatorID
-		if err != nil {
-			return nil, err
-		}
-
-		params.AssetsAddress = assetstypes.GenerateNSTAddr(info.AddressLength)
-		if method.Name == MethodDepositNST {
-			params.Action = assetstypes.DepositNST
-		} else {
-			params.Action = assetstypes.WithdrawNST
-		}
-	default:
-		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}
-
+	params.Action = meta.action
 	return params, nil
 }
 
-func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []interface{}) (*assetstypes.ClientChainInfo, error) {
+func (p Precompile) ClientChainInfoFromInputs(_ sdk.Context, args []any) (*assetstypes.ClientChainInfo, error) {
 	ta := NewTypedArgs(args)
 	if err := ta.RequireLen(len(p.ABI.Methods[MethodRegisterOrUpdateClientChain].Inputs)); err != nil {
 		return nil, err
@@ -161,6 +167,10 @@ func (p Precompile) TokenFromInputs(ctx sdk.Context, args []interface{}) (*asset
 	decimal, err := ta.GetUint8(2) // No specific non-zero check needed
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if decimal > assetstypes.MaxDecimal {
+		return nil, nil, fmt.Errorf(imuacmn.ErrInvalidDecimal, decimal, assetstypes.MaxDecimal)
 	}
 
 	name, err := ta.GetRequiredString(3) // Must not be empty

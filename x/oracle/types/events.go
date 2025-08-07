@@ -21,6 +21,8 @@ const (
 	AttributeKeyNSTBalanceChange = "nst_balance_change"
 	AttributeKeyNSTPieceUpdate   = "nst_piece_update"
 	AttributeKeyNSTPieceChange   = "nst_piece_Change"
+	AttributeKeyNSTVersionUpdate = "nst_version_update"
+	AttributeKeyNSTFeedVersion   = "nst_feed_version"
 	AttributeKeyValidatorKey     = "validator_key"
 	AttributeKeyMissedRounds     = "missed_rounds"
 	AttributeKeyHeight           = "height"

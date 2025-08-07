@@ -465,11 +465,6 @@
         "internalType": "uint32"
       },
       {
-        "name": "validatorID",
-        "type": "bytes",
-        "internalType": "bytes"
-      },
-      {
         "name": "withdrawAddress",
         "type": "bytes",
         "internalType": "bytes"

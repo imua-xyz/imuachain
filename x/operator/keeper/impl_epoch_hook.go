@@ -24,6 +24,14 @@ func (k *Keeper) EpochsHooks() EpochsHooksWrapper {
 func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 	ctx sdk.Context, epochIdentifier string, epochNumber int64,
 ) {
+	// update the USD values for all operators, it will be used to calculate
+	// the voting power. It should be executed before updating voting power.
+	err := wrapper.keeper.UpdateAllOperatorAssetUSDValues(ctx, []string{epochIdentifier})
+	if err != nil {
+		ctx.Logger().Error("AfterEpochEnd: Failed to update the asset USD values for all operators", "epochIdentifier", epochIdentifier, "error", err)
+		return
+	}
+
 	// get all the avs address bypass the epoch end
 	// update the assets' share when their prices change
 	// todo: need to consider the calling order

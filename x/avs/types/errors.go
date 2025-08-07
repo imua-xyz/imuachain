@@ -23,9 +23,9 @@ var (
 		ModuleName, 5,
 		"Error: Undefined action",
 	)
-	ErrUnbondingPeriod = errorsmod.Register(
+	ErrCannotDeregister = errorsmod.Register(
 		ModuleName, 6,
-		"Error: UnbondingPeriod check failed",
+		"Error: can not deregister",
 	)
 	ErrEpochNotFound = errorsmod.Register(
 		ModuleName, 7,
@@ -114,5 +114,13 @@ var (
 	ErrSubmitTooSoonError = errorsmod.Register(
 		ModuleName, 27,
 		" The response was submitted too soon.",
+	)
+	ErrNotFound = errorsmod.Register(
+		ModuleName, 28,
+		"Resource not found",
+	)
+	ErrNoOptedInOperators = errorsmod.Register(
+		ModuleName, 29,
+		"No operators have opted in to the AVS yet",
 	)
 )

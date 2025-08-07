@@ -10,8 +10,6 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-const InitialEpochNumber int64 = 1
-
 func (k *Keeper) SetVotingPowerSnapshot(ctx sdk.Context, key []byte, snapshot *types.VotingPowerSnapshot) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	bz := k.cdc.MustMarshal(snapshot)
@@ -34,7 +32,7 @@ func (k *Keeper) GetVotingPowerSnapshot(ctx sdk.Context, key []byte) (*types.Vot
 	return &ret, nil
 }
 
-func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(height int64, snapshot *types.VotingPowerSnapshot) error) error {
+func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, opFunc func(height int64, snapshot *types.VotingPowerSnapshot) error) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	iterator := sdk.KVStorePrefixIterator(store, common.HexToAddress(avsAddr).Bytes())
 	defer iterator.Close()
@@ -49,10 +47,6 @@ func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, isU
 		err = opFunc(height, &snapshot)
 		if err != nil {
 			return err
-		}
-		if isUpdate {
-			bz := k.cdc.MustMarshal(&snapshot)
-			store.Set(iterator.Key(), bz)
 		}
 	}
 	return nil
@@ -94,7 +88,7 @@ func (k *Keeper) GetSnapshotHeightAndKey(ctx sdk.Context, avsAddr string, height
 
 func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, optOutHeight int64) (int64, error) {
 	if optOutHeight < 0 {
-		return 0, types.ErrParameterInvalid.Wrapf("the opt out height is negative, optOutHeight:%v", optOutHeight)
+		return 0, types.ErrParameterInvalid.Wrapf("GetEpochNumberByOptOutHeight: the opt out height is negative, optOutHeight:%v", optOutHeight)
 	}
 	_, findKey, err := k.GetSnapshotHeightAndKey(ctx, avsAddr, optOutHeight)
 	if err != nil {
@@ -107,7 +101,7 @@ func (k *Keeper) GetEpochNumberByOptOutHeight(ctx sdk.Context, avsAddr string, o
 		// We don't save the voting power snapshots for the AVSs that don't have any opted-in operators.
 		// Therefore, for these AVSs, the `findKey` might not exist in the store if the operator opts in and out
 		// within the same epoch. In this case, we return `NullEpochNumber` as the virtual epoch number, so that
-		// the caller `GetImpactfulAVSForOperator` can skip this AVS. This is acceptable because opt-in and opt-out
+		// the caller `GetUnbondingRelatedAVS` can skip this AVS. This is acceptable because opt-in and opt-out
 		// actions submitted within the same epoch won't influence the AVS, and the AVS doesn't have any operators
 		// opted in.
 		// Additionally, since expired voting power snapshots are deleted, it will also be impossible to retrieve
@@ -203,14 +197,6 @@ func (k *Keeper) UpdateSnapshotHelper(ctx sdk.Context, avsAddr string, opFunc fu
 	return nil
 }
 
-func (k *Keeper) SetOptOutFlag(ctx sdk.Context, avsAddr string, hasOptOut bool) error {
-	opFunc := func(helper *types.SnapshotHelper) error {
-		helper.HasOptOut = hasOptOut
-		return nil // Reserve for future error handling
-	}
-	return k.UpdateSnapshotHelper(ctx, avsAddr, opFunc)
-}
-
 func (k *Keeper) SetLastChangedHeight(ctx sdk.Context, avsAddr string, lastChangeHeight int64) error {
 	opFunc := func(helper *types.SnapshotHelper) error {
 		helper.LastChangedHeight = lastChangeHeight
@@ -259,7 +245,7 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 			}
 			return nil
 		}
-		err := k.IterateOperatorsForAVS(ctx, avsAddr, false, opFunc)
+		err := k.IterateOperatorUSDValuesForAVS(ctx, avsAddr, false, opFunc)
 		if err != nil {
 			return err
 		}
@@ -271,7 +257,7 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 		epochNumber := epochInfo.CurrentEpoch
 		// set the epoch number to 1 when epoch start for the first time.
 		if !epochInfo.EpochCountingStarted {
-			epochNumber = InitialEpochNumber
+			epochNumber = types.InitialEpochNumber
 		}
 		bz := k.cdc.MustMarshal(&types.VotingPowerSnapshot{
 			TotalVotingPower:     avsUSDValue.Amount,
@@ -285,12 +271,11 @@ func (k *Keeper) InitGenesisVPSnapshot(ctx sdk.Context) error {
 
 		bz = k.cdc.MustMarshal(&types.SnapshotHelper{
 			LastChangedHeight: genesisSnapshotHeight,
-			HasOptOut:         false,
 		})
 		snapshotHelperStore.Set([]byte(avsAddr), bz)
 		return nil
 	}
-	err := k.IterateAVSUSDValues(ctx, false, opFunc)
+	err := k.IterateAVSUSDValues(ctx, opFunc)
 	if err != nil {
 		return err
 	}

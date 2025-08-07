@@ -40,6 +40,8 @@ message Params {
 
   // piece_size_byte defines how many bytes one piece of raw data includes
   uint32 piece_size_byte = 13;
+  // epoch_identifier defines the identifier for the epoch, which is used to calculate the TWAP
+  string epoch_identifier= 14;
 }
 
 // ConsensusMode defines the consensus mode for the prices.

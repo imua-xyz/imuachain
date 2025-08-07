@@ -1,15 +1,12 @@
 package keeper
 
 import (
-	"errors"
-
 	"github.com/ethereum/go-ethereum/common"
 
 	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
-	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 // UpdateVotingPower update the voting power of the specified AVS and its operators at
@@ -17,13 +14,13 @@ import (
 func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier string, epochNumber int64, isForSlash bool) error {
 	// get assets supported by the AVS
 	// the mock keeper returns all registered assets.
-	assets, getAssetsErr := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
+	avsAssetsList, getAVSAssetsErr := k.avsKeeper.GetAVSAssetsList(ctx, avsAddr)
 	// check if self USD value is more than the minimum self delegation.
 	minimumSelfDelegation, getSelfDelegationErr := k.avsKeeper.GetAVSMinimumSelfDelegation(ctx, avsAddr)
 	// set the voting power to zero if an error is returned, which may prevent malicious behavior
 	// where errors are intentionally triggered to avoid updating the voting power.
-	if getAssetsErr != nil || assets == nil || getSelfDelegationErr != nil {
-		ctx.Logger().Error("UpdateVotingPower the assets list supported by AVS is nil or can't get AVS info", "getAssetsErr", getAssetsErr, "getSelfDelegationErr", getSelfDelegationErr)
+	if getAVSAssetsErr != nil || len(avsAssetsList) == 0 || getSelfDelegationErr != nil {
+		ctx.Logger().Error("UpdateVotingPower the assets list supported by AVS is nil or can't get AVS info", "getAVSAssetsErr", getAVSAssetsErr, "getSelfDelegationErr", getSelfDelegationErr)
 		// using cache context to ensure the atomicity of the operation.
 		cc, writeFunc := ctx.CacheContext()
 		// clear the voting power regarding this AVS if there isn't any assets supported by it.
@@ -39,28 +36,24 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		return nil
 	}
 
-	// get the prices and decimals of assets
-	decimals, err := k.assetsKeeper.GetAssetsDecimal(ctx, assets)
-	if err != nil {
-		return err
-	}
-	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
-	// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
-	if err != nil {
-		// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
-		if !errors.Is(err, oracletypes.ErrGetPriceRoundNotFound) {
-			ctx.Logger().Error("fail to get price from oracle, since current assetID is not bonded with oracle token", "details:", err)
-			return err
-		}
-		// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
-	}
-
 	// update the voting power of operators and AVS
 	isSnapshotChanged := false
 	votingPowerSet := make([]*operatortypes.OperatorVotingPower, 0)
 	avsVotingPower := sdkmath.LegacyZeroDec()
 	hasOptedOperator := false
+	deletedOperators := make([]string, 0)
 	opFunc := func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error {
+		// check if the operator is opted out but not effective, the usd value of these operators
+		// should be deleted when updating the voting power
+		if k.IsOptedOutButNotEffective(ctx, operator, avsAddr) {
+			deletedOperators = append(deletedOperators, operator)
+			// mark the snapshotChanged flag
+			if !isSnapshotChanged {
+				isSnapshotChanged = true
+			}
+			// continue handle the other operators
+			return nil
+		}
 		if !hasOptedOperator {
 			hasOptedOperator = true
 		}
@@ -71,7 +64,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 			SelfUSDValue:   sdkmath.LegacyZeroDec(),
 			ActiveUSDValue: sdkmath.LegacyZeroDec(),
 		}
-		stakingInfo, err := k.CalculateUSDValueForOperator(ctx, false, operator, assets, decimals, prices)
+		stakingInfo, err := k.AggregateOperatorUSDValue(ctx, epochIdentifier, operator, avsAssetsList)
 		if err != nil {
 			return err
 		}
@@ -100,12 +93,24 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 	cc, writeFunc := ctx.CacheContext()
 	// iterate all operators of the AVS to update their voting power
 	// and calculate the voting power for AVS
-	err = k.IterateOperatorsForAVS(cc, avsAddr, true, opFunc)
+	err := k.IterateOperatorUSDValuesForAVS(cc, avsAddr, true, opFunc)
 	if err != nil {
 		return err
 	}
+	// Delete the USD values for the operators that have opted out in the current epoch.
+	err = k.DeleteOperatorUSDValues(cc, avsAddr, deletedOperators)
+	if err != nil {
+		return err
+	}
+
 	// set the voting power for AVS
 	err = k.SetAVSUSDValue(cc, avsAddr, avsVotingPower)
+	if err != nil {
+		return err
+	}
+
+	// clear the AVS asset list at the time of the last voting power update
+	err = k.DeleteAllAVSAssetsPerEpoch(cc)
 	if err != nil {
 		return err
 	}
@@ -148,22 +153,18 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		votingPowerSnapshot.EpochNumber++
 	}
 	isSetSnapshot := true
-	// Since we delete the operator's USD value information for the relevant AVS during the opt-out
-	// process to facilitate voting power updates in the next epoch, the `isSnapshotChanged` check in
-	// the above IterateOperatorsForAVS call cannot capture the changes in the voting power snapshot
-	// caused by the opt-out. Therefore, it is necessary to handle all scenarios where voting power
-	// snapshots need to be saved by referencing the opt-out records in helperRecord.
-	// For cases where there is no opt-out operation, IterateOperatorsForAVS does not detect any voting
-	// power changes, and no operator has opted into the AVS, no snapshot needs to be created. This is
-	// equivalent to the AVS no longer having any operators serving it at the end of the previous epoch.
-	// As a result, when querying the historical voting power using snapshots, the system will fall back
-	// to the last snapshot where the voting power was updated to zero.
-	if snapshotHelper.HasOptOut || isSnapshotChanged {
+	// For cases where there is no opt-out operation, IterateOperatorUSDValuesForAVS does not detect any voting
+	// power changes, and no operator has opted into the AVS, the voting power information doesn't need
+	// to be saved in the snapshot. Because it can be fetched through falling back to the last snapshot
+	// where the voting power was changed.
+	// In the case where the AVS no longer has any operators serving it, meaning the `hasOptedOperator`
+	// flag is false, the system won't store a snapshot, even if it is a snapshot without voting power
+	// information. As a result, when querying the historical voting power using snapshots, the system
+	// will fall back to the last snapshot where the voting power was updated to zero.
+	if isSnapshotChanged {
 		votingPowerSnapshot.TotalVotingPower = avsVotingPower
 		votingPowerSnapshot.OperatorVotingPowers = votingPowerSet
 		snapshotHelper.LastChangedHeight = snapshotHeight
-		// clear the hasOptOut flag if it's certain that the snapshot will be updated
-		snapshotHelper.HasOptOut = false
 	} else if !hasOptedOperator {
 		// don’t set the snapshot if no operator has opted into the AVS,
 		// except for the first epoch after all operators have opted out of this AVS.
@@ -209,7 +210,7 @@ func (k *Keeper) ClearVotingPowerSnapshot(ctx sdk.Context, avs string) error {
 	return nil
 }
 
-// EndBlock : update the assets' share when their prices change
+// EndBlock : do nothing, because the voting power will be updated by epoch hook.
 func (k *Keeper) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
 }

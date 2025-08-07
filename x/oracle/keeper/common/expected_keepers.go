@@ -78,6 +78,7 @@ type KeeperOracle interface {
 	AddNodesToMerkleTree(ctx sdk.Context, feederID uint64, proof []*types.HashNode)
 	SetNextPieceIndexForFeeder(ctx sdk.Context, feederID uint64, pieceIndex uint32)
 	GetPostAggregation(feederID int64) (handler PostAggregationHandler, found bool)
+	UpdateNSTFeedVersion(ctx sdk.Context, u uint64) (uint64, uint64, bool)
 	SetRawDataPiece(ctx sdk.Context, feederID uint64, pieceIndex uint32, rawData []byte)
 	GetRawDataPieces(ctx sdk.Context, feederID uint64) ([][]byte, error)
 	GetFeederTreeInfo(ctx sdk.Context, feederID uint64) (uint32, []byte)

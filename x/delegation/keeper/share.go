@@ -47,6 +47,20 @@ func SharesFromTokens(totalShare sdkmath.LegacyDec, stakerAmount, totalAmount sd
 	return totalShare.MulInt(stakerAmount).QuoInt(totalAmount), nil
 }
 
+func TokenUSDValueFromShares(stakerShare, totalShare sdkmath.LegacyDec, totalUSDValue sdkmath.LegacyDec) (sdkmath.LegacyDec, error) {
+	if stakerShare.GT(totalShare) {
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(delegationtypes.ErrInsufficientShares, "the stakerShare is:%v the totalShare is:%v", stakerShare, totalShare)
+	}
+	if totalShare.IsZero() {
+		if totalUSDValue.IsZero() {
+			// this can happen if everyone exits.
+			return sdkmath.LegacyZeroDec(), nil
+		}
+		return sdkmath.LegacyZeroDec(), delegationtypes.ErrDivisorIsZero
+	}
+	return (stakerShare.Mul(totalUSDValue)).Quo(totalShare), nil
+}
+
 // CalculateShare calculates the S_j
 // S_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,
 // and the T_j represents the change in staker's asset amount when some external
@@ -192,7 +206,7 @@ func (k Keeper) RemoveShareFromOperator(
 	if isUndelegation {
 		delta.PendingUndelegationAmount = removedToken
 	}
-	err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operator, assetID, delta)
+	_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operator, assetID, delta)
 	if err != nil {
 		return token, err
 	}
@@ -233,7 +247,7 @@ func (k Keeper) RemoveShare(
 			}
 		}
 	}
-	shareIsZero, err := k.UpdateDelegationState(ctx, stakerID, assetID, operator.String(), deltaAmount)
+	shareIsZero, _, err := k.UpdateDelegationState(ctx, stakerID, assetID, operator.String(), deltaAmount)
 	if err != nil {
 		return removeToken, err
 	}

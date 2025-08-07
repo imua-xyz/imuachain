@@ -1,171 +1,214 @@
 package keeper
 
 import (
-	"sort"
-
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
-// Based on the epoch, AllocateTokens performs reward and fee distribution to all validators.
-func (k Keeper) AllocateTokens(ctx sdk.Context, totalPreviousPower int64) error {
-	logger := k.Logger()
-	feeCollector := k.authKeeper.GetModuleAccount(ctx, k.feeCollectorName)
-	feesCollectedInt := k.bankKeeper.GetAllBalances(ctx, feeCollector.GetAddress())
-	feesCollected := sdk.NewDecCoinsFromCoins(feesCollectedInt...)
-
-	// transfer collected fees to the distribution module account
-	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, feesCollectedInt); err != nil {
-		return err
-	}
-
-	feePool := k.GetFeePool(ctx)
-	if totalPreviousPower == 0 {
-		feePool.CommunityPool = feePool.CommunityPool.Add(feesCollected...)
-		k.SetFeePool(ctx, feePool)
-		return nil
-	}
-	logger.Info("Allocate tokens to all validators", "feesCollected amount is ", feesCollected)
-	// calculate fraction allocated to imua validators
-	remaining := feesCollected
-	communityTax, err := k.GetCommunityTax(ctx)
-	if err != nil {
-		return err
-	}
-	feeMultiplier := feesCollected.MulDecTruncate(math.LegacyOneDec().Sub(communityTax))
-
-	// allocate tokens proportionally to voting power of different validators
-	// TODO: Consider parallelizing later
-	allValidators := k.StakingKeeper.GetAllImuachainValidators(ctx) // GetAllValidators(suite.Ctx)
-	for i, val := range allValidators {
-		pk, err := val.ConsPubKey()
+// AllocateRewardsByEpoch performs reward and fee distribution to all operators for the AVS with same epoch
+// configuration based on the F1 fee distribution specification.
+func (k Keeper) AllocateRewardsByEpoch(ctx sdk.Context, epochIdentifier string, endingEpochNumber int64) error {
+	avsList := k.avsKeeper.GetEpochEndAVSs(ctx, epochIdentifier, endingEpochNumber)
+	for _, avs := range avsList {
+		err := k.AllocateRewardsByAVS(ctx, avs, epochIdentifier)
 		if err != nil {
-			logger.Error("Failed to deserialize public key; skipping", "error", err, "i", i)
-			continue
+			ctx.Logger().Info("AllocateTokensByEpoch: failed to allocate rewards by avs, skipping the avs",
+				"err", err, "avs", avs)
 		}
-		validatorDetail, found := k.StakingKeeper.ValidatorByConsAddrForChainID(
-			ctx, sdk.GetConsAddress(pk), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
-		)
-		if !found {
-			logger.Error("Operator address not found; skipping", "consAddress", sdk.GetConsAddress(pk), "i", i)
-			continue
-		}
-		if totalPreviousPower == 0 {
-			return nil
-		}
-		powerFraction := math.LegacyNewDec(val.Power).QuoTruncate(math.LegacyNewDec(totalPreviousPower))
-		reward := feeMultiplier.MulDecTruncate(powerFraction)
-
-		k.AllocateTokensToValidator(ctx, validatorDetail, reward, feePool)
-		remaining = remaining.Sub(reward)
+		// continue handling the other AVSs
 	}
-
-	// allocate community funding
-	feePool.CommunityPool = feePool.CommunityPool.Add(remaining...)
-	k.SetFeePool(ctx, feePool)
-
 	return nil
 }
 
-// AllocateTokensToValidator allocate tokens to a particular validator,
-// splitting according to commission.
-func (k Keeper) AllocateTokensToValidator(ctx sdk.Context, val stakingtypes.ValidatorI, tokens sdk.DecCoins, feePool *types.FeePool) {
-	logger := k.Logger()
-	valBz := val.GetOperator()
-	accAddr := sdk.AccAddress(valBz)
-	ops, err := k.StakingKeeper.OperatorInfo(ctx, accAddr.String())
+func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier string) error {
+	isDogfood, rewardAndProportions, err := k.AVSRewardAndProportionsByParam(ctx, avs)
 	if err != nil {
-		ctx.Logger().Error("Failed to get operator info", "error", err)
+		return err
 	}
-	commission := tokens.MulDec(ops.GetCommission().Rate)
-	shared := tokens.Sub(commission)
-	// update current commission
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeCommission,
-		sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
-		sdk.NewAttribute(types.AttributeKeyValidator, val.GetOperator().String()),
-	))
-	currentCommission := k.GetValidatorAccumulatedCommission(ctx, valBz)
-	currentCommission.Commission = currentCommission.Commission.Add(commission...)
-	k.SetValidatorAccumulatedCommission(ctx, valBz, currentCommission)
-	// update current rewards, i.e. the rewards to stakers
-	// if the rewards do not exist it's fine, we will just add to zero.
-	// allocate share tokens to all stakers of this operator.
-	operatorAccAddress := sdk.AccAddress(valBz)
-	k.AllocateTokensToStakers(ctx, operatorAccAddress, shared, feePool)
+	if len(rewardAndProportions.Rewards) == 0 {
+		ctx.Logger().Info("AllocateTokensByEpoch: there isn't any rewards to distribute, skipping the avs", "isDogfood", isDogfood, "avs", avs)
+		return nil
+	}
 
-	// update outstanding rewards
-	ctx.EventManager().EmitEvent(sdk.NewEvent(
-		types.EventTypeRewards,
-		sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
-		sdk.NewAttribute(types.AttributeKeyValidator, val.GetOperator().String()),
-	))
-
-	// ValidatorOutstandingRewards is the rewards of a validator address.
-	outstanding := k.GetValidatorOutstandingRewards(ctx, valBz)
-	outstanding.Rewards = outstanding.Rewards.Add(tokens...)
-	k.SetValidatorOutstandingRewards(ctx, valBz, outstanding)
-	logger.Info("Allocate tokens to validator successfully", "allocated amount is", outstanding.Rewards.String())
+	// this function will be called by the epoch hook, so using cache context
+	// to ensure the state atomicity.
+	cc, writeFunc := ctx.CacheContext()
+	// update the reward asset state
+	for _, token := range rewardAndProportions.Rewards {
+		assetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, avs, token.Denom)
+		if err != nil {
+			return err
+		}
+		err = k.UpdateAVSRewardAssetState(cc, avs, assetID, &types.DeltaAVSRewardAssetState{
+			RewardAllocationTotal: token.Amount,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if len(rewardAndProportions.OperatorRewardProportions) == 0 {
+		// distribute the rewards to the community pool
+		err := k.UpdateAVSCommunityPool(cc, avs, true, rewardAndProportions.Rewards)
+		if err != nil {
+			return err
+		}
+		ctx.Logger().Info("AllocateTokensByEpoch: add all rewards to the avs fee pool when the operator rewards proportion hasn't been configured", "avs", avs, "err", err)
+		writeFunc()
+		return nil
+	}
+	remaining, err := k.AllocateRewardsToOperators(cc, avs, epochIdentifier, rewardAndProportions)
+	if err != nil {
+		return err
+	}
+	if len(remaining) != 0 {
+		// add the remaining rewards to the community pool
+		err = k.UpdateAVSCommunityPool(cc, avs, true, remaining)
+		if err != nil {
+			return err
+		}
+	}
+	writeFunc()
+	return nil
 }
 
-func (k Keeper) AllocateTokensToStakers(ctx sdk.Context, operatorAddress sdk.AccAddress, rewardToAllStakers sdk.DecCoins, feePool *types.FeePool) {
-	logger := k.Logger()
-	logger.Info("AllocateTokensToStakers", "operatorAddress", operatorAddress.String())
-	avsList, err := k.StakingKeeper.GetOptedInAVSForOperator(ctx, operatorAddress.String())
+// AllocateRewardsToOperators allocate the rewards to the related operators for an AVS
+// the remaining rewards will be returned.
+func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdentifier string, rewardsAndProportions types.EpochRewardsAndProportions) (sdk.DecCoins, error) {
+	// calculate the community tax, then allocate the remaining rewards to the operators.
+	// use a same community tax for all AVS
+	// todo: consider setting different tax rates for different AVSs.
+	communityTax, err := k.GetCommunityTax(ctx)
 	if err != nil {
-		logger.Debug("avs address lists not found; skipping")
-		return
+		return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to get the community tax,err:%s", err)
 	}
-	stakersPowerMap, curTotalStakersPowers := make(map[string]math.LegacyDec), math.LegacyNewDec(0)
-	globalStakerAddressList := make([]string, 0)
-	for _, avsAddress := range avsList {
-		avsAssets, err := k.StakingKeeper.GetAVSSupportedAssets(ctx, avsAddress)
+	remaining := rewardsAndProportions.Rewards
+	proportion := math.LegacyOneDec().Sub(communityTax)
+	rewardsForOperators := rewardsAndProportions.Rewards.MulDecTruncate(proportion)
+
+	for _, operatorProportion := range rewardsAndProportions.OperatorRewardProportions {
+		reward := rewardsForOperators.MulDecTruncate(operatorProportion.RewardProportion)
+		// calculate the commission for the operator
+		ops, err := k.StakingKeeper.OperatorInfo(ctx, operatorProportion.OperatorAddr)
 		if err != nil {
-			logger.Debug("avs address lists not found; skipping")
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to get operator info,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
+		}
+		rewardsForStakers := reward
+		commission := reward.MulDecTruncate(ops.GetCommission().Rate)
+		err = k.UpdateOperatorAccumulatedCommission(ctx, operatorProportion.OperatorAddr, avsAddr, true, commission)
+		if err != nil {
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to distribute the commission to the operator,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
+		}
+		// update current commission
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeCommission,
+				sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
+				sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+			),
+		)
+
+		rewardsForStakers = rewardsForStakers.Sub(commission)
+		// split the reward to multiple assets pool
+		leftover, err := k.SplitRewardsToAssetsPool(ctx, operatorProportion.OperatorAddr, avsAddr, epochIdentifier, rewardsForStakers)
+		if err != nil {
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("SplitRewardsToAssetsPool,avs:%s,operator:%s,err:%s", avsAddr, operatorProportion.OperatorAddr, err)
+		}
+		// update the outstanding rewards for the operator
+		err = k.UpdateOperatorOutstandingRewards(ctx, operatorProportion.OperatorAddr, avsAddr, true, reward)
+		if err != nil {
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to update the operator outstanding rewards,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
+		}
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeRewards,
+				sdk.NewAttribute(sdk.AttributeKeyAmount, reward.String()),
+				sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
+				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+			),
+		)
+		// calculate the remaining  rewards, it will be distributed to the community pool.
+		var hasNeg bool
+		remaining, hasNeg = remaining.SafeSub(reward)
+		if hasNeg {
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("reward is greater than the remaining,operator:%s,remaining:%s,reward:%s", operatorProportion.OperatorAddr, remaining, reward)
+		}
+		remaining = remaining.Add(leftover...)
+	}
+	return remaining, nil
+}
+
+// SplitRewardsToAssetsPool : split the rewards to multiple assets pool, then the reward of each
+// asset pool can be allocated to the stakers whose staking has changed through F1 distribution.
+// After distribution, the remaining leftover rewards will be returned to be accounted for in the community pool.
+func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epochIdentifier string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
+	// split the rewards by multiple assets
+	// get the list of assets supported by the AVS at the time of the recent ended epoch.
+	// because the voting power update is per epoch.
+	assets, err := k.operatorKeeper.GetRecentEndedEpochAVSAssets(ctx, avsAddr)
+	if err != nil {
+		return nil, err
+	}
+	// get the operator opted USD value
+	optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator)
+	if err != nil {
+		return nil, err
+	}
+	remaining := rewards
+	// calculate and set the rewards for each asset.
+	for _, assetID := range assets {
+		if !k.operatorKeeper.HasOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID) {
+			// no rewards for assets that are not owned by the operator.
 			continue
 		}
-		for assetID := range avsAssets {
-			stakerList, err := k.StakingKeeper.GetStakersByOperator(ctx, operatorAddress.String(), assetID)
-			if err != nil {
-				logger.Debug("staker lists not found; skipping")
-				continue
-			}
-			for _, staker := range stakerList.Stakers {
-				if curStakerPower, err := k.StakingKeeper.CalculateUSDValueForStaker(ctx, staker, avsAddress, operatorAddress.Bytes()); err != nil {
-					logger.Error("curStakerPower error", "error", err)
-				} else {
-					stakersPowerMap[staker] = curStakerPower
-					globalStakerAddressList = append(globalStakerAddressList, staker)
-					curTotalStakersPowers = curTotalStakersPowers.Add(curStakerPower)
+		// get the USD value for asset
+		assetUSDValue, err := k.operatorKeeper.GetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID)
+		if err != nil {
+			return nil, err
+		}
+		if assetUSDValue.IsZero() {
+			// no rewards for assets with a zero USD value.
+			ctx.Logger().Info("SplitRewardsToAssetsPool: no rewards for assets with a zero USD value.", "EpochIdentifier", epochIdentifier, "operator", operator, "assetID", assetID)
+			continue
+		} else if assetUSDValue.GT(optedUSDValue.ActiveUSDValue) ||
+			assetUSDValue.IsNegative() {
+			// The opted USD value is the sum of the USD values of multiple assets, so the USD value of
+			// each individual asset must be less than or equal to the opted USD value.
+			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool,assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
+		}
+
+		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
+		if assetRewards.IsAllPositive() {
+			if !k.isOperatorPeriodInitialized(ctx, operator, assetID, epochIdentifier) {
+				// Initialize the currentRewardRatio currentRewards and period of the operator.
+				// This case occurs when distributing rewards to an operator for the first time.
+				// At this point, the operator's previous rewards should be zero,
+				// and no currentRewardRatio currentRewards state has been recorded.
+				err = k.initializeOperatorPeriod(ctx, operator, assetID, epochIdentifier)
+				if err != nil {
+					return nil, err
 				}
 			}
-		}
-	}
-	sort.Slice(globalStakerAddressList, func(i, j int) bool {
-		return stakersPowerMap[globalStakerAddressList[i]].GT(stakersPowerMap[globalStakerAddressList[j]])
-	})
-	remaining := rewardToAllStakers
-	// allocate to stakers in voting power descending order if the curTotalStakersPower is positive
-	if curTotalStakersPowers.IsPositive() {
-		for _, staker := range globalStakerAddressList {
-			stakerPower := stakersPowerMap[staker]
-			powerFraction := stakerPower.QuoTruncate(curTotalStakersPowers)
-			rewardToSingleStaker := rewardToAllStakers.MulDecTruncate(powerFraction)
-			k.AllocateTokensToSingleStaker(ctx, staker, rewardToSingleStaker)
-			remaining = remaining.Sub(rewardToSingleStaker)
-		}
-	}
-	feePool.CommunityPool = feePool.CommunityPool.Add(remaining...)
-	logger.Info("allocate tokens to stakers successfully", "allocated amount is", rewardToAllStakers.Sub(remaining).String())
-}
+			err = k.UpdateOperatorCurrentRewards(
+				ctx, operator, assetID, epochIdentifier,
+				true, types.CommonAVSRewardData{
+					Rewards:    assetRewards,
+					AVSAddress: avsAddr,
+				})
+			if err != nil {
+				return nil, err
+			}
 
-func (k Keeper) AllocateTokensToSingleStaker(ctx sdk.Context, stakerAddress string, reward sdk.DecCoins) {
-	logger := k.Logger()
-	currentStakerRewards := k.GetStakerRewards(ctx, stakerAddress)
-	currentStakerRewards.Rewards = currentStakerRewards.Rewards.Add(reward...)
-	k.SetStakerRewards(ctx, stakerAddress, currentStakerRewards)
-	logger.Info("allocate tokens to single staker successfully", "allocated amount is", currentStakerRewards.Rewards.String())
+			var hasNeg bool
+			remaining, hasNeg = remaining.SafeSub(assetRewards)
+			if hasNeg {
+				return nil, types.ErrFailedToSplitRewards.Wrapf("asset reward is greater than the remaining,assetID:%s,remaining:%s,assetRewards:%s", assetID, remaining, assetRewards)
+			}
+		} else {
+			ctx.Logger().Error("SplitRewardsToAssetsPool: assetRewards isn't all positive")
+		}
+	}
+	return remaining, nil
 }

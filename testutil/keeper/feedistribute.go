@@ -64,6 +64,10 @@ func FeedistributeKeeper(t testing.TB) (distrkeeper.Keeper, sdk.Context) {
 		accountKeeper,
 		stakingkeeper.Keeper{},
 		epochskeeper,
+		nil,
+		nil,
+		nil,
+		nil,
 	)
 
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())

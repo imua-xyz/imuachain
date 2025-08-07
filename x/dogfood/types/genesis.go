@@ -254,5 +254,13 @@ func (gs GenesisState) Validate() error {
 		)
 	}
 
+	if !gs.LastTotalPower.Equal(sdk.NewInt(totalPower)) {
+		return errorsmod.Wrapf(
+			ErrInvalidGenesisData,
+			"the sum of all validator powers isn't equal to the last total power %s,sumPower:%d",
+			gs.LastTotalPower, totalPower,
+		)
+	}
+
 	return nil
 }

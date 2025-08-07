@@ -6,6 +6,30 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/immint/types";
 
+// InflationParams defines parameters used for dynamic annual reward inflation.
+message InflationParams {
+  // enable indicates whether inflation is enabled. If false,
+  // the module will use `epoch_reward` instead.
+  bool enable = 1;
+
+  // start_time is the Unix timestamp (in seconds) when inflation starts.
+  // Together with the current time, it determines which inflation rate
+  // to select from the annual_inflation list.
+  int64 start_time = 2;
+
+  // annual_inflation defines the list of annual inflation rates for staking rewards.
+  // The rate is selected based on the time since start_time.
+  // This list stores all annual inflation ratios starting from start_time.
+  // If the current time exceeds start_time + len(list) * 1 year, the last ratio in
+  // the list will be used.
+  repeated string annual_inflation = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
@@ -14,6 +38,8 @@ message Params {
   // epoch_reward is the reward minted by the module, per epoch. note that
   // this is in addition to any other fees that are collected, or rewards
   // that are minted.
+  // This will be used when inflation parameter is not enabled or the inflation list is empty.
+  // It is useful in cases where a fixed mint amount is preferred over dynamic inflation.
   string epoch_reward = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -22,4 +48,6 @@ message Params {
   // epoch_identifier is the epoch identifier used to determine when to mint
   // the reward.
   string epoch_identifier = 3;
+  // inflation_params is the parameter for reward inflation.
+  InflationParams inflation_params = 4 [(gogoproto.nullable) = false];
 }

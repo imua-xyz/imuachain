@@ -93,28 +93,37 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 }
 
 func (h OperatorHooksWrapper) AfterSlash(
-	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo,
+	ctx sdk.Context, operator sdk.AccAddress, _ sdk.Dec, affectedAVSList []string,
+	_ []operatortypes.SlashFromAssetsPool,
 ) {
-	h.afterStakingChange(ctx, operator, affectedAVSList)
+	h.afterStakingOrJailChange(ctx, operator, false, affectedAVSList)
 }
 
 func (h OperatorHooksWrapper) AfterJail(
-	ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo,
+	ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string,
 ) {
-	h.afterStakingChange(ctx, operator, affectedAVSList)
+	h.afterStakingOrJailChange(ctx, operator, isUnjail, affectedAVSList)
 }
 
-func (h OperatorHooksWrapper) afterStakingChange(ctx sdk.Context, operator sdk.AccAddress, affectedAVSList []operatortypes.ImpactfulAVSInfo) {
+func (h OperatorHooksWrapper) afterStakingOrJailChange(ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string) {
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
-	for i := range affectedAVSList {
-		if affectedAVSList[i].AVSAddr == dogfoodAVSAddr {
-			// check if the operator is in the current validator set.
+	for _, avs := range affectedAVSList {
+		if avs == dogfoodAVSAddr {
 			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)
 			if !found || err != nil {
 				ctx.Logger().Error("AfterSlash the consensus key isn't found by the chainIDWithoutRevision and operator address", "operatorAddr", operator, "chainIDWithoutRevision", chainIDWithoutRevision, "err", err)
 				return
 			}
+			if isUnjail {
+				// mark the flag for unjail
+				// the validator has been removed from the current active validator set when jailing,
+				// so it shouldn't check if it is active when unjail.
+				h.keeper.MarkUpdateValidatorSetFlag(ctx)
+				break
+			}
+
+			// check if the operator is in the current validator set.
 			// check if the key is active yet
 			isValidator := false
 			_, isValidator = h.keeper.GetImuachainValidator(

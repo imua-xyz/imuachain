@@ -100,7 +100,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	epochsUntilUnbonded := suite.App.StakingKeeper.GetEpochsUntilUnbonded(suite.Ctx)
 	for i := 0; i < int(epochsUntilUnbonded); i++ {
 		suite.Equal(
-			uint64(1), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
+			uint64(0), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
 		)
 		suite.CheckLengthOfValidatorUpdates(0, nil, "moving forward one epoch")
 	}
@@ -140,7 +140,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	// early release, based on the opt out epoch
 	for i := 0; i < int(epochsUntilUnbonded)-forwardEpochs; i++ {
 		suite.Equal(
-			uint64(1), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
+			uint64(0), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
 		)
 		suite.CheckLengthOfValidatorUpdates(0, nil, "moving forward one epoch")
 	}
@@ -272,7 +272,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 		uint64(suite.Ctx.BlockHeight()), initialUndelegationID+2, txHash.String(), operatorAddressString,
 	)
 	suite.Equal(
-		uint64(1), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
+		uint64(0), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
 	)
 	suite.CheckLengthOfValidatorUpdates(1, []int64{amountUSD * 2}, "undelegate")
 	// replace the key
@@ -302,7 +302,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 		uint64(suite.Ctx.BlockHeight()), initialUndelegationID+3, txHash.String(), operatorAddressString,
 	)
 	suite.Equal(
-		uint64(1), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
+		uint64(0), suite.App.DelegationKeeper.GetUndelegationHoldCount(suite.Ctx, recordKey),
 	)
 	suite.CheckLengthOfValidatorUpdates(2, []int64{amountUSD * 1, 0}, "replace key")
 }

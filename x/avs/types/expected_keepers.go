@@ -43,8 +43,9 @@ type OperatorKeeper interface {
 	GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([]string, error)
 	GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error)
 	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
-	SetOperatorInfo(ctx sdk.Context, addr string, info *operatortypes.OperatorInfo) (err error)
-	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
+	IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool
+	SetAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string, assets []string) error
+	HasAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string) bool
 }
 
 // AssetsKeeper represents the expected keeper interface for the assets module.
@@ -53,4 +54,9 @@ type AssetsKeeper interface {
 		ctx sdk.Context, assetID string,
 	) (info *assetstype.StakingAssetInfo, err error)
 	IsStakingAsset(sdk.Context, string) bool
+}
+
+// DistributionKeeper represents the expected keeper interface for the distribution module.
+type DistributionKeeper interface {
+	IsAVSAllRewardsClaimed(ctx sdk.Context, avsAddr string) bool
 }

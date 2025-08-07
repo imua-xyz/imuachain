@@ -16,8 +16,9 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-// GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID, because /* the slash  */event occurs in
-// dogfood doesn't have a TxID. It isn't submitted through an external transaction.
+// GetSlashIDForDogfood It use infractionType+'_'+'infractionHeight' as the slashID,
+// because the slash event occurs in dogfood doesn't have a TxID. It isn't submitted
+// through an external transaction.
 func GetSlashIDForDogfood(infraction stakingtypes.Infraction, infractionHeight int64) string {
 	slashIDBytes := utils.AppendMany(
 		utils.Uint32ToBigEndian(uint32(infraction)),
@@ -73,7 +74,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	// calculate the new slash proportion according to the historical power and current assets state
 	slashUSDValue := sdkmath.LegacyNewDec(parameter.Power).Mul(parameter.SlashProportion)
 	// calculate the current usd value of all assets pool for the operator
-	stakingInfo, err := k.CalculateUSDValueForOperator(ctx, true, parameter.Operator.String(), nil, nil, nil)
+	stakingInfo, err := k.CalculateRealTimeOperatorUSDValue(ctx, true, parameter.Operator.String(), nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +209,30 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	if err != nil {
 		return err
 	}
-	writeFunc()
+
+	// update the voting power and save the snapshot for all affected AVSs
+	affectedAVSList, affectedEpochList, err := k.GetImpactfulEpochsAndAVSsForOperator(ctx, parameter.Operator.String())
+	if err != nil {
+		return err
+	}
+	// update the operator asset USD value first
+	err = k.UpdateAllOperatorAssetUSDValues(cc, affectedEpochList)
+	if err != nil {
+		return err
+	}
+	for _, avs := range affectedAVSList {
+		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
+		if err != nil {
+			return err
+		}
+		err = k.UpdateVotingPower(cc, avs, epochInfo.Identifier, epochInfo.CurrentEpoch, true)
+		if err != nil {
+			return err
+		}
+	}
+	k.hooks.AfterSlash(cc, parameter.Operator, executionInfo.SlashProportion, affectedAVSList,
+		executionInfo.SlashAssetsPool)
+
 	// store the slash information
 	height := ctx.BlockHeight()
 	slashInfo := types.OperatorSlashInfo{
@@ -219,28 +243,11 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		SlashProportion: parameter.SlashProportion,
 		ExecutionInfo:   executionInfo,
 	}
-	err = k.UpdateOperatorSlashInfo(ctx, parameter.Operator.String(), parameter.AVSAddr, parameter.SlashID, slashInfo)
+	err = k.UpdateOperatorSlashInfo(cc, parameter.Operator.String(), parameter.AVSAddr, parameter.SlashID, slashInfo)
 	if err != nil {
 		return err
 	}
-
-	// update the voting power and save the snapshot for all affected AVSs
-	affectedAVSList, err := k.GetImpactfulAVSForOperator(ctx, parameter.Operator.String())
-	if err != nil {
-		return err
-	}
-	for i := range affectedAVSList {
-		avs := affectedAVSList[i].AVSAddr
-		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avs)
-		if err != nil {
-			return err
-		}
-		err = k.UpdateVotingPower(ctx, avs, epochInfo.Identifier, epochInfo.CurrentEpoch, true)
-		if err != nil {
-			return err
-		}
-	}
-	k.hooks.AfterSlash(ctx, parameter.Operator, affectedAVSList)
+	writeFunc()
 	return nil
 }
 
@@ -258,8 +265,8 @@ func (k Keeper) SlashWithInfractionReason(
 	}
 
 	chainID := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
-	if !isAvs {
+	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
+	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)
 		return sdkmath.ZeroInt()
 	}
@@ -292,8 +299,8 @@ func (k Keeper) IsOperatorJailedForChainID(ctx sdk.Context, consAddr sdk.ConsAdd
 		return false
 	}
 
-	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
-	if !isAvs {
+	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
+	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", chainID)
 		return false
 	}
@@ -312,25 +319,30 @@ func (k *Keeper) SetJailedState(ctx sdk.Context, consAddr sdk.ConsAddress, chain
 		return
 	}
 
-	isAvs, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
-	if !isAvs {
+	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
+	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)
 		return
 	}
 
 	handleFunc := func(info *types.OptedInfo) {
 		info.Jailed = jailed
+		height := ctx.BlockHeight()
+		// append jail or junjail height
+		info.JailToggleHeights = append(info.JailToggleHeights, uint64(height))
 	}
 	err := k.HandleOptedInfo(ctx, operatorAddr.String(), avsAddr, handleFunc)
 	if err != nil {
 		k.Logger(ctx).Error(err.Error(), chainID)
 	}
 
-	affectedAVSList, err := k.GetImpactfulAVSForOperator(ctx, operatorAddr.String())
+	// TODO: Should jailing by one AVS apply to all AVSs the operator is serving, similar to slashing?
+	// Or should it only affect the AVS that jailed the operator, allowing them to continue serving the others?
+	affectedAVSList, _, err := k.GetImpactfulEpochsAndAVSsForOperator(ctx, operatorAddr.String())
 	if err != nil {
 		return
 	}
-	k.hooks.AfterJail(ctx, operatorAddr, affectedAVSList)
+	k.hooks.AfterJail(ctx, operatorAddr, !jailed, affectedAVSList)
 }
 
 // Jail an operator

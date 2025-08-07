@@ -24,6 +24,7 @@ type BankKeeper interface {
 		amt sdk.Coins,
 	) error
 	MintCoins(ctx sdk.Context, name string, amt sdk.Coins) error
+	GetSupply(ctx sdk.Context, denom string) sdk.Coin
 }
 
 // EpochsKeeper represents the expected keeper interface for the epochs module.

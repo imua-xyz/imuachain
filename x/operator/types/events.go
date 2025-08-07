@@ -37,7 +37,8 @@ const (
 	AttributeKeyTotalUSDValue       = "total_usd_value"
 	AttributeKeyActiveUSDValue      = "active_usd_value"
 
-	EventTypeDeleteOperatorUSDValue = "delete_operator_usd_value"
+	EventTypeDeleteOperatorUSDValues = "delete_operator_usd_values"
+	AttributeKeyOperators            = "operators"
 
 	EventTypeUpdateAVSUSDValue = "update_avs_usd_value"
 
@@ -50,4 +51,9 @@ const (
 
 	EventTypeOperatorAssetSlashed = "operator_asset_slashed"
 	AttributeKeyAssetID           = "asset_id"
+
+	EventTypeUpdateOperatorAssetUSDValue = "update_operator_asset_usd_value"
+
+	EventTypeDeleteOperatorAssetUSDValueByEpoch = "delete_operator_asset_usd_value_by_epoch"
+	AttributeKeyEpochIdentifier                 = "epoch_identifier"
 )

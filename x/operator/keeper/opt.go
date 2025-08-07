@@ -31,7 +31,7 @@ func (k *Keeper) OptIn(
 		return errorsmod.Wrapf(delegationtypes.ErrOperatorNotExist, "operator is :%s", operatorAddress)
 	}
 	// check that the AVS is registered
-	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
 	// check if operator is in the whitelist
@@ -41,6 +41,10 @@ func (k *Keeper) OptIn(
 	// check optedIn info
 	if k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrAlreadyOptedIn
+	}
+	// check if the operator is jailed
+	if k.IsJailed(ctx, operatorAddress.String(), avsAddr) {
+		return types.ErrIsJailed
 	}
 	// Check if the USD value of the operator is greater than or equal to the self-delegation
 	// configured by the AVS. This is used to prevent a DDOS attack from zero-USD value opting in.
@@ -85,8 +89,9 @@ func (k *Keeper) OptIn(
 	optedInfo := &types.OptedInfo{
 		SlashContract: slashContract,
 		// #nosec G701
-		OptedInHeight:  uint64(ctx.BlockHeight()),
-		OptedOutHeight: types.DefaultOptedOutHeight,
+		OptedInHeight:     uint64(ctx.BlockHeight()),
+		OptedOutHeight:    types.DefaultOptedOutHeight,
+		JailToggleHeights: make([]uint64, 0),
 	}
 	err = k.SetOptedInfo(ctx, operatorAddress.String(), avsAddr, optedInfo)
 	if err != nil {
@@ -121,19 +126,22 @@ func (k Keeper) OptInWithConsKey(
 	return k.SetOperatorConsKeyForChainID(ctx, operatorAddress, chainID, key)
 }
 
-// OptOut call this function to opt out of AVS
+// OptOut call this function to opt out of AVS.
+// The opt-out will remain effective until the end of the current epoch
+// because the voting power is updated per epoch.
 func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr string) (err error) {
 	// check that the operator is registered
 	if !k.IsOperator(ctx, operatorAddress) {
 		return delegationtypes.ErrOperatorNotExist
 	}
 	// check that the AVS is registered
-	if isAvs, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAvs {
+	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
 	}
-	// check if the operator is active. It's not allowed to opt-out if the operator
-	// isn't opted-in or is jailed.
-	if !k.IsActive(ctx, operatorAddress, avsAddr) {
+	// It's not allowed to opt-out if the operator isn't opted-in.
+	// There is no reason to restrict a jailed operator from opting out.
+	// Therefore, we only check if the operator has opted in here.
+	if !k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrNotOptedIn
 	}
 	// do not allow frozen operators to do anything meaningful
@@ -150,16 +158,6 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 		}
 	}()
 
-	// DeleteOperatorUSDValue, delete the operator voting power, it can facilitate to
-	// update the voting powers of all opted-in operators at the end of epoch.
-	// There might still be a reward for the operator in this opted-out epoch,
-	// which is determined by the reward logic.
-	// #nosec G703 // already validated that operatorAddress is not ""
-	_ = k.DeleteOperatorUSDValue(ctx, avsAddr, operatorAddress.String())
-	if err != nil {
-		return err
-	}
-
 	// set opted-out height
 	handleFunc := func(info *types.OptedInfo) {
 		// #nosec G701
@@ -170,12 +168,6 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 		// so the difference due to the epoch scheduling is not too big a concern.
 	}
 	err = k.HandleOptedInfo(ctx, operatorAddress.String(), avsAddr, handleFunc)
-	if err != nil {
-		return err
-	}
-
-	// mark opt out in the snapshot helper
-	err = k.SetOptOutFlag(ctx, avsAddr, true)
 	if err != nil {
 		return err
 	}

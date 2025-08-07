@@ -18,37 +18,6 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: types.DefaultGenesis(),
 			valid:    true,
 		},
-		{
-			desc: "valid genesis state",
-			genState: &types.GenesisState{
-				Params: types.Params{
-					EpochIdentifier: "day",
-				},
-			},
-			valid: true,
-		},
-		{
-			desc: "invalid genesis state",
-			genState: &types.GenesisState{
-				Params: types.Params{
-					EpochIdentifier: "",
-				},
-			},
-			valid: false,
-		},
-		{
-			desc: "Illegal val address", // Fixed the description to match the valid state
-			genState: &types.GenesisState{
-				Params: types.Params{
-					EpochIdentifier: "day",
-				},
-				ValidatorAccumulatedCommissions: []types.ValidatorAccumulatedCommissions{
-					{ValAddr: "validator1", Commission: &types.ValidatorAccumulatedCommission{}},
-					{ValAddr: "validator2", Commission: &types.ValidatorAccumulatedCommission{}},
-				},
-			},
-			valid: false,
-		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {

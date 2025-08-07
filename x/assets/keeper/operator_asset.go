@@ -5,6 +5,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
@@ -59,13 +60,13 @@ func (k Keeper) GetOperatorAssetInfos(ctx sdk.Context, operator string, assetsFi
 	return ret, nil
 }
 
-func (k Keeper) IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.Address, assetID string) bool {
+func (k Keeper) IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	key := assetstype.GetJoinedStoreKey(operatorAddr.String(), assetID)
 	return store.Has(key)
 }
 
-func (k Keeper) GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.Address, assetID string) (info *assetstype.OperatorAssetInfo, err error) {
+func (k Keeper) GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	key := assetstype.GetJoinedStoreKey(operatorAddr.String(), assetID)
 	value := store.Get(key)
@@ -80,37 +81,42 @@ func (k Keeper) GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.
 // UpdateOperatorAssetState is used to update the operator states that include TotalAmount OperatorAmount and WaitUndelegationAmount
 // The input `changeAmount` represents the values that you want to add or decrease,using positive or negative values for increasing and decreasing,respectively. The function will calculate and update new state after a successful check.
 // The function will be called when there is delegation or undelegation related to the operator. In the future,it will also be called when the operator deposit their own assets.
-func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Address, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (err error) {
+func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (stateBeforeUpdate assetstype.OperatorAssetInfo, err error) {
 	// get the latest state,use the default initial state if the state hasn't been stored
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	key := assetstype.GetJoinedStoreKey(operatorAddr.String(), assetID)
 	assetState := assetstype.OperatorAssetInfo{
-		TotalAmount:               math.NewInt(0),
-		PendingUndelegationAmount: math.NewInt(0),
-		TotalShare:                math.LegacyNewDec(0),
-		OperatorShare:             math.LegacyNewDec(0),
+		TotalAmount:               math.ZeroInt(),
+		PendingUndelegationAmount: math.ZeroInt(),
+		TotalShare:                math.LegacyZeroDec(),
+		OperatorShare:             math.LegacyZeroDec(),
 	}
 	value := store.Get(key)
 	if value != nil {
 		k.cdc.MustUnmarshal(value, &assetState)
 	}
-
+	stateBeforeUpdate = assetstype.OperatorAssetInfo{
+		TotalAmount:               math.NewIntFromBigInt(assetState.TotalAmount.BigInt()),
+		PendingUndelegationAmount: math.NewIntFromBigInt(assetState.PendingUndelegationAmount.BigInt()),
+		TotalShare:                assetState.TotalShare.Clone(),
+		OperatorShare:             assetState.OperatorShare.Clone(),
+	}
 	// update all states of the specified operator asset
 	err = assetstype.UpdateAssetValue(&assetState.TotalAmount, &changeAmount.TotalAmount)
 	if err != nil {
-		return errorsmod.Wrap(err, "UpdateOperatorAssetState TotalAmountOrWantChangeValue error")
+		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState TotalAmountOrWantChangeValue error")
 	}
 	err = assetstype.UpdateAssetValue(&assetState.PendingUndelegationAmount, &changeAmount.PendingUndelegationAmount)
 	if err != nil {
-		return errorsmod.Wrap(err, "UpdateOperatorAssetState WaitUndelegationAmountOrWantChangeValue error")
+		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState WaitUndelegationAmountOrWantChangeValue error")
 	}
 	err = assetstype.UpdateAssetDecValue(&assetState.TotalShare, &changeAmount.TotalShare)
 	if err != nil {
-		return errorsmod.Wrap(err, "UpdateOperatorAssetState TotalShare error")
+		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState TotalShare error")
 	}
 	err = assetstype.UpdateAssetDecValue(&assetState.OperatorShare, &changeAmount.OperatorShare)
 	if err != nil {
-		return errorsmod.Wrap(err, "UpdateOperatorAssetState OperatorShare error")
+		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState OperatorShare error")
 	}
 
 	// store the updated state
@@ -129,7 +135,7 @@ func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.Addre
 		),
 	)
 
-	return nil
+	return stateBeforeUpdate, nil
 }
 
 // IteratorAssetsForOperator iterates all assets for the specified operator
@@ -142,6 +148,8 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(operator))
 	defer iterator.Close()
+	updateKeyValues := make([]utils.KeyValue, 0)
+	updateAssetIDs := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts assetstype.OperatorAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
@@ -160,21 +168,32 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 			return err
 		}
 		if isUpdate {
-			// store the updated state
-			bz := k.cdc.MustMarshal(&amounts)
-			store.Set(iterator.Key(), bz)
-			ctx.EventManager().EmitEvent(
-				sdk.NewEvent(
-					assetstype.EventTypeUpdatedOperatorAsset,
-					sdk.NewAttribute(assetstype.AttributeKeyOperatorAddress, operator),
-					sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
-					sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, amounts.TotalAmount.String()),
-					sdk.NewAttribute(assetstype.AttributeKeyPendingUndelegationAmount, amounts.PendingUndelegationAmount.String()),
-					sdk.NewAttribute(assetstype.AttributeKeyTotalShare, amounts.TotalShare.String()),
-					sdk.NewAttribute(assetstype.AttributeKeyOperatorShare, amounts.OperatorShare.String()),
-				),
-			)
+			// collect key values to update
+			updateKeyValues = append(updateKeyValues, utils.KeyValue{
+				Key:   append([]byte(nil), iterator.Key()...),
+				Value: &amounts,
+			})
+			updateAssetIDs = append(updateAssetIDs, assetID)
 		}
+	}
+
+	// bulk set the updated states
+	for i, updateKeyValue := range updateKeyValues {
+		// store the updated state
+		bz := k.cdc.MustMarshal(updateKeyValue.Value)
+		store.Set(updateKeyValue.Key, bz)
+		amounts := updateKeyValue.Value.(*assetstype.OperatorAssetInfo)
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				assetstype.EventTypeUpdatedOperatorAsset,
+				sdk.NewAttribute(assetstype.AttributeKeyOperatorAddress, operator),
+				sdk.NewAttribute(assetstype.AttributeKeyAssetID, updateAssetIDs[i]),
+				sdk.NewAttribute(assetstype.AttributeKeyTotalAmount, amounts.TotalAmount.String()),
+				sdk.NewAttribute(assetstype.AttributeKeyPendingUndelegationAmount, amounts.PendingUndelegationAmount.String()),
+				sdk.NewAttribute(assetstype.AttributeKeyTotalShare, amounts.TotalShare.String()),
+				sdk.NewAttribute(assetstype.AttributeKeyOperatorShare, amounts.OperatorShare.String()),
+			),
+		)
 	}
 	return nil
 }

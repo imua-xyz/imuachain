@@ -37,7 +37,6 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	defer k.ClearValidatorSetUpdateFlag(ctx)
 	logger := k.Logger(ctx)
 	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.

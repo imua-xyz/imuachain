@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
@@ -50,17 +51,12 @@ import (
 
 	evmoskr "github.com/evmos/evmos/v16/crypto/keyring"
 	cmdcfg "github.com/imua-xyz/imuachain/cmd/config"
-	// pricefeeder "github.com/imua-xyz/price-feeder/external"
-	// feedertypes "github.com/imua-xyz/price-feeder/types"
 )
 
 const (
 	EnvPrefix    = "IMUACHAIN"
-	flagOracle   = "oracle"
-	flagMnemonic = "mnemonic"
-	confPath     = "config"
-	confOracle   = "oracle_feeder.yaml"
 	cmdStartName = "start"
+	confPath     = "config"
 )
 
 // NewRootCmd creates a new root command for imuad. It is called once in the
@@ -140,28 +136,26 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	)
 	startCmd, _, _ := rootCmd.Find([]string{cmdStartName})
 	startCmd.Flags().Bool(flagOracle, false, "enable oracle feeder")
-	startCmd.Flags().String(flagMnemonic, "", "set validator consensus key's mnemonic")
+	startCmd.Flags().String(flagFeederLogPath, "", "oracle feeder log file")
+	startCmd.Flags().String(flagFeederMnemonic, "", "set validator consensus key's mnemonic")
+	startCmd.Flags().String(flagFeederBinPath, "", "path to the price feeder binary")
+	startCmd.Flags().Int(flagFeederStatusListenPort, 0, "port to listen for price feeder status requests")
 	preRunE := startCmd.PreRunE
 	// add preRun to run price-feeder first before starting the node
 	startCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
-		//	if enableFeeder, _ := cmd.Flags().GetBool(flagOracle); enableFeeder {
-		//		clientCtx := cmd.Context().Value(client.ClientContextKey).(*client.Context)
-		//		go func() {
-		//			defer func() {
-		//				if err := recover(); err != nil {
-		//					fmt.Println("price-feeder failed", err)
-		//					if e, ok := err.(error); ok && errors.Is(e, feedertypes.ErrInitFail) {
-		//						panic(e)
-		//					}
-		//				}
-		//			}()
-		//			mnemonic, _ := cmd.Flags().GetString(flagMnemonic)
-		//			_ = mnemonic
-		//			_ = clientCtx
-		//			serverCtx := sdkserver.GetServerContextFromCmd(cmd)
-		//			pricefeeder.StartPriceFeeder(path.Join(clientCtx.HomeDir, confPath, confOracle), mnemonic, path.Join(clientCtx.HomeDir, confPath), serverCtx.Logger.With("module", "price-feeder"))
-		//		}()
-		//	}
+		// This needs to be re-enabled after the price feeder updates the EVMOS dependency to v16 and updates the Imuachain dependency
+		// to the version that includes this fix.
+		if enableFeeder, _ := cmd.Flags().GetBool(flagOracle); enableFeeder {
+			clientCtx := cmd.Context().Value(client.ClientContextKey).(*client.Context)
+			configFile := path.Join(clientCtx.HomeDir, confPath, confOracle)
+			sourcesConfPath := path.Join(clientCtx.HomeDir, confPath)
+			mnemonic, _ := cmd.Flags().GetString(flagFeederMnemonic)
+			binPath, _ := cmd.Flags().GetString(flagFeederBinPath)
+			logPath, _ := cmd.Flags().GetString(flagFeederLogPath)
+			statusPort, _ := cmd.Flags().GetInt(flagFeederStatusListenPort)
+			serverCtx := sdkserver.GetServerContextFromCmd(cmd)
+			go launchFeeder(configFile, sourcesConfPath, binPath, mnemonic, serverCtx.Logger.With("module", "price-feeder"), logPath, statusPort)
+		}
 		return preRunE(cmd, args)
 	}
 	// add keybase, auxiliary RPC, query, and tx child commands
@@ -169,6 +163,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		rpc.StatusCommand(),
 		queryCommand(),
 		txCommand(),
+		externalCommand(),
 		evmosclient.KeyCommands(app.DefaultNodeHome),
 	)
 	rootCmd, err := srvflags.AddTxFlags(rootCmd)

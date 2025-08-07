@@ -34,3 +34,30 @@ func CmdQueryParams() *cobra.Command {
 
 	return cmd
 }
+
+func CmdQueryEpochMintInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "epoch_mint_info",
+		Short: "shows the mint info for current epoch",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.EpochMintInfo(cmd.Context(), &types.QueryEpochMintInfoRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}

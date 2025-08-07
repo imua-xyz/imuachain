@@ -90,18 +90,6 @@ message SnapshotHelper {
   // last_changed_height indicates the height of the most recent change.
   // It is used to set the `last_changed_height` field in `VotingPowerSnapshot`.
   int64 last_changed_height = 1;
-
-  // has_opt_out is used to indicate whether there has been any opt-out operation from
-  // the most recently saved snapshot to the current height. This is because,
-  // when an opt-out operation occurs, the related AVS validator information changes,
-  // and the snapshot needs to be updated.
-  // Currently, a boolean variable is used instead of an operator list
-  // because the snapshot is set by default to store all operator information related to AVS.
-  // Therefore, as long as any operator has opted out, the snapshot needs to be updated.
-  // If we later introduce a limit on the maximum number of validators in AVS,
-  // similar to the MaxValidatorNumber in Dogfood, this may need to be changed to an operator list
-  // to track all operators that have opted out, thereby assisting with the correct snapshot update.
-  bool has_opt_out = 2;
 }
 
 // ClientChainEarningAddrList is the list of client chain earning addresses.
@@ -148,6 +136,11 @@ message OptedInfo {
   uint64 opted_out_height = 3;
   // jailed defined whether the operator has been jailed from bonded status or not.
   bool jailed = 4;
+  // jail_toggle_heights stores all block heights at which the operator's jail status changed.
+  // It always starts with a jail event. Even indices (0, 2, ...) represent jail events,
+  // and odd indices (1, 3, ...) represent unjail events.
+  // This can be used to accurately calculate reward eligibility by excluding jailed periods.
+  repeated uint64 jail_toggle_heights = 5;
 }
 
 // OptedInAssetState is the state of opted-in asset
@@ -252,8 +245,7 @@ message OperatorSlashInfo {
 
 // RegisterOperatorReq is the request to register a new operator.
 message RegisterOperatorReq {
-  option (cosmos.msg.v1.signer) = "FromAddress";
-  option (amino.name) = "cosmos-sdk/OperatorInfo";
+  option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -268,8 +260,7 @@ message RegisterOperatorResponse {}
 
 // OptIntoAVSReq is the request to opt into an AVS.
 message OptIntoAVSReq {
-  option (cosmos.msg.v1.signer) = "FromAddress";
-  option (amino.name) = "cosmos-sdk/OptIntoAVSReq";
+  option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -288,8 +279,7 @@ message OptIntoAVSResponse {}
 
 // OptOutOfAVSReq is the request to opt out from an AVS.
 message OptOutOfAVSReq {
-  option (cosmos.msg.v1.signer) = "FromAddress";
-  option (amino.name) = "cosmos-sdk/OptOutOfAVSReq";
+  option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
@@ -305,7 +295,6 @@ message OptOutOfAVSResponse {}
 // SetConsKeyReq is the request to set the operator's consensus key for an AVS.
 message SetConsKeyReq {
   option (cosmos.msg.v1.signer) = "address";
-  option (amino.name) = "cosmos-sdk/SetConsKeyReq";
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
   // address is the operator address
@@ -326,23 +315,24 @@ message SetConsKeyResponse {}
 // Msg defines the operator Msg service.
 service Msg {
   option (cosmos.msg.v1.service) = true;
+
   // RegisterOperator registers a new operator.
   rpc RegisterOperator(RegisterOperatorReq) returns (RegisterOperatorResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/RegisterOperatorReq";
+    option (google.api.http).post = "/imuachain/operator/v1/tx/register_operator";
   }
 
   // SetConsKey sets the operator's consensus key for an AVS. To do this, the operator
   // must have previously opted into the AVS.
   rpc SetConsKey(SetConsKeyReq) returns (SetConsKeyResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/SetConsKeyReq";
+    option (google.api.http).post = "/imuachain/operator/v1/tx/set_cons_key";
   }
 
   // OptIntoAVS opts an operator into an AVS.
   rpc OptIntoAVS(OptIntoAVSReq) returns (OptIntoAVSResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/OptIntoAVSReq";
+    option (google.api.http).post = "/imuachain/operator/v1/tx/opt_into_avs";
   }
   // OptOutOfAVS opts an operator out of an AVS.
   rpc OptOutOfAVS(OptOutOfAVSReq) returns (OptOutOfAVSResponse) {
-    option (google.api.http).post = "/imuachain/operator/v1/tx/OptOutOfAVSReq";
+    option (google.api.http).post = "/imuachain/operator/v1/tx/opt_out_of_avs";
   }
 }

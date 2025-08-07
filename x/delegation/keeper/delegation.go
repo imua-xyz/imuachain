@@ -108,7 +108,7 @@ func (k *Keeper) delegateTo(
 		deltaOperatorAsset.OperatorShare = share
 	}
 
-	err = k.assetsKeeper.UpdateOperatorAssetState(ctx, params.OperatorAddress, assetID, deltaOperatorAsset)
+	prevAssetState, err := k.assetsKeeper.UpdateOperatorAssetState(ctx, params.OperatorAddress, assetID, deltaOperatorAsset)
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (k *Keeper) delegateTo(
 	deltaAmount := &delegationtype.DeltaDelegationAmounts{
 		UndelegatableShare: share,
 	}
-	_, err = k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
+	_, preDelegationState, err := k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
 	if err != nil {
 		return err
 	}
@@ -126,109 +126,23 @@ func (k *Keeper) delegateTo(
 	}
 
 	if notGenesis {
+		// calculate the previous delegation amount
+		preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+			prevAssetState.TotalShare, prevAssetState.TotalAmount)
+		if err != nil {
+			return err
+		}
 		// call the hooks registered by the other modules
-		k.Hooks().AfterDelegation(ctx, params.OperatorAddress)
+		err = k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, preDelegatedAmount, prevAssetState)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// InstantUndelegateFrom undelegates asset from operator with instant unbonding
-func (k *Keeper) InstantUndelegateFrom(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) error {
-	if !params.OpAmount.IsPositive() {
-		return delegationtype.ErrAmountIsNotPositive
-	}
-
-	// check if the UndelegatedFrom address is an operator
-	if !k.operatorKeeper.IsOperator(ctx, params.OperatorAddress) {
-		return delegationtype.ErrOperatorNotExist
-	}
-
-	// Get staker and asset IDs
-	stakerID, assetID := assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
-
-	undelegationID := k.GetLastUndelegationID(ctx)
-
-	// verify the undelegation amount
-	share, err := k.ValidateUndelegationAmount(ctx, params.OperatorAddress, stakerID, assetID, params.OpAmount)
-	if err != nil {
-		return err
-	}
-
-	// remove share
-	removeToken, err := k.RemoveShare(ctx, true, params.OperatorAddress, stakerID, assetID, share)
-	if err != nil {
-		return err
-	}
-
-	// Create undelegation record
-	r := delegationtype.UndelegationRecord{
-		StakerId:              stakerID,
-		AssetId:               assetID,
-		OperatorAddr:          params.OperatorAddress.String(),
-		TxHash:                params.TxHash.String(),
-		UndelegationId:        undelegationID,
-		BlockNumber:           uint64(ctx.BlockHeight()),
-		Amount:                removeToken,
-		ActualCompletedAmount: removeToken,
-	}
-
-	// Get current epoch info
-	completedEpochID, completedEpochNumber, err := k.operatorKeeper.GetUnbondingExpiration(ctx, params.OperatorAddress)
-	if err != nil {
-		return err
-	}
-
-	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, completedEpochID)
-	if !found {
-		return errorsmod.Wrapf(delegationtype.ErrEpochIdentifierNotExist, "identifier:%s", completedEpochID)
-	}
-
-	// Apply instant penalty only when the completion epoch is more than one epoch away
-	if completedEpochNumber-epochInfo.CurrentEpoch > 1 {
-		// Get the instant undelegation penalty
-		penalty := k.GetInstantUndelegationPenalty(ctx)
-		penaltyAmount := params.OpAmount.Mul(sdk.NewInt(int64(penalty))).Quo(sdk.NewInt(100))
-		r.ActualCompletedAmount = r.ActualCompletedAmount.Sub(penaltyAmount)
-		r.CompletedEpochNumber = epochInfo.CurrentEpoch + 1
-	} else {
-		r.CompletedEpochNumber = completedEpochNumber
-	}
-
-	r.CompletedEpochIdentifier = completedEpochID
-
-	// Store record and increment ID
-	if err := k.SetUndelegationRecords(ctx, false, []delegationtype.UndelegationAndHoldCount{{Undelegation: &r}}); err != nil {
-		return err
-	}
-	if err := k.IncrementLastUndelegationID(ctx); err != nil {
-		return err
-	}
-
-	recordKey := r.GetKey()
-
-	// Emit event
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			delegationtype.EventTypeUndelegationStarted,
-			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, r.StakerId),
-			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, r.AssetId),
-			sdk.NewAttribute(delegationtype.AttributeKeyOperator, r.OperatorAddr),
-			sdk.NewAttribute(delegationtype.AttributeKeyRecordID, hexutil.Encode(recordKey)),
-			sdk.NewAttribute(delegationtype.AttributeKeyAmount, r.Amount.String()),
-			sdk.NewAttribute(delegationtype.AttributeKeyCompletedEpochID, r.CompletedEpochIdentifier),
-			sdk.NewAttribute(delegationtype.AttributeKeyCompletedEpochNumber, fmt.Sprintf("%d", r.CompletedEpochNumber)),
-			sdk.NewAttribute(delegationtype.AttributeKeyUndelegationID, fmt.Sprintf("%d", r.UndelegationId)),
-			sdk.NewAttribute(delegationtype.AttributeKeyTxHash, params.TxHash.String()),
-			sdk.NewAttribute(delegationtype.AttributeKeyBlockNumber, fmt.Sprintf("%d", r.BlockNumber)),
-			sdk.NewAttribute(delegationtype.InstantUnbonding, fmt.Sprintf("%t", true)),
-		),
-	)
-
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, recordKey)
-}
-
-// UndelegateFrom handles normal undelegation with a waiting period.
-// UndelegateFrom: The undelegation needs to consider whether the operator's opted-in assets can exit from the AVS.
+// UndelegateFrom handles normal and instant undelegation.
+// The undelegation needs to consider whether the operator's opted-in assets can exit from the AVS.
 // Because only after the operator has served the AVS can the staking asset be undelegated.
 // So we use two steps to handle the undelegation. Fist,record the undelegation request and the corresponding exit time which needs to be obtained from the operator opt-in module. Then,we handle the record when the exit time has expired.
 func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) error {
@@ -244,6 +158,22 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 
 	// verify the undelegation amount
 	share, err := k.ValidateUndelegationAmount(ctx, params.OperatorAddress, stakerID, assetID, params.OpAmount)
+	if err != nil {
+		return err
+	}
+
+	// get the previous operator asset state before update
+	prevAssetState, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, params.OperatorAddress, assetID)
+	if err != nil {
+		return err
+	}
+	preDelegationState, err := k.GetSingleDelegationInfo(ctx, stakerID, assetID, params.OperatorAddress.String())
+	if err != nil {
+		return err
+	}
+	// calculate the previous delegation amount
+	preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+		prevAssetState.TotalShare, prevAssetState.TotalAmount)
 	if err != nil {
 		return err
 	}
@@ -265,10 +195,29 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		Amount:                removeToken,
 		ActualCompletedAmount: removeToken,
 	}
-	completedEpochID, completedEpochNumber, err := k.operatorKeeper.GetUnbondingExpiration(ctx, params.OperatorAddress)
-	if err != nil {
-		return err
+
+	var completedEpochID string
+	var completedEpochNumber int64
+	var applySlash bool
+	if params.InstantUnbonding {
+		applySlash, completedEpochID, completedEpochNumber, err = k.operatorKeeper.GetInstantUnbondingExpiration(ctx, params.OperatorAddress)
+		if err != nil {
+			return err
+		}
+		// Apply instant penalty
+		if applySlash {
+			// Get the instant undelegation penalty
+			penalty := k.GetInstantUndelegationPenalty(ctx)
+			penaltyAmount := params.OpAmount.Mul(sdk.NewInt(int64(penalty))).Quo(sdk.NewInt(100))
+			r.ActualCompletedAmount = r.ActualCompletedAmount.Sub(penaltyAmount)
+		}
+	} else {
+		completedEpochID, completedEpochNumber, _, err = k.operatorKeeper.GetUnbondingExpiration(ctx, params.OperatorAddress)
+		if err != nil {
+			return err
+		}
 	}
+
 	r.CompletedEpochIdentifier = completedEpochID
 	r.CompletedEpochNumber = completedEpochNumber
 	// the hold count is relevant to async AVSs instead of sync AVSs. for example, the dogfood AVS is sync since it
@@ -290,6 +239,13 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 
 	recordKey := r.GetKey()
+	// call the hooks registered by the other modules
+	err = k.Hooks().AfterUndelegationStarted(ctx, stakerID, assetID, params.OperatorAddress,
+		recordKey, preDelegatedAmount, *prevAssetState)
+	if err != nil {
+		return err
+	}
+
 	// emit an event to track the undelegation record identifiers.
 	// for the ImuachainAssetID undelegation, this event is used to track asset state as well.
 	// for other undelegations, it is instead tracked from the staker asset state.
@@ -307,11 +263,11 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 			sdk.NewAttribute(delegationtype.AttributeKeyUndelegationID, fmt.Sprintf("%d", r.UndelegationId)),
 			sdk.NewAttribute(delegationtype.AttributeKeyTxHash, params.TxHash.String()),
 			sdk.NewAttribute(delegationtype.AttributeKeyBlockNumber, fmt.Sprintf("%d", r.BlockNumber)),
+			sdk.NewAttribute(delegationtype.AttributeKeyInstantUnbonding, fmt.Sprintf("%t", params.InstantUnbonding)),
+			sdk.NewAttribute(delegationtype.AttributeKeyApplyInstantSlash, fmt.Sprintf("%t", applySlash)),
 		),
 	)
-
-	// call the hooks registered by the other modules
-	return k.Hooks().AfterUndelegationStarted(ctx, params.OperatorAddress, recordKey)
+	return nil
 }
 
 // AssociateOperatorWithStaker marks that a staker is claiming to be associated with an operator.
@@ -353,7 +309,7 @@ func (k *Keeper) AssociateOperatorWithStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// increase the share of new marked operator
 		if keys.OperatorAddr == operatorAddress.String() {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
+			_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, operatorAddress, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare,
 			})
 		}
@@ -400,7 +356,7 @@ func (k *Keeper) DissociateOperatorFromStaker(
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// decrease the share of old operator
 		if keys.OperatorAddr == associatedOperator {
-			err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
+			_, err = k.assetsKeeper.UpdateOperatorAssetState(ctx, oldOperatorAccAddr, keys.AssetId, assetstype.DeltaOperatorSingleAsset{
 				OperatorShare: amounts.UndelegatableShare.Neg(),
 			})
 		}

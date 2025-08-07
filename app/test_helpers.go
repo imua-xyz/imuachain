@@ -251,7 +251,7 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 			},
 		},
 	}
-	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil)
+	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil)
 	genesisState[operatortypes.ModuleName] = app.AppCodec().MustMarshalJSON(operatorGenesis)
 	// x/delegation
 	singleStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operator.String())
@@ -278,7 +278,7 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 			},
 		},
 	}
-	delegationGenesis := delegationtypes.NewGenesis(associations, delegationStates, stakersByOperator, nil)
+	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = app.AppCodec().MustMarshalJSON(delegationGenesis)
 
 	// create a dogfood genesis with just the validator set, that is, the bare

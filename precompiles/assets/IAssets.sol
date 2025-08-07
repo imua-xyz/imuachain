@@ -102,12 +102,10 @@ interface IAssets {
     /// @param clientChainID is the layerZero chainID if it is supported.
     //  It might be allocated by Imuachain when the client chain isn't supported
     //  by layerZero
-    /// @param validatorID The validator's identifier (index or pubkey)
     /// @param withdrawAddress The withdraw address
     /// @param opAmount The withdraw amount
     function withdrawNST(
         uint32 clientChainID,
-        bytes calldata validatorID,
         bytes calldata withdrawAddress,
         uint256 opAmount
     ) external returns (bool success, uint256 latestAssetState);

@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
@@ -68,19 +70,29 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		intervalInt = defaultInterval
 	}
 
+	isNST := assetstypes.IsNST(oInfo.AssetID)
+	// var assetAddr string
+	var clientChainID uint64
+
+	if isNST {
+		_, clientChainID, err = assetstypes.ParseID(oInfo.AssetID)
+		if err != nil {
+			return fmt.Errorf("invalid assetID %s: %w", oInfo.AssetID, err)
+		}
+	}
+
 	defer func() {
 		if !ctx.IsCheckTx() {
 			k.SetParamsUpdated()
 		}
 	}()
 
-	for _, t := range p.Tokens {
-		// token exists, bind assetID for this token
-		// it's possible for  one price bonded with multiple assetID, like ETHUSDT from sepolia/mainnet
-		if t.Name == oInfo.Token.Name && t.ChainID == chainID {
-			t.AssetID = strings.Join([]string{t.AssetID, oInfo.AssetID}, ",")
+	idx, has := p.HasTokenByName(oInfo.Token.Name, chainID)
+	if has {
+		t := p.Tokens[idx]
+		t.AssetID = strings.Join([]string{t.AssetID, oInfo.AssetID}, ",")
+		if !isNST {
 			k.SetParams(ctx, p)
-			// there should have been existing tokenFeeder running(currently we register tokens from assets-module and with infinite endBlock)
 			return nil
 		}
 	}
@@ -98,9 +110,8 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	// set a tokenFeeder for the new token
 	p.TokenFeeders = append(p.TokenFeeders, &types.TokenFeeder{
 		// #nosec G115 // len(p.Tokens) must be positive since we just append an element for it
-		TokenID: uint64(len(p.Tokens) - 1),
-		// we only support rule_1 for v1
-		RuleID:       1,
+		TokenID:      uint64(len(p.Tokens) - 1),
+		RuleID:       2,
 		StartRoundID: 1,
 		// #nosec G115
 		StartBaseBlock: uint64(ctx.BlockHeight() + startAfterBlocks),
@@ -108,6 +119,33 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		// we don't end feeders for v1
 		EndBlock: 0,
 	})
+
+	if isNST {
+		// set a virtual token for NST to track balance change
+		nstTokenName := types.NSTTokenPrefix + oInfo.Token.Name
+		if _, has := p.HasTokenByName(nstTokenName, chainID); !has {
+			nstAssetID := types.NSTIDPrefix + hexutil.EncodeUint64(clientChainID)
+			p.Tokens = append(p.Tokens, &types.Token{
+				Name:            nstTokenName,
+				ChainID:         chainID,
+				ContractAddress: "",
+				Decimal:         int32(decimalInt), // #nosec G115
+				AssetID:         nstAssetID,
+			})
+			// set tokenfeeder to track blanace change
+			p.TokenFeeders = append(p.TokenFeeders, &types.TokenFeeder{
+				// #nosec G115 // len(p.Tokens) must be positive since we just append an element for it
+				TokenID:      uint64(len(p.Tokens) - 1),
+				RuleID:       3,
+				StartRoundID: 1,
+				// #nosec G115
+				StartBaseBlock: uint64(ctx.BlockHeight() + startAfterBlocks),
+				Interval:       intervalInt,
+				// we don't end feeders for v1
+				EndBlock: 0,
+			})
+		}
+	}
 
 	k.SetParams(ctx, p)
 	return nil

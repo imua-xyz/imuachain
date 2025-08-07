@@ -12,6 +12,8 @@ security and extending it to off-chain systems, Imuachain powers an open market 
 
 To learn how Imuachain works from a high-level perspective, see the [Imuachain Whitepaper](https://t.co/A4y4YcOuEC)
 
+To learn about Imua contracts, that work with Imuachain, see the [Imua Contracts](docs/imua-contracts.md)
+
 ## Creating docker images
 
 1. Once the dependencies are installed, execute

@@ -139,7 +139,7 @@ func (suite *KeeperTestSuite) TestSameEpochOperations() {
 			operations: []funcThatReturnsError{
 				setKey,
 			},
-			errValues: []error{operatortypes.ErrNotOptedIn},
+			errValues: []error{operatortypes.ErrIsOptedOutOrJailed},
 		},
 		{
 			name: "opt in then replace",
@@ -332,7 +332,7 @@ func (suite *KeeperTestSuite) TestDifferentEpochOperations() {
 			operations: []funcThatReturnsError{
 				setKey,
 			},
-			errValues:       []error{operatortypes.ErrNotOptedIn},
+			errValues:       []error{operatortypes.ErrIsOptedOutOrJailed},
 			expUpdatesCount: []int{0},
 			powers: [][]int64{
 				{},

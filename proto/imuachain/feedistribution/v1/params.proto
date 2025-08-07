@@ -10,10 +10,9 @@ option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 // Params defines the parameters for the module.
 message Params {
   option (amino.name) = "imua/x/feedistribution/params";
-  // epoch_identifier for fee distribution
-  string epoch_identifier = 2;
   // community_tax is the tax defined for allocation
-  string community_tax = 3 [
+  // Currently, use the same community tax for the rewards distribution of all AVSs
+  string community_tax = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (amino.dont_omitempty) = true,

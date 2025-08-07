@@ -210,7 +210,7 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 			},
 		},
 	}
-	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil)
+	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil)
 	genesisState[operatortypes.ModuleName] = codec.MustMarshalJSON(operatorGenesis)
 	// x/delegation
 	singleStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operator.String())
@@ -237,7 +237,7 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 			},
 		},
 	}
-	delegationGenesis := delegationtypes.NewGenesis(associations, delegationStates, stakersByOperator, nil)
+	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = codec.MustMarshalJSON(delegationGenesis)
 
 	dogfoodGenesis := dogfoodtypes.NewGenesis(

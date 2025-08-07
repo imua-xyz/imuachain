@@ -34,6 +34,11 @@ type StringKey interface {
 	PrependStr(key string, stringTransformations ...func(string) string) StringKey
 }
 
+type KeyValue struct {
+	Key   []byte
+	Value codec.ProtoMarshaler
+}
+
 // KVStore is a wrapper around the cosmos-sdk KVStore to provide more safety regarding key management and better ease-of-use
 type KVStore struct {
 	sdk.KVStore

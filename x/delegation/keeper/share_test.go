@@ -203,7 +203,7 @@ func (suite *DelegationTestSuite) TestCalculateShare() {
 	suite.Equal(sdkmath.LegacyNewDecFromBigInt(assetAmount.BigInt()), share)
 
 	// test the case that the asset amount of operator is zero
-	err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, suite.opAccAddr, assetID, assetstype.DeltaOperatorSingleAsset{
+	_, err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, suite.opAccAddr, assetID, assetstype.DeltaOperatorSingleAsset{
 		TotalAmount: sdkmath.ZeroInt(),
 		TotalShare:  sdkmath.LegacyZeroDec(),
 	})
@@ -213,7 +213,7 @@ func (suite *DelegationTestSuite) TestCalculateShare() {
 	suite.Equal(sdkmath.LegacyNewDecFromBigInt(assetAmount.BigInt()), share)
 
 	// test normal cases
-	err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, suite.opAccAddr, assetID, assetstype.DeltaOperatorSingleAsset{
+	_, err = suite.App.AssetsKeeper.UpdateOperatorAssetState(suite.Ctx, suite.opAccAddr, assetID, assetstype.DeltaOperatorSingleAsset{
 		TotalAmount: sdkmath.NewInt(50),
 		TotalShare:  sdkmath.LegacyNewDec(60),
 	})

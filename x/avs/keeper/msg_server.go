@@ -28,15 +28,15 @@ func (m MsgServerImpl) SubmitTaskResult(goCtx context.Context, req *types.Submit
 
 func (m MsgServerImpl) RegisterAVS(_ context.Context, _ *types.RegisterAVSReq) (*types.RegisterAVSResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return nil, types.ErrNotFound.Wrap("RegisterAVS not implemented")
 }
 
 func (m MsgServerImpl) DeRegisterAVS(_ context.Context, _ *types.DeRegisterAVSReq) (*types.DeRegisterAVSResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return nil, types.ErrNotFound.Wrap("DeRegisterAVS not implemented")
 }
 
 func (m MsgServerImpl) RegisterAVSTask(_ context.Context, _ *types.RegisterAVSTaskReq) (*types.RegisterAVSTaskResponse, error) {
 	// TODO implement me
-	panic("implement me")
+	return nil, types.ErrNotFound.Wrap("RegisterAVSTask not implemented")
 }
