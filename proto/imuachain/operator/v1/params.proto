@@ -10,15 +10,15 @@ option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
 
 // Params represents the params of the x/operator module.
 message Params {
-    option (gogoproto.goproto_stringer) = false;
-    // The minimum interval between commission updates.
-    google.protobuf.Duration min_commission_update_interval = 1 [
+  option (gogoproto.goproto_stringer) = false;
+  // The minimum interval between commission updates.
+  google.protobuf.Duration min_commission_update_interval = 1 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
     (gogoproto.stdduration) = true
   ];
-    // The minimum commission rate as an sdk.Dec.
-    string min_commission_rate = 2 [
+  // The minimum commission rate as an sdk.Dec.
+  string min_commission_rate = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (amino.dont_omitempty) = true,

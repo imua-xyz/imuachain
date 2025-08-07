@@ -7,10 +7,10 @@ import "cosmos/query/v1/query.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "imuachain/operator/v1/params.proto";
 import "imuachain/operator/v1/tx.proto";
 import "imuachain/operator/v1/validator.proto";
 import "tendermint/crypto/keys.proto";
-import "imuachain/operator/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
 
