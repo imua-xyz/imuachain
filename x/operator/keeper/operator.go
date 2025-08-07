@@ -58,6 +58,15 @@ func (k *Keeper) RegisterOperator(
 		info.Commission.UpdateTime = ctx.BlockTime()
 	}
 
+	if has, err := k.HasOperatorName(ctx, info.OperatorMetaInfo); err != nil {
+		return errorsmod.Wrap(err, "SetOperatorInfo: error occurred when checking operator name")
+	} else if has {
+		return errorsmod.Wrap(
+			operatortypes.ErrOperatorNameAlreadyExists,
+			fmt.Sprintf("SetOperatorInfo: operator name already exists, name: %s", info.OperatorMetaInfo),
+		)
+	}
+
 	if info.ClientChainEarningsAddr != nil {
 		for _, data := range info.ClientChainEarningsAddr.EarningInfoList {
 			if data.ClientChainEarningAddr == "" {
@@ -99,6 +108,25 @@ func (k *Keeper) setOperatorInfo(
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
 	bz := k.cdc.MustMarshal(info)
 	store.Set(opAccAddr, bz)
+}
+
+// HasOperatorName checks if the operator name already exists.
+func (k *Keeper) HasOperatorName(ctx sdk.Context, name string) (bool, error) {
+	res := false
+	opFunc := func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
+		if operatorInfo.OperatorMetaInfo == name {
+			res = true
+			// stop, no error
+			return true, nil
+		}
+		// continue, no error
+		return false, nil
+	}
+	err := k.IterateOperators(ctx, opFunc)
+	if err != nil {
+		return false, err
+	}
+	return res, nil
 }
 
 func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error) {
