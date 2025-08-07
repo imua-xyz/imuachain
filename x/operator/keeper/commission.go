@@ -22,7 +22,7 @@ func (k Keeper) ValidateAndUpdateCommissionRate(
 			rate.String(), minCommissionRate.String(),
 		)
 	}
-	// check last update time
+	// check last update time - condition 1
 	if ctx.BlockTime().Sub(operatorInfo.Commission.UpdateTime) < k.GetMinCommissionUpdateInterval(ctx) {
 		return stakingtypes.ErrCommissionUpdateTime.Wrapf(
 			"commission update time is less than the minimum commission update interval: %s < %s",
@@ -30,11 +30,27 @@ func (k Keeper) ValidateAndUpdateCommissionRate(
 			k.GetMinCommissionUpdateInterval(ctx).String(),
 		)
 	}
-	// now validate the entire commission. we do not use the `ValidateNewRate`
-	// method because that has the duration of 24h hardcoded.
-	commission := stakingtypes.NewCommission(rate, operatorInfo.Commission.CommissionRates.MaxRate, operatorInfo.Commission.CommissionRates.MaxChangeRate)
-	if err := commission.Validate(); err != nil {
-		return err
+	// ease of access var
+	commission := operatorInfo.Commission.CommissionRates
+	// check rate is non-negative - condition 2
+	if rate.IsNegative() {
+		return stakingtypes.ErrCommissionNegative.Wrapf(
+			"commission rate is negative: %s", rate.String(),
+		)
+	}
+	// check rate is less than the max rate - condition 3
+	if rate.GT(commission.MaxRate) {
+		return stakingtypes.ErrCommissionGTMaxRate.Wrapf(
+			"commission rate is greater than the max rate: %s > %s",
+			rate.String(), commission.MaxRate.String(),
+		)
+	}
+	// check rate change is less than the max change rate - condition 4
+	if rate.Sub(commission.Rate).GT(commission.MaxChangeRate) {
+		return stakingtypes.ErrCommissionGTMaxChangeRate.Wrapf(
+			"commission change rate is greater than the max change rate: %s > %s",
+			rate.Sub(commission.Rate).String(), commission.MaxChangeRate.String(),
+		)
 	}
 	// finally, store it
 	operatorInfo.Commission.CommissionRates.Rate = rate

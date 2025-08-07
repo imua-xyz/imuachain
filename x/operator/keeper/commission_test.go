@@ -22,7 +22,7 @@ func TestCommissionTestSuite(t *testing.T) {
 	suite.Run(t, new(CommissionTestSuite))
 }
 
-func (suite *CommissionTestSuite) TestValidateAndUpdateCommissionRate() {
+func (suite *CommissionTestSuite) TestCommissionRateTimeBound() {
 	suite.DoSetupTest()
 	// register operator
 	suite.RegisterOperator(suite.AccAddress.String(), stakingtypes.Commission{
@@ -67,4 +67,54 @@ func (suite *CommissionTestSuite) TestValidateAndUpdateCommissionRate() {
 	updateCommissionReq.CommissionRate = sdk.NewDecWithPrec(4, 2)
 	_, err = suite.OperatorMsgServer.UpdateCommissionRate(suite.Ctx, updateCommissionReq)
 	suite.Require().ErrorAs(err, &stakingtypes.ErrCommissionLTMinRate)
+}
+
+func (suite *CommissionTestSuite) TestCommissionRateChange() {
+	suite.DoSetupTest()
+	// register operator
+	suite.RegisterOperator(suite.AccAddress.String(), stakingtypes.Commission{
+		CommissionRates: stakingtypes.CommissionRates{
+			Rate:          sdk.ZeroDec(),
+			MaxRate:       sdk.NewDecWithPrec(75, 2),
+			MaxChangeRate: sdk.NewDecWithPrec(5, 2),
+		},
+	})
+	duration := suite.App.OperatorKeeper.GetMinCommissionUpdateInterval(suite.Ctx)
+	// from 0 we can go to 5% but not higher
+	// let's try 5.1%
+	suite.CommitAfter(duration + time.Nanosecond)
+	updateCommissionReq := &operatortypes.UpdateCommissionRateReq{
+		Address:        suite.AccAddress.String(),
+		CommissionRate: sdk.NewDecWithPrec(51, 2),
+	}
+	_, err := suite.OperatorMsgServer.UpdateCommissionRate(suite.Ctx, updateCommissionReq)
+	suite.Require().ErrorAs(err, &stakingtypes.ErrCommissionGTMaxChangeRate)
+	// now try 5%
+	updateCommissionReq.CommissionRate = sdk.NewDecWithPrec(5, 2)
+	_, err = suite.OperatorMsgServer.UpdateCommissionRate(suite.Ctx, updateCommissionReq)
+	suite.Require().NoError(err)
+	suite.Commit()
+	info, err := suite.App.OperatorKeeper.OperatorInfo(
+		suite.Ctx, suite.AccAddress.String(),
+	)
+	suite.Require().NoError(err)
+	suite.Require().Equal(sdk.NewDecWithPrec(5, 2), info.Commission.CommissionRates.Rate)
+	for i := 0; i <= (75-5)/5; i++ {
+		suite.CommitAfter(duration + time.Nanosecond)
+		updateCommissionReq.CommissionRate = sdk.NewDecWithPrec(int64(5+5*i), 2)
+		_, err = suite.OperatorMsgServer.UpdateCommissionRate(suite.Ctx, updateCommissionReq)
+		suite.Require().NoError(err)
+		suite.Commit()
+	}
+	// check value is 75% now
+	info, err = suite.App.OperatorKeeper.OperatorInfo(
+		suite.Ctx, suite.AccAddress.String(),
+	)
+	suite.Require().NoError(err)
+	suite.Require().Equal(sdk.NewDecWithPrec(75, 2), info.Commission.CommissionRates.Rate)
+	suite.CommitAfter(duration + time.Nanosecond)
+	// now try to change to 76%
+	updateCommissionReq.CommissionRate = sdk.NewDecWithPrec(76, 2)
+	_, err = suite.OperatorMsgServer.UpdateCommissionRate(suite.Ctx, updateCommissionReq)
+	suite.Require().ErrorAs(err, &stakingtypes.ErrCommissionGTMaxRate)
 }
