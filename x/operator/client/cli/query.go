@@ -6,6 +6,9 @@ import (
 	"strconv"
 	"strings"
 
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/x/avs/types"
@@ -61,6 +64,7 @@ func GetQueryCmd() *cobra.Command {
 		GetAllOperatorKeys(),
 		GetAllOperatorConsAddrs(),
 		QueryOperatorUSDValue(),
+		QueryOperatorAssetUSDValue(),
 		QueryAVSUSDValue(),
 		QueryOperatorSlashInfo(),
 		QueryAllOperatorsWithOptInAVS(),
@@ -287,7 +291,7 @@ func QueryOperatorUSDValue() *cobra.Command {
 		Use:     "operator-usd-value <operatorAddr> <avsAddr>",
 		Short:   "Get the opted-in USD value",
 		Long:    "Get the opted-in USD value for the operator",
-		Example: fmt.Sprintf("%s query operator QueryOperatorUSDValue im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
+		Example: fmt.Sprintf("%s query operator operator-usd-value im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
 		Args:    cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
@@ -301,6 +305,50 @@ func QueryOperatorUSDValue() *cobra.Command {
 				return err
 			}
 			return genericQueryParams.clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// QueryOperatorAssetUSDValue queries USD value for the operator asset
+func QueryOperatorAssetUSDValue() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "operator-asset-usd-value <epochIdentifier> <operatorAddr> <assetID>",
+		Short:   "Get the USD value for operator asset",
+		Long:    "Get the USD value for operator asset",
+		Example: fmt.Sprintf("%s query operator operator-asset-usd-value day im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj 0xdac17f958d2ee523a2206206994597c13d831ec7_0x65", version.AppName),
+		Args:    cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := epochstypes.ValidateEpochIdentifierString(args[0])
+			if err != nil {
+				return xerrors.Errorf("invalid epoch identifier:%s, err:%s", args[0], err.Error())
+			}
+			_, err = sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return xerrors.Errorf("invalid operator address:%s, err:%s", args[1], err.Error())
+			}
+			_, _, err = assetstype.ValidateID(args[2], false, false)
+			if err != nil {
+				return xerrors.Errorf("invalid assetID:%s ,err:%v", args[2], err)
+			}
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := operatortypes.NewQueryClient(clientCtx)
+			res, err := queryClient.QueryOperatorAssetUSDValue(
+				context.Background(),
+				&operatortypes.QueryOperatorAssetUSDValueRequest{
+					EpochIdentifier: args[0],
+					OperatorAddr:    args[1],
+					AssetId:         args[2],
+				})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
 		},
 	}
 
@@ -325,7 +373,7 @@ func QueryAVSUSDValue() *cobra.Command {
 			}
 			queryClient := operatortypes.NewQueryClient(clientCtx)
 			req := &operatortypes.QueryAVSUSDValueRequest{
-				AVSAddress: strings.ToLower(args[0]),
+				AvsAddress: strings.ToLower(args[0]),
 			}
 			res, err := queryClient.QueryAVSUSDValue(context.Background(), req)
 			if err != nil {
