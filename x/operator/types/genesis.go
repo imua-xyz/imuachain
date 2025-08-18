@@ -55,17 +55,27 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 	// - commission rate for each operator is valid and is >= the minimum commission rate.
 	minCommissionRate := gs.Params.MinCommissionRate
 	operators := make(map[string]struct{}, len(gs.Operators))
+	operatorNames := make(map[string]struct{}, len(gs.Operators))
 	for _, op := range gs.Operators {
+		// check for duplicate address
 		address := op.OperatorAddress
 		if _, found := operators[address]; found {
 			return nil, ErrInvalidGenesisData.Wrapf(
 				"ValidateOperators: duplicate operator address %s", address,
 			)
 		}
+		// check for duplicate operator name
+		if _, found := operatorNames[op.OperatorInfo.OperatorMetaInfo]; found {
+			return nil, ErrInvalidGenesisData.Wrapf(
+				"ValidateOperators: duplicate operator name %s", op.OperatorInfo.OperatorMetaInfo,
+			)
+		}
+		operatorNames[op.OperatorInfo.OperatorMetaInfo] = struct{}{}
+		// check for valid address
 		_, err := sdk.AccAddressFromBech32(address)
 		if err != nil {
 			return nil, ErrInvalidGenesisData.Wrapf(
-				"ValidateOperators: invalid operator address %s: %s", address, err,
+				"ValidateOperators: invalid bech32 address %s: %s", address, err,
 			)
 		}
 		if op.OperatorInfo.EarningsAddr != address {
@@ -157,12 +167,8 @@ func (gs GenesisState) ValidateOperatorConsKeyRecords(operators map[string]struc
 		}
 		for _, chain := range record.Chains {
 			chainID := chain.ChainID
-			if !utils.IsValidChainIDWithoutRevision(chainID) {
-				return ErrInvalidGenesisData.Wrapf(
-					"ValidateOperatorConsKeyRecords: invalid chainID without revision, operator %s: chainID: %s", addr, chainID,
-				)
-			}
-			// Cosmos does not describe a specific `chainID` format, so can't validate it.
+			// TODO: check chain-id passes IBC format validation
+			// Cosmos does not prescribe a specific `chainID` format, so can't validate it.
 			if _, found := keysByChainID[chainID]; !found {
 				keysByChainID[chainID] = make(map[string]struct{})
 			}
@@ -458,12 +464,8 @@ func (gs GenesisState) ValidatePrevConsKeys(operators map[string]struct{}) error
 			)
 		}
 
-		chainID, operator := keys[0], keys[1]
-		if !utils.IsValidChainIDWithoutRevision(chainID) {
-			return ErrInvalidGenesisData.Wrapf(
-				"ValidatePrevConsKeys: invalid chainID without revision, operator %s: chainID: %s", operator, chainID,
-			)
-		}
+		_, operator := keys[0], keys[1]
+		// TODO: check chain-id passes IBC format validation
 		// check that the operator is registered
 		if _, ok := operators[operator]; !ok {
 			return ErrInvalidGenesisData.Wrapf(
