@@ -394,6 +394,7 @@ service Query {
 
   // QueryParams queries the parameters of the module.
   rpc QueryParams(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/operator/v1/params";
   }
 }
