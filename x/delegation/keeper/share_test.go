@@ -328,7 +328,7 @@ func (suite *DelegationTestSuite) TestRemoveShare() {
 	delegationInfo, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, suite.opAccAddr.String())
 	suite.NoError(err)
 	suite.Equal(sdkmath.LegacyZeroDec(), delegationInfo.UndelegatableShare)
-	suite.Equal(removeShare.TruncateInt(), delegationInfo.WaitUndelegationAmount)
+	suite.Equal(removeShare.TruncateInt(), delegationInfo.PendingUndelegationAmount)
 	stakerAssetInfo, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
 	suite.NoError(err)
 	suite.Equal(removeShare.TruncateInt(), stakerAssetInfo.PendingUndelegationAmount)

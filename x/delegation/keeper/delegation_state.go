@@ -158,8 +158,8 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 	}
 	singleStateKey := assetstype.GetJoinedStoreKey(stakerID, assetID, opAddr)
 	delegationState := delegationtype.DelegationAmounts{
-		WaitUndelegationAmount: sdkmath.ZeroInt(),
-		UndelegatableShare:     sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:        sdkmath.LegacyZeroDec(),
 	}
 
 	value := store.Get(singleStateKey)
@@ -168,12 +168,12 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 	}
 
 	preState = delegationtype.DelegationAmounts{
-		UndelegatableShare:     delegationState.UndelegatableShare.Clone(),
-		WaitUndelegationAmount: sdkmath.NewIntFromBigInt(delegationState.WaitUndelegationAmount.BigInt()),
+		UndelegatableShare:        delegationState.UndelegatableShare.Clone(),
+		PendingUndelegationAmount: sdkmath.NewIntFromBigInt(delegationState.PendingUndelegationAmount.BigInt()),
 	}
-	err = assetstype.UpdateAssetValue(&delegationState.WaitUndelegationAmount, &deltaAmounts.WaitUndelegationAmount)
+	err = assetstype.UpdateAssetValue(&delegationState.PendingUndelegationAmount, &deltaAmounts.PendingUndelegationAmount)
 	if err != nil {
-		return shareIsZero, preState, errorsmod.Wrap(err, "UpdateDelegationState WaitUndelegationAmount error")
+		return shareIsZero, preState, errorsmod.Wrap(err, "UpdateDelegationState PendingUndelegationAmount error")
 	}
 
 	err = assetstype.UpdateAssetDecValue(&delegationState.UndelegatableShare, &deltaAmounts.UndelegatableShare)
@@ -181,11 +181,21 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 		return shareIsZero, preState, errorsmod.Wrap(err, "UpdateDelegationState UndelegatableShare error")
 	}
 
+	err = assetstype.UpdateAssetValue(&delegationState.RewardPendingUndelegationAmount, &deltaAmounts.RewardPendingUndelegationAmount)
+	if err != nil {
+		return shareIsZero, preState, errorsmod.Wrap(err, "UpdateDelegationState RewardPendingUndelegationAmount error")
+	}
+
+	err = assetstype.UpdateAssetDecValue(&delegationState.RewardUndelegatableShare, &deltaAmounts.RewardUndelegatableShare)
+	if err != nil {
+		return shareIsZero, preState, errorsmod.Wrap(err, "UpdateDelegationState RewardUndelegatableShare error")
+	}
+
 	if delegationState.UndelegatableShare.IsZero() {
 		shareIsZero = true
 	}
 
-	// todo: should we delete the delegation state if both the share and the WaitUndelegationAmount are zero
+	// todo: should we delete the delegation state if both the share and the PendingUndelegationAmount are zero
 	// to reduce the state storage?
 
 	// save single operator delegation state
@@ -198,8 +208,10 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 			sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
 			sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
 			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, opAddr),
-			sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmountDelta, deltaAmounts.WaitUndelegationAmount.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyPendingUndelegationAmountDelta, deltaAmounts.PendingUndelegationAmount.String()),
 			sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShareDelta, deltaAmounts.UndelegatableShare.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyRewardUndelegationShareDelta, deltaAmounts.RewardUndelegatableShare.String()),
+			sdk.NewAttribute(delegationtype.AttributeKeyRewardPendingUndelegationDelta, deltaAmounts.RewardPendingUndelegationAmount.String()),
 		),
 	)
 
@@ -389,7 +401,12 @@ func (k *Keeper) SetStakerShareToZero(ctx sdk.Context, operator, assetID string,
 			// TODO: check if pendingUndelegation==0 => just delete this item instead of update share to zero, otherwise this item will be left in the storage forever with zero value
 			delegationState := delegationtype.DelegationAmounts{}
 			k.cdc.MustUnmarshal(value, &delegationState)
+
+			undelegatableShareDelta := delegationState.UndelegatableShare.Neg()
+			rewardUndelegatableShareDelta := delegationState.RewardUndelegatableShare.Neg()
 			delegationState.UndelegatableShare = sdkmath.LegacyZeroDec()
+			delegationState.RewardUndelegatableShare = sdkmath.LegacyZeroDec()
+
 			bz := k.cdc.MustMarshal(&delegationState)
 			store.Set(singleStateKey, bz)
 			ctx.EventManager().EmitEvent(
@@ -398,9 +415,10 @@ func (k *Keeper) SetStakerShareToZero(ctx sdk.Context, operator, assetID string,
 					sdk.NewAttribute(delegationtype.AttributeKeyStakerID, stakerID),
 					sdk.NewAttribute(delegationtype.AttributeKeyAssetID, assetID),
 					sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
-					sdk.NewAttribute(delegationtype.AttributeKeyWaitUndelegationAmountDelta, sdk.ZeroDec().String()),
-					sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShareDelta, delegationState.UndelegatableShare.Neg().String()),
-				),
+					sdk.NewAttribute(delegationtype.AttributeKeyPendingUndelegationAmountDelta, sdk.ZeroInt().String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyUndelegatableShareDelta, undelegatableShareDelta.String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyRewardUndelegationShareDelta, rewardUndelegatableShareDelta.String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyRewardPendingUndelegationDelta, sdk.ZeroInt().String())),
 			)
 		}
 	}

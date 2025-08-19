@@ -35,8 +35,8 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			Key: string(singleStateKey),
 			States: types.DelegationAmounts{
-				WaitUndelegationAmount: math.NewInt(0),
-				UndelegatableShare:     math.LegacyNewDec(1000),
+				PendingUndelegationAmount: math.NewInt(0),
+				UndelegatableShare:        math.LegacyNewDec(1000),
 			},
 		},
 	}
@@ -136,10 +136,10 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
-				gs.DelegationStates[0].States.WaitUndelegationAmount = math.Int{}
+				gs.DelegationStates[0].States.PendingUndelegationAmount = math.Int{}
 			},
 			unmalleate: func(gs *types.GenesisState) {
-				gs.DelegationStates[0].States.WaitUndelegationAmount = math.NewInt(0)
+				gs.DelegationStates[0].States.PendingUndelegationAmount = math.NewInt(0)
 			},
 		},
 		{

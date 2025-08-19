@@ -30,10 +30,10 @@ type (
 		avsKeeper        feedistributiontypes.AVSKeeper
 		assetsKeeper     feedistributiontypes.AssetsKeeper
 		delegationKeeper feedistributiontypes.DelegationKeeper
+		SlashKeeper      feedistributiontypes.SlashKeeper
+		StakingKeeper    feedistributiontypes.StakingKeeper
 
 		feeCollectorName string
-
-		StakingKeeper stakingkeeper.Keeper
 	}
 )
 
@@ -50,6 +50,7 @@ func NewKeeper(
 	avsKeeper feedistributiontypes.AVSKeeper,
 	assetsKeeper feedistributiontypes.AssetsKeeper,
 	delegationKeeper feedistributiontypes.DelegationKeeper,
+	SlashKeeper feedistributiontypes.SlashKeeper,
 ) Keeper {
 	// ensure distribution module account is set
 	if addr := accountKeeper.GetModuleAddress(feedistributiontypes.ModuleName); addr == nil {
@@ -74,6 +75,7 @@ func NewKeeper(
 		avsKeeper:        avsKeeper,
 		assetsKeeper:     assetsKeeper,
 		delegationKeeper: delegationKeeper,
+		SlashKeeper:      SlashKeeper,
 	}
 
 	return *k
@@ -216,7 +218,7 @@ func (k Keeper) SetAllOperatorOutstandingRewards(
 ) error {
 	return GenericSetAllItems(
 		ctx, k,
-		feedistributiontypes.KeyPrefixOperatorOutstandingRewards, allOperatorOutstandingRewards,
+		feedistributiontypes.KeyPrefixOperatorUnclaimedRewards, allOperatorOutstandingRewards,
 		func(item feedistributiontypes.KeyAndOperatorOutstandingRewards) []byte {
 			return []byte(item.Key)
 		},
@@ -228,7 +230,7 @@ func (k Keeper) SetAllOperatorOutstandingRewards(
 
 func (k Keeper) GetAllOperatorOutstandingRewards(ctx sdk.Context) ([]feedistributiontypes.KeyAndOperatorOutstandingRewards, error) {
 	return GenericGetAllItems(
-		ctx, k, feedistributiontypes.KeyPrefixOperatorOutstandingRewards,
+		ctx, k, feedistributiontypes.KeyPrefixOperatorUnclaimedRewards,
 		func() codec.ProtoMarshaler { return &feedistributiontypes.OperatorOutstandingRewards{} },
 		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndOperatorOutstandingRewards {
 			return feedistributiontypes.KeyAndOperatorOutstandingRewards{

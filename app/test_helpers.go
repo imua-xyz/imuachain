@@ -259,8 +259,8 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 		{
 			Key: string(singleStateKey),
 			States: delegationtypes.DelegationAmounts{
-				WaitUndelegationAmount: math.NewInt(0),
-				UndelegatableShare:     math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
+				PendingUndelegationAmount: math.NewInt(0),
+				UndelegatableShare:        math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
 			},
 		},
 	}

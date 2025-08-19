@@ -79,7 +79,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 		if assetInfo.Decimals > assetstype.MaxDecimal {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", assetInfo.Decimals, assetstype.MaxDecimal)
 		}
-		err = sdk.ValidateDenom(assetInfo.Symbol)
+		err = types.ValidateRewardAssetSymbol(assetInfo.Symbol)
 		if err != nil {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", assetInfo.Symbol, err)
 		}
@@ -275,7 +275,7 @@ func (k Keeper) SetAllAVSRewardAssets(ctx sdk.Context, allAVSRewardAssets []type
 			if rewardAsset.AssetBasicInfo.Decimals > assetstype.MaxDecimal {
 				return types.ErrInvalidInputParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAsset.AssetBasicInfo.Decimals, assetstype.MaxDecimal)
 			}
-			err := sdk.ValidateDenom(rewardAsset.AssetBasicInfo.Symbol)
+			err := types.ValidateRewardAssetSymbol(rewardAsset.AssetBasicInfo.Symbol)
 			if err != nil {
 				return types.ErrInvalidInputParameter.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", rewardAsset.AssetBasicInfo.Symbol, err)
 			}

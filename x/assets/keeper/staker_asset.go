@@ -110,8 +110,8 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 			// this is because slashing is applied to an operator's total amount, of which, the share of a staker is kept
 			// unchanged.
 			// this amount is post-slashing, as explained above.
-			info.TotalDepositAmount = info.TotalDepositAmount.Add(delegationInfo.DelegationInfo.MaxUndelegatableAmount).Add(delegationInfo.DelegationInfo.DelegationAmounts.WaitUndelegationAmount)
-			info.PendingUndelegationAmount = info.PendingUndelegationAmount.Add(delegationInfo.DelegationInfo.DelegationAmounts.WaitUndelegationAmount)
+			info.TotalDepositAmount = info.TotalDepositAmount.Add(delegationInfo.DelegationInfo.MaxUndelegatableAmount).Add(delegationInfo.DelegationInfo.DelegationAmounts.PendingUndelegationAmount)
+			info.PendingUndelegationAmount = info.PendingUndelegationAmount.Add(delegationInfo.DelegationInfo.DelegationAmounts.PendingUndelegationAmount)
 		}
 		return info, nil
 	}
@@ -154,15 +154,15 @@ func (k Keeper) UpdateStakerAssetState(
 	// update all states of the specified restaker asset
 	err = assetstype.UpdateAssetValue(&assetState.TotalDepositAmount, &changeAmount.TotalDepositAmount)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState TotalDepositAmount error")
+		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState totalDepositAmount error")
 	}
 	err = assetstype.UpdateAssetValue(&assetState.WithdrawableAmount, &changeAmount.WithdrawableAmount)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState CanWithdrawAmountOrWantChangeValue error")
+		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState withdrawableAmount or changeAmount error")
 	}
 	err = assetstype.UpdateAssetValue(&assetState.PendingUndelegationAmount, &changeAmount.PendingUndelegationAmount)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState WaitUndelegationAmountOrWantChangeValue error")
+		return nil, errorsmod.Wrap(err, "UpdateStakerAssetState pendingUndelegationAmount or changeAmount error")
 	}
 
 	// store the updated state

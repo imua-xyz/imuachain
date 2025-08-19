@@ -59,6 +59,19 @@ message MsgDelegation {
   DelegationIncOrDecInfo base_info = 2;
 }
 
+// UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.
+// We need to track the source AVS of the rewards when handling reward undelegations.
+message UndelegationAmountPerAVS {
+  // avs_address is the AVS address the rewards come from.
+  string avs_address = 1;
+  // amount is the undelegated amount from specific AVS.
+  string amount = 9 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 // UndelegationRecord is the undelegation record, keyed by a RecordKey.
 message UndelegationRecord {
   // staker_id is the staker id.
@@ -92,6 +105,11 @@ message UndelegationRecord {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // reward_asset indicates whether the undelegation is for rewards
+  bool reward_asset = 11;
+  // reward_undelegations represents reward undelegation amounts from different AVSs.
+  // This field is only populated when `reward_asset` is true.
+  repeated UndelegationAmountPerAVS reward_undelegations = 12 [(gogoproto.nullable) = false];
 }
 
 // UndelegationRecordKeyList is the list of undelegation records.

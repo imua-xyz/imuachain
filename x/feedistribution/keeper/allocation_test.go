@@ -165,7 +165,7 @@ func (suite *KeeperTestSuite) checkAllocationStates(testAVSAddr string, states e
 
 	// check the operator outstanding rewards
 	for operator, expectedOutstandingRewards := range states.outstandingRewards {
-		outstandingRewards, err := suite.App.DistrKeeper.GetOperatorOutstandingRewards(suite.Ctx, operator, testAVSAddr)
+		outstandingRewards, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, operator, testAVSAddr)
 		suite.Require().NoError(err)
 		suite.Require().Equal(expectedOutstandingRewards, outstandingRewards.Rewards)
 	}
@@ -500,7 +500,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByEpoch() {
 			epochInfo, exist := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, dogfoodtypes.DefaultEpochIdentifier)
 			suite.Require().True(exist)
 
-			err := suite.App.DistrKeeper.AllocateRewardsByEpoch(suite.Ctx, dogfoodtypes.DefaultEpochIdentifier, epochInfo.CurrentEpoch)
+			_, err := suite.App.DistrKeeper.AllocateRewardsByEpoch(suite.Ctx, dogfoodtypes.DefaultEpochIdentifier, epochInfo.CurrentEpoch)
 			if tc.expPass {
 				s.Require().NoError(err)
 			} else if tc.errContains != "" {

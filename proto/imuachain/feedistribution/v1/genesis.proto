@@ -84,7 +84,7 @@ message KeyAndOperatorOutstandingRewards {
   // key is is a combination of the operator and AVS
   string key = 1;
   // operator_outstanding_rewards represents the outstanding rewards for the operator.
-  OperatorOutstandingRewards operator_outstanding_rewards = 2 [(gogoproto.nullable) = false];
+  OperatorUnclaimedRewards operator_outstanding_rewards = 2 [(gogoproto.nullable) = false];
 }
 
 // KeyAndDelegationChangeInfo is a struct used in the genesis state.

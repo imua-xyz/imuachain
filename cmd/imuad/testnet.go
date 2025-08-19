@@ -415,8 +415,8 @@ func getTestImuachainGenesis(
 		delegationStates = append(delegationStates, delegationtypes.DelegationStates{
 			Key: string(singleStateKey),
 			States: delegationtypes.DelegationAmounts{
-				WaitUndelegationAmount: math.NewInt(0),
-				UndelegatableShare:     math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
+				PendingUndelegationAmount: math.NewInt(0),
+				UndelegatableShare:        math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
 			},
 		},
 		)

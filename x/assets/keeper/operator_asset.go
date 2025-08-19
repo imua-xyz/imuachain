@@ -78,7 +78,7 @@ func (k Keeper) GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.
 	return &ret, nil
 }
 
-// UpdateOperatorAssetState is used to update the operator states that include TotalAmount OperatorAmount and WaitUndelegationAmount
+// UpdateOperatorAssetState is used to update the operator states that include TotalAmount OperatorAmount and PendingUndelegationAmount
 // The input `changeAmount` represents the values that you want to add or decrease,using positive or negative values for increasing and decreasing,respectively. The function will calculate and update new state after a successful check.
 // The function will be called when there is delegation or undelegation related to the operator. In the future,it will also be called when the operator deposit their own assets.
 func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (stateBeforeUpdate assetstype.OperatorAssetInfo, err error) {
@@ -104,11 +104,11 @@ func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.AccAd
 	// update all states of the specified operator asset
 	err = assetstype.UpdateAssetValue(&assetState.TotalAmount, &changeAmount.TotalAmount)
 	if err != nil {
-		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState TotalAmountOrWantChangeValue error")
+		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState totalAmount or changeValue error")
 	}
 	err = assetstype.UpdateAssetValue(&assetState.PendingUndelegationAmount, &changeAmount.PendingUndelegationAmount)
 	if err != nil {
-		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState WaitUndelegationAmountOrWantChangeValue error")
+		return stateBeforeUpdate, errorsmod.Wrap(err, "UpdateOperatorAssetState pendingUndelegationAmount or changeValue error")
 	}
 	err = assetstype.UpdateAssetDecValue(&assetState.TotalShare, &changeAmount.TotalShare)
 	if err != nil {

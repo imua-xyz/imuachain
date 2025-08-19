@@ -255,11 +255,6 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 		if !amountFromDogfood.IsNil() {
 			withdrawAmountFromDogfood = amountFromDogfood
 		}
-		// decrease the commission from the operator outstanding rewards.
-		err = k.UpdateOperatorOutstandingRewards(ctx, operator.String(), avs, false, subCommissions)
-		if err != nil {
-			return false, false, err
-		}
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -316,12 +311,6 @@ func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccA
 		return nil, err
 	}
 
-	// decrease the commission from the operator outstanding rewards.
-	err = k.UpdateOperatorOutstandingRewards(ctx, operator.String(), dogfoodAVSAddr,
-		false, subCommissions)
-	if err != nil {
-		return nil, err
-	}
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeWithdrawCommissionFromAVS,

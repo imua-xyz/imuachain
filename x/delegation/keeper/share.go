@@ -234,7 +234,7 @@ func (k Keeper) RemoveShare(
 		UndelegatableShare: share.Neg(),
 	}
 	if isUndelegation {
-		deltaAmount.WaitUndelegationAmount = removeToken
+		deltaAmount.PendingUndelegationAmount = removeToken
 		// don't update staker asset info for imua-native-token
 		if assetID != assetstype.ImuachainAssetID {
 			// todo: TotalDepositAmount might be influenced by slash and precision loss,

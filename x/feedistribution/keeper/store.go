@@ -1,9 +1,8 @@
 package keeper
 
 import (
-	"github.com/cosmos/cosmos-sdk/codec"
+	"fmt"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -206,75 +205,101 @@ func (k Keeper) IncreaseOperatorCommission(ctx sdk.Context, operator, avsAddr st
 	return nil
 }
 
-// SetOperatorOutstandingRewards : set outstanding avs rewards for the operator
-func (k Keeper) SetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, rewards feedistributiontypes.OperatorOutstandingRewards) error {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
-	var bz []byte
-
-	if rewards.Rewards.IsZero() {
-		bz = k.cdc.MustMarshal(&feedistributiontypes.OperatorOutstandingRewards{})
-	} else {
-		bz = k.cdc.MustMarshal(&rewards)
-	}
-
+// SetOperatorUnclaimedRewards : set unclaimed avs rewards for the operator
+func (k Keeper) SetOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string, rewards feedistributiontypes.OperatorUnclaimedRewards) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorUnclaimedRewards)
+	bz := k.cdc.MustMarshal(&rewards)
 	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
 	store.Set(key, bz)
 	return nil
 }
 
-// GetOperatorOutstandingRewards : get the outstanding avs rewards for the operator
-func (k Keeper) GetOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string) (feedistributiontypes.OperatorOutstandingRewards, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
+// GetOperatorUnclaimedRewards : get the unclaimed avs rewards for the operator
+func (k Keeper) GetOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string) (feedistributiontypes.OperatorUnclaimedRewards, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorUnclaimedRewards)
 	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
 	b := store.Get(key)
 	if b == nil {
-		return feedistributiontypes.OperatorOutstandingRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorOutstandingRewards, operator:%s,avsAddr:%s", operator, avsAddr)
+		return feedistributiontypes.OperatorUnclaimedRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorUnclaimedRewards, operator:%s,avsAddr:%s", operator, avsAddr)
 	}
-	rewards := feedistributiontypes.OperatorOutstandingRewards{}
+	rewards := feedistributiontypes.OperatorUnclaimedRewards{}
 	k.cdc.MustUnmarshal(b, &rewards)
 	return rewards, nil
 }
 
-// HasOperatorOutstandingRewards : check whether the outstanding avs rewards exists for the operator
-func (k Keeper) HasOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string) bool {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorOutstandingRewards)
+// HasOperatorUnclaimedRewards : check whether the unclaimed avs rewards exists for the operator
+func (k Keeper) HasOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorUnclaimedRewards)
 	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
 	return store.Has(key)
 }
 
-// UpdateOperatorOutstandingRewards : increase or decrease the outstanding avs rewards for the operator
+// UpdateOperatorUnclaimedRewards : increase or decrease the unclaimed avs rewards for the operator
 // the isIncrease flag is used to indicate whether the update is an increase or a decrease
-func (k Keeper) UpdateOperatorOutstandingRewards(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaRewards sdk.DecCoins) error {
-	if len(deltaRewards) == 0 {
+func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaRewards feedistributiontypes.DeltaOperatorUnclaimedRewards) error {
+	if len(deltaRewards.OutstandingRewards) == 0 && len(deltaRewards.RewardsFromCompounding) == 0 {
 		return nil
 	}
 	// set the initialized value
-	rewards := feedistributiontypes.OperatorOutstandingRewards{
-		Rewards: make([]sdk.DecCoin, 0),
+	rewards := feedistributiontypes.OperatorUnclaimedRewards{
+		OutstandingRewards:     make([]sdk.DecCoin, 0),
+		RewardsFromCompounding: feedistributiontypes.NewCompoundingRewards(),
 	}
 	var err error
-	if k.HasOperatorOutstandingRewards(ctx, operator, avsAddr) {
-		rewards, err = k.GetOperatorOutstandingRewards(ctx, operator, avsAddr)
+	if k.HasOperatorUnclaimedRewards(ctx, operator, avsAddr) {
+		rewards, err = k.GetOperatorUnclaimedRewards(ctx, operator, avsAddr)
 		if err != nil {
 			return err
 		}
 	}
 
 	if isIncrease {
-		rewards.Rewards = rewards.Rewards.Add(deltaRewards...)
+		rewards.OutstandingRewards = rewards.OutstandingRewards.Add(deltaRewards.OutstandingRewards...)
+		rewards.RewardsFromCompounding = feedistributiontypes.CompoundingRewards(rewards.RewardsFromCompounding).Add(deltaRewards.RewardsFromCompounding...)
 	} else {
 		var negative bool
-		rewards.Rewards, negative = rewards.Rewards.SafeSub(deltaRewards)
+		rewards.OutstandingRewards, negative = rewards.OutstandingRewards.SafeSub(deltaRewards.OutstandingRewards)
 		if negative {
-			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("UpdateOperatorOutstandingRewards,operator:%s,avsAddr:%s", operator, avsAddr)
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update operator outstanding rewards,operator:%s,avsAddr:%s", operator, avsAddr)
+		}
+		rewards.RewardsFromCompounding, negative = feedistributiontypes.CompoundingRewards(rewards.RewardsFromCompounding).SafeSub(deltaRewards.RewardsFromCompounding)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update operator rewards from compounding,operator:%s,avsAddr:%s", operator, avsAddr)
 		}
 	}
 
-	err = k.SetOperatorOutstandingRewards(ctx, operator, avsAddr, rewards)
+	err = k.SetOperatorUnclaimedRewards(ctx, operator, avsAddr, rewards)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+// IterateOperatorUnclaimedRewards : iterates the unclaimed rewards for an operator and does some external operations.
+// `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
+func (k Keeper) IterateOperatorUnclaimedRewards(
+	ctx sdk.Context,
+	operator string,
+	isUpdate bool,
+	opFunc func(avs string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error),
+) error {
+	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorUnclaimedRewards](
+		ctx,
+		k.cdc,
+		k.storeKey,
+		feedistributiontypes.KeyPrefixOperatorUnclaimedRewards,
+		assetstype.GetJoinedStoreKeyForPrefix(operator),
+		isUpdate,
+		2,
+		func(bz []byte) (*feedistributiontypes.OperatorUnclaimedRewards, error) {
+			var r feedistributiontypes.OperatorUnclaimedRewards
+			k.cdc.MustUnmarshal(bz, &r)
+			return &r, nil
+		},
+		func(keys []string, value *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
+			return opFunc(keys[1], value)
+		},
+	)
 }
 
 // SetOperatorCurrentRewards : set current rewards for the specific operator, epochIdentifier and assetID
@@ -317,7 +342,7 @@ func (k Keeper) UpdateOperatorCurrentRewards(ctx sdk.Context, operator, assetID,
 	// It sets 1 as the start period and initializes the rewards slice as null.
 	// set the initialized value
 	rewards := feedistributiontypes.OperatorCurrentRewards{
-		Rewards: make([]feedistributiontypes.CommonAVSRewardData, 0),
+		Rewards: feedistributiontypes.NewCommonAVSRewards(),
 		// the period in current rewards starts from 1.
 		Period: 1,
 	}
@@ -609,6 +634,34 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 	return nil
 }
 
+// SetStakerRewardParams : set the reward params for the staker
+func (k Keeper) SetStakerRewardParams(
+	ctx sdk.Context, stakerID string,
+	params feedistributiontypes.StakerRewardParams,
+) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerRewardParams)
+	bz := k.cdc.MustMarshal(&params)
+	store.Set([]byte(stakerID), bz)
+	return nil
+}
+
+func (k Keeper) HasStakerRewardParams(ctx sdk.Context, stakerID string) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerRewardParams)
+	return store.Has([]byte(stakerID))
+}
+
+// GetStakerRewardParams : get the reward params for the staker
+func (k Keeper) GetStakerRewardParams(ctx sdk.Context, stakerID string) (feedistributiontypes.StakerRewardParams, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerRewardParams)
+	b := store.Get([]byte(stakerID))
+	if b == nil {
+		return feedistributiontypes.StakerRewardParams{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetStakerRewardParams, stakerID:%s", stakerID)
+	}
+	params := feedistributiontypes.StakerRewardParams{}
+	k.cdc.MustUnmarshal(b, &params)
+	return params, nil
+}
+
 // SetStakerClaimedRewards : set the claimed avs rewards for the staker
 func (k Keeper) SetStakerClaimedRewards(ctx sdk.Context, stakerID, avsAddr string,
 	rewards feedistributiontypes.StakerClaimedRewards,
@@ -642,16 +695,10 @@ func (k Keeper) HasStakerClaimedRewards(ctx sdk.Context, stakerID, avsAddr strin
 	return store.Has(key)
 }
 
-// IncreaseStakerOutstandingRewards : increase the outstanding avs rewards for the staker.
-func (k Keeper) IncreaseStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr string, deltaRewards sdk.DecCoins) error {
-	if len(deltaRewards) == 0 {
-		return nil
-	}
+// UpdateStakerClaimedRewards : update the claimed rewards for the staker.
+func (k Keeper) UpdateStakerClaimedRewards(ctx sdk.Context, stakerID, avsAddr string, deltaRewards feedistributiontypes.DeltaStakerClaimedRewards) error {
 	// set the initialized value
-	rewards := feedistributiontypes.StakerClaimedRewards{
-		OutstandingRewards: make([]sdk.DecCoin, 0),
-		WithdrawnRewards:   make([]sdk.DecCoin, 0),
-	}
+	rewards := feedistributiontypes.DefaultStakerClaimedRewards()
 	var err error
 	if k.HasStakerClaimedRewards(ctx, stakerID, avsAddr) {
 		rewards, err = k.GetStakerClaimedRewards(ctx, stakerID, avsAddr)
@@ -659,8 +706,34 @@ func (k Keeper) IncreaseStakerOutstandingRewards(ctx sdk.Context, stakerID, avsA
 			return err
 		}
 	}
-
-	rewards.OutstandingRewards = rewards.OutstandingRewards.Add(deltaRewards...)
+	err = feedistributiontypes.UpdateDecCoins(rewards.OutstandingRewards, deltaRewards.OutstandingRewards)
+	if err != nil {
+		return err
+	}
+	err = feedistributiontypes.UpdateDecCoins(rewards.WithdrawnRewards, deltaRewards.WithdrawnRewards)
+	if err != nil {
+		return err
+	}
+	err = feedistributiontypes.UpdateDecCoins(rewards.HistoricalTotalRewards, deltaRewards.HistoricalTotalRewards)
+	if err != nil {
+		return err
+	}
+	err = feedistributiontypes.UpdateDecCoins(rewards.DelegationRewardsShares, deltaRewards.DelegationRewardsShares)
+	if err != nil {
+		return err
+	}
+	err = feedistributiontypes.UpdateDecCoins(rewards.PendingUndelegationRewards, deltaRewards.PendingUndelegationRewards)
+	if err != nil {
+		return err
+	}
+	err = feedistributiontypes.UpdateDecCoins(rewards.PendingSlashedRewards, deltaRewards.PendingSlashedRewards)
+	if err != nil {
+		return err
+	}
+	err = feedistributiontypes.UpdateDecCoins(rewards.WithdrawableRewards, deltaRewards.WithdrawableRewards)
+	if err != nil {
+		return err
+	}
 	err = k.SetStakerClaimedRewards(ctx, stakerID, avsAddr, rewards)
 	if err != nil {
 		return err
@@ -668,52 +741,18 @@ func (k Keeper) IncreaseStakerOutstandingRewards(ctx sdk.Context, stakerID, avsA
 	return nil
 }
 
-func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
-	ctx sdk.Context,
-	cdc codec.BinaryCodec,
-	storeKey storetypes.StoreKey,
-	keyPrefix []byte,
-	iteratePrefix []byte,
-	isUpdate bool,
-	keyNumber int,
-	unmarshal func([]byte) (T, error),
-	opFunc func(keys []string, value T) (bool, bool, error),
-) error {
-	store := prefix.NewStore(ctx.KVStore(storeKey), keyPrefix)
-	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
-	defer iterator.Close()
-
-	updatedKeyValues := make([]utils.KeyValue, 0)
-	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), keyNumber)
-		if err != nil {
-			return err
-		}
-
-		value, err := unmarshal(iterator.Value())
-		if err != nil {
-			return err
-		}
-
-		isBreak, isChanged, err := opFunc(keys, value)
-		if err != nil {
-			return err
-		}
-		if isBreak {
-			break
-		}
-
-		if isUpdate && isChanged {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
-				Key:   append([]byte(nil), iterator.Key()...),
-				Value: value,
-			})
-		}
+// IncreaseStakerOutstandingRewards : increase the outstanding avs rewards for the staker.
+func (k Keeper) IncreaseStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr string, deltaRewards sdk.DecCoins) error {
+	if len(deltaRewards) == 0 {
+		return nil
 	}
-	for _, updateKeyValue := range updatedKeyValues {
-		store.Set(updateKeyValue.Key, cdc.MustMarshal(updateKeyValue.Value))
+	if deltaRewards.IsAnyNegative() {
+		return fmt.Errorf("IncreaseStakerOutstandingRewards: negative delta rewards:%s", deltaRewards)
 	}
-	return nil
+	return k.UpdateStakerClaimedRewards(ctx, stakerID, avsAddr, feedistributiontypes.DeltaStakerClaimedRewards{
+		OutstandingRewards:     deltaRewards,
+		HistoricalTotalRewards: deltaRewards,
+	})
 }
 
 // IterateStakerClaimedRewards : iterates the claimed rewards for a staker and does some external operations.
@@ -724,7 +763,7 @@ func (k Keeper) IterateStakerClaimedRewards(
 	isUpdate bool,
 	opFunc func(avs string, rewards *feedistributiontypes.StakerClaimedRewards) (bool, bool, error),
 ) error {
-	return GenericIterateStoreWithUpdate[*feedistributiontypes.StakerClaimedRewards](
+	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.StakerClaimedRewards](
 		ctx,
 		k.cdc,
 		k.storeKey,
@@ -749,7 +788,7 @@ func (k Keeper) IterateStakerClaimedRewards(
 func (k Keeper) IterateOperatorCommissions(ctx sdk.Context, operator string, isUpdate bool,
 	opFunc func(avs string, commissions *feedistributiontypes.OperatorCommission) (bool, bool, error),
 ) error {
-	return GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorCommission](
+	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorCommission](
 		ctx,
 		k.cdc,
 		k.storeKey,

@@ -8,6 +8,7 @@ import (
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
@@ -97,7 +98,7 @@ type AVSKeeper interface {
 	// wish to retrieve. If the caller want to retrieve a historical assets info supported by
 	// Avs, it needs to generate a historical context through calling
 	// `ContextForHistoricalState` implemented in x/assets/types/general.go
-	GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]interface{}, error)
+	GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]string, map[string]interface{}, error)
 	GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, error)
 	// GetChainIDByAVSAddr converts the hex AVS address to the chainID.
 	GetChainIDByAVSAddr(ctx sdk.Context, avsAddr string) (string, bool)
@@ -154,4 +155,15 @@ type StakingKeeper interface {
 // EpochsKeeper represents the expected keeper interface for the epochs module.
 type EpochsKeeper interface {
 	GetEpochInfo(sdk.Context, string) (epochstypes.EpochInfo, bool)
+}
+
+// DistributionKeeper represents the expected keeper interface for the distribution module.
+type DistributionKeeper interface {
+	IterateOperatorUnclaimedRewards(
+		ctx sdk.Context,
+		operator string,
+		isUpdate bool,
+		opFunc func(avs string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error),
+	) error
+	GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
 }

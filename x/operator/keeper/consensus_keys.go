@@ -676,7 +676,7 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 	val.ConsAddress = consAddr.String()
 	val.Commission = ops.Commission
 
-	assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddrStr)
+	_, assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddrStr)
 	if err != nil {
 		return types.Validator{}, false
 	}

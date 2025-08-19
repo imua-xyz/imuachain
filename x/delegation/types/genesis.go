@@ -108,7 +108,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 		}
 
 		// check that there is no nil value provided.
-		if info.States.UndelegatableShare.IsNil() || info.States.WaitUndelegationAmount.IsNil() {
+		if info.States.UndelegatableShare.IsNil() || info.States.PendingUndelegationAmount.IsNil() {
 			return ErrInvalidGenesisData.Wrapf(
 				"ValidateDelegationStates: nil delegation state for %s: %+v",
 				info.Key, info,
@@ -116,7 +116,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 		}
 
 		// check for negative values.
-		if info.States.UndelegatableShare.IsNegative() || info.States.WaitUndelegationAmount.IsNegative() {
+		if info.States.UndelegatableShare.IsNegative() || info.States.PendingUndelegationAmount.IsNegative() {
 			return ErrInvalidGenesisData.Wrapf(
 				"ValidateDelegationStates: negative delegation state  for %s: %+v",
 				info.Key, info,

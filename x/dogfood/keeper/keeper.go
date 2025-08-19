@@ -3,18 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
-
-	sdkmath "cosmossdk.io/math"
-
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/imua-xyz/imuachain/x/delegation/keeper"
-	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
-
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/delegation/keeper"
 
 	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
@@ -143,29 +136,4 @@ func (k Keeper) mustValidateFields() {
 	if _, err := sdk.AccAddressFromBech32(k.authority); err != nil {
 		panic(fmt.Sprintf("authority address %s is invalid: %s", k.authority, err))
 	}
-}
-
-// Add the function to get detail information through the operatorKeeper within the dogfood
-func (k Keeper) ValidatorByConsAddrForChainID(ctx sdk.Context, consAddr sdk.ConsAddress, chainID string) (stakingtypes.Validator, bool) {
-	return k.operatorKeeper.ValidatorByConsAddrForChainID(ctx, consAddr, chainID)
-}
-
-func (k *Keeper) GetStakersByOperator(ctx sdk.Context, operator, assetID string) (delegationtype.StakerList, error) {
-	return k.delegationKeeper.GetStakersByOperator(ctx, operator, assetID)
-}
-
-func (k Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]interface{}, error) {
-	return k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
-}
-
-func (k Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) ([]string, error) {
-	return k.operatorKeeper.GetOptedInAVSForOperator(ctx, operatorAddr)
-}
-
-func (k Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr string, operator sdk.AccAddress) (sdkmath.LegacyDec, error) {
-	return k.operatorKeeper.CalculateUSDValueForStaker(ctx, stakerID, avsAddr, operator)
-}
-
-func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error) {
-	return k.operatorKeeper.OperatorInfo(ctx, addr)
 }

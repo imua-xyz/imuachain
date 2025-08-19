@@ -12,3 +12,11 @@ func CalculateUSDValue(assetAmount sdkmath.Int, price sdkmath.Int, assetDecimal 
 	divisor := sdkmath.NewIntWithDecimal(1, int(assetDecimal)+int(priceDecimal))
 	return assetValueDec.QuoInt(divisor)
 }
+
+// CalculateDecUSDValue assetUSDValue = (assetAmount*price)/(10^priceDecimal)
+func CalculateDecUSDValue(assetAmountDec sdkmath.LegacyDec, price sdkmath.Int, priceDecimal uint8) sdkmath.LegacyDec {
+	assetValueDec := assetAmountDec.MulInt(price)
+	// #nosec G115
+	divisor := sdkmath.NewIntWithDecimal(1, int(priceDecimal))
+	return assetValueDec.QuoInt(divisor)
+}

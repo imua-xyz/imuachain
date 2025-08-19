@@ -39,55 +39,60 @@ func (k *Keeper) delegateTo(
 		return delegationtype.ErrOperatorIsFrozen
 	}
 	stakerID, assetID := assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
-	if assetID != assetstype.ImuachainAssetID {
-		// check if the staker asset has been deposited and the canWithdraw amount is bigger than the delegation amount
-		info, err := k.assetsKeeper.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetID)
-		if err != nil {
-			return err
-		}
+	if params.RewardAsset {
+		// handle the reward asset delegation
 
-		if info.WithdrawableAmount.LT(params.OpAmount) {
-			return errorsmod.Wrap(delegationtype.ErrDelegationAmountTooBig, fmt.Sprintf("the opAmount is:%s the WithdrawableAmount amount is:%s", params.OpAmount, info.WithdrawableAmount))
-		}
-
-		// update staker asset state
-		_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, assetstype.DeltaStakerSingleAsset{
-			WithdrawableAmount: params.OpAmount.Neg(),
-		})
-		if err != nil {
-			return err
-		}
 	} else {
-		coins := sdk.NewCoins(sdk.NewCoin(assetstype.ImuachainAssetDenom, params.OpAmount))
-		// transfer the delegation amount from the staker account to the delegated pool
-		if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, params.StakerAddress, delegationtype.DelegatedPoolName, coins); err != nil {
-			return err
-		}
-		// auto associate it, if there is a match. note that both are byte versions of bech32
-		// AccAddress. there is no need to check for an existing association because:
-		// (1) at this point, the `params.ClientChainID` is 0 and such a `stakerID` ending with
-		// this clientChainID can not be associated with an operator using the standard
-		// precompile method due to the `ClientChainExists` check.
-		// (2) an existing association will be overwritten by the exact same association due to
-		// the equality check below.
-		if bytes.Equal(params.StakerAddress, params.OperatorAddress[:]) {
-			// always returns nil.
-			err := k.SetAssociatedOperator(ctx, stakerID, params.OperatorAddress.String())
+		if assetID != assetstype.ImuachainAssetID {
+			// check if the staker asset has been deposited and the canWithdraw amount is bigger than the delegation amount
+			info, err := k.assetsKeeper.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetID)
 			if err != nil {
 				return err
 			}
+
+			if info.WithdrawableAmount.LT(params.OpAmount) {
+				return errorsmod.Wrap(delegationtype.ErrDelegationAmountTooBig, fmt.Sprintf("the opAmount is:%s the WithdrawableAmount amount is:%s", params.OpAmount, info.WithdrawableAmount))
+			}
+
+			// update staker asset state
+			_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, assetstype.DeltaStakerSingleAsset{
+				WithdrawableAmount: params.OpAmount.Neg(),
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			coins := sdk.NewCoins(sdk.NewCoin(assetstype.ImuachainAssetDenom, params.OpAmount))
+			// transfer the delegation amount from the staker account to the delegated pool
+			if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, params.StakerAddress, delegationtype.DelegatedPoolName, coins); err != nil {
+				return err
+			}
+			// auto associate it, if there is a match. note that both are byte versions of bech32
+			// AccAddress. there is no need to check for an existing association because:
+			// (1) at this point, the `params.ClientChainID` is 0 and such a `stakerID` ending with
+			// this clientChainID can not be associated with an operator using the standard
+			// precompile method due to the `ClientChainExists` check.
+			// (2) an existing association will be overwritten by the exact same association due to
+			// the equality check below.
+			if bytes.Equal(params.StakerAddress, params.OperatorAddress[:]) {
+				// always returns nil.
+				err := k.SetAssociatedOperator(ctx, stakerID, params.OperatorAddress.String())
+				if err != nil {
+					return err
+				}
+			}
+			// this emitted event is not the total amount; it is the additional amount.
+			// indexers must add it to the last known amount to get the total amount.
+			// non-native case handled within UpdateStakerAssetState
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					delegationtype.EventTypeImuaAssetDelegation,
+					sdk.NewAttribute(delegationtype.AttributeKeyStakerID, sdk.AccAddress(params.StakerAddress).String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyOperator, params.OperatorAddress.String()),
+					sdk.NewAttribute(delegationtype.AttributeKeyAmount, params.OpAmount.String()),
+				),
+			)
 		}
-		// this emitted event is not the total amount; it is the additional amount.
-		// indexers must add it to the last known amount to get the total amount.
-		// non-native case handled within UpdateStakerAssetState
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				delegationtype.EventTypeImuaAssetDelegation,
-				sdk.NewAttribute(delegationtype.AttributeKeyStakerID, sdk.AccAddress(params.StakerAddress).String()),
-				sdk.NewAttribute(delegationtype.AttributeKeyOperator, params.OperatorAddress.String()),
-				sdk.NewAttribute(delegationtype.AttributeKeyAmount, params.OpAmount.String()),
-			),
-		)
 	}
 	// calculate the share from the delegation amount
 	share, err := k.CalculateShare(ctx, params.OperatorAddress, assetID, params.OpAmount)
@@ -113,8 +118,11 @@ func (k *Keeper) delegateTo(
 		return err
 	}
 
-	deltaAmount := &delegationtype.DeltaDelegationAmounts{
-		UndelegatableShare: share,
+	deltaAmount := &delegationtype.DeltaDelegationAmounts{}
+	if params.RewardAsset {
+		deltaAmount.RewardUndelegatableShare = share
+	} else {
+		deltaAmount.UndelegatableShare = share
 	}
 	_, preDelegationState, err := k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
 	if err != nil {

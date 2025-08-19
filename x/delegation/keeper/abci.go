@@ -43,7 +43,7 @@ func (k *Keeper) EndBlock(
 		recordAmountNeg := record.Amount.Neg()
 		// update delegation state
 		deltaAmount := &types.DeltaDelegationAmounts{
-			WaitUndelegationAmount: recordAmountNeg,
+			PendingUndelegationAmount: recordAmountNeg,
 		}
 		_, _, err = k.UpdateDelegationState(cc, record.StakerId, record.AssetId, record.OperatorAddr, deltaAmount)
 		if err != nil {

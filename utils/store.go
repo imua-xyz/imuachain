@@ -2,6 +2,9 @@ package utils
 
 import (
 	"bytes"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
@@ -269,4 +272,52 @@ func CloseLogError(iter sdk.Iterator, logger log.Logger) {
 	if err != nil {
 		logger.Error(errorsmod.Wrap(err, "failed to close kv store iterator").Error())
 	}
+}
+
+func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
+	ctx sdk.Context,
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
+	keyPrefix []byte,
+	iteratePrefix []byte,
+	isUpdate bool,
+	keyNumber int,
+	unmarshal func([]byte) (T, error),
+	opFunc func(keys []string, value T) (bool, bool, error),
+) error {
+	store := prefix.NewStore(ctx.KVStore(storeKey), keyPrefix)
+	prefixIterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
+	defer prefixIterator.Close()
+
+	updatedKeyValues := make([]KeyValue, 0)
+	for ; prefixIterator.Valid(); prefixIterator.Next() {
+		keys, err := assetstype.ParseJoinedStoreKey(prefixIterator.Key(), keyNumber)
+		if err != nil {
+			return err
+		}
+
+		value, err := unmarshal(prefixIterator.Value())
+		if err != nil {
+			return err
+		}
+
+		isBreak, isChanged, err := opFunc(keys, value)
+		if err != nil {
+			return err
+		}
+		if isBreak {
+			break
+		}
+
+		if isUpdate && isChanged {
+			updatedKeyValues = append(updatedKeyValues, KeyValue{
+				Key:   append([]byte(nil), prefixIterator.Key()...),
+				Value: value,
+			})
+		}
+	}
+	for _, updateKeyValue := range updatedKeyValues {
+		store.Set(updateKeyValue.Key, cdc.MustMarshal(updateKeyValue.Value))
+	}
+	return nil
 }

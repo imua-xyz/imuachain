@@ -19,6 +19,8 @@ type DelegationOrUndelegationParams struct {
 
 	// indicator for instant unbonding, default is false.
 	InstantUnbonding bool
+	// indicates whether it's a delegation/undelegation regarding reward.
+	RewardAsset bool
 }
 
 func NewDelegationOrUndelegationParams(

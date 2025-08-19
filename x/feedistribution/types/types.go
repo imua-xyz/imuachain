@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"sort"
 	"strings"
 
@@ -11,16 +12,21 @@ import (
 )
 
 type (
-	DeltaAVSRewardAssetState AVSRewardAssetState
-)
+	DeltaAVSRewardAssetState      AVSRewardAssetState
+	DeltaOperatorUnclaimedRewards OperatorUnclaimedRewards
+	DeltaStakerClaimedRewards     StakerClaimedRewards
+	OperatorRewardProportions     []OperatorRewardProportion
 
-type OperatorRewardProportions []OperatorRewardProportion
-
-type (
 	CommonAVSRewards           []CommonAVSRewardData
 	EpochRewardsAndProportions struct {
 		Rewards                   sdk.DecCoins
 		OperatorRewardProportions []OperatorRewardProportion
+	}
+
+	CompoundingRewards        []CompoundingRewardsPerAsset
+	CompoundingRewardsWithAVS struct {
+		AVS                string
+		CompoundingRewards CompoundingRewards
 	}
 )
 
@@ -345,6 +351,15 @@ func (crs CommonAVSRewards) IsAnyNegative() bool {
 	return false
 }
 
+func (crs CommonAVSRewards) IsZeroRewards() bool {
+	for _, rewardPerAVS := range crs {
+		if !rewardPerAVS.IsZeroRewards() {
+			return false
+		}
+	}
+	return true
+}
+
 // Sub subtracts a set of CommonAVSRewards from another (adds the inverse).
 func (crs CommonAVSRewards) Sub(avsRewardsB CommonAVSRewards) CommonAVSRewards {
 	diff, hasNeg := crs.SafeSub(avsRewardsB)
@@ -379,20 +394,19 @@ func (crs CommonAVSRewards) CalculateRewardRatio(totalDelegatedAmount sdk.Dec) (
 	return ret, nil
 }
 
-// CalculateRewards calculates the rewards, the receiver of this function should be the rewards ratio.
-func (crs CommonAVSRewards) CalculateRewards(delegatedAmount sdk.Dec) (CommonAVSRewards, error) {
-	if delegatedAmount.IsNegative() {
-		return nil, ErrInvalidInputParameter.Wrapf("CalculateRewards, the delegated amount is negative, value:%s", delegatedAmount)
+func (crs CommonAVSRewards) MulDecTruncate(multiplier sdk.Dec) (CommonAVSRewards, error) {
+	if multiplier.IsNegative() {
+		return nil, ErrInvalidInputParameter.Wrapf("MulDecTruncate, the multiplier is negative, value:%s", multiplier)
 	}
 	ret := make([]CommonAVSRewardData, 0)
-	if delegatedAmount.IsZero() {
+	if multiplier.IsZero() {
 		return ret, nil
 	}
-	for _, avsRewardRatio := range crs {
+	for _, avsReward := range crs {
 		// note: necessary to truncate so we don't allow withdrawing more rewards than owed
-		rewards := avsRewardRatio.Rewards.MulDecTruncate(delegatedAmount)
+		rewards := avsReward.Rewards.MulDecTruncate(multiplier)
 		ret = append(ret, CommonAVSRewardData{
-			AVSAddress: avsRewardRatio.AVSAddress,
+			AVSAddress: avsReward.AVSAddress,
 			Rewards:    rewards,
 		})
 	}
@@ -405,6 +419,250 @@ func (crs CommonAVSRewards) RewardsOf(avsAddr string) sdk.DecCoins {
 			return avsRewards.Rewards
 		}
 	}
+	return nil
+}
+
+func (cra CompoundingRewardsPerAsset) IsZeroRewards() bool {
+	return CommonAVSRewards(cra.Rewards).IsZeroRewards()
+}
+
+func (cra CompoundingRewardsPerAsset) IsPositive() bool {
+	return !cra.IsZeroRewards() && !CommonAVSRewards(cra.Rewards).IsAnyNegative()
+}
+
+func (cra CompoundingRewardsPerAsset) Add(compoundingRewardB CompoundingRewardsPerAsset) CompoundingRewardsPerAsset {
+	if cra.Symbol != compoundingRewardB.Symbol {
+		return cra
+	}
+	return CompoundingRewardsPerAsset{
+		Symbol:  cra.Symbol,
+		Rewards: CommonAVSRewards(cra.Rewards).Add(compoundingRewardB.Rewards...),
+	}
+}
+
+// Sorting
+var _ sort.Interface = CompoundingRewards{}
+
+// Len implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Len() int { return len(cmr) }
+
+// Less implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Less(i, j int) bool { return cmr[i].Symbol < cmr[j].Symbol }
+
+// Swap implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Swap(i, j int) { cmr[i], cmr[j] = cmr[j], cmr[i] }
+
+// Sort is a helper function to sort the set of CompoundingRewards in-place.
+func (cmr CompoundingRewards) Sort() CompoundingRewards {
+	sort.Sort(cmr)
+	return cmr
+}
+
+// NewCompoundingRewards constructs a new CompoundingRewardsPerAsset set.
+// The provided CompoundingRewardsPerAsset will be sanitized by removing
+// zero rewards and sorting the CompoundingRewardsPerAsset set. A panic will occur if the
+// CompoundingRewardsPerAsset set is not valid.
+func NewCompoundingRewards(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
+	newAVSRewards := sanitizeCompoundingRewards(compoundingRewards)
+	if err := newAVSRewards.Validate(); err != nil {
+		panic(fmt.Errorf("invalid compounding reward set: %w", err))
+	}
+
+	return newAVSRewards
+}
+
+func sanitizeCompoundingRewards(compoundingRewards []CompoundingRewardsPerAsset) CompoundingRewards {
+	// remove zeroes
+	newCompoundingRewards := removeZeroCompoundingRewards(compoundingRewards)
+	if len(newCompoundingRewards) == 0 {
+		return CompoundingRewards{}
+	}
+
+	return newCompoundingRewards.Sort()
+}
+
+func removeZeroCompoundingRewards(compoundingRewards CompoundingRewards) CompoundingRewards {
+	result := make([]CompoundingRewardsPerAsset, 0, len(compoundingRewards))
+
+	for _, compoundingReward := range compoundingRewards {
+		if !compoundingReward.IsZeroRewards() {
+			result = append(result, compoundingReward)
+		}
+	}
+
+	return result
+}
+
+// Validate checks that the CompoundingRewards are sorted, have positive rewards, with a unique
+// symbol (i.e no duplicates). Otherwise, it returns an error.
+func (cmr CompoundingRewards) Validate() error {
+	switch len(cmr) {
+	case 0:
+		return nil
+
+	case 1:
+		if !cmr[0].IsPositive() {
+			return fmt.Errorf("rewardsPerAsset %s amount is not positive", cmr[0])
+		}
+		return nil
+	default:
+		// check single compounding reward case
+		if err := (CompoundingRewards{cmr[0]}).Validate(); err != nil {
+			return err
+		}
+
+		lowSymbol := cmr[0].Symbol
+		seenSymbol := make(map[string]bool)
+		seenSymbol[lowSymbol] = true
+
+		for _, rewardsPerAsset := range cmr[1:] {
+			if seenSymbol[rewardsPerAsset.Symbol] {
+				return fmt.Errorf("duplicate symbol %s", rewardsPerAsset.Symbol)
+			}
+			if rewardsPerAsset.Symbol <= lowSymbol {
+				return fmt.Errorf("symbol %s is not sorted", rewardsPerAsset.Symbol)
+			}
+			if !rewardsPerAsset.IsPositive() {
+				return fmt.Errorf("symbol %s amount is not positive", rewardsPerAsset.Symbol)
+			}
+
+			// we compare each rewardsPerAsset against the last avs address
+			lowSymbol = rewardsPerAsset.Symbol
+			seenSymbol[rewardsPerAsset.Symbol] = true
+		}
+
+		return nil
+	}
+}
+func (cmr CompoundingRewards) RewardsOf(symbol string) CommonAVSRewards {
+	for _, assetRewards := range cmr {
+		if symbol == assetRewards.Symbol {
+			return assetRewards.Rewards
+		}
+	}
+	return nil
+}
+
+func (cmr CompoundingRewards) Add(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
+	return cmr.safeAdd(compoundingRewards)
+}
+
+// safeAdd will perform addition of two CompoundingRewards sets. If both CompoundingRewards sets are
+// empty, then an empty set is returned. If only a single set is empty, the
+// other set is returned. Otherwise, the CompoundingRewards are compared in order of their
+// symbols and addition only occurs when the symbol match, otherwise
+// the CompoundingRewards is simply added to the sum assuming it's not zero.
+func (cmr CompoundingRewards) safeAdd(compoundingRewardsB CompoundingRewards) CompoundingRewards {
+	sum := ([]CompoundingRewardsPerAsset)(nil)
+	indexA, indexB := 0, 0
+	lenA, lenB := len(cmr), len(compoundingRewardsB)
+
+	for {
+		if indexA == lenA {
+			if indexB == lenB {
+				// return nil coins if both sets are empty
+				return sum
+			}
+
+			// return set B (excluding zero rewards) if set A is empty
+			return append(sum, removeZeroCompoundingRewards(compoundingRewardsB[indexB:])...)
+		} else if indexB == lenB {
+			// return set A (excluding zero rewards) if set B is empty
+			return append(sum, removeZeroCompoundingRewards(cmr[indexA:])...)
+		}
+
+		compoundingRewardA, compoundingRewardB := cmr[indexA], compoundingRewardsB[indexB]
+
+		switch strings.Compare(compoundingRewardA.Symbol, compoundingRewardB.Symbol) {
+		case -1: // avs A address < avs B address
+			if !compoundingRewardA.IsZeroRewards() {
+				sum = append(sum, compoundingRewardA)
+			}
+
+			indexA++
+
+		case 0: // avs reward A address == avs reward B address
+			res := compoundingRewardA.Add(compoundingRewardB)
+			if !res.IsZeroRewards() {
+				sum = append(sum, res)
+			}
+
+			indexA++
+			indexB++
+
+		case 1: // coin A denom > coin B denom
+			if !compoundingRewardB.IsZeroRewards() {
+				sum = append(sum, compoundingRewardB)
+			}
+
+			indexB++
+		}
+	}
+}
+
+// IsAnyNegative returns true if there is at least one coin of the compounding rewards whose amount
+// is negative; returns false otherwise. It returns false if the CompoundingRewards set
+// is empty too.
+func (cmr CompoundingRewards) IsAnyNegative() bool {
+	for _, avsReward := range cmr {
+		if CommonAVSRewards(avsReward.Rewards).IsAnyNegative() {
+			return true
+		}
+	}
+	return false
+}
+
+// negative returns a set of CompoundingRewardsPerAsset with all rewards amount negative.
+func (cmr CompoundingRewards) negative() CompoundingRewards {
+	res := make([]CompoundingRewardsPerAsset, 0, len(cmr))
+	for _, compoundingReward := range cmr {
+		res = append(res, CompoundingRewardsPerAsset{
+			Symbol:  compoundingReward.Symbol,
+			Rewards: CommonAVSRewards(compoundingReward.Rewards).negative(),
+		})
+	}
+	return res
+}
+
+// Sub subtracts a set of CompoundingRewards from another (adds the inverse).
+func (cmr CompoundingRewards) Sub(compoundingRewardsB CompoundingRewards) CompoundingRewards {
+	diff, hasNeg := cmr.SafeSub(compoundingRewardsB)
+	if hasNeg {
+		panic("negative compounding rewards")
+	}
+
+	return diff
+}
+
+// SafeSub performs the same arithmetic as Sub but returns a boolean if any
+// negative avs rewards amount was returned.
+func (cmr CompoundingRewards) SafeSub(avsRewardsB CompoundingRewards) (CompoundingRewards, bool) {
+	diff := cmr.safeAdd(avsRewardsB.negative())
+	return diff, diff.IsAnyNegative()
+}
+
+func DefaultStakerClaimedRewards() StakerClaimedRewards {
+	return StakerClaimedRewards{
+		OutstandingRewards:         sdk.NewDecCoins(),
+		WithdrawnRewards:           sdk.NewDecCoins(),
+		DelegationRewards:          sdk.NewDecCoins(),
+		PendingUndelegationRewards: sdk.NewDecCoins(),
+		PendingSlashedRewards:      sdk.NewDecCoins(),
+		WithdrawableRewards:        sdk.NewDecCoins(),
+		TotalSlashedRewards:        sdk.NewDecCoins(),
+	}
+}
+
+func UpdateDecCoins(valueToUpdate sdk.DecCoins, deltaValue sdk.DecCoins) error {
+	if len(deltaValue) == 0 {
+		// do nothing
+		return nil
+	}
+	sum := valueToUpdate.Add(deltaValue...)
+	if sum.IsAnyNegative() {
+		return fmt.Errorf("decCoins have negative values after the update,valueToUpdate:%s,deltaValue:%s", valueToUpdate, deltaValue)
+	}
+	valueToUpdate = sum
 	return nil
 }
 
@@ -439,4 +697,15 @@ func TruncateSDKDec(dec sdk.Dec, decimal uint32) sdk.Dec {
 
 	// Divide back by the multiplier to restore the decimal point at the correct position
 	return sdk.NewDecFromInt(truncated).QuoInt(multiplier)
+}
+
+// ValidateRewardAssetSymbol is the default validation function for the symbol of reward asset.
+func ValidateRewardAssetSymbol(symbol string) error {
+	// check if it contains the combined delimiter `/`, because symbol might be used in
+	// a combined key.
+	if strings.IndexByte(symbol, types.DelimiterForCombinedKey) >= 0 {
+		return fmt.Errorf("invalid symbol %q: contains combined delimiter %q",
+			symbol, string(types.DelimiterForCombinedKey))
+	}
+	return sdk.ValidateDenom(symbol)
 }

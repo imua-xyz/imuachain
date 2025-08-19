@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"strings"
 
 	"github.com/imua-xyz/imuachain/utils"
@@ -570,7 +571,7 @@ func (k Keeper) GetOrCalculateOperatorUSDValues(
 	// voting power to set the tokens and shares for this case.
 	if k.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
 		// get assets supported by the AVS
-		assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
+		_, assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
 		if err != nil {
 			return operatortypes.OperatorOptedUSDValue{}, err
 		}
@@ -614,7 +615,7 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 	}
 
 	// calculate the active voting power for staker
-	assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
+	_, assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
 	if err != nil {
 		return sdkmath.LegacyDec{}, err
 	}
@@ -873,4 +874,182 @@ func (k *Keeper) GetRecentEndedEpochAVSAssets(ctx sdk.Context, avsAddr string) (
 		return nil, err
 	}
 	return avsAssetsList, nil
+}
+
+// SetOperatorRewardUSDValue stores the USD value of reward earned by an operator
+// from a specific rewardSourceAVS, credited to the operator's receivingAVS.
+//
+// receivingAVS:    The AVS that will receive the voting power (operator opted in).
+// rewardSourceAVS: The AVS from which the rewards were actually earned.
+// operator: 		The operator that have the reward.
+// symbol:          The symbol of the reward asset.
+// amount:          The USD-denominated value of the reward.
+//
+// Since an operator can opt in to multiple AVSs, it may earn rewards from multiple AVSs.
+// These rewards can each contribute voting power to the operator's opted-in (receiving) AVS.
+// Therefore, the storage key includes both the receivingAVS address and the rewardSourceAVS address.
+func (k *Keeper) SetOperatorRewardUSDValue(
+	ctx sdk.Context,
+	receivingAVS, rewardSourceAVS, operator, symbol string,
+	amount sdkmath.LegacyDec,
+) error {
+	if amount.IsNil() {
+		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("SetOperatorRewardUSDValue the amount is:%v", amount))
+	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixCompoundingRewardsUSDValues)
+	key := assetstype.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, symbol)
+	setValue := operatortypes.DecValueField{Amount: amount}
+	bz := k.cdc.MustMarshal(&setValue)
+	store.Set(key, bz)
+	return nil
+}
+
+func (k *Keeper) RemoveAllStaleOperatorRewardUSDs(
+	ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{},
+) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixCompoundingRewardsUSDValues)
+	iterator := sdk.KVStorePrefixIterator(store, assetstype.GetJoinedStoreKeyForPrefix(receivingAVS, operator))
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		_, ok := keysToKeep[string(iterator.Key())]
+		if !ok {
+			// delete the invalid USD value
+			store.Delete(iterator.Key())
+		}
+	}
+	return nil
+}
+
+func (k *Keeper) IterateOperatorRewardsUSDValue(
+	ctx sdk.Context,
+	receivingAVS, operator string,
+	isUpdate bool,
+	opFunc func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error),
+) error {
+	return utils.GenericIterateStoreWithUpdate[*operatortypes.DecValueField](
+		ctx,
+		k.cdc,
+		k.storeKey,
+		operatortypes.KeyPrefixCompoundingRewardsUSDValues,
+		assetstype.GetJoinedStoreKeyForPrefix(receivingAVS, operator),
+		isUpdate,
+		4,
+		func(bz []byte) (*operatortypes.DecValueField, error) {
+			var r operatortypes.DecValueField
+			k.cdc.MustUnmarshal(bz, &r)
+			return &r, nil
+		},
+		func(keys []string, value *operatortypes.DecValueField) (bool, bool, error) {
+			return opFunc(keys[2], keys[3], value)
+		},
+	)
+}
+
+func (k *Keeper) HandleOperatorRewardsUSDValues(
+	ctx sdk.Context, receivingAVS, rewardSourceAVS, operator string,
+	unclaimedRewards feedistributiontypes.OperatorUnclaimedRewards,
+	validRewardUSDs map[string]interface{},
+	calculateUSDValue func(avs, symbol string, amount sdk.Dec) (sdkmath.LegacyDec, error),
+) (sdkmath.LegacyDec, error) {
+	totalUSDValue := sdkmath.LegacyZeroDec()
+	// iterate over the outstanding rewards
+	for _, outstandingReward := range unclaimedRewards.OutstandingRewards {
+		// handle the outstanding rewards earned from staking token.
+		outstandingUSDValue, err := calculateUSDValue(rewardSourceAVS, outstandingReward.Denom, outstandingReward.Amount)
+		if err != nil {
+			return sdkmath.LegacyDec{}, err
+		}
+
+		// handle the rewards earned by compounding
+		compoundingRewards := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(outstandingReward.Denom)
+		compoundingUSDValue := sdkmath.LegacyZeroDec()
+		for _, rewardsPerAsset := range compoundingRewards {
+			for _, reward := range rewardsPerAsset.Rewards {
+				usdValuePerAsset, err := calculateUSDValue(rewardsPerAsset.AVSAddress, reward.Denom, reward.Amount)
+				if err != nil {
+					return sdkmath.LegacyDec{}, err
+				}
+				compoundingUSDValue.AddMut(usdValuePerAsset)
+			}
+		}
+		// set the USD value for specific AVS reward asset
+		totalCompoundingUSDValue := compoundingUSDValue.Add(outstandingUSDValue)
+		if totalCompoundingUSDValue.IsPositive() {
+			err = k.SetOperatorRewardUSDValue(ctx, receivingAVS, rewardSourceAVS, operator, outstandingReward.Denom, totalCompoundingUSDValue)
+			if err != nil {
+				return sdkmath.LegacyDec{}, err
+			}
+			totalUSDValue.AddMut(totalCompoundingUSDValue)
+			key := string(assetstype.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, outstandingReward.Denom))
+			validRewardUSDs[key] = nil
+		}
+	}
+	return totalUSDValue, nil
+}
+
+// UpdateAllRewardsUSDForOperator calculate and update all compounding rewards USD values for operator
+// The rewards USD value of every AVS will be stored to calculate the compounding rewards.
+// And the total USD values from all AVS rewards will be returned.
+func (k *Keeper) UpdateAllRewardsUSDForOperator(
+	ctx sdk.Context,
+	receivingAVS, operator string,
+	assetsMap map[string]interface{},
+) (sdkmath.LegacyDec, error) {
+	assetPrices := make(map[string]oracletype.Price, 0)
+	calculateUSDValue := func(avs, symbol string, amount sdk.Dec) (sdkmath.LegacyDec, error) {
+		if !amount.IsPositive() {
+			ctx.Logger().Info("UpdateAllRewardsUSDForOperator: skip the reward with no-positive amount", "avs", avs, "symbol", symbol)
+			return sdkmath.LegacyZeroDec(), nil
+		}
+		// get the assetID by rewardSourceAVS and symbol
+		assetID, err := k.distributionKeeper.GetAVSRewardAssetIDBySymbol(ctx, avs, symbol)
+		if err != nil {
+			return sdkmath.LegacyDec{}, err
+		}
+		_, exist := assetsMap[assetID]
+		if !exist {
+			// the reward asset isn't supported by the receivingAVS, skipping it.
+			return sdkmath.LegacyZeroDec(), nil
+		}
+
+		// get the price of the reward asset
+		price, ok := assetPrices[assetID]
+		if !ok {
+			price, err = k.oracleKeeper.GetSpecifiedAssetsPrice(ctx, assetID)
+			if err != nil {
+				return sdkmath.LegacyDec{}, err
+			}
+			assetPrices[assetID] = price
+		}
+		if !price.Value.IsPositive() {
+			// reward asset with a non-positive price can't contribute any USD value, skipping it.
+			return sdkmath.LegacyZeroDec(), nil
+		}
+		// calculate the USD value of each reward asset
+		usdPerAsset := CalculateDecUSDValue(amount, price.Value, price.Decimal)
+		return usdPerAsset, nil
+	}
+
+	validRewardUSDs := make(map[string]interface{}, 0)
+	totalUSDValue := sdk.ZeroDec()
+	opFunc := func(rewardSourceAVS string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
+		// calculate and set the USD value for specific operator and rewardSourceAVS
+		avsRewardsUSD, err := k.HandleOperatorRewardsUSDValues(ctx, receivingAVS, rewardSourceAVS, operator, *rewards, validRewardUSDs, calculateUSDValue)
+		if err != nil {
+			return false, false, err
+		}
+		totalUSDValue.AddMut(avsRewardsUSD)
+		return false, false, nil
+	}
+	err := k.distributionKeeper.IterateOperatorUnclaimedRewards(ctx, operator, false, opFunc)
+	if err != nil {
+		return sdkmath.LegacyDec{}, err
+	}
+	// remove the invalid rewards USD values
+	err = k.RemoveAllStaleOperatorRewardUSDs(ctx, receivingAVS, operator, validRewardUSDs)
+	if err != nil {
+		return sdkmath.LegacyDec{}, err
+	}
+	return totalUSDValue, nil
 }

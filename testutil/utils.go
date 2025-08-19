@@ -464,15 +464,15 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		{
 			Key: string(assetstypes.GetJoinedStoreKey(stakerID1, assetID, operator1.String())),
 			States: delegationtypes.DelegationAmounts{
-				WaitUndelegationAmount: math.NewInt(0),
-				UndelegatableShare:     math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
+				PendingUndelegationAmount: math.NewInt(0),
+				UndelegatableShare:        math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
 			},
 		},
 		{
 			Key: string(assetstypes.GetJoinedStoreKey(stakerID2, assetID, operator2.String())),
 			States: delegationtypes.DelegationAmounts{
-				WaitUndelegationAmount: math.NewInt(0),
-				UndelegatableShare:     math.LegacyNewDecFromBigInt(depositAmount2.BigInt()),
+				PendingUndelegationAmount: math.NewInt(0),
+				UndelegatableShare:        math.LegacyNewDecFromBigInt(depositAmount2.BigInt()),
 			},
 		},
 	}

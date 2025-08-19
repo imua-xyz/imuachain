@@ -331,7 +331,7 @@ message OperatorAVSRequest {
 // QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards
 message QueryOperatorOutstandingRewardsResponse{
   // operator_outstanding_rewards is the outstanding rewards returned for an operator
-  OperatorOutstandingRewards operator_outstanding_rewards = 1;
+  OperatorUnclaimedRewards operator_outstanding_rewards = 1;
 }
 
 // QueryOperatorCommissionResponse is the response to obtain the operator commission

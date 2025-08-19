@@ -470,8 +470,8 @@ func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount 
 			DefaultGenStateDelegation.DelegationStates = append(DefaultGenStateDelegation.DelegationStates, delegationtypes.DelegationStates{
 				Key: stakerID + "/" + assetID + "/" + operator.String(),
 				States: delegationtypes.DelegationAmounts{
-					UndelegatableShare:     sdkmath.LegacyNewDecFromInt(stakingAmount),
-					WaitUndelegationAmount: sdkmath.ZeroInt(),
+					UndelegatableShare:        sdkmath.LegacyNewDecFromInt(stakingAmount),
+					PendingUndelegationAmount: sdkmath.ZeroInt(),
 				},
 			})
 			DefaultGenStateDelegation.StakersByOperator = append(DefaultGenStateDelegation.StakersByOperator, delegationtypes.StakersByOperator{

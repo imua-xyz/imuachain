@@ -45,7 +45,7 @@ func (k Keeper) AVSRewardAssetBySymbol(ctx context.Context, req *types.QueryAVSR
 	if !common.IsHexAddress(req.Avs) {
 		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
 	}
-	err := sdk.ValidateDenom(req.Symbol)
+	err := types.ValidateRewardAssetSymbol(req.Symbol)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "symbol should be a valid denomination,symbol:%s,err:%s", req.Symbol, err)
 	}
@@ -131,7 +131,7 @@ func (k Keeper) OperatorOutstandingRewards(ctx context.Context, req *types.Opera
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
 	avsAddr := strings.ToLower(req.Avs)
-	outstandingRewards, err := k.GetOperatorOutstandingRewards(c, req.Operator, avsAddr)
+	outstandingRewards, err := k.GetOperatorUnclaimedRewards(c, req.Operator, avsAddr)
 	if err != nil {
 		return nil, err
 	}

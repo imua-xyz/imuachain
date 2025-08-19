@@ -2,10 +2,10 @@ package types
 
 import (
 	"context"
-
 	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
@@ -58,6 +58,10 @@ type OperatorKeeper interface {
 	GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error)
 	HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) bool
 	GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) (sdkmath.LegacyDec, error)
+	IterateOperatorRewardsUSDValue(ctx sdk.Context, receivingAVS, operator string, isUpdate bool,
+		opFunc func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error),
+	) error
+	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.
@@ -72,6 +76,7 @@ type AVSKeeper interface {
 type AssetsKeeper interface {
 	GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *assetstype.StakingAssetInfo, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
+	IsStakingAsset(ctx sdk.Context, assetID string) bool
 }
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.
@@ -79,6 +84,17 @@ type DelegationKeeper interface {
 	GetDelegationInfoWithAmount(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, error)
 	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
 	GetStakersByOperator(ctx sdk.Context, operator, assetID string) (delegationtype.StakerList, error)
+}
+
+type SlashKeeper interface {
+	IsOperatorFrozen(ctx sdk.Context, opAddr sdk.AccAddress) bool
+}
+
+type StakingKeeper interface {
+	GetLastTotalPower(ctx sdk.Context) sdkmath.Int
+	GetAllImuachainValidators(
+		ctx sdk.Context,
+	) (validators []dogfoodtypes.ImuachainValidator)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

@@ -169,8 +169,8 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	specifiedDelegationAmount, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, opAccAddr.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:     sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
-		WaitUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:        sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
+		PendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err := suite.App.DelegationKeeper.TotalDelegatedAmountForStakerAsset(suite.Ctx, stakerID, assetID)
@@ -211,8 +211,8 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	specifiedDelegationAmount, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, opAccAddr.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:     sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
-		WaitUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:        sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
+		PendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err = suite.App.DelegationKeeper.TotalDelegatedAmountForStakerAsset(suite.Ctx, stakerID, assetID)
@@ -309,8 +309,8 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 	specifiedDelegationAmount, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		WaitUndelegationAmount: delegationEvent.OpAmount,
-		UndelegatableShare:     sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount: delegationEvent.OpAmount,
+		UndelegatableShare:        sdkmath.LegacyZeroDec(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err := suite.App.DelegationKeeper.TotalDelegatedAmountForStakerAsset(suite.Ctx, stakerID, assetID)
@@ -366,8 +366,8 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 	specifiedDelegationAmount, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		WaitUndelegationAmount: delegationEvent.OpAmount,
-		UndelegatableShare:     sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount: delegationEvent.OpAmount,
+		UndelegatableShare:        sdkmath.LegacyZeroDec(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err = suite.App.DelegationKeeper.TotalDelegatedAmountForStakerAsset(suite.Ctx, stakerID, assetID)
@@ -452,8 +452,8 @@ func (suite *DelegationTestSuite) TestCompleteUndelegation() {
 	specifiedDelegationAmount, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:     sdkmath.LegacyZeroDec(),
-		WaitUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:        sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err := suite.App.DelegationKeeper.TotalDelegatedAmountForStakerAsset(suite.Ctx, stakerID, assetID)
@@ -518,8 +518,8 @@ func (suite *DelegationTestSuite) TestCompleteUndelegation() {
 	specifiedDelegationAmount, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:     sdkmath.LegacyZeroDec(),
-		WaitUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:        sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err = suite.App.DelegationKeeper.TotalDelegatedAmountForStakerAsset(suite.Ctx, stakerID, assetID)
