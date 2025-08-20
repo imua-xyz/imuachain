@@ -692,7 +692,6 @@ func NewImuachainApp(
 		&app.OracleKeeper,
 		&app.AVSManagerKeeper,
 		&app.StakingKeeper,
-		// TODO(chuang)?
 		delegationTypes.VirtualSlashKeeper{},
 		app.EpochsKeeper,
 		authAddrString,
