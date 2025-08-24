@@ -65,7 +65,14 @@ message UndelegationAmountPerAVS {
   // avs_address is the AVS address the rewards come from.
   string avs_address = 1;
   // amount is the undelegated amount from specific AVS.
-  string amount = 9 [
+  string amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // actual_completed_amount is the actual amount of the asset that has been
+  // undelegated so far. it may be lower than the amount in the case of slashing.
+  string actual_completed_amount = 3 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false

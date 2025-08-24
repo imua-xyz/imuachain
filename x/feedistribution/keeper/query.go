@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"google.golang.org/grpc/codes"
@@ -117,8 +119,8 @@ func (k Keeper) AVSRewardDistribution(ctx context.Context, req *types.AVSRequest
 	return &types.QueryAVSRewardDistributionResponse{AvsRewardDistribution: avsRewardDistribution}, nil
 }
 
-// OperatorOutstandingRewards queries the outstanding rewards for an operator.
-func (k Keeper) OperatorOutstandingRewards(ctx context.Context, req *types.OperatorAVSRequest) (*types.QueryOperatorOutstandingRewardsResponse, error) {
+// OperatorUnclaimedRewards queries the unclaimed rewards for an operator.
+func (k Keeper) OperatorUnclaimedRewards(ctx context.Context, req *types.OperatorAVSRequest) (*types.QueryOperatorUnclaimedRewardsResponse, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
@@ -131,16 +133,25 @@ func (k Keeper) OperatorOutstandingRewards(ctx context.Context, req *types.Opera
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
 	avsAddr := strings.ToLower(req.Avs)
-	outstandingRewards, err := k.GetOperatorUnclaimedRewards(c, req.Operator, avsAddr)
+	unclaimedRewards, err := k.GetOperatorUnclaimedRewards(c, req.Operator, avsAddr)
 	if err != nil {
 		return nil, err
 	}
-	normalizedRewards, err := k.NormalizeRewardDecCoins(c, avsAddr, outstandingRewards.Rewards)
+	normalizedRewards, err := k.NormalizeRewardDecCoins(c, avsAddr, unclaimedRewards.OutstandingRewards)
 	if err != nil {
 		return nil, err
 	}
-	outstandingRewards.Rewards = normalizedRewards
-	return &types.QueryOperatorOutstandingRewardsResponse{OperatorOutstandingRewards: &outstandingRewards}, nil
+	unclaimedRewards.OutstandingRewards = normalizedRewards
+
+	// normalize the rewards from compounding
+	for i, compoundingRewardsPerSymbol := range unclaimedRewards.RewardsFromCompounding {
+		normalizedRewardsPerSymbol, err := k.BatchNormalizeRewardDecimals(c, compoundingRewardsPerSymbol.Rewards)
+		if err != nil {
+			return nil, err
+		}
+		unclaimedRewards.RewardsFromCompounding[i].Rewards = normalizedRewardsPerSymbol
+	}
+	return &types.QueryOperatorUnclaimedRewardsResponse{OperatorUnclaimedRewards: &unclaimedRewards}, nil
 }
 
 // StakerClaimedRewards queries the claimed rewards for a staker.
@@ -235,7 +246,7 @@ func (k Keeper) DelegationStartingInfo(ctx context.Context, req *types.QueryDele
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
-	delegationKey := assetstype.GetJoinedStoreKey(strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.Operator)
+	delegationKey := utils.GetJoinedStoreKey(strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.Operator)
 	delegationStartingInfo, err := k.GetDelegationStartingInfo(c, string(delegationKey), req.EpochIdentifier)
 	if err != nil {
 		return nil, err

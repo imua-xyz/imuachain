@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"cosmossdk.io/math"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/avs/types"
 
 	sdkmath "cosmossdk.io/math"
-	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
-
 	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -745,7 +745,7 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
-		operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
+		utils.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
 		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
@@ -755,7 +755,7 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
-		operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
+		utils.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
 		suite.CommitAfter(time.Hour*3 + time.Nanosecond)
 	}
 	commonMalleate := func() (common.Address, []byte) {

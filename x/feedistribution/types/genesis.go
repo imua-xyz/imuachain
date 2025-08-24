@@ -3,8 +3,6 @@ package types
 import (
 	"strings"
 
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,7 +47,7 @@ var IMUARewardToken = AVSRewardAsset{
 func DefaultGenesis() *GenesisState {
 	// Use the default chain ID to generate the dogfood address, the current default genesis is used for mainnet.
 	// The AVS address in the genesis file should be updated either manually or via a script when used for testnet.
-	avsAddrStr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(utils.DefaultChainID))
+	avsAddrStr := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(utils.DefaultChainID))
 	return &GenesisState{
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
@@ -93,7 +91,7 @@ func CheckUint64BigEndianHexStr(s string) error {
 }
 
 func CheckJoinedKey(joinedKey string, keyNumber int, keyTypes []KeyTypeForJoinedKey) error {
-	keys, err := assetstypes.ParseJoinedStoreKey([]byte(joinedKey), keyNumber)
+	keys, err := utils.ParseJoinedStoreKey([]byte(joinedKey), keyNumber)
 	if err != nil {
 		return xerrors.Errorf("failed to parse the key, err:%s,key:%s", err, joinedKey)
 	}
@@ -330,23 +328,27 @@ func (gs GenesisState) ValidateAVSRewardDistributions() error {
 	return nil
 }
 
-func (gs GenesisState) ValidateOperatorOutstandingRewards() error {
-	validationFunc := func(_ int, info KeyAndOperatorOutstandingRewards) error {
+func (gs GenesisState) ValidateOperatorUnclaimedRewards() error {
+	validationFunc := func(_ int, info KeyAndOperatorUnclaimedRewards) error {
 		// check the joined key
 		err := CheckJoinedKey(info.Key, 2, []KeyTypeForJoinedKey{OperatorAddr, AVSAddr})
 		if err != nil {
-			return ErrInvalidGenesisData.Wrapf("ValidateOperatorOutstandingRewards: failed to check the joined key, err:%s", err)
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: failed to check the joined key, err:%s", err)
 		}
-		if !info.OperatorOutstandingRewards.Rewards.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateOperatorOutstandingRewards: invalid outstanding reward for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+		if !info.OperatorUnclaimedRewards.OutstandingRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid outstanding rewards for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
+		}
+		err = CompoundingRewards(info.OperatorUnclaimedRewards.RewardsFromCompounding).Validate()
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards for operator, err:%s", err)
 		}
 		return nil
 	}
-	seenFieldValueFunc := func(info KeyAndOperatorOutstandingRewards) (string, struct{}) {
+	seenFieldValueFunc := func(info KeyAndOperatorUnclaimedRewards) (string, struct{}) {
 		return info.Key, struct{}{}
 	}
-	_, err := utils.CommonValidation(gs.AllOperatorOutstandingRewards, seenFieldValueFunc, validationFunc)
+	_, err := utils.CommonValidation(gs.AllOperatorUnclaimedRewards, seenFieldValueFunc, validationFunc)
 	if err != nil {
 		return err
 	}
@@ -617,7 +619,7 @@ func (gs GenesisState) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = gs.ValidateOperatorOutstandingRewards()
+	err = gs.ValidateOperatorUnclaimedRewards()
 	if err != nil {
 		return err
 	}

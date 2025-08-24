@@ -92,9 +92,4 @@ var (
 	ErrRegisterDuplicateAssetID = errorsmod.Register(
 		ModuleName, 19,
 		"register new asset with an existing assetID")
-
-	ErrParseJoinedKey = errorsmod.Register(
-		ModuleName, 20,
-		"the joined key can't be parsed",
-	)
 )

@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"github.com/ethereum/go-ethereum/crypto"
@@ -104,7 +106,7 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			return errorsmod.Wrap(types.ErrAlreadyRegistered, fmt.Sprintf("this TaskAddr has already been used by other AVS,the TaskAddr is :%s", params.TaskAddress))
 		}
 		startingEpoch := uint64(epoch.CurrentEpoch + 1)
-		if params.ChainID == types.ChainIDWithoutRevision(ctx.ChainID()) {
+		if params.ChainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 			// TODO: handle this better
 			startingEpoch = uint64(epoch.CurrentEpoch)
 		}
@@ -312,7 +314,7 @@ func (k Keeper) RegisterBLSPublicKey(ctx sdk.Context, params *types.BlsParams) e
 	// (1) validate that this signature is intended solely for RegisterBLSPublicKey
 	// (2) prevent replay attacks by including the chain-id and operator-address
 	// note that the operator address is bech32 encoded and thus already lowercase
-	msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(ctx.ChainID()), params.OperatorAddress.String())
+	msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(ctx.ChainID()), params.OperatorAddress.String())
 	hashedMsg := crypto.Keccak256Hash([]byte(msg))
 
 	sig := params.PubKeyRegistrationSignature
@@ -404,7 +406,7 @@ func (k *Keeper) IsAVS(ctx sdk.Context, addr string) (bool, error) {
 // IsAVSByChainID queries whether an AVS exists by chainID.
 // It returns the AVS address if it exists.
 func (k Keeper) IsAVSByChainID(ctx sdk.Context, chainID string) (bool, string) {
-	avsAddrStr := types.GenerateAVSAddress(chainID)
+	avsAddrStr := utils.GenerateAVSAddress(chainID)
 	avsAddr := common.HexToAddress(avsAddrStr)
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSInfo)
 	return store.Has(avsAddr.Bytes()), avsAddrStr

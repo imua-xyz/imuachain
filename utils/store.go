@@ -2,10 +2,10 @@ package utils
 
 import (
 	"bytes"
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/cometbft/cometbft/libs/log"
@@ -291,7 +291,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 
 	updatedKeyValues := make([]KeyValue, 0)
 	for ; prefixIterator.Valid(); prefixIterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(prefixIterator.Key(), keyNumber)
+		keys, err := ParseJoinedStoreKey(prefixIterator.Key(), keyNumber)
 		if err != nil {
 			return err
 		}

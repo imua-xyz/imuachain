@@ -377,7 +377,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	suite.Require().NotNil(pubKey)
 	pubKey2 := testutiltx.GenerateConsensusKey()
 	suite.Require().NotNil(pubKey2)
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(utils.DefaultChainID)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(utils.DefaultChainID)
 	operatorConsKeys := []operatortypes.OperatorConsKeyRecord{
 		{
 			OperatorAddress: operator1.String(),
@@ -398,18 +398,18 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			},
 		},
 	}
-	avsAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	avsAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	suite.DogfoodAVSAddr = avsAddr
 	optStates := []operatortypes.OptedState{
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), avsAddr)),
+			Key: string(utils.GetJoinedStoreKey(operator1.String(), avsAddr)),
 			OptInfo: operatortypes.OptedInfo{
 				OptedInHeight:  1,
 				OptedOutHeight: operatortypes.DefaultOptedOutHeight,
 			},
 		},
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), avsAddr)),
+			Key: string(utils.GetJoinedStoreKey(operator2.String(), avsAddr)),
 			OptInfo: operatortypes.OptedInfo{
 				OptedInHeight:  1,
 				OptedOutHeight: operatortypes.DefaultOptedOutHeight,
@@ -418,7 +418,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	}
 	operatorUSDValues := []operatortypes.OperatorUSDValue{
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(avsAddr, operator1.String())),
+			Key: string(utils.GetJoinedStoreKey(avsAddr, operator1.String())),
 			OptedUSDValue: operatortypes.OperatorOptedUSDValue{
 				SelfUSDValue:   usdValue,
 				TotalUSDValue:  usdValue,
@@ -426,7 +426,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			},
 		},
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(avsAddr, operator2.String())),
+			Key: string(utils.GetJoinedStoreKey(avsAddr, operator2.String())),
 			OptedUSDValue: operatortypes.OperatorOptedUSDValue{
 				SelfUSDValue:   usdValue2,
 				TotalUSDValue:  usdValue2,
@@ -436,13 +436,13 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	}
 	operatorAssetUSDValues := []operatortypes.OperatorAssetUSDValue{
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(dogfoodtypes.DefaultEpochIdentifier, operator1.String(), assetID)),
+			Key: string(utils.GetJoinedStoreKey(dogfoodtypes.DefaultEpochIdentifier, operator1.String(), assetID)),
 			Value: operatortypes.DecValueField{
 				Amount: usdValue,
 			},
 		},
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(dogfoodtypes.DefaultEpochIdentifier, operator2.String(), assetID)),
+			Key: string(utils.GetJoinedStoreKey(dogfoodtypes.DefaultEpochIdentifier, operator2.String(), assetID)),
 			Value: operatortypes.DecValueField{
 				Amount: usdValue2,
 			},
@@ -462,14 +462,14 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	// x/delegation
 	delegationStates := []delegationtypes.DelegationStates{
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(stakerID1, assetID, operator1.String())),
+			Key: string(utils.GetJoinedStoreKey(stakerID1, assetID, operator1.String())),
 			States: delegationtypes.DelegationAmounts{
 				PendingUndelegationAmount: math.NewInt(0),
 				UndelegatableShare:        math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
 			},
 		},
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(stakerID2, assetID, operator2.String())),
+			Key: string(utils.GetJoinedStoreKey(stakerID2, assetID, operator2.String())),
 			States: delegationtypes.DelegationAmounts{
 				PendingUndelegationAmount: math.NewInt(0),
 				UndelegatableShare:        math.LegacyNewDecFromBigInt(depositAmount2.BigInt()),
@@ -488,13 +488,13 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	}
 	stakersByOperator := []delegationtypes.StakersByOperator{
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID)),
+			Key: string(utils.GetJoinedStoreKey(operator1.String(), assetID)),
 			Stakers: []string{
 				stakerID1,
 			},
 		},
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID)),
+			Key: string(utils.GetJoinedStoreKey(operator2.String(), assetID)),
 			Stakers: []string{
 				stakerID2,
 			},
@@ -754,7 +754,7 @@ func (suite *BaseTestSuite) Delegation(isDelegation bool, clientChainLzID uint64
 	}
 	var err error
 	if isDelegation {
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
 	} else {
 		err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, param)
 	}

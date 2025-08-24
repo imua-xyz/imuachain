@@ -48,7 +48,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 	}
 
 	// redelegate the claimed rewards of all related stakers and AVSs
-	err = wrapper.keeper.BatchRedelegateClaimedRewards(ctx, avsList, stakersList)
+	err = wrapper.keeper.BatchRedelegateClaimedRewards(ctx, epochIdentifier, avsList, stakersList)
 	if err != nil {
 		ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 		// The delegation change information still needs to be deleted

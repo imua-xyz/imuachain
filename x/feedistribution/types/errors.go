@@ -96,4 +96,14 @@ var (
 		ModuleName, 19,
 		"failed to redelegate rewards",
 	)
+
+	ErrFailedToUndelegateRewards = errorsmod.Register(
+		ModuleName, 20,
+		"failed to undelegate rewards",
+	)
+
+	ErrFailedToCompleteRewardsUndelegation = errorsmod.Register(
+		ModuleName, 21,
+		"failed to complete rewards undelegation",
+	)
 )

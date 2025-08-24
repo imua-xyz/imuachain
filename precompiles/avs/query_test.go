@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
@@ -17,7 +19,6 @@ import (
 	imuacmn "github.com/imua-xyz/imuachain/precompiles/common"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	avstype "github.com/imua-xyz/imuachain/x/avs/types"
-	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -175,7 +176,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
-		usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
+		usdtValue := utils.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
 		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
@@ -185,7 +186,7 @@ func (suite *AVSManagerPrecompileSuite) TestAVSUSDValue() {
 		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
-		usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
+		usdcValue := utils.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
 		expectedUSDvalue = usdcValue.Add(usdtValue)
 		suite.CommitAfter(time.Hour*1 + time.Nanosecond)
 		suite.CommitAfter(time.Hour*1 + time.Nanosecond)
@@ -263,7 +264,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 		suite.NoError(err)
 		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 		suite.NoError(err)
-		usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
+		usdtValue := utils.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
 		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
@@ -273,7 +274,7 @@ func (suite *AVSManagerPrecompileSuite) TestGetOperatorOptedUSDValue() {
 		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
-		usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
+		usdcValue := utils.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
 		expectedUSDvalue = usdcValue.Add(usdtValue)
 		suite.CommitAfter(time.Hour*1 + time.Nanosecond)
 		suite.CommitAfter(time.Hour*1 + time.Nanosecond)

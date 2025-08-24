@@ -165,9 +165,9 @@ func (suite *KeeperTestSuite) checkAllocationStates(testAVSAddr string, states e
 
 	// check the operator outstanding rewards
 	for operator, expectedOutstandingRewards := range states.outstandingRewards {
-		outstandingRewards, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, operator, testAVSAddr)
+		unclaimedRewards, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, operator, testAVSAddr)
 		suite.Require().NoError(err)
-		suite.Require().Equal(expectedOutstandingRewards, outstandingRewards.Rewards)
+		suite.Require().Equal(expectedOutstandingRewards, unclaimedRewards.OutstandingRewards)
 	}
 
 	// check the current rewards for the operator after splitting into different asset pools.

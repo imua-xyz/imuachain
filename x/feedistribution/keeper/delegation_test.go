@@ -49,7 +49,7 @@ func (suite *KeeperTestSuite) checkDelegationStates(expectedStates *expectedDele
 		for assetID, operatorAssetState := range assetsState {
 			// check the delegation starting info
 			for stakerID, delegationStartingInfo := range operatorAssetState.DelegationStartingInfos {
-				delegationKey := string(assetstype.GetJoinedStoreKey(stakerID, assetID, operator))
+				delegationKey := string(utils.GetJoinedStoreKey(stakerID, assetID, operator))
 				actualStartingInfo, err := suite.App.DistrKeeper.GetDelegationStartingInfo(suite.Ctx, delegationKey, expectedStates.EpochIdentifier)
 				if delegationStartingInfo == nil {
 					suite.Require().ErrorContains(err, feedistributiontypes.ErrNoKeyInTheStore.Error(), "delegationKey:%s EpochIdentifier:%s", delegationKey, expectedStates.EpochIdentifier)
@@ -78,7 +78,7 @@ func (suite *KeeperTestSuite) checkDelegationStates(expectedStates *expectedDele
 				totalPeriodNumber++
 				return false, nil
 			}
-			prefix := assetstype.GetJoinedStoreKey(operator, assetID, expectedStates.EpochIdentifier)
+			prefix := utils.GetJoinedStoreKey(operator, assetID, expectedStates.EpochIdentifier)
 			err = suite.App.DistrKeeper.IterateOperatorHistoricalRewards(suite.Ctx, false, prefix, opFunc)
 			suite.Require().NoError(err, "prefix for operator historical rewards:%s", string(prefix))
 			// check the length to ensure that no expected periods are missing in the store.
@@ -925,7 +925,7 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 				operatorPowerAfterSlash := sdk.NewDec(operatorPower).Sub(slashPower)
 				multiplier := math.NewIntWithDecimal(1, int(suite.Assets[0].Decimals)) // 10^decimals
 				delegationAmountBigInt := operatorPowerAfterSlash.MulInt(multiplier).TruncateInt()
-				_, undelegable, err := suite.App.DelegationKeeper.GetDelegationInfoWithAmount(suite.Ctx, suite.StakerIDs[0], suite.AssetIDs[0], suite.Operators[0].String())
+				_, undelegable, _, err := suite.App.DelegationKeeper.GetDelegationInfoWithAmounts(suite.Ctx, suite.StakerIDs[0], suite.AssetIDs[0], suite.Operators[0].String())
 				suite.Require().NoError(err)
 				suite.Require().Equal(delegationAmountBigInt, undelegable)
 
@@ -962,7 +962,7 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 
 				epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(2))
 				blockHeightHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(uint64(slashBlockHeight)))
-				slashEventkey := assetstype.GetJoinedStoreKey(suite.Operators[0].String(), suite.AssetIDs[0], dogfoodtypes.DefaultEpochIdentifier, epochNumberHexStr, blockHeightHexStr)
+				slashEventkey := utils.GetJoinedStoreKey(suite.Operators[0].String(), suite.AssetIDs[0], dogfoodtypes.DefaultEpochIdentifier, epochNumberHexStr, blockHeightHexStr)
 				commonStates := expectedDelegationRewardStates{
 					AvsAddr:         suite.DogfoodAVSAddr,
 					EpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,

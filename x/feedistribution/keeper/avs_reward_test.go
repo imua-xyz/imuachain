@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	"github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
@@ -295,7 +294,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 				// test case: [4,5,6,7,8,9,10] are the block numbers of the current epoch.
 				// The operator is jailed at block 5 and unjailed at block 9,
 				// so the jailed blocks are (5,9] = [6,7,8,9], which makes the total jailed block count 4.
-				chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+				chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 				found, consensusKey, err := suite.App.OperatorKeeper.GetOperatorConsKeyForChainID(suite.Ctx, suite.Operators[0], chainIDWithoutRevision)
 				suite.NoError(err)
 				suite.True(found)

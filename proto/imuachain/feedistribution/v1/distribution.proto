@@ -214,11 +214,25 @@ message OperatorUnclaimedRewards {
   repeated CompoundingRewardsPerAsset rewards_from_compounding = 2 [(gogoproto.nullable) = false];
 }
 
+// RewardsDelegationShare is a helper struct that records all the delegated rewards shares
+// from a specific operator.
+message RewardsDelegationShare {
+  // operator_addr is the target operator address for redelegation
+  string operator_addr = 1;
+  // shares represents the shares of rewards that are lazily claimed and currently
+  // redelegated for compounding.In the decCoin, the amount represent the share in
+  // operator asset pool instead of the asset amount.
+  repeated cosmos.base.v1beta1.DecCoin shares = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
 // StakerClaimedRewards includes the detailed states for claimed rewards.
 //
 // The current total rewards assets of a staker in an AVS are calculated as:
 // (outstanding_rewards + delegation_rewards + pending_undelegation_rewards +
-// withdrawable_rewards - pending_undelegation_slashed_rewards).
+// withdrawable_rewards - pending_slashed_rewards).
 // This value reflects the staker’s current reward assets after considering slashing,
 // and thus represents the current asset balance rather than the historical total earned.
 //
@@ -246,14 +260,9 @@ message StakerClaimedRewards {
     (amino.dont_omitempty) = true
   ];
   // delegation_rewards_shares represents the shares of rewards that are lazily claimed
-  // and currently redelegated for compounding.
-  // In the decCoin, the amount represent the share in operator asset pool instead of
-  // the asset amount.
-  repeated cosmos.base.v1beta1.DecCoin delegation_rewards_shares = 4 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  // and currently redelegated for compounding. The shares might come from different operators,
+  // as the staker may change the default redelegation operator.
+  repeated RewardsDelegationShare delegation_rewards_shares = 4 [(gogoproto.nullable) = false];
   // pending_undelegation_rewards represents the pending undelegation rewards
   // through a reward undelegation transaction.
   repeated cosmos.base.v1beta1.DecCoin pending_undelegation_rewards = 5 [
@@ -262,8 +271,8 @@ message StakerClaimedRewards {
     (amino.dont_omitempty) = true
   ];
   // pending_slashed_rewards represents rewards from pending undelegations
-  // that have been slashed. Once the pending undelegation completes, these amounts
-  // are accounted into total_slashed_rewards. This field ensures accurate calculation
+  // that have been slashed. The slashing may result from malicious behavior
+  // or from instant unbonding. This field ensures accurate calculation
   // of the current staker’s rewards in an AVS by excluding the effect of slashed
   // pending undelegations.
   repeated cosmos.base.v1beta1.DecCoin pending_slashed_rewards = 6 [

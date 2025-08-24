@@ -23,8 +23,8 @@ message GenesisState {
   repeated AVSAddrAndFeePool all_avs_fee_pools = 4 [(gogoproto.nullable) = false];
   // all_avs_reward_distributions is the reward distributions for all AVSs.
   repeated AVSAddrAndRewardDistribution all_avs_reward_distributions = 5 [(gogoproto.nullable) = false];
-  // all_operator_outstanding_rewards is the outstanding rewards for all operators.
-  repeated KeyAndOperatorOutstandingRewards all_operator_outstanding_rewards = 6 [(gogoproto.nullable) = false];
+  // all_operator_unclaimed_rewards is the unclaimed rewards for all operators.
+  repeated KeyAndOperatorUnclaimedRewards all_operator_unclaimed_rewards = 6 [(gogoproto.nullable) = false];
   // all_delegation_change_infos is the delegation changes for all epochs and operators.
   repeated KeyAndDelegationChangeInfo all_delegation_change_infos = 7 [(gogoproto.nullable) = false];
   // all_delegation_change_infos is the delegation starting information for all epochs.
@@ -77,14 +77,14 @@ message AVSAddrAndRewardDistribution {
   AVSRewardDistribution avs_reward_distribution = 2 [(gogoproto.nullable) = false];
 }
 
-// KeyAndOperatorOutstandingRewards is a struct used in the genesis state.
-// It stores the outstanding rewards for a specific operator and AVS.
+// KeyAndOperatorUnclaimedRewards is a struct used in the genesis state.
+// It stores the unclaimed rewards for a specific operator and AVS.
 // The key, which is a combination of the operator and AVS, is included within it.
-message KeyAndOperatorOutstandingRewards {
+message KeyAndOperatorUnclaimedRewards {
   // key is is a combination of the operator and AVS
   string key = 1;
-  // operator_outstanding_rewards represents the outstanding rewards for the operator.
-  OperatorUnclaimedRewards operator_outstanding_rewards = 2 [(gogoproto.nullable) = false];
+  // operator_unclaimed_rewards represents the unclaimed rewards for the operator.
+  OperatorUnclaimedRewards operator_unclaimed_rewards = 2 [(gogoproto.nullable) = false];
 }
 
 // KeyAndDelegationChangeInfo is a struct used in the genesis state.

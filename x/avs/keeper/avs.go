@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
@@ -172,11 +174,11 @@ func (k Keeper) RegisterAVSWithChainID(
 	// guard against errors
 	ctx, writeFunc := oCtx.CacheContext()
 	// remove the version number and validate
-	params.ChainID = types.ChainIDWithoutRevision(params.ChainID)
+	params.ChainID = utils.ChainIDWithoutRevision(params.ChainID)
 	if len(params.ChainID) == 0 {
 		return false, common.Address{}, errorsmod.Wrap(types.ErrNotNull, "RegisterAVSWithChainID: chainID is null")
 	}
-	avsAddrStr := types.GenerateAVSAddress(params.ChainID)
+	avsAddrStr := utils.GenerateAVSAddress(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
 	// check that the AVS is registered
 	if isAVS, _ := k.IsAVS(ctx, avsAddrStr); isAVS {
@@ -274,7 +276,7 @@ func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddress string)
 		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parsing account acc address from Bech32")
 	}
 	// whitelist is disabled for avs of the dogfood type
-	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == types.GenerateAVSAddress(avsInfo.Info.ChainId) {
+	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == utils.GenerateAVSAddress(avsInfo.Info.ChainId) {
 		return true, nil
 	}
 	// Currently avs has no whitelist set and any operator can optin

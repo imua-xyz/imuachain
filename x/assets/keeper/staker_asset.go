@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
@@ -20,7 +21,7 @@ func (k Keeper) AllDeposits(ctx sdk.Context) (deposits []assetstype.DepositsBySt
 	for ; iterator.Valid(); iterator.Next() {
 		var stateInfo assetstype.StakerAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &stateInfo)
-		keyList, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		keyList, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}
@@ -54,7 +55,7 @@ func (k Keeper) GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInf
 	for ; iterator.Valid(); iterator.Next() {
 		var stateInfo assetstype.StakerAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &stateInfo)
-		keyList, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		keyList, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +117,7 @@ func (k Keeper) GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, as
 		return info, nil
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakerAssetInfos)
-	key := assetstype.GetJoinedStoreKey(stakerID, assetID)
+	key := utils.GetJoinedStoreKey(stakerID, assetID)
 	value := store.Get(key)
 	if value == nil {
 		return nil, assetstype.ErrNoStakerAssetKey.Wrapf("the key is:%s", key)
@@ -141,7 +142,7 @@ func (k Keeper) UpdateStakerAssetState(
 ) (info *assetstype.StakerAssetInfo, err error) {
 	// get the latest state,use the default initial state if the state hasn't been stored
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixReStakerAssetInfos)
-	key := assetstype.GetJoinedStoreKey(stakerID, assetID)
+	key := utils.GetJoinedStoreKey(stakerID, assetID)
 	assetState := assetstype.StakerAssetInfo{
 		TotalDepositAmount:        math.NewInt(0),
 		WithdrawableAmount:        math.NewInt(0),
@@ -206,7 +207,7 @@ func (k Keeper) GetStakerBalanceByAsset(ctx sdk.Context, stakerID string, assetI
 		return assetstype.StakerBalance{}, err
 	}
 
-	delegatedAmount, err := k.dk.TotalDelegatedAmountForStakerAsset(ctx, stakerID, assetID)
+	delegatedAmount, err := k.dk.TotalDelegatedAmountForStakingAsset(ctx, stakerID, assetID)
 	if err != nil {
 		return assetstype.StakerBalance{}, err
 	}

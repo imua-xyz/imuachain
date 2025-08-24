@@ -127,7 +127,7 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 
 		leftover, hasNeg := rewardsForStakers.SafeSub(assetsRewards.Add(totalRewardsFromCompounding...))
 		if hasNeg {
-			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to calculate the leftover,operator:%s,rewardsForStakers:%s,assetsRewards:%s,totalRewardsFromCompounding:%s", rewardsForStakers, assetsRewards, totalRewardsFromCompounding)
+			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to calculate the leftover,operator:%s,rewardsForStakers:%s,assetsRewards:%s,totalRewardsFromCompounding:%s", operatorProportion.OperatorAddr, rewardsForStakers, assetsRewards, totalRewardsFromCompounding)
 		}
 
 		// update the compounding rewards for the operator

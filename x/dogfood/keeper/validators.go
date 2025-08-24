@@ -4,13 +4,14 @@ import (
 	"sort"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
@@ -70,7 +71,7 @@ func (k Keeper) ApplyValidatorChanges(
 				// via stakingkeeeper.Validator(ctx, valAddr)
 				// then it fetches the cons pub key from said validator to generate the lookup
 				found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-					ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), addr,
+					ctx, utils.ChainIDWithoutRevision(ctx.ChainID()), addr,
 				)
 				if !found {
 					// should never happen
@@ -355,13 +356,13 @@ func (k Keeper) GetValidator(
 ) (stakingtypes.Validator, bool) {
 	accAddr := sdk.AccAddress(valAddr)
 	found, wrappedKey, err := k.operatorKeeper.GetOperatorConsKeyForChainID(
-		ctx, accAddr, avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, accAddr, utils.ChainIDWithoutRevision(ctx.ChainID()),
 	)
 	if !found || err != nil || wrappedKey == nil {
 		return stakingtypes.Validator{}, false
 	}
 	val, found := k.operatorKeeper.ValidatorByConsAddrForChainID(
-		ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, wrappedKey.ToConsAddr(), utils.ChainIDWithoutRevision(ctx.ChainID()),
 	)
 	if !found {
 		return stakingtypes.Validator{}, false

@@ -2,7 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/utils"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
@@ -42,7 +42,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			)
 			// clear the registered AVS. remember that this module stores
 			// the chainID with the revision but the AVS module stores it without.
-			chainID := avstypes.ChainIDWithoutRevision(subscriber.ChainID)
+			chainID := utils.ChainIDWithoutRevision(subscriber.ChainID)
 			// always guaranteed to exist
 			_, addr := wrapper.keeper.avsKeeper.IsAVSByChainID(ctx, chainID)
 			if err := wrapper.keeper.avsKeeper.DeleteAVSInfo(ctx, addr); err != nil {

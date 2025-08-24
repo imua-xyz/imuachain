@@ -3,8 +3,8 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
@@ -71,8 +71,8 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 
 	// send the rewards token for dogfood AVS
 	// check if the avs is dogfood
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	var withdrawAmountFromDogfood sdkmath.Int
 	if dogfoodAVSAddr == avs {
 		withdrawAmountFromDogfood = actualWithdrawAmountInt
@@ -180,8 +180,8 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 	amount sdkmath.Int, imuaReceiptAddr sdk.AccAddress,
 ) (sdk.Coins, error) {
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	stakerClaimedRewards, err := k.GetStakerClaimedRewards(ctx, stakerID, dogfoodAVSAddr)
 	if err != nil {
 		return nil, err
@@ -289,8 +289,8 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 // So it can be provided through a cosmos transaction.
 func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccAddress) (sdk.Coins, error) {
 	// check if the avs is dogfood
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	operatorCommission, err := k.GetOperatorCommission(ctx, operator.String(), dogfoodAVSAddr)
 	if err != nil {
 		return nil, err

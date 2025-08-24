@@ -12,14 +12,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-
 	tmprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -75,7 +72,7 @@ func (k *Keeper) QueryOperatorConsKeyForChainID(
 	if err != nil {
 		return nil, err
 	}
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(req.Chain)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(req.Chain)
 	found, key, err := k.GetOperatorConsKeyForChainID(
 		ctx, addr, chainIDWithoutRevision,
 	)
@@ -105,7 +102,7 @@ func (k Keeper) QueryOperatorConsAddressForChainID(
 	if err != nil {
 		return nil, err
 	}
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(req.Chain)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(req.Chain)
 	found, wrappedKey, err := k.GetOperatorConsKeyForChainID(
 		ctx, addr, chainIDWithoutRevision,
 	)
@@ -132,7 +129,7 @@ func (k Keeper) QueryAllOperatorConsKeysByChainID(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorConsKeyPair, 0)
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(req.Chain)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(req.Chain)
 	chainPrefix := types.ChainIDAndAddrKey(
 		types.BytePrefixForChainIDAndOperatorToConsKey,
 		chainIDWithoutRevision, nil,
@@ -172,7 +169,7 @@ func (k Keeper) QueryAllOperatorConsAddrsByChainID(
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	res := make([]*types.OperatorConsAddrPair, 0)
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(req.Chain)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(req.Chain)
 	chainPrefix := types.ChainIDAndAddrKey(
 		types.BytePrefixForChainIDAndOperatorToConsKey,
 		chainIDWithoutRevision, nil,
@@ -258,7 +255,7 @@ func (k *Keeper) QueryOperatorSlashInfo(goCtx context.Context, req *types.QueryO
 		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AvsAddress)
 	}
 
-	slashPrefix := utils.AppendMany(types.KeyPrefixOperatorSlashInfo, assetstype.GetJoinedStoreKeyForPrefix(req.OperatorAddr, strings.ToLower(req.AvsAddress)))
+	slashPrefix := utils.AppendMany(types.KeyPrefixOperatorSlashInfo, utils.GetJoinedStoreKeyForPrefix(req.OperatorAddr, strings.ToLower(req.AvsAddress)))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), slashPrefix)
 
 	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
@@ -334,9 +331,9 @@ func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest
 	var chainIDWithoutRevision string
 
 	if len(req.Chain) == 0 {
-		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(ctx.ChainID())
+		chainIDWithoutRevision = utils.ChainIDWithoutRevision(ctx.ChainID())
 	} else {
-		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(req.Chain)
+		chainIDWithoutRevision = utils.ChainIDWithoutRevision(req.Chain)
 	}
 	chainPrefix := types.ChainIDAndAddrKey(
 		types.BytePrefixForChainIDAndOperatorToConsKey,
@@ -354,7 +351,7 @@ func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest
 			return status.Error(codes.Internal, "invalid consensus key")
 		}
 		val, found := k.GetValidatorByConsAddrForChainID(
-			ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+			ctx, wrappedKey.ToConsAddr(), utils.ChainIDWithoutRevision(ctx.ChainID()),
 		)
 		if found {
 			vals = append(vals, val)
@@ -381,9 +378,9 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	var chainIDWithoutRevision string
 
 	if len(req.Chain) == 0 {
-		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(ctx.ChainID())
+		chainIDWithoutRevision = utils.ChainIDWithoutRevision(ctx.ChainID())
 	} else {
-		chainIDWithoutRevision = avstypes.ChainIDWithoutRevision(req.Chain)
+		chainIDWithoutRevision = utils.ChainIDWithoutRevision(req.Chain)
 	}
 	accAddr, err := sdk.AccAddressFromBech32(req.ValidatorAccAddr)
 	if err != nil {
@@ -391,7 +388,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	}
 
 	found, wrappedKey, err := k.GetOperatorConsKeyForChainID(
-		ctx, accAddr, avstypes.ChainIDWithoutRevision(chainIDWithoutRevision),
+		ctx, accAddr, utils.ChainIDWithoutRevision(chainIDWithoutRevision),
 	)
 
 	if !found || err != nil || wrappedKey == nil {
@@ -402,7 +399,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	}
 
 	val, found := k.GetValidatorByConsAddrForChainID(
-		ctx, wrappedKey.ToConsAddr(), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, wrappedKey.ToConsAddr(), utils.ChainIDWithoutRevision(ctx.ChainID()),
 	)
 	if !found {
 		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAccAddr)

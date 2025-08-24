@@ -32,6 +32,7 @@ type (
 		delegationKeeper feedistributiontypes.DelegationKeeper
 		SlashKeeper      feedistributiontypes.SlashKeeper
 		StakingKeeper    feedistributiontypes.StakingKeeper
+		OracleKeeper     feedistributiontypes.OracleKeeper
 
 		feeCollectorName string
 	}
@@ -50,7 +51,8 @@ func NewKeeper(
 	avsKeeper feedistributiontypes.AVSKeeper,
 	assetsKeeper feedistributiontypes.AssetsKeeper,
 	delegationKeeper feedistributiontypes.DelegationKeeper,
-	SlashKeeper feedistributiontypes.SlashKeeper,
+	slashKeeper feedistributiontypes.SlashKeeper,
+	oracleKeeper feedistributiontypes.OracleKeeper,
 ) Keeper {
 	// ensure distribution module account is set
 	if addr := accountKeeper.GetModuleAddress(feedistributiontypes.ModuleName); addr == nil {
@@ -75,7 +77,8 @@ func NewKeeper(
 		avsKeeper:        avsKeeper,
 		assetsKeeper:     assetsKeeper,
 		delegationKeeper: delegationKeeper,
-		SlashKeeper:      SlashKeeper,
+		SlashKeeper:      slashKeeper,
+		OracleKeeper:     oracleKeeper,
 	}
 
 	return *k
@@ -213,29 +216,29 @@ func (k Keeper) GetAllAVSRewardDistributions(ctx sdk.Context) ([]feedistribution
 	)
 }
 
-func (k Keeper) SetAllOperatorOutstandingRewards(
-	ctx sdk.Context, allOperatorOutstandingRewards []feedistributiontypes.KeyAndOperatorOutstandingRewards,
+func (k Keeper) SetAllOperatorUnclaimedRewards(
+	ctx sdk.Context, allOperatorUnclaimedRewards []feedistributiontypes.KeyAndOperatorUnclaimedRewards,
 ) error {
 	return GenericSetAllItems(
 		ctx, k,
-		feedistributiontypes.KeyPrefixOperatorUnclaimedRewards, allOperatorOutstandingRewards,
-		func(item feedistributiontypes.KeyAndOperatorOutstandingRewards) []byte {
+		feedistributiontypes.KeyPrefixOperatorUnclaimedRewards, allOperatorUnclaimedRewards,
+		func(item feedistributiontypes.KeyAndOperatorUnclaimedRewards) []byte {
 			return []byte(item.Key)
 		},
-		func(item feedistributiontypes.KeyAndOperatorOutstandingRewards) codec.ProtoMarshaler {
-			return &item.OperatorOutstandingRewards
+		func(item feedistributiontypes.KeyAndOperatorUnclaimedRewards) codec.ProtoMarshaler {
+			return &item.OperatorUnclaimedRewards
 		},
 	)
 }
 
-func (k Keeper) GetAllOperatorOutstandingRewards(ctx sdk.Context) ([]feedistributiontypes.KeyAndOperatorOutstandingRewards, error) {
+func (k Keeper) GetAllOperatorUnclaimedRewards(ctx sdk.Context) ([]feedistributiontypes.KeyAndOperatorUnclaimedRewards, error) {
 	return GenericGetAllItems(
 		ctx, k, feedistributiontypes.KeyPrefixOperatorUnclaimedRewards,
-		func() codec.ProtoMarshaler { return &feedistributiontypes.OperatorOutstandingRewards{} },
-		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndOperatorOutstandingRewards {
-			return feedistributiontypes.KeyAndOperatorOutstandingRewards{
-				Key:                        string(key),
-				OperatorOutstandingRewards: *value.(*feedistributiontypes.OperatorOutstandingRewards),
+		func() codec.ProtoMarshaler { return &feedistributiontypes.OperatorUnclaimedRewards{} },
+		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndOperatorUnclaimedRewards {
+			return feedistributiontypes.KeyAndOperatorUnclaimedRewards{
+				Key:                      string(key),
+				OperatorUnclaimedRewards: *value.(*feedistributiontypes.OperatorUnclaimedRewards),
 			}
 		},
 	)

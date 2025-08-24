@@ -20,7 +20,7 @@ func (k Keeper) AllOperatorAssets(ctx sdk.Context) (operatorAssets []assetstype.
 	ret := make([]assetstype.AssetsByOperator, 0)
 	var previousOperator string
 	for ; iterator.Valid(); iterator.Next() {
-		keyList, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		keyList, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}
@@ -62,13 +62,13 @@ func (k Keeper) GetOperatorAssetInfos(ctx sdk.Context, operator string, assetsFi
 
 func (k Keeper) IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
-	key := assetstype.GetJoinedStoreKey(operatorAddr.String(), assetID)
+	key := utils.GetJoinedStoreKey(operatorAddr.String(), assetID)
 	return store.Has(key)
 }
 
 func (k Keeper) GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
-	key := assetstype.GetJoinedStoreKey(operatorAddr.String(), assetID)
+	key := utils.GetJoinedStoreKey(operatorAddr.String(), assetID)
 	value := store.Get(key)
 	if value == nil {
 		return nil, assetstype.ErrNoOperatorAssetKey
@@ -84,7 +84,7 @@ func (k Keeper) GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.
 func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (stateBeforeUpdate assetstype.OperatorAssetInfo, err error) {
 	// get the latest state,use the default initial state if the state hasn't been stored
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
-	key := assetstype.GetJoinedStoreKey(operatorAddr.String(), assetID)
+	key := utils.GetJoinedStoreKey(operatorAddr.String(), assetID)
 	assetState := assetstype.OperatorAssetInfo{
 		TotalAmount:               math.ZeroInt(),
 		PendingUndelegationAmount: math.ZeroInt(),
@@ -153,7 +153,7 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts assetstype.OperatorAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
-		keys, err := assetstype.ParseJoinedKey(iterator.Key())
+		keys, err := utils.ParseJoinedKey(iterator.Key())
 		if err != nil {
 			return err
 		}

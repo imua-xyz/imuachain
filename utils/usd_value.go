@@ -1,8 +1,6 @@
-package keeper
+package utils
 
-import (
-	sdkmath "cosmossdk.io/math"
-)
+import sdkmath "cosmossdk.io/math"
 
 // CalculateUSDValue assetUSDValue = (assetAmount*price)/(10^(asset.decimal+priceDecimal))
 func CalculateUSDValue(assetAmount sdkmath.Int, price sdkmath.Int, assetDecimal uint32, priceDecimal uint8) sdkmath.LegacyDec {

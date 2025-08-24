@@ -5,9 +5,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // this line is used by starport scaffolding # genesis/types/import
@@ -84,7 +85,7 @@ func (gs GenesisState) Validate() error {
 		if !common.IsHexAddress(info.TaskContractAddress) {
 			return fmt.Errorf("invalid hex address: %s", info.TaskContractAddress)
 		}
-		infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(info.TaskContractAddress), strconv.FormatUint(info.TaskId, 10))
+		infoKey := utils.GetJoinedStoreKey(strings.ToLower(info.TaskContractAddress), strconv.FormatUint(info.TaskId, 10))
 
 		if taskInfoMap[string(infoKey)] {
 			return fmt.Errorf("duplicate task address: %s", info.TaskContractAddress)
@@ -98,7 +99,7 @@ func (gs GenesisState) Validate() error {
 		if !common.IsHexAddress(taskNum.TaskAddress) {
 			return fmt.Errorf("invalid hex address: %s", taskNum.TaskAddress)
 		}
-		taskNumKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskNum.TaskAddress),
+		taskNumKey := utils.GetJoinedStoreKey(strings.ToLower(taskNum.TaskAddress),
 			strconv.FormatUint(taskNum.TaskId, 10))
 		if taskNumMap[string(taskNumKey)] {
 			return fmt.Errorf("duplicate task ID %v ", taskNum)
@@ -133,7 +134,7 @@ func (gs GenesisState) Validate() error {
 		if err != nil {
 			return fmt.Errorf("invalid operatorAddress address: %s", result.OperatorAddress)
 		}
-		resultKey := assetstype.GetJoinedStoreKey(result.OperatorAddress, strings.ToLower(result.TaskContractAddress),
+		resultKey := utils.GetJoinedStoreKey(result.OperatorAddress, strings.ToLower(result.TaskContractAddress),
 			strconv.FormatUint(result.TaskId, 10))
 
 		if taskResultMap[string(resultKey)] {

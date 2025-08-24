@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	sdkmath "cosmossdk.io/math"
+	"github.com/imua-xyz/imuachain/utils"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -9,9 +10,7 @@ import (
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
-	operatorkeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -31,7 +30,7 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 	suite.CheckLengthOfValidatorUpdates(0, nil, "register operator but don't opt in")
 
 	// opt-in with a key - it will fail because there is not enough self delegation to opt-in
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 	found, avsAddress := suite.App.AVSManagerKeeper.IsAVSByChainID(suite.Ctx, chainIDWithoutRevision)
 	suite.True(found, "AVS not found")
 	key := utiltx.GenerateConsensusKey()
@@ -76,7 +75,7 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 		OperatorAddress: operatorAddress,
 		OpAmount:        amount,
 	}
-	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+	_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 	suite.NoError(err)
 	suite.CheckLengthOfValidatorUpdates(0, nil, "delegate but not self delegate")
 	// mark it as self delegation
@@ -105,10 +104,10 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 		OperatorAddress: operatorAddress,
 		OpAmount:        depositParams.OpAmount,
 	}
-	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+	_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 	suite.NoError(err)
 	totalAmount := amount.Add(additionalAmount)
-	totalAmountInUSD := operatorkeeper.CalculateUSDValue(
+	totalAmountInUSD := utils.CalculateUSDValue(
 		totalAmount,
 		sdkmath.NewInt(1), // asset price
 		assetDecimals,
@@ -145,10 +144,10 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 		OperatorAddress: operatorAddress,
 		OpAmount:        amount,
 	}
-	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+	_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 	suite.NoError(err)
 	totalAmount = totalAmount.Add(amount)
-	totalAmountInUSD = operatorkeeper.CalculateUSDValue(
+	totalAmountInUSD = utils.CalculateUSDValue(
 		totalAmount,
 		sdkmath.NewInt(1), // asset price
 		assetDecimals,
@@ -178,11 +177,11 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 			OperatorAddress: operatorAddress,
 			OpAmount:        amount,
 		}
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 		suite.NoError(err)
 		totalAmount = totalAmount.Add(amount)
 	}
-	totalAmountInUSD = operatorkeeper.CalculateUSDValue(
+	totalAmountInUSD = utils.CalculateUSDValue(
 		totalAmount,
 		sdkmath.NewInt(1), // asset price
 		assetDecimals,
@@ -213,7 +212,7 @@ func (suite *KeeperTestSuite) TestBasicOperations() {
 			OperatorAddress: suite.Operators[i],
 			OpAmount:        amount,
 		}
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 		suite.NoError(err)
 	}
 	suite.CheckLengthOfValidatorUpdates(

@@ -27,9 +27,9 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState feedistributiontypes.Genes
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all avs reward distributions"))
 	}
-	err = k.SetAllOperatorOutstandingRewards(ctx, genState.AllOperatorOutstandingRewards)
+	err = k.SetAllOperatorUnclaimedRewards(ctx, genState.AllOperatorUnclaimedRewards)
 	if err != nil {
-		panic(errorsmod.Wrap(err, "failed to set all operator outstanding rewards"))
+		panic(errorsmod.Wrap(err, "failed to set all operator unclaimed rewards"))
 	}
 	err = k.SetAllDelegationChangeInfo(ctx, genState.AllDelegationChangeInfos)
 	if err != nil {
@@ -83,9 +83,9 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *feedistributiontypes.GenesisStat
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all avs reward distributions"))
 	}
-	genesis.AllOperatorOutstandingRewards, err = k.GetAllOperatorOutstandingRewards(ctx)
+	genesis.AllOperatorUnclaimedRewards, err = k.GetAllOperatorUnclaimedRewards(ctx)
 	if err != nil {
-		panic(errorsmod.Wrap(err, "failed to get all operator outstanding rewards"))
+		panic(errorsmod.Wrap(err, "failed to get all operator unclaimed rewards"))
 	}
 	genesis.AllDelegationChangeInfos, err = k.GetAllDelegationChangeInfo(ctx)
 	if err != nil {

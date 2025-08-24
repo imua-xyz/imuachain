@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/imua-xyz/imuachain/utils"
 	"strings"
 	"time"
 
@@ -12,7 +13,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -91,7 +91,7 @@ func (suite *OperatorTestSuite) TestOptIn() {
 	// check if the related state is correct
 	price, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 	suite.NoError(err)
-	usdValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
+	usdValue := utils.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
 	expectedState := &StateForCheck{
 		OptedInfo: &operatorTypes.OptedInfo{
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),

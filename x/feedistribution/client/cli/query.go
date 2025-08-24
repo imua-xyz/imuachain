@@ -40,7 +40,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 		CmdQueryOperatorCurrentRewards(),
 		CmdQueryOperatorHistoricalRewards(),
 		CmdQueryAllOperatorHistoricalRewards(),
-		CmdQueryOperatorOutstandingRewards(),
+		CmdQueryOperatorUnclaimedRewards(),
 		CmdQueryOperatorSlashEvent(),
 		CmdQueryOperatorSlashEvents(),
 		CmdQueryStakerClaimedRewards(),
@@ -312,13 +312,13 @@ func CmdQueryAVSRewardDistribution() *cobra.Command {
 	)
 }
 
-func CmdQueryOperatorOutstandingRewards() *cobra.Command {
+func CmdQueryOperatorUnclaimedRewards() *cobra.Command {
 	return newOperatorAVSCmd(
-		"operator-outstanding-rewards [operator] [avsAddr]",
-		"get the outstanding rewards for the operator",
-		"get the outstanding rewards for the operator",
+		"operator-unclaimed-rewards [operator] [avsAddr]",
+		"get the unclaimed rewards for the operator",
+		"get the unclaimed rewards for the operator",
 		func(q types.QueryClient, ctx context.Context, req *types.OperatorAVSRequest) (proto.Message, error) {
-			return q.OperatorOutstandingRewards(ctx, req)
+			return q.OperatorUnclaimedRewards(ctx, req)
 		},
 	)
 }

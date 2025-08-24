@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -14,7 +16,7 @@ import (
 // DelegateTo : It doesn't need to check the active status of the operator in middlewares when
 // delegating assets to the operator. This is because it adds assets to the operator's amount.
 // But it needs to check if operator has been slashed or frozen.
-func (k Keeper) DelegateTo(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) error {
+func (k Keeper) DelegateTo(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) (sdkmath.LegacyDec, sdkmath.Int, error) {
 	return k.delegateTo(ctx, params, true)
 }
 
@@ -24,34 +26,38 @@ func (k *Keeper) delegateTo(
 	ctx sdk.Context,
 	params *delegationtype.DelegationOrUndelegationParams,
 	notGenesis bool,
-) error {
+) (sdkmath.LegacyDec, sdkmath.Int, error) {
 	if !params.OpAmount.IsPositive() {
-		return delegationtype.ErrAmountIsNotPositive
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, delegationtype.ErrAmountIsNotPositive
 	}
 	// check if the delegatedTo address is an operator
 	if !k.operatorKeeper.IsOperator(ctx, params.OperatorAddress) {
-		return errorsmod.Wrap(delegationtype.ErrOperatorNotExist, fmt.Sprintf("input operatorAddr is:%s", params.OperatorAddress))
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, errorsmod.Wrap(delegationtype.ErrOperatorNotExist, fmt.Sprintf("input operatorAddr is:%s", params.OperatorAddress))
 	}
 
 	// check if the operator has been slashed or frozen
 	// skip the check if not genesis (or chain restart)
 	if notGenesis && k.slashKeeper.IsOperatorFrozen(ctx, params.OperatorAddress) {
-		return delegationtype.ErrOperatorIsFrozen
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, delegationtype.ErrOperatorIsFrozen
 	}
-	stakerID, assetID := assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
+
+	var stakerID, assetID string
 	if params.RewardAsset {
 		// handle the reward asset delegation
-
+		stakerID, assetID = params.RewardStakerID, params.RewardAssetID
+		// The delegated rewards come from the distribution module,
+		// so the rewards state will be updated there when this function is called.
 	} else {
+		stakerID, assetID = assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
 		if assetID != assetstype.ImuachainAssetID {
 			// check if the staker asset has been deposited and the canWithdraw amount is bigger than the delegation amount
 			info, err := k.assetsKeeper.GetStakerSpecifiedAssetInfo(ctx, stakerID, assetID)
 			if err != nil {
-				return err
+				return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 			}
 
 			if info.WithdrawableAmount.LT(params.OpAmount) {
-				return errorsmod.Wrap(delegationtype.ErrDelegationAmountTooBig, fmt.Sprintf("the opAmount is:%s the WithdrawableAmount amount is:%s", params.OpAmount, info.WithdrawableAmount))
+				return sdkmath.LegacyDec{}, sdkmath.Int{}, errorsmod.Wrap(delegationtype.ErrDelegationAmountTooBig, fmt.Sprintf("the opAmount is:%s the WithdrawableAmount amount is:%s", params.OpAmount, info.WithdrawableAmount))
 			}
 
 			// update staker asset state
@@ -59,13 +65,13 @@ func (k *Keeper) delegateTo(
 				WithdrawableAmount: params.OpAmount.Neg(),
 			})
 			if err != nil {
-				return err
+				return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 			}
 		} else {
 			coins := sdk.NewCoins(sdk.NewCoin(assetstype.ImuachainAssetDenom, params.OpAmount))
 			// transfer the delegation amount from the staker account to the delegated pool
 			if err := k.bankKeeper.DelegateCoinsFromAccountToModule(ctx, params.StakerAddress, delegationtype.DelegatedPoolName, coins); err != nil {
-				return err
+				return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 			}
 			// auto associate it, if there is a match. note that both are byte versions of bech32
 			// AccAddress. there is no need to check for an existing association because:
@@ -78,7 +84,7 @@ func (k *Keeper) delegateTo(
 				// always returns nil.
 				err := k.SetAssociatedOperator(ctx, stakerID, params.OperatorAddress.String())
 				if err != nil {
-					return err
+					return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 				}
 			}
 			// this emitted event is not the total amount; it is the additional amount.
@@ -97,7 +103,7 @@ func (k *Keeper) delegateTo(
 	// calculate the share from the delegation amount
 	share, err := k.CalculateShare(ctx, params.OperatorAddress, assetID, params.OpAmount)
 	if err != nil {
-		return err
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 	}
 
 	deltaOperatorAsset := assetstype.DeltaOperatorSingleAsset{
@@ -107,7 +113,7 @@ func (k *Keeper) delegateTo(
 	// Check if the staker belongs to the delegated operator. Increase the operator's share if yes.
 	operator, err := k.GetAssociatedOperator(ctx, stakerID)
 	if err != nil {
-		return err
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 	}
 	if operator == params.OperatorAddress.String() {
 		deltaOperatorAsset.OperatorShare = share
@@ -115,7 +121,7 @@ func (k *Keeper) delegateTo(
 
 	prevAssetState, err := k.assetsKeeper.UpdateOperatorAssetState(ctx, params.OperatorAddress, assetID, deltaOperatorAsset)
 	if err != nil {
-		return err
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 	}
 
 	deltaAmount := &delegationtype.DeltaDelegationAmounts{}
@@ -126,27 +132,27 @@ func (k *Keeper) delegateTo(
 	}
 	_, preDelegationState, err := k.UpdateDelegationState(ctx, stakerID, assetID, params.OperatorAddress.String(), deltaAmount)
 	if err != nil {
-		return err
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 	}
 	err = k.AppendStakerForOperator(ctx, params.OperatorAddress.String(), assetID, stakerID)
 	if err != nil {
-		return err
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 	}
 
+	// calculate the previous delegation amount
+	totalDelegatableShare := preDelegationState.UndelegatableShare.Add(preDelegationState.RewardUndelegatableShare)
+	preDelegatedAmount, err := TokensFromShares(totalDelegatableShare, prevAssetState.TotalShare, prevAssetState.TotalAmount)
+	if err != nil {
+		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
+	}
 	if notGenesis {
-		// calculate the previous delegation amount
-		preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
-			prevAssetState.TotalShare, prevAssetState.TotalAmount)
-		if err != nil {
-			return err
-		}
 		// call the hooks registered by the other modules
 		err = k.Hooks().AfterDelegation(ctx, stakerID, assetID, params.OperatorAddress, preDelegatedAmount, prevAssetState)
 		if err != nil {
-			return err
+			return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 		}
 	}
-	return nil
+	return share, preDelegatedAmount, nil
 }
 
 // UndelegateFrom handles normal and instant undelegation.
@@ -162,10 +168,15 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		return delegationtype.ErrOperatorNotExist
 	}
 	// get staker delegation state, then check the validation of Undelegation amount
-	stakerID, assetID := assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
+	var stakerID, assetID string
+	if params.RewardAsset {
+		stakerID, assetID = params.RewardStakerID, params.RewardAssetID
+	} else {
+		stakerID, assetID = assetstype.GetStakerIDAndAssetID(params.ClientChainID, params.StakerAddress, params.AssetsAddress)
+	}
 
 	// verify the undelegation amount
-	share, err := k.ValidateUndelegationAmount(ctx, params.OperatorAddress, stakerID, assetID, params.OpAmount)
+	share, err := k.ValidateUndelegationAmount(ctx, params.RewardAsset, params.OperatorAddress, stakerID, assetID, params.OpAmount)
 	if err != nil {
 		return err
 	}
@@ -180,14 +191,15 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		return err
 	}
 	// calculate the previous delegation amount
-	preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+	totalDelegatableShare := preDelegationState.UndelegatableShare.Add(preDelegationState.RewardUndelegatableShare)
+	preDelegatedAmount, err := TokensFromShares(totalDelegatableShare,
 		prevAssetState.TotalShare, prevAssetState.TotalAmount)
 	if err != nil {
 		return err
 	}
 
 	// remove share
-	removeToken, err := k.RemoveShare(ctx, true, params.OperatorAddress, stakerID, assetID, share)
+	removeToken, err := k.RemoveShare(ctx, true, params.RewardAsset, params.OperatorAddress, stakerID, assetID, share)
 	if err != nil {
 		return err
 	}
@@ -202,11 +214,14 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		BlockNumber:           uint64(ctx.BlockHeight()),
 		Amount:                removeToken,
 		ActualCompletedAmount: removeToken,
+		RewardAsset:           params.RewardAsset,
+		RewardUndelegations:   params.RewardUndelegations,
 	}
 
 	var completedEpochID string
 	var completedEpochNumber int64
 	var applySlash bool
+	instantSlashRatio := sdkmath.LegacyZeroDec()
 	if params.InstantUnbonding {
 		applySlash, completedEpochID, completedEpochNumber, err = k.operatorKeeper.GetInstantUnbondingExpiration(ctx, params.OperatorAddress)
 		if err != nil {
@@ -216,7 +231,8 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		if applySlash {
 			// Get the instant undelegation penalty
 			penalty := k.GetInstantUndelegationPenalty(ctx)
-			penaltyAmount := params.OpAmount.Mul(sdk.NewInt(int64(penalty))).Quo(sdk.NewInt(100))
+			instantSlashRatio = sdkmath.LegacyNewDec(int64(penalty)).QuoInt64(100)
+			penaltyAmount := instantSlashRatio.MulInt(params.OpAmount).TruncateInt()
 			r.ActualCompletedAmount = r.ActualCompletedAmount.Sub(penaltyAmount)
 		}
 	} else {
@@ -224,6 +240,18 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		if err != nil {
 			return err
 		}
+	}
+
+	if params.RewardAsset {
+		// decrease the reward delegation share if it's an reward undelegation
+		undelegationAmounts, totalCompletedAmount, err := params.ReduceDelegationShare(ctx, params.RewardStakerID, params.RewardAssetID, params.OperatorAddress, instantSlashRatio, params.OpAmount)
+		if err != nil {
+			return err
+		}
+		if instantSlashRatio.IsPositive() {
+			r.ActualCompletedAmount = totalCompletedAmount
+		}
+		r.RewardUndelegations = undelegationAmounts
 	}
 
 	r.CompletedEpochIdentifier = completedEpochID

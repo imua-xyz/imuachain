@@ -550,6 +550,7 @@ func NewImuachainApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.EpochsKeeper,
+		&app.DistrKeeper, // intentionally a pointer, since not yet initialized.
 	)
 
 	// the dogfood module is the first AVS. it receives slashing calls from either x/slashing
@@ -713,6 +714,7 @@ func NewImuachainApp(
 		app.AssetsKeeper,
 		&app.DelegationKeeper,
 		delegationTypes.VirtualSlashKeeper{},
+		&app.OracleKeeper,
 	)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(

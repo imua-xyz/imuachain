@@ -2,12 +2,12 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/imua-xyz/imuachain/utils"
-	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -16,7 +16,7 @@ func (k Keeper) SetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, ope
 	delegationChangeInfo feedistributiontypes.DelegationChangeInfo,
 ) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	key := utils.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	b := k.cdc.MustMarshal(&delegationChangeInfo)
 	store.Set(key, b)
 	return nil
@@ -24,7 +24,7 @@ func (k Keeper) SetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, ope
 
 func (k Keeper) GetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) (feedistributiontypes.DelegationChangeInfo, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	key := utils.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.DelegationChangeInfo{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
@@ -37,13 +37,13 @@ func (k Keeper) GetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, ope
 
 func (k Keeper) HasStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	key := utils.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	return store.Has(key)
 }
 
 func (k Keeper) DeleteStakeChangedDelegationsByEpoch(ctx sdk.Context, epochIdentifier string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
-	iterator := sdk.KVStorePrefixIterator(store, assetstype.GetJoinedStoreKeyForPrefix(epochIdentifier))
+	iterator := sdk.KVStorePrefixIterator(store, utils.GetJoinedStoreKeyForPrefix(epochIdentifier))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -64,7 +64,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 	updatedKeyValues := make([]utils.KeyValue, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var DelegationChangeInfo feedistributiontypes.DelegationChangeInfo
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
+		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 3)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ func (k Keeper) UpdateAVSCommunityPool(ctx sdk.Context, avsAddr string, isIncrea
 func (k Keeper) SetOperatorCommission(ctx sdk.Context, operator, avsAddr string, commission feedistributiontypes.OperatorCommission) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCommission)
 	bz := k.cdc.MustMarshal(&commission)
-	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	key := utils.GetJoinedStoreKey(operator, avsAddr)
 	store.Set(key, bz)
 	return nil
 }
@@ -162,7 +162,7 @@ func (k Keeper) SetOperatorCommission(ctx sdk.Context, operator, avsAddr string,
 // GetOperatorCommission : get the commission for the avs and operator
 func (k Keeper) GetOperatorCommission(ctx sdk.Context, operator, avsAddr string) (feedistributiontypes.OperatorCommission, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCommission)
-	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	key := utils.GetJoinedStoreKey(operator, avsAddr)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorCommission{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorCommission, operator:%s,avsAddr:%s", operator, avsAddr)
@@ -175,7 +175,7 @@ func (k Keeper) GetOperatorCommission(ctx sdk.Context, operator, avsAddr string)
 // HasOperatorCommission : check whether the accumulated commission for the avs and operator exists
 func (k Keeper) HasOperatorCommission(ctx sdk.Context, operator, avsAddr string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCommission)
-	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	key := utils.GetJoinedStoreKey(operator, avsAddr)
 	return store.Has(key)
 }
 
@@ -209,7 +209,7 @@ func (k Keeper) IncreaseOperatorCommission(ctx sdk.Context, operator, avsAddr st
 func (k Keeper) SetOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string, rewards feedistributiontypes.OperatorUnclaimedRewards) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorUnclaimedRewards)
 	bz := k.cdc.MustMarshal(&rewards)
-	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	key := utils.GetJoinedStoreKey(operator, avsAddr)
 	store.Set(key, bz)
 	return nil
 }
@@ -217,7 +217,7 @@ func (k Keeper) SetOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr s
 // GetOperatorUnclaimedRewards : get the unclaimed avs rewards for the operator
 func (k Keeper) GetOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string) (feedistributiontypes.OperatorUnclaimedRewards, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorUnclaimedRewards)
-	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	key := utils.GetJoinedStoreKey(operator, avsAddr)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorUnclaimedRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorUnclaimedRewards, operator:%s,avsAddr:%s", operator, avsAddr)
@@ -230,7 +230,7 @@ func (k Keeper) GetOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr s
 // HasOperatorUnclaimedRewards : check whether the unclaimed avs rewards exists for the operator
 func (k Keeper) HasOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorUnclaimedRewards)
-	key := assetstype.GetJoinedStoreKey(operator, avsAddr)
+	key := utils.GetJoinedStoreKey(operator, avsAddr)
 	return store.Has(key)
 }
 
@@ -288,7 +288,7 @@ func (k Keeper) IterateOperatorUnclaimedRewards(
 		k.cdc,
 		k.storeKey,
 		feedistributiontypes.KeyPrefixOperatorUnclaimedRewards,
-		assetstype.GetJoinedStoreKeyForPrefix(operator),
+		utils.GetJoinedStoreKeyForPrefix(operator),
 		isUpdate,
 		2,
 		func(bz []byte) (*feedistributiontypes.OperatorUnclaimedRewards, error) {
@@ -306,7 +306,7 @@ func (k Keeper) IterateOperatorUnclaimedRewards(
 func (k Keeper) SetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string, rewards feedistributiontypes.OperatorCurrentRewards) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
 	bz := k.cdc.MustMarshal(&rewards)
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier)
 	store.Set(key, bz)
 	return nil
 }
@@ -314,7 +314,7 @@ func (k Keeper) SetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, ep
 // GetOperatorCurrentRewards : get the current rewards for the specific operator, epochIdentifier and assetID
 func (k Keeper) GetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string) (feedistributiontypes.OperatorCurrentRewards, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorCurrentRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorCurrentRewards, operator:%s,assetID:%s,epochIdentifier:%s", operator, assetID, epochIdentifier)
@@ -328,7 +328,7 @@ func (k Keeper) GetOperatorCurrentRewards(ctx sdk.Context, operator, assetID, ep
 // and assetID exists.
 func (k Keeper) HasOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorCurrentRewards)
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier)
 	return store.Has(key)
 }
 
@@ -384,7 +384,7 @@ func (k Keeper) SetOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 	bz := k.cdc.MustMarshal(&historicalRewards)
 	// this encoding ensures the key is ordered by period.
 	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
 	store.Set(key, bz)
 	return nil
 }
@@ -397,7 +397,7 @@ func (k Keeper) DeleteOperatorHistoricalRewards(ctx sdk.Context, operator, asset
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
 	// this encoding ensures the key is ordered by period.
 	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
 	store.Delete(key)
 	return nil
 }
@@ -410,7 +410,7 @@ func (k Keeper) GetOperatorHistoricalReward(ctx sdk.Context, operator, assetID, 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
 	// this encoding ensures the key is ordered by period.
 	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorHistoricalRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetOperatorHistoricalReward, operator:%s,assetID:%s,epochIdentifier:%s,period:%d", operator, assetID, epochIdentifier, period)
@@ -423,7 +423,7 @@ func (k Keeper) GetOperatorHistoricalReward(ctx sdk.Context, operator, assetID, 
 // OperatorRewardsForAllPeriods : get the operator historical rewards for all periods
 func (k Keeper) OperatorRewardsForAllPeriods(ctx sdk.Context, operator, assetID, epochIdentifier string) ([]feedistributiontypes.OperatorHistoricalRewardsAndPeriod, error) {
 	ret := make([]feedistributiontypes.OperatorHistoricalRewardsAndPeriod, 0)
-	iterationPrefix := assetstype.GetJoinedStoreKeyForPrefix(operator, assetID, epochIdentifier)
+	iterationPrefix := utils.GetJoinedStoreKeyForPrefix(operator, assetID, epochIdentifier)
 
 	opFunc := func(_, _, _ string, period uint64, operatorHistoricalReward *feedistributiontypes.OperatorHistoricalRewards) (bool, error) {
 		ret = append(ret, feedistributiontypes.OperatorHistoricalRewardsAndPeriod{
@@ -446,7 +446,7 @@ func (k Keeper) HasOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
 	// this encoding ensures the key is ordered by period.
 	periodHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(period))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, periodHexStr)
 	return store.Has(key)
 }
 
@@ -461,7 +461,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 	updatedKeyValues := make([]utils.KeyValue, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var operatorHistoricalReward feedistributiontypes.OperatorHistoricalRewards
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 4)
+		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 4)
 		if err != nil {
 			return err
 		}
@@ -495,7 +495,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 func (k Keeper) SetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string, startingInfo feedistributiontypes.DelegationStartingInfo) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
 	bz := k.cdc.MustMarshal(&startingInfo)
-	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	key := utils.GetJoinedStoreKey(delegationKey, epochIdentifier)
 	store.Set(key, bz)
 	return nil
 }
@@ -503,7 +503,7 @@ func (k Keeper) SetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 // GetDelegationStartingInfo : get the starting information for the delegation
 func (k Keeper) GetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) (feedistributiontypes.DelegationStartingInfo, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
-	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	key := utils.GetJoinedStoreKey(delegationKey, epochIdentifier)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.DelegationStartingInfo{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetDelegationStartingInfo, delegationKey:%s,epochIdentifier:%s", delegationKey, epochIdentifier)
@@ -516,7 +516,7 @@ func (k Keeper) GetDelegationStartingInfo(ctx sdk.Context, delegationKey, epochI
 // DeleteDelegationStartingInfo : delete the starting information for the delegation
 func (k Keeper) DeleteDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
-	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	key := utils.GetJoinedStoreKey(delegationKey, epochIdentifier)
 	store.Delete(key)
 	return nil
 }
@@ -524,7 +524,7 @@ func (k Keeper) DeleteDelegationStartingInfo(ctx sdk.Context, delegationKey, epo
 // HasDelegationStartingInfo : check whether the starting information for the delegation exists.
 func (k Keeper) HasDelegationStartingInfo(ctx sdk.Context, delegationKey, epochIdentifier string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixDelegationStartingInfo)
-	key := assetstype.GetJoinedStoreKey(delegationKey, epochIdentifier)
+	key := utils.GetJoinedStoreKey(delegationKey, epochIdentifier)
 	return store.Has(key)
 }
 
@@ -537,7 +537,7 @@ func (k Keeper) SetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochI
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
 	heightHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(blockHeight))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr, heightHexStr)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr, heightHexStr)
 	store.Set(key, bz)
 	return nil
 }
@@ -550,7 +550,7 @@ func (k Keeper) GetOperatorSlashEvent(ctx sdk.Context, operator, assetID, epochI
 	// this encoding ensures the key is ordered by epoch number.
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(epochNumber))
 	heightHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(blockHeight))
-	key := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr, heightHexStr)
+	key := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr, heightHexStr)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.OperatorSlashEvent{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf(
@@ -594,10 +594,10 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 ) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(startingEpochNumber))
-	startKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
+	startKey := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
 	// Add 1 to include all slash events in the ending epoch
 	epochNumberHexStr = hexutil.Encode(sdk.Uint64ToBigEndian(endingEpochNumber + 1))
-	endKey := assetstype.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
+	endKey := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
 
 	iter := store.Iterator(
 		startKey,
@@ -607,7 +607,7 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 	for ; iter.Valid(); iter.Next() {
 		var event feedistributiontypes.OperatorSlashEvent
 		k.cdc.MustUnmarshal(iter.Value(), &event)
-		keys, err := assetstype.ParseJoinedStoreKey(iter.Key(), 5)
+		keys, err := utils.ParseJoinedStoreKey(iter.Key(), 5)
 		if err != nil {
 			return err
 		}
@@ -668,7 +668,7 @@ func (k Keeper) SetStakerClaimedRewards(ctx sdk.Context, stakerID, avsAddr strin
 ) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerClaimedRewards)
 	bz := k.cdc.MustMarshal(&rewards)
-	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
+	key := utils.GetJoinedStoreKey(stakerID, avsAddr)
 	store.Set(key, bz)
 	return nil
 }
@@ -678,7 +678,7 @@ func (k Keeper) GetStakerClaimedRewards(ctx sdk.Context, stakerID,
 	avsAddr string,
 ) (feedistributiontypes.StakerClaimedRewards, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerClaimedRewards)
-	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
+	key := utils.GetJoinedStoreKey(stakerID, avsAddr)
 	b := store.Get(key)
 	if b == nil {
 		return feedistributiontypes.StakerClaimedRewards{}, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetStakerClaimedRewards, stakerID:%s,avsAddr:%s", stakerID, avsAddr)
@@ -691,7 +691,7 @@ func (k Keeper) GetStakerClaimedRewards(ctx sdk.Context, stakerID,
 // HasStakerClaimedRewards : check whether the claimed avs rewards exists for the operator
 func (k Keeper) HasStakerClaimedRewards(ctx sdk.Context, stakerID, avsAddr string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakerClaimedRewards)
-	key := assetstype.GetJoinedStoreKey(stakerID, avsAddr)
+	key := utils.GetJoinedStoreKey(stakerID, avsAddr)
 	return store.Has(key)
 }
 
@@ -706,31 +706,35 @@ func (k Keeper) UpdateStakerClaimedRewards(ctx sdk.Context, stakerID, avsAddr st
 			return err
 		}
 	}
-	err = feedistributiontypes.UpdateDecCoins(rewards.OutstandingRewards, deltaRewards.OutstandingRewards)
+	rewards.OutstandingRewards, err = feedistributiontypes.UpdateDecCoins(rewards.OutstandingRewards, deltaRewards.OutstandingRewards)
 	if err != nil {
 		return err
 	}
-	err = feedistributiontypes.UpdateDecCoins(rewards.WithdrawnRewards, deltaRewards.WithdrawnRewards)
+	rewards.WithdrawnRewards, err = feedistributiontypes.UpdateDecCoins(rewards.WithdrawnRewards, deltaRewards.WithdrawnRewards)
 	if err != nil {
 		return err
 	}
-	err = feedistributiontypes.UpdateDecCoins(rewards.HistoricalTotalRewards, deltaRewards.HistoricalTotalRewards)
+	rewards.HistoricalTotalRewards, err = feedistributiontypes.UpdateDecCoins(rewards.HistoricalTotalRewards, deltaRewards.HistoricalTotalRewards)
 	if err != nil {
 		return err
 	}
-	err = feedistributiontypes.UpdateDecCoins(rewards.DelegationRewardsShares, deltaRewards.DelegationRewardsShares)
+	if len(deltaRewards.DelegationRewardsShares) != 0 {
+		sum := feedistributiontypes.RewardsDelegationShares(rewards.DelegationRewardsShares).Add(deltaRewards.DelegationRewardsShares...)
+		if sum.IsAnyNegative() {
+			return fmt.Errorf("DelegationRewardsShares have negative values after the update")
+		}
+		rewards.DelegationRewardsShares = sum
+	}
+
+	rewards.PendingUndelegationRewards, err = feedistributiontypes.UpdateDecCoins(rewards.PendingUndelegationRewards, deltaRewards.PendingUndelegationRewards)
 	if err != nil {
 		return err
 	}
-	err = feedistributiontypes.UpdateDecCoins(rewards.PendingUndelegationRewards, deltaRewards.PendingUndelegationRewards)
+	rewards.PendingSlashedRewards, err = feedistributiontypes.UpdateDecCoins(rewards.PendingSlashedRewards, deltaRewards.PendingSlashedRewards)
 	if err != nil {
 		return err
 	}
-	err = feedistributiontypes.UpdateDecCoins(rewards.PendingSlashedRewards, deltaRewards.PendingSlashedRewards)
-	if err != nil {
-		return err
-	}
-	err = feedistributiontypes.UpdateDecCoins(rewards.WithdrawableRewards, deltaRewards.WithdrawableRewards)
+	rewards.WithdrawableRewards, err = feedistributiontypes.UpdateDecCoins(rewards.WithdrawableRewards, deltaRewards.WithdrawableRewards)
 	if err != nil {
 		return err
 	}
@@ -761,14 +765,14 @@ func (k Keeper) IterateStakerClaimedRewards(
 	ctx sdk.Context,
 	stakerID string,
 	isUpdate bool,
-	opFunc func(avs string, rewards *feedistributiontypes.StakerClaimedRewards) (bool, bool, error),
+	opFunc func(avs string, rewards *feedistributiontypes.StakerClaimedRewards) (isBreak, isChanged bool, err error),
 ) error {
 	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.StakerClaimedRewards](
 		ctx,
 		k.cdc,
 		k.storeKey,
 		feedistributiontypes.KeyPrefixStakerClaimedRewards,
-		assetstype.GetJoinedStoreKeyForPrefix(stakerID),
+		utils.GetJoinedStoreKeyForPrefix(stakerID),
 		isUpdate,
 		2,
 		func(bz []byte) (*feedistributiontypes.StakerClaimedRewards, error) {
@@ -793,7 +797,7 @@ func (k Keeper) IterateOperatorCommissions(ctx sdk.Context, operator string, isU
 		k.cdc,
 		k.storeKey,
 		feedistributiontypes.KeyPrefixOperatorCommission,
-		assetstype.GetJoinedStoreKeyForPrefix(operator),
+		utils.GetJoinedStoreKeyForPrefix(operator),
 		isUpdate,
 		2,
 		func(bz []byte) (*feedistributiontypes.OperatorCommission, error) {
@@ -816,7 +820,7 @@ func (k Keeper) GetStakerAllClaimedRewards(ctx sdk.Context, stakerID string,
 			AVSAddress:     avs,
 			ClaimedRewards: *rewards,
 		})
-		return false, true, nil
+		return false, false, nil
 	}
 	// iterate to withdraw rewards from multiple AVSs, because different AVSs might
 	// use the same asset as reward.

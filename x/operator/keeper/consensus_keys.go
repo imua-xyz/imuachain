@@ -523,7 +523,7 @@ func (k *Keeper) SetAllPrevConsKeys(ctx sdk.Context, prevConsKeys []types.PrevCo
 	store := ctx.KVStore(k.storeKey)
 	for i := range prevConsKeys {
 		prevKey := prevConsKeys[i]
-		keys, err := assetstypes.ParseJoinedStoreKey([]byte(prevKey.Key), 2)
+		keys, err := utils.ParseJoinedStoreKey([]byte(prevKey.Key), 2)
 		if err != nil {
 			return err
 		}
@@ -555,7 +555,7 @@ func (k *Keeper) GetAllPrevConsKeys(ctx sdk.Context) ([]types.PrevConsKey, error
 		}
 		wrappedConsKey := keytypes.NewWrappedConsKeyFromTmProtoKey(&consKey)
 		ret = append(ret, types.PrevConsKey{
-			Key:          string(assetstypes.GetJoinedStoreKey(chainID, operatorAddr.String())),
+			Key:          string(utils.GetJoinedStoreKey(chainID, operatorAddr.String())),
 			ConsensusKey: wrappedConsKey.ToHex(),
 		})
 	}
@@ -566,7 +566,7 @@ func (k *Keeper) SetAllOperatorKeyRemovals(ctx sdk.Context, operatorKeyRemoval [
 	store := ctx.KVStore(k.storeKey)
 	for i := range operatorKeyRemoval {
 		keyRemoval := operatorKeyRemoval[i]
-		keys, err := assetstypes.ParseJoinedStoreKey([]byte(keyRemoval.Key), 2)
+		keys, err := utils.ParseJoinedStoreKey([]byte(keyRemoval.Key), 2)
 		if err != nil {
 			return err
 		}
@@ -593,7 +593,7 @@ func (k *Keeper) GetAllOperatorKeyRemovals(ctx sdk.Context) ([]types.OperatorKey
 		}
 
 		ret = append(ret, types.OperatorKeyRemoval{
-			Key: string(assetstypes.GetJoinedStoreKey(operatorAddr.String(), chainID)),
+			Key: string(utils.GetJoinedStoreKey(operatorAddr.String(), chainID)),
 		})
 	}
 	return ret, nil
@@ -715,14 +715,14 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		if !ok {
 			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateRealTimeOperatorUSDValue map: decimals, key: assetID")
 		}
-		currentAssetTotalUSD := CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
+		currentAssetTotalUSD := utils.CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
 		ret.Staking = ret.Staking.Add(currentAssetTotalUSD)
 		// calculate the token amount from the share for the operator
 		selfAmount, err := delegationkeeper.TokensFromShares(state.OperatorShare, state.TotalShare, state.TotalAmount)
 		if err != nil {
 			return err
 		}
-		currentAssetSelfUSD := CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal)
+		currentAssetSelfUSD := utils.CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal)
 		ret.SelfStaking = ret.SelfStaking.Add(currentAssetSelfUSD)
 		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 		if err != nil {

@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"strings"
 
 	"github.com/imua-xyz/imuachain/utils"
@@ -32,7 +31,7 @@ func (k *Keeper) UpdateOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr s
 	if operatorAddr == "" {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "UpdateOperatorUSDValue the operatorAddr is empty")
 	}
-	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
+	key = utils.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 
 	usdInfo := operatortypes.OperatorOptedUSDValue{
 		SelfUSDValue:   sdkmath.LegacyZeroDec(),
@@ -78,7 +77,7 @@ func (k *Keeper) InitOperatorUSDValue(ctx sdk.Context, avsAddr, operatorAddr str
 	if operatorAddr == "" {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "InitOperatorUSDValue the operatorAddr is empty")
 	}
-	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
+	key = utils.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	if store.Has(key) {
 		// The operator's USD value won’t be deleted immediately when opting out,
 		// so just return nil if it has already been initialized.
@@ -111,7 +110,7 @@ func (k *Keeper) DeleteOperatorUSDValues(ctx sdk.Context, avsAddr string, operat
 		if operatorAddr == "" {
 			return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "DeleteOperatorUSDValue the operatorAddr is empty")
 		}
-		key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
+		key = utils.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 		store.Delete(key)
 		operatorEvents += fmt.Sprintf("%v,", operatorAddr)
 	}
@@ -136,7 +135,7 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 	hasOperator := false
 	operatorEvents := ""
 	for ; iterator.Valid(); iterator.Next() {
-		parsed, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		parsed, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return err
 		}
@@ -180,16 +179,24 @@ func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr
 	var ret operatortypes.OperatorOptedUSDValue
 	var key []byte
 	if operatorAddr == "" {
-		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrParameterInvalid, "GetOperatorOptedUSDValue the operatorAddr is empty")
+		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrParameterInvalid, "GetOperatorActiveUSDValue the operatorAddr is empty")
 	}
-	key = assetstype.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
+	key = utils.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	value := store.Get(key)
 	if value == nil {
-		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorOptedUSDValue: key is %s", key))
+		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorActiveUSDValue: key is %s", key))
 	}
 	k.cdc.MustUnmarshal(value, &ret)
 
 	return ret, nil
+}
+
+func (k *Keeper) GetOperatorActiveUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (sdkmath.LegacyDec, error) {
+	optedUSDValue, err := k.GetOperatorOptedUSDValue(ctx, avsAddr, operatorAddr)
+	if err != nil {
+		return sdkmath.LegacyDec{}, err
+	}
+	return optedUSDValue.ActiveUSDValue, nil
 }
 
 // UpdateAVSUSDValue is a function to update the total USD share of an Avs,
@@ -290,7 +297,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	updatedKeyValues := make([]utils.KeyValue, 0)
 	updatedOperators := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedKey(iterator.Key())
+		keys, err := utils.ParseJoinedKey(iterator.Key())
 		if err != nil {
 			return err
 		}
@@ -486,7 +493,7 @@ func (k *Keeper) CalculateRealTimeOperatorUSDValue(
 				return err
 			}
 			decimal = assetInfo.AssetBasicInfo.Decimals
-			usdValue := CalculateUSDValue(state.TotalAmount.Add(state.PendingUndelegationAmount), price.Value, decimal, price.Decimal)
+			usdValue := utils.CalculateUSDValue(state.TotalAmount.Add(state.PendingUndelegationAmount), price.Value, decimal, price.Decimal)
 			ctx.Logger().Info("CalculateRealTimeOperatorUSDValue: get price for slash", "assetID", assetID, "assetDecimal", decimal, "price", price, "totalAmount", state.TotalAmount, "pendingUndelegationAmount", state.PendingUndelegationAmount, "StakingAndWaitUnbonding", ret.StakingAndWaitUnbonding, "addUSDValue", usdValue)
 			ret.StakingAndWaitUnbonding.AddMut(usdValue)
 		} else {
@@ -501,13 +508,13 @@ func (k *Keeper) CalculateRealTimeOperatorUSDValue(
 			if !ok {
 				return errorsmod.Wrap(operatortypes.ErrKeyNotExistInMap, "CalculateRealTimeOperatorUSDValue map: decimals, key: assetID")
 			}
-			ret.Staking.AddMut(CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
+			ret.Staking.AddMut(utils.CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal))
 			// calculate the token amount from the share for the operator
 			selfAmount, err := delegationkeeper.TokensFromShares(state.OperatorShare, state.TotalShare, state.TotalAmount)
 			if err != nil {
 				return err
 			}
-			ret.SelfStaking.AddMut(CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal))
+			ret.SelfStaking.AddMut(utils.CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal))
 		}
 		return nil
 	}
@@ -652,7 +659,7 @@ func (k *Keeper) CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr s
 				if err != nil {
 					return true, err
 				}
-				usdValue := CalculateUSDValue(amount, price.Value, assetInfo.AssetBasicInfo.Decimals, price.Decimal)
+				usdValue := utils.CalculateUSDValue(amount, price.Value, assetInfo.AssetBasicInfo.Decimals, price.Decimal)
 				totalUSDValue = totalUSDValue.Add(usdValue)
 			}
 		}
@@ -671,7 +678,7 @@ func (k *Keeper) SetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("SetOperatorAssetUSDValue the amount is:%v", amount))
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
-	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	key := utils.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	setValue := operatortypes.DecValueField{Amount: amount}
 	bz := k.cdc.MustMarshal(&setValue)
 	store.Set(key, bz)
@@ -680,7 +687,7 @@ func (k *Keeper) SetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 
 func (k *Keeper) DeleteOperatorAssetUSDValueByEpoch(ctx sdk.Context, epochIdentifier, operator string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
-	prefix := assetstype.GetJoinedStoreKey(epochIdentifier, operator)
+	prefix := utils.GetJoinedStoreKey(epochIdentifier, operator)
 	iterator := sdk.KVStorePrefixIterator(store, prefix)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
@@ -692,7 +699,7 @@ func (k *Keeper) DeleteOperatorAssetUSDValueByEpoch(ctx sdk.Context, epochIdenti
 // GetOperatorAssetUSDValue is a function to retrieve the USD value of operator asset,
 func (k *Keeper) GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) (sdkmath.LegacyDec, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
-	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	key := utils.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	var ret operatortypes.DecValueField
 	value := store.Get(key)
 	if value == nil {
@@ -706,7 +713,7 @@ func (k *Keeper) GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, oper
 // HasOperatorAssetUSDValue check whether the USD value of operator asset exists
 func (k *Keeper) HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorAssetUSDValue)
-	key := assetstype.GetJoinedStoreKey(epochIdentifier, operator, assetID)
+	key := utils.GetJoinedStoreKey(epochIdentifier, operator, assetID)
 	return store.Has(key)
 }
 
@@ -779,7 +786,7 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers [
 			return nil
 		}
 		decimal = assetInfo.AssetBasicInfo.Decimals
-		usdValue := CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
+		usdValue := utils.CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
 		for _, epochIdentifier := range impactfulEpochIdentifiers {
 			err = k.SetOperatorAssetUSDValue(ctx, epochIdentifier, operator, assetID, usdValue)
 			if err != nil {
@@ -897,7 +904,7 @@ func (k *Keeper) SetOperatorRewardUSDValue(
 		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("SetOperatorRewardUSDValue the amount is:%v", amount))
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixCompoundingRewardsUSDValues)
-	key := assetstype.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, symbol)
+	key := utils.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, symbol)
 	setValue := operatortypes.DecValueField{Amount: amount}
 	bz := k.cdc.MustMarshal(&setValue)
 	store.Set(key, bz)
@@ -908,7 +915,7 @@ func (k *Keeper) RemoveAllStaleOperatorRewardUSDs(
 	ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{},
 ) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixCompoundingRewardsUSDValues)
-	iterator := sdk.KVStorePrefixIterator(store, assetstype.GetJoinedStoreKeyForPrefix(receivingAVS, operator))
+	iterator := sdk.KVStorePrefixIterator(store, utils.GetJoinedStoreKeyForPrefix(receivingAVS, operator))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -932,7 +939,7 @@ func (k *Keeper) IterateOperatorRewardsUSDValue(
 		k.cdc,
 		k.storeKey,
 		operatortypes.KeyPrefixCompoundingRewardsUSDValues,
-		assetstype.GetJoinedStoreKeyForPrefix(receivingAVS, operator),
+		utils.GetJoinedStoreKeyForPrefix(receivingAVS, operator),
 		isUpdate,
 		4,
 		func(bz []byte) (*operatortypes.DecValueField, error) {
@@ -944,112 +951,4 @@ func (k *Keeper) IterateOperatorRewardsUSDValue(
 			return opFunc(keys[2], keys[3], value)
 		},
 	)
-}
-
-func (k *Keeper) HandleOperatorRewardsUSDValues(
-	ctx sdk.Context, receivingAVS, rewardSourceAVS, operator string,
-	unclaimedRewards feedistributiontypes.OperatorUnclaimedRewards,
-	validRewardUSDs map[string]interface{},
-	calculateUSDValue func(avs, symbol string, amount sdk.Dec) (sdkmath.LegacyDec, error),
-) (sdkmath.LegacyDec, error) {
-	totalUSDValue := sdkmath.LegacyZeroDec()
-	// iterate over the outstanding rewards
-	for _, outstandingReward := range unclaimedRewards.OutstandingRewards {
-		// handle the outstanding rewards earned from staking token.
-		outstandingUSDValue, err := calculateUSDValue(rewardSourceAVS, outstandingReward.Denom, outstandingReward.Amount)
-		if err != nil {
-			return sdkmath.LegacyDec{}, err
-		}
-
-		// handle the rewards earned by compounding
-		compoundingRewards := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(outstandingReward.Denom)
-		compoundingUSDValue := sdkmath.LegacyZeroDec()
-		for _, rewardsPerAsset := range compoundingRewards {
-			for _, reward := range rewardsPerAsset.Rewards {
-				usdValuePerAsset, err := calculateUSDValue(rewardsPerAsset.AVSAddress, reward.Denom, reward.Amount)
-				if err != nil {
-					return sdkmath.LegacyDec{}, err
-				}
-				compoundingUSDValue.AddMut(usdValuePerAsset)
-			}
-		}
-		// set the USD value for specific AVS reward asset
-		totalCompoundingUSDValue := compoundingUSDValue.Add(outstandingUSDValue)
-		if totalCompoundingUSDValue.IsPositive() {
-			err = k.SetOperatorRewardUSDValue(ctx, receivingAVS, rewardSourceAVS, operator, outstandingReward.Denom, totalCompoundingUSDValue)
-			if err != nil {
-				return sdkmath.LegacyDec{}, err
-			}
-			totalUSDValue.AddMut(totalCompoundingUSDValue)
-			key := string(assetstype.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, outstandingReward.Denom))
-			validRewardUSDs[key] = nil
-		}
-	}
-	return totalUSDValue, nil
-}
-
-// UpdateAllRewardsUSDForOperator calculate and update all compounding rewards USD values for operator
-// The rewards USD value of every AVS will be stored to calculate the compounding rewards.
-// And the total USD values from all AVS rewards will be returned.
-func (k *Keeper) UpdateAllRewardsUSDForOperator(
-	ctx sdk.Context,
-	receivingAVS, operator string,
-	assetsMap map[string]interface{},
-) (sdkmath.LegacyDec, error) {
-	assetPrices := make(map[string]oracletype.Price, 0)
-	calculateUSDValue := func(avs, symbol string, amount sdk.Dec) (sdkmath.LegacyDec, error) {
-		if !amount.IsPositive() {
-			ctx.Logger().Info("UpdateAllRewardsUSDForOperator: skip the reward with no-positive amount", "avs", avs, "symbol", symbol)
-			return sdkmath.LegacyZeroDec(), nil
-		}
-		// get the assetID by rewardSourceAVS and symbol
-		assetID, err := k.distributionKeeper.GetAVSRewardAssetIDBySymbol(ctx, avs, symbol)
-		if err != nil {
-			return sdkmath.LegacyDec{}, err
-		}
-		_, exist := assetsMap[assetID]
-		if !exist {
-			// the reward asset isn't supported by the receivingAVS, skipping it.
-			return sdkmath.LegacyZeroDec(), nil
-		}
-
-		// get the price of the reward asset
-		price, ok := assetPrices[assetID]
-		if !ok {
-			price, err = k.oracleKeeper.GetSpecifiedAssetsPrice(ctx, assetID)
-			if err != nil {
-				return sdkmath.LegacyDec{}, err
-			}
-			assetPrices[assetID] = price
-		}
-		if !price.Value.IsPositive() {
-			// reward asset with a non-positive price can't contribute any USD value, skipping it.
-			return sdkmath.LegacyZeroDec(), nil
-		}
-		// calculate the USD value of each reward asset
-		usdPerAsset := CalculateDecUSDValue(amount, price.Value, price.Decimal)
-		return usdPerAsset, nil
-	}
-
-	validRewardUSDs := make(map[string]interface{}, 0)
-	totalUSDValue := sdk.ZeroDec()
-	opFunc := func(rewardSourceAVS string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
-		// calculate and set the USD value for specific operator and rewardSourceAVS
-		avsRewardsUSD, err := k.HandleOperatorRewardsUSDValues(ctx, receivingAVS, rewardSourceAVS, operator, *rewards, validRewardUSDs, calculateUSDValue)
-		if err != nil {
-			return false, false, err
-		}
-		totalUSDValue.AddMut(avsRewardsUSD)
-		return false, false, nil
-	}
-	err := k.distributionKeeper.IterateOperatorUnclaimedRewards(ctx, operator, false, opFunc)
-	if err != nil {
-		return sdkmath.LegacyDec{}, err
-	}
-	// remove the invalid rewards USD values
-	err = k.RemoveAllStaleOperatorRewardUSDs(ctx, receivingAVS, operator, validRewardUSDs)
-	if err != nil {
-		return sdkmath.LegacyDec{}, err
-	}
-	return totalUSDValue, nil
 }

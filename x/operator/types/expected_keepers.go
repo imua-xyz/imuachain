@@ -8,7 +8,6 @@ import (
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
-	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
@@ -159,11 +158,7 @@ type EpochsKeeper interface {
 
 // DistributionKeeper represents the expected keeper interface for the distribution module.
 type DistributionKeeper interface {
-	IterateOperatorUnclaimedRewards(
-		ctx sdk.Context,
-		operator string,
-		isUpdate bool,
-		opFunc func(avs string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error),
-	) error
 	GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
+	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) error
+	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]interface{}) (sdkmath.LegacyDec, error)
 }

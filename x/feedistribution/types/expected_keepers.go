@@ -2,11 +2,13 @@ package types
 
 import (
 	"context"
+
 	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
@@ -62,6 +64,8 @@ type OperatorKeeper interface {
 		opFunc func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error),
 	) error
 	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
+	SetOperatorRewardUSDValue(ctx sdk.Context, receivingAVS, rewardSourceAVS, operator, symbol string, amount sdkmath.LegacyDec) error
+	RemoveAllStaleOperatorRewardUSDs(ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{}) error
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.
@@ -81,9 +85,11 @@ type AssetsKeeper interface {
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.
 type DelegationKeeper interface {
-	GetDelegationInfoWithAmount(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, error)
+	GetDelegationInfoWithAmounts(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, sdkmath.Int, error)
 	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
 	GetStakersByOperator(ctx sdk.Context, operator, assetID string) (delegationtype.StakerList, error)
+	DelegateTo(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) (sdkmath.LegacyDec, sdkmath.Int, error)
+	UndelegateFrom(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) error
 }
 
 type SlashKeeper interface {
@@ -95,6 +101,12 @@ type StakingKeeper interface {
 	GetAllImuachainValidators(
 		ctx sdk.Context,
 	) (validators []dogfoodtypes.ImuachainValidator)
+}
+
+type OracleKeeper interface {
+	// GetSpecifiedAssetsPrice is a function to retrieve the asset price according to the
+	// assetID.
+	GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (oracletype.Price, error)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

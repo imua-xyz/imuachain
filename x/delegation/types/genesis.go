@@ -138,7 +138,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 func (gs GenesisState) ValidateStakerList() error {
 	validationFunc := func(_ int, stakersByOperator StakersByOperator) error {
 		// validate the key
-		stringList, err := assetstypes.ParseJoinedStoreKey([]byte(stakersByOperator.Key), 2)
+		stringList, err := utils.ParseJoinedStoreKey([]byte(stakersByOperator.Key), 2)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateStakerList: %s", err.Error())
 		}

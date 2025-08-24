@@ -20,7 +20,12 @@ type DelegationOrUndelegationParams struct {
 	// indicator for instant unbonding, default is false.
 	InstantUnbonding bool
 	// indicates whether it's a delegation/undelegation regarding reward.
-	RewardAsset bool
+	RewardAsset           bool
+	RewardAssetID         string
+	RewardStakerID        string
+	ReduceDelegationShare func(ctx sdk.Context, stakerID, assetID string,
+		operatorAccAddr sdk.AccAddress, instantSlashRatio sdk.Dec, amount sdkmath.Int) ([]UndelegationAmountPerAVS, sdkmath.Int, error)
+	RewardUndelegations []UndelegationAmountPerAVS
 }
 
 func NewDelegationOrUndelegationParams(

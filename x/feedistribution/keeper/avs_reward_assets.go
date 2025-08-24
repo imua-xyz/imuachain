@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	sdkmath "cosmossdk.io/math"
@@ -25,7 +27,7 @@ func (k Keeper) UpdateAVSRewardAssetState(ctx sdk.Context, avsAddr, assetID stri
 		return types.ErrInvalidRewardAssetParameter.Wrapf("UpdateAVSRewardAssetState: the input delta is nil,AvsAddr:%s,assetID:%s", avsAddr, assetID)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
-	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	key := utils.GetJoinedStoreKey(avsAddr, assetID)
 	value := store.Get(key)
 	if value == nil {
 		return types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,assetID:%s", avsAddr, assetID)
@@ -89,8 +91,8 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 		}
 		symbolMap[assetInfo.Symbol] = nil
 		_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(assetInfo.LayerZeroChainID, "", assetInfo.Address)
-		assetKey := assetstype.GetJoinedStoreKey(avsAddr, assetID)
-		symbolKey := assetstype.GetJoinedStoreKey(avsAddr, assetInfo.Symbol)
+		assetKey := utils.GetJoinedStoreKey(avsAddr, assetID)
+		symbolKey := utils.GetJoinedStoreKey(avsAddr, assetInfo.Symbol)
 		if assetStore.Has(assetKey) {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("the reward asset is already stored,AvsAddr:%s,assetID:%s", avsAddr, assetID)
 		}
@@ -153,14 +155,14 @@ func (k Keeper) IsAVSAllRewardsClaimed(ctx sdk.Context, avsAddr string) bool {
 // IsAVSRewardAssetByAssetID checks if the assetID is a reward asset of specified AVS.
 func (k Keeper) IsAVSRewardAssetByAssetID(ctx sdk.Context, avsAddr, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
-	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	key := utils.GetJoinedStoreKey(avsAddr, assetID)
 	return store.Has(key)
 }
 
 // GetAVSRewardAssetInfo returns the avs reward asset information stored against the  provided AvsAddr and assetID.
 func (k Keeper) GetAVSRewardAssetInfo(ctx sdk.Context, avsAddr, assetID string) (info *types.AVSRewardAsset, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
-	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	key := utils.GetJoinedStoreKey(avsAddr, assetID)
 	value := store.Get(key)
 	if value == nil {
 		return nil, types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,assetID:%s", avsAddr, assetID)
@@ -174,14 +176,14 @@ func (k Keeper) GetAVSRewardAssetInfo(ctx sdk.Context, avsAddr, assetID string) 
 // IsAVSRewardAssetBySymbol checks if the symbol is a reward asset of specified AVS.
 func (k Keeper) IsAVSRewardAssetBySymbol(ctx sdk.Context, avsAddr, symbol string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
-	key := assetstype.GetJoinedStoreKey(avsAddr, symbol)
+	key := utils.GetJoinedStoreKey(avsAddr, symbol)
 	return store.Has(key)
 }
 
 // GetAVSRewardAssetIDBySymbol returns the avs reward assetID stored against the  provided AvsAddr and symbol.
 func (k Keeper) GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssetBySymbol)
-	key := assetstype.GetJoinedStoreKey(avsAddr, symbol)
+	key := utils.GetJoinedStoreKey(avsAddr, symbol)
 	value := store.Get(key)
 	if value == nil {
 		return assetID, types.ErrAVSRewardAssetNotFound.Wrapf("avs:%s,symbol:%s", avsAddr, symbol)
@@ -212,7 +214,7 @@ func (k Keeper) UpdateAVSRewardAssetMetaInfo(ctx sdk.Context, avsAddr, assetID s
 		return err
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
-	key := assetstype.GetJoinedStoreKey(avsAddr, assetID)
+	key := utils.GetJoinedStoreKey(avsAddr, assetID)
 	info.AssetBasicInfo.MetaInfo = metainfo
 	bz := k.cdc.MustMarshal(info)
 	store.Set(key, bz)
@@ -282,9 +284,9 @@ func (k Keeper) SetAllAVSRewardAssets(ctx sdk.Context, allAVSRewardAssets []type
 			bz := k.cdc.MustMarshal(&rewardAsset)
 			_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(rewardAsset.AssetBasicInfo.LayerZeroChainID,
 				"", rewardAsset.AssetBasicInfo.Address)
-			assetKey := assetstype.GetJoinedStoreKey(avsRewardAsset.Avs, assetID)
+			assetKey := utils.GetJoinedStoreKey(avsRewardAsset.Avs, assetID)
 			assetStore.Set(assetKey, bz)
-			symbolKey := assetstype.GetJoinedStoreKey(avsRewardAsset.Avs,
+			symbolKey := utils.GetJoinedStoreKey(avsRewardAsset.Avs,
 				rewardAsset.AssetBasicInfo.Symbol)
 			assetSymbolStore.Set(symbolKey, []byte(assetID))
 		}
@@ -300,7 +302,7 @@ func (k Keeper) GetAllAVSRewardAssets(ctx sdk.Context) ([]types.AVSAddrAndReward
 	ret := make([]types.AVSAddrAndRewardAssets, 0)
 	avs := ""
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +328,7 @@ func (k Keeper) IsRegisteredRewardAsset(ctx sdk.Context, assetID string) bool {
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
+		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return false
 		}

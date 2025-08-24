@@ -69,7 +69,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 			return err
 		}
 		// calculate and store the USD value from compounding rewards
-		rewardsUSDValue, err := k.UpdateAllRewardsUSDForOperator(ctx, avsAddr, operator, avsAssetsMap)
+		rewardsUSDValue, err := k.distributionKeeper.UpdateAllRewardsUSDForOperator(ctx, avsAddr, operator, avsAssetsMap)
 		if err != nil {
 			return err
 		}

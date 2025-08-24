@@ -70,3 +70,7 @@ type EpochsKeeper interface {
 	GetEpochInfo(ctx sdk.Context, epochIdentifier string) (epochsTypes.EpochInfo, bool)
 	AllEpochInfos(ctx sdk.Context) []epochsTypes.EpochInfo
 }
+
+type DistributionKeeper interface {
+	CompleteRewardUndelegation(ctx sdk.Context, record UndelegationRecord) error
+}

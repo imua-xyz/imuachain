@@ -3,6 +3,8 @@ package keeper
 import (
 	"strconv"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
 	"cosmossdk.io/math"
@@ -11,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/types/keys"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -239,8 +240,8 @@ func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 			return nil, err
 		}
 
-		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-		dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+		chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+		dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 		// fund the reward pool of dogfood AVS
 		validRewards := make(sdk.DecCoins, 0)
 		for _, singleReward := range feesCollected {
@@ -482,7 +483,7 @@ func (k Keeper) RewardProportionsFnForDogfood() OperatorRewardProportionsFn {
 				}
 				wrappedKey = keys.NewWrappedConsKeyFromSdkKey(consensusKey)
 				found, accAddress = k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-					ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
+					ctx, utils.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
 				)
 				if !found {
 					ctx.Logger().Error("Operator address not found; skipping", "consAddress", wrappedKey.ToConsAddr(), "i", i)
@@ -559,8 +560,8 @@ func (k Keeper) AVSRewardAndProportionsByParam(ctx sdk.Context, avsAddr string) 
 	var operatorRewardProportionsFn OperatorRewardProportionsFn
 	var isDogfood bool
 	// check if the avs is dogfood
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	if dogfoodAVSAddr == avsAddr {
 		isDogfood = true
 		avsEpochRewardFn = k.EpochRewardFnForDogfood()

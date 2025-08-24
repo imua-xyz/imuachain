@@ -7,7 +7,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/imua-xyz/imuachain/x/operator/keeper"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -24,7 +23,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	suite.NoError(err)
 
 	// opt into the AVS
-	avsAddr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()))
+	avsAddr := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(suite.Ctx.ChainID()))
 	err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddr, avsAddr)
 	suite.NoError(err)
 

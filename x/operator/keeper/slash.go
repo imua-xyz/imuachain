@@ -11,7 +11,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -27,9 +26,10 @@ func GetSlashIDForDogfood(infraction stakingtypes.Infraction, infractionHeight i
 }
 
 // SlashFromUndelegation executes the slash from an undelegation, reduce the .ActualCompletedAmount from undelegationRecords
-func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) *types.SlashFromUndelegation {
+func (k *Keeper) SlashFromUndelegation(ctx sdk.Context, undelegation *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) (*types.SlashFromUndelegation, error) {
 	if undelegation.ActualCompletedAmount.IsZero() {
-		return nil
+		// do nothing because there isn't amount to be slashed
+		return nil, nil
 	}
 	slashAmount := slashProportion.MulInt(undelegation.Amount).TruncateInt()
 	// reduce the actual_completed_amount in the record
@@ -40,11 +40,19 @@ func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slas
 		undelegation.ActualCompletedAmount = undelegation.ActualCompletedAmount.Sub(slashAmount)
 	}
 
+	if undelegation.RewardAsset {
+		// handle the reward states if it's a reward asset undelegation
+		err := k.distributionKeeper.SlashRewardUndelegation(ctx, undelegation, slashProportion)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &types.SlashFromUndelegation{
 		StakerID: undelegation.StakerId,
 		AssetID:  undelegation.AssetId,
 		Amount:   slashAmount,
-	}
+	}, nil
 }
 
 func (k *Keeper) CheckSlashParameter(ctx sdk.Context, parameter *types.SlashInputInfo) error {
@@ -94,7 +102,10 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	if parameter.SlashEventHeight < ctx.BlockHeight() {
 		// get the undelegations that are submitted after the slash.
 		opFunc := func(undelegation *delegationtype.UndelegationRecord) error {
-			slashFromUndelegation := SlashFromUndelegation(undelegation, newSlashProportion)
+			slashFromUndelegation, err := k.SlashFromUndelegation(ctx, undelegation, newSlashProportion)
+			if err != nil {
+				return err
+			}
 			if slashFromUndelegation != nil {
 				executionInfo.SlashUndelegations = append(executionInfo.SlashUndelegations, *slashFromUndelegation)
 				ctx.EventManager().EmitEvent(
@@ -264,7 +275,7 @@ func (k Keeper) SlashWithInfractionReason(
 		return sdkmath.ZeroInt()
 	}
 
-	chainID := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	chainID := utils.ChainIDWithoutRevision(ctx.ChainID())
 	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
 	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)

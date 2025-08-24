@@ -7,7 +7,6 @@ import (
 	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -58,7 +57,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 		OperatorAddress: operatorAddress,
 		OpAmount:        amount,
 	}
-	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+	_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 	suite.NoError(err)
 	// self delegate
 	err = suite.App.DelegationKeeper.AssociateOperatorWithStaker(
@@ -67,7 +66,7 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	suite.NoError(err)
 	// opt in
 	oldKey := utiltx.GenerateConsensusKey()
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 	_, avsAddress := suite.App.AVSManagerKeeper.IsAVSByChainID(suite.Ctx, chainIDWithoutRevision)
 	_, err = suite.OperatorMsgServer.OptIntoAVS(
 		sdk.WrapSDKContext(suite.Ctx),
@@ -196,7 +195,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 		OperatorAddress: operatorAddress,
 		OpAmount:        depositParams.OpAmount,
 	}
-	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+	_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 	suite.NoError(err)
 	// mark as self delegation
 	err = suite.App.DelegationKeeper.AssociateOperatorWithStaker(
@@ -226,7 +225,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	suite.CheckLengthOfValidatorUpdates(0, []int64{}, "undelegate without opt in")
 	// opt in
 	oldKey := utiltx.GenerateConsensusKey()
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 	_, avsAddress := suite.App.AVSManagerKeeper.IsAVSByChainID(suite.Ctx, chainIDWithoutRevision)
 	_, err = suite.OperatorMsgServer.OptIntoAVS(
 		sdk.WrapSDKContext(suite.Ctx),

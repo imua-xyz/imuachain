@@ -49,10 +49,10 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_distribution/{avs}";
   }
-  // OperatorOutstandingRewards queries the outstanding rewards for an operator.
-  rpc OperatorOutstandingRewards(OperatorAVSRequest) returns (QueryOperatorOutstandingRewardsResponse) {
+  // OperatorUnclaimedRewards queries the unclaimed rewards for an operator.
+  rpc OperatorUnclaimedRewards(OperatorAVSRequest) returns (QueryOperatorUnclaimedRewardsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_outstanding_rewards/{operator}/{avs}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_unclaimed_rewards/{operator}/{avs}";
   }
   // StakerClaimedRewards queries the claimed rewards for a staker.
   rpc StakerClaimedRewards(QueryStakerClaimedRewardsRequest) returns (QueryStakerClaimedRewardsResponse) {
@@ -328,10 +328,10 @@ message OperatorAVSRequest {
   string avs = 2;
 }
 
-// QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards
-message QueryOperatorOutstandingRewardsResponse{
-  // operator_outstanding_rewards is the outstanding rewards returned for an operator
-  OperatorUnclaimedRewards operator_outstanding_rewards = 1;
+// QueryOperatorUnclaimedRewardsResponse is the response to obtain the operator unclaimed rewards
+message QueryOperatorUnclaimedRewardsResponse{
+  // operator_unclaimed_rewards is the unclaimed rewards returned for an operator
+  OperatorUnclaimedRewards operator_unclaimed_rewards = 1;
 }
 
 // QueryOperatorCommissionResponse is the response to obtain the operator commission
