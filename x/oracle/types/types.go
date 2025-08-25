@@ -119,7 +119,7 @@ const (
 	NSTETHAssetAddr    = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 	NSTSOLAssetAddr    = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 
-	DefaultPriceValue   = 1
+	DefaultPriceValue   = 0
 	DefaultPriceDecimal = 0
 
 	MaxPageLimit = 100
