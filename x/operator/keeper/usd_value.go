@@ -474,11 +474,8 @@ func (k *Keeper) CalculateRealTimeOperatorUSDValue(
 			// so the price needs to be retrieved here
 			price, err = k.oracleKeeper.GetSpecifiedAssetsPrice(ctx, assetID)
 			if err != nil {
-				// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
-				if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
-					return err
-				}
-				// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
+				// we use 0 price to indicate the price is not found, and only log the error to avoid panic
+				ctx.Logger().Error("CalculateRealTimeOperatorUSDValue: failed to get the price for slash", "assetID", assetID, "err", err)
 			}
 			assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 			if err != nil {
@@ -780,7 +777,6 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers [
 		var decimal uint32
 		price, err := k.oracleKeeper.GetSpecifiedAssetsPrice(ctx, assetID)
 		if err != nil && !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
-			// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
 			ctx.Logger().Error("UpdateOperatorAssetUSDValue: failed to get the asset price", "assetID", assetID, "err", err)
 			// don't return error to continue handling the other assets.
 			return nil

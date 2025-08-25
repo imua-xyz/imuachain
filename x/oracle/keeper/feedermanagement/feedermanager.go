@@ -829,6 +829,42 @@ func (f *FeederManager) SetForceSeal() {
 	f.forceSeal = true
 }
 
+// ValidatePriceSourceDetIDs validates the price source detIDs
+// we only check the duplicated detIDs for the same sourceID and ignore any other errors
+func (f *FeederManager) ValidatePriceSourceDetIDs(msg *oracletypes.MsgCreatePrice) bool {
+	priceSourceDetIDs := GetPriceSourceDetIDs(msg)
+	if priceSourceDetIDs == nil {
+		return true
+	}
+	if priceSourceDetIDs.FeederID == 0 || priceSourceDetIDs.FeederID > uint64(len(f.rounds)) {
+		return true
+	}
+	r, ok := f.rounds[int64(priceSourceDetIDs.FeederID)]
+	if !ok || r == nil {
+		return true
+	}
+	if r.a == nil || r.a.v == nil || r.a.v.records == nil {
+		return true
+	}
+	for sourceID, detIDs := range priceSourceDetIDs.SourceDetIDs {
+		records, ok := r.a.v.records[priceSourceDetIDs.Validator]
+		if !ok || records == nil {
+			return true
+		}
+		psRec, ok := records.priceSources[int64(sourceID)]
+		if !ok || psRec == nil {
+			return true
+		}
+		for _, detID := range detIDs {
+			if _, seen := psRec.detIDs[detID]; !seen {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 // validateMsg validates a MsgCreatePrice against the current state and round configuration.
 func (f *FeederManager) validateMsg(ctx sdk.Context, msg *oracletypes.MsgCreatePrice) (*round, error) {
 	// TODO:(leonz) ? this validation is not suitable for validateBasic, it need state information, but maybe move them into anteHandler ?

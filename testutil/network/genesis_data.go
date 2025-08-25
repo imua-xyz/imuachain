@@ -66,14 +66,6 @@ func init() {
 		// bond assetsIDs of ETH, NSTETH to ETH price
 		AssetID: fmt.Sprintf("%s,%s", ETHAssetID, NativeAssetID),
 	})
-	DefaultGenStateOracle.Params.Sources = append(DefaultGenStateOracle.Params.Sources, &oracletypes.Source{
-		Name: "Chainlink",
-		Entry: &oracletypes.Endpoint{
-			Offchain: map[uint64]string{0: ""},
-		},
-		Valid:         true,
-		Deterministic: true,
-	})
 	DefaultGenStateOracle.Params.TokenFeeders = append(DefaultGenStateOracle.Params.TokenFeeders, &oracletypes.TokenFeeder{
 		TokenID:      1,
 		RuleID:       2,
