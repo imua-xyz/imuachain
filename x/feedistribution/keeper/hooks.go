@@ -138,7 +138,7 @@ func (h OperatorHooksWrapper) AfterSlash(
 	slashAssetsPool []operatortypes.SlashAssetAmount, slashUnclaimedRewards []operatortypes.SlashFromUnclaimedRewards,
 ) {
 	cc, writeFunc := ctx.CacheContext()
-	err := h.keeper.HandleOperatorSlashEvent(cc, operator, slashProportion, slashAssetsPool)
+	err := h.keeper.HandleOperatorSlashEvent(cc, operator, slashProportion, slashAssetsPool, slashUnclaimedRewards)
 	if err != nil {
 		ctx.Logger().Error("AfterSlash: failed to handle the slash event", "err", err,
 			"operator", operator, "slashProportion", slashProportion, "slashAssetsPool", slashAssetsPool)

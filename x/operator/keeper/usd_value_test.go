@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	"github.com/imua-xyz/imuachain/utils"
 	"time"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"

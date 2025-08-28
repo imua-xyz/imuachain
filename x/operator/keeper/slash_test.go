@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	"github.com/imua-xyz/imuachain/utils"
 	"time"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 

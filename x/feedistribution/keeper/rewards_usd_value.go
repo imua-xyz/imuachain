@@ -1,13 +1,14 @@
 package keeper
 
 import (
+	"sort"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/utils"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
-	"sort"
 )
 
 // calculateRewardUSDValue calculates the USD value of a specific reward asset.
@@ -18,7 +19,8 @@ import (
 func (k *Keeper) calculateRewardUSDValue(
 	ctx sdk.Context, avs,
 	symbol string, supportedAssets map[string]interface{},
-	assetPrices map[string]oracletype.Price, amount sdk.Dec) (string, sdkmath.LegacyDec, error) {
+	assetPrices map[string]oracletype.Price, amount sdk.Dec,
+) (string, sdkmath.LegacyDec, error) {
 	if !amount.IsPositive() {
 		ctx.Logger().Info("UpdateAllRewardsUSDForOperator: skip the reward with no-positive amount", "avs", avs, "symbol", symbol)
 		return "", sdkmath.LegacyZeroDec(), nil
@@ -125,7 +127,6 @@ func (k *Keeper) UpdateAllRewardsUSDForOperator(
 	receivingAVS, operator string,
 	supportedAssets map[string]interface{},
 ) (sdkmath.LegacyDec, error) {
-
 	assetPrices := make(map[string]oracletype.Price, 0)
 	validRewardUSDs := make(map[string]interface{}, 0)
 	totalUSDValue := sdk.ZeroDec()
@@ -165,8 +166,8 @@ func (k *Keeper) UpdateAllRewardsUSDForOperator(
 // and its price can be obtained from the oracle module.
 // It returns the USD value and the detailed source mapping: AVS -> assetID -> nil.
 func (k *Keeper) OperatorTotalRewardsUSDValue(
-	ctx sdk.Context, operator string) (map[string]map[string]interface{}, sdkmath.LegacyDec, error) {
-
+	ctx sdk.Context, operator string,
+) (map[string]map[string]interface{}, sdkmath.LegacyDec, error) {
 	usdValueSources := make(map[string]map[string]interface{}, 0)
 	assetPrices := make(map[string]oracletype.Price, 0)
 	totalUSDValue := sdk.ZeroDec()
@@ -239,7 +240,8 @@ func convertSlashStates(
 func (k *Keeper) SlashOperatorUnclaimedRewards(
 	ctx sdk.Context, operator string,
 	slashSources map[string]map[string]interface{},
-	slashProportion sdkmath.LegacyDec) ([]operatortypes.SlashFromUnclaimedRewards, error) {
+	slashProportion sdkmath.LegacyDec,
+) ([]operatortypes.SlashFromUnclaimedRewards, error) {
 	if slashProportion.IsNil() || slashProportion.IsZero() {
 		return nil, nil
 	} else if slashProportion.IsNegative() || slashProportion.GT(sdkmath.LegacyOneDec()) {
