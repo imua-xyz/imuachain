@@ -106,4 +106,8 @@ var (
 		ModuleName, 21,
 		"failed to complete rewards undelegation",
 	)
+	ErrFailedToSlashUnclaimedRewards = errorsmod.Register(
+		ModuleName, 22,
+		"failed to slash unclaimed rewards",
+	)
 )

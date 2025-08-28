@@ -135,7 +135,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 // AfterSlash is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec, _ []string,
-	slashAssetsPool []operatortypes.SlashFromAssetsPool,
+	slashAssetsPool []operatortypes.SlashAssetAmount, slashUnclaimedRewards []operatortypes.SlashFromUnclaimedRewards,
 ) {
 	cc, writeFunc := ctx.CacheContext()
 	err := h.keeper.HandleOperatorSlashEvent(cc, operator, slashProportion, slashAssetsPool)

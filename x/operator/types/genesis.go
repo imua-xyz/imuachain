@@ -403,7 +403,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 			return err
 		}
 		// validate the slashing record regarding assets pool
-		SlashFromAssetsPoolVal := func(_ int, slashFromAssetsPool SlashFromAssetsPool) error {
+		SlashFromAssetsPoolVal := func(_ int, slashFromAssetsPool SlashAssetAmount) error {
 			// when the data is exported, no check for 0 value is added, that is, even 0 values are exported.
 			// to maintain consistency, we allow 0 values here.
 			if slashFromAssetsPool.Amount.IsNil() || slashFromAssetsPool.Amount.LT(sdkmath.ZeroInt()) {
@@ -414,7 +414,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 			}
 			return nil
 		}
-		SlashFromAssetsPooLSeenFunc := func(slashFromAssetsPool SlashFromAssetsPool) (string, struct{}) {
+		SlashFromAssetsPooLSeenFunc := func(slashFromAssetsPool SlashAssetAmount) (string, struct{}) {
 			return slashFromAssetsPool.AssetID, struct{}{}
 		}
 		_, err = utils.CommonValidation(slash.Info.ExecutionInfo.SlashAssetsPool, SlashFromAssetsPooLSeenFunc, SlashFromAssetsPoolVal)

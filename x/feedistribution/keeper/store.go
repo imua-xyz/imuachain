@@ -256,6 +256,8 @@ func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAdd
 	if isIncrease {
 		rewards.OutstandingRewards = rewards.OutstandingRewards.Add(deltaRewards.OutstandingRewards...)
 		rewards.RewardsFromCompounding = feedistributiontypes.CompoundingRewards(rewards.RewardsFromCompounding).Add(deltaRewards.RewardsFromCompounding...)
+		rewards.OutstandingRewardsSlashed = rewards.OutstandingRewardsSlashed.Add(deltaRewards.OutstandingRewardsSlashed...)
+		rewards.CompoundingRewardsSlashed = feedistributiontypes.CompoundingRewards(rewards.CompoundingRewardsSlashed).Add(deltaRewards.CompoundingRewardsSlashed...)
 	} else {
 		var negative bool
 		rewards.OutstandingRewards, negative = rewards.OutstandingRewards.SafeSub(deltaRewards.OutstandingRewards)
@@ -265,6 +267,14 @@ func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAdd
 		rewards.RewardsFromCompounding, negative = feedistributiontypes.CompoundingRewards(rewards.RewardsFromCompounding).SafeSub(deltaRewards.RewardsFromCompounding)
 		if negative {
 			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update operator rewards from compounding,operator:%s,avsAddr:%s", operator, avsAddr)
+		}
+		rewards.OutstandingRewardsSlashed, negative = rewards.OutstandingRewardsSlashed.SafeSub(deltaRewards.OutstandingRewardsSlashed)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update slashed operator outstanding rewards,operator:%s,avsAddr:%s", operator, avsAddr)
+		}
+		rewards.CompoundingRewardsSlashed, negative = feedistributiontypes.CompoundingRewards(rewards.CompoundingRewardsSlashed).SafeSub(deltaRewards.CompoundingRewardsSlashed)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update slashed operator rewards from compounding,operator:%s,avsAddr:%s", operator, avsAddr)
 		}
 	}
 

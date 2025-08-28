@@ -140,7 +140,7 @@ type OperatorHooks interface {
 	// AfterSlash This hook is called when an operator is slashed
 	AfterSlash(
 		ctx sdk.Context, addr sdk.AccAddress, slashProportion sdk.Dec, affectedAVSList []string,
-		slashAssetsPool []SlashFromAssetsPool,
+		slashAssetsPool []SlashAssetAmount, slashUnclaimedRewards []SlashFromUnclaimedRewards,
 	)
 	// AfterJail This hook is called when an operator is jailed
 	AfterJail(
@@ -161,4 +161,9 @@ type DistributionKeeper interface {
 	GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
 	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) error
 	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]interface{}) (sdkmath.LegacyDec, error)
+	OperatorTotalRewardsUSDValue(ctx sdk.Context, operator string) (map[string]map[string]interface{}, sdkmath.LegacyDec, error)
+	SlashOperatorUnclaimedRewards(
+		ctx sdk.Context, operator string,
+		slashSources map[string]map[string]interface{},
+		slashProportion sdkmath.LegacyDec) ([]SlashFromUnclaimedRewards, error)
 }

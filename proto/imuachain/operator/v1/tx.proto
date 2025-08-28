@@ -185,16 +185,23 @@ message SlashFromUndelegation {
   ];
 }
 
-// SlashFromAssetsPool records the slash detail from the operator assets pool
-message SlashFromAssetsPool {
+// SlashAssetAmount records the slash amount of specific assetID
+message SlashAssetAmount {
   // asset_id is the asset id.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
-  // amount is the slashed amount from the assets pool.
+  // amount is the slashed amount..
   string amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+}
+// SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards
+message SlashFromUnclaimedRewards {
+  // avs is who the rewards earned from.
+  string avs = 1 ;
+  // slash_assets represent multiple rewards assets states that are slashed.
+  repeated SlashAssetAmount slash_assets =2 [(gogoproto.nullable) = false];
 }
 
 // SlashExecutionInfo is the actual execution state for a slash event
@@ -211,14 +218,16 @@ message SlashExecutionInfo {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // SlashUndelegations records all slash info related to the undelegation
+  // slash_undelegations records all slash info related to the undelegation
   repeated SlashFromUndelegation slash_undelegations = 3 [(gogoproto.nullable) = false];
-  // SlashFromAssetsPool records all slash info related to the assets pool
-  repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
+  // slash_assets_pool records all slash info related to the assets pool
+  repeated SlashAssetAmount slash_assets_pool = 4 [(gogoproto.nullable) = false];
   // undelegation_filter_height records the height before which undelegations are not slashed
   int64 undelegation_filter_height = 5;
   // the historical voting power at the time of the slash event.
   int64 historical_voting_power = 6;
+  // slash_unclaimed_rewards records all slash amounts from unclaimed rewards
+  repeated SlashFromUnclaimedRewards slash_unclaimed_rewards = 7 [(gogoproto.nullable) = false];
 }
 
 // OperatorSlashInfo is the slash info of operator

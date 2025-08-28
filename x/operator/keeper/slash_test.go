@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/imua-xyz/imuachain/utils"
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -91,7 +92,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 		Amount:   newSlashProportion.MulInt(undelegationAmount).TruncateInt(),
 	}, slashInfo.ExecutionInfo.SlashUndelegations[0])
 	suite.NotEmpty(slashInfo.ExecutionInfo.SlashAssetsPool)
-	suite.Equal(types.SlashFromAssetsPool{
+	suite.Equal(types.SlashAssetAmount{
 		AssetID: suite.assetID,
 		Amount:  newSlashProportion.MulInt(delegationRemaining).TruncateInt(),
 	}, slashInfo.ExecutionInfo.SlashAssetsPool[0])

@@ -94,7 +94,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		SlashProportion:          newSlashProportion,
 		SlashValue:               slashUSDValue,
 		SlashUndelegations:       make([]types.SlashFromUndelegation, 0),
-		SlashAssetsPool:          make([]types.SlashFromAssetsPool, 0),
+		SlashAssetsPool:          make([]types.SlashAssetAmount, 0),
 		UndelegationFilterHeight: snapshotHeight,
 		HistoricalVotingPower:    parameter.Power,
 	}
@@ -161,7 +161,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		state.TotalAmount = remainingAmount
 		// TODO: check if pendingUndelegation also zero => delete this item, and this operator should be opted out if
 		// all assets falls to 0 since the miniself is not satisfied then.
-		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashFromAssetsPool{
+		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashAssetAmount{
 			AssetID: assetID,
 			Amount:  slashAmount,
 		})
@@ -179,6 +179,13 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	if err != nil {
 		return nil, err
 	}
+
+	// slash the compounding rewards
+	slashFromUnclaimedRewards, err := k.distributionKeeper.SlashOperatorUnclaimedRewards(ctx, parameter.Operator.String(), stakingInfo.CompoundingUSDValueSources, newSlashProportion)
+	if err != nil {
+		return nil, err
+	}
+	executionInfo.SlashUnclaimedRewards = slashFromUnclaimedRewards
 	return executionInfo, nil
 }
 
@@ -242,7 +249,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		}
 	}
 	k.hooks.AfterSlash(cc, parameter.Operator, executionInfo.SlashProportion, affectedAVSList,
-		executionInfo.SlashAssetsPool)
+		executionInfo.SlashAssetsPool, executionInfo.SlashUnclaimedRewards)
 
 	// store the slash information
 	height := ctx.BlockHeight()

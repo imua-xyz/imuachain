@@ -241,8 +241,33 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 		if slashEndingPeriod > startingPeriod {
 			rewardsBetweenPeriod, err := k.calculateDelegationRewardsBetween(ctx, startingPeriod, slashEndingPeriod, operator, assetID, epochIdentifier, stake)
 			if err != nil {
-				return false, err
+				return true, err
 			}
+			// Slash the rewards because they are automatically compounded to contribute to voting power
+			// Convert SlashedRewardAssets into a map to filter out slashed assets
+			slashedAssetsMap := make(map[string]interface{})
+			for _, slashedAssetID := range event.SlashedRewardAssets {
+				slashedAssetsMap[slashedAssetID] = nil
+			}
+			slashedRewards := feedistributiontypes.NewCommonAVSRewards()
+			for _, rewardPerAVS := range rewardsBetweenPeriod {
+				for _, reward := range rewardPerAVS.Rewards {
+					// get assetID from AVS address and asset symbol
+					rewardAssetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, rewardPerAVS.AVSAddress, reward.Denom)
+					if err != nil {
+						return true, err
+					}
+					_, exist := slashedAssetsMap[rewardAssetID]
+					if exist {
+						slashedRewards = slashedRewards.Add(feedistributiontypes.CommonAVSRewardData{
+							AVSAddress: rewardPerAVS.AVSAddress,
+							Rewards:    sdk.NewDecCoins(sdk.NewDecCoinFromDec(reward.Denom, reward.Amount.Mul(event.Fraction))),
+						})
+					}
+				}
+			}
+			rewardsBetweenPeriod = rewardsBetweenPeriod.Sub(slashedRewards)
+
 			rewards = rewards.Add(rewardsBetweenPeriod...)
 			// Note: It is necessary to truncate so we don't allow withdrawing
 			// more rewards than owed.

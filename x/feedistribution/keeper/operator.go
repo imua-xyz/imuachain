@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"cosmossdk.io/math"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
@@ -277,12 +278,28 @@ func (k Keeper) getDelegatedAmountAtPreEpochEnd(ctx sdk.Context, operator, asset
 // It increases the period and reference count, then stores the slash event
 // for future reward calculations.
 func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec,
-	slashAssetsPool []operatortypes.SlashFromAssetsPool,
+	slashAssetsPool []operatortypes.SlashAssetAmount, slashUnclaimedRewards []operatortypes.SlashFromUnclaimedRewards,
 ) error {
 	if slashProportion.GT(math.LegacyOneDec()) || slashProportion.IsNegative() {
 		return feedistributiontypes.ErrInvalidInputParameter.Wrapf(
 			"HandleOperatorSlashEvent: fraction must be >=0 and <=1, current fraction: %s", slashProportion)
 	}
+	// get the slashed rewards asssets list from the input map `slashUnclaimedRewards`
+	assetIDSet := make(map[string]struct{})
+	// collect assetIDs
+	for _, s := range slashUnclaimedRewards {
+		for _, sa := range s.SlashAssets {
+			assetIDSet[sa.AssetID] = struct{}{}
+		}
+	}
+	// convert map keys to slice
+	slashedRewardAssets := make([]string, 0, len(assetIDSet))
+	for id := range assetIDSet {
+		slashedRewardAssets = append(slashedRewardAssets, id)
+	}
+	// sort for deterministic order
+	sort.Strings(slashedRewardAssets)
+
 	// the slash event will influence all epochs
 	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	for _, slashAsset := range slashAssetsPool {
@@ -341,8 +358,9 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			}
 			err = k.SetOperatorSlashEvent(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, uint64(epochInfo.CurrentEpoch), uint64(ctx.BlockHeight()),
 				feedistributiontypes.OperatorSlashEvent{
-					OperatorPeriod: endingPeriod,
-					Fraction:       slashProportion,
+					OperatorPeriod:      endingPeriod,
+					Fraction:            slashProportion,
+					SlashedRewardAssets: slashedRewardAssets,
 				})
 			if err != nil {
 				return err

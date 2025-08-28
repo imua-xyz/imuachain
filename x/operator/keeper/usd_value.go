@@ -522,6 +522,17 @@ func (k *Keeper) CalculateRealTimeOperatorUSDValue(
 	if err != nil {
 		return ret, err
 	}
+	// calculate the USD value from rewards compounding
+	usdValueSources, compoundingUSDValue, err := k.distributionKeeper.OperatorTotalRewardsUSDValue(ctx, operator)
+	if err != nil {
+		return ret, err
+	}
+	if isForSlash {
+		ret.StakingAndWaitUnbonding.AddMut(compoundingUSDValue)
+		ret.CompoundingUSDValueSources = usdValueSources
+	} else {
+		ret.Staking.AddMut(compoundingUSDValue)
+	}
 	return ret, nil
 }
 

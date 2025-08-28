@@ -212,6 +212,18 @@ message OperatorUnclaimedRewards {
   // for stakers. Asset symbols in the list must correspond to the denominations in outstanding_rewards,
   // since all compounding rewards are derived from the outstanding rewards.
   repeated CompoundingRewardsPerAsset rewards_from_compounding = 2 [(gogoproto.nullable) = false];
+  // outstanding_rewards_slashed represents the total amount of rewards slashed from outstanding rewards.
+  // We need to apply slashing here because outstanding rewards are automatically compounded
+  // to contribute voting power.
+  repeated cosmos.base.v1beta1.DecCoin outstanding_rewards_slashed = 3 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // compounding_rewards_slashed represents the total amount of rewards slashed from compounding rewards.
+  // We need to apply slashing here because compounding rewards are automatically compounded
+  // to contribute voting power.
+  repeated CompoundingRewardsPerAsset compounding_rewards_slashed = 4 [(gogoproto.nullable) = false];
 }
 
 // RewardsDelegationShare is a helper struct that records all the delegated rewards shares
@@ -297,7 +309,7 @@ message StakerRewardParams {
 }
 
 // OperatorSlashEvent represents an operator slash event.
-// operator, height and epochIdentifier are implicit within the store key.
+// operator, assetID, epochIdentifier, epochNumber and height are implicit within the store key.
 // This is needed to calculate appropriate amount of staking tokens
 // for delegations which are withdrawn after a slash has occurred.
 message OperatorSlashEvent {
@@ -309,6 +321,10 @@ message OperatorSlashEvent {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
+  // slashed_reward_assets records the list of reward assets that have been slashed.
+  // It is used to calculate stakers' rewards, taking into account slashing that occurs
+  // due to reward compounding.
+  repeated string slashed_reward_assets = 3;
 }
 
 // FeePool is the global fee pool for distribution.
@@ -349,6 +365,9 @@ message AVSRewardAssetState {
   // they may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility
   // to ensure its reward pool remains sufficiently funded.
   // the debt is the difference between `reward_allocation_total` and `reward_pool_total`
+  // TODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues
+  // when handling reward compounding. For example, the reward pool might contribute greater voting
+  // power than its actual balance due to debt.
   string reward_allocation_total = 3  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
