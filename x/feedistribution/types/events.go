@@ -12,10 +12,11 @@ const (
 	AttributeKeyOperatorTotalReward    = "operator_total_reward"
 	AttributeKeyOperatorCommission     = "operator_commission"
 	// EventTypeWithdrawRewards : withdraw the reward for a staker
-	EventTypeWithdrawRewards             = "withdraw_rewards"
-	EventTypeWithdrawRewardFromAVS       = "withdraw_reward_from_avs"
-	AttributeKeyWithdrawDecCoinsFromAVS  = "withdraw_dec_coins_from_avs"
-	AttributeKeyStakerOutstandingRewards = "staker_outstanding_rewards"
+	EventTypeWithdrawRewards              = "withdraw_rewards"
+	EventTypeWithdrawRewardFromAVS        = "withdraw_reward_from_avs"
+	AttributeKeyWithdrawDecCoinsFromAVS   = "withdraw_dec_coins_from_avs"
+	AttributeKeyStakerOutstandingRewards  = "staker_outstanding_rewards"
+	AttributeKeyStakerWithdrawableRewards = "staker_withdrawable_rewards"
 
 	// EventTypeWithdrawCommission :  withdraw the commission for an operator
 	EventTypeWithdrawCommission           = "withdraw_commission"

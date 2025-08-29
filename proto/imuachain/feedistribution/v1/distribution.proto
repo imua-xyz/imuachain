@@ -253,7 +253,8 @@ message RewardsDelegationShare {
 // - withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).
 // This includes both withdrawn rewards and slashed rewards, in addition to the current balance.
 message StakerClaimedRewards {
-  // outstanding_rewards represents the un-withdrawn rewards for the staker
+  // outstanding_rewards represents the rewards that have been claimed by the staker
+  // but not yet withdrawn; they can either be withdrawn or automatically redelegated.
   repeated cosmos.base.v1beta1.DecCoin outstanding_rewards = 1 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,

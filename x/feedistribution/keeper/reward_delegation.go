@@ -28,6 +28,9 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 		if err != nil {
 			return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
 		}
+		if !stakerRewardParams.RedelegateReward {
+			continue
+		}
 		// check if the operator has been slashed or frozen
 		// skip the check if not genesis (or chain restart)
 		operatorAccAddr, err := sdk.AccAddressFromBech32(stakerRewardParams.RedelegateOperatorAddr)

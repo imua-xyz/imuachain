@@ -849,7 +849,8 @@ func (m *RewardsDelegationShare) GetShares() github_com_cosmos_cosmos_sdk_types.
 // - withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).
 // This includes both withdrawn rewards and slashed rewards, in addition to the current balance.
 type StakerClaimedRewards struct {
-	// outstanding_rewards represents the un-withdrawn rewards for the staker
+	// outstanding_rewards represents the rewards that have been claimed by the staker
+	// but not yet withdrawn; they can either be withdrawn or automatically redelegated.
 	OutstandingRewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,1,rep,name=outstanding_rewards,json=outstandingRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"outstanding_rewards"`
 	// withdrawn_rewards represents the withdrawn rewards for the staker
 	WithdrawnRewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,2,rep,name=withdrawn_rewards,json=withdrawnRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"withdrawn_rewards"`
