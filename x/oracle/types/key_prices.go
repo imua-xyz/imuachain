@@ -6,7 +6,14 @@ var _ binary.ByteOrder
 
 const (
 	// PricesKeyPrefix is the prefix to retrieve all Prices
-	PricesKeyPrefix = "Prices/value/"
+	PricesKeyPrefix            = "Prices/value/"
+	PricesAccumulatedKeyPrefix = "Prices/accumulate/value/"
+	PricesTWAPKeyPrefix        = "Prices/twap/value/"
+)
+
+var (
+	PricesAccumulatedKeyPrefixB = []byte(PricesAccumulatedKeyPrefix)
+	PricesTWAPKeyPrefixB        = []byte(PricesTWAPKeyPrefix)
 )
 
 // PricesNextRoundIDKey is the key set for each tokenId storeKV to store the next round id
@@ -31,4 +38,22 @@ func PricesRoundKey(
 	roundID uint64,
 ) []byte {
 	return append(Uint64Bytes(roundID), []byte("/")...)
+}
+
+func PricesAccumulatedKey(tokenID uint64) []byte {
+	var key []byte
+	return AppendMultiple(
+		key,
+		PricesAccumulatedKeyPrefixB,
+		Uint64Bytes(tokenID),
+	)
+}
+
+func PricesTWAPKey(tokenID uint64) []byte {
+	var key []byte
+	return AppendMultiple(
+		key,
+		PricesTWAPKeyPrefixB,
+		Uint64Bytes(tokenID),
+	)
 }

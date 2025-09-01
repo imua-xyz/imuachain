@@ -19,6 +19,8 @@ const (
 	failedInAggregation
 	quoteRecorded
 	noOp
+	accumulatePrice
+	twapFallback
 )
 
 // x/oracle module sentinel errors
@@ -35,4 +37,6 @@ var (
 	ErrFailedInAggregation               = sdkerrors.Register(ModuleName, failedInAggregation, "failed in aggregation")
 	ErrQuoteRecorded                     = sdkerrors.Register(ModuleName, quoteRecorded, "quote recorded")
 	ErrNoOp                              = sdkerrors.Register(ModuleName, noOp, "no operation")
+	ErrAccumulatePrice                   = sdkerrors.Register(ModuleName, accumulatePrice, "accumulate price failed")
+	ErrTWAPFallback                      = sdkerrors.Register(ModuleName, twapFallback, "fallback to latest price in TWAP calculation")
 )

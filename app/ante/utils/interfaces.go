@@ -56,4 +56,6 @@ type OracleKeeper interface {
 	MinimalProofPathByIndex(feederID uint64, index uint32) []uint32
 	// LatestRoundBaseBlock returns the base block of the latest round for a given feeder ID.
 	LatestRoundBaseBlock(feederID uint64) (uint64, bool)
+	// DuplicatedPriceSourceDetIDs checks the price source IDs in a price feed message.
+	DuplicatedPriceSourceDetIDs(msg *oracletypes.MsgCreatePrice) bool
 }

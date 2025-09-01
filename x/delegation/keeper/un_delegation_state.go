@@ -5,6 +5,8 @@ import (
 	"math"
 	"strings"
 
+	sdkmath "cosmossdk.io/math"
+
 	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -214,6 +216,21 @@ func (k *Keeper) GetStakerUndelegationRecords(ctx sdk.Context, stakerID, assetID
 	}
 
 	return k.GetUndelegationRecords(ctx, recordKeys)
+}
+
+// GetPendingUndelegationFinalAmount returns the final total amount that the staker will receive
+// from a pending undelegation, excluding any slashed amount.
+func (k *Keeper) GetPendingUndelegationFinalAmount(ctx sdk.Context, stakerID, assetID string) (sdkmath.Int, error) {
+	amount := sdkmath.ZeroInt()
+	opFunc := func(_ []byte, undelegation *types.UndelegationRecord) (bool, error) {
+		amount = amount.Add(undelegation.ActualCompletedAmount)
+		return false, nil
+	}
+	err := k.IterateUndelegationsByStakerAndAsset(ctx, stakerID, assetID, false, opFunc)
+	if err != nil {
+		return sdkmath.Int{}, err
+	}
+	return amount, nil
 }
 
 // IterateUndelegationsByStakerAndAsset iterates over the undelegation records belonging to the provided

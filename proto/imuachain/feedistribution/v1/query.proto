@@ -218,11 +218,7 @@ message StakerClaimedRewardsPerAVS {
   // avs_address is the AVS address
   string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
   // claimed_rewards represents the claimed rewards
-  StakerClaimedRewards claimed_rewards = 2 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
+  StakerClaimedRewards claimed_rewards = 2 [(gogoproto.nullable) = false];
 }
 
 // QueryStakerAllClaimedRewardsResponse is the response to obtain all claimed rewards for a staker.

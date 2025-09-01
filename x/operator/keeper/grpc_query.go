@@ -223,15 +223,37 @@ func (k *Keeper) QueryOperatorUSDValue(ctx context.Context, req *types.QueryOper
 	}, nil
 }
 
+func (k *Keeper) QueryOperatorAssetUSDValue(ctx context.Context, req *types.QueryOperatorAssetUSDValueRequest) (*types.DecValueField, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	_, err := sdk.AccAddressFromBech32(req.OperatorAddr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	assetUSDValue, err := k.GetOperatorAssetUSDValue(c, req.EpochIdentifier, req.OperatorAddr, strings.ToLower(req.AssetId))
+	if err != nil {
+		return nil, err
+	}
+	return &types.DecValueField{
+		Amount: assetUSDValue,
+	}, nil
+}
+
 func (k *Keeper) QueryAVSUSDValue(ctx context.Context, req *types.QueryAVSUSDValueRequest) (*types.DecValueField, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
-	if !common.IsHexAddress(req.AVSAddress) {
-		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AVSAddress)
+	if !common.IsHexAddress(req.AvsAddress) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AvsAddress)
 	}
-	usdValue, err := k.GetAVSUSDValue(c, req.AVSAddress)
+	usdValue, err := k.GetAVSUSDValue(c, req.AvsAddress)
 	if err != nil {
 		return nil, err
 	}

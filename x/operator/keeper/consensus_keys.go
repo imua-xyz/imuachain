@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/imua-xyz/imuachain/utils"
@@ -15,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
-	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -689,14 +687,10 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		return types.Validator{}, false
 	}
 	prices, err := k.oracleKeeper.GetMultipleAssetsPrices(ctx, assets)
-	// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
 	if err != nil {
-		// TODO: when assetID is not registered in oracle module, this error will finally lead to panic
-		if !errors.Is(err, oracletype.ErrGetPriceRoundNotFound) {
-			ctx.Logger().Error("fail to get price from oracle, since current assetID is not bonded with oracle token", "details:", err)
-			return types.Validator{}, false
-		}
-		// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
+		// don't panic for missing prices, we just log the error
+		ctx.Logger().Error("fail to get some prices from oracle", "details:", err)
+		return types.Validator{}, false
 	}
 
 	ret := types.OperatorStakingInfo{

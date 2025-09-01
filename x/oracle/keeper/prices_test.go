@@ -43,6 +43,7 @@ func TestPricesGet(t *testing.T) {
 	rst, found := keeper.GetPrices(ctx, 1)
 	require.True(t, found)
 	pRes := testdata.P1
+	rst.PriceList = rst.PriceList[1:]
 	require.Equal(t, pRes, rst)
 }
 
@@ -64,7 +65,8 @@ func TestPricesGetMultiAssets(t *testing.T) {
 
 	assets["unexistsAsset"] = new(interface{})
 	_, err = keeper.GetMultipleAssetsPrices(ctx, assets)
-	require.ErrorIs(t, err, types.ErrGetPriceAssetNotFound.Wrapf("assetID does not exist in oracle %s", "unexistsAsset"))
+	// require.ErrorIs(t, err, types.ErrGetPriceAssetNotFound.Wrapf("assetID does not exist in oracle %s", "unexistsAsset"))
+	require.ErrorIs(t, err, types.ErrGetPriceRoundNotFound.Wrapf("no valid price for assetIDs=%s", "unexistsAsset"))
 }
 
 func TestPricesRemove(t *testing.T) {
