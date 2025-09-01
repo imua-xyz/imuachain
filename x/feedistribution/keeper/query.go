@@ -439,3 +439,25 @@ func (k Keeper) StakerAllRewards(
 		Rewards: stakerAllRewards,
 	}, nil
 }
+
+func (k Keeper) StakerRewardParams(
+	ctx context.Context,
+	req *types.QueryStakerRewardParamsRequest,
+) (*types.QueryStakerRewardParamsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	rewardParams, err := k.GetStakerRewardParams(c, strings.ToLower(req.StakerId))
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryStakerRewardParamsResponse{
+		RewardParams: rewardParams,
+	}, nil
+}

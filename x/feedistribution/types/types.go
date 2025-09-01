@@ -892,6 +892,16 @@ func (rds RewardsDelegationShares) DelegationSharesOf(operator string) sdk.DecCo
 	return nil
 }
 
+func (srp StakerRewardParams) Validate() error {
+	if srp.RedelegateReward {
+		_, err := sdk.AccAddressFromBech32(srp.RedelegateOperatorAddr)
+		if err != nil {
+			return fmt.Errorf("invalid redelegated operator address:%s,err:%s", srp.RedelegateOperatorAddr, err)
+		}
+	}
+	return nil
+}
+
 func DefaultStakerClaimedRewards() StakerClaimedRewards {
 	return StakerClaimedRewards{
 		OutstandingRewards:         sdk.NewDecCoins(),

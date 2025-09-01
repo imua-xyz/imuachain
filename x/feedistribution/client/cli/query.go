@@ -47,6 +47,7 @@ func GetQueryCmd(_ string) *cobra.Command {
 		CmdQueryStakeChangeDelegations(),
 		CmdQueryDelegationStartingInfo(),
 		CmdQueryStakerUnclaimedRewards(),
+		CmdQueryStakerRewardParams(),
 	)
 	return cmd
 }
@@ -523,6 +524,7 @@ func CmdQueryOperatorCommission() *cobra.Command {
 	)
 }
 
+//nolint:dupl
 func CmdQueryStakerUnclaimedRewards() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "staker-unclaimed-rewards [stakerID]",
@@ -540,9 +542,41 @@ func CmdQueryStakerUnclaimedRewards() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryStakerUnclaimedRewardsRequest{
-				StakerId: args[0], // the RPC is case-insensitive with respect to AVSAddr.
+				StakerId: args[0],
 			}
 			res, err := queryClient.StakerUnclaimedRewards(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+//nolint:dupl
+func CmdQueryStakerRewardParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "staker-reward-params [stakerID]",
+		Short: "get the reward parameters for a staker",
+		Long:  "get the reward parameters for a staker",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if _, _, err := assetstypes.ValidateID(args[0], false, false); err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			req := &types.QueryStakerRewardParamsRequest{
+				StakerId: args[0],
+			}
+			res, err := queryClient.StakerRewardParams(context.Background(), req)
 			if err != nil {
 				return err
 			}

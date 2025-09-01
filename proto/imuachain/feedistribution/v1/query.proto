@@ -114,6 +114,10 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/all_rewards/{staker_id}";
   }
+  // StakerRewardParams queries the reward parameters of the staker.
+  rpc StakerRewardParams(QueryStakerRewardParamsRequest) returns (QueryStakerRewardParamsResponse){
+    option (google.api.http).post = "/imuachain/feedistribution/v1/staker_reward_params/{staker_id}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -444,4 +448,16 @@ message StakerRewardsPerAVS {
 message QueryStakerAllRewardsResponse {
   // rewards is the total rewards for all AVSs
   repeated StakerRewardsPerAVS rewards = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStakerRewardParamsRequest is the request to obtain the staker reward parameters.
+message QueryStakerRewardParamsRequest {
+  // staker id
+  string staker_id = 1;
+}
+
+// QueryStakerRewardParamsResponse is the response to obtain the staker reward parameters.
+message QueryStakerRewardParamsResponse {
+  // reward_params is the reward parameters.
+  StakerRewardParams reward_params = 1 [(gogoproto.nullable) = false];
 }

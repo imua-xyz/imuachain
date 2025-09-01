@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -27,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 		CmdUpdateParams(),
 		CmdWithdrawDogfoodCommission(),
 		CmdClaimAndWithdrawDogfoodReward(),
+		CmdUpdateStakerRewardParams(),
 	)
 	return cmd
 }
@@ -105,6 +107,41 @@ func CmdClaimAndWithdrawDogfoodReward() *cobra.Command {
 				return types.ErrInvalidCliCmdArg.Wrapf("invalid input amount: %s", args[0])
 			}
 			msg.Amount = amount
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdUpdateStakerRewardParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "update-staker-reward-params",
+		Short:   "set or update the reward parameters for the staker",
+		Example: "imua tx feedistribution update-staker-reward-params true im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj",
+		Args:    cobra.RangeArgs(1, 2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			redelegateReward, err := strconv.ParseBool(args[0])
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgUpdateStakerRewardParams{
+				FromAddress: clientCtx.GetFromAddress().String(),
+				RewardParams: types.StakerRewardParams{
+					RedelegateReward: redelegateReward,
+				},
+			}
+			if redelegateReward {
+				_, err = sdk.AccAddressFromBech32(args[2])
+				if err != nil {
+					return err
+				}
+				msg.RewardParams.RedelegateOperatorAddr = args[2]
+			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}

@@ -10,12 +10,14 @@ const (
 	TypeMsgUpdateParams                  = "update_params"
 	TypeMsgWithdrawDogfoodCommission     = "withdraw_dogfood_commission"
 	TypeMsgClaimAndWithdrawDogfoodReward = "claim_and_withdraw_dogfood_reward"
+	TypeMsgUpdateStakerRewardParams      = "update_staker_reward_params"
 )
 
 var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgWithdrawDogfoodCommission{}
 	_ sdk.Msg = &MsgClaimAndWithdrawDogfoodReward{}
+	_ sdk.Msg = &MsgUpdateStakerRewardParams{}
 )
 
 // ValidateBasic does a sanity check on the provided data.
@@ -110,5 +112,38 @@ func (m *MsgClaimAndWithdrawDogfoodReward) GetSigners() []sdk.AccAddress {
 
 // GetSignBytes implements the LegacyMsg interface.
 func (m *MsgClaimAndWithdrawDogfoodReward) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// ValidateBasic does a sanity check on the provided data.
+func (m *MsgUpdateStakerRewardParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.FromAddress); err != nil {
+		return errorsmod.Wrap(err, "invalid from address")
+	}
+	err := m.RewardParams.Validate()
+	if err != nil {
+		return ErrInvalidInputParameter.Wrapf("invalid reward parameters,err:%s", err)
+	}
+	return nil
+}
+
+// Route returns the transaction route.
+func (m *MsgUpdateStakerRewardParams) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *MsgUpdateStakerRewardParams) Type() string {
+	return TypeMsgUpdateStakerRewardParams
+}
+
+// GetSigners returns the expected signers for a MsgUpdateParams message.
+func (m *MsgUpdateStakerRewardParams) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.FromAddress)
+	return []sdk.AccAddress{addr}
+}
+
+// GetSignBytes implements the LegacyMsg interface.
+func (m *MsgUpdateStakerRewardParams) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

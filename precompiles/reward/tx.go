@@ -24,6 +24,7 @@ const (
 	MethodClaimReward                 = "claimReward"
 	MethodWithdrawReward              = "withdrawReward"
 	MethodWithdrawIMUATokenReward     = "withdrawIMUATokenReward"
+	MethodSetStakerRewardParams       = "setStakerRewardParams"
 	MethodWithdrawCommission          = "withdrawCommission"
 	MethodWithdrawIMUATokenCommission = "withdrawIMUATokenCommission"
 
@@ -57,7 +58,8 @@ func packErrorOutput(method *abi.Method) ([]byte, error) {
 	case MethodClaimReward, MethodRegisterRewardToken,
 		MethodUpdateRewardToken, MethodSetAVSRewardDistribution,
 		MethodSetAVSEpochReward, MethodSetOperatorRewardProportions,
-		MethodSetAVSRewardParams, MethodFundAVSReward:
+		MethodSetAVSRewardParams, MethodFundAVSReward,
+		MethodSetStakerRewardParams:
 		return method.Outputs.Pack(false)
 	case MethodWithdrawReward, MethodWithdrawCommission:
 		return method.Outputs.Pack(false, new(big.Int))
@@ -194,6 +196,44 @@ func (p Precompile) WithdrawIMUATokenReward(
 		return nil, err
 	}
 	return method.Outputs.Pack(true, actualWithdrawAmount.BigInt(), withdrawAmountFromDogfood.BigInt())
+}
+
+func (p Precompile) SetStakerRewardParams(
+	ctx sdk.Context,
+	_ common.Address,
+	contract *vm.Contract,
+	_ vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
+	}
+	var setStakerRewardParamsArgs SetStakerRewardParamsArgs
+	if err := method.Inputs.Copy(&setStakerRewardParamsArgs, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to SetStakerRewardParamsArgs struct: %s", err)
+	}
+	_, stakerID, err := addressToID(ctx, p.assetsKeeper, setStakerRewardParamsArgs.ClientChainLzID,
+		setStakerRewardParamsArgs.StakerAddress)
+	if err != nil {
+		return nil, err
+	}
+	rewardParams := feedistributiontypes.StakerRewardParams{
+		RedelegateReward:       setStakerRewardParamsArgs.RedelegateReward,
+		RedelegateOperatorAddr: setStakerRewardParamsArgs.RedelegateOperator,
+	}
+	err = rewardParams.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("invalid staker reward parameters, stakerID:%s,err:%s", stakerID, err)
+	}
+	err = p.distributionKeeper.SetStakerRewardParams(ctx, stakerID, rewardParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set staker reward parameters, stakerID:%s,err:%s", stakerID, err)
+	}
+
+	return method.Outputs.Pack(true)
 }
 
 func (p Precompile) WithdrawCommission(

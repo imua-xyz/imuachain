@@ -97,6 +97,18 @@ interface IReward {
         uint256 opAmount
     ) external returns (bool success, uint256 actualWithdrawAmount, uint256 withdrawAmountFromDogfood);
 
+    /// @dev Sets or updates reward parameters for a staker.
+    /// @param clientChainLzId LayerZero ID of the staker's client chain.
+    /// @param stakerAddress Address of the staker.
+    /// @param redelegateReward Whether rewards should be redelegated after automatic claiming.
+    /// @param redelegateOperator Operator address to redelegate rewards to.
+    function setStakerRewardParams(
+        uint32 clientChainLzId,
+        bytes calldata stakerAddress,
+        bool redelegateReward,
+        string calldata redelegateOperator
+    ) external returns (bool success);
+
     /// @dev Withdraw the commissions earned from multiple AVSs (excluding the dogfood AVS) to the operator.
     /// This will update the commission state of the specified operator.
     /// Note that this address cannot be a module account.
@@ -204,7 +216,6 @@ interface IReward {
         bytes calldata assetAddress,
         uint256 opAmount
     ) external returns (bool success);
-
 
     /// QUERIES
     /// @dev Checks if the reward token is registered, given the chain ID and token address.

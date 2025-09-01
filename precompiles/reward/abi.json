@@ -307,6 +307,42 @@
     [
       {
         "internalType": "uint32",
+        "name": "clientChainLzId",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "stakerAddress",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bool",
+        "name": "redelegateReward",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "redelegateOperator",
+        "type": "string"
+      }
+    ],
+    "name": "setStakerRewardParams",
+    "outputs":
+    [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "uint32",
         "name": "clientChainID",
         "type": "uint32"
       },
