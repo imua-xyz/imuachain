@@ -21273,7 +21273,7 @@
                   "title": "rewards is the total rewards for all AVSs"
                 }
               },
-              "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+              "description": "QueryStakerAllRewardsResponse is the aggregated rewards response per AVS."
             }
           },
           "default": {
@@ -48565,7 +48565,7 @@
           "title": "rewards is the total rewards for all AVSs"
         }
       },
-      "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+      "description": "QueryStakerAllRewardsResponse is the aggregated rewards response per AVS."
     },
     "imuachain.feedistribution.v1.QueryStakerClaimedRewardsResponse": {
       "type": "object",

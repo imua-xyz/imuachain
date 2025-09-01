@@ -395,7 +395,8 @@ message QueryStakerUnclaimedRewardsResponse {
   repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
 }
 
-// QueryStakerUnclaimedRewardsRequest is the request to obtain the staker unclaimed rewards.
+// QueryStakerAllRewardsRequest is the request to obtain the staker's aggregated rewards
+// (outstanding, withdrawn, unclaimed) across AVSs.
 message QueryStakerAllRewardsRequest {
   // staker id
   string staker_id = 1;
@@ -436,7 +437,7 @@ message StakerRewardsPerAVS {
 }
 
 
-// QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
+// QueryStakerAllRewardsResponse is the aggregated rewards response per AVS.
 message QueryStakerAllRewardsResponse {
   // rewards is the total rewards for all AVSs
   repeated StakerRewardsPerAVS rewards = 1 [(gogoproto.nullable) = false];

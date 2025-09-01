@@ -1973,7 +1973,8 @@ func (m *QueryStakerUnclaimedRewardsResponse) GetRewards() []CommonAVSRewardData
 	return nil
 }
 
-// QueryStakerUnclaimedRewardsRequest is the request to obtain the staker unclaimed rewards.
+// QueryStakerAllRewardsRequest is the request to obtain the staker's aggregated rewards
+// (outstanding, withdrawn, unclaimed) across AVSs.
 type QueryStakerAllRewardsRequest struct {
 	// staker id
 	StakerId string `protobuf:"bytes,1,opt,name=staker_id,json=stakerId,proto3" json:"staker_id,omitempty"`
@@ -2151,7 +2152,7 @@ func (m *StakerRewardsPerAVS) GetUnclaimedRewards() []RewardInfo {
 	return nil
 }
 
-// QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
+// QueryStakerAllRewardsResponse is the aggregated rewards response per AVS.
 type QueryStakerAllRewardsResponse struct {
 	// rewards is the total rewards for all AVSs
 	Rewards []StakerRewardsPerAVS `protobuf:"bytes,1,rep,name=rewards,proto3" json:"rewards"`

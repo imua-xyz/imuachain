@@ -425,7 +425,7 @@ func (k Keeper) SetAllStakerClaimedRewards(
 func (k Keeper) GetAllStakerClaimedRewards(ctx sdk.Context) ([]feedistributiontypes.KeyAndStakerClaimedRewards, error) {
 	return GenericGetAllItems(
 		ctx, k, feedistributiontypes.KeyPrefixStakerClaimedRewards,
-		func() codec.ProtoMarshaler { return &feedistributiontypes.KeyAndStakerClaimedRewards{} },
+		func() codec.ProtoMarshaler { return &feedistributiontypes.StakerClaimedRewards{} },
 		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndStakerClaimedRewards {
 			return feedistributiontypes.KeyAndStakerClaimedRewards{
 				Key:                  string(key),
