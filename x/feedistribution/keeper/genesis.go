@@ -111,7 +111,7 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *feedistributiontypes.GenesisStat
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all operator slash events"))
 	}
-	genesis.AllStakerClaimedRewards, err = k.GetAllStakerOutstandingRewards(ctx)
+	genesis.AllStakerClaimedRewards, err = k.GetAllStakerClaimedRewards(ctx)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all staker claimed rewards"))
 	}

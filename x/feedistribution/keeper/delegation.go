@@ -450,7 +450,7 @@ func (k Keeper) ClaimDelegationRewards(ctx sdk.Context, stakerID string) (feedis
 
 // GetStakerUnclaimedRewards queries the unclaimed rewards for a staker.
 // Unlike ClaimDelegationRewards, it does not trigger a claim operation.
-func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) ([]feedistributiontypes.CommonAVSRewardData, error) {
+func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) (feedistributiontypes.CommonAVSRewards, error) {
 	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	ret := make(feedistributiontypes.CommonAVSRewards, 0)
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
