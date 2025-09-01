@@ -1,6 +1,8 @@
 package assets_test
 
 import (
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	"math/big"
 	"strings"
 
@@ -911,6 +913,21 @@ func (s *AssetsPrecompileSuite) TestGetStakerBalanceByToken() {
 					PendingUndelegationAmount: sdkmath.NewInt(30),
 				}
 				_, err = s.App.AssetsKeeper.UpdateStakerAssetState(s.Ctx, stakerID, assetID, assetDelta)
+				s.Require().NoError(err)
+
+				err = s.App.DelegationKeeper.SetUndelegationRecords(s.Ctx, false, []delegationtype.UndelegationAndHoldCount{
+					{
+						Undelegation: &delegationtype.UndelegationRecord{
+							StakerId:                 stakerID,
+							AssetId:                  assetID,
+							OperatorAddr:             s.Operators[0].String(),
+							Amount:                   sdkmath.NewInt(30),
+							ActualCompletedAmount:    sdkmath.NewInt(30),
+							CompletedEpochIdentifier: dogfoodtypes.DefaultEpochIdentifier,
+							CompletedEpochNumber:     5,
+						},
+					},
+				})
 				s.Require().NoError(err)
 
 				input, err := s.precompile.Pack(

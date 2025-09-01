@@ -11,12 +11,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	utils "github.com/imua-xyz/imuachain/utils"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper/common"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // deposit: update staker's totalDeposit
@@ -49,7 +50,6 @@ func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerIn
 		if stakerInfo.StakerIndex > lastIndex {
 			lastIndex = stakerInfo.StakerIndex
 		}
-
 		keyStakerIndex := types.NSTStakerAddrKey(chainID, staker.StakerIndex)
 		store.Set(keyStakerIndex, []byte(stakerAddr))
 	}
@@ -375,7 +375,6 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 	}
 
 	updatedIndex = staker.StakerIndex
-
 	// set staker
 	if action == types.Action_ACTION_DEPOSIT {
 		updatedVersion := k.IncreaseVersionByDeposit(ctx, chainID, balance)
@@ -450,7 +449,7 @@ func (k Keeper) UpdateNSTFeedVersion(ctx sdk.Context, chainID uint64) (uint64, u
 	}
 	k.cdc.MustUnmarshal(value, &v)
 	if v.FeedVersion.Version >= v.Version.Version && v.FeedWithdrawVersion >= v.WithdrawVersion {
-		return v.FeedVersion.Version, v.WithdrawVersion, false
+		return v.FeedVersion.Version, v.FeedWithdrawVersion, false
 	}
 	v.FeedVersion.Version = v.Version.Version
 	v.FeedVersion.DepositAmount = v.Version.DepositAmount

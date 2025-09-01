@@ -158,6 +158,10 @@ func (k Keeper) UpdateAVSInfo(ctx sdk.Context, params *types.AVSRegisterOrDeregi
 			return errorsmod.Wrap(types.ErrCallerAddressUnauthorized, fmt.Sprintf("this caller not qualified to deregister %s", params.CallerAddress))
 		}
 
+		power, err := k.operatorKeeper.GetAVSUSDValue(ctx, params.AvsAddress.String())
+		if err == nil && power.IsPositive() {
+			return types.ErrCannotDeregister.Wrapf("The AVS still has voting power. avs:%s", params.AvsAddress)
+		}
 		// If avs DeRegisterAction check UnbondingPeriod
 		// #nosec G115
 		if k.operatorKeeper.IsUnbondingRelatedAVS(ctx, params.AvsAddress.String()) {
@@ -471,6 +475,7 @@ func (k Keeper) RaiseAndResolveChallenge(ctx sdk.Context, params *types.Challeng
 	if k.IsExistTaskChallengedInfo(ctx, params.TaskContractAddress.String(), params.TaskID) {
 		return errorsmod.Wrap(types.ErrAlreadyExists, fmt.Sprintf("the challenge has been raised: %s", params.TaskContractAddress))
 	}
+
 	// check challenge period
 	//  check epoch，The challenge must be within the challenge window period
 	avsInfo := k.GetAVSInfoByTaskAddress(ctx, taskInfo.TaskContractAddress)

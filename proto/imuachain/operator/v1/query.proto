@@ -53,10 +53,20 @@ message QueryOperatorUSDValueResponse {
   OperatorOptedUSDValue usd_values = 1 [(gogoproto.customname) = "USDValues"];
 }
 
+// QueryOperatorAssetUSDValueRequest is the request to obtain the USD value for operator asset.
+message QueryOperatorAssetUSDValueRequest {
+  // epoch_identifier is the specific epoch identifier
+  string epoch_identifier = 1;
+  // operator_addr should be the string type of sdk.AccAddress
+  string operator_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // asset_id is the specific asset to query
+  string asset_id = 3;
+}
+
 // QueryAVSUSDValueRequest is the request to obtain the USD value for AVS.
 message QueryAVSUSDValueRequest {
   // avs_address is the AVS address opted-in by the operator
-  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
+  string avs_address = 1;
 }
 
 // QueryOperatorSlashInfoRequest is the request to obtain the slash information for the specified
@@ -300,20 +310,26 @@ service Query {
   // QueryOperatorUSDValue queries the opted-in USD value for the operator
   rpc QueryOperatorUSDValue(QueryOperatorUSDValueRequest) returns (QueryOperatorUSDValueResponse) {
     option (google.api.http).get =
-      "/imuachain/operator/v1/operator_usd_value/{operator_and_avs.operator_addr}/"
-      "{operator_and_avs.avs_address}";
+    "/imuachain/operator/v1/operator_usd_value/{operator_and_avs.operator_addr}/"
+        "{operator_and_avs.avs_address}";
+  }
+
+  // QueryOperatorAssetUSDValue queries the USD value for the operator asset
+  rpc QueryOperatorAssetUSDValue(QueryOperatorAssetUSDValueRequest) returns (DecValueField) {
+    option (google.api.http).get =
+    "/imuachain/operator/v1/operator_asset_usd_value/{epoch_identifier}/{operator_addr}/{asset_id}";
   }
 
   // QueryAVSUSDValue queries the USD value for the AVS
   rpc QueryAVSUSDValue(QueryAVSUSDValueRequest) returns (DecValueField) {
-    option (google.api.http).get = "/imuachain/operator/v1/avs_usd_value";
+    option (google.api.http).get = "/imuachain/operator/v1/avs_usd_value/{avs_address}";
   }
 
   // QueryOperatorSlashInfo queries the slash information for the specified operator and AVS
   rpc QueryOperatorSlashInfo(QueryOperatorSlashInfoRequest) returns (QueryOperatorSlashInfoResponse) {
     option (google.api.http).get =
-      "/imuachain/operator/v1/operator_slash_info/{operator_and_avs.operator_addr}/"
-      "{operator_and_avs.avs_address}";
+    "/imuachain/operator/v1/operator_slash_info/{operator_and_avs.operator_addr}/"
+        "{operator_and_avs.avs_address}";
   }
 
   // QueryAllOperatorConsAddrsByChainID queries all operators and their consensus addresses
