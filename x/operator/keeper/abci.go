@@ -13,7 +13,7 @@ import (
 // the end of epoch.
 func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier string, epochNumber int64, isForSlash bool) error {
 	// get assets supported by the AVS
-	avsAssetsList,avsAssetsMap, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
+	avsAssetsList, avsAssetsMap, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
 	if err != nil {
 		return err
 	}
