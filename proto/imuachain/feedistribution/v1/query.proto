@@ -405,8 +405,8 @@ message QueryStakerAllRewardsRequest {
 // RewardInfo represents a reward amount for a specific token,
 // including its identifier, decimal precision, and the actual amount.
 message RewardInfo {
-  // token_id is the unique identifier of the reward token.
-  string token_id = 1;
+  // asset_id is the unique identifier of the reward token.
+  string asset_id = 1;
 
   // decimal specifies the number of decimal places for the reward asset,
   // which is provided during registration.

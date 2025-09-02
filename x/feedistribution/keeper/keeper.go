@@ -485,7 +485,7 @@ func (k Keeper) DecCoinsToRewardInfos(ctx sdk.Context, avsAddr string, rewards s
 		decimal := assetInfo.AssetBasicInfo.Decimals
 		rewardAmount := feedistributiontypes.UnscaleDecToInt(rewards[i].Amount, decimal)
 		rewardInfos[i] = feedistributiontypes.RewardInfo{
-			TokenId: assetID,
+			AssetId: assetID,
 			Decimal: decimal,
 			Amount:  rewardAmount,
 		}
