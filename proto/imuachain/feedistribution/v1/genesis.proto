@@ -39,6 +39,8 @@ message GenesisState {
   repeated KeyAndOperatorSlashEvent all_operator_slash_events = 12 [(gogoproto.nullable) = false];
   // all_staker_claimed_rewards is the claimed rewards for all stakers.
   repeated KeyAndStakerClaimedRewards all_staker_claimed_rewards = 13 [(gogoproto.nullable) = false];
+  // all_staker_reward_params is the reward parameters for all stakers.
+  repeated KeyAndStakerRewardParams all_staker_reward_params = 14 [(gogoproto.nullable) = false];
 }
 
 // AVSAddrAndRewardAssets is a struct to be used in the genesis state.
@@ -155,5 +157,15 @@ message KeyAndStakerClaimedRewards{
   string key = 1;
   // staker_claimed_rewards represents the claimed rewards for the staker.
   StakerClaimedRewards staker_claimed_rewards = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndStakerRewardParams is a struct used in the genesis state.
+// It stores the claimed rewards for the staker.
+// The key, which is the stakerID.
+message KeyAndStakerRewardParams{
+  // key is is the stakerID.
+  string key = 1;
+  // staker_reward_params represents the reward params for the staker.
+  StakerRewardParams staker_reward_params = 2 [(gogoproto.nullable) = false];
 }
 

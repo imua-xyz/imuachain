@@ -43,6 +43,16 @@ type SetStakerRewardParamsArgs struct {
 	RedelegateOperator string `abi:"redelegateOperator"`
 }
 
+type UndelegateRewardArgs struct {
+	ClientChainLzID      uint32   `abi:"clientChainLzID"`
+	RewardAssetChainLzID uint32   `abi:"rewardAssetChainLzID"`
+	AssetAddress         []byte   `abi:"assetAddress"`
+	StakerAddress        []byte   `abi:"stakerAddress"`
+	OperatorAddr         []byte   `abi:"operatorAddr"`
+	OpAmount             *big.Int `abi:"opAmount"`
+	InstantUnbond        bool     `abi:"instantUnbond"`
+}
+
 type WithdrawCommissionArgs struct {
 	RewardAssetChainLzID uint32   `abi:"rewardAssetChainLzID"`
 	AssetAddress         []byte   `abi:"assetAddress"`

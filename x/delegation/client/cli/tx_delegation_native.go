@@ -3,6 +3,8 @@ package cli
 import (
 	"errors"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -11,10 +13,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/imua-xyz/imuachain/x/delegation/types"
-)
-
-const (
-	FlagInstantUnbonding = "instant-unbonding"
 )
 
 func CmdDelegate() *cobra.Command {
@@ -58,7 +56,7 @@ func CmdUndelegate() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			instantUnbonding, err := cmd.Flags().GetBool(FlagInstantUnbonding)
+			instantUnbonding, err := cmd.Flags().GetBool(utils.FlagInstantUnbonding)
 			if err != nil {
 				return err
 			}
@@ -68,7 +66,7 @@ func CmdUndelegate() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
-	cmd.Flags().Bool(FlagInstantUnbonding, false, "indicate whether it's an instant undelegation")
+	cmd.Flags().Bool(utils.FlagInstantUnbonding, false, "indicate whether it's an instant undelegation")
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

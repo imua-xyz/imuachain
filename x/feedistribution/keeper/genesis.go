@@ -59,6 +59,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState feedistributiontypes.Genes
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all staker claimed rewards"))
 	}
+	err = k.SetAllStakerRewardParams(ctx, genState.AllStakerRewardParams)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all staker reward parameters"))
+	}
 }
 
 // ExportGenesis returns the module's exported genesis
@@ -114,6 +118,10 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *feedistributiontypes.GenesisStat
 	genesis.AllStakerClaimedRewards, err = k.GetAllStakerClaimedRewards(ctx)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all staker claimed rewards"))
+	}
+	genesis.AllStakerRewardParams, err = k.GetAllStakerRewardParams(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all staker reward parameters"))
 	}
 	return &genesis
 }

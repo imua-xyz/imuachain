@@ -42,6 +42,10 @@ const (
 	DelimiterForID = "_"
 )
 
+const (
+	FlagInstantUnbonding = "instant-unbonding"
+)
+
 // ChainIDPrefix is pre-pended to the chainID, and the combination hashed to generate the AVS address.
 var ChainIDPrefix = []byte("chain-id-prefix")
 

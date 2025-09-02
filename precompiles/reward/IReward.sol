@@ -109,6 +109,24 @@ interface IReward {
         string calldata redelegateOperator
     ) external returns (bool success);
 
+    /// @dev undelegate reward from the specific operator
+    /// @param clientChainLzID The LzID of the client chain the staker originates from
+    /// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
+    /// @param assetAddress The reward asset Address
+    /// @param stakerAddress The address of the staker withdrawing the reward.
+    /// @param operatorAddr  The operator address that wants to unDelegate from
+    /// @param opAmount The Undelegation amount
+    /// @param instantUnbond Whether to unbond immediately
+    function undelegateReward(
+        uint32 clientChainLzID,
+        uint32 rewardAssetChainLzID,
+        bytes calldata assetAddress,
+        bytes calldata stakerAddress,
+        bytes calldata operatorAddr,
+        uint256 opAmount,
+        bool instantUnbond
+    ) external returns (bool success);
+
     /// @dev Withdraw the commissions earned from multiple AVSs (excluding the dogfood AVS) to the operator.
     /// This will update the commission state of the specified operator.
     /// Note that this address cannot be a module account.

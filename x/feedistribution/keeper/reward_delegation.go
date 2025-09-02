@@ -3,9 +3,10 @@ package keeper
 import (
 	"sort"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/avs/types"
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
@@ -152,10 +153,13 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 	return nil
 }
 
-func (k Keeper) UndelegateStakerClaimedRewards(
-	ctx sdk.Context, stakerID, assetID string, txHash common.Hash,
+func (k Keeper) UndelegateClaimedRewards(
+	ctx sdk.Context, stakerID, assetID string,
 	operatorAccAddr sdk.AccAddress, instantUnbonding bool, amount math.Int,
 ) error {
+	if amount.IsNil() || !amount.IsPositive() {
+		return feedistributiontypes.ErrFailedToUndelegateRewards.Wrapf("invalid amount: %v", amount)
+	}
 	lackingUndelegationAmount := sdk.NewIntFromBigInt(amount.BigInt())
 	totalCompletedAmount := math.ZeroInt()
 
@@ -257,10 +261,12 @@ func (k Keeper) UndelegateStakerClaimedRewards(
 	}
 
 	err := k.delegationKeeper.UndelegateFrom(ctx, &delegationtype.DelegationOrUndelegationParams{
-		Action:                assetstype.UndelegateFrom,
-		OperatorAddress:       operatorAccAddr,
-		OpAmount:              amount,
-		TxHash:                txHash,
+		Action:          assetstype.UndelegateFrom,
+		OperatorAddress: operatorAccAddr,
+		OpAmount:        amount,
+		// The txID in the undelegation key is unnecessary after introducing a unique undelegation ID.
+		// TODO: Consider removing all code related to using the txID in the undelegation key.
+		TxHash:                common.Hash{},
 		InstantUnbonding:      instantUnbonding,
 		RewardAsset:           true,
 		RewardAssetID:         assetID,

@@ -59,9 +59,9 @@ func (k *Keeper) calculateRewardUSDValue(
 	return assetID, usdPerAsset, nil
 }
 
-// iterateOperatorRewardUSDValues iterates operator rewards and calculates USD values.
+// calcOperatorRewardsUSDValue iterates operator rewards and calculates USD values.
 // For each denom with positive USD value, it invokes the handler callback.
-func (k *Keeper) iterateOperatorRewardUSDValues(
+func (k *Keeper) calcOperatorRewardsUSDValue(
 	ctx sdk.Context,
 	rewardSourceAVS string,
 	unclaimedRewards feedistributiontypes.OperatorUnclaimedRewards,
@@ -133,7 +133,7 @@ func (k *Keeper) UpdateAllRewardsUSDForOperator(
 
 	opFunc := func(rewardSourceAVS string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
 		// calculate and set the USD value for specific operator and rewardSourceAVS
-		_, avsRewardsUSD, err := k.iterateOperatorRewardUSDValues(ctx, rewardSourceAVS, *rewards, supportedAssets, assetPrices,
+		_, avsRewardsUSD, err := k.calcOperatorRewardsUSDValue(ctx, rewardSourceAVS, *rewards, supportedAssets, assetPrices,
 			func(denom string, usdValue sdkmath.LegacyDec) error {
 				// set the USD value for specific AVS reward asset
 				if err := k.operatorKeeper.SetOperatorRewardUSDValue(ctx, receivingAVS, rewardSourceAVS, operator, denom, usdValue); err != nil {
@@ -174,7 +174,7 @@ func (k *Keeper) OperatorTotalRewardsUSDValue(
 
 	opFunc := func(rewardSourceAVS string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
 		// calculate the USD value for specific operator and rewardSourceAVS
-		usdValuedAssets, avsRewardsUSD, err := k.iterateOperatorRewardUSDValues(
+		usdValuedAssets, avsRewardsUSD, err := k.calcOperatorRewardsUSDValue(
 			ctx, rewardSourceAVS, *rewards,
 			nil, assetPrices, nil)
 		if err != nil {

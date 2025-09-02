@@ -8,6 +8,8 @@ import (
 	"math"
 	"strings"
 
+	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+
 	"github.com/imua-xyz/imuachain/utils"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -232,7 +234,7 @@ func (k *Keeper) QueryOperatorAssetUSDValue(ctx context.Context, req *types.Quer
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
-	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	_, _, err = assetstypes.ValidateID(req.AssetId, false, false)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
 	}
@@ -242,6 +244,27 @@ func (k *Keeper) QueryOperatorAssetUSDValue(ctx context.Context, req *types.Quer
 	}
 	return &types.DecValueField{
 		Amount: assetUSDValue,
+	}, nil
+}
+
+func (k *Keeper) QueryRewardsUSDValue(ctx context.Context, req *types.QueryRewardsUSDValueRequest) (*types.QueryRewardsUSDValueResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.AvsAddress) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.AvsAddress)
+	}
+	_, err := sdk.AccAddressFromBech32(req.OperatorAddr)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
+	rewardsUSDValues, err := k.GetRewardsUSDValues(c, req.AvsAddress, req.OperatorAddr)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryRewardsUSDValueResponse{
+		AvsRewardsUsdValues: rewardsUSDValues,
 	}, nil
 }
 

@@ -21389,7 +21389,7 @@
                         },
                         "reward_allocation_total": {
                           "type": "string",
-                          "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                          "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
                         }
                       }
                     }
@@ -22107,98 +22107,6 @@
         ]
       }
     },
-    "/imuachain/feedistribution/v1/operator_outstanding_rewards/{operator}/{avs}": {
-      "get": {
-        "summary": "OperatorOutstandingRewards queries the outstanding rewards for an operator.",
-        "operationId": "OperatorOutstandingRewards",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "operator_outstanding_rewards": {
-                  "title": "operator_outstanding_rewards is the outstanding rewards returned for an operator",
-                  "type": "object",
-                  "properties": {
-                    "rewards": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "denom": {
-                            "type": "string"
-                          },
-                          "amount": {
-                            "type": "string"
-                          }
-                        },
-                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
-                      },
-                      "title": "rewards represents the rewards for the operator"
-                    }
-                  },
-                  "description": "OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor an operator inexpensive to track, allows simple sanity checks.\nThe AVS address is implicit within the store key."
-                }
-              },
-              "title": "QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "operator",
-            "description": "operator address",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "avs",
-            "description": "avs address",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "Query"
-        ]
-      }
-    },
     "/imuachain/feedistribution/v1/operator_slash_event/{operator}/{asset_id}/{epoch_identifier}/{epoch_number}/{block_height}": {
       "get": {
         "summary": "OperatorSlashEvent queries the operator slash event.",
@@ -22221,9 +22129,16 @@
                     "fraction": {
                       "type": "string",
                       "description": "fraction is the slash fraction."
+                    },
+                    "slashed_reward_assets": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "slashed_reward_assets records the list of reward assets that have been slashed.\nIt is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
                     }
                   },
-                  "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
+                  "description": "OperatorSlashEvent represents an operator slash event.\noperator, assetID, epochIdentifier, epochNumber and height are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
                 }
               },
               "description": "QueryOperatorSlashEventResponse is the response to obtain the operator slash event."
@@ -22344,6 +22259,13 @@
                           "fraction": {
                             "type": "string",
                             "description": "fraction is the slash fraction."
+                          },
+                          "slashed_reward_assets": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "slashed_reward_assets records the list of reward assets that have been slashed.\nIt is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
                           }
                         }
                       }
@@ -22408,6 +22330,202 @@
           {
             "name": "epoch_identifier",
             "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/operator_unclaimed_rewards/{operator}/{avs}": {
+      "get": {
+        "summary": "OperatorUnclaimedRewards queries the unclaimed rewards for an operator.",
+        "operationId": "OperatorUnclaimedRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "operator_unclaimed_rewards": {
+                  "title": "operator_unclaimed_rewards is the unclaimed rewards returned for an operator",
+                  "type": "object",
+                  "properties": {
+                    "outstanding_rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "description": "outstanding_rewards represents the unclaimed rewards generated by staking assets under the operator\nIt acts like a reward pool holding unclaimed rewards for all stakers."
+                    },
+                    "rewards_from_compounding": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "symbol": {
+                            "type": "string",
+                            "title": "symbol is the symbol(domination) of the reward asset"
+                          },
+                          "rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "avs_address": {
+                                  "type": "string",
+                                  "title": "avs_address is the AVS address"
+                                },
+                                "rewards": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "denom": {
+                                        "type": "string"
+                                      },
+                                      "amount": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                                  },
+                                  "title": "rewards represents the current rewards or cumulative reward ratios"
+                                }
+                              },
+                              "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                            },
+                            "title": "rewards represents the cumulative compounding reward from multiple AVSs"
+                          }
+                        },
+                        "title": "CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for\nspecific reward asset"
+                      },
+                      "description": "rewards_from_compounding represents the rewards generated by the rewards compounding\nIt acts as a reward pool holding unclaimed compounded rewards for all stakers.\nStores the rewards pool for each asset, allowing calculation of compounding rewards\nfor stakers. Asset symbols in the list must correspond to the denominations in outstanding_rewards,\nsince all compounding rewards are derived from the outstanding rewards."
+                    },
+                    "outstanding_rewards_slashed": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "description": "outstanding_rewards_slashed represents the total amount of rewards slashed from outstanding rewards.\nWe need to apply slashing here because outstanding rewards are automatically compounded\nto contribute voting power."
+                    },
+                    "compounding_rewards_slashed": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "symbol": {
+                            "type": "string",
+                            "title": "symbol is the symbol(domination) of the reward asset"
+                          },
+                          "rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "avs_address": {
+                                  "type": "string",
+                                  "title": "avs_address is the AVS address"
+                                },
+                                "rewards": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "denom": {
+                                        "type": "string"
+                                      },
+                                      "amount": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                                  },
+                                  "title": "rewards represents the current rewards or cumulative reward ratios"
+                                }
+                              },
+                              "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                            },
+                            "title": "rewards represents the cumulative compounding reward from multiple AVSs"
+                          }
+                        },
+                        "title": "CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for\nspecific reward asset"
+                      },
+                      "description": "compounding_rewards_slashed represents the total amount of rewards slashed from compounding rewards.\nWe need to apply slashing here because compounding rewards are automatically compounded\nto contribute voting power."
+                    }
+                  },
+                  "description": "OperatorUnclaimedRewards represents the accumulated rewards for an operator that have not\nbeen claimed by stakers. This structure is inexpensive to track and allows simple sanity checks.\nThe AVS address is implicit in the store key."
+                }
+              },
+              "title": "QueryOperatorUnclaimedRewardsResponse is the response to obtain the operator unclaimed rewards"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator",
+            "description": "operator address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "avs",
+            "description": "avs address",
             "in": "path",
             "required": true,
             "type": "string"
@@ -22546,7 +22664,7 @@
                         },
                         "reward_allocation_total": {
                           "type": "string",
-                          "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                          "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
                         }
                       }
                     }
@@ -22681,7 +22799,7 @@
                               },
                               "reward_allocation_total": {
                                 "type": "string",
-                                "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                                "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
                               }
                             }
                           }
@@ -22963,7 +23081,7 @@
                               },
                               "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
                             },
-                            "title": "outstanding_rewards represents the un-withdrawn rewards for the staker"
+                            "description": "outstanding_rewards represents the rewards that have been claimed by the staker\nbut not yet withdrawn; they can either be withdrawn or automatically redelegated."
                           },
                           "withdrawn_rewards": {
                             "type": "array",
@@ -22980,8 +23098,103 @@
                               "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
                             },
                             "title": "withdrawn_rewards represents the withdrawn rewards for the staker"
+                          },
+                          "historical_total_rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "denom": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "type": "string"
+                                }
+                              },
+                              "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                            },
+                            "title": "historical_total_rewards represents the historical total rewards that are claimed by this staker,"
+                          },
+                          "delegation_rewards_shares": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "operator_addr": {
+                                  "type": "string",
+                                  "title": "operator_addr is the target operator address for redelegation"
+                                },
+                                "shares": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "denom": {
+                                        "type": "string"
+                                      },
+                                      "amount": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                                  },
+                                  "description": "shares represents the shares of rewards that are lazily claimed and currently\nredelegated for compounding.In the decCoin, the amount represent the share in\noperator asset pool instead of the asset amount."
+                                }
+                              },
+                              "description": "RewardsDelegationShare is a helper struct that records all the delegated rewards shares\nfrom a specific operator."
+                            },
+                            "description": "delegation_rewards_shares represents the shares of rewards that are lazily claimed\nand currently redelegated for compounding. The shares might come from different operators,\nas the staker may change the default redelegation operator."
+                          },
+                          "pending_undelegation_rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "denom": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "type": "string"
+                                }
+                              },
+                              "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                            },
+                            "description": "pending_undelegation_rewards represents the pending undelegation rewards\nthrough a reward undelegation transaction."
+                          },
+                          "pending_slashed_rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "denom": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "type": "string"
+                                }
+                              },
+                              "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                            },
+                            "description": "pending_slashed_rewards represents rewards from pending undelegations\nthat have been slashed. The slashing may result from malicious behavior\nor from instant unbonding. This field ensures accurate calculation\nof the current staker’s rewards in an AVS by excluding the effect of slashed\npending undelegations."
+                          },
+                          "withdrawable_rewards": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "denom": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "type": "string"
+                                }
+                              },
+                              "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                            },
+                            "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
                           }
-                        }
+                        },
+                        "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
                       }
                     },
                     "title": "StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified\nstaker and AVS"
@@ -23068,7 +23281,7 @@
                         },
                         "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
                       },
-                      "title": "outstanding_rewards represents the un-withdrawn rewards for the staker"
+                      "description": "outstanding_rewards represents the rewards that have been claimed by the staker\nbut not yet withdrawn; they can either be withdrawn or automatically redelegated."
                     },
                     "withdrawn_rewards": {
                       "type": "array",
@@ -23085,8 +23298,103 @@
                         "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
                       },
                       "title": "withdrawn_rewards represents the withdrawn rewards for the staker"
+                    },
+                    "historical_total_rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "title": "historical_total_rewards represents the historical total rewards that are claimed by this staker,"
+                    },
+                    "delegation_rewards_shares": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "operator_addr": {
+                            "type": "string",
+                            "title": "operator_addr is the target operator address for redelegation"
+                          },
+                          "shares": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "denom": {
+                                  "type": "string"
+                                },
+                                "amount": {
+                                  "type": "string"
+                                }
+                              },
+                              "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                            },
+                            "description": "shares represents the shares of rewards that are lazily claimed and currently\nredelegated for compounding.In the decCoin, the amount represent the share in\noperator asset pool instead of the asset amount."
+                          }
+                        },
+                        "description": "RewardsDelegationShare is a helper struct that records all the delegated rewards shares\nfrom a specific operator."
+                      },
+                      "description": "delegation_rewards_shares represents the shares of rewards that are lazily claimed\nand currently redelegated for compounding. The shares might come from different operators,\nas the staker may change the default redelegation operator."
+                    },
+                    "pending_undelegation_rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "description": "pending_undelegation_rewards represents the pending undelegation rewards\nthrough a reward undelegation transaction."
+                    },
+                    "pending_slashed_rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "description": "pending_slashed_rewards represents rewards from pending undelegations\nthat have been slashed. The slashing may result from malicious behavior\nor from instant unbonding. This field ensures accurate calculation\nof the current staker’s rewards in an AVS by excluding the effect of slashed\npending undelegations."
+                    },
+                    "withdrawable_rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
                     }
-                  }
+                  },
+                  "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
                 }
               },
               "title": "QueryStakerClaimedRewardsResponse is the response to obtain the staker claimed rewards"
@@ -23137,6 +23445,83 @@
           {
             "name": "avs",
             "description": "avs address",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/staker_reward_params/{staker_id}": {
+      "post": {
+        "summary": "StakerRewardParams queries the reward parameters of the staker.",
+        "operationId": "StakerRewardParams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reward_params": {
+                  "description": "reward_params is the reward parameters.",
+                  "type": "object",
+                  "properties": {
+                    "redelegate_reward": {
+                      "type": "boolean",
+                      "title": "redelegate_reward represents whether the reward is redelegated"
+                    },
+                    "redelegate_operator_addr": {
+                      "type": "string",
+                      "title": "redelegate_operator_address is the target operator address for redelegation"
+                    }
+                  },
+                  "title": "StakerRewardParams is the reward parameters for a staker"
+                }
+              },
+              "description": "QueryStakerRewardParamsResponse is the response to obtain the staker reward parameters."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker id",
             "in": "path",
             "required": true,
             "type": "string"
@@ -23486,9 +23871,17 @@
                                 "type": "string",
                                 "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
                               },
-                              "wait_undelegation_amount": {
+                              "pending_undelegation_amount": {
                                 "type": "string",
-                                "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                                "description": "pending_undelegation_amount is the amount that is waiting to be unbonded."
+                              },
+                              "reward_undelegatable_share": {
+                                "type": "string",
+                                "description": "reward_undelegatable_share is the undelegatable share of reward."
+                              },
+                              "reward_pending_undelegation_amount": {
+                                "type": "string",
+                                "description": "reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded."
                               }
                             },
                             "description": "DelegationAmounts is the delegation amount response for a single delegation."
@@ -23688,6 +24081,32 @@
                           "actual_completed_amount": {
                             "type": "string",
                             "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                          },
+                          "reward_asset": {
+                            "type": "boolean",
+                            "title": "reward_asset indicates whether the undelegation is for rewards"
+                          },
+                          "reward_undelegations": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "avs_address": {
+                                  "type": "string",
+                                  "description": "avs_address is the AVS address the rewards come from."
+                                },
+                                "amount": {
+                                  "type": "string",
+                                  "description": "amount is the undelegated amount from specific AVS."
+                                },
+                                "actual_completed_amount": {
+                                  "type": "string",
+                                  "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                                }
+                              },
+                              "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
+                            },
+                            "description": "reward_undelegations represents reward undelegation amounts from different AVSs.\nThis field is only populated when `reward_asset` is true."
                           }
                         },
                         "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -23784,9 +24203,17 @@
                           "type": "string",
                           "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
                         },
-                        "wait_undelegation_amount": {
+                        "pending_undelegation_amount": {
                           "type": "string",
-                          "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                          "description": "pending_undelegation_amount is the amount that is waiting to be unbonded."
+                        },
+                        "reward_undelegatable_share": {
+                          "type": "string",
+                          "description": "reward_undelegatable_share is the undelegatable share of reward."
+                        },
+                        "reward_pending_undelegation_amount": {
+                          "type": "string",
+                          "description": "reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded."
                         }
                       },
                       "description": "DelegationAmounts is the delegation amount response for a single delegation."
@@ -24006,6 +24433,32 @@
                           "actual_completed_amount": {
                             "type": "string",
                             "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                          },
+                          "reward_asset": {
+                            "type": "boolean",
+                            "title": "reward_asset indicates whether the undelegation is for rewards"
+                          },
+                          "reward_undelegations": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "avs_address": {
+                                  "type": "string",
+                                  "description": "avs_address is the AVS address the rewards come from."
+                                },
+                                "amount": {
+                                  "type": "string",
+                                  "description": "amount is the undelegated amount from specific AVS."
+                                },
+                                "actual_completed_amount": {
+                                  "type": "string",
+                                  "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                                }
+                              },
+                              "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
+                            },
+                            "description": "reward_undelegations represents reward undelegation amounts from different AVSs.\nThis field is only populated when `reward_asset` is true."
                           }
                         },
                         "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -25839,7 +26292,7 @@
                                   },
                                   "title": "SlashFromUndelegation records the slash detail from the undelegation"
                                 },
-                                "title": "SlashUndelegations records all slash info related to the undelegation"
+                                "title": "slash_undelegations records all slash info related to the undelegation"
                               },
                               "slash_assets_pool": {
                                 "type": "array",
@@ -25852,12 +26305,12 @@
                                     },
                                     "amount": {
                                       "type": "string",
-                                      "description": "amount is the slashed amount from the assets pool."
+                                      "description": "amount is the slashed amount.."
                                     }
                                   },
-                                  "title": "SlashFromAssetsPool records the slash detail from the operator assets pool"
+                                  "title": "SlashAssetAmount records the slash amount of specific assetID"
                                 },
-                                "title": "SlashFromAssetsPool records all slash info related to the assets pool"
+                                "title": "slash_assets_pool records all slash info related to the assets pool"
                               },
                               "undelegation_filter_height": {
                                 "type": "string",
@@ -25868,6 +26321,38 @@
                                 "type": "string",
                                 "format": "int64",
                                 "description": "the historical voting power at the time of the slash event."
+                              },
+                              "slash_unclaimed_rewards": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "avs": {
+                                      "type": "string",
+                                      "description": "avs is who the rewards earned from."
+                                    },
+                                    "slash_assets": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "asset_id": {
+                                            "type": "string",
+                                            "description": "asset_id is the asset id."
+                                          },
+                                          "amount": {
+                                            "type": "string",
+                                            "description": "amount is the slashed amount.."
+                                          }
+                                        },
+                                        "title": "SlashAssetAmount records the slash amount of specific assetID"
+                                      },
+                                      "description": "slash_assets represent multiple rewards assets states that are slashed."
+                                    }
+                                  },
+                                  "title": "SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards"
+                                },
+                                "title": "slash_unclaimed_rewards records all slash amounts from unclaimed rewards"
                               }
                             }
                           }
@@ -25946,7 +26431,7 @@
           },
           {
             "name": "operator_and_avs.avs_address",
-            "description": "avs_address is the address of the AVS - either an 0x address or a chainID.",
+            "description": "avs_address is the address of the AVS",
             "in": "path",
             "required": true,
             "type": "string"
@@ -26074,7 +26559,7 @@
           },
           {
             "name": "operator_and_avs.avs_address",
-            "description": "avs_address is the address of the AVS - either an 0x address or a chainID.",
+            "description": "avs_address is the address of the AVS",
             "in": "path",
             "required": true,
             "type": "string"
@@ -26316,7 +26801,111 @@
           },
           {
             "name": "operator_and_avs.avs_address",
-            "description": "avs_address is the address of the AVS - either an 0x address or a chainID.",
+            "description": "avs_address is the address of the AVS",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/operator/v1/rewards_usd_value/{operator_and_avs.operator_addr}/{operator_and_avs.avs_address}": {
+      "get": {
+        "summary": "QueryRewardsUSDValue queries the USD value of compounding rewards for the specific operator and AVS",
+        "operationId": "QueryRewardsUSDValue",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "avs_rewards_usd_values": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "avs_address": {
+                        "type": "string",
+                        "title": "avs_address is the address of the reward source AVS"
+                      },
+                      "rewards_usd_values": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "symbol": {
+                              "type": "string",
+                              "description": "symbol of the reward asset."
+                            },
+                            "usd_value": {
+                              "type": "string",
+                              "title": "usd_value is the USD value of specific reward asset"
+                            }
+                          },
+                          "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+                        },
+                        "description": "rewards_usd_values are the USD values of all reward assets."
+                      }
+                    },
+                    "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+                  },
+                  "description": "avs_rewards_usd_values are the rewards USD values from all AVSs."
+                }
+              },
+              "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string",
+                        "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte",
+                        "description": "Must be a valid serialized protocol buffer of the above specified type."
+                      }
+                    },
+                    "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(&foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n\nExample 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\nExample 4: Pack and unpack a message in Go\n\n     foo := &pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := &pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\n\nJSON\n\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": <string>,\n      \"lastName\": <string>\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "operator_and_avs.operator_addr",
+            "description": "operator_addr should be the string type of sdk.AccAddress",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operator_and_avs.avs_address",
+            "description": "avs_address is the address of the AVS",
             "in": "path",
             "required": true,
             "type": "string"
@@ -47210,7 +47799,7 @@
             },
             "reward_allocation_total": {
               "type": "string",
-              "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+              "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
             }
           }
         }
@@ -47230,7 +47819,7 @@
         },
         "reward_allocation_total": {
           "type": "string",
-          "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+          "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
         }
       },
       "title": "AVSRewardAssetState defines the state of an asset to be used as a reward for an AVS"
@@ -47294,7 +47883,7 @@
                   },
                   "reward_allocation_total": {
                     "type": "string",
-                    "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                    "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
                   }
                 }
               }
@@ -47395,6 +47984,46 @@
         }
       },
       "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+    },
+    "imuachain.feedistribution.v1.CompoundingRewardsPerAsset": {
+      "type": "object",
+      "properties": {
+        "symbol": {
+          "type": "string",
+          "title": "symbol is the symbol(domination) of the reward asset"
+        },
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the AVS address"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "title": "rewards represents the current rewards or cumulative reward ratios"
+              }
+            },
+            "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+          },
+          "title": "rewards represents the cumulative compounding reward from multiple AVSs"
+        }
+      },
+      "title": "CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for\nspecific reward asset"
     },
     "imuachain.feedistribution.v1.DelegationChangeInfo": {
       "type": "object",
@@ -47638,28 +48267,6 @@
       },
       "description": "OperatorHistoricalRewardsAndPeriod is used for querying the operator historical rewards for all periods."
     },
-    "imuachain.feedistribution.v1.OperatorOutstandingRewards": {
-      "type": "object",
-      "properties": {
-        "rewards": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "denom": {
-                "type": "string"
-              },
-              "amount": {
-                "type": "string"
-              }
-            },
-            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
-          },
-          "title": "rewards represents the rewards for the operator"
-        }
-      },
-      "description": "OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor an operator inexpensive to track, allows simple sanity checks.\nThe AVS address is implicit within the store key."
-    },
     "imuachain.feedistribution.v1.OperatorRewardProportion": {
       "type": "object",
       "properties": {
@@ -47685,9 +48292,16 @@
         "fraction": {
           "type": "string",
           "description": "fraction is the slash fraction."
+        },
+        "slashed_reward_assets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "slashed_reward_assets records the list of reward assets that have been slashed.\nIt is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
         }
       },
-      "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
+      "description": "OperatorSlashEvent represents an operator slash event.\noperator, assetID, epochIdentifier, epochNumber and height are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
     },
     "imuachain.feedistribution.v1.OperatorSlashEventAndHeight": {
       "type": "object",
@@ -47714,11 +48328,144 @@
             "fraction": {
               "type": "string",
               "description": "fraction is the slash fraction."
+            },
+            "slashed_reward_assets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "slashed_reward_assets records the list of reward assets that have been slashed.\nIt is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
             }
           }
         }
       },
       "title": "OperatorSlashEventAndHeight is a struct used for querying all slash events for the specific operator"
+    },
+    "imuachain.feedistribution.v1.OperatorUnclaimedRewards": {
+      "type": "object",
+      "properties": {
+        "outstanding_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "description": "outstanding_rewards represents the unclaimed rewards generated by staking assets under the operator\nIt acts like a reward pool holding unclaimed rewards for all stakers."
+        },
+        "rewards_from_compounding": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "title": "symbol is the symbol(domination) of the reward asset"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "avs_address": {
+                      "type": "string",
+                      "title": "avs_address is the AVS address"
+                    },
+                    "rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "title": "rewards represents the current rewards or cumulative reward ratios"
+                    }
+                  },
+                  "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                },
+                "title": "rewards represents the cumulative compounding reward from multiple AVSs"
+              }
+            },
+            "title": "CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for\nspecific reward asset"
+          },
+          "description": "rewards_from_compounding represents the rewards generated by the rewards compounding\nIt acts as a reward pool holding unclaimed compounded rewards for all stakers.\nStores the rewards pool for each asset, allowing calculation of compounding rewards\nfor stakers. Asset symbols in the list must correspond to the denominations in outstanding_rewards,\nsince all compounding rewards are derived from the outstanding rewards."
+        },
+        "outstanding_rewards_slashed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "description": "outstanding_rewards_slashed represents the total amount of rewards slashed from outstanding rewards.\nWe need to apply slashing here because outstanding rewards are automatically compounded\nto contribute voting power."
+        },
+        "compounding_rewards_slashed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "title": "symbol is the symbol(domination) of the reward asset"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "avs_address": {
+                      "type": "string",
+                      "title": "avs_address is the AVS address"
+                    },
+                    "rewards": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "denom": {
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "string"
+                          }
+                        },
+                        "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                      },
+                      "title": "rewards represents the current rewards or cumulative reward ratios"
+                    }
+                  },
+                  "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                },
+                "title": "rewards represents the cumulative compounding reward from multiple AVSs"
+              }
+            },
+            "title": "CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for\nspecific reward asset"
+          },
+          "description": "compounding_rewards_slashed represents the total amount of rewards slashed from compounding rewards.\nWe need to apply slashing here because compounding rewards are automatically compounded\nto contribute voting power."
+        }
+      },
+      "description": "OperatorUnclaimedRewards represents the accumulated rewards for an operator that have not\nbeen claimed by stakers. This structure is inexpensive to track and allows simple sanity checks.\nThe AVS address is implicit in the store key."
     },
     "imuachain.feedistribution.v1.Params": {
       "type": "object",
@@ -47816,7 +48563,7 @@
                 },
                 "reward_allocation_total": {
                   "type": "string",
-                  "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                  "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
                 }
               }
             }
@@ -47883,7 +48630,7 @@
                 },
                 "reward_allocation_total": {
                   "type": "string",
-                  "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                  "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
                 }
               }
             }
@@ -48200,35 +48947,6 @@
       },
       "description": "QueryOperatorHistoricalRewardsResponse is the response to obtain the operator historical rewards."
     },
-    "imuachain.feedistribution.v1.QueryOperatorOutstandingRewardsResponse": {
-      "type": "object",
-      "properties": {
-        "operator_outstanding_rewards": {
-          "title": "operator_outstanding_rewards is the outstanding rewards returned for an operator",
-          "type": "object",
-          "properties": {
-            "rewards": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "denom": {
-                    "type": "string"
-                  },
-                  "amount": {
-                    "type": "string"
-                  }
-                },
-                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
-              },
-              "title": "rewards represents the rewards for the operator"
-            }
-          },
-          "description": "OperatorOutstandingRewards represents outstanding (un-withdrawn) rewards\nfor an operator inexpensive to track, allows simple sanity checks.\nThe AVS address is implicit within the store key."
-        }
-      },
-      "title": "QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards"
-    },
     "imuachain.feedistribution.v1.QueryOperatorSlashEventResponse": {
       "type": "object",
       "properties": {
@@ -48244,9 +48962,16 @@
             "fraction": {
               "type": "string",
               "description": "fraction is the slash fraction."
+            },
+            "slashed_reward_assets": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "slashed_reward_assets records the list of reward assets that have been slashed.\nIt is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
             }
           },
-          "description": "OperatorSlashEvent represents an operator slash event.\noperator, height and epochIdentifier are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
+          "description": "OperatorSlashEvent represents an operator slash event.\noperator, assetID, epochIdentifier, epochNumber and height are implicit within the store key.\nThis is needed to calculate appropriate amount of staking tokens\nfor delegations which are withdrawn after a slash has occurred."
         }
       },
       "description": "QueryOperatorSlashEventResponse is the response to obtain the operator slash event."
@@ -48281,6 +49006,13 @@
                   "fraction": {
                     "type": "string",
                     "description": "fraction is the slash fraction."
+                  },
+                  "slashed_reward_assets": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "slashed_reward_assets records the list of reward assets that have been slashed.\nIt is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
                   }
                 }
               }
@@ -48291,6 +49023,139 @@
         }
       },
       "description": "QueryOperatorSlashEventsResponse is the response to obtain the operator slash events."
+    },
+    "imuachain.feedistribution.v1.QueryOperatorUnclaimedRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "operator_unclaimed_rewards": {
+          "title": "operator_unclaimed_rewards is the unclaimed rewards returned for an operator",
+          "type": "object",
+          "properties": {
+            "outstanding_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "outstanding_rewards represents the unclaimed rewards generated by staking assets under the operator\nIt acts like a reward pool holding unclaimed rewards for all stakers."
+            },
+            "rewards_from_compounding": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "symbol": {
+                    "type": "string",
+                    "title": "symbol is the symbol(domination) of the reward asset"
+                  },
+                  "rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "avs_address": {
+                          "type": "string",
+                          "title": "avs_address is the AVS address"
+                        },
+                        "rewards": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "denom": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                          },
+                          "title": "rewards represents the current rewards or cumulative reward ratios"
+                        }
+                      },
+                      "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                    },
+                    "title": "rewards represents the cumulative compounding reward from multiple AVSs"
+                  }
+                },
+                "title": "CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for\nspecific reward asset"
+              },
+              "description": "rewards_from_compounding represents the rewards generated by the rewards compounding\nIt acts as a reward pool holding unclaimed compounded rewards for all stakers.\nStores the rewards pool for each asset, allowing calculation of compounding rewards\nfor stakers. Asset symbols in the list must correspond to the denominations in outstanding_rewards,\nsince all compounding rewards are derived from the outstanding rewards."
+            },
+            "outstanding_rewards_slashed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "outstanding_rewards_slashed represents the total amount of rewards slashed from outstanding rewards.\nWe need to apply slashing here because outstanding rewards are automatically compounded\nto contribute voting power."
+            },
+            "compounding_rewards_slashed": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "symbol": {
+                    "type": "string",
+                    "title": "symbol is the symbol(domination) of the reward asset"
+                  },
+                  "rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "avs_address": {
+                          "type": "string",
+                          "title": "avs_address is the AVS address"
+                        },
+                        "rewards": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "denom": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                          },
+                          "title": "rewards represents the current rewards or cumulative reward ratios"
+                        }
+                      },
+                      "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                    },
+                    "title": "rewards represents the cumulative compounding reward from multiple AVSs"
+                  }
+                },
+                "title": "CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for\nspecific reward asset"
+              },
+              "description": "compounding_rewards_slashed represents the total amount of rewards slashed from compounding rewards.\nWe need to apply slashing here because compounding rewards are automatically compounded\nto contribute voting power."
+            }
+          },
+          "description": "OperatorUnclaimedRewards represents the accumulated rewards for an operator that have not\nbeen claimed by stakers. This structure is inexpensive to track and allows simple sanity checks.\nThe AVS address is implicit in the store key."
+        }
+      },
+      "title": "QueryOperatorUnclaimedRewardsResponse is the response to obtain the operator unclaimed rewards"
     },
     "imuachain.feedistribution.v1.QueryParamsResponse": {
       "type": "object",
@@ -48371,7 +49236,7 @@
                       },
                       "reward_allocation_total": {
                         "type": "string",
-                        "title": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`"
+                        "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
                       }
                     }
                   }
@@ -48450,7 +49315,7 @@
                       },
                       "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
                     },
-                    "title": "outstanding_rewards represents the un-withdrawn rewards for the staker"
+                    "description": "outstanding_rewards represents the rewards that have been claimed by the staker\nbut not yet withdrawn; they can either be withdrawn or automatically redelegated."
                   },
                   "withdrawn_rewards": {
                     "type": "array",
@@ -48467,8 +49332,103 @@
                       "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
                     },
                     "title": "withdrawn_rewards represents the withdrawn rewards for the staker"
+                  },
+                  "historical_total_rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "title": "historical_total_rewards represents the historical total rewards that are claimed by this staker,"
+                  },
+                  "delegation_rewards_shares": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "operator_addr": {
+                          "type": "string",
+                          "title": "operator_addr is the target operator address for redelegation"
+                        },
+                        "shares": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "denom": {
+                                "type": "string"
+                              },
+                              "amount": {
+                                "type": "string"
+                              }
+                            },
+                            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                          },
+                          "description": "shares represents the shares of rewards that are lazily claimed and currently\nredelegated for compounding.In the decCoin, the amount represent the share in\noperator asset pool instead of the asset amount."
+                        }
+                      },
+                      "description": "RewardsDelegationShare is a helper struct that records all the delegated rewards shares\nfrom a specific operator."
+                    },
+                    "description": "delegation_rewards_shares represents the shares of rewards that are lazily claimed\nand currently redelegated for compounding. The shares might come from different operators,\nas the staker may change the default redelegation operator."
+                  },
+                  "pending_undelegation_rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "description": "pending_undelegation_rewards represents the pending undelegation rewards\nthrough a reward undelegation transaction."
+                  },
+                  "pending_slashed_rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "description": "pending_slashed_rewards represents rewards from pending undelegations\nthat have been slashed. The slashing may result from malicious behavior\nor from instant unbonding. This field ensures accurate calculation\nof the current staker’s rewards in an AVS by excluding the effect of slashed\npending undelegations."
+                  },
+                  "withdrawable_rewards": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
                   }
-                }
+                },
+                "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
               }
             },
             "title": "StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified\nstaker and AVS"
@@ -48588,7 +49548,7 @@
                 },
                 "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
               },
-              "title": "outstanding_rewards represents the un-withdrawn rewards for the staker"
+              "description": "outstanding_rewards represents the rewards that have been claimed by the staker\nbut not yet withdrawn; they can either be withdrawn or automatically redelegated."
             },
             "withdrawn_rewards": {
               "type": "array",
@@ -48605,11 +49565,127 @@
                 "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
               },
               "title": "withdrawn_rewards represents the withdrawn rewards for the staker"
+            },
+            "historical_total_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "title": "historical_total_rewards represents the historical total rewards that are claimed by this staker,"
+            },
+            "delegation_rewards_shares": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "operator_addr": {
+                    "type": "string",
+                    "title": "operator_addr is the target operator address for redelegation"
+                  },
+                  "shares": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "description": "shares represents the shares of rewards that are lazily claimed and currently\nredelegated for compounding.In the decCoin, the amount represent the share in\noperator asset pool instead of the asset amount."
+                  }
+                },
+                "description": "RewardsDelegationShare is a helper struct that records all the delegated rewards shares\nfrom a specific operator."
+              },
+              "description": "delegation_rewards_shares represents the shares of rewards that are lazily claimed\nand currently redelegated for compounding. The shares might come from different operators,\nas the staker may change the default redelegation operator."
+            },
+            "pending_undelegation_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "pending_undelegation_rewards represents the pending undelegation rewards\nthrough a reward undelegation transaction."
+            },
+            "pending_slashed_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "pending_slashed_rewards represents rewards from pending undelegations\nthat have been slashed. The slashing may result from malicious behavior\nor from instant unbonding. This field ensures accurate calculation\nof the current staker’s rewards in an AVS by excluding the effect of slashed\npending undelegations."
+            },
+            "withdrawable_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
             }
-          }
+          },
+          "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
         }
       },
       "title": "QueryStakerClaimedRewardsResponse is the response to obtain the staker claimed rewards"
+    },
+    "imuachain.feedistribution.v1.QueryStakerRewardParamsResponse": {
+      "type": "object",
+      "properties": {
+        "reward_params": {
+          "description": "reward_params is the reward parameters.",
+          "type": "object",
+          "properties": {
+            "redelegate_reward": {
+              "type": "boolean",
+              "title": "redelegate_reward represents whether the reward is redelegated"
+            },
+            "redelegate_operator_addr": {
+              "type": "string",
+              "title": "redelegate_operator_address is the target operator address for redelegation"
+            }
+          },
+          "title": "StakerRewardParams is the reward parameters for a staker"
+        }
+      },
+      "description": "QueryStakerRewardParamsResponse is the response to obtain the staker reward parameters."
     },
     "imuachain.feedistribution.v1.QueryStakerUnclaimedRewardsResponse": {
       "type": "object",
@@ -48666,6 +49742,32 @@
       },
       "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
     },
+    "imuachain.feedistribution.v1.RewardsDelegationShare": {
+      "type": "object",
+      "properties": {
+        "operator_addr": {
+          "type": "string",
+          "title": "operator_addr is the target operator address for redelegation"
+        },
+        "shares": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "description": "shares represents the shares of rewards that are lazily claimed and currently\nredelegated for compounding.In the decCoin, the amount represent the share in\noperator asset pool instead of the asset amount."
+        }
+      },
+      "description": "RewardsDelegationShare is a helper struct that records all the delegated rewards shares\nfrom a specific operator."
+    },
     "imuachain.feedistribution.v1.StakerClaimedRewards": {
       "type": "object",
       "properties": {
@@ -48683,7 +49785,7 @@
             },
             "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
           },
-          "title": "outstanding_rewards represents the un-withdrawn rewards for the staker"
+          "description": "outstanding_rewards represents the rewards that have been claimed by the staker\nbut not yet withdrawn; they can either be withdrawn or automatically redelegated."
         },
         "withdrawn_rewards": {
           "type": "array",
@@ -48700,9 +49802,103 @@
             "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
           },
           "title": "withdrawn_rewards represents the withdrawn rewards for the staker"
+        },
+        "historical_total_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "title": "historical_total_rewards represents the historical total rewards that are claimed by this staker,"
+        },
+        "delegation_rewards_shares": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "operator_addr": {
+                "type": "string",
+                "title": "operator_addr is the target operator address for redelegation"
+              },
+              "shares": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "description": "shares represents the shares of rewards that are lazily claimed and currently\nredelegated for compounding.In the decCoin, the amount represent the share in\noperator asset pool instead of the asset amount."
+              }
+            },
+            "description": "RewardsDelegationShare is a helper struct that records all the delegated rewards shares\nfrom a specific operator."
+          },
+          "description": "delegation_rewards_shares represents the shares of rewards that are lazily claimed\nand currently redelegated for compounding. The shares might come from different operators,\nas the staker may change the default redelegation operator."
+        },
+        "pending_undelegation_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "description": "pending_undelegation_rewards represents the pending undelegation rewards\nthrough a reward undelegation transaction."
+        },
+        "pending_slashed_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "description": "pending_slashed_rewards represents rewards from pending undelegations\nthat have been slashed. The slashing may result from malicious behavior\nor from instant unbonding. This field ensures accurate calculation\nof the current staker’s rewards in an AVS by excluding the effect of slashed\npending undelegations."
+        },
+        "withdrawable_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "denom": {
+                "type": "string"
+              },
+              "amount": {
+                "type": "string"
+              }
+            },
+            "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+          },
+          "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
         }
       },
-      "title": "StakerClaimedRewards includes the outstanding (un-withdrawn) rewards and the withdrawn rewards\nfor a staker inexpensive to track, allows simple sanity checks.\nThe sum represents the total accumulated rewards"
+      "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
     },
     "imuachain.feedistribution.v1.StakerClaimedRewardsPerAVS": {
       "type": "object",
@@ -48729,7 +49925,7 @@
                 },
                 "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
               },
-              "title": "outstanding_rewards represents the un-withdrawn rewards for the staker"
+              "description": "outstanding_rewards represents the rewards that have been claimed by the staker\nbut not yet withdrawn; they can either be withdrawn or automatically redelegated."
             },
             "withdrawn_rewards": {
               "type": "array",
@@ -48746,8 +49942,103 @@
                 "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
               },
               "title": "withdrawn_rewards represents the withdrawn rewards for the staker"
+            },
+            "historical_total_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "title": "historical_total_rewards represents the historical total rewards that are claimed by this staker,"
+            },
+            "delegation_rewards_shares": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "operator_addr": {
+                    "type": "string",
+                    "title": "operator_addr is the target operator address for redelegation"
+                  },
+                  "shares": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "denom": {
+                          "type": "string"
+                        },
+                        "amount": {
+                          "type": "string"
+                        }
+                      },
+                      "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                    },
+                    "description": "shares represents the shares of rewards that are lazily claimed and currently\nredelegated for compounding.In the decCoin, the amount represent the share in\noperator asset pool instead of the asset amount."
+                  }
+                },
+                "description": "RewardsDelegationShare is a helper struct that records all the delegated rewards shares\nfrom a specific operator."
+              },
+              "description": "delegation_rewards_shares represents the shares of rewards that are lazily claimed\nand currently redelegated for compounding. The shares might come from different operators,\nas the staker may change the default redelegation operator."
+            },
+            "pending_undelegation_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "pending_undelegation_rewards represents the pending undelegation rewards\nthrough a reward undelegation transaction."
+            },
+            "pending_slashed_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "pending_slashed_rewards represents rewards from pending undelegations\nthat have been slashed. The slashing may result from malicious behavior\nor from instant unbonding. This field ensures accurate calculation\nof the current staker’s rewards in an AVS by excluding the effect of slashed\npending undelegations."
+            },
+            "withdrawable_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "denom": {
+                    "type": "string"
+                  },
+                  "amount": {
+                    "type": "string"
+                  }
+                },
+                "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+              },
+              "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
             }
-          }
+          },
+          "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
         }
       },
       "title": "StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified\nstaker and AVS"
@@ -48765,6 +50056,20 @@
         }
       },
       "description": "StakerDelegationChange includes the staker ID and the delegated amount at the end\nof the previous epoch for stakers whose delegation has changed."
+    },
+    "imuachain.feedistribution.v1.StakerRewardParams": {
+      "type": "object",
+      "properties": {
+        "redelegate_reward": {
+          "type": "boolean",
+          "title": "redelegate_reward represents whether the reward is redelegated"
+        },
+        "redelegate_operator_addr": {
+          "type": "string",
+          "title": "redelegate_operator_address is the target operator address for redelegation"
+        }
+      },
+      "title": "StakerRewardParams is the reward parameters for a staker"
     },
     "imuachain.feedistribution.v1.StakerRewardsPerAVS": {
       "type": "object",
@@ -48852,9 +50157,17 @@
           "type": "string",
           "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
         },
-        "wait_undelegation_amount": {
+        "pending_undelegation_amount": {
           "type": "string",
-          "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+          "description": "pending_undelegation_amount is the amount that is waiting to be unbonded."
+        },
+        "reward_undelegatable_share": {
+          "type": "string",
+          "description": "reward_undelegatable_share is the undelegatable share of reward."
+        },
+        "reward_pending_undelegation_amount": {
+          "type": "string",
+          "description": "reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded."
         }
       },
       "description": "DelegationAmounts is the delegation amount response for a single delegation."
@@ -48878,9 +50191,17 @@
                   "type": "string",
                   "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
                 },
-                "wait_undelegation_amount": {
+                "pending_undelegation_amount": {
                   "type": "string",
-                  "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                  "description": "pending_undelegation_amount is the amount that is waiting to be unbonded."
+                },
+                "reward_undelegatable_share": {
+                  "type": "string",
+                  "description": "reward_undelegatable_share is the undelegatable share of reward."
+                },
+                "reward_pending_undelegation_amount": {
+                  "type": "string",
+                  "description": "reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded."
                 }
               },
               "description": "DelegationAmounts is the delegation amount response for a single delegation."
@@ -48970,9 +50291,17 @@
                         "type": "string",
                         "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
                       },
-                      "wait_undelegation_amount": {
+                      "pending_undelegation_amount": {
                         "type": "string",
-                        "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                        "description": "pending_undelegation_amount is the amount that is waiting to be unbonded."
+                      },
+                      "reward_undelegatable_share": {
+                        "type": "string",
+                        "description": "reward_undelegatable_share is the undelegatable share of reward."
+                      },
+                      "reward_pending_undelegation_amount": {
+                        "type": "string",
+                        "description": "reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded."
                       }
                     },
                     "description": "DelegationAmounts is the delegation amount response for a single delegation."
@@ -49019,9 +50348,17 @@
               "type": "string",
               "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
             },
-            "wait_undelegation_amount": {
+            "pending_undelegation_amount": {
               "type": "string",
-              "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+              "description": "pending_undelegation_amount is the amount that is waiting to be unbonded."
+            },
+            "reward_undelegatable_share": {
+              "type": "string",
+              "description": "reward_undelegatable_share is the undelegatable share of reward."
+            },
+            "reward_pending_undelegation_amount": {
+              "type": "string",
+              "description": "reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded."
             }
           },
           "description": "DelegationAmounts is the delegation amount response for a single delegation."
@@ -49048,9 +50385,17 @@
                   "type": "string",
                   "description": "undelegatable_share is the share that can be undelegated.\nIt's to reduce the state updating when slash occurs.\nS_j = S * T_j / T, `S` and `T` is the current asset share and amount of operator,\nand the T_j represents the change in staker's asset amount when some external\noperations occur, such as: delegation, undelegation and slashing.\nS_j represents the change in the staker's asset share,\nso the updated share should be added by it.\nA special case is the initial delegation, when T = 0 and S = 0, so T_j / T is undefined.\nFor the initial delegation, delegator j who delegates T_j tokens receive S_j = T_j shares."
                 },
-                "wait_undelegation_amount": {
+                "pending_undelegation_amount": {
                   "type": "string",
-                  "description": "wait_undelegation_amount is the amount that is waiting to be unbonded."
+                  "description": "pending_undelegation_amount is the amount that is waiting to be unbonded."
+                },
+                "reward_undelegatable_share": {
+                  "type": "string",
+                  "description": "reward_undelegatable_share is the undelegatable share of reward."
+                },
+                "reward_pending_undelegation_amount": {
+                  "type": "string",
+                  "description": "reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded."
                 }
               },
               "description": "DelegationAmounts is the delegation amount response for a single delegation."
@@ -49063,6 +50408,24 @@
         }
       },
       "title": "SingleDelegationInfoResponse is the response to QuerySingleDelegationInfo"
+    },
+    "imuachain.delegation.v1.UndelegationAmountPerAVS": {
+      "type": "object",
+      "properties": {
+        "avs_address": {
+          "type": "string",
+          "description": "avs_address is the AVS address the rewards come from."
+        },
+        "amount": {
+          "type": "string",
+          "description": "amount is the undelegated amount from specific AVS."
+        },
+        "actual_completed_amount": {
+          "type": "string",
+          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+        }
+      },
+      "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
     },
     "imuachain.delegation.v1.UndelegationAndHoldCount": {
       "type": "object",
@@ -49113,6 +50476,32 @@
             "actual_completed_amount": {
               "type": "string",
               "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+            },
+            "reward_asset": {
+              "type": "boolean",
+              "title": "reward_asset indicates whether the undelegation is for rewards"
+            },
+            "reward_undelegations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "avs_address": {
+                    "type": "string",
+                    "description": "avs_address is the AVS address the rewards come from."
+                  },
+                  "amount": {
+                    "type": "string",
+                    "description": "amount is the undelegated amount from specific AVS."
+                  },
+                  "actual_completed_amount": {
+                    "type": "string",
+                    "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                  }
+                },
+                "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
+              },
+              "description": "reward_undelegations represents reward undelegation amounts from different AVSs.\nThis field is only populated when `reward_asset` is true."
             }
           },
           "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -49181,6 +50570,32 @@
         "actual_completed_amount": {
           "type": "string",
           "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+        },
+        "reward_asset": {
+          "type": "boolean",
+          "title": "reward_asset indicates whether the undelegation is for rewards"
+        },
+        "reward_undelegations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "description": "avs_address is the AVS address the rewards come from."
+              },
+              "amount": {
+                "type": "string",
+                "description": "amount is the undelegated amount from specific AVS."
+              },
+              "actual_completed_amount": {
+                "type": "string",
+                "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+              }
+            },
+            "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
+          },
+          "description": "reward_undelegations represents reward undelegation amounts from different AVSs.\nThis field is only populated when `reward_asset` is true."
         }
       },
       "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -49239,6 +50654,32 @@
                   "actual_completed_amount": {
                     "type": "string",
                     "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                  },
+                  "reward_asset": {
+                    "type": "boolean",
+                    "title": "reward_asset indicates whether the undelegation is for rewards"
+                  },
+                  "reward_undelegations": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "avs_address": {
+                          "type": "string",
+                          "description": "avs_address is the AVS address the rewards come from."
+                        },
+                        "amount": {
+                          "type": "string",
+                          "description": "amount is the undelegated amount from specific AVS."
+                        },
+                        "actual_completed_amount": {
+                          "type": "string",
+                          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                        }
+                      },
+                      "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
+                    },
+                    "description": "reward_undelegations represents reward undelegation amounts from different AVSs.\nThis field is only populated when `reward_asset` is true."
                   }
                 },
                 "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -49898,6 +51339,34 @@
       },
       "description": "CommissionRates defines the initial commission rates to be used for creating\na validator."
     },
+    "imuachain.operator.v1.AVSRewardsUSDValues": {
+      "type": "object",
+      "properties": {
+        "avs_address": {
+          "type": "string",
+          "title": "avs_address is the address of the reward source AVS"
+        },
+        "rewards_usd_values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol": {
+                "type": "string",
+                "description": "symbol of the reward asset."
+              },
+              "usd_value": {
+                "type": "string",
+                "title": "usd_value is the USD value of specific reward asset"
+              }
+            },
+            "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+          },
+          "description": "rewards_usd_values are the USD values of all reward assets."
+        }
+      },
+      "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+    },
     "imuachain.operator.v1.ClientChainEarningAddrInfo": {
       "type": "object",
       "properties": {
@@ -49991,7 +51460,7 @@
         },
         "avs_address": {
           "type": "string",
-          "description": "avs_address is the address of the AVS - either an 0x address or a chainID."
+          "title": "avs_address is the address of the AVS"
         }
       },
       "title": "OperatorAVSAddress includes the address of operator and AVS"
@@ -50195,7 +51664,7 @@
                 },
                 "title": "SlashFromUndelegation records the slash detail from the undelegation"
               },
-              "title": "SlashUndelegations records all slash info related to the undelegation"
+              "title": "slash_undelegations records all slash info related to the undelegation"
             },
             "slash_assets_pool": {
               "type": "array",
@@ -50208,12 +51677,12 @@
                   },
                   "amount": {
                     "type": "string",
-                    "description": "amount is the slashed amount from the assets pool."
+                    "description": "amount is the slashed amount.."
                   }
                 },
-                "title": "SlashFromAssetsPool records the slash detail from the operator assets pool"
+                "title": "SlashAssetAmount records the slash amount of specific assetID"
               },
-              "title": "SlashFromAssetsPool records all slash info related to the assets pool"
+              "title": "slash_assets_pool records all slash info related to the assets pool"
             },
             "undelegation_filter_height": {
               "type": "string",
@@ -50224,6 +51693,38 @@
               "type": "string",
               "format": "int64",
               "description": "the historical voting power at the time of the slash event."
+            },
+            "slash_unclaimed_rewards": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "avs": {
+                    "type": "string",
+                    "description": "avs is who the rewards earned from."
+                  },
+                  "slash_assets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "asset_id": {
+                          "type": "string",
+                          "description": "asset_id is the asset id."
+                        },
+                        "amount": {
+                          "type": "string",
+                          "description": "amount is the slashed amount.."
+                        }
+                      },
+                      "title": "SlashAssetAmount records the slash amount of specific assetID"
+                    },
+                    "description": "slash_assets represent multiple rewards assets states that are slashed."
+                  }
+                },
+                "title": "SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards"
+              },
+              "title": "slash_unclaimed_rewards records all slash amounts from unclaimed rewards"
             }
           }
         }
@@ -50300,7 +51801,7 @@
                     },
                     "title": "SlashFromUndelegation records the slash detail from the undelegation"
                   },
-                  "title": "SlashUndelegations records all slash info related to the undelegation"
+                  "title": "slash_undelegations records all slash info related to the undelegation"
                 },
                 "slash_assets_pool": {
                   "type": "array",
@@ -50313,12 +51814,12 @@
                       },
                       "amount": {
                         "type": "string",
-                        "description": "amount is the slashed amount from the assets pool."
+                        "description": "amount is the slashed amount.."
                       }
                     },
-                    "title": "SlashFromAssetsPool records the slash detail from the operator assets pool"
+                    "title": "SlashAssetAmount records the slash amount of specific assetID"
                   },
-                  "title": "SlashFromAssetsPool records all slash info related to the assets pool"
+                  "title": "slash_assets_pool records all slash info related to the assets pool"
                 },
                 "undelegation_filter_height": {
                   "type": "string",
@@ -50329,6 +51830,38 @@
                   "type": "string",
                   "format": "int64",
                   "description": "the historical voting power at the time of the slash event."
+                },
+                "slash_unclaimed_rewards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "avs": {
+                        "type": "string",
+                        "description": "avs is who the rewards earned from."
+                      },
+                      "slash_assets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "description": "asset_id is the asset id."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "description": "amount is the slashed amount.."
+                            }
+                          },
+                          "title": "SlashAssetAmount records the slash amount of specific assetID"
+                        },
+                        "description": "slash_assets represent multiple rewards assets states that are slashed."
+                      }
+                    },
+                    "title": "SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards"
+                  },
+                  "title": "slash_unclaimed_rewards records all slash amounts from unclaimed rewards"
                 }
               }
             }
@@ -50731,7 +52264,7 @@
                           },
                           "title": "SlashFromUndelegation records the slash detail from the undelegation"
                         },
-                        "title": "SlashUndelegations records all slash info related to the undelegation"
+                        "title": "slash_undelegations records all slash info related to the undelegation"
                       },
                       "slash_assets_pool": {
                         "type": "array",
@@ -50744,12 +52277,12 @@
                             },
                             "amount": {
                               "type": "string",
-                              "description": "amount is the slashed amount from the assets pool."
+                              "description": "amount is the slashed amount.."
                             }
                           },
-                          "title": "SlashFromAssetsPool records the slash detail from the operator assets pool"
+                          "title": "SlashAssetAmount records the slash amount of specific assetID"
                         },
-                        "title": "SlashFromAssetsPool records all slash info related to the assets pool"
+                        "title": "slash_assets_pool records all slash info related to the assets pool"
                       },
                       "undelegation_filter_height": {
                         "type": "string",
@@ -50760,6 +52293,38 @@
                         "type": "string",
                         "format": "int64",
                         "description": "the historical voting power at the time of the slash event."
+                      },
+                      "slash_unclaimed_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "avs": {
+                              "type": "string",
+                              "description": "avs is who the rewards earned from."
+                            },
+                            "slash_assets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "asset_id": {
+                                    "type": "string",
+                                    "description": "asset_id is the asset id."
+                                  },
+                                  "amount": {
+                                    "type": "string",
+                                    "description": "amount is the slashed amount.."
+                                  }
+                                },
+                                "title": "SlashAssetAmount records the slash amount of specific assetID"
+                              },
+                              "description": "slash_assets represent multiple rewards assets states that are slashed."
+                            }
+                          },
+                          "title": "SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards"
+                        },
+                        "title": "slash_unclaimed_rewards records all slash amounts from unclaimed rewards"
                       }
                     }
                   }
@@ -50813,6 +52378,44 @@
         }
       },
       "description": "QueryOperatorUSDValueResponse is the response to obtain the USD value for operator."
+    },
+    "imuachain.operator.v1.QueryRewardsUSDValueResponse": {
+      "type": "object",
+      "properties": {
+        "avs_rewards_usd_values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the address of the reward source AVS"
+              },
+              "rewards_usd_values": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "symbol": {
+                      "type": "string",
+                      "description": "symbol of the reward asset."
+                    },
+                    "usd_value": {
+                      "type": "string",
+                      "title": "usd_value is the USD value of specific reward asset"
+                    }
+                  },
+                  "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+                },
+                "description": "rewards_usd_values are the USD values of all reward assets."
+              }
+            },
+            "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+          },
+          "description": "avs_rewards_usd_values are the rewards USD values from all AVSs."
+        }
+      },
+      "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS."
     },
     "imuachain.operator.v1.QueryValidatorResponse": {
       "type": "object",
@@ -51113,6 +52716,34 @@
       },
       "title": "QueryValidatorsResponse is response type for the Query/Validators RPC method"
     },
+    "imuachain.operator.v1.RewardUSDValue": {
+      "type": "object",
+      "properties": {
+        "symbol": {
+          "type": "string",
+          "description": "symbol of the reward asset."
+        },
+        "usd_value": {
+          "type": "string",
+          "title": "usd_value is the USD value of specific reward asset"
+        }
+      },
+      "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+    },
+    "imuachain.operator.v1.SlashAssetAmount": {
+      "type": "object",
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "description": "asset_id is the asset id."
+        },
+        "amount": {
+          "type": "string",
+          "description": "amount is the slashed amount.."
+        }
+      },
+      "title": "SlashAssetAmount records the slash amount of specific assetID"
+    },
     "imuachain.operator.v1.SlashExecutionInfo": {
       "type": "object",
       "properties": {
@@ -51144,7 +52775,7 @@
             },
             "title": "SlashFromUndelegation records the slash detail from the undelegation"
           },
-          "title": "SlashUndelegations records all slash info related to the undelegation"
+          "title": "slash_undelegations records all slash info related to the undelegation"
         },
         "slash_assets_pool": {
           "type": "array",
@@ -51157,12 +52788,12 @@
               },
               "amount": {
                 "type": "string",
-                "description": "amount is the slashed amount from the assets pool."
+                "description": "amount is the slashed amount.."
               }
             },
-            "title": "SlashFromAssetsPool records the slash detail from the operator assets pool"
+            "title": "SlashAssetAmount records the slash amount of specific assetID"
           },
-          "title": "SlashFromAssetsPool records all slash info related to the assets pool"
+          "title": "slash_assets_pool records all slash info related to the assets pool"
         },
         "undelegation_filter_height": {
           "type": "string",
@@ -51173,23 +52804,69 @@
           "type": "string",
           "format": "int64",
           "description": "the historical voting power at the time of the slash event."
+        },
+        "slash_unclaimed_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs": {
+                "type": "string",
+                "description": "avs is who the rewards earned from."
+              },
+              "slash_assets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "asset_id": {
+                      "type": "string",
+                      "description": "asset_id is the asset id."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "description": "amount is the slashed amount.."
+                    }
+                  },
+                  "title": "SlashAssetAmount records the slash amount of specific assetID"
+                },
+                "description": "slash_assets represent multiple rewards assets states that are slashed."
+              }
+            },
+            "title": "SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards"
+          },
+          "title": "slash_unclaimed_rewards records all slash amounts from unclaimed rewards"
         }
       },
       "title": "SlashExecutionInfo is the actual execution state for a slash event"
     },
-    "imuachain.operator.v1.SlashFromAssetsPool": {
+    "imuachain.operator.v1.SlashFromUnclaimedRewards": {
       "type": "object",
       "properties": {
-        "asset_id": {
+        "avs": {
           "type": "string",
-          "description": "asset_id is the asset id."
+          "description": "avs is who the rewards earned from."
         },
-        "amount": {
-          "type": "string",
-          "description": "amount is the slashed amount from the assets pool."
+        "slash_assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "description": "asset_id is the asset id."
+              },
+              "amount": {
+                "type": "string",
+                "description": "amount is the slashed amount.."
+              }
+            },
+            "title": "SlashAssetAmount records the slash amount of specific assetID"
+          },
+          "description": "slash_assets represent multiple rewards assets states that are slashed."
         }
       },
-      "title": "SlashFromAssetsPool records the slash detail from the operator assets pool"
+      "title": "SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards"
     },
     "imuachain.operator.v1.SlashFromUndelegation": {
       "type": "object",

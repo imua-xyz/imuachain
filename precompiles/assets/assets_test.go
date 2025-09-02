@@ -1,10 +1,11 @@
 package assets_test
 
 import (
-	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
-	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	"math/big"
 	"strings"
+
+	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"

@@ -569,19 +569,50 @@ func (gs GenesisState) ValidateOperatorSlashEvents() error {
 	return nil
 }
 
-func (gs GenesisState) ValidateClaimedOutstandingRewards() error {
+func (gs GenesisState) ValidateStakerClaimedRewards() error {
 	validationFunc := func(_ int, info KeyAndStakerClaimedRewards) error {
 		// check the joined key
 		err := CheckJoinedKey(info.Key, 2, []KeyTypeForJoinedKey{StakerID, AVSAddr})
 		if err != nil {
-			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: failed to check the joined key, err:%s", err)
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: failed to check the joined key, err:%s", err)
 		}
 		if !info.StakerClaimedRewards.OutstandingRewards.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: invalid outstanding reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid outstanding reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
 		if !info.StakerClaimedRewards.WithdrawnRewards.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: invalid withdrawn reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid withdrawn reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		if !info.StakerClaimedRewards.HistoricalTotalRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid historical reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+
+		validationFunc := func(_ int, info RewardsDelegationShare) error {
+			if !info.Shares.IsValid() {
+				return ErrInvalidGenesisData.Wrapf("invalid reward delegation share for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. operator:%s", info.OperatorAddr)
+			}
+			return nil
+		}
+		seenFieldValueFunc := func(info RewardsDelegationShare) (string, struct{}) {
+			return info.OperatorAddr, struct{}{}
+		}
+		_, err = utils.CommonValidation(info.StakerClaimedRewards.DelegationRewardsShares, seenFieldValueFunc, validationFunc)
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: err:%s,key:%s", err, info.Key)
+		}
+
+		if !info.StakerClaimedRewards.PendingUndelegationRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid pending undelegation reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		if !info.StakerClaimedRewards.PendingSlashedRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid pending slashed reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		if !info.StakerClaimedRewards.WithdrawableRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid withdrawable reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
 		return nil
@@ -590,6 +621,30 @@ func (gs GenesisState) ValidateClaimedOutstandingRewards() error {
 		return info.Key, struct{}{}
 	}
 	_, err := utils.CommonValidation(gs.AllStakerClaimedRewards, seenFieldValueFunc, validationFunc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gs GenesisState) ValidateStakerRewardParams() error {
+	validationFunc := func(_ int, info KeyAndStakerRewardParams) error {
+		_, _, err := assetstypes.ValidateID(info.Key, true, false)
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerRewardParams: invalid stakerID:%s",
+				info.Key)
+		}
+		err = info.StakerRewardParams.Validate()
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerRewardParams: invalid reward parameters. stakerID:%s",
+				info.Key)
+		}
+		return nil
+	}
+	seenFieldValueFunc := func(info KeyAndStakerRewardParams) (string, struct{}) {
+		return info.Key, struct{}{}
+	}
+	_, err := utils.CommonValidation(gs.AllStakerRewardParams, seenFieldValueFunc, validationFunc)
 	if err != nil {
 		return err
 	}
@@ -647,7 +702,11 @@ func (gs GenesisState) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = gs.ValidateClaimedOutstandingRewards()
+	err = gs.ValidateStakerClaimedRewards()
+	if err != nil {
+		return err
+	}
+	err = gs.ValidateStakerRewardParams()
 	if err != nil {
 		return err
 	}

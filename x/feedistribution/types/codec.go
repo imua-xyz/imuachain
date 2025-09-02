@@ -18,6 +18,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgWithdrawDogfoodCommission{},
 		&MsgClaimAndWithdrawDogfoodReward{},
 		&MsgUpdateStakerRewardParams{},
+		&MsgUndelegateReward{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

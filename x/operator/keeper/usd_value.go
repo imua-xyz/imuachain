@@ -918,6 +918,31 @@ func (k *Keeper) SetOperatorRewardUSDValue(
 	return nil
 }
 
+func (k *Keeper) GetRewardsUSDValues(ctx sdk.Context, avs, operator string) ([]operatortypes.AVSRewardsUSDValues, error) {
+	ret := make([]operatortypes.AVSRewardsUSDValues, 0)
+	rewardSourceAVS := ""
+	opFunc := func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error) {
+		if rewardSourceAVS == "" || rewardSourceAVS != avs {
+			rewardSourceAVS = avs
+			ret = append(ret, operatortypes.AVSRewardsUSDValues{
+				AvsAddress:       rewardSourceAVS,
+				RewardsUsdValues: make([]operatortypes.RewardUSDValue, 0),
+			})
+		}
+		length := len(ret)
+		ret[length-1].RewardsUsdValues = append(ret[length-1].RewardsUsdValues, operatortypes.RewardUSDValue{
+			Symbol:   symbol,
+			UsdValue: usdValue.Amount,
+		})
+		return false, false, nil
+	}
+	err := k.IterateOperatorRewardsUSDValue(ctx, avs, operator, false, opFunc)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 func (k *Keeper) RemoveAllStaleOperatorRewardUSDs(
 	ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{},
 ) error {

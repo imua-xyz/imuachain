@@ -440,6 +440,34 @@ func (k Keeper) GetAllStakerClaimedRewards(ctx sdk.Context) ([]feedistributionty
 	)
 }
 
+func (k Keeper) GetAllStakerRewardParams(ctx sdk.Context) ([]feedistributiontypes.KeyAndStakerRewardParams, error) {
+	return GenericGetAllItems(
+		ctx, k, feedistributiontypes.KeyPrefixStakerRewardParams,
+		func() codec.ProtoMarshaler { return &feedistributiontypes.StakerRewardParams{} },
+		func(key []byte, value codec.ProtoMarshaler) feedistributiontypes.KeyAndStakerRewardParams {
+			return feedistributiontypes.KeyAndStakerRewardParams{
+				Key:                string(key),
+				StakerRewardParams: *value.(*feedistributiontypes.StakerRewardParams),
+			}
+		},
+	)
+}
+
+func (k Keeper) SetAllStakerRewardParams(
+	ctx sdk.Context, allStakerRewardParams []feedistributiontypes.KeyAndStakerRewardParams,
+) error {
+	return GenericSetAllItems(
+		ctx, k,
+		feedistributiontypes.KeyPrefixStakerRewardParams, allStakerRewardParams,
+		func(item feedistributiontypes.KeyAndStakerRewardParams) []byte {
+			return []byte(item.Key)
+		},
+		func(item feedistributiontypes.KeyAndStakerRewardParams) codec.ProtoMarshaler {
+			return &item.StakerRewardParams
+		},
+	)
+}
+
 func (k Keeper) NormalizeRewardDecCoins(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
 	for i := range rewards {
 		// get the decimal of reward asset

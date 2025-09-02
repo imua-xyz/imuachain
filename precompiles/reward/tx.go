@@ -36,6 +36,7 @@ const (
 	MethodSetOperatorRewardProportions = "setOperatorRewardProportions"
 	MethodSetAVSRewardParams           = "setAVSRewardParams"
 	MethodFundAVSReward                = "fundAVSReward"
+	MethodUndelegateReward             = "undelegateReward"
 )
 
 func addressToID(ctx sdk.Context, assetKeeper assetskeeper.Keeper, chainLzID uint32, address []byte) ([]byte, string, error) {
@@ -59,7 +60,7 @@ func packErrorOutput(method *abi.Method) ([]byte, error) {
 		MethodUpdateRewardToken, MethodSetAVSRewardDistribution,
 		MethodSetAVSEpochReward, MethodSetOperatorRewardProportions,
 		MethodSetAVSRewardParams, MethodFundAVSReward,
-		MethodSetStakerRewardParams:
+		MethodSetStakerRewardParams, MethodUndelegateReward:
 		return method.Outputs.Pack(false)
 	case MethodWithdrawReward, MethodWithdrawCommission:
 		return method.Outputs.Pack(false, new(big.Int))
@@ -233,6 +234,43 @@ func (p Precompile) SetStakerRewardParams(
 		return nil, fmt.Errorf("failed to set staker reward parameters, stakerID:%s,err:%s", stakerID, err)
 	}
 
+	return method.Outputs.Pack(true)
+}
+
+func (p Precompile) UndelegateReward(
+	ctx sdk.Context,
+	_ common.Address,
+	contract *vm.Contract,
+	_ vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
+	}
+	var undelegateRewardArgs UndelegateRewardArgs
+	err = method.Inputs.Copy(&undelegateRewardArgs, args)
+	if err != nil {
+		return nil, fmt.Errorf("error while unpacking args to UndelegateRewardArgs struct: %s", err)
+	}
+	if undelegateRewardArgs.OpAmount == nil || undelegateRewardArgs.OpAmount.Cmp(big.NewInt(0)) <= 0 {
+		return nil, fmt.Errorf("UndelegateReward: invalid undelegation amount:%v", undelegateRewardArgs.OpAmount)
+	}
+	_, stakerID, err := addressToID(ctx, p.assetsKeeper, undelegateRewardArgs.ClientChainLzID, undelegateRewardArgs.StakerAddress)
+	if err != nil {
+		return nil, err
+	}
+	_, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, undelegateRewardArgs.RewardAssetChainLzID, undelegateRewardArgs.AssetAddress)
+	if err != nil {
+		return nil, err
+	}
+	operatorAccAddr := sdk.AccAddress(undelegateRewardArgs.OperatorAddr)
+	err = p.distributionKeeper.UndelegateClaimedRewards(ctx, stakerID, rewardAssetID, operatorAccAddr, undelegateRewardArgs.InstantUnbond, sdkmath.NewIntFromBigInt(undelegateRewardArgs.OpAmount))
+	if err != nil {
+		return nil, err
+	}
 	return method.Outputs.Pack(true)
 }
 
