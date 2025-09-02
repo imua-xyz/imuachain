@@ -21203,9 +21203,9 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "token_id": {
+                            "asset_id": {
                               "type": "string",
-                              "description": "token_id is the unique identifier of the reward token."
+                              "description": "asset_id is the unique identifier of the reward token."
                             },
                             "decimal": {
                               "type": "integer",
@@ -21226,9 +21226,9 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "token_id": {
+                            "asset_id": {
                               "type": "string",
-                              "description": "token_id is the unique identifier of the reward token."
+                              "description": "asset_id is the unique identifier of the reward token."
                             },
                             "decimal": {
                               "type": "integer",
@@ -21249,9 +21249,9 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "token_id": {
+                            "asset_id": {
                               "type": "string",
-                              "description": "token_id is the unique identifier of the reward token."
+                              "description": "asset_id is the unique identifier of the reward token."
                             },
                             "decimal": {
                               "type": "integer",
@@ -21273,7 +21273,7 @@
                   "title": "rewards is the total rewards for all AVSs"
                 }
               },
-              "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+              "description": "QueryStakerAllRewardsResponse is the aggregated rewards response per AVS."
             }
           },
           "default": {
@@ -48495,9 +48495,9 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "token_id": {
+                    "asset_id": {
                       "type": "string",
-                      "description": "token_id is the unique identifier of the reward token."
+                      "description": "asset_id is the unique identifier of the reward token."
                     },
                     "decimal": {
                       "type": "integer",
@@ -48518,9 +48518,9 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "token_id": {
+                    "asset_id": {
                       "type": "string",
-                      "description": "token_id is the unique identifier of the reward token."
+                      "description": "asset_id is the unique identifier of the reward token."
                     },
                     "decimal": {
                       "type": "integer",
@@ -48541,9 +48541,9 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "token_id": {
+                    "asset_id": {
                       "type": "string",
-                      "description": "token_id is the unique identifier of the reward token."
+                      "description": "asset_id is the unique identifier of the reward token."
                     },
                     "decimal": {
                       "type": "integer",
@@ -48565,7 +48565,7 @@
           "title": "rewards is the total rewards for all AVSs"
         }
       },
-      "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
+      "description": "QueryStakerAllRewardsResponse is the aggregated rewards response per AVS."
     },
     "imuachain.feedistribution.v1.QueryStakerClaimedRewardsResponse": {
       "type": "object",
@@ -48650,9 +48650,9 @@
     "imuachain.feedistribution.v1.RewardInfo": {
       "type": "object",
       "properties": {
-        "token_id": {
+        "asset_id": {
           "type": "string",
-          "description": "token_id is the unique identifier of the reward token."
+          "description": "asset_id is the unique identifier of the reward token."
         },
         "decimal": {
           "type": "integer",
@@ -48778,9 +48778,9 @@
           "items": {
             "type": "object",
             "properties": {
-              "token_id": {
+              "asset_id": {
                 "type": "string",
-                "description": "token_id is the unique identifier of the reward token."
+                "description": "asset_id is the unique identifier of the reward token."
               },
               "decimal": {
                 "type": "integer",
@@ -48801,9 +48801,9 @@
           "items": {
             "type": "object",
             "properties": {
-              "token_id": {
+              "asset_id": {
                 "type": "string",
-                "description": "token_id is the unique identifier of the reward token."
+                "description": "asset_id is the unique identifier of the reward token."
               },
               "decimal": {
                 "type": "integer",
@@ -48824,9 +48824,9 @@
           "items": {
             "type": "object",
             "properties": {
-              "token_id": {
+              "asset_id": {
                 "type": "string",
-                "description": "token_id is the unique identifier of the reward token."
+                "description": "asset_id is the unique identifier of the reward token."
               },
               "decimal": {
                 "type": "integer",
