@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 
 	sdkmath "cosmossdk.io/math"
@@ -60,7 +61,7 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		if err != nil {
 			return err
 		}
-
+		fmt.Println("the rewards voting power is:", operator, rewardsUSDValue, ctx.BlockHeight())
 		optedUSDValues.SelfUSDValue = stakingInfo.SelfStaking
 		optedUSDValues.TotalUSDValue = stakingInfo.Staking.Add(rewardsUSDValue)
 		// check if self USD value is more than the minimum self delegation.

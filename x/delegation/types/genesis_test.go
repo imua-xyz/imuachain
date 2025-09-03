@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"github.com/imua-xyz/imuachain/utils"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -30,7 +31,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		lzID, stakerAddress[:], assetAddress[:],
 	)
 	operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-	singleStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operatorAddress.String())
+	singleStateKey := utils.GetJoinedStoreKey(stakerID, assetID, operatorAddress.String())
 	delegationStates := []types.DelegationStates{
 		{
 			Key: string(singleStateKey),
@@ -42,7 +43,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 	}
 	stakersByOperator := []types.StakersByOperator{
 		{
-			Key: string(assetstypes.GetJoinedStoreKey(operatorAddress.String(), assetID)),
+			Key: string(utils.GetJoinedStoreKey(operatorAddress.String(), assetID)),
 			Stakers: []string{
 				stakerID,
 			},
@@ -75,7 +76,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
-				invalidStateKey := assetstypes.GetJoinedStoreKey("invalid", assetID, operatorAddress.String())
+				invalidStateKey := utils.GetJoinedStoreKey("invalid", assetID, operatorAddress.String())
 				gs.DelegationStates[0].Key = string(invalidStateKey)
 			},
 			unmalleate: func(gs *types.GenesisState) {
@@ -98,7 +99,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
-				invalidStateKey := assetstypes.GetJoinedStoreKey(stakerID, "invalid", operatorAddress.String())
+				invalidStateKey := utils.GetJoinedStoreKey(stakerID, "invalid", operatorAddress.String())
 				gs.DelegationStates[0].Key = string(invalidStateKey)
 			},
 			unmalleate: func(gs *types.GenesisState) {
@@ -113,7 +114,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				stakerID, _ := assetstypes.GetStakerIDAndAssetID(
 					lzID+1, stakerAddress[:], assetAddress[:],
 				)
-				invalidStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operatorAddress.String())
+				invalidStateKey := utils.GetJoinedStoreKey(stakerID, assetID, operatorAddress.String())
 				gs.DelegationStates[0].Key = string(invalidStateKey)
 			},
 			unmalleate: func(gs *types.GenesisState) {
@@ -158,7 +159,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			genState: types.NewGenesis(types.DefaultParams(), nil, delegationStates, stakersByOperator, nil),
 			expPass:  false,
 			malleate: func(gs *types.GenesisState) {
-				invalidStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, "invalid")
+				invalidStateKey := utils.GetJoinedStoreKey(stakerID, assetID, "invalid")
 				gs.DelegationStates[0].Key = string(invalidStateKey)
 			},
 			unmalleate: func(gs *types.GenesisState) {

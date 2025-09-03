@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/imua-xyz/imuachain/utils"
@@ -136,6 +137,8 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	addPower := 1
 	addUSDValue := sdkmath.LegacyNewDec(1)
 
+	fmt.Println("initial powers are:", initialPowers)
+
 	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 	avsAddress := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(suite.Ctx.ChainID()))
 	// CommitAfter causes the epoch hook to be triggered, and results in writing
@@ -221,6 +224,7 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], slashBlockHeight, slashOperatorPower, slashFactor, slashType)
 	suite.App.OperatorKeeper.Jail(suite.Ctx, slashOperatorConsAddr, suite.Ctx.ChainID())
 
+	fmt.Println("commit after jail", suite.Operators)
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
 	suite.App.StakingKeeper.EndBlock(suite.Ctx)
 

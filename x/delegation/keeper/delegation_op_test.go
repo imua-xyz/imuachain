@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"github.com/imua-xyz/imuachain/utils"
 	"math"
 	"time"
 
@@ -167,8 +168,10 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	specifiedDelegationAmount, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, opAccAddr.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:        sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
-		PendingUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:              sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
+		PendingUndelegationAmount:       sdkmath.ZeroInt(),
+		RewardUndelegatableShare:        sdkmath.LegacyZeroDec(),
+		RewardPendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err := suite.App.DelegationKeeper.TotalDelegatedAmountForStakingAsset(suite.Ctx, stakerID, assetID)
@@ -209,8 +212,10 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	specifiedDelegationAmount, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, opAccAddr.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:        sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
-		PendingUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:              sdkmath.LegacyNewDecFromBigInt(delegationParams.OpAmount.BigInt()),
+		PendingUndelegationAmount:       sdkmath.ZeroInt(),
+		RewardUndelegatableShare:        sdkmath.LegacyZeroDec(),
+		RewardPendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err = suite.App.DelegationKeeper.TotalDelegatedAmountForStakingAsset(suite.Ctx, stakerID, assetID)
@@ -307,8 +312,10 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 	specifiedDelegationAmount, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		PendingUndelegationAmount: delegationEvent.OpAmount,
-		UndelegatableShare:        sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount:       delegationEvent.OpAmount,
+		UndelegatableShare:              sdkmath.LegacyZeroDec(),
+		RewardUndelegatableShare:        sdkmath.LegacyZeroDec(),
+		RewardPendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err := suite.App.DelegationKeeper.TotalDelegatedAmountForStakingAsset(suite.Ctx, stakerID, assetID)
@@ -364,8 +371,10 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 	specifiedDelegationAmount, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		PendingUndelegationAmount: delegationEvent.OpAmount,
-		UndelegatableShare:        sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount:       delegationEvent.OpAmount,
+		UndelegatableShare:              sdkmath.LegacyZeroDec(),
+		RewardUndelegatableShare:        sdkmath.LegacyZeroDec(),
+		RewardPendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err = suite.App.DelegationKeeper.TotalDelegatedAmountForStakingAsset(suite.Ctx, stakerID, assetID)
@@ -450,8 +459,10 @@ func (suite *DelegationTestSuite) TestCompleteUndelegation() {
 	specifiedDelegationAmount, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:        sdkmath.LegacyZeroDec(),
-		PendingUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:              sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount:       sdkmath.ZeroInt(),
+		RewardUndelegatableShare:        sdkmath.LegacyZeroDec(),
+		RewardPendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err := suite.App.DelegationKeeper.TotalDelegatedAmountForStakingAsset(suite.Ctx, stakerID, assetID)
@@ -516,8 +527,10 @@ func (suite *DelegationTestSuite) TestCompleteUndelegation() {
 	specifiedDelegationAmount, err = suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetID, delegationEvent.OperatorAddress.String())
 	suite.NoError(err)
 	suite.Equal(delegationtype.DelegationAmounts{
-		UndelegatableShare:        sdkmath.LegacyZeroDec(),
-		PendingUndelegationAmount: sdkmath.ZeroInt(),
+		UndelegatableShare:              sdkmath.LegacyZeroDec(),
+		PendingUndelegationAmount:       sdkmath.ZeroInt(),
+		RewardUndelegatableShare:        sdkmath.LegacyZeroDec(),
+		RewardPendingUndelegationAmount: sdkmath.ZeroInt(),
 	}, *specifiedDelegationAmount)
 
 	totalDelegationAmount, err = suite.App.DelegationKeeper.TotalDelegatedAmountForStakingAsset(suite.Ctx, stakerID, assetID)
