@@ -436,42 +436,46 @@ func (k Keeper) GetAllStakerClaimedRewards(ctx sdk.Context) ([]feedistributionty
 }
 
 func (k Keeper) NormalizeRewardDecCoins(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) (sdk.DecCoins, error) {
-	for i := range rewards {
+	normalized := append(sdk.DecCoins(nil), rewards...)
+	for i := range normalized {
 		// get the decimal of reward asset
-		_, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, rewards[i].Denom)
+		_, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, normalized[i].Denom)
 		if err != nil {
 			return nil, err
 		}
-		rewards[i].Amount = feedistributiontypes.TruncateSDKDec(rewards[i].Amount, assetInfo.AssetBasicInfo.Decimals)
+		normalized[i].Amount = feedistributiontypes.TruncateSDKDec(normalized[i].Amount, assetInfo.AssetBasicInfo.Decimals)
 	}
-	return rewards, nil
+	return normalized, nil
 }
 
 func (k Keeper) BatchNormalizeClaimedRewardDecimals(ctx sdk.Context, rewards []feedistributiontypes.StakerClaimedRewardsPerAVS) ([]feedistributiontypes.StakerClaimedRewardsPerAVS, error) {
-	for i := range rewards {
-		normalizedOutstandingRewards, err := k.NormalizeRewardDecCoins(ctx, rewards[i].AVSAddress, rewards[i].ClaimedRewards.OutstandingRewards)
+	out := make([]feedistributiontypes.StakerClaimedRewardsPerAVS, len(rewards))
+	copy(out, rewards)
+	for i := range out {
+		normalizedOutstandingRewards, err := k.NormalizeRewardDecCoins(ctx, out[i].AVSAddress, out[i].ClaimedRewards.OutstandingRewards)
 		if err != nil {
 			return nil, err
 		}
-		normalizedWithdrawnRewards, err := k.NormalizeRewardDecCoins(ctx, rewards[i].AVSAddress, rewards[i].ClaimedRewards.WithdrawnRewards)
+		normalizedWithdrawnRewards, err := k.NormalizeRewardDecCoins(ctx, out[i].AVSAddress, out[i].ClaimedRewards.WithdrawnRewards)
 		if err != nil {
 			return nil, err
 		}
-		rewards[i].ClaimedRewards.OutstandingRewards = normalizedOutstandingRewards
-		rewards[i].ClaimedRewards.WithdrawnRewards = normalizedWithdrawnRewards
+		out[i].ClaimedRewards.OutstandingRewards = normalizedOutstandingRewards
+		out[i].ClaimedRewards.WithdrawnRewards = normalizedWithdrawnRewards
 	}
-	return rewards, nil
+	return out, nil
 }
 
 func (k Keeper) BatchNormalizeRewardDecimals(ctx sdk.Context, rewards feedistributiontypes.CommonAVSRewards) (feedistributiontypes.CommonAVSRewards, error) {
-	for i := range rewards {
-		normalized, err := k.NormalizeRewardDecCoins(ctx, rewards[i].AVSAddress, rewards[i].Rewards)
+	out := append(feedistributiontypes.CommonAVSRewards(nil), rewards...)
+	for i := range out {
+		normalized, err := k.NormalizeRewardDecCoins(ctx, out[i].AVSAddress, out[i].Rewards)
 		if err != nil {
 			return nil, err
 		}
-		rewards[i].Rewards = normalized
+		out[i].Rewards = normalized
 	}
-	return rewards, nil
+	return out, nil
 }
 
 func (k Keeper) DecCoinsToRewardInfos(ctx sdk.Context, avsAddr string, rewards sdk.DecCoins) ([]feedistributiontypes.RewardInfo, error) {
