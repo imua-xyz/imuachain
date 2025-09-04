@@ -124,6 +124,9 @@ message OperatorInfo {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  // disable_compound_rewards indicates whether compounding for unclaimed rewards is disabled.
+  // By default, rewards are automatically compounded. This flag provides flexibility to disable it.
+  bool disable_compound_rewards = 6;
 }
 
 // OptedInfo is the opted information about operator

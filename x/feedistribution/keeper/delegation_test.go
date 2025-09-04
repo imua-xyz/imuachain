@@ -267,7 +267,7 @@ func (suite *KeeperTestSuite) TestMarkChangedDelegations() {
 		tc := tc
 		s.Run(tc.name, func() {
 			s.SetupTest() // Reset state for each test case
-			s.prepareTestBase(TestStakerNumber, TestOperatorNumber, 1)
+			s.prepareTestBase(TestStakerNumber, TestOperatorNumber, 1, true)
 
 			// set the default test object
 			defaultLzChainID = suite.ClientChains[0].LayerZeroChainID
@@ -530,7 +530,8 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				defaultDelegationRewardState.OperatorAssetStates[testOperator.String()][suite.AssetIDs[0]] = operatorAssetState
 				// the delegation rewards should be recorded in the staker's outstanding rewards
 				defaultDelegationRewardState.StakerClaimedRewards[suite.StakerIDs[operatorIndex]] = &feedistributiontypes.StakerClaimedRewards{
-					OutstandingRewards: stakerReward,
+					OutstandingRewards:     stakerReward,
+					HistoricalTotalRewards: stakerReward,
 				}
 				return defaultDelegationRewardState
 			},
@@ -543,7 +544,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 			malleate: func() expectedDelegationRewardStates {
 				epochDuration := 5
 				// prepare the test operators and delegations
-				operators := suite.RegisterOperators(1)
+				operators := suite.RegisterOperators(1, true)
 				suite.testOperators = operators
 
 				// key is the assetID and stakerID
@@ -684,11 +685,13 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 					operatorStatePerAsset.DelegationStartingInfos[stakerID] = nil
 					if i >= firstBatchStakerCount {
 						stakerClaimedRewards[stakerID] = &feedistributiontypes.StakerClaimedRewards{
-							OutstandingRewards: stakerReward2,
+							OutstandingRewards:     stakerReward2,
+							HistoricalTotalRewards: stakerReward2,
 						}
 					} else {
 						stakerClaimedRewards[stakerID] = &feedistributiontypes.StakerClaimedRewards{
-							OutstandingRewards: stakerReward1,
+							OutstandingRewards:     stakerReward1,
+							HistoricalTotalRewards: stakerReward1,
 						}
 					}
 				}
@@ -847,7 +850,8 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 					},
 					StakerClaimedRewards: map[string]*feedistributiontypes.StakerClaimedRewards{
 						testStakerID: {
-							OutstandingRewards: stakerDelegation1Rewards.Add(stakerDelegation2Rewards...),
+							OutstandingRewards:     stakerDelegation1Rewards.Add(stakerDelegation2Rewards...),
+							HistoricalTotalRewards: stakerDelegation1Rewards.Add(stakerDelegation2Rewards...),
 						},
 					},
 				}
@@ -995,7 +999,8 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 					},
 					StakerClaimedRewards: map[string]*feedistributiontypes.StakerClaimedRewards{
 						testStakerID: {
-							OutstandingRewards: rewardEpoch1.Add(rewardForEpoch2And3...),
+							OutstandingRewards:     rewardEpoch1.Add(rewardForEpoch2And3...),
+							HistoricalTotalRewards: rewardEpoch1.Add(rewardForEpoch2And3...),
 						},
 					},
 				}
@@ -1007,6 +1012,9 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 							OperatorSlashEvent: feedistributiontypes.OperatorSlashEvent{
 								OperatorPeriod: 2,
 								Fraction:       slashFactor,
+								SlashedRewardAssets: []string{
+									assetstype.ImuachainAssetID,
+								},
 							},
 						},
 					},

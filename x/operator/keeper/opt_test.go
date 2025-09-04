@@ -29,7 +29,7 @@ type StateForCheck struct {
 func (suite *OperatorTestSuite) prepareOperator() {
 	suite.operatorAddr = testutiltx.GenerateAddress().Bytes()
 	// register operator
-	suite.RegisterOperator(suite.operatorAddr.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()))
+	suite.RegisterOperator(suite.operatorAddr.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()), true)
 }
 
 func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Address, amount sdkmath.Int) {

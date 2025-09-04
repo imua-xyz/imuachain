@@ -372,19 +372,21 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		{
 			OperatorAddress: operator1.String(),
 			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator1.String(),
-				OperatorMetaInfo: "operator1",
-				ApproveAddr:      operator1.String(),
-				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+				EarningsAddr:           operator1.String(),
+				OperatorMetaInfo:       "operator1",
+				ApproveAddr:            operator1.String(),
+				Commission:             stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+				DisableCompoundRewards: true,
 			},
 		},
 		{
 			OperatorAddress: operator2.String(),
 			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator2.String(),
-				OperatorMetaInfo: "operator2",
-				ApproveAddr:      operator2.String(),
-				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+				EarningsAddr:           operator2.String(),
+				OperatorMetaInfo:       "operator2",
+				ApproveAddr:            operator2.String(),
+				Commission:             stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+				DisableCompoundRewards: true,
 			},
 		},
 	}
@@ -730,14 +732,15 @@ func (suite *BaseTestSuite) DebugPrintObject(object interface{}) {
 	fmt.Println(string(bytes))
 }
 
-func (suite *BaseTestSuite) RegisterOperator(operator string, commission stakingtypes.Commission) {
+func (suite *BaseTestSuite) RegisterOperator(operator string, commission stakingtypes.Commission, disableCompoundRewards bool) {
 	// register operator
 	registerReq := &operatortypes.RegisterOperatorReq{
 		FromAddress: operator,
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr: operator,
-			ApproveAddr:  operator,
-			Commission:   commission,
+			EarningsAddr:           operator,
+			ApproveAddr:            operator,
+			Commission:             commission,
+			DisableCompoundRewards: disableCompoundRewards,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
@@ -810,11 +813,11 @@ func (suite *BaseTestSuite) RegisterAVSs(number int, epochIdentifier string) []c
 	return avsList
 }
 
-func (suite *BaseTestSuite) RegisterOperators(number int) []sdk.AccAddress {
+func (suite *BaseTestSuite) RegisterOperators(number int, disableCompoundRewards bool) []sdk.AccAddress {
 	operators := make([]sdk.AccAddress, 0)
 	for i := 0; i < number; i++ {
 		addr, _ := testutiltx.NewAccAddressAndKey()
-		suite.RegisterOperator(addr.String(), DefaultOperatorCommission)
+		suite.RegisterOperator(addr.String(), DefaultOperatorCommission, disableCompoundRewards)
 		operators = append(operators, addr)
 	}
 	return operators

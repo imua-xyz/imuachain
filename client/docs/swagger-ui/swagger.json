@@ -26154,6 +26154,10 @@
                       "description": "update_time is the last time the commission rate was changed."
                     }
                   }
+                },
+                "disable_compound_rewards": {
+                  "type": "boolean",
+                  "description": "disable_compound_rewards indicates whether compounding for unclaimed rewards is disabled.\nBy default, rewards are automatically compounded. This flag provides flexibility to disable it."
                 }
               },
               "description": "OperatorInfo is the operator info."
@@ -51580,6 +51584,10 @@
               "description": "update_time is the last time the commission rate was changed."
             }
           }
+        },
+        "disable_compound_rewards": {
+          "type": "boolean",
+          "description": "disable_compound_rewards indicates whether compounding for unclaimed rewards is disabled.\nBy default, rewards are automatically compounded. This flag provides flexibility to disable it."
         }
       },
       "description": "OperatorInfo is the operator info."

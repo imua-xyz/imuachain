@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	FlagMetaInfo        = "meta-info"
-	FlagClientChainData = "client-chain-data"
+	FlagMetaInfo                  = "meta-info"
+	FlagClientChainData           = "client-chain-data"
+	FlagDisableRewardsCompounding = "disable-rewards-compounding"
 )
 
 // NewTxCmd returns a root CLI command handler for deposit commands
@@ -83,6 +84,7 @@ func CmdRegisterOperator() *cobra.Command {
 			"can be supplied multiple times. "+
 			"Format: <client-chain-id>:<client-chain-earnings-addr>",
 	)
+	f.Bool(FlagDisableRewardsCompounding, false, "indicate whether disable the compounding of unclaimed rewards")
 	f.AddFlagSet(stakingcli.FlagSetCommissionCreate())
 
 	// required flags
@@ -146,6 +148,9 @@ func newBuildRegisterOperatorMsg(
 		return nil, err
 	}
 	msg.Info.Commission = commission
+
+	disableRewardsCompounding, _ := fs.GetBool(FlagDisableRewardsCompounding)
+	msg.Info.DisableCompoundRewards = disableRewardsCompounding
 	return msg, nil
 }
 

@@ -66,6 +66,7 @@ type OperatorKeeper interface {
 	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
 	SetOperatorRewardUSDValue(ctx sdk.Context, receivingAVS, rewardSourceAVS, operator, symbol string, amount sdkmath.LegacyDec) error
 	RemoveAllStaleOperatorRewardUSDs(ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{}) error
+	IsCompoundRewardsDisabled(ctx sdk.Context, addr string) (bool, error)
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.

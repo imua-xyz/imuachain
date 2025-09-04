@@ -30,11 +30,11 @@ func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]strin
 	ret := make(map[string]interface{})
 
 	for _, assetID := range assetIDList {
-		asset, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
+		_, err = k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 		if err != nil {
 			return nil, nil, errorsmod.Wrap(err, fmt.Sprintf("[GetAVSSupportedAssets] GetStakingAssetInfo: key is %s", assetID))
 		}
-		ret[assetID] = asset
+		ret[assetID] = nil
 	}
 
 	return assetIDList, ret, nil

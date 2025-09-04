@@ -61,7 +61,7 @@ func (suite *KeeperTestSuite) mintDogfoodTestReward() {
 }
 
 func (suite *KeeperTestSuite) TestSetAVSRewardParam() {
-	suite.prepareTestBase(1, 1, 1)
+	suite.prepareTestBase(1, 1, 1, true)
 	suite.setRewardParams(suite.testAVSs)
 
 	// Verify the parameters were set correctly
@@ -137,7 +137,7 @@ func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {
 		tc := tc
 		s.Run(tc.name, func() {
 			s.SetupTest() // Reset state for each test case
-			s.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+			s.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 
 			rewards := tc.malleate()
 			testAvs := strings.ToLower(suite.testAVSs[0].String())
@@ -175,7 +175,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "fail - the reward parameter hasn't been configured",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				return strings.ToLower(suite.testAVSs[0].String())
 			},
 			isDogfood:   false,
@@ -186,7 +186,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "fail - the reward distribution info hasn't been configured",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -200,7 +200,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "fail - the AVS USD value hasn't been updated because it hasn't run to the end of the epoch.",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -216,7 +216,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "pass - the avs reward distribution should be fetched correctly, but the operator reward proportions should be null because null epoch rewards are configured",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -237,7 +237,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "pass - the AVS reward distribution should be fetched correctly. The reward proportion of each test operator should be 0.5 because there are 2 test operators with the same deposits and delegations.",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -262,7 +262,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "pass - the dogfood AVS reward distribution should be fetched correctly.",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// run to the end of epoch
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
 				suite.mintDogfoodTestReward()

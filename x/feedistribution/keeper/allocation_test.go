@@ -82,7 +82,7 @@ func (expectedStates *expectedAllocationStates) addOperatorCurrentReward(avsAddr
 	expectedStates.operatorCurrentReward[operator] = rewardMap
 }
 
-func (suite *KeeperTestSuite) prepareTestBase(stakerNumber, operatorNumber, avsNumber int) {
+func (suite *KeeperTestSuite) prepareTestBase(stakerNumber, operatorNumber, avsNumber int, disableCompoundRewards bool) {
 	suite.Require().GreaterOrEqual(stakerNumber, operatorNumber, "There should be at least as many stakers as operator, as each pair is associated by index.")
 	testClientChainID := suite.ClientChains[0].LayerZeroChainID
 	// create test stakers
@@ -90,7 +90,7 @@ func (suite *KeeperTestSuite) prepareTestBase(stakerNumber, operatorNumber, avsN
 	suite.testStakers = stakerAddrs
 	suite.testStakerIDs = stakerIDs
 	// create and register test operators
-	operators := suite.RegisterOperators(operatorNumber)
+	operators := suite.RegisterOperators(operatorNumber, disableCompoundRewards)
 	suite.testOperators = operators
 	// create and register test AVSs
 	// using the same epoch identifier as the dogfood AVS
@@ -225,14 +225,15 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 				proportion := math.LegacyOneDec().Sub(feedistributiontypes.DefaultParams().CommunityTax)
 				rewardsExcludeCommunityTax := totalRewardDec.MulTruncate(proportion)
 
-				operatorCommissionRate := testutil.DefaultOperatorCommission.Rate
-				expectedOperatorOutstandingRewards := rewardsExcludeCommunityTax.QuoInt64(int64(TestOperatorNumber))
-				expectedOperatorCommission := expectedOperatorOutstandingRewards.MulTruncate(operatorCommissionRate)
 				expectedCommunityFee := totalRewardDec.Sub(rewardsExcludeCommunityTax)
+				operatorCommissionRate := testutil.DefaultOperatorCommission.Rate
+				operatorTotalRewards := rewardsExcludeCommunityTax.QuoInt64(int64(TestOperatorNumber))
+				expectedOperatorCommission := operatorTotalRewards.MulTruncate(operatorCommissionRate)
 
+				totalStakerRewards := operatorTotalRewards.Sub(expectedOperatorCommission)
 				// Rewards for each staking asset are the same after splitting,
 				// since we delegated equal amounts and all asset prices use default values.
-				expectedRewardPerAsset := expectedOperatorOutstandingRewards.Sub(expectedOperatorCommission).QuoInt64(int64(len(suite.AssetIDs)))
+				expectedRewardPerAsset := totalStakerRewards.QuoInt64(int64(len(suite.AssetIDs)))
 
 				expectedStates := expectedAllocationStates{
 					rewardAllocationTotal: sdk.NewDec(DefaultEpochRewardAmount),
@@ -244,7 +245,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 
 				for _, operator := range suite.testOperators {
 					expectedStates.accumulatedCommission[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedOperatorCommission)}
-					expectedStates.outstandingRewards[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedOperatorOutstandingRewards)}
+					expectedStates.outstandingRewards[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, totalStakerRewards)}
 					// check the current rewards for the operator after splitting into different asset pools.
 					for _, stakingAssetID := range suite.AssetIDs {
 						expectedStates.addOperatorCurrentReward(testAVSAddr, assetSymbol, operator.String(), stakingAssetID, expectedRewardPerAsset)
@@ -390,19 +391,19 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 							commissionRate = testutil.DefaultOperatorCommission.Rate
 						}
 
-						// calculate outstanding rewards
-						expectedEpochOutstandingRewards := epochRewardsExcludeCommunityTax.MulTruncate(power.QuoTruncate(epochTotalPower))
-						expectedStates.addOutstandingRewards(assetSymbol, operatorStr, expectedEpochOutstandingRewards)
+						// calculate total rewards for operator, which includes commission and rewards for all stakers.
+						operatorTotalRewards := epochRewardsExcludeCommunityTax.MulTruncate(power.QuoTruncate(epochTotalPower))
 
 						// calculate commission
-						operatorCommission := expectedEpochOutstandingRewards.MulTruncate(commissionRate)
+						operatorCommission := operatorTotalRewards.MulTruncate(commissionRate)
 						if commissionRate.IsPositive() {
 							expectedStates.addAccumulatedCommission(assetSymbol, operatorStr, operatorCommission)
 						}
 						expectedCommunityFee.SubMut(operatorCommission)
 
 						// calculate staking rewards
-						stakingRewards := expectedEpochOutstandingRewards.Sub(operatorCommission)
+						stakingRewards := operatorTotalRewards.Sub(operatorCommission)
+						expectedStates.addOutstandingRewards(assetSymbol, operatorStr, stakingRewards)
 						// For new operators, staking rewards are split equally between assets,
 						// as each asset was delegated with the same USD value.
 						// For default operators, only one asset was delegated, so no splitting is needed.
@@ -424,7 +425,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 		tc := tc
 		s.Run(tc.name, func() {
 			s.SetupTest() // Reset state for each test case
-			s.prepareTestBase(TestStakerNumber, TestOperatorNumber, 1)
+			s.prepareTestBase(TestStakerNumber, TestOperatorNumber, 1, true)
 
 			testAVSAddr, runToEpochNumber := tc.malleate()
 			err := suite.App.DistrKeeper.AllocateRewardsByAVS(suite.Ctx, testAVSAddr, dogfoodtypes.DefaultEpochIdentifier)
@@ -491,7 +492,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByEpoch() {
 		tc := tc
 		s.Run(tc.name, func() {
 			s.SetupTest() // Reset state for each test case
-			s.prepareTestBase(TestStakerNumber, TestOperatorNumber, TestAVSNumber)
+			s.prepareTestBase(TestStakerNumber, TestOperatorNumber, TestAVSNumber, true)
 
 			if tc.malleate != nil {
 				tc.malleate()

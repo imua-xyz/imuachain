@@ -525,10 +525,19 @@ func (k *Keeper) CalculateRealTimeOperatorUSDValue(
 		return ret, err
 	}
 	if isForSlash {
+		// The rewards can be subject to slashing regardless of whether the operator disables rewards compounding.
+		// This can decrease the amount slashed from the staking assets.
 		ret.StakingAndWaitUnbonding.AddMut(compoundingUSDValue)
 		ret.CompoundingUSDValueSources = usdValueSources
 	} else {
-		ret.Staking.AddMut(compoundingUSDValue)
+		isCompoundingRewardsDisabled, err := k.IsCompoundRewardsDisabled(ctx, operator)
+		if err != nil {
+			return operatortypes.OperatorStakingInfo{}, err
+		}
+		if !isCompoundingRewardsDisabled {
+			// Rewards contribute to the USD value when compounding is enabled.
+			ret.Staking.AddMut(compoundingUSDValue)
+		}
 	}
 	return ret, nil
 }

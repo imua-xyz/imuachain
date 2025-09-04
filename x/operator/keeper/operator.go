@@ -155,6 +155,14 @@ func (k Keeper) IsOperator(ctx sdk.Context, addr sdk.AccAddress) bool {
 	return store.Has(addr)
 }
 
+func (k Keeper) IsCompoundRewardsDisabled(ctx sdk.Context, addr string) (bool, error) {
+	operatorInfo, err := k.OperatorInfo(ctx, addr)
+	if err != nil {
+		return false, err
+	}
+	return operatorInfo.DisableCompoundRewards, nil
+}
+
 func (k *Keeper) HandleOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string, handleFunc func(info *operatortypes.OptedInfo)) error {
 	opAccAddr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {

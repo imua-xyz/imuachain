@@ -131,28 +131,35 @@ func (k *Keeper) UpdateAllRewardsUSDForOperator(
 	validRewardUSDs := make(map[string]interface{}, 0)
 	totalUSDValue := sdk.ZeroDec()
 
-	opFunc := func(rewardSourceAVS string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
-		// calculate and set the USD value for specific operator and rewardSourceAVS
-		_, avsRewardsUSD, err := k.calcOperatorRewardsUSDValue(ctx, rewardSourceAVS, *rewards, supportedAssets, assetPrices,
-			func(denom string, usdValue sdkmath.LegacyDec) error {
-				// set the USD value for specific AVS reward asset
-				if err := k.operatorKeeper.SetOperatorRewardUSDValue(ctx, receivingAVS, rewardSourceAVS, operator, denom, usdValue); err != nil {
-					return err
-				}
-				key := string(utils.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, denom))
-				validRewardUSDs[key] = nil
-				return nil
-			})
-		if err != nil {
-			return false, false, err
-		}
-		totalUSDValue.AddMut(avsRewardsUSD)
-		return false, false, nil
-	}
-	err := k.IterateOperatorUnclaimedRewards(ctx, operator, false, opFunc)
+	isDisableRewardsCompounding, err := k.operatorKeeper.IsCompoundRewardsDisabled(ctx, operator)
 	if err != nil {
 		return sdkmath.LegacyDec{}, err
 	}
+	if !isDisableRewardsCompounding {
+		opFunc := func(rewardSourceAVS string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
+			// calculate and set the USD value for specific operator and rewardSourceAVS
+			_, avsRewardsUSD, err := k.calcOperatorRewardsUSDValue(ctx, rewardSourceAVS, *rewards, supportedAssets, assetPrices,
+				func(denom string, usdValue sdkmath.LegacyDec) error {
+					// set the USD value for specific AVS reward asset
+					if err := k.operatorKeeper.SetOperatorRewardUSDValue(ctx, receivingAVS, rewardSourceAVS, operator, denom, usdValue); err != nil {
+						return err
+					}
+					key := string(utils.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, denom))
+					validRewardUSDs[key] = nil
+					return nil
+				})
+			if err != nil {
+				return false, false, err
+			}
+			totalUSDValue.AddMut(avsRewardsUSD)
+			return false, false, nil
+		}
+		err := k.IterateOperatorUnclaimedRewards(ctx, operator, false, opFunc)
+		if err != nil {
+			return sdkmath.LegacyDec{}, err
+		}
+	}
+
 	// remove the invalid rewards USD values
 	err = k.operatorKeeper.RemoveAllStaleOperatorRewardUSDs(ctx, receivingAVS, operator, validRewardUSDs)
 	if err != nil {

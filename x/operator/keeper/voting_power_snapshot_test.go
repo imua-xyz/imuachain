@@ -45,7 +45,7 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 		stakers[i] = ethAddr
 		operators[i] = ethAddr.Bytes()
 		// register operator
-		suite.RegisterOperator(operators[i].String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()))
+		suite.RegisterOperator(operators[i].String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()), true)
 		// associate the stakers with operators
 		err := suite.App.DelegationKeeper.AssociateOperatorWithStaker(suite.Ctx, suite.clientChainLzID, operators[i], stakers[i].Bytes())
 		suite.NoError(err)
