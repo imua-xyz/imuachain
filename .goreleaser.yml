@@ -152,7 +152,7 @@ docker_manifests:
       - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-arm64"
 
   - name_template: "ghcr.io/imua-xyz/imuachain:latest"
-    skip_push: "{{ .IsSnapshot }}"
+    skip_push: "{{ or .IsSnapshot .Prerelease }}"
     image_templates:
-      - "{{ if not .Prerelease }}ghcr.io/imua-xyz/imuachain:latest-amd64{{ end }}"
-      - "{{ if not .Prerelease }}ghcr.io/imua-xyz/imuachain:latest-arm64{{ end }}"
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-amd64"
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-arm64"
