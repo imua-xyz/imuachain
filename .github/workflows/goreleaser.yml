@@ -2,6 +2,7 @@ name: goreleaser
 
 permissions:
   contents: write
+  packages: write
 
 on:
   merge_group:
@@ -40,6 +41,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event_name != 'pull_request' && github.event_name != 'merge_group'
       - name: Release dry run
         run: make release-dry-run
         if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
