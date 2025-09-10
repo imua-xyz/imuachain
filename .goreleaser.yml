@@ -122,8 +122,8 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .Commit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.created={{ time \"2006-01-02T15:04:05Z07:00\" }}"
-      - '--label=org.opencontainers.image.title="imuachain"'
-      - '--label=org.opencontainers.image.description="IMUA full node (release image)"'
+      - "--label=org.opencontainers.image.title=imuachain"
+      - "--label=org.opencontainers.image.description=IMUA full node (release image)"
 
   - id: ghcr-arm64
     skip_push: "{{ .IsSnapshot }}"
@@ -141,8 +141,8 @@ dockers:
       - "--label=org.opencontainers.image.revision={{ .Commit }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
       - "--label=org.opencontainers.image.created={{ time \"2006-01-02T15:04:05Z07:00\" }}"
-      - '--label=org.opencontainers.image.title="imuachain"'
-      - '--label=org.opencontainers.image.description="IMUA full node (release image)"'
+      - "--label=org.opencontainers.image.title=imuachain"
+      - "--label=org.opencontainers.image.description=IMUA full node (release image)"
 
 docker_manifests:
   - name_template: "ghcr.io/imua-xyz/imuachain:{{ .Tag }}"
