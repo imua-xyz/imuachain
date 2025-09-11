@@ -331,6 +331,7 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		UndelegationId:           initialUndelegationID,
 		CompletedEpochIdentifier: epochtypes.NullEpochIdentifier,
 		CompletedEpochNumber:     epochtypes.NullEpochNumber,
+		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
 	suite.Equal(UndelegationRecord, records[0].Undelegation)
 	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
@@ -388,6 +389,7 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		CompletedEpochIdentifier: epochtypes.NullEpochIdentifier,
 		CompletedEpochNumber:     epochtypes.NullEpochNumber,
 		UndelegationId:           initialUndelegationID + 1,
+		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
 	suite.Equal(UndelegationRecord, records[0].Undelegation)
 

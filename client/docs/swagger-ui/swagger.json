@@ -23688,6 +23688,18 @@
                           "actual_completed_amount": {
                             "type": "string",
                             "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                          },
+                          "instant_unbonding": {
+                            "type": "boolean",
+                            "title": "instant_unbonding indicates whether it's an instant unbonding"
+                          },
+                          "apply_slash": {
+                            "type": "boolean",
+                            "description": "apply_slash indicates whether it will be slashed for instant unbonding."
+                          },
+                          "instant_penalty_amount": {
+                            "type": "string",
+                            "title": "instant_penalty_amount indicates the penalty amount for instant unbonding"
                           }
                         },
                         "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -24006,6 +24018,18 @@
                           "actual_completed_amount": {
                             "type": "string",
                             "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                          },
+                          "instant_unbonding": {
+                            "type": "boolean",
+                            "title": "instant_unbonding indicates whether it's an instant unbonding"
+                          },
+                          "apply_slash": {
+                            "type": "boolean",
+                            "description": "apply_slash indicates whether it will be slashed for instant unbonding."
+                          },
+                          "instant_penalty_amount": {
+                            "type": "string",
+                            "title": "instant_penalty_amount indicates the penalty amount for instant unbonding"
                           }
                         },
                         "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -49113,6 +49137,18 @@
             "actual_completed_amount": {
               "type": "string",
               "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+            },
+            "instant_unbonding": {
+              "type": "boolean",
+              "title": "instant_unbonding indicates whether it's an instant unbonding"
+            },
+            "apply_slash": {
+              "type": "boolean",
+              "description": "apply_slash indicates whether it will be slashed for instant unbonding."
+            },
+            "instant_penalty_amount": {
+              "type": "string",
+              "title": "instant_penalty_amount indicates the penalty amount for instant unbonding"
             }
           },
           "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -49181,6 +49217,18 @@
         "actual_completed_amount": {
           "type": "string",
           "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+        },
+        "instant_unbonding": {
+          "type": "boolean",
+          "title": "instant_unbonding indicates whether it's an instant unbonding"
+        },
+        "apply_slash": {
+          "type": "boolean",
+          "description": "apply_slash indicates whether it will be slashed for instant unbonding."
+        },
+        "instant_penalty_amount": {
+          "type": "string",
+          "title": "instant_penalty_amount indicates the penalty amount for instant unbonding"
         }
       },
       "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
@@ -49239,6 +49287,18 @@
                   "actual_completed_amount": {
                     "type": "string",
                     "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                  },
+                  "instant_unbonding": {
+                    "type": "boolean",
+                    "title": "instant_unbonding indicates whether it's an instant unbonding"
+                  },
+                  "apply_slash": {
+                    "type": "boolean",
+                    "description": "apply_slash indicates whether it will be slashed for instant unbonding."
+                  },
+                  "instant_penalty_amount": {
+                    "type": "string",
+                    "title": "instant_penalty_amount indicates the penalty amount for instant unbonding"
                   }
                 },
                 "description": "UndelegationRecord is the undelegation record, keyed by a RecordKey."
