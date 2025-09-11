@@ -87,7 +87,6 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 	remaining := rewardsAndProportions.Rewards
 	proportion := math.LegacyOneDec().Sub(communityTax)
 	rewardsForOperators := rewardsAndProportions.Rewards.MulDecTruncate(proportion)
-
 	for _, operatorProportion := range rewardsAndProportions.OperatorRewardProportions {
 		reward := rewardsForOperators.MulDecTruncate(operatorProportion.RewardProportion)
 		// calculate the commission for the operator
@@ -200,7 +199,6 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			// each individual asset must be less than or equal to the opted USD value.
 			return nil, types.ErrInvalidAssetUSDValue.Wrapf("error in SplitRewardsToAssetsPool,assetUSDValue:%s,operatorUSDValue:%s", assetUSDValue, optedUSDValue.ActiveUSDValue)
 		}
-
 		assetRewards := rewards.MulDecTruncate(assetUSDValue.QuoTruncate(optedUSDValue.ActiveUSDValue))
 		if assetRewards.IsAllPositive() {
 			if !k.isOperatorPeriodInitialized(ctx, operator, assetID, epochIdentifier) {

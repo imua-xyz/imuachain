@@ -186,6 +186,11 @@ message SlashFromUndelegation {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // undelegation_Id is a globally incrementing number used to identify an undelegation.
+  // It will be included in the key when storing the undelegation.
+  uint64 undelegation_id = 4;
+  // reward_asset indicates whether the undelegation is for rewards
+  bool reward_asset = 5;
 }
 
 // SlashAssetAmount records the slash amount of specific assetID
@@ -204,7 +209,7 @@ message SlashFromUnclaimedRewards {
   // avs is who the rewards earned from.
   string avs = 1 ;
   // slash_assets represent multiple rewards assets states that are slashed.
-  repeated SlashAssetAmount slash_assets =2 [(gogoproto.nullable) = false];
+  repeated SlashAssetAmount slash_assets = 2 [(gogoproto.nullable) = false];
 }
 
 // SlashExecutionInfo is the actual execution state for a slash event

@@ -49,9 +49,11 @@ func (k *Keeper) SlashFromUndelegation(ctx sdk.Context, undelegation *delegation
 	}
 
 	return &types.SlashFromUndelegation{
-		StakerID: undelegation.StakerId,
-		AssetID:  undelegation.AssetId,
-		Amount:   slashAmount,
+		StakerID:       undelegation.StakerId,
+		AssetID:        undelegation.AssetId,
+		Amount:         slashAmount,
+		UndelegationId: undelegation.UndelegationId,
+		RewardAsset:    undelegation.RewardAsset,
 	}, nil
 }
 
@@ -134,6 +136,10 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
 		// iterate over each operator + asset and reduce the total amount by the slash amount
 		slashAmount := newSlashProportion.MulInt(state.TotalAmount).TruncateInt()
+		if !slashAmount.IsPositive() {
+			// do nothing if the slash amount isn't positive.
+			return nil
+		}
 		remainingAmount := state.TotalAmount.Sub(slashAmount)
 		// todo: consider slash all assets if the remaining amount is too small,
 		// which can avoid the unbalance between share and amount
@@ -304,8 +310,9 @@ func (k Keeper) SlashWithInfractionReason(
 		k.Logger(ctx).Error("error when executing slash", "error", err, "avsAddr", avsAddr)
 		return sdkmath.ZeroInt()
 	}
-	// todo: The returned value should be the amount of burned IMUA if we considering a slash from the reward
-	// Now it doesn't slash from the reward, so just return 0
+	// The returned value should represent the amount of IMUA burned in the Cosmos SDK.
+	// In the IMUA chain implementation, we do not actually burn any slashed assets;
+	// instead, we lock these assets, which better supports the slashing veto mechanism.
 	return sdkmath.ZeroInt()
 }
 

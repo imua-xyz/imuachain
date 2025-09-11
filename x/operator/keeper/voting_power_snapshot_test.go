@@ -2,10 +2,11 @@ package keeper_test
 
 import (
 	"fmt"
-	"github.com/imua-xyz/imuachain/utils"
 	"math/big"
 	"sort"
 	"time"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/imua-xyz/imuachain/testutil"

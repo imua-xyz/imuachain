@@ -357,7 +357,7 @@ func (k Keeper) distributeRewardsToDelegation(
 			if compoundingRewardsPerAsset != nil {
 				outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
 				if outstandingRewardAmount.IsPositive() {
-					proportion := math.LegacyMinDec(reward.Amount.Quo(outstandingRewardAmount), math.LegacyOneDec())
+					proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
 					// calculate the compounding rewards for specific reward asset
 					stakerCompoundingRewardsPerAsset, err := compoundingRewardsPerAsset.MulDecTruncate(proportion)
 					if err != nil {

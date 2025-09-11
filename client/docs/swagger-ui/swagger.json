@@ -26292,6 +26292,15 @@
                                     "amount": {
                                       "type": "string",
                                       "description": "amount is the slashed amount from the undelegation."
+                                    },
+                                    "undelegation_id": {
+                                      "type": "string",
+                                      "format": "uint64",
+                                      "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                                    },
+                                    "reward_asset": {
+                                      "type": "boolean",
+                                      "title": "reward_asset indicates whether the undelegation is for rewards"
                                     }
                                   },
                                   "title": "SlashFromUndelegation records the slash detail from the undelegation"
@@ -51668,6 +51677,15 @@
                   "amount": {
                     "type": "string",
                     "description": "amount is the slashed amount from the undelegation."
+                  },
+                  "undelegation_id": {
+                    "type": "string",
+                    "format": "uint64",
+                    "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                  },
+                  "reward_asset": {
+                    "type": "boolean",
+                    "title": "reward_asset indicates whether the undelegation is for rewards"
                   }
                 },
                 "title": "SlashFromUndelegation records the slash detail from the undelegation"
@@ -51805,6 +51823,15 @@
                       "amount": {
                         "type": "string",
                         "description": "amount is the slashed amount from the undelegation."
+                      },
+                      "undelegation_id": {
+                        "type": "string",
+                        "format": "uint64",
+                        "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                      },
+                      "reward_asset": {
+                        "type": "boolean",
+                        "title": "reward_asset indicates whether the undelegation is for rewards"
                       }
                     },
                     "title": "SlashFromUndelegation records the slash detail from the undelegation"
@@ -52268,6 +52295,15 @@
                             "amount": {
                               "type": "string",
                               "description": "amount is the slashed amount from the undelegation."
+                            },
+                            "undelegation_id": {
+                              "type": "string",
+                              "format": "uint64",
+                              "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                            },
+                            "reward_asset": {
+                              "type": "boolean",
+                              "title": "reward_asset indicates whether the undelegation is for rewards"
                             }
                           },
                           "title": "SlashFromUndelegation records the slash detail from the undelegation"
@@ -52779,6 +52815,15 @@
               "amount": {
                 "type": "string",
                 "description": "amount is the slashed amount from the undelegation."
+              },
+              "undelegation_id": {
+                "type": "string",
+                "format": "uint64",
+                "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+              },
+              "reward_asset": {
+                "type": "boolean",
+                "title": "reward_asset indicates whether the undelegation is for rewards"
               }
             },
             "title": "SlashFromUndelegation records the slash detail from the undelegation"
@@ -52890,6 +52935,15 @@
         "amount": {
           "type": "string",
           "description": "amount is the slashed amount from the undelegation."
+        },
+        "undelegation_id": {
+          "type": "string",
+          "format": "uint64",
+          "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+        },
+        "reward_asset": {
+          "type": "boolean",
+          "title": "reward_asset indicates whether the undelegation is for rewards"
         }
       },
       "title": "SlashFromUndelegation records the slash detail from the undelegation"

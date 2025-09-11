@@ -168,11 +168,8 @@ func (k Keeper) UndelegateClaimedRewards(
 		stakerID, assetID string,
 		operatorAccAddr sdk.AccAddress,
 		instantSlashRatio sdk.Dec, _ math.Int,
+		preOperatorAssetState assetstype.OperatorAssetInfo,
 	) ([]delegationtype.UndelegationAmountPerAVS, math.Int, error) {
-		operatorAssetInfo, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operatorAccAddr, assetID)
-		if err != nil {
-			return nil, math.Int{}, err
-		}
 		// The delegated asset might come from multiple AVSs, so we iterate over all AVSs
 		// to calculate the undelegated amount from each AVS. The iteration stops once the
 		// collected amount equals the expected undelegation amount. Then the undelegation
@@ -201,7 +198,7 @@ func (k Keeper) UndelegateClaimedRewards(
 				// continue iterating the next AVS
 				return false, false, nil
 			}
-			assetAmount, err := delegationkeeper.TokensFromShares(assetShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
+			assetAmount, err := delegationkeeper.TokensFromShares(assetShare, preOperatorAssetState.TotalShare, preOperatorAssetState.TotalAmount)
 			if err != nil {
 				return true, false, err
 			}
@@ -230,7 +227,7 @@ func (k Keeper) UndelegateClaimedRewards(
 			undelegationAmounts = append(undelegationAmounts, undelegationAmountPerAVS)
 
 			// update the claimed rewards
-			undelegateShare, err := delegationkeeper.SharesFromTokens(operatorAssetInfo.TotalShare, amountFromCurAVS, operatorAssetInfo.TotalAmount)
+			undelegateShare, err := delegationkeeper.SharesFromTokens(preOperatorAssetState.TotalShare, amountFromCurAVS, preOperatorAssetState.TotalAmount)
 			if err != nil {
 				return true, false, err
 			}
@@ -250,7 +247,7 @@ func (k Keeper) UndelegateClaimedRewards(
 		}
 		// iterate to withdraw rewards from multiple AVSs, because different AVSs might
 		// use the same asset as reward.
-		err = k.IterateStakerClaimedRewards(ctx, stakerID, true, opFunc)
+		err := k.IterateStakerClaimedRewards(ctx, stakerID, true, opFunc)
 		if err != nil {
 			return nil, math.Int{}, err
 		}
@@ -349,7 +346,7 @@ func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.
 		expectedSlashAmount := slashProportion.MulInt(undelegationPerAVS.Amount).TruncateInt()
 		actualSlashAmount := math.MinInt(expectedSlashAmount, undelegationPerAVS.ActualCompletedAmount)
 		record.RewardUndelegations[i].ActualCompletedAmount = undelegationPerAVS.ActualCompletedAmount.Sub(actualSlashAmount)
-		stakerClaimedRewards.PendingUndelegationRewards = stakerClaimedRewards.PendingSlashedRewards.Add(sdk.NewDecCoin(rewardAssetInfo.AssetBasicInfo.Symbol, actualSlashAmount))
+		stakerClaimedRewards.PendingSlashedRewards = stakerClaimedRewards.PendingSlashedRewards.Add(sdk.NewDecCoin(rewardAssetInfo.AssetBasicInfo.Symbol, actualSlashAmount))
 
 		err = k.SetStakerClaimedRewards(ctx, record.StakerId, undelegationPerAVS.AvsAddress, stakerClaimedRewards)
 		if err != nil {

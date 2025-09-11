@@ -24,7 +24,7 @@ type DelegationOrUndelegationParams struct {
 	RewardAssetID         string
 	RewardStakerID        string
 	ReduceDelegationShare func(ctx sdk.Context, stakerID, assetID string,
-		operatorAccAddr sdk.AccAddress, instantSlashRatio sdk.Dec, amount sdkmath.Int) ([]UndelegationAmountPerAVS, sdkmath.Int, error)
+		operatorAccAddr sdk.AccAddress, instantSlashRatio sdk.Dec, amount sdkmath.Int, preOperatorAssetState assetstype.OperatorAssetInfo) ([]UndelegationAmountPerAVS, sdkmath.Int, error)
 	RewardUndelegations []UndelegationAmountPerAVS
 }
 

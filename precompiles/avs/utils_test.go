@@ -2,9 +2,10 @@ package avs_test
 
 import (
 	"fmt"
-	"github.com/imua-xyz/imuachain/utils"
 	"strings"
 	"time"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 

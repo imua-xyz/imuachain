@@ -2,9 +2,10 @@ package keeper_test
 
 import (
 	"fmt"
-	"github.com/imua-xyz/imuachain/utils"
 	"math"
 	"time"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	"github.com/imua-xyz/imuachain/testutil"
 	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"

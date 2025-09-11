@@ -105,7 +105,6 @@ func (k *Keeper) delegateTo(
 	if err != nil {
 		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
 	}
-
 	deltaOperatorAsset := assetstype.DeltaOperatorSingleAsset{
 		TotalAmount: params.OpAmount,
 		TotalShare:  share,
@@ -244,7 +243,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 
 	if params.RewardAsset {
 		// decrease the reward delegation share if it's an reward undelegation
-		undelegationAmounts, totalCompletedAmount, err := params.ReduceDelegationShare(ctx, params.RewardStakerID, params.RewardAssetID, params.OperatorAddress, instantSlashRatio, params.OpAmount)
+		undelegationAmounts, totalCompletedAmount, err := params.ReduceDelegationShare(ctx, params.RewardStakerID, params.RewardAssetID, params.OperatorAddress, instantSlashRatio, params.OpAmount, *prevAssetState)
 		if err != nil {
 			return err
 		}

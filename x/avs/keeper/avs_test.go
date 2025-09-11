@@ -2,10 +2,11 @@ package keeper_test
 
 import (
 	"fmt"
-	"github.com/imua-xyz/imuachain/utils"
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"

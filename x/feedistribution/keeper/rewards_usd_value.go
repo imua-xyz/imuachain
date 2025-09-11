@@ -26,7 +26,7 @@ func (k *Keeper) calculateRewardUSDValue(
 		return "", sdkmath.LegacyZeroDec(), nil
 	}
 	// get the assetID by rewardSourceAVS and symbol
-	assetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, avs, symbol)
+	assetID, rewardAssetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avs, symbol)
 	if err != nil {
 		return "", sdkmath.LegacyDec{}, err
 	}
@@ -54,8 +54,13 @@ func (k *Keeper) calculateRewardUSDValue(
 		// reward asset with a non-positive price can't contribute any USD value, skipping it.
 		return "", sdkmath.LegacyZeroDec(), nil
 	}
+	// get the decimal in staking asset
+	assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
+	if err != nil {
+		return "", sdkmath.LegacyZeroDec(), nil
+	}
 	// calculate the USD value of each reward asset
-	usdPerAsset := utils.CalculateDecUSDValue(amount, price.Value, price.Decimal)
+	usdPerAsset := utils.CalculateRewardUSDValue(amount, rewardAssetInfo.AssetBasicInfo.Decimals, assetInfo.AssetBasicInfo.Decimals, price.Value, price.Decimal)
 	return assetID, usdPerAsset, nil
 }
 

@@ -1,8 +1,9 @@
 package types_test
 
 import (
-	"github.com/imua-xyz/imuachain/utils"
 	"testing"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
