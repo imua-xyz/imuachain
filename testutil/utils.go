@@ -107,7 +107,7 @@ var DefaultTestClientChain = []assetstypes.ClientChainInfo{
 	},
 	// add the imua chain
 	{
-		Name:               "Imua",
+		Name:               "Imua chain",
 		MetaInfo:           "The (native) Imua chain",
 		ChainId:            0,
 		FinalizationBlocks: 10,
@@ -322,7 +322,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			AssetID:         "nst_0x65",
 		},
 		&oracletypes.Token{
-			Name:            "IMUA",
+			Name:            "IM",
 			ChainID:         1,
 			ContractAddress: "0x",
 			Decimal:         0,
