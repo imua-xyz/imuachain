@@ -40,9 +40,9 @@ const (
 	prefixDelegationStartingInfo
 	prefixOperatorHistoricalRewards
 	prefixOperatorCurrentRewards
-	prefixOperatorAccumulatedCommission
+	prefixOperatorCommission
 	prefixOperatorSlashEvent
-	prefixStakerOutstandingRewards
+	prefixStakerClaimedRewards
 )
 
 var (
@@ -115,10 +115,10 @@ var (
 	// key for current operator rewards
 	KeyPrefixOperatorCurrentRewards = []byte{prefixOperatorCurrentRewards}
 
-	// KeyPrefixOperatorAccumulatedCommission :
-	// operator + '/' + AVSAddr -> OperatorAccumulatedCommission
+	// KeyPrefixOperatorCommission :
+	// operator + '/' + AVSAddr -> OperatorCommission
 	// key for accumulated operator commission
-	KeyPrefixOperatorAccumulatedCommission = []byte{prefixOperatorAccumulatedCommission}
+	KeyPrefixOperatorCommission = []byte{prefixOperatorCommission}
 
 	// KeyPrefixOperatorSlashEvent :
 	// operator + '/' + assetID + '/' + epochIdentifier + '/' + epochNumber + '/' + blockHeight-> OperatorSlashEvent
@@ -128,9 +128,9 @@ var (
 	// is low and unlikely to lead to significant state accumulation.
 	KeyPrefixOperatorSlashEvent = []byte{prefixOperatorSlashEvent}
 
-	// KeyPrefixStakerOutstandingRewards :
-	// stakerID + '/' + AVSAddr -> StakerOutstandingRewards
-	// key for outstanding rewards of staker.
+	// KeyPrefixStakerClaimedRewards :
+	// stakerID + '/' + AVSAddr -> StakerClaimedRewards
+	// key for claimed rewards of staker, including the outstanding and withdrawn rewards.
 	// Unlike the F1 distribution in Cosmos SDK, the reward vault for restakers in the Imua
 	// protocol may be distributed across different client chains as well as the Imua chain
 	// itself. Therefore, when a staker claims rewards, we handle it in two steps. The first
@@ -139,7 +139,7 @@ var (
 	// Afterward, the staker can initiate a claim transaction on the chain where the reward vault
 	// is located. The transaction will check the validity of the claim based on the recorded reward
 	// status and execute the reward distribution accordingly.
-	KeyPrefixStakerOutstandingRewards = []byte{prefixStakerOutstandingRewards}
+	KeyPrefixStakerClaimedRewards = []byte{prefixStakerClaimedRewards}
 
 	// KeyPrefixDelegatorWithdrawAddr
 	// key for delegator withdraw address

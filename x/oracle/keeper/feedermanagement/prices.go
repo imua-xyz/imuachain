@@ -376,6 +376,25 @@ func (p *PricePower) Cpy() *PricePower {
 	}
 }
 
+func GetPriceSourceDetIDs(msg *oracletypes.MsgCreatePrice) *PriceSourceDetIDs {
+	validator, err := oracletypes.ConsAddrStrFromCreator(msg.Creator)
+	if err != nil || msg.FeederID == 0 {
+		return nil
+	}
+	ret := &PriceSourceDetIDs{
+		FeederID:     msg.FeederID,
+		Validator:    validator,
+		SourceDetIDs: make(map[uint64][]string),
+	}
+	for _, ps := range msg.Prices {
+		sourceID := ps.SourceID
+		for _, p := range ps.Prices {
+			ret.SourceDetIDs[sourceID] = append(ret.SourceDetIDs[sourceID], p.DetID)
+		}
+	}
+	return ret
+}
+
 type errorStr string
 
 func (e *errorStr) add(s string) {

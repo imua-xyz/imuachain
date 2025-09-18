@@ -36,14 +36,14 @@ func GetQueryCmd(_ string) *cobra.Command {
 		CmdQueryAVSRewardParam(),
 		CmdQueryAVSCommunityPool(),
 		CmdQueryAVSRewardDistribution(),
-		CmdQueryOperatorAccumulatedCommission(),
+		CmdQueryOperatorCommission(),
 		CmdQueryOperatorCurrentRewards(),
 		CmdQueryOperatorHistoricalRewards(),
 		CmdQueryAllOperatorHistoricalRewards(),
 		CmdQueryOperatorOutstandingRewards(),
 		CmdQueryOperatorSlashEvent(),
 		CmdQueryOperatorSlashEvents(),
-		CmdQueryStakerOutstandingRewards(),
+		CmdQueryStakerClaimedRewards(),
 		CmdQueryStakeChangeDelegations(),
 		CmdQueryDelegationStartingInfo(),
 		CmdQueryStakerUnclaimedRewards(),
@@ -323,11 +323,11 @@ func CmdQueryOperatorOutstandingRewards() *cobra.Command {
 	)
 }
 
-func CmdQueryStakerOutstandingRewards() *cobra.Command {
+func CmdQueryStakerClaimedRewards() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "staker-outstanding-rewards [stakerID] [avsAddr]",
-		Short: "get the outstanding rewards for the staker",
-		Long:  "get the outstanding rewards for the staker",
+		Use:   "staker-claimed-rewards [stakerID] [avsAddr]",
+		Short: "get the claimed rewards for the staker",
+		Long:  "get the claimed rewards for the staker",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, _, err := assetstypes.ValidateID(args[0], false, false); err != nil {
@@ -342,11 +342,11 @@ func CmdQueryStakerOutstandingRewards() *cobra.Command {
 				return err
 			}
 			queryClient := types.NewQueryClient(clientCtx)
-			req := &types.QueryStakerOutstandingRewardsRequest{
+			req := &types.QueryStakerClaimedRewardsRequest{
 				StakerId: args[0], // the RPC will convert to lowercase
 				Avs:      args[1], // the RPC will convert to lowercase
 			}
-			res, err := queryClient.StakerOutstandingRewards(context.Background(), req)
+			res, err := queryClient.StakerClaimedRewards(context.Background(), req)
 			if err != nil {
 				return err
 			}
@@ -512,13 +512,13 @@ func CmdQueryOperatorCurrentRewards() *cobra.Command {
 	)
 }
 
-func CmdQueryOperatorAccumulatedCommission() *cobra.Command {
+func CmdQueryOperatorCommission() *cobra.Command {
 	return newOperatorAVSCmd(
-		"operator-accumulated-commission [operator] [avsAddr]",
-		"get the historical rewards for an operator",
-		"get the historical rewards for an operator",
+		"operator-commission [operator] [avsAddr]",
+		"get the commission for an operator",
+		"get the commission for an operator",
 		func(q types.QueryClient, ctx context.Context, req *types.OperatorAVSRequest) (proto.Message, error) {
-			return q.OperatorAccumulatedCommission(ctx, req)
+			return q.OperatorCommission(ctx, req)
 		},
 	)
 }

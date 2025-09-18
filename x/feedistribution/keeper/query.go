@@ -36,6 +36,26 @@ func (k Keeper) AVSRewardAsset(ctx context.Context, req *types.QueryAVSRewardAss
 	return &types.QueryAVSRewardAssetResponse{AvsRewardAsset: assetInfo}, nil
 }
 
+// AVSRewardAssetBySymbol queries the specific AVS reward asset by the symbol.
+func (k Keeper) AVSRewardAssetBySymbol(ctx context.Context, req *types.QueryAVSRewardAssetBySymbolRequest) (*types.QueryAVSRewardAssetBySymbolResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	if !common.IsHexAddress(req.Avs) {
+		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
+	}
+	err := sdk.ValidateDenom(req.Symbol)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "symbol should be a valid denomination,symbol:%s,err:%s", req.Symbol, err)
+	}
+	_, assetInfo, err := k.GetAVSRewardAssetBySymbol(c, strings.ToLower(req.Avs), req.Symbol)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryAVSRewardAssetBySymbolResponse{AvsRewardAsset: assetInfo}, nil
+}
+
 // RewardAssetsByAVS queries all reward assets for an AVS.
 func (k Keeper) RewardAssetsByAVS(ctx context.Context, req *types.AVSRequest) (*types.QueryRewardAssetsByAVSResponse, error) {
 	if req == nil {
@@ -110,15 +130,21 @@ func (k Keeper) OperatorOutstandingRewards(ctx context.Context, req *types.Opera
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
-	outstandingRewards, err := k.GetOperatorOutstandingRewards(c, req.Operator, strings.ToLower(req.Avs))
+	avsAddr := strings.ToLower(req.Avs)
+	outstandingRewards, err := k.GetOperatorOutstandingRewards(c, req.Operator, avsAddr)
 	if err != nil {
 		return nil, err
 	}
+	normalizedRewards, err := k.NormalizeRewardDecCoins(c, avsAddr, outstandingRewards.Rewards)
+	if err != nil {
+		return nil, err
+	}
+	outstandingRewards.Rewards = normalizedRewards
 	return &types.QueryOperatorOutstandingRewardsResponse{OperatorOutstandingRewards: &outstandingRewards}, nil
 }
 
-// StakerOutstandingRewards queries the outstanding rewards for a staker.
-func (k Keeper) StakerOutstandingRewards(ctx context.Context, req *types.QueryStakerOutstandingRewardsRequest) (*types.QueryStakerOutstandingRewardsResponse, error) {
+// StakerClaimedRewards queries the claimed rewards for a staker.
+func (k Keeper) StakerClaimedRewards(ctx context.Context, req *types.QueryStakerClaimedRewardsRequest) (*types.QueryStakerClaimedRewardsResponse, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
@@ -130,11 +156,44 @@ func (k Keeper) StakerOutstandingRewards(ctx context.Context, req *types.QuerySt
 	if !common.IsHexAddress(req.Avs) {
 		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
 	}
-	outstandingRewards, err := k.GetStakerOutstandingRewards(c, strings.ToLower(req.StakerId), strings.ToLower(req.Avs))
+	avsAddr := strings.ToLower(req.Avs)
+	claimedRewards, err := k.GetStakerClaimedRewards(c, strings.ToLower(req.StakerId), avsAddr)
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryStakerOutstandingRewardsResponse{StakerOutstandingRewards: &outstandingRewards}, nil
+	normalizedOutstandingRewards, err := k.NormalizeRewardDecCoins(c, avsAddr, claimedRewards.OutstandingRewards)
+	if err != nil {
+		return nil, err
+	}
+	normalizedWithdrawnRewards, err := k.NormalizeRewardDecCoins(c, avsAddr, claimedRewards.WithdrawnRewards)
+	if err != nil {
+		return nil, err
+	}
+	claimedRewards.OutstandingRewards = normalizedOutstandingRewards
+	claimedRewards.WithdrawnRewards = normalizedWithdrawnRewards
+	return &types.QueryStakerClaimedRewardsResponse{StakerClaimedRewards: &claimedRewards}, nil
+}
+
+// StakerAllClaimedRewards queries all claimed rewards for a staker.
+func (k Keeper) StakerAllClaimedRewards(ctx context.Context, req *types.QueryStakerAllClaimedRewardsRequest) (*types.QueryStakerAllClaimedRewardsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+
+	allClaimedRewards, err := k.GetStakerAllClaimedRewards(c, strings.ToLower(req.StakerId))
+	if err != nil {
+		return nil, err
+	}
+	normalizedRewards, err := k.BatchNormalizeClaimedRewardDecimals(c, allClaimedRewards)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryStakerAllClaimedRewardsResponse{Rewards: normalizedRewards}, nil
 }
 
 // StakeChangeDelegations queries the delegations whose stake has changed.
@@ -249,8 +308,8 @@ func (k Keeper) OperatorCurrentRewards(ctx context.Context, req *types.QueryOper
 	return &types.QueryOperatorCurrentRewardsResponse{OperatorCurrentRewards: &currentRewards}, nil
 }
 
-// OperatorAccumulatedCommission queries the operator accumulated commission.
-func (k Keeper) OperatorAccumulatedCommission(ctx context.Context, req *types.OperatorAVSRequest) (*types.QueryOperatorAccumulatedCommissionResponse, error) {
+// OperatorCommission queries the operator commission.
+func (k Keeper) OperatorCommission(ctx context.Context, req *types.OperatorAVSRequest) (*types.QueryOperatorCommissionResponse, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
@@ -262,11 +321,22 @@ func (k Keeper) OperatorAccumulatedCommission(ctx context.Context, req *types.Op
 	if !common.IsHexAddress(req.Avs) {
 		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
 	}
-	commission, err := k.GetOperatorAccumulatedCommission(c, req.Operator, strings.ToLower(req.Avs))
+	avsAddr := strings.ToLower(req.Avs)
+	commission, err := k.GetOperatorCommission(c, req.Operator, avsAddr)
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryOperatorAccumulatedCommissionResponse{OperatorAccumulatedCommission: &commission}, nil
+	normalizedUnwithdrawnCommission, err := k.NormalizeRewardDecCoins(c, avsAddr, commission.UnwithdrawnCommission)
+	if err != nil {
+		return nil, err
+	}
+	normalizedWithdrawnCommission, err := k.NormalizeRewardDecCoins(c, avsAddr, commission.WithdrawnCommission)
+	if err != nil {
+		return nil, err
+	}
+	commission.UnwithdrawnCommission = normalizedUnwithdrawnCommission
+	commission.WithdrawnCommission = normalizedWithdrawnCommission
+	return &types.QueryOperatorCommissionResponse{OperatorCommission: &commission}, nil
 }
 
 // OperatorSlashEvent queries the operator slash event.
@@ -322,5 +392,39 @@ func (k Keeper) StakerUnclaimedRewards(ctx context.Context, req *types.QueryStak
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryStakerUnclaimedRewardsResponse{Rewards: unclaimedRewards}, nil
+	normalizedRewards, err := k.BatchNormalizeRewardDecimals(c, unclaimedRewards)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryStakerUnclaimedRewardsResponse{Rewards: normalizedRewards}, nil
+}
+
+func (k Keeper) StakerAllRewards(
+	ctx context.Context,
+	req *types.QueryStakerAllRewardsRequest,
+) (*types.QueryStakerAllRewardsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	claimedRewards, err := k.GetStakerAllClaimedRewards(c, strings.ToLower(req.StakerId))
+	if err != nil {
+		return nil, err
+	}
+	unclaimedRewards, err := k.GetStakerUnclaimedRewards(c, strings.ToLower(req.StakerId))
+	if err != nil {
+		return nil, err
+	}
+	stakerAllRewards, err := k.MergeStakerRewards(c, claimedRewards, unclaimedRewards)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryStakerAllRewardsResponse{
+		Rewards: stakerAllRewards,
+	}, nil
 }

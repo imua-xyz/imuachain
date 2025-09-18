@@ -47,17 +47,17 @@ func (k Keeper) InitGenesis(ctx sdk.Context, genState feedistributiontypes.Genes
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all operator current rewards"))
 	}
-	err = k.SetAllOperatorAccumulatedCommission(ctx, genState.AllOperatorAccumulatedCommission)
+	err = k.SetAllOperatorCommission(ctx, genState.AllOperatorCommission)
 	if err != nil {
-		panic(errorsmod.Wrap(err, "failed to set all operator accumulated commissions"))
+		panic(errorsmod.Wrap(err, "failed to set all operator commissions"))
 	}
 	err = k.SetAllOperatorSlashEvent(ctx, genState.AllOperatorSlashEvents)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all operator slash events"))
 	}
-	err = k.SetAllStakerOutstandingRewards(ctx, genState.AllStakerOutstandingRewards)
+	err = k.SetAllStakerClaimedRewards(ctx, genState.AllStakerClaimedRewards)
 	if err != nil {
-		panic(errorsmod.Wrap(err, "failed to set all staker outstanding rewards"))
+		panic(errorsmod.Wrap(err, "failed to set all staker claimed rewards"))
 	}
 }
 
@@ -103,17 +103,17 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *feedistributiontypes.GenesisStat
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all operator current rewards"))
 	}
-	genesis.AllOperatorAccumulatedCommission, err = k.GetAllOperatorAccumulatedCommission(ctx)
+	genesis.AllOperatorCommission, err = k.GetAllOperatorCommission(ctx)
 	if err != nil {
-		panic(errorsmod.Wrap(err, "failed to get all operator accumulated commissions"))
+		panic(errorsmod.Wrap(err, "failed to get all operator commissions"))
 	}
 	genesis.AllOperatorSlashEvents, err = k.GetAllOperatorSlashEvent(ctx)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all operator slash events"))
 	}
-	genesis.AllStakerOutstandingRewards, err = k.GetAllStakerOutstandingRewards(ctx)
+	genesis.AllStakerClaimedRewards, err = k.GetAllStakerClaimedRewards(ctx)
 	if err != nil {
-		panic(errorsmod.Wrap(err, "failed to get all staker outstanding rewards"))
+		panic(errorsmod.Wrap(err, "failed to get all staker claimed rewards"))
 	}
 	return &genesis
 }

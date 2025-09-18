@@ -5,8 +5,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// DeltaOptedInAssetState This is a struct to describe the desired change that matches with the OptedInAssetState
 type (
+	// DeltaOptedInAssetState This is a struct to describe the desired change that matches with the OptedInAssetState
 	DeltaOptedInAssetState OptedInAssetState
 	DeltaOperatorUSDInfo   OperatorOptedUSDValue
 )

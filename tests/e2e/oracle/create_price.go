@@ -104,24 +104,24 @@ func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
 	s.Require().NoError(err)
 
 	// wait for validator set update
-	s.moveToAndCheck(120)
+	s.moveToAndCheck(130)
 
 	// send create-price from validator-0
-	msg0 = oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 120, 1)
+	msg0 = oracletypes.NewMsgCreatePrice(creator0.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 130, 1)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg0}, "valconskey0", kr0)
 	s.Require().NoError(err)
 
 	// send create-price from validator-1
-	msg1 = oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 120, 1)
+	msg1 = oracletypes.NewMsgCreatePrice(creator1.String(), 1, []*oracletypes.PriceSource{&priceSource1R1}, 130, 1)
 	err = s.network.SendTxOracleCreateprice([]sdk.Msg{msg1}, "valconskey1", kr1)
 	s.Require().NoError(err)
 
-	s.moveToAndCheck(122)
+	s.moveToAndCheck(132)
 	// query final price. query state of 11 on height 12
-	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(121), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	res, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(131), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
 	s.Require().NoError(err)
 
-	ret := priceTest1R1.getPriceTimeRound(12)
+	ret := priceTest1R1.getPriceTimeRound(13)
 	ret.Timestamp = res.Price.Timestamp
 	s.Require().Equal(ret, res.Price)
 }

@@ -54,6 +54,14 @@ type MsgItem struct {
 	PriceSources []*priceSource
 }
 
+// PriceSourceDetIDs is the price source detIDs information including validator, sourceID, and detIDs
+// this is defined as a internal type used for quick check on duplicated detIDs
+type PriceSourceDetIDs struct {
+	FeederID     uint64
+	Validator    string
+	SourceDetIDs map[uint64][]string
+}
+
 // PriceInfo is the price information including price, decimal, time, and detID
 // this is defined as a internal type as alias of oracletypes.PriceTimeDetID
 type PriceInfo oracletypes.PriceTimeDetID

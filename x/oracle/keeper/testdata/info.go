@@ -47,6 +47,7 @@ var (
 )
 
 var (
+	PTR0 = &types.PriceTimeRound{}
 	PTR1 = newPTR("100", 1)
 	PTR2 = newPTR("109", 2)
 	PTR3 = newPTR("117", 3)

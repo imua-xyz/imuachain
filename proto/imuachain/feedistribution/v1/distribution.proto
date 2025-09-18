@@ -167,12 +167,19 @@ message DelegationStartingInfo {
   uint64 epoch_number = 3;
 }
 
-// OperatorAccumulatedCommission represents accumulated commission
-// for an operator kept as a running counter, can be withdrawn at any time.
-// The AVS address is implicit within the store key.
-message OperatorAccumulatedCommission {
-  // commission is the commission for an operator
-  repeated cosmos.base.v1beta1.DecCoin commission = 1 [
+// OperatorCommission includes both withdrawn and unwithdrawn commissions
+// for an operator, maintained as a running total. These commissions can be
+// withdrawn at any time. The sum represents the total accumulated commission.
+// The AVS address is implicit in the store key.
+message OperatorCommission {
+  // unwithdrawn_commission is the unwithdrawn commission for an operator
+  repeated cosmos.base.v1beta1.DecCoin unwithdrawn_commission = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // withdrawn_commission is the withdrawn commission for an operator
+  repeated cosmos.base.v1beta1.DecCoin withdrawn_commission = 2 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
@@ -191,11 +198,18 @@ message OperatorOutstandingRewards {
   ];
 }
 
-// StakerOutstandingRewards represents outstanding (un-withdrawn) rewards
+// StakerClaimedRewards includes the outstanding (un-withdrawn) rewards and the withdrawn rewards
 // for a staker inexpensive to track, allows simple sanity checks.
-message StakerOutstandingRewards {
-  // rewards represents the rewards for the operator
-  repeated cosmos.base.v1beta1.DecCoin rewards = 1 [
+// The sum represents the total accumulated rewards
+message StakerClaimedRewards {
+  // outstanding_rewards represents the un-withdrawn rewards for the staker
+  repeated cosmos.base.v1beta1.DecCoin outstanding_rewards = 1 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // withdrawn_rewards represents the withdrawn rewards for the staker
+  repeated cosmos.base.v1beta1.DecCoin withdrawn_rewards = 2 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
@@ -242,7 +256,7 @@ message AVSRewardAssetState {
   ];
   // reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
   // each time an AVS deposits/withdraws funds into/from the treasury. The difference between it and
-  // reward_pool_balance represents the total amount claimed by stakers and operators.
+  // reward_pool_balance represents the total amount withdrawn by stakers and operators.
   string reward_pool_total = 2  [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",

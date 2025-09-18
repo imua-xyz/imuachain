@@ -96,19 +96,10 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 		}
 		rewardsForStakers := reward
 		commission := reward.MulDecTruncate(ops.GetCommission().Rate)
-		err = k.UpdateOperatorAccumulatedCommission(ctx, operatorProportion.OperatorAddr, avsAddr, true, commission)
+		err = k.IncreaseOperatorCommission(ctx, operatorProportion.OperatorAddr, avsAddr, commission)
 		if err != nil {
 			return nil, types.ErrFailedToAllocateRewardsForOperators.Wrapf("failed to distribute the commission to the operator,operator:%s,err:%s", operatorProportion.OperatorAddr, err)
 		}
-		// update current commission
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				types.EventTypeCommission,
-				sdk.NewAttribute(sdk.AttributeKeyAmount, commission.String()),
-				sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
-				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
-			),
-		)
 
 		rewardsForStakers = rewardsForStakers.Sub(commission)
 		// split the reward to multiple assets pool
@@ -123,10 +114,11 @@ func (k Keeper) AllocateRewardsToOperators(ctx sdk.Context, avsAddr, epochIdenti
 		}
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				types.EventTypeRewards,
-				sdk.NewAttribute(sdk.AttributeKeyAmount, reward.String()),
-				sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
+				types.EventTypeAllocateRewardsToOperator,
 				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
+				sdk.NewAttribute(types.AttributeKeyOperator, operatorProportion.OperatorAddr),
+				sdk.NewAttribute(types.AttributeKeyOperatorTotalReward, reward.String()),
+				sdk.NewAttribute(types.AttributeKeyOperatorCommission, commission.String()),
 			),
 		)
 		// calculate the remaining  rewards, it will be distributed to the community pool.

@@ -40,7 +40,7 @@ type expectedDelegationRewardStates struct {
 	// map key is the operator and assetID
 	OperatorAssetStates map[string]map[string]operatorAssetState
 	// map key is the stakerID
-	StakerOutstandingRewards map[string]*feedistributiontypes.StakerOutstandingRewards
+	StakerClaimedRewards map[string]*feedistributiontypes.StakerClaimedRewards
 }
 
 func (suite *KeeperTestSuite) checkDelegationStates(expectedStates *expectedDelegationRewardStates) {
@@ -86,8 +86,8 @@ func (suite *KeeperTestSuite) checkDelegationStates(expectedStates *expectedDele
 		}
 	}
 	// check the outstanding rewards for the staker
-	for stakerID, outStandingRewards := range expectedStates.StakerOutstandingRewards {
-		actualStartingInfo, err := suite.App.DistrKeeper.GetStakerOutstandingRewards(suite.Ctx, stakerID, expectedStates.AvsAddr)
+	for stakerID, outStandingRewards := range expectedStates.StakerClaimedRewards {
+		actualStartingInfo, err := suite.App.DistrKeeper.GetStakerClaimedRewards(suite.Ctx, stakerID, expectedStates.AvsAddr)
 		if outStandingRewards == nil {
 			suite.Require().ErrorContains(err, feedistributiontypes.ErrNoKeyInTheStore.Error(), "stakerID:%s avs:%s", stakerID, expectedStates.AvsAddr)
 		} else {
@@ -149,7 +149,7 @@ func (suite *KeeperTestSuite) defaultDelegationRewardStates() expectedDelegation
 				},
 			},
 		},
-		StakerOutstandingRewards: map[string]*feedistributiontypes.StakerOutstandingRewards{
+		StakerClaimedRewards: map[string]*feedistributiontypes.StakerClaimedRewards{
 			suite.StakerIDs[0]: nil,
 			suite.StakerIDs[1]: nil,
 		},
@@ -359,7 +359,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 							suite.AssetIDs[0]: nullOperatorAssetState,
 						},
 					},
-					StakerOutstandingRewards: map[string]*feedistributiontypes.StakerOutstandingRewards{
+					StakerClaimedRewards: map[string]*feedistributiontypes.StakerClaimedRewards{
 						suite.StakerIDs[0]: nil,
 						suite.StakerIDs[1]: nil,
 					},
@@ -429,7 +429,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				}
 				// The new test stakers haven’t accumulated or claimed any rewards.
 				for _, newStaker := range suite.testStakerIDs {
-					defaultDelegationRewardState.StakerOutstandingRewards[newStaker] = nil
+					defaultDelegationRewardState.StakerClaimedRewards[newStaker] = nil
 				}
 				return defaultDelegationRewardState
 			},
@@ -529,8 +529,8 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				}
 				defaultDelegationRewardState.OperatorAssetStates[testOperator.String()][suite.AssetIDs[0]] = operatorAssetState
 				// the delegation rewards should be recorded in the staker's outstanding rewards
-				defaultDelegationRewardState.StakerOutstandingRewards[suite.StakerIDs[operatorIndex]] = &feedistributiontypes.StakerOutstandingRewards{
-					Rewards: stakerReward,
+				defaultDelegationRewardState.StakerClaimedRewards[suite.StakerIDs[operatorIndex]] = &feedistributiontypes.StakerClaimedRewards{
+					OutstandingRewards: stakerReward,
 				}
 				return defaultDelegationRewardState
 			},
@@ -678,17 +678,17 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				// over 1*epochDuration epochs.
 				stakerReward2 := assetRewardRatio2.Rewards.MulDecTruncate(sdk.NewDec(testutil.DefaultDelegateAmount))
 
-				stakerOutstandingRewards := make(map[string]*feedistributiontypes.StakerOutstandingRewards)
+				stakerClaimedRewards := make(map[string]*feedistributiontypes.StakerClaimedRewards)
 				for i, stakerID := range allTestStakerIDs {
 					// all stake has been undelegated, so the starting info will be deleted
 					operatorStatePerAsset.DelegationStartingInfos[stakerID] = nil
 					if i >= firstBatchStakerCount {
-						stakerOutstandingRewards[stakerID] = &feedistributiontypes.StakerOutstandingRewards{
-							Rewards: stakerReward2,
+						stakerClaimedRewards[stakerID] = &feedistributiontypes.StakerClaimedRewards{
+							OutstandingRewards: stakerReward2,
 						}
 					} else {
-						stakerOutstandingRewards[stakerID] = &feedistributiontypes.StakerOutstandingRewards{
-							Rewards: stakerReward1,
+						stakerClaimedRewards[stakerID] = &feedistributiontypes.StakerClaimedRewards{
+							OutstandingRewards: stakerReward1,
 						}
 					}
 				}
@@ -702,7 +702,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 							suite.AssetIDs[1]: operatorStatePerAsset,
 						},
 					},
-					StakerOutstandingRewards: stakerOutstandingRewards,
+					StakerClaimedRewards: stakerClaimedRewards,
 				}
 			},
 		},
@@ -845,9 +845,9 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 							},
 						},
 					},
-					StakerOutstandingRewards: map[string]*feedistributiontypes.StakerOutstandingRewards{
+					StakerClaimedRewards: map[string]*feedistributiontypes.StakerClaimedRewards{
 						testStakerID: {
-							Rewards: stakerDelegation1Rewards.Add(stakerDelegation2Rewards...),
+							OutstandingRewards: stakerDelegation1Rewards.Add(stakerDelegation2Rewards...),
 						},
 					},
 				}
@@ -872,7 +872,7 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 			suite.Require().Equal(feedistributiontypes.CommonAVSRewards{
 				{
 					AVSAddress: suite.DogfoodAVSAddr,
-					Rewards:    expectedStates.StakerOutstandingRewards[testStakerID].Rewards,
+					Rewards:    expectedStates.StakerClaimedRewards[testStakerID].OutstandingRewards,
 				},
 			}, totalClaimedRewards)
 		})
@@ -993,9 +993,9 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 							},
 						},
 					},
-					StakerOutstandingRewards: map[string]*feedistributiontypes.StakerOutstandingRewards{
+					StakerClaimedRewards: map[string]*feedistributiontypes.StakerClaimedRewards{
 						testStakerID: {
-							Rewards: rewardEpoch1.Add(rewardForEpoch2And3...),
+							OutstandingRewards: rewardEpoch1.Add(rewardForEpoch2And3...),
 						},
 					},
 				}

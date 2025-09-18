@@ -53,12 +53,18 @@ func (p Precompile) DepositWithdrawParams(ctx sdk.Context, method *abi.Method, a
 		return nil, err
 	}
 
-	stakerAddr, err := ta.GetRequiredBytesPrefix(2, info.AddressLength)
+	stakerAddrIndex := 2
+	opAmountIndex := 3
+	if method.Name == MethodWithdrawNST {
+		stakerAddrIndex = 1
+		opAmountIndex = 2
+	}
+	stakerAddr, err := ta.GetRequiredBytesPrefix(stakerAddrIndex, info.AddressLength)
 	if err != nil {
 		return nil, err
 	}
 
-	opAmount, err := ta.GetPositiveBigInt(3)
+	opAmount, err := ta.GetPositiveBigInt(opAmountIndex)
 	if err != nil {
 		return nil, err
 	}

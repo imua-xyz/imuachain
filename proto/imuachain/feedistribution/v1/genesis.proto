@@ -33,12 +33,12 @@ message GenesisState {
   repeated KeyAndOperatorHistoricalRewards all_operator_historical_rewards = 9 [(gogoproto.nullable) = false];
   // all_operator_current_rewards is the operator current rewards information for all epochs.
   repeated KeyAndOperatorCurrentRewards all_operator_current_rewards = 10 [(gogoproto.nullable) = false];
-  // all_operator_accumulated_commission is the accumulated commissions for all operators.
-  repeated KeyAndOperatorAccumulatedCommission all_operator_accumulated_commission = 11 [(gogoproto.nullable) = false];
+  // all_operator_commission is the commissions for all operators.
+  repeated KeyAndOperatorCommission all_operator_commission = 11 [(gogoproto.nullable) = false];
   // all_operator_slash_events is the slash events for all operators.
   repeated KeyAndOperatorSlashEvent all_operator_slash_events = 12 [(gogoproto.nullable) = false];
-  // all_staker_outstanding_rewards is the outstanding rewards for all stakers.
-  repeated KeyAndStakerOutstandingRewards all_staker_outstanding_rewards = 13 [(gogoproto.nullable) = false];
+  // all_staker_claimed_rewards is the claimed rewards for all stakers.
+  repeated KeyAndStakerClaimedRewards all_staker_claimed_rewards = 13 [(gogoproto.nullable) = false];
 }
 
 // AVSAddrAndRewardAssets is a struct to be used in the genesis state.
@@ -127,14 +127,14 @@ message KeyAndOperatorCurrentRewards{
   OperatorCurrentRewards operator_current_rewards = 2 [(gogoproto.nullable) = false];
 }
 
-// KeyAndOperatorAccumulatedCommission is a struct used in the genesis state.
-// It stores the operator accumulated commission for the operator.
+// KeyAndOperatorCommission is a struct used in the genesis state.
+// It stores the operator commission for the operator.
 // The key, which is a combination of the operator and avs, is included within it.
-message KeyAndOperatorAccumulatedCommission{
+message KeyAndOperatorCommission{
   // key is is a combination of the operator and avs.
   string key = 1;
-  // operator_current_rewards represents the accumulated commission for the operator.
-  OperatorAccumulatedCommission operator_accumulated_commission = 2 [(gogoproto.nullable) = false];
+  // operator_commission represents the commission for the operator.
+  OperatorCommission operator_commission = 2 [(gogoproto.nullable) = false];
 }
 
 // KeyAndOperatorSlashEvent is a struct used in the genesis state.
@@ -147,13 +147,13 @@ message KeyAndOperatorSlashEvent{
   OperatorSlashEvent operator_slash_event = 2 [(gogoproto.nullable) = false];
 }
 
-// KeyAndStakerOutstandingRewards is a struct used in the genesis state.
-// It stores the outstanding rewards for the staker.
+// KeyAndStakerClaimedRewards is a struct used in the genesis state.
+// It stores the claimed rewards for the staker.
 // The key, which is a combination of the stakerID and avsAddr, is included within it.
-message KeyAndStakerOutstandingRewards{
+message KeyAndStakerClaimedRewards{
   // key is is a combination of the stakerID and avsAddr.
   string key = 1;
-  // staker_outstanding_rewards represents the outstanding rewards for the staker.
-  StakerOutstandingRewards staker_outstanding_rewards = 2 [(gogoproto.nullable) = false];
+  // staker_claimed_rewards represents the claimed rewards for the staker.
+  StakerClaimedRewards staker_claimed_rewards = 2 [(gogoproto.nullable) = false];
 }
 

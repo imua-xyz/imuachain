@@ -79,6 +79,10 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 		if assetInfo.Decimals > assetstype.MaxDecimal {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", assetInfo.Decimals, assetstype.MaxDecimal)
 		}
+		err = sdk.ValidateDenom(assetInfo.Symbol)
+		if err != nil {
+			return types.ErrInvalidRewardAssetParameter.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", assetInfo.Symbol, err)
+		}
 		// check for symbol duplication
 		if _, ok := symbolMap[assetInfo.Symbol]; ok {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated symbol: %s", assetInfo.Symbol)
@@ -110,7 +114,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assets []ass
 			sdk.NewEvent(
 				types.EventTypeNewAVSRewardAsset,
 				sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
-				sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+				sdk.NewAttribute(types.AttributeKeyAssetID, assetID),
 				sdk.NewAttribute(assetstype.AttributeKeyName, assetInfo.Name),
 				sdk.NewAttribute(assetstype.AttributeKeySymbol, assetInfo.Symbol),
 				sdk.NewAttribute(assetstype.AttributeKeyAddress, assetInfo.Address),
@@ -216,7 +220,7 @@ func (k Keeper) UpdateAVSRewardAssetMetaInfo(ctx sdk.Context, avsAddr, assetID s
 		sdk.NewEvent(
 			types.EventTypeUpdatedRewardAssetMetaInfo,
 			sdk.NewAttribute(types.AttributeKeyAvsAddress, avsAddr),
-			sdk.NewAttribute(assetstype.AttributeKeyAssetID, assetID),
+			sdk.NewAttribute(types.AttributeKeyAssetID, assetID),
 			sdk.NewAttribute(assetstype.AttributeKeyMetaInfo, metainfo),
 		),
 	)
@@ -271,7 +275,10 @@ func (k Keeper) SetAllAVSRewardAssets(ctx sdk.Context, allAVSRewardAssets []type
 			if rewardAsset.AssetBasicInfo.Decimals > assetstype.MaxDecimal {
 				return types.ErrInvalidInputParameter.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAsset.AssetBasicInfo.Decimals, assetstype.MaxDecimal)
 			}
-
+			err := sdk.ValidateDenom(rewardAsset.AssetBasicInfo.Symbol)
+			if err != nil {
+				return types.ErrInvalidInputParameter.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", rewardAsset.AssetBasicInfo.Symbol, err)
+			}
 			bz := k.cdc.MustMarshal(&rewardAsset)
 			_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(rewardAsset.AssetBasicInfo.LayerZeroChainID,
 				"", rewardAsset.AssetBasicInfo.Address)

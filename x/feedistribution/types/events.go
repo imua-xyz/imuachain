@@ -1,31 +1,29 @@
 package types
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 // x/feedistribution events
 const (
-	EventTypeCommission         = "commission"
-	EventTypeSetWithdrawAddress = "set_withdraw_address"
-	EventTypeRewards            = "rewards"
+	EventTypeAllocateRewardsToOperator = "allocate_rewards_to_operator"
+	AttributeKeyOperatorTotalReward    = "operator_total_reward"
+	AttributeKeyOperatorCommission     = "operator_commission"
 	// EventTypeWithdrawRewards : withdraw the reward for a staker
-	EventTypeWithdrawRewards = "withdraw_rewards"
-
-	EventTypeWithdrawDogfoodRewards = "withdraw_dogfood_rewards"
+	EventTypeWithdrawRewards             = "withdraw_rewards"
+	EventTypeWithdrawRewardFromAVS       = "withdraw_reward_from_avs"
+	AttributeKeyWithdrawDecCoinsFromAVS  = "withdraw_dec_coins_from_avs"
+	AttributeKeyStakerOutstandingRewards = "staker_outstanding_rewards"
 
 	// EventTypeWithdrawCommission :  withdraw the commission for an operator
-	EventTypeWithdrawCommission             = "withdraw_commission"
-	AttributeKeyAllAVSActualWithdrawAmounts = "all_avs_actual_withdraw_amounts"
-	AttributeKeyTotalWithdrawAmount         = "total_withdraw_amount"
-	AttributeKeyWithdrawAmountFromDogfood   = "withdraw_amount_from_dogfood"
-	AttributeKeyStakerID                    = "staker_id"
-
-	// EventTypeWithdrawCommissionFromDogfood :  withdraw all commissions only from dogfood.
-	EventTypeWithdrawCommissionFromDogfood = "withdraw_commission_from_dogfood"
-	AttributeKeyCommissionAmount           = "commission_amount"
-
-	EventTypeProposerReward = "proposer_reward"
-
-	AttributeKeyWithdrawAddress = "withdraw_address"
-	AttributeKeyOperator        = "operator"
-	AttributeKeyDelegator       = "delegator"
+	EventTypeWithdrawCommission           = "withdraw_commission"
+	EventTypeWithdrawCommissionFromAVS    = "withdraw_commission_from_avs"
+	AttributeKeyTotalWithdrawAmount       = "total_withdraw_amount"
+	AttributeKeyWithdrawAmountFromDogfood = "withdraw_amount_from_dogfood"
+	AttributeKeyStakerID                  = "staker_id"
+	AttributeKeyOperator                  = "operator"
 
 	// EventTypeUpdatedAVSRewardAsset : avs reward asset state updated
 	EventTypeUpdatedAVSRewardAsset    = "avs_reward_asset_updated"
@@ -47,16 +45,50 @@ const (
 	EventTypeAVSRewardProportionsSet  = "avs_reward_proportions_set"
 	AttributeKeyEpochRewards          = "epoch_rewards"
 	AttributeKeyOperatorProportions   = "operator_reward_proportions"
+	AttributeKeyEpochIdentifier       = "epoch_identifier"
+	AttributeKeyEpochNumber           = "epoch_number"
 
 	// EventTypeAVSRewardParamSet : set the avs reward parameter
-	EventTypeAVSRewardParamSet = "avs_reward_param_set"
-	AttributeKeyAVSRewardParam = "avs_reward_param"
-
-	// EventTypeDistributeRewardToDelegations : distribute rewards to delegations with updated stake.
-	EventTypeDistributeRewardToDelegations = "distribute_reward_to_delegations"
-	AttributeKeyEpochIdentifier            = "epoch_identifier"
-	AttributeKeyEndingPeriod               = "ending_period"
-	AttributeKeyStakers                    = "stakers"
-	AttributeKeyPreDelegatedTotalAmount    = "pre_delegated_total_amount"
-	AttributeKeyEpochNumber                = "epoch_number"
+	EventTypeAVSRewardParamSet        = "avs_reward_param_set"
+	AttributeKeyAVSRewardParam        = "avs_reward_param"
+	AttributeKeyCustomRewardInflation = "CustomRewardInflation"
+	AttributeKeyCustomOperatorRatio   = "CustomOperatorRatio"
 )
+
+func (p *AVSRewardParam) ToEventString() string {
+	return fmt.Sprintf("%s:%v,%s:%v",
+		AttributeKeyCustomRewardInflation, p.CustomRewardInflation,
+		AttributeKeyCustomOperatorRatio, p.CustomOperatorRatio,
+	)
+}
+
+func ParseAVSRewardParams(event string) (*AVSRewardParam, error) {
+	ret := &AVSRewardParam{}
+	pairs := strings.Split(event, ",")
+
+	for _, pair := range pairs {
+		kv := strings.Split(pair, ":")
+		if len(kv) != 2 {
+			return nil, fmt.Errorf("invalid AVS reward param pair format: %s", pair)
+		}
+
+		key := kv[0]
+		valStr := kv[1]
+
+		val, err := strconv.ParseBool(valStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid bool value in AVS reward param: %s", valStr)
+		}
+
+		switch key {
+		case AttributeKeyCustomRewardInflation:
+			ret.CustomRewardInflation = val
+		case AttributeKeyCustomOperatorRatio:
+			ret.CustomOperatorRatio = val
+		default:
+			return nil, fmt.Errorf("unknown AVS reward param key: %s", key)
+		}
+	}
+
+	return ret, nil
+}

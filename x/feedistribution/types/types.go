@@ -10,40 +10,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type DeltaAVSRewardAssetState AVSRewardAssetState
+type (
+	DeltaAVSRewardAssetState AVSRewardAssetState
+)
 
 type OperatorRewardProportions []OperatorRewardProportion
 
-type CommonAVSRewards []CommonAVSRewardData
-
-type ActualWithdrawAmountPerAVS struct {
-	Avs                  string
-	ActualWithdrawAmount sdkmath.Int
-}
-type EpochRewardsAndProportions struct {
-	Rewards                   sdk.DecCoins
-	OperatorRewardProportions []OperatorRewardProportion
-}
-type AllAVSActualWithdrawAmount []ActualWithdrawAmountPerAVS
-
-// String implements the Stringer interface for AllAVSActualWithdrawAmount. It returns a
-// human-readable representation of actual withdraw amounts of all AVSs
-func (aa AllAVSActualWithdrawAmount) String() string {
-	if len(aa) == 0 {
-		return ""
+type (
+	CommonAVSRewards           []CommonAVSRewardData
+	EpochRewardsAndProportions struct {
+		Rewards                   sdk.DecCoins
+		OperatorRewardProportions []OperatorRewardProportion
 	}
-
-	out := ""
-	for _, perAVS := range aa {
-		proportionStr := fmt.Sprintf("%v:%v", perAVS.Avs, perAVS.ActualWithdrawAmount.String())
-		out += fmt.Sprintf("%v,", proportionStr)
-	}
-
-	if out != "" {
-		out = out[:len(out)-1]
-	}
-	return out
-}
+)
 
 // String implements the Stringer interface for OperatorRewardProportions. It returns a
 // human-readable representation of operator reward proportions
@@ -62,6 +41,39 @@ func (op OperatorRewardProportions) String() string {
 		out = out[:len(out)-1]
 	}
 	return out
+}
+
+// ParseOperatorRewardProportions parses a string representation like "addr1:0.7,addr2:0.3"
+// into a slice of OperatorRewardProportion structs.
+func ParseOperatorRewardProportions(s string) ([]OperatorRewardProportion, error) {
+	if strings.TrimSpace(s) == "" {
+		return nil, nil
+	}
+
+	parts := strings.Split(s, ",")
+	result := make([]OperatorRewardProportion, 0, len(parts))
+
+	for _, part := range parts {
+		pair := strings.SplitN(part, ":", 2)
+		if len(pair) != 2 {
+			return nil, fmt.Errorf("invalid format for operator proportion: %q", part)
+		}
+
+		addr := strings.TrimSpace(pair[0])
+		propStr := strings.TrimSpace(pair[1])
+
+		prop, err := sdk.NewDecFromStr(propStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid decimal for operator %s: %w", addr, err)
+		}
+
+		result = append(result, OperatorRewardProportion{
+			OperatorAddr:     addr,
+			RewardProportion: prop,
+		})
+	}
+
+	return result, nil
 }
 
 // AppendUniqueStakerID appends a new stakerID to the staker list in DelegationChangeInfo
@@ -92,29 +104,9 @@ func (d *DelegationChangeInfo) DelegationChangesByStaker() map[string]sdk.Dec {
 	return ret
 }
 
-func (d *DelegationChangeInfo) StakersAsString() string {
-	if len(d.StakerDelegationChanges) == 0 {
-		return ""
-	}
-
-	out := ""
-	for _, stakerDelegationChange := range d.StakerDelegationChanges {
-		out += fmt.Sprintf("%v:%s,", stakerDelegationChange.StakerId, stakerDelegationChange.PreviousDelegatedAmount)
-	}
-	if out != "" {
-		out = out[:len(out)-1]
-	}
-	return out
-}
-
-// HasAVSReward checks whether the avs reward exists, return the index if it exists
-func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) (int, bool) {
-	for index, avsReward := range o.Rewards {
-		if avsAddr == avsReward.AVSAddress {
-			return index, true
-		}
-	}
-	return 0, false
+// HasAVSReward checks whether the avs reward exists.
+func (o *OperatorCurrentRewards) HasAVSReward(avsAddr string) bool {
+	return CommonAVSRewards(o.Rewards).RewardsOf(avsAddr) != nil
 }
 
 func (o *OperatorCurrentRewards) UpdateReward(isIncrease bool, deltaRewards CommonAVSRewardData) error {
@@ -407,6 +399,15 @@ func (crs CommonAVSRewards) CalculateRewards(delegatedAmount sdk.Dec) (CommonAVS
 	return ret, nil
 }
 
+func (crs CommonAVSRewards) RewardsOf(avsAddr string) sdk.DecCoins {
+	for _, avsRewards := range crs {
+		if avsAddr == avsRewards.AVSAddress {
+			return avsRewards.Rewards
+		}
+	}
+	return nil
+}
+
 func ScaleIntByDecimals(amount sdkmath.Int, decimals uint32) sdk.Dec {
 	if decimals == 0 {
 		return sdk.NewDecFromInt(amount)
@@ -421,4 +422,21 @@ func UnscaleDecToInt(dec sdk.Dec, decimals uint32) sdkmath.Int {
 	}
 	multiplier := sdkmath.NewIntWithDecimal(1, int(decimals)) // 10^decimals
 	return dec.MulInt(multiplier).TruncateInt()
+}
+
+// TruncateSDKDec truncates a sdk.Dec value to the specified number of decimal places without rounding.
+// For example, truncating 1.23456789 to 4 decimal places will return 1.2345.
+// This function is useful when only a fixed precision is allowed and rounding is not desired.
+func TruncateSDKDec(dec sdk.Dec, decimal uint32) sdk.Dec {
+	// Compute the multiplier: 10^decimal
+	multiplier := sdkmath.NewIntWithDecimal(1, int(decimal))
+
+	// Multiply the original decimal to shift the decimal point to the right
+	decMultiplied := dec.MulInt(multiplier)
+
+	// Truncate the result to remove all digits beyond the decimal
+	truncated := decMultiplied.TruncateInt()
+
+	// Divide back by the multiplier to restore the decimal point at the correct position
+	return sdk.NewDecFromInt(truncated).QuoInt(multiplier)
 }

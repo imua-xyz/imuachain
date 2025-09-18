@@ -158,9 +158,9 @@ func (suite *KeeperTestSuite) checkAllocationStates(testAVSAddr string, states e
 
 	// check the accumulated commission
 	for operator, expectedCommission := range states.accumulatedCommission {
-		accumulatedCommission, err := suite.App.DistrKeeper.GetOperatorAccumulatedCommission(suite.Ctx, operator, testAVSAddr)
+		accumulatedCommission, err := suite.App.DistrKeeper.GetOperatorCommission(suite.Ctx, operator, testAVSAddr)
 		suite.Require().NoError(err)
-		suite.Require().Equal(expectedCommission, accumulatedCommission.Commission, "operator:%s,avs:%s", operator, testAVSAddr)
+		suite.Require().Equal(expectedCommission, accumulatedCommission.UnwithdrawnCommission, "operator:%s,avs:%s", operator, testAVSAddr)
 	}
 
 	// check the operator outstanding rewards

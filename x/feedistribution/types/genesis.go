@@ -171,6 +171,11 @@ func (gs GenesisState) ValidateAVSRewardAssets() error {
 			if rewardAssetInfo.AssetBasicInfo.Decimals > assetstypes.MaxDecimal {
 				return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAssetInfo.AssetBasicInfo.Decimals, assetstypes.MaxDecimal)
 			}
+			// check the symbol
+			err := sdk.ValidateDenom(rewardAssetInfo.AssetBasicInfo.Symbol)
+			if err != nil {
+				return ErrInvalidGenesisData.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", rewardAssetInfo.AssetBasicInfo.Symbol, err)
+			}
 			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNil() ||
 				rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNegative() {
 				return errorsmod.Wrapf(
@@ -508,23 +513,26 @@ func (gs GenesisState) ValidateOperatorCurrentRewards() error {
 	return nil
 }
 
-func (gs GenesisState) ValidateOperatorAccumulatedCommissions() error {
-	validationFunc := func(_ int, info KeyAndOperatorAccumulatedCommission) error {
+func (gs GenesisState) ValidateOperatorCommissions() error {
+	validationFunc := func(_ int, info KeyAndOperatorCommission) error {
 		// check the joined key
 		err := CheckJoinedKey(info.Key, 2,
 			[]KeyTypeForJoinedKey{OperatorAddr, AVSAddr})
 		if err != nil {
-			return ErrInvalidGenesisData.Wrapf("ValidateOperatorAccumulatedCommissions: failed to check the joined key, err:%s", err)
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorCommissions: failed to check the joined key, err:%s", err)
 		}
-		if !info.OperatorAccumulatedCommission.Commission.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateOperatorAccumulatedCommissions: invalid accumulated commission for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s", info.Key)
+		if !info.OperatorCommission.UnwithdrawnCommission.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorCommissions: invalid unwithdrawn commission for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s", info.Key)
+		}
+		if !info.OperatorCommission.WithdrawnCommission.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorCommissions: invalid withdrawn commission for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s", info.Key)
 		}
 		return nil
 	}
-	seenFieldValueFunc := func(info KeyAndOperatorAccumulatedCommission) (string, struct{}) {
+	seenFieldValueFunc := func(info KeyAndOperatorCommission) (string, struct{}) {
 		return info.Key, struct{}{}
 	}
-	_, err := utils.CommonValidation(gs.AllOperatorAccumulatedCommission, seenFieldValueFunc, validationFunc)
+	_, err := utils.CommonValidation(gs.AllOperatorCommission, seenFieldValueFunc, validationFunc)
 	if err != nil {
 		return err
 	}
@@ -559,23 +567,27 @@ func (gs GenesisState) ValidateOperatorSlashEvents() error {
 	return nil
 }
 
-func (gs GenesisState) ValidateStakerOutstandingRewards() error {
-	validationFunc := func(_ int, info KeyAndStakerOutstandingRewards) error {
+func (gs GenesisState) ValidateClaimedOutstandingRewards() error {
+	validationFunc := func(_ int, info KeyAndStakerClaimedRewards) error {
 		// check the joined key
 		err := CheckJoinedKey(info.Key, 2, []KeyTypeForJoinedKey{StakerID, AVSAddr})
 		if err != nil {
-			return ErrInvalidGenesisData.Wrapf("ValidateStakerOutstandingRewards: failed to check the joined key, err:%s", err)
+			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: failed to check the joined key, err:%s", err)
 		}
-		if !info.StakerOutstandingRewards.Rewards.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateStakerOutstandingRewards: invalid outstanding reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+		if !info.StakerClaimedRewards.OutstandingRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: invalid outstanding reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		if !info.StakerClaimedRewards.WithdrawnRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: invalid withdrawn reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
 		return nil
 	}
-	seenFieldValueFunc := func(info KeyAndStakerOutstandingRewards) (string, struct{}) {
+	seenFieldValueFunc := func(info KeyAndStakerClaimedRewards) (string, struct{}) {
 		return info.Key, struct{}{}
 	}
-	_, err := utils.CommonValidation(gs.AllStakerOutstandingRewards, seenFieldValueFunc, validationFunc)
+	_, err := utils.CommonValidation(gs.AllStakerClaimedRewards, seenFieldValueFunc, validationFunc)
 	if err != nil {
 		return err
 	}
@@ -625,7 +637,7 @@ func (gs GenesisState) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = gs.ValidateOperatorAccumulatedCommissions()
+	err = gs.ValidateOperatorCommissions()
 	if err != nil {
 		return err
 	}
@@ -633,7 +645,7 @@ func (gs GenesisState) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = gs.ValidateStakerOutstandingRewards()
+	err = gs.ValidateClaimedOutstandingRewards()
 	if err != nil {
 		return err
 	}

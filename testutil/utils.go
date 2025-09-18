@@ -321,6 +321,14 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			Active:          true,
 			AssetID:         "nst_0x65",
 		},
+		&oracletypes.Token{
+			Name:            "IMUA",
+			ChainID:         1,
+			ContractAddress: "0x",
+			Decimal:         0,
+			Active:          true,
+			AssetID:         "0x0000000000000000000000000000000000000000_0x0",
+		},
 	)
 	oracleDefaultParams.TokenFeeders = append(oracleDefaultParams.TokenFeeders, &oracletypes.TokenFeeder{
 		TokenID:        1,
@@ -343,11 +351,19 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			StartBaseBlock: 1,
 			Interval:       10,
 		},
+		&oracletypes.TokenFeeder{
+			TokenID:        4,
+			RuleID:         1,
+			StartRoundID:   1,
+			StartBaseBlock: 1,
+			Interval:       10,
+		},
 	)
 	oracleGenesis := oracletypes.NewGenesisState(oracleDefaultParams)
 	oracleGenesis.PricesList = []oracletypes.Prices{
 		{TokenID: 1, NextRoundID: 2, PriceList: []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 1}}},
 		{TokenID: 2, NextRoundID: 2, PriceList: []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 1}}},
+		{TokenID: 4, NextRoundID: 2, PriceList: []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 1}}},
 	}
 	genesisState[oracletypes.ModuleName] = app.AppCodec().MustMarshalJSON(oracleGenesis)
 
@@ -867,6 +883,15 @@ func (suite *BaseTestSuite) RegisterAssets(number int, decimal uint32) ([]common
 			AssetID: assetID,
 		})
 		suite.Require().NoError(err)
+		pOracle := suite.App.OracleKeeper.GetParams(suite.Ctx)
+		tokensSize := len(pOracle.Tokens) - 1
+		// set price to 1 for the newly registered asset
+		prices := oracletypes.Prices{
+			TokenID:     uint64(i + tokensSize), // assuming token IDs start from 1
+			NextRoundID: 2,
+			PriceList:   []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 1}},
+		}
+		suite.App.OracleKeeper.SetPrices(suite.Ctx, prices)
 		err = suite.App.AssetsKeeper.SetStakingAssetInfo(suite.Ctx, &assetstypes.StakingAssetInfo{
 			AssetBasicInfo: assetstypes.AssetInfo{
 				Name:             name,

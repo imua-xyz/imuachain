@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"strconv"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -93,18 +91,7 @@ func (k Keeper) HandleChangedDelegations(ctx sdk.Context, epochIdentifier string
 				"epochIdentifier", epochIdentifier, "err", err)
 			return false, nil
 		}
-		// emit the events for delegation distribution
-		ctx.EventManager().EmitEvent(
-			sdk.NewEvent(
-				feedistributiontypes.EventTypeDistributeRewardToDelegations,
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyEpochIdentifier, epochIdentifier),
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyOperator, operator),
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyAssetID, assetID),
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyEndingPeriod, strconv.FormatUint(endingPeriod, 10)),
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakers, delegationChangeInfo.StakersAsString()),
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyPreDelegatedTotalAmount, delegationChangeInfo.TotalAmount.String()),
-			),
-		)
+
 		return false, nil
 	}
 	return k.IterateStakeChangedDelegations(ctx, false, assetstype.GetJoinedStoreKeyForPrefix(epochIdentifier), opFunc)
@@ -316,7 +303,7 @@ func (k Keeper) distributeRewardsToDelegation(
 			)
 		}
 		// move the rewards to staker from the operator outstanding rewards.
-		err = k.UpdateStakerOutstandingRewards(ctx, stakerID, rewardsRawPerAVS.AVSAddress, true, rewards)
+		err = k.IncreaseStakerOutstandingRewards(ctx, stakerID, rewardsRawPerAVS.AVSAddress, rewards)
 		if err != nil {
 			return nil, err
 		}
@@ -463,9 +450,9 @@ func (k Keeper) ClaimDelegationRewards(ctx sdk.Context, stakerID string) (feedis
 
 // GetStakerUnclaimedRewards queries the unclaimed rewards for a staker.
 // Unlike ClaimDelegationRewards, it does not trigger a claim operation.
-func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) ([]feedistributiontypes.CommonAVSRewardData, error) {
+func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) (feedistributiontypes.CommonAVSRewards, error) {
 	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
-	ret := make([]feedistributiontypes.CommonAVSRewardData, 0)
+	ret := make(feedistributiontypes.CommonAVSRewards, 0)
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
 		for i := range allEpochIdentifiers {
 			epochIdentifier := allEpochIdentifiers[i]
@@ -509,7 +496,8 @@ func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) ([]f
 			if err != nil {
 				return false, err
 			}
-			ret = append(ret, allAVSRewardsRaw...)
+
+			ret = ret.Add(allAVSRewardsRaw...)
 		}
 
 		return false, nil
@@ -518,5 +506,6 @@ func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) ([]f
 	if err != nil {
 		return nil, err
 	}
+
 	return ret, nil
 }
