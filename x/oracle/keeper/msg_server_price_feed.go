@@ -29,7 +29,8 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	defer func() {
 		if !ctx.IsCheckTx() {
-			ms.Keeper.addTotald(time.Since(start))
+			ms.addTotald(time.Since(start))
+			ms.increaseCount()
 		}
 		ctx = ctx.WithGasMeter(gasMeter)
 	}()

@@ -32,6 +32,7 @@ type (
 		cachedNSTStakersEventValue *string
 		c                          *common.Caches
 		blkOracleNS                *atomic.Int64
+		blkOracleCount             *atomic.Int32
 	}
 )
 
@@ -72,6 +73,7 @@ func NewKeeper(
 		cachedNSTStakersEventValue: new(string),
 		c:                          common.NewCaches(),
 		blkOracleNS:                new(atomic.Int64),
+		blkOracleCount:             new(atomic.Int32),
 	}
 	ret.FeederManager.SetKeeper(&ret)
 	return ret
@@ -95,11 +97,14 @@ func (k Keeper) addTotald(d time.Duration) {
 	k.blkOracleNS.Add(d.Nanoseconds())
 }
 
+func (k Keeper) increaseCount() {
+	k.blkOracleCount.Add(1)
+}
+
 func (k Keeper) GetAndResetTotald() float32 {
 	return float32(k.blkOracleNS.Swap(0)) / 1000_000
 }
 
-// for debug purpose only
-func (k Keeper) GetTotald() float32 {
-	return float32(k.blkOracleNS.Load()) / 1000_000
+func (k Keeper) GetAndResetCount() int32 {
+	return k.blkOracleCount.Swap(0)
 }

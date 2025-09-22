@@ -152,8 +152,9 @@ func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.Val
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 	am.keeper.FlushCachedNSTStakersEvent(ctx)
 	am.keeper.EndBlock(ctx)
-	if d := am.keeper.GetAndResetTotald(); d > 0 {
-		telemetry.ModuleSetGauge(types.ModuleName, d, "block", "tx_exec", "oracle_ms")
+	if c := am.keeper.GetAndResetCount(); c > 0 {
+		telemetry.ModuleSetGauge(types.ModuleName, float32(c), "block", "tx_exec", "oracle_count")
+		telemetry.ModuleSetGauge(types.ModuleName, am.keeper.GetAndResetTotald(), "block", "tx_exec", "oracle_ms")
 	}
 	return []abci.ValidatorUpdate{}
 }
