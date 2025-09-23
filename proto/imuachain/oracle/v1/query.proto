@@ -19,6 +19,9 @@ option go_package = "github.com/imua-xyz/imuachain/x/oracle/types";
 
 // Query defines the gRPC querier service.
 service Query {
+  rpc ValidatorMissCount(QueryValidatorMissCountRequest) returns (QueryValidatorMissCountResponse) {
+    option (google.api.http).get = "/imuachain/oracle/v1/validator_miss_count";
+  }
   // TokenIndexes shows the map tells token and its index for further usage
   rpc TokenIndexes(QueryTokenIndexesRequest) returns (QueryTokenIndexesResponse) {
     option (google.api.http).get = "/imuachain/oracle/v1/token_indexes";
@@ -93,6 +96,16 @@ service Query {
   rpc RecentParamsAll(QueryAllRecentParamsRequest) returns (QueryAllRecentParamsResponse) {
     option (google.api.http).get = "/imuachain/oracle/v1/recent_params";
   }
+}
+
+message QueryValidatorMissCountRequest {
+  string validator = 1;
+}
+
+message QueryValidatorMissCountResponse {
+  int64 miss_count = 1;
+  int64 window_size = 2;
+  int64 max_miss = 3;
 }
 
 // TokenIndex is the pair of tokenName and its index defined in params

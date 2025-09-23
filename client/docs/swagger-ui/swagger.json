@@ -20823,6 +20823,77 @@
         ]
       }
     },
+    "/imuachain/oracle/v1/validator_miss_count": {
+      "get": {
+        "operationId": "ValidatorMissCount",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "miss_count": {
+                  "type": "string",
+                  "format": "int64"
+                },
+                "window_size": {
+                  "type": "string",
+                  "format": "int64"
+                },
+                "max_miss": {
+                  "type": "string",
+                  "format": "int64"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "validator",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
     "/imuachain/oracle/v1/validator_update_block": {
       "get": {
         "summary": "Queries a ValidatorUpdateBlock by index.",
@@ -46375,6 +46446,23 @@
         }
       },
       "title": "QueryTokenIndexesResponse is response type for Query/TokenIndexes RPC method"
+    },
+    "imuachain.oracle.v1.QueryValidatorMissCountResponse": {
+      "type": "object",
+      "properties": {
+        "miss_count": {
+          "type": "string",
+          "format": "int64"
+        },
+        "window_size": {
+          "type": "string",
+          "format": "int64"
+        },
+        "max_miss": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
     },
     "imuachain.oracle.v1.RecentMsg": {
       "type": "object",
