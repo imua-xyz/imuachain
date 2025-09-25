@@ -51,4 +51,16 @@ const (
 
 	EventTypeOperatorAssetSlashed = "operator_asset_slashed"
 	AttributeKeyAssetID           = "asset_id"
+
+	EventTypeUpdateOperatorAssetUSDValue = "update_operator_asset_usd_value"
+
+	EventTypeDeleteOperatorAssetUSDValueByEpoch = "delete_operator_asset_usd_value_by_epoch"
+	AttributeKeyEpochIdentifier                 = "epoch_identifier"
+
+	EventTypeEditOperator = "edit_operator"
+
+	EventTypeUpdateParams                   = "update_params"
+	AttributeKeyAuthority                   = "authority"
+	AttributeKeyMinCommissionRate           = "min_commission_rate"
+	AttributeKeyMinCommissionUpdateInterval = "min_commission_update_interval"
 )

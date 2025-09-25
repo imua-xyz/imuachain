@@ -1,11 +1,16 @@
 package keeper
 
 import (
+	"time"
+
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func (k Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 	if len(k.postHandlers) == 0 {
 		// bond handlers for nst token feeders
 		p := k.GetParams(ctx)

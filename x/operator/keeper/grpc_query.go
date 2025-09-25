@@ -496,3 +496,15 @@ func (k *Keeper) QueryAllSnapshot(goCtx context.Context, req *types.QueryAllSnap
 		Pagination: pageRes,
 	}, nil
 }
+
+// QueryParams is an implementation of the grpc query for the operator module.
+func (k *Keeper) QueryParams(
+	goCtx context.Context,
+	req *types.QueryParamsRequest,
+) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+}

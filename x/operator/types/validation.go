@@ -28,10 +28,10 @@ func (info *OperatorInfo) ValidateBasic() error {
 		)
 	}
 	// do not allow operator info to exceed the maximum length
-	if len(info.OperatorMetaInfo) > stakingtypes.MaxIdentityLength {
+	if len(info.OperatorMetaInfo) > stakingtypes.MaxMonikerLength {
 		return errorsmod.Wrapf(
 			ErrParameterInvalid,
-			"ValidateBasic: info length exceeds %d", stakingtypes.MaxIdentityLength,
+			"ValidateBasic: info length exceeds %d", stakingtypes.MaxMonikerLength,
 		)
 	}
 	// do not allow empty approve address
@@ -42,7 +42,15 @@ func (info *OperatorInfo) ValidateBasic() error {
 		)
 	}
 	// TODO(Chuang): should the approve address be bech32 validated?
-	if err := info.Commission.Validate(); err != nil {
+	// first make sure none of these are nil; otherwise Validate will panic
+	commission := info.Commission
+	if commission.Rate.IsNil() || commission.MaxRate.IsNil() || commission.MaxChangeRate.IsNil() {
+		return errorsmod.Wrap(
+			ErrParameterInvalid,
+			"ValidateBasic: commission rate is nil",
+		)
+	}
+	if err := commission.Validate(); err != nil {
 		return errorsmod.Wrap(err, "ValidateBasic: invalid commission rate")
 	}
 	return nil

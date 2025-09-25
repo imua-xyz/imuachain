@@ -18,6 +18,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
@@ -61,8 +62,16 @@ func (suite *DelegationTestSuite) prepareDelegation(delegationAmount sdkmath.Int
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: operator.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr: operator.String(),
-			ApproveAddr:  operator.String(),
+			EarningsAddr:     operator.String(),
+			ApproveAddr:      operator.String(),
+			OperatorMetaInfo: operator.String(),
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          sdk.ZeroDec(),
+					MaxRate:       sdk.ZeroDec(),
+					MaxChangeRate: sdk.ZeroDec(),
+				},
+			},
 		},
 	}
 	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -137,8 +146,16 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr: opAccAddr.String(),
-			ApproveAddr:  opAccAddr.String(),
+			EarningsAddr:     opAccAddr.String(),
+			ApproveAddr:      opAccAddr.String(),
+			OperatorMetaInfo: opAccAddr.String(),
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          sdk.ZeroDec(),
+					MaxRate:       sdk.ZeroDec(),
+					MaxChangeRate: sdk.ZeroDec(),
+				},
+			},
 		},
 	}
 	_, err = s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -227,8 +244,16 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr: opAccAddr.String(),
-			ApproveAddr:  opAccAddr.String(),
+			EarningsAddr:     opAccAddr.String(),
+			ApproveAddr:      opAccAddr.String(),
+			OperatorMetaInfo: opAccAddr.String(),
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          sdk.ZeroDec(),
+					MaxRate:       sdk.ZeroDec(),
+					MaxChangeRate: sdk.ZeroDec(),
+				},
+			},
 		},
 	}
 	_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

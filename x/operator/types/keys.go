@@ -79,6 +79,9 @@ const (
 
 	// prefixAVSAssetListPerEpoch is the prefix used to store the AVS asset list per epoch.
 	prefixAVSAssetListPerEpoch
+
+	// prefixParams is the prefix used to store the params.
+	prefixParams
 )
 
 var (
@@ -143,6 +146,10 @@ var (
 	// This ensures that we obtain the correct asset list at the last voting power update,
 	// which is necessary for reward distribution.
 	KeyPrefixAVSAssetListPerEpoch = []byte{prefixAVSAssetListPerEpoch}
+
+	// KeyPrefixParams key-value:
+	// params -> Params
+	KeyPrefixParams = []byte{prefixParams}
 )
 
 // ModuleAddress is the native module address for EVM
@@ -307,4 +314,9 @@ func ParseKeyForOperatorKeyRemoval(key []byte) (addr sdk.AccAddress, chainID str
 func IterateOperatorsForAVSPrefix(avsAddr string) []byte {
 	tmp := append([]byte(avsAddr), '/')
 	return tmp
+}
+
+// KeyForParams returns the key for the params.
+func KeyForParams() []byte {
+	return KeyPrefixParams
 }

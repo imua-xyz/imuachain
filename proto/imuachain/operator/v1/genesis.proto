@@ -3,6 +3,7 @@ package imuachain.operator.v1;
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
+import "imuachain/operator/v1/params.proto";
 import "imuachain/operator/v1/tx.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
@@ -41,6 +42,8 @@ message GenesisState {
   repeated OperatorKeyRemoval operator_key_removals = 8 [(gogoproto.nullable) = false];
   // operator_asset_usd_value is a list of all operator asset USD values
   repeated OperatorAssetUSDValue operator_asset_usd_values = 9 [(gogoproto.nullable) = false];
+  // params is the params of the operator module.
+  Params params = 10 [(gogoproto.nullable) = false];
 }
 
 // OperatorDetail is helper structure to store the operator information for the genesis state.
