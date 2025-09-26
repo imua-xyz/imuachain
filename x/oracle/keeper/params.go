@@ -106,7 +106,13 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		Active:          true,
 		AssetID:         oInfo.AssetID,
 	})
-
+	startBaseBlock := uint64(ctx.BlockHeight() + startAfterBlocks)
+	if len(p.TokenFeeders) > 1 {
+		offset := GetStartBaseBlock(startBaseBlock+1, uint64(p.MaxNonce), intervalInt, p.TokenFeeders[1:])
+		if offset > 1 {
+			startBaseBlock += offset - 1
+		}
+	}
 	// set a tokenFeeder for the new token
 	p.TokenFeeders = append(p.TokenFeeders, &types.TokenFeeder{
 		// #nosec G115 // len(p.Tokens) must be positive since we just append an element for it
@@ -114,7 +120,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		RuleID:       2,
 		StartRoundID: 1,
 		// #nosec G115
-		StartBaseBlock: uint64(ctx.BlockHeight() + startAfterBlocks),
+		StartBaseBlock: startBaseBlock,
 		Interval:       intervalInt,
 		// we don't end feeders for v1
 		EndBlock: 0,
@@ -139,7 +145,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 				RuleID:       3,
 				StartRoundID: 1,
 				// #nosec G115
-				StartBaseBlock: uint64(ctx.BlockHeight() + startAfterBlocks),
+				StartBaseBlock: startBaseBlock,
 				Interval:       intervalInt,
 				// we don't end feeders for v1
 				EndBlock: 0,
@@ -149,4 +155,50 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 
 	k.SetParams(ctx, p)
 	return nil
+}
+
+func GetStartBaseBlock(firstQuotingHeight, window, interval uint64, tfs []*types.TokenFeeder) uint64 {
+	blocks := make([]uint64, interval)
+	for _, tf := range tfs {
+		if tf.EndBlock > 0 && tf.EndBlock < firstQuotingHeight {
+			continue
+		}
+		tfStartL := tf.StartBaseBlock
+		// Calculate the first quoting block of this feeder's latest round that's <= firstQuotingHeight
+		if firstQuotingHeight < tfStartL {
+			rounds := (tfStartL - firstQuotingHeight) / tf.Interval
+			tfStartL = tfStartL - (rounds+1)*tf.Interval
+		} else {
+			rounds := (firstQuotingHeight - tfStartL) / tf.Interval
+			tfStartL = tfStartL + tf.Interval*rounds
+		}
+
+		// Process all quoting windows of this feeder that overlap with our interval
+		for tfStartL < firstQuotingHeight+interval {
+			tfStartR := tfStartL + window
+			tmp := tfStartL + 1 // first quoting block
+			for tmp < firstQuotingHeight+interval && tmp <= tfStartR {
+				if tmp >= firstQuotingHeight {
+					offset := tmp - firstQuotingHeight
+					if offset < interval {
+						blocks[offset]++
+					}
+				}
+				tmp++
+			}
+			tfStartL += tf.Interval
+		}
+	}
+	minIndex := 0
+	minCount := blocks[0]
+	for idx, count := range blocks {
+		if count == 0 {
+			return uint64(idx)
+		}
+		if count < minCount {
+			minIndex = idx
+			minCount = count
+		}
+	}
+	return uint64(minIndex)
 }
