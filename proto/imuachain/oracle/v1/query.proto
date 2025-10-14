@@ -99,13 +99,19 @@ service Query {
   }
 }
 
+// QueryValidatorMissCountRequest is request type for Query/ValidatorMissCount RPC method
 message QueryValidatorMissCountRequest {
+  // validator is the validator address
   string validator = 1;
 }
 
+// QueryValidatorMissCountResponse is response type for Query/ValidatorMissCount RPC method
 message QueryValidatorMissCountResponse {
+  // miss_count is the number of missed rounds
   int64 miss_count = 1;
+  // window_size is the window size
   int64 window_size = 2;
+  // max_miss is the maximum number of missed rounds
   int64 max_miss = 3;
 }
 

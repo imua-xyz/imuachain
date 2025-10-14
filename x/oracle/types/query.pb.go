@@ -30,7 +30,9 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// QueryValidatorMissCountRequest is request type for Query/ValidatorMissCount RPC method
 type QueryValidatorMissCountRequest struct {
+	// validator is the validator address
 	Validator string `protobuf:"bytes,1,opt,name=validator,proto3" json:"validator,omitempty"`
 }
 
@@ -74,10 +76,14 @@ func (m *QueryValidatorMissCountRequest) GetValidator() string {
 	return ""
 }
 
+// QueryValidatorMissCountResponse is response type for Query/ValidatorMissCount RPC method
 type QueryValidatorMissCountResponse struct {
-	MissCount  int64 `protobuf:"varint,1,opt,name=miss_count,json=missCount,proto3" json:"miss_count,omitempty"`
+	// miss_count is the number of missed rounds
+	MissCount int64 `protobuf:"varint,1,opt,name=miss_count,json=missCount,proto3" json:"miss_count,omitempty"`
+	// window_size is the window size
 	WindowSize int64 `protobuf:"varint,2,opt,name=window_size,json=windowSize,proto3" json:"window_size,omitempty"`
-	MaxMiss    int64 `protobuf:"varint,3,opt,name=max_miss,json=maxMiss,proto3" json:"max_miss,omitempty"`
+	// max_miss is the maximum number of missed rounds
+	MaxMiss int64 `protobuf:"varint,3,opt,name=max_miss,json=maxMiss,proto3" json:"max_miss,omitempty"`
 }
 
 func (m *QueryValidatorMissCountResponse) Reset()         { *m = QueryValidatorMissCountResponse{} }
@@ -1766,6 +1772,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// ValidatorMissCount shows the miss count of a validator
 	ValidatorMissCount(ctx context.Context, in *QueryValidatorMissCountRequest, opts ...grpc.CallOption) (*QueryValidatorMissCountResponse, error)
 	// TokenIndexes shows the map tells token and its index for further usage
 	TokenIndexes(ctx context.Context, in *QueryTokenIndexesRequest, opts ...grpc.CallOption) (*QueryTokenIndexesResponse, error)
@@ -1942,6 +1949,7 @@ func (c *queryClient) RecentParamsAll(ctx context.Context, in *QueryAllRecentPar
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// ValidatorMissCount shows the miss count of a validator
 	ValidatorMissCount(context.Context, *QueryValidatorMissCountRequest) (*QueryValidatorMissCountResponse, error)
 	// TokenIndexes shows the map tells token and its index for further usage
 	TokenIndexes(context.Context, *QueryTokenIndexesRequest) (*QueryTokenIndexesResponse, error)

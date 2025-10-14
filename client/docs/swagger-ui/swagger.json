@@ -20825,6 +20825,7 @@
     },
     "/imuachain/oracle/v1/validator_miss_count": {
       "get": {
+        "summary": "ValidatorMissCount shows the miss count of a validator",
         "operationId": "ValidatorMissCount",
         "responses": {
           "200": {
@@ -20834,17 +20835,21 @@
               "properties": {
                 "miss_count": {
                   "type": "string",
-                  "format": "int64"
+                  "format": "int64",
+                  "title": "miss_count is the number of missed rounds"
                 },
                 "window_size": {
                   "type": "string",
-                  "format": "int64"
+                  "format": "int64",
+                  "title": "window_size is the window size"
                 },
                 "max_miss": {
                   "type": "string",
-                  "format": "int64"
+                  "format": "int64",
+                  "title": "max_miss is the maximum number of missed rounds"
                 }
-              }
+              },
+              "title": "QueryValidatorMissCountResponse is response type for Query/ValidatorMissCount RPC method"
             }
           },
           "default": {
@@ -20884,6 +20889,7 @@
         "parameters": [
           {
             "name": "validator",
+            "description": "validator is the validator address.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -46452,17 +46458,21 @@
       "properties": {
         "miss_count": {
           "type": "string",
-          "format": "int64"
+          "format": "int64",
+          "title": "miss_count is the number of missed rounds"
         },
         "window_size": {
           "type": "string",
-          "format": "int64"
+          "format": "int64",
+          "title": "window_size is the window size"
         },
         "max_miss": {
           "type": "string",
-          "format": "int64"
+          "format": "int64",
+          "title": "max_miss is the maximum number of missed rounds"
         }
-      }
+      },
+      "title": "QueryValidatorMissCountResponse is response type for Query/ValidatorMissCount RPC method"
     },
     "imuachain.oracle.v1.RecentMsg": {
       "type": "object",
