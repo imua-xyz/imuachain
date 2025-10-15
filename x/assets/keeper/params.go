@@ -11,17 +11,33 @@ import (
 )
 
 func (k Keeper) SetParams(ctx sdk.Context, params *assetstypes.Params) error {
-	// lower case all gateway addresses
-	params.Normalize()
-	// check if addr is evm address
+	// Apply business logic validation (blacklist check)
+	// Static checks already done in AnteHandler via ValidateBasic
 	for _, gateway := range params.Gateways {
-		if !common.IsHexAddress(gateway) {
-			return assetstypes.ErrInvalidEvmAddressFormat
+		if err := k.validateGatewayBusinessRules(gateway); err != nil {
+			return err
 		}
 	}
+
+	// Normalize addresses (convert to lowercase)
+	params.Normalize()
+
+	// Store the validated and normalized parameters
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstypes.KeyPrefixParams)
 	bz := k.cdc.MustMarshal(params)
 	store.Set(assetstypes.ParamsKey, bz)
+	return nil
+}
+
+// validateGatewayBusinessRules applies business logic validation to gateway addresses
+func (k Keeper) validateGatewayBusinessRules(gateway string) error {
+	// Check if address is in forbidden list
+	for _, forbidden := range assetstypes.ForbiddenGatewayAddresses {
+		if strings.EqualFold(gateway, forbidden) {
+			return assetstypes.ErrInvalidEvmAddressFormat.Wrapf(
+				"address is in forbidden list: %s", gateway)
+		}
+	}
 	return nil
 }
 
