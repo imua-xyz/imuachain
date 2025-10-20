@@ -3,6 +3,7 @@ package keeper_test
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
@@ -23,8 +24,16 @@ func (suite *KeeperTestSuite) TestSameEpochOperations() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddressString,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr: operatorAddressString,
-				ApproveAddr:  operatorAddressString,
+				EarningsAddr:     operatorAddressString,
+				ApproveAddr:      operatorAddressString,
+				OperatorMetaInfo: operatorAddressString,
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          sdk.ZeroDec(),
+						MaxRate:       sdk.ZeroDec(),
+						MaxChangeRate: sdk.ZeroDec(),
+					},
+				},
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(
@@ -203,8 +212,16 @@ func (suite *KeeperTestSuite) TestDifferentEpochOperations() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddressString,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr: operatorAddressString,
-				ApproveAddr:  operatorAddressString,
+				EarningsAddr:     operatorAddressString,
+				ApproveAddr:      operatorAddressString,
+				OperatorMetaInfo: operatorAddressString,
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          sdk.ZeroDec(),
+						MaxRate:       sdk.ZeroDec(),
+						MaxChangeRate: sdk.ZeroDec(),
+					},
+				},
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(

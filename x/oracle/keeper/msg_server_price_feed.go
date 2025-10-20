@@ -22,11 +22,16 @@ const (
 
 // CreatePrice proposes price for new round of specific tokenFeeder
 func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice) (*types.MsgCreatePriceResponse, error) {
+	start := time.Now()
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	gasMeter := ctx.GasMeter()
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	defer func() {
+		if !ctx.IsCheckTx() {
+			ms.addTotald(time.Since(start))
+			ms.increaseCount()
+		}
 		ctx = ctx.WithGasMeter(gasMeter)
 	}()
 

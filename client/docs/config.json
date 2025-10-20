@@ -195,7 +195,12 @@
       "url": "./tmp-swagger-gen/imuachain/avs/v1/query.swagger.json"
     },
     {
-      "url": "./tmp-swagger-gen/imuachain/operator/v1/query.swagger.json"
+      "url": "./tmp-swagger-gen/imuachain/operator/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "QueryParams": "OperatorParams"
+        }
+      }
     },
     {
       "url": "./tmp-swagger-gen/cosmos/upgrade/v1beta1/query.swagger.json",

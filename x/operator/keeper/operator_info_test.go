@@ -28,7 +28,7 @@ func (suite *OperatorTestSuite) TestOperatorInfo() {
 		Commission: stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
 	}
 	suite.Equal(delegationtypes.AccAddressLength, len(suite.AccAddress))
-	err := suite.App.OperatorKeeper.SetOperatorInfo(suite.Ctx, suite.AccAddress.String(), info)
+	err := suite.App.OperatorKeeper.RegisterOperator(suite.Ctx, suite.AccAddress.String(), info)
 	suite.NoError(err)
 
 	getOperatorInfo, err := suite.App.OperatorKeeper.QueryOperatorInfo(suite.Ctx, &operatortype.GetOperatorInfoReq{OperatorAddr: suite.AccAddress.String()})
@@ -47,7 +47,7 @@ func (suite *OperatorTestSuite) TestAllOperators() {
 			Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		},
 	}
-	err := suite.App.OperatorKeeper.SetOperatorInfo(suite.Ctx, suite.AccAddress.String(), &operatorDetail.OperatorInfo)
+	err := suite.App.OperatorKeeper.RegisterOperator(suite.Ctx, suite.AccAddress.String(), &operatorDetail.OperatorInfo)
 	suite.NoError(err)
 
 	getOperators := suite.App.OperatorKeeper.AllOperators(suite.Ctx)

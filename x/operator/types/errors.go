@@ -140,4 +140,9 @@ var (
 		ModuleName, 30,
 		"invalid jailed block number",
 	)
+
+	ErrOperatorNameAlreadyExists = errorsmod.Register(
+		ModuleName, 31,
+		"operator name already exists",
+	)
 )

@@ -81,6 +81,9 @@ const (
 	prefixAVSAssetListPerEpoch
 
 	prefixCompoundingRewardsUSDValues
+
+	// prefixParams is the prefix used to store the params.
+	prefixParams
 )
 
 var (
@@ -155,6 +158,10 @@ var (
 	// rewards must be distributed per AVS reward asset to ensure distribution to the
 	// corresponding stakers.
 	KeyPrefixCompoundingRewardsUSDValues = []byte{prefixCompoundingRewardsUSDValues}
+
+	// KeyPrefixParams key-value:
+	// params -> Params
+	KeyPrefixParams = []byte{prefixParams}
 )
 
 // ModuleAddress is the native module address for EVM
@@ -319,4 +326,9 @@ func ParseKeyForOperatorKeyRemoval(key []byte) (addr sdk.AccAddress, chainID str
 func IterateOperatorsForAVSPrefix(avsAddr string) []byte {
 	tmp := append([]byte(avsAddr), '/')
 	return tmp
+}
+
+// KeyForParams returns the key for the params.
+func KeyForParams() []byte {
+	return KeyPrefixParams
 }
