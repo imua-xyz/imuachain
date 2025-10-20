@@ -20,7 +20,7 @@ func (k Keeper) AllOperatorAssets(ctx sdk.Context) (operatorAssets []assetstype.
 	ret := make([]assetstype.AssetsByOperator, 0)
 	var previousOperator string
 	for ; iterator.Valid(); iterator.Next() {
-		keyList, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
+		keyList, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}
@@ -153,17 +153,14 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts assetstype.OperatorAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
-		keys, err := utils.ParseJoinedKey(iterator.Key())
-		if err != nil {
-			return err
-		}
+		keys := utils.ParseJoinedKey(iterator.Key())
 		assetID := keys[1]
 		if assetsFilter != nil {
 			if _, ok := assetsFilter[assetID]; !ok {
 				continue
 			}
 		}
-		err = opFunc(assetID, &amounts)
+		err := opFunc(assetID, &amounts)
 		if err != nil {
 			return err
 		}

@@ -307,7 +307,7 @@
     [
       {
         "internalType": "uint32",
-        "name": "clientChainLzId",
+        "name": "clientChainLzID",
         "type": "uint32"
       },
       {
@@ -327,6 +327,57 @@
       }
     ],
     "name": "setStakerRewardParams",
+    "outputs":
+    [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "uint32",
+        "name": "clientChainLzID",
+        "type": "uint32"
+      },
+      {
+        "internalType": "uint32",
+        "name": "rewardAssetChainLzID",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "assetAddress",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "stakerAddress",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "operatorAddr",
+        "type": "bytes"
+      },
+      {
+        "internalType": "uint256",
+        "name": "opAmount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "instantUnbond",
+        "type": "bool"
+      }
+    ],
+    "name": "undelegateReward",
     "outputs":
     [
       {

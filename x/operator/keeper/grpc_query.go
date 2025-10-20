@@ -259,7 +259,7 @@ func (k *Keeper) QueryRewardsUSDValue(ctx context.Context, req *types.QueryRewar
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
-	rewardsUSDValues, err := k.GetRewardsUSDValues(c, req.AvsAddress, req.OperatorAddr)
+	rewardsUSDValues, err := k.GetRewardsUSDValues(c, strings.ToLower(req.AvsAddress), req.OperatorAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -396,8 +396,7 @@ func (k *Keeper) Validators(c context.Context, req *types.QueryValidatorsRequest
 			return status.Error(codes.Internal, "invalid consensus key")
 		}
 		val, found := k.GetValidatorByConsAddrForChainID(
-			ctx, wrappedKey.ToConsAddr(), utils.ChainIDWithoutRevision(ctx.ChainID()),
-		)
+			ctx, wrappedKey.ToConsAddr(), chainIDWithoutRevision)
 		if found {
 			vals = append(vals, val)
 		}

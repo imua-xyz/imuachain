@@ -324,7 +324,7 @@ func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) 
 	avsList := make([]string, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
-			keys, err := utils.ParseJoinedStoreKey(key, 2)
+			keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 			if err != nil {
 				return false, err
 			}
@@ -374,7 +374,7 @@ func (k *Keeper) isUnbondingRelated(ctx sdk.Context, avsAddr string, optedInfo *
 func (k *Keeper) GetUnbondingRelatedAVS(ctx sdk.Context, operatorAddr string) ([]operatortypes.ImpactfulAVSInfo, error) {
 	avsList := make([]operatortypes.ImpactfulAVSInfo, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := utils.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		avsAddr := keys[1]
 		if err != nil {
 			return false, err
@@ -506,7 +506,7 @@ func (k Keeper) GetImpactfulEpochsAndAVSsForOperator(ctx sdk.Context, operatorAd
 	epochsList := make([]string, 0)
 	avsList := make([]string, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := utils.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		avsAddr := keys[1]
 		if err != nil {
 			return false, err
@@ -543,7 +543,7 @@ func (k Keeper) GetImpactfulEpochsAndAVSsForOperator(ctx sdk.Context, operatorAd
 func (k Keeper) IsImpactfulEpochForOperator(ctx sdk.Context, epochIdentifier, operatorAddr string) bool {
 	var isImpactfulEpoch bool
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := utils.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		avsAddr := keys[1]
 		if err != nil {
 			return false, err
@@ -606,7 +606,7 @@ func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([
 	operatorList := make([]string, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
-			keys, err := utils.ParseJoinedStoreKey(key, 2)
+			keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 			if err != nil {
 				return false, err
 			}
@@ -630,7 +630,7 @@ func (k *Keeper) IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool {
 	var err error
 	avsAddr = strings.ToLower(avsAddr)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := utils.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		if err != nil {
 			return false, err
 		}

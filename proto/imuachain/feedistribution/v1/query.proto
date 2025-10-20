@@ -116,7 +116,7 @@ service Query {
   }
   // StakerRewardParams queries the reward parameters of the staker.
   rpc StakerRewardParams(QueryStakerRewardParamsRequest) returns (QueryStakerRewardParamsResponse){
-    option (google.api.http).post = "/imuachain/feedistribution/v1/staker_reward_params/{staker_id}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_reward_params/{staker_id}";
   }
 }
 

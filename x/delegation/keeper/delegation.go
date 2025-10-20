@@ -242,6 +242,9 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	}
 
 	if params.RewardAsset {
+		if params.ReduceDelegationShare == nil {
+			return delegationtype.ErrInvalidInputParameter.Wrap("ReduceDelegationShare function is required for reward undelegation")
+		}
 		// decrease the reward delegation share if it's an reward undelegation
 		undelegationAmounts, totalCompletedAmount, err := params.ReduceDelegationShare(ctx, params.RewardStakerID, params.RewardAssetID, params.OperatorAddress, instantSlashRatio, params.OpAmount, *prevAssetState)
 		if err != nil {

@@ -87,7 +87,10 @@ func (k Keeper) IterateDelegationsForStaker(ctx sdk.Context, stakerID string, op
 }
 
 func (k Keeper) UndelegatableAmount(ctx sdk.Context, assetID, operator string, amounts *delegationtype.DelegationAmounts) (sdkmath.Int, sdkmath.Int, error) {
-	opAccAddr := sdk.MustAccAddressFromBech32(operator)
+	opAccAddr, err := sdk.AccAddressFromBech32(operator)
+	if err != nil {
+		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), delegationtype.ErrOperatorAddrIsNotAccAddr
+	}
 	// get the asset state of operator
 	operatorAsset, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, opAccAddr, assetID)
 	if err != nil {
@@ -448,10 +451,7 @@ func (k Keeper) DelegationStateByOperatorAssets(ctx sdk.Context, operatorAddr st
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts delegationtype.DelegationAmounts
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
-		keys, err := utils.ParseJoinedKey(iterator.Key())
-		if err != nil {
-			return nil, err
-		}
+		keys := utils.ParseJoinedKey(iterator.Key())
 		if len(keys) != 3 {
 			continue
 		}

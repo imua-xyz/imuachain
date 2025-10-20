@@ -28,31 +28,31 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type GenesisState struct {
 	// params defines all the parameters of the module.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-	// all_avs_reward_assets is the rewards assets for all AVSs.
+	// all_avs_reward_assets are the rewards assets for all AVSs.
 	AllAvsRewardAssets []AVSAddrAndRewardAssets `protobuf:"bytes,2,rep,name=all_avs_reward_assets,json=allAvsRewardAssets,proto3" json:"all_avs_reward_assets"`
-	// all_avs_reward_params is the rewards parameters for all AVSs.
+	// all_avs_reward_params are the rewards parameters for all AVSs.
 	AllAvsRewardParams []AVSAddrAndRewardParam `protobuf:"bytes,3,rep,name=all_avs_reward_params,json=allAvsRewardParams,proto3" json:"all_avs_reward_params"`
-	// all_avs_fee_pools is the fee pools for all AVSs.
+	// all_avs_fee_pools are the fee pools for all AVSs.
 	AllAvsFeePools []AVSAddrAndFeePool `protobuf:"bytes,4,rep,name=all_avs_fee_pools,json=allAvsFeePools,proto3" json:"all_avs_fee_pools"`
-	// all_avs_reward_distributions is the reward distributions for all AVSs.
+	// all_avs_reward_distributions are the reward distributions for all AVSs.
 	AllAvsRewardDistributions []AVSAddrAndRewardDistribution `protobuf:"bytes,5,rep,name=all_avs_reward_distributions,json=allAvsRewardDistributions,proto3" json:"all_avs_reward_distributions"`
-	// all_operator_unclaimed_rewards is the unclaimed rewards for all operators.
+	// all_operator_unclaimed_rewards are the unclaimed rewards for all operators.
 	AllOperatorUnclaimedRewards []KeyAndOperatorUnclaimedRewards `protobuf:"bytes,6,rep,name=all_operator_unclaimed_rewards,json=allOperatorUnclaimedRewards,proto3" json:"all_operator_unclaimed_rewards"`
-	// all_delegation_change_infos is the delegation changes for all epochs and operators.
+	// all_delegation_change_infos are the delegation changes for all epochs and operators.
 	AllDelegationChangeInfos []KeyAndDelegationChangeInfo `protobuf:"bytes,7,rep,name=all_delegation_change_infos,json=allDelegationChangeInfos,proto3" json:"all_delegation_change_infos"`
-	// all_delegation_change_infos is the delegation starting information for all epochs.
+	// all_delegation_change_infos are the delegation starting information for all epochs.
 	AllDelegationStartingInfos []KeyAndDelegationStartingInfo `protobuf:"bytes,8,rep,name=all_delegation_starting_infos,json=allDelegationStartingInfos,proto3" json:"all_delegation_starting_infos"`
-	// all_operator_historical_rewards is the operator historical rewards information for all periods.
+	// all_operator_historical_rewards are the operator historical rewards information for all periods.
 	AllOperatorHistoricalRewards []KeyAndOperatorHistoricalRewards `protobuf:"bytes,9,rep,name=all_operator_historical_rewards,json=allOperatorHistoricalRewards,proto3" json:"all_operator_historical_rewards"`
-	// all_operator_current_rewards is the operator current rewards information for all epochs.
+	// all_operator_current_rewards are the operator current rewards information for all epochs.
 	AllOperatorCurrentRewards []KeyAndOperatorCurrentRewards `protobuf:"bytes,10,rep,name=all_operator_current_rewards,json=allOperatorCurrentRewards,proto3" json:"all_operator_current_rewards"`
-	// all_operator_commission is the commissions for all operators.
+	// all_operator_commission are the commissions for all operators.
 	AllOperatorCommission []KeyAndOperatorCommission `protobuf:"bytes,11,rep,name=all_operator_commission,json=allOperatorCommission,proto3" json:"all_operator_commission"`
-	// all_operator_slash_events is the slash events for all operators.
+	// all_operator_slash_events are the slash events for all operators.
 	AllOperatorSlashEvents []KeyAndOperatorSlashEvent `protobuf:"bytes,12,rep,name=all_operator_slash_events,json=allOperatorSlashEvents,proto3" json:"all_operator_slash_events"`
-	// all_staker_claimed_rewards is the claimed rewards for all stakers.
+	// all_staker_claimed_rewards are the claimed rewards for all stakers.
 	AllStakerClaimedRewards []KeyAndStakerClaimedRewards `protobuf:"bytes,13,rep,name=all_staker_claimed_rewards,json=allStakerClaimedRewards,proto3" json:"all_staker_claimed_rewards"`
-	// all_staker_reward_params is the reward parameters for all stakers.
+	// all_staker_reward_params are the reward parameters for all stakers.
 	AllStakerRewardParams []KeyAndStakerRewardParams `protobuf:"bytes,14,rep,name=all_staker_reward_params,json=allStakerRewardParams,proto3" json:"all_staker_reward_params"`
 }
 
@@ -415,7 +415,7 @@ func (m *AVSAddrAndRewardDistribution) GetAvsRewardDistribution() AVSRewardDistr
 // It stores the unclaimed rewards for a specific operator and AVS.
 // The key, which is a combination of the operator and AVS, is included within it.
 type KeyAndOperatorUnclaimedRewards struct {
-	// key is is a combination of the operator and AVS
+	// key is a combination of the operator and AVS
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_unclaimed_rewards represents the unclaimed rewards for the operator.
 	OperatorUnclaimedRewards OperatorUnclaimedRewards `protobuf:"bytes,2,opt,name=operator_unclaimed_rewards,json=operatorUnclaimedRewards,proto3" json:"operator_unclaimed_rewards"`
@@ -472,7 +472,7 @@ func (m *KeyAndOperatorUnclaimedRewards) GetOperatorUnclaimedRewards() OperatorU
 // It stores the delegation changes for the current epoch.
 // The key, which is a combination of the epochIdentifier, operator and assetID, is included within it.
 type KeyAndDelegationChangeInfo struct {
-	// key is is a combination of the epochIdentifier, operator and assetID
+	// key is a combination of the epochIdentifier, operator and assetID
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// delegation_change_info represents the delegation changes for the current epoch.
 	DelegationChangeInfo DelegationChangeInfo `protobuf:"bytes,2,opt,name=delegation_change_info,json=delegationChangeInfo,proto3" json:"delegation_change_info"`
@@ -529,7 +529,7 @@ func (m *KeyAndDelegationChangeInfo) GetDelegationChangeInfo() DelegationChangeI
 // It stores the delegation starting information for multiple epochs.
 // The key, which is a combination of the delegation key and the epochIdentifier, is included within it.
 type KeyAndDelegationStartingInfo struct {
-	// key is is a combination of the delegation key and epoch identifier.
+	// key is a combination of the delegation key and epoch identifier.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// delegation_starting_info represents the starting information for the delegation.
 	DelegationStartingInfo DelegationStartingInfo `protobuf:"bytes,2,opt,name=delegation_starting_info,json=delegationStartingInfo,proto3" json:"delegation_starting_info"`
@@ -586,7 +586,7 @@ func (m *KeyAndDelegationStartingInfo) GetDelegationStartingInfo() DelegationSta
 // It stores the operator historical rewards information for multiple periods.
 // The key, which is a combination of the operator,assetID,epochIdentifier and period, is included within it.
 type KeyAndOperatorHistoricalRewards struct {
-	// key is is a combination of the operator,assetID,epochIdentifier and period.
+	// key is a combination of the operator,assetID,epochIdentifier and period.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_historical_rewards represents the historical rewards for the operator.
 	OperatorHistoricalRewards OperatorHistoricalRewards `protobuf:"bytes,2,opt,name=operator_historical_rewards,json=operatorHistoricalRewards,proto3" json:"operator_historical_rewards"`
@@ -643,7 +643,7 @@ func (m *KeyAndOperatorHistoricalRewards) GetOperatorHistoricalRewards() Operato
 // It stores the operator current rewards information for multiple epochs.
 // The key, which is a combination of the operator,assetID and epochIdentifier, is included within it.
 type KeyAndOperatorCurrentRewards struct {
-	// key is is a combination of the operator,assetID and epochIdentifier.
+	// key is a combination of the operator,assetID and epochIdentifier.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_current_rewards represents the current rewards for the operator.
 	OperatorCurrentRewards OperatorCurrentRewards `protobuf:"bytes,2,opt,name=operator_current_rewards,json=operatorCurrentRewards,proto3" json:"operator_current_rewards"`
@@ -698,9 +698,9 @@ func (m *KeyAndOperatorCurrentRewards) GetOperatorCurrentRewards() OperatorCurre
 
 // KeyAndOperatorCommission is a struct used in the genesis state.
 // It stores the operator commission for the operator.
-// The key, which is a combination of the operator and avs, is included within it.
+// The key, which is a combination of the operator and AVS, is included within it.
 type KeyAndOperatorCommission struct {
-	// key is is a combination of the operator and avs.
+	// key is a combination of the operator and AVS.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_commission represents the commission for the operator.
 	OperatorCommission OperatorCommission `protobuf:"bytes,2,opt,name=operator_commission,json=operatorCommission,proto3" json:"operator_commission"`
@@ -757,7 +757,7 @@ func (m *KeyAndOperatorCommission) GetOperatorCommission() OperatorCommission {
 // It stores the slash event for the operator.
 // The key, which is a combination of the operator,assetID,epochIdentifier,epochNumber and blockHeight, is included within it.
 type KeyAndOperatorSlashEvent struct {
-	// key is is a combination of the operator,assetID,epochIdentifier and epochNumber.
+	// key is a combination of the operator,assetID,epochIdentifier and epochNumber.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_slash_event represents the slash event for the operator.
 	OperatorSlashEvent OperatorSlashEvent `protobuf:"bytes,2,opt,name=operator_slash_event,json=operatorSlashEvent,proto3" json:"operator_slash_event"`
@@ -814,7 +814,7 @@ func (m *KeyAndOperatorSlashEvent) GetOperatorSlashEvent() OperatorSlashEvent {
 // It stores the claimed rewards for the staker.
 // The key, which is a combination of the stakerID and avsAddr, is included within it.
 type KeyAndStakerClaimedRewards struct {
-	// key is is a combination of the stakerID and avsAddr.
+	// key is a combination of the stakerID and avsAddr.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// staker_claimed_rewards represents the claimed rewards for the staker.
 	StakerClaimedRewards StakerClaimedRewards `protobuf:"bytes,2,opt,name=staker_claimed_rewards,json=stakerClaimedRewards,proto3" json:"staker_claimed_rewards"`
@@ -871,7 +871,7 @@ func (m *KeyAndStakerClaimedRewards) GetStakerClaimedRewards() StakerClaimedRewa
 // It stores the claimed rewards for the staker.
 // The key, which is the stakerID.
 type KeyAndStakerRewardParams struct {
-	// key is is the stakerID.
+	// key is the stakerID.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// staker_reward_params represents the reward params for the staker.
 	StakerRewardParams StakerRewardParams `protobuf:"bytes,2,opt,name=staker_reward_params,json=stakerRewardParams,proto3" json:"staker_reward_params"`

@@ -302,7 +302,7 @@ func (k Keeper) GetAllAVSRewardAssets(ctx sdk.Context) ([]types.AVSAddrAndReward
 	ret := make([]types.AVSAddrAndRewardAssets, 0)
 	avs := ""
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}
@@ -328,7 +328,7 @@ func (k Keeper) IsRegisteredRewardAsset(ctx sdk.Context, assetID string) bool {
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
 		if err != nil {
 			return false
 		}

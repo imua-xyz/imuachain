@@ -291,7 +291,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 
 	updatedKeyValues := make([]KeyValue, 0)
 	for ; prefixIterator.Valid(); prefixIterator.Next() {
-		keys, err := ParseJoinedStoreKey(prefixIterator.Key(), keyNumber)
+		keys, err := ParseJoinedKeyWithCount(prefixIterator.Key(), keyNumber)
 		if err != nil {
 			return err
 		}

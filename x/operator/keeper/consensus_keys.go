@@ -521,7 +521,7 @@ func (k *Keeper) SetAllPrevConsKeys(ctx sdk.Context, prevConsKeys []types.PrevCo
 	store := ctx.KVStore(k.storeKey)
 	for i := range prevConsKeys {
 		prevKey := prevConsKeys[i]
-		keys, err := utils.ParseJoinedStoreKey([]byte(prevKey.Key), 2)
+		keys, err := utils.ParseJoinedKeyWithCount([]byte(prevKey.Key), 2)
 		if err != nil {
 			return err
 		}
@@ -564,7 +564,7 @@ func (k *Keeper) SetAllOperatorKeyRemovals(ctx sdk.Context, operatorKeyRemoval [
 	store := ctx.KVStore(k.storeKey)
 	for i := range operatorKeyRemoval {
 		keyRemoval := operatorKeyRemoval[i]
-		keys, err := utils.ParseJoinedStoreKey([]byte(keyRemoval.Key), 2)
+		keys, err := utils.ParseJoinedKeyWithCount([]byte(keyRemoval.Key), 2)
 		if err != nil {
 			return err
 		}

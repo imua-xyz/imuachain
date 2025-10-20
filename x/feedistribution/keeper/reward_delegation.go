@@ -55,6 +55,7 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 					Shares:       sdk.NewDecCoins(),
 				}
 				// iterate over all reward assets to calculate the delegation amount for specific reward asset
+				indicesToRemove := make([]int, 0)
 				for i, reward := range stakerClaimedRewards.OutstandingRewards {
 					assetID, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avs, reward.Denom)
 					if err != nil {
@@ -97,9 +98,14 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 						delegationChanges.AppendUniqueStakerID(staker, preDelegatedAmount, assetDecimal)
 						delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = delegationChanges
 
-						newOutstandingRewards = append(newOutstandingRewards[:i], newOutstandingRewards[i+1:]...)
+						indicesToRemove = append(indicesToRemove, i)
 						delegationRewardsShare.Shares = delegationRewardsShare.Shares.Add(sdk.NewDecCoinFromDec(reward.Denom, share))
 					}
+				}
+				// Remove elements in reverse order to maintain indices
+				for i := len(indicesToRemove) - 1; i >= 0; i-- {
+					idx := indicesToRemove[i]
+					newOutstandingRewards = append(newOutstandingRewards[:idx], newOutstandingRewards[idx+1:]...)
 				}
 				stakerClaimedRewards.OutstandingRewards = newOutstandingRewards
 				stakerClaimedRewards.DelegationRewardsShares = feedistributiontypes.RewardsDelegationShares(stakerClaimedRewards.DelegationRewardsShares).Add(delegationRewardsShare)

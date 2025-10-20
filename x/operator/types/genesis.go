@@ -175,7 +175,7 @@ func (gs GenesisState) ValidateOperatorConsKeyRecords(operators map[string]struc
 func (gs GenesisState) ValidateOptedStates(operators map[string]struct{}) (map[string]struct{}, error) {
 	avs := make(map[string]struct{})
 	validationFunc := func(_ int, state OptedState) error {
-		stringList, err := utils.ParseJoinedStoreKey([]byte(state.Key), 2)
+		stringList, err := utils.ParseJoinedKeyWithCount([]byte(state.Key), 2)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateOptedStates: can't parse the joined key: %s", err.Error())
 		}
@@ -284,7 +284,7 @@ func (gs GenesisState) ValidateOperatorUSDValues(operators map[string]struct{}, 
 				operatorUSDValue,
 			)
 		}
-		stringList, err := utils.ParseJoinedStoreKey([]byte(operatorUSDValue.Key), 2)
+		stringList, err := utils.ParseJoinedKeyWithCount([]byte(operatorUSDValue.Key), 2)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrap(err.Error())
 		}
@@ -336,7 +336,7 @@ func (gs GenesisState) ValidateOperatorUSDValues(operators map[string]struct{}, 
 
 func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) error {
 	validationFunc := func(_ int, slash OperatorSlashState) error {
-		stringList, err := utils.ParseJoinedStoreKey([]byte(slash.Key), 3)
+		stringList, err := utils.ParseJoinedKeyWithCount([]byte(slash.Key), 3)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrap(err.Error())
 		}
@@ -435,7 +435,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 
 func (gs GenesisState) ValidatePrevConsKeys(operators map[string]struct{}) error {
 	validationFunc := func(_ int, prevConsKey PrevConsKey) error {
-		keys, err := utils.ParseJoinedStoreKey([]byte(prevConsKey.Key), 2)
+		keys, err := utils.ParseJoinedKeyWithCount([]byte(prevConsKey.Key), 2)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf(
 				"ValidatePrevConsKeys: ValidatePrevConsKeys can't parse the combined key, %+v",
@@ -478,7 +478,7 @@ func (gs GenesisState) ValidatePrevConsKeys(operators map[string]struct{}) error
 
 func (gs GenesisState) ValidateOperatorKeyRemovals(operators map[string]struct{}) error {
 	validationFunc := func(_ int, operatorKeyRemoval OperatorKeyRemoval) error {
-		keys, err := utils.ParseJoinedStoreKey([]byte(operatorKeyRemoval.Key), 2)
+		keys, err := utils.ParseJoinedKeyWithCount([]byte(operatorKeyRemoval.Key), 2)
 		if err != nil {
 			return err
 		}
@@ -509,7 +509,7 @@ func (gs GenesisState) ValidateOperatorAssetUSDValues(operators map[string]struc
 		return ErrInvalidGenesisData.Wrap("ValidateOperatorAssetUSDValues: the USD value of the operator's asset can't be empty.")
 	}*/
 	validationFunc := func(_ int, usdValue OperatorAssetUSDValue) error {
-		stringList, err := utils.ParseJoinedStoreKey([]byte(usdValue.Key), 3)
+		stringList, err := utils.ParseJoinedKeyWithCount([]byte(usdValue.Key), 3)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorAssetUSDValues: can't parse the joined key: %s, err:%s", usdValue.Key, err.Error())
 		}

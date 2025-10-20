@@ -4,7 +4,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	"github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 const (
@@ -158,14 +157,14 @@ func (m *MsgUndelegateReward) ValidateBasic() error {
 	}
 	_, _, err := assetstypes.ValidateID(m.AssetId, false, false)
 	if err != nil {
-		return types.ErrInvalidInputParameter.Wrapf("invalid assetID:%s,err:%s", m.AssetId, err)
+		return ErrInvalidInputParameter.Wrapf("invalid assetID:%s,err:%s", m.AssetId, err)
 	}
 	_, err = sdk.AccAddressFromBech32(m.OperatorAddr)
 	if err != nil {
-		return types.ErrInvalidInputParameter.Wrapf("invalid operator address:%s,err:%s", m.OperatorAddr, err)
+		return ErrInvalidInputParameter.Wrapf("invalid operator address:%s,err:%s", m.OperatorAddr, err)
 	}
 	if m.Amount.IsNil() || !m.Amount.IsPositive() {
-		return types.ErrInvalidInputParameter.Wrapf("invalid amount:%v", m.Amount)
+		return ErrInvalidInputParameter.Wrapf("invalid amount:%v", m.Amount)
 	}
 	return nil
 }

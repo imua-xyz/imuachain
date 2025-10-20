@@ -80,10 +80,7 @@ func (k *Keeper) AllOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr str
 	for ; iterator.Valid(); iterator.Next() {
 		var slashInfo operatortypes.OperatorSlashInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &slashInfo)
-		keys, err := utils.ParseJoinedKey(iterator.Key())
-		if err != nil {
-			return nil, err
-		}
+		keys := utils.ParseJoinedKey(iterator.Key())
 		ret[keys[2]] = &slashInfo
 	}
 	return ret, nil

@@ -91,7 +91,7 @@ func CheckUint64BigEndianHexStr(s string) error {
 }
 
 func CheckJoinedKey(joinedKey string, keyNumber int, keyTypes []KeyTypeForJoinedKey) error {
-	keys, err := utils.ParseJoinedStoreKey([]byte(joinedKey), keyNumber)
+	keys, err := utils.ParseJoinedKeyWithCount([]byte(joinedKey), keyNumber)
 	if err != nil {
 		return xerrors.Errorf("failed to parse the key, err:%s,key:%s", err, joinedKey)
 	}

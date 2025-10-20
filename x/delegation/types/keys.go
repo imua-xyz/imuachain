@@ -98,7 +98,7 @@ func IteratorPrefixForStakerAsset(stakerID, assetID string) []byte {
 }
 
 func ParseStakerAssetIDAndOperator(key []byte) (keys *SingleDelegationInfoReq, err error) {
-	stringList, err := utils.ParseJoinedStoreKey(key, 3)
+	stringList, err := utils.ParseJoinedKeyWithCount(key, 3)
 	if err != nil {
 		return nil, err
 	}

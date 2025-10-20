@@ -47,29 +47,29 @@ const (
 )
 
 // ChainIDPrefix is pre-pended to the chainID, and the combination hashed to generate the AVS address.
-var ChainIDPrefix = []byte("chain-id-prefix")
+var (
+	ChainIDPrefix                = []byte("chain-id-prefix")
+	DelimiterForCombinedKeyBytes = []byte(DelimiterForCombinedKey)
+)
 
 func GetJoinedStoreKey(keys ...string) []byte {
 	return []byte(strings.Join(keys, DelimiterForCombinedKey))
 }
 
 func GetJoinedStoreKeyForPrefix(keys ...string) []byte {
-	ret := []byte(strings.Join(keys, DelimiterForCombinedKey))
-	ret = append(ret, []byte(DelimiterForCombinedKey)...)
-	return ret
+	return append(GetJoinedStoreKey(keys...), DelimiterForCombinedKeyBytes...)
 }
 
-func ParseJoinedKey(key []byte) (keys []string, err error) {
-	stringList := strings.Split(string(key), DelimiterForCombinedKey)
-	return stringList, nil
+func ParseJoinedKey(key []byte) []string {
+	return strings.Split(string(key), DelimiterForCombinedKey)
 }
 
 func IsJoinedStoreKey(key string) bool {
 	return strings.Contains(key, DelimiterForCombinedKey)
 }
 
-func ParseJoinedStoreKey(key []byte, number int) (keys []string, err error) {
-	stringList := strings.Split(string(key), DelimiterForCombinedKey)
+func ParseJoinedKeyWithCount(key []byte, number int) (keys []string, err error) {
+	stringList := ParseJoinedKey(key)
 	if len(stringList) != number {
 		return nil, fmt.Errorf(
 			"the joined key can't be parsed,expected length:%d,actual length:%d,the stringList is:%v",
@@ -287,8 +287,12 @@ func ChainIDWithoutRevision(chainID string) string {
 	if !ibcclienttypes.IsRevisionFormat(chainID) {
 		return chainID
 	}
-	splitStr := strings.Split(chainID, "-")
-	return splitStr[0]
+	// only strip the final "-<revision>" suffix
+	idx := strings.LastIndex(chainID, "-")
+	if idx == -1 {
+		return chainID
+	}
+	return chainID[:idx]
 }
 
 // GenerateAVSAddress generates a hex AVS address based on the chainID.

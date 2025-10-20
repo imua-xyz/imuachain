@@ -21,7 +21,7 @@ func (k Keeper) AllDeposits(ctx sdk.Context) (deposits []assetstype.DepositsBySt
 	for ; iterator.Valid(); iterator.Next() {
 		var stateInfo assetstype.StakerAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &stateInfo)
-		keyList, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
+		keyList, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}
@@ -55,7 +55,7 @@ func (k Keeper) GetStakerAssetInfos(ctx sdk.Context, stakerID string) (assetsInf
 	for ; iterator.Valid(); iterator.Next() {
 		var stateInfo assetstype.StakerAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &stateInfo)
-		keyList, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
+		keyList, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
 		if err != nil {
 			return nil, err
 		}

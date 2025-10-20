@@ -57,7 +57,7 @@ const (
 )
 
 func (p *AVSRewardParam) ToEventString() string {
-	return fmt.Sprintf("%s:%v,%s:%v",
+	return fmt.Sprintf("%s:%t,%s:%t",
 		AttributeKeyCustomRewardInflation, p.CustomRewardInflation,
 		AttributeKeyCustomOperatorRatio, p.CustomOperatorRatio,
 	)

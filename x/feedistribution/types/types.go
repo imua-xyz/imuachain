@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/imua-xyz/imuachain/x/oracle/types"
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -63,13 +63,13 @@ func ParseOperatorRewardProportions(s string) ([]OperatorRewardProportion, error
 	result := make([]OperatorRewardProportion, 0, len(parts))
 
 	for _, part := range parts {
-		pair := strings.SplitN(part, ":", 2)
-		if len(pair) != 2 {
+		addr, propStr, ok := strings.Cut(part, ":")
+		if !ok {
 			return nil, fmt.Errorf("invalid format for operator proportion: %q", part)
 		}
 
-		addr := strings.TrimSpace(pair[0])
-		propStr := strings.TrimSpace(pair[1])
+		addr = strings.TrimSpace(addr)
+		propStr = strings.TrimSpace(propStr)
 
 		prop, err := sdk.NewDecFromStr(propStr)
 		if err != nil {
@@ -469,7 +469,7 @@ func (cmr CompoundingRewards) Sort() CompoundingRewards {
 func NewCompoundingRewards(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
 	newAVSRewards := sanitizeCompoundingRewards(compoundingRewards)
 	if err := newAVSRewards.Validate(); err != nil {
-		panic(fmt.Errorf("invalid compounding reward set: %w", err))
+		return CompoundingRewards{}
 	}
 
 	return newAVSRewards
@@ -965,9 +965,9 @@ func TruncateSDKDec(dec sdk.Dec, decimal uint32) sdk.Dec {
 func ValidateRewardAssetSymbol(symbol string) error {
 	// check if it contains the combined delimiter `/`, because symbol might be used in
 	// a combined key.
-	if strings.IndexByte(symbol, types.DelimiterForCombinedKey) >= 0 {
+	if strings.IndexByte(symbol, oracletypes.DelimiterForCombinedKey) >= 0 {
 		return fmt.Errorf("invalid symbol %q: contains combined delimiter %q",
-			symbol, string(types.DelimiterForCombinedKey))
+			symbol, string(oracletypes.DelimiterForCombinedKey))
 	}
 	return sdk.ValidateDenom(symbol)
 }

@@ -64,7 +64,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 	updatedKeyValues := make([]utils.KeyValue, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var DelegationChangeInfo feedistributiontypes.DelegationChangeInfo
-		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 3)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 3)
 		if err != nil {
 			return err
 		}
@@ -237,7 +237,10 @@ func (k Keeper) HasOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr s
 // UpdateOperatorUnclaimedRewards : increase or decrease the unclaimed avs rewards for the operator
 // the isIncrease flag is used to indicate whether the update is an increase or a decrease
 func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAddr string, isIncrease bool, deltaRewards feedistributiontypes.DeltaOperatorUnclaimedRewards) error {
-	if len(deltaRewards.OutstandingRewards) == 0 && len(deltaRewards.RewardsFromCompounding) == 0 {
+	if len(deltaRewards.OutstandingRewards) == 0 &&
+		len(deltaRewards.RewardsFromCompounding) == 0 &&
+		len(deltaRewards.OutstandingRewardsSlashed) == 0 &&
+		len(deltaRewards.CompoundingRewardsSlashed) == 0 {
 		return nil
 	}
 	// set the initialized value
@@ -471,7 +474,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 	updatedKeyValues := make([]utils.KeyValue, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var operatorHistoricalReward feedistributiontypes.OperatorHistoricalRewards
-		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 4)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 4)
 		if err != nil {
 			return err
 		}
@@ -617,7 +620,7 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 	for ; iter.Valid(); iter.Next() {
 		var event feedistributiontypes.OperatorSlashEvent
 		k.cdc.MustUnmarshal(iter.Value(), &event)
-		keys, err := utils.ParseJoinedStoreKey(iter.Key(), 5)
+		keys, err := utils.ParseJoinedKeyWithCount(iter.Key(), 5)
 		if err != nil {
 			return err
 		}

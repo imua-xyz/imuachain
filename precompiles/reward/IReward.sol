@@ -98,12 +98,12 @@ interface IReward {
     ) external returns (bool success, uint256 actualWithdrawAmount, uint256 withdrawAmountFromDogfood);
 
     /// @dev Sets or updates reward parameters for a staker.
-    /// @param clientChainLzId LayerZero ID of the staker's client chain.
+    /// @param clientChainLzID LayerZero ID of the staker's client chain.
     /// @param stakerAddress Address of the staker.
     /// @param redelegateReward Whether rewards should be redelegated after automatic claiming.
     /// @param redelegateOperator Operator address to redelegate rewards to.
     function setStakerRewardParams(
-        uint32 clientChainLzId,
+        uint32 clientChainLzID,
         bytes calldata stakerAddress,
         bool redelegateReward,
         string calldata redelegateOperator

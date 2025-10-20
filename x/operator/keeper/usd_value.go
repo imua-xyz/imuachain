@@ -135,7 +135,7 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 	hasOperator := false
 	operatorEvents := ""
 	for ; iterator.Valid(); iterator.Next() {
-		parsed, err := utils.ParseJoinedStoreKey(iterator.Key(), 2)
+		parsed, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
 		if err != nil {
 			return err
 		}
@@ -297,13 +297,10 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	updatedKeyValues := make([]utils.KeyValue, 0)
 	updatedOperators := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := utils.ParseJoinedKey(iterator.Key())
-		if err != nil {
-			return err
-		}
+		keys := utils.ParseJoinedKey(iterator.Key())
 		var optedUSDValues operatortypes.OperatorOptedUSDValue
 		k.cdc.MustUnmarshal(iterator.Value(), &optedUSDValues)
-		err = opFunc(keys[1], &optedUSDValues)
+		err := opFunc(keys[1], &optedUSDValues)
 		if err != nil {
 			return err
 		}

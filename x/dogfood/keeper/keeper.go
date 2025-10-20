@@ -2,13 +2,12 @@ package keeper
 
 import (
 	"fmt"
+	delegationKeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/imua-xyz/imuachain/x/delegation/keeper"
-
 	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
@@ -36,7 +35,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 	epochsKeeper types.EpochsKeeper, operatorKeeper types.OperatorKeeper,
-	delegationKeeper keeper.Keeper, restakingKeeper types.AssetsKeeper,
+	delegationKeeper delegationKeeper.Keeper, restakingKeeper types.AssetsKeeper,
 	avsKeeper types.AVSKeeper, authority string,
 ) Keeper {
 	k := Keeper{

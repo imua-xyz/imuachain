@@ -140,11 +140,14 @@ func CmdUpdateStakerRewardParams() *cobra.Command {
 				},
 			}
 			if redelegateReward {
-				_, err = sdk.AccAddressFromBech32(args[2])
+				if len(args) < 2 {
+					return types.ErrInvalidCliCmdArg.Wrap("missing redelegate operator address when redelegateReward=true")
+				}
+				_, err = sdk.AccAddressFromBech32(args[1])
 				if err != nil {
 					return err
 				}
-				msg.RewardParams.RedelegateOperatorAddr = args[2]
+				msg.RewardParams.RedelegateOperatorAddr = args[1]
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

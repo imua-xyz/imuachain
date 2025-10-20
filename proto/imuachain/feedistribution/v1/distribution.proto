@@ -186,10 +186,10 @@ message OperatorCommission {
   ];
 }
 
-// CompoundingRewardsPerAsset is a common struct used to record the compounding rewards for
-// specific reward asset
+// CompoundingRewardsPerAsset records compounding rewards for
+// a specific reward asset
 message CompoundingRewardsPerAsset {
-  // symbol is the symbol(domination) of the reward asset
+  // symbol is the symbol(denomination) of the reward asset
   string symbol = 1 ;
   // rewards represents the cumulative compounding reward from multiple AVSs
   repeated CommonAVSRewardData rewards = 2 [(gogoproto.nullable) = false];
@@ -229,11 +229,11 @@ message OperatorUnclaimedRewards {
 // RewardsDelegationShare is a helper struct that records all the delegated rewards shares
 // from a specific operator.
 message RewardsDelegationShare {
-  // operator_addr is the target operator address for redelegation
-  string operator_addr = 1;
-  // shares represents the shares of rewards that are lazily claimed and currently
-  // redelegated for compounding.In the decCoin, the amount represent the share in
-  // operator asset pool instead of the asset amount.
+  // operator_addr is the target operator address for redelegation.
+  string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // shares are the reward shares that are lazily claimed and currently
+  // redelegated for compounding. In DecCoin, the amount represents the share in the
+  // operator's asset pool, not the asset amount.
   repeated cosmos.base.v1beta1.DecCoin shares = 2 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,
@@ -306,7 +306,7 @@ message StakerRewardParams {
   // redelegate_reward represents whether the reward is redelegated
   bool redelegate_reward = 1;
   // redelegate_operator_address is the target operator address for redelegation
-  string redelegate_operator_addr = 2;
+  string redelegate_operator_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // OperatorSlashEvent represents an operator slash event.
