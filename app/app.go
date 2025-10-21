@@ -694,6 +694,7 @@ func NewImuachainApp(
 		&app.StakingKeeper,
 		delegationTypes.VirtualSlashKeeper{},
 		app.EpochsKeeper,
+		authAddrString,
 	)
 	// the fee distribution keeper is used to allocate reward to imualidators on epoch-basis,
 	// and it'll interact with other modules, like delegation for voting power, mint and inflation and etc.

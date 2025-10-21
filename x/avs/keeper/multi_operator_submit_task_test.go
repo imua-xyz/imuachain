@@ -1,11 +1,13 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/big"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
@@ -19,7 +21,7 @@ import (
 )
 
 func (suite *AVSTestSuite) prepareOperators() {
-	for _, operatorAddress := range suite.operatorAddresses {
+	for i, operatorAddress := range suite.operatorAddresses {
 		opAccAddr, err := sdk.AccAddressFromBech32(operatorAddress)
 		suite.Require().NoError(err)
 
@@ -29,6 +31,15 @@ func (suite *AVSTestSuite) prepareOperators() {
 			Info: &operatorTypes.OperatorInfo{
 				EarningsAddr: opAccAddr.String(),
 				ApproveAddr:  opAccAddr.String(),
+				// avoid name conflict with other tests
+				OperatorMetaInfo: fmt.Sprintf("operator%d", i+10),
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          sdk.ZeroDec(),
+						MaxRate:       sdk.ZeroDec(),
+						MaxChangeRate: sdk.ZeroDec(),
+					},
+				},
 			},
 		}
 		_, err = suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
