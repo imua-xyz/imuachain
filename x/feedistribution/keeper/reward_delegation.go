@@ -65,6 +65,9 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 					// check if the reward asset can be redelegated
 					if k.assetsKeeper.IsStakingAsset(ctx, assetID) && reward.IsPositive() {
 						rewardAmount := feedistributiontypes.UnscaleDecToInt(reward.Amount, assetDecimal)
+						if !rewardAmount.IsPositive() {
+							continue
+						}
 						// redelegate the reward
 						share, preDelegatedAmount, err := k.delegationKeeper.DelegateTo(cc, &delegationtype.DelegationOrUndelegationParams{
 							Action:          assetstype.DelegateTo,
@@ -224,7 +227,8 @@ func (k Keeper) UndelegateClaimedRewards(
 				if instantSlashRatio.IsNegative() || instantSlashRatio.GT(math.LegacyOneDec()) {
 					return true, false, feedistributiontypes.ErrFailedToUndelegateRewards.Wrapf("invalid instant slash ratio:%s", instantSlashRatio)
 				} else if !instantSlashRatio.IsZero() {
-					undelegationAmountPerAVS.ActualCompletedAmount = instantSlashRatio.MulInt(undelegationAmountPerAVS.Amount).TruncateInt()
+					slashed := instantSlashRatio.MulInt(undelegationAmountPerAVS.Amount).TruncateInt()
+					undelegationAmountPerAVS.ActualCompletedAmount = undelegationAmountPerAVS.Amount.Sub(slashed)
 				}
 			}
 

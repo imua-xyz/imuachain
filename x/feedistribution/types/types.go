@@ -464,8 +464,9 @@ func (cmr CompoundingRewards) Sort() CompoundingRewards {
 
 // NewCompoundingRewards constructs a new CompoundingRewardsPerAsset set.
 // The provided CompoundingRewardsPerAsset will be sanitized by removing
-// zero rewards and sorting the CompoundingRewardsPerAsset set. A panic will occur if the
-// CompoundingRewardsPerAsset set is not valid.
+// zero rewards and sorting the CompoundingRewardsPerAsset set. An empty
+// CompoundingRewards will be returned if the CompoundingRewardsPerAsset
+// set is not valid.
 func NewCompoundingRewards(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
 	newAVSRewards := sanitizeCompoundingRewards(compoundingRewards)
 	if err := newAVSRewards.Validate(); err != nil {

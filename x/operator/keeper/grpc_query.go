@@ -432,7 +432,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	}
 
 	found, wrappedKey, err := k.GetOperatorConsKeyForChainID(
-		ctx, accAddr, utils.ChainIDWithoutRevision(chainIDWithoutRevision),
+		ctx, accAddr, chainIDWithoutRevision,
 	)
 
 	if !found || err != nil || wrappedKey == nil {

@@ -88,7 +88,7 @@ func CmdRegisterOperator() *cobra.Command {
 			"can be supplied multiple times. "+
 			"Format: <client-chain-id>:<client-chain-earnings-addr>",
 	)
-	f.Bool(FlagDisableRewardsCompounding, false, "indicate whether disable the compounding of unclaimed rewards")
+	f.Bool(FlagDisableRewardsCompounding, false, "indicate whether to disable the compounding of unclaimed rewards")
 	f.AddFlagSet(stakingcli.FlagSetCommissionCreate())
 
 	// required flags
