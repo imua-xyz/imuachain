@@ -443,7 +443,7 @@ func (k *Keeper) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	}
 
 	val, found := k.GetValidatorByConsAddrForChainID(
-		ctx, wrappedKey.ToConsAddr(), utils.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, wrappedKey.ToConsAddr(), chainIDWithoutRevision,
 	)
 	if !found {
 		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorAccAddr)

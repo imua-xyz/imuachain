@@ -169,7 +169,7 @@ func (k Keeper) UndelegateClaimedRewards(
 	if amount.IsNil() || !amount.IsPositive() {
 		return feedistributiontypes.ErrFailedToUndelegateRewards.Wrapf("invalid amount: %v", amount)
 	}
-	lackingUndelegationAmount := sdk.NewIntFromBigInt(amount.BigInt())
+	lackingUndelegationAmount := amount
 	totalCompletedAmount := math.ZeroInt()
 
 	reduceDelegationShare := func(
