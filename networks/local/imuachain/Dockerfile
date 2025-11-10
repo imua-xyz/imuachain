@@ -13,7 +13,7 @@ FROM alpine:3.21 AS run
 RUN apk add --no-cache \
     libstdc++=~14.2.0 \
     bash=~5.2.37 \
-    curl=~8.12.1 \
+    curl=~8.14.1 \
     jq=~1.7.1 \
  && addgroup -g 1000 imua \
  && adduser -S -h /home/imua -D imua -u 1000 -G imua
