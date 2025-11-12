@@ -370,7 +370,7 @@ func (k Keeper) GetStakersByOperator(ctx sdk.Context, operator, assetID string) 
 	Key := utils.GetJoinedStoreKey(operator, assetID)
 	value := store.Get(Key)
 	if value == nil {
-		return delegationtype.StakerList{}, delegationtype.ErrNoKeyInTheStore.Wrap("error occurs in GetStakersByOperator")
+		return delegationtype.StakerList{}, delegationtype.ErrNoKeyInTheStore.Wrapf("error occurs in GetStakersByOperator,operator:%s,assetID:%s", operator, assetID)
 	}
 	stakerList := delegationtype.StakerList{}
 	k.cdc.MustUnmarshal(value, &stakerList)

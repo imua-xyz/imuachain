@@ -15,7 +15,7 @@ func (k Keeper) AllocateRewardsByEpoch(ctx sdk.Context, epochIdentifier string, 
 	for _, avs := range avsList {
 		err := k.AllocateRewardsByAVS(ctx, avs, epochIdentifier)
 		if err != nil {
-			ctx.Logger().Info("AllocateTokensByEpoch: failed to allocate rewards by avs, skipping the avs",
+			ctx.Logger().Error("AllocateTokensByEpoch: failed to allocate rewards by avs, skipping the avs",
 				"err", err, "avs", avs)
 		}
 		// continue handling the other AVSs
