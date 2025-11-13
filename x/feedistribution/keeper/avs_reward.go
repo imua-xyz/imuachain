@@ -56,19 +56,19 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 	}
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
-	for _, operator := range distribution.OperatorRewardProportions {
+	for _, operatorProportion := range distribution.OperatorRewardProportions {
 		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
-		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.OperatorAddr, avsAddr) {
-			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
+		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operatorProportion.OperatorAddr, avsAddr) {
+			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operatorProportion.OperatorAddr)
 		}
 		// check if the operator has active USD value
-		optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator.OperatorAddr)
+		optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operatorProportion.OperatorAddr)
 		if err != nil {
 			return err
 		}
 		if !optedUSDValue.ActiveUSDValue.IsPositive() {
-			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s,ActiveUSDValue:%s", operator, optedUSDValue.ActiveUSDValue)
+			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s,ActiveUSDValue:%s", operatorProportion.OperatorAddr, optedUSDValue.ActiveUSDValue)
 		}
 	}
 
@@ -146,11 +146,11 @@ func (k Keeper) SetAVSRewardProportionsExclusive(ctx sdk.Context, avsAddr string
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
-	for _, operator := range rewardProportions {
+	for _, operatorProportion := range rewardProportions {
 		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
-		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
-			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
+		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operatorProportion.OperatorAddr, avsAddr) {
+			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operatorProportion.OperatorAddr)
 		}
 	}
 	rewardDistribution := feedistributiontypes.AVSRewardDistribution{}

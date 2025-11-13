@@ -243,13 +243,7 @@ func (crs CommonAVSRewards) Validate() error {
 		}
 
 		lowAVS := crs[0].AVSAddress
-		seenAVS := make(map[string]bool)
-		seenAVS[lowAVS] = true
-
 		for _, avsReward := range crs[1:] {
-			if seenAVS[avsReward.AVSAddress] {
-				return fmt.Errorf("duplicate avs address %s", avsReward.AVSAddress)
-			}
 			if avsReward.AVSAddress <= lowAVS {
 				return fmt.Errorf("avs address %s is not sorted", avsReward.AVSAddress)
 			}
@@ -259,7 +253,6 @@ func (crs CommonAVSRewards) Validate() error {
 
 			// we compare each avsReward against the last avs address
 			lowAVS = avsReward.AVSAddress
-			seenAVS[avsReward.AVSAddress] = true
 		}
 
 		return nil
@@ -517,13 +510,7 @@ func (cmr CompoundingRewards) Validate() error {
 		}
 
 		lowSymbol := cmr[0].Symbol
-		seenSymbol := make(map[string]bool)
-		seenSymbol[lowSymbol] = true
-
 		for _, rewardsPerAsset := range cmr[1:] {
-			if seenSymbol[rewardsPerAsset.Symbol] {
-				return fmt.Errorf("duplicate symbol %s", rewardsPerAsset.Symbol)
-			}
 			if rewardsPerAsset.Symbol <= lowSymbol {
 				return fmt.Errorf("symbol %s is not sorted", rewardsPerAsset.Symbol)
 			}
@@ -533,7 +520,6 @@ func (cmr CompoundingRewards) Validate() error {
 
 			// we compare each rewardsPerAsset against the last avs address
 			lowSymbol = rewardsPerAsset.Symbol
-			seenSymbol[rewardsPerAsset.Symbol] = true
 		}
 
 		return nil
@@ -746,13 +732,7 @@ func (rds RewardsDelegationShares) Validate() error {
 		}
 
 		lowOperator := rds[0].OperatorAddr
-		seenOperator := make(map[string]bool)
-		seenOperator[lowOperator] = true
-
 		for _, delegationShares := range rds[1:] {
-			if seenOperator[delegationShares.OperatorAddr] {
-				return fmt.Errorf("duplicate operator address %s", delegationShares.OperatorAddr)
-			}
 			if delegationShares.OperatorAddr <= lowOperator {
 				return fmt.Errorf("operator address %s is not sorted", delegationShares.OperatorAddr)
 			}
@@ -762,7 +742,6 @@ func (rds RewardsDelegationShares) Validate() error {
 
 			// we compare each delegationShares against the last operator address
 			lowOperator = delegationShares.OperatorAddr
-			seenOperator[delegationShares.OperatorAddr] = true
 		}
 
 		return nil

@@ -159,18 +159,16 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["assets"]["deposits"][0]["deposits"][0]["info"]["withdrawable_amount"]="1000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][0]["deposits"][0]["info"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][0]["deposits"][1]["asset_id"]="0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["assets"]["deposits"][0]["deposits"][1]["info"]["total_deposit_amount"]="1000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["assets"]["deposits"][0]["deposits"][1]["info"]["withdrawable_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["assets"]["deposits"][0]["deposits"][1]["info"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["assets"]["deposits"][0]["deposits"][1]["info"]["total_deposit_amount"]="1000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["assets"]["deposits"][0]["deposits"][1]["info"]["withdrawable_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["assets"]["deposits"][0]["deposits"][1]["info"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
-  # add another genesis staker for the tests using local node.
+	# add another genesis staker for the tests using local node.
 	jq '.app_state["assets"]["deposits"][1]["staker"]="0xdc77c5b9d061ae2f7b35a6c8854b8f5bbea98eef_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][1]["deposits"][0]["asset_id"]="0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][1]["deposits"][0]["info"]["total_deposit_amount"]="5000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][1]["deposits"][0]["info"]["withdrawable_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["deposits"][1]["deposits"][0]["info"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
-
 
 	jq '.app_state["assets"]["operator_assets"][0]["operator"]="'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["operator_assets"][0]["assets_state"][0]["asset_id"]="0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -183,7 +181,6 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["assets"]["operator_assets"][0]["assets_state"][1]["info"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["operator_assets"][0]["assets_state"][1]["info"]["total_share"]="1000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["assets"]["operator_assets"][0]["assets_state"][1]["info"]["operator_share"]="1000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-
 
 	# x/feemarket
 	jq '.app_state["feemarket"]["params"]["base_fee"]="10"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -218,10 +215,10 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["delegation"]["delegation_states"][0]["key"]="'"$LOCAL_ADDRESS_HEX"'_0x65/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["delegation_states"][0]["states"]["undelegatable_share"]="4000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["delegation_states"][0]["states"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["delegation"]["delegation_states"][1]["key"]="'"$LOCAL_ADDRESS_HEX"'_0x65/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["delegation"]["delegation_states"][1]["key"]="'"$LOCAL_ADDRESS_HEX"'_0x65/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["delegation_states"][1]["states"]["undelegatable_share"]="1000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["delegation_states"][1]["states"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["delegation"]["delegation_states"][2]["key"]="0xdc77c5b9d061ae2f7b35a6c8854b8f5bbea98eef_0x65/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["delegation"]["delegation_states"][2]["key"]="0xdc77c5b9d061ae2f7b35a6c8854b8f5bbea98eef_0x65/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["delegation_states"][2]["states"]["undelegatable_share"]="5000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["delegation_states"][2]["states"]["pending_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["associations"][0]["staker_id"]="'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -257,8 +254,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# chain
 	jq '.app_state["oracle"]["params"]["chains"][1]["name"]="Ethereum"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["chains"][1]["desc"]="-"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["params"]["chains"][2]["name"]="Solana"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["params"]["chains"][2]["desc"]="-"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["params"]["chains"][2]["name"]="Solana"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["params"]["chains"][2]["desc"]="-"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	# token
 	jq '.app_state["oracle"]["params"]["tokens"][1]["name"]="USDT"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["params"]["tokens"][1]["chain_id"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -330,17 +327,17 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# NSTETH
 	jq '.app_state["oracle"]["prices_list"][1]["next_round_id"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["oracle"]["prices_list"][1]["price_list"][0]["decimal"]="6"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][1]["price_list"][0]["price"]="3000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][1]["price_list"][0]["round_id"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][1]["price_list"][0]["timestamp"]="2025-11-07 01:00:00"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][1]["token_id"]="2"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  # NSTSOL
-  jq '.app_state["oracle"]["prices_list"][2]["next_round_id"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["decimal"]="6"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["price"]="155000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["round_id"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["timestamp"]="2025-11-07 01:00:00"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-  jq '.app_state["oracle"]["prices_list"][2]["token_id"]="3"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][1]["price_list"][0]["price"]="3000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][1]["price_list"][0]["round_id"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][1]["price_list"][0]["timestamp"]="2025-11-07 01:00:00"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][1]["token_id"]="2"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	# NSTSOL
+	jq '.app_state["oracle"]["prices_list"][2]["next_round_id"]="1"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["decimal"]="6"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["price"]="155000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["round_id"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][2]["price_list"][0]["timestamp"]="2025-11-07 01:00:00"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["oracle"]["prices_list"][2]["token_id"]="3"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# custom epoch definitions can be added here, if required.
 	# see https://github.com/imua-xyz/imuachain/blob/82b2509ad33ab7679592dcb1aa56a7a811128410/local_node.sh#L123 as an example
