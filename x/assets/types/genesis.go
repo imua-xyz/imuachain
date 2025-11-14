@@ -20,7 +20,7 @@ var (
 	IMUAToken = StakingAssetInfo{
 		AssetBasicInfo: AssetInfo{
 			Name:             "Native IM token",
-			Symbol:           "IMUA",
+			Symbol:           "IM",
 			Address:          "0x0000000000000000000000000000000000000000",
 			Decimals:         18,
 			LayerZeroChainID: 0,

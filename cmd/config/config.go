@@ -27,7 +27,7 @@ const (
 const (
 	// DisplayDenom defines the denomination displayed to users in client applications.
 	// We capitalize it to match ETH and wei logic.
-	DisplayDenom = "IMUA"
+	DisplayDenom = "IM"
 	// BaseDenom defines to the default denomination used in Imuachain (EVM, governance, etc.)
 	BaseDenom = "hua"
 )
