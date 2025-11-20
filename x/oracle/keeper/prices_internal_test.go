@@ -50,12 +50,7 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 					Price:   "100",
 					RoundID: 1,
 					Decimal: 18,
-				})
-				//				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
-				//					Price:   "100",
-				//					RoundID: 2,
-				//					Decimal: 18,
-				//				})
+				}, true)
 			},
 			input: types.PriceTimeRound{
 				Price:   "100",
@@ -66,7 +61,7 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 			expectedResult: &types.PriceAcc{
 				Price:        "0",
 				StartRoundID: 1,
-				LastRoundID:  1,
+				LastRoundID:  0,
 				Decimal:      0,
 			},
 		},
@@ -77,12 +72,12 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 					Price:   "100",
 					RoundID: 1,
 					Decimal: 18,
-				})
+				}, true)
 				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
 					Price:   "100",
 					RoundID: 2,
 					Decimal: 18,
-				})
+				}, true)
 			},
 			input: types.PriceTimeRound{
 				Price:   "110",
@@ -93,7 +88,7 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 			expectedResult: &types.PriceAcc{
 				Price:        "200",
 				StartRoundID: 1,
-				LastRoundID:  3,
+				LastRoundID:  2,
 				Decimal:      18,
 			},
 		},
@@ -104,18 +99,50 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 					Price:   "100",
 					RoundID: 1,
 					Decimal: 18,
-				})
+				}, true)
 				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
 					Price:   "100",
 					RoundID: 2,
 					Decimal: 18,
-				})
+				}, true)
 				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
 					Price:   "110",
 					RoundID: 3,
 					Decimal: 18,
-				})
-				// Set up existing accumulated price
+				}, true)
+			},
+			input: types.PriceTimeRound{
+				Price:   "120",
+				RoundID: 4,
+				Decimal: 18,
+			},
+			expectedError: false,
+			expectedResult: &types.PriceAcc{
+				Price:        "310",
+				StartRoundID: 1,
+				LastRoundID:  3,
+				Decimal:      18,
+			},
+		},
+		{
+			name: "skip accumulation when previous round is already accumulated",
+			setup: func(k *Keeper, ctx sdk.Context, tokenID uint64) {
+				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
+					Price:   "100",
+					RoundID: 1,
+					Decimal: 18,
+				}, true)
+				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
+					Price:   "100",
+					RoundID: 2,
+					Decimal: 18,
+				}, true)
+				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
+					Price:   "110",
+					RoundID: 3,
+					Decimal: 18,
+				}, true)
+				// Set up accumulated price that already includes round 4
 				accPrice := types.PriceAcc{
 					Price:        "210",
 					StartRoundID: 2,
@@ -133,51 +160,9 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 			},
 			expectedError: false,
 			expectedResult: &types.PriceAcc{
-				Price:        "320",
-				StartRoundID: 2,
-				LastRoundID:  4,
-				Decimal:      18,
-			},
-		},
-		{
-			name: "skip accumulation when previous round is already accumulated",
-			setup: func(k *Keeper, ctx sdk.Context, tokenID uint64) {
-				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
-					Price:   "100",
-					RoundID: 1,
-					Decimal: 18,
-				})
-				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
-					Price:   "100",
-					RoundID: 2,
-					Decimal: 18,
-				})
-				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
-					Price:   "110",
-					RoundID: 3,
-					Decimal: 18,
-				})
-				// Set up accumulated price that already includes round 4
-				accPrice := types.PriceAcc{
-					Price:        "210",
-					StartRoundID: 2,
-					LastRoundID:  4,
-					Decimal:      18,
-				}
-				store := ctx.KVStore(k.storeKey)
-				key := types.PricesAccumulatedKey(tokenID)
-				store.Set(key, k.cdc.MustMarshal(&accPrice))
-			},
-			input: types.PriceTimeRound{
-				Price:   "120",
-				RoundID: 4,
-				Decimal: 18,
-			},
-			expectedError: false,
-			expectedResult: &types.PriceAcc{
 				Price:        "210",
 				StartRoundID: 2,
-				LastRoundID:  4,
+				LastRoundID:  3,
 				Decimal:      18,
 			},
 		},
@@ -188,12 +173,12 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 					Price:   "100",
 					RoundID: 1,
 					Decimal: 6,
-				})
+				}, true)
 				k.AppendPriceTR(ctx, tokenID, types.PriceTimeRound{
 					Price:   "100",
 					RoundID: 2,
 					Decimal: 8,
-				})
+				}, true)
 			},
 			input: types.PriceTimeRound{
 				Price:   "110",
@@ -204,7 +189,7 @@ func TestAccumulatePriceTR_Internal(t *testing.T) {
 			expectedResult: &types.PriceAcc{
 				Price:        "10100",
 				StartRoundID: 1,
-				LastRoundID:  3,
+				LastRoundID:  2,
 				Decimal:      8,
 			},
 		},

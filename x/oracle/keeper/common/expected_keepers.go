@@ -30,8 +30,8 @@ type KeeperOracle interface {
 	InitValidatorReportInfo(ctx sdk.Context, validator string, height int64)
 	ClearAllValidatorReportInfo(ctx sdk.Context)
 	ClearAllValidatorMissedRoundBitArray(ctx sdk.Context)
-	GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price string, roundID uint64)
-	AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound) bool
+	GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64, accumulate bool) (price string, roundID uint64)
+	AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound, accumulate bool) bool
 	GetValidatorReportInfo(ctx sdk.Context, validator string) (info types.ValidatorReportInfo, found bool)
 	GetMaliciousJailDuration(ctx sdk.Context) (res time.Duration)
 	ClearValidatorMissedRoundBitArray(ctx sdk.Context, validator string)
