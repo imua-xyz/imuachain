@@ -16,8 +16,8 @@ const (
 
 // Blacklisted gateway addresses that are not allowed to be used as gateways
 var (
-	// ForbiddenGatewayAddresses contains addresses that are not allowed to be used as gateways
-	ForbiddenGatewayAddresses = []string{
+	// forbiddenGatewayAddresses contains addresses that are not allowed to be used as gateways
+	forbiddenGatewayAddresses = []string{
 		"0x0000000000000000000000000000000000000000", // Zero address
 		// Ethereum standard precompiles (1-9)
 		"0x0000000000000000000000000000000000000001", // ECRECOVER
@@ -98,7 +98,7 @@ func (p Params) ValidateBasic() error {
 // ValidateGatewayBusinessRules applies business logic validation to gateway addresses
 func ValidateGatewayBusinessRules(gateway string) error {
 	// Check if address is in forbidden list
-	for _, forbidden := range ForbiddenGatewayAddresses {
+	for _, forbidden := range forbiddenGatewayAddresses {
 		if strings.EqualFold(gateway, forbidden) {
 			return ErrInvalidEvmAddressFormat.Wrapf(
 				"address is in forbidden list: %s", gateway)
