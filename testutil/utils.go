@@ -107,7 +107,7 @@ var DefaultTestClientChain = []assetstypes.ClientChainInfo{
 	},
 	// add the imua chain
 	{
-		Name:               "Imua",
+		Name:               "Imua chain",
 		MetaInfo:           "The (native) Imua chain",
 		ChainId:            0,
 		FinalizationBlocks: 10,
@@ -322,7 +322,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			AssetID:         "nst_0x65",
 		},
 		&oracletypes.Token{
-			Name:            "IMUA",
+			Name:            "IM",
 			ChainID:         1,
 			ContractAddress: "0x",
 			Decimal:         0,
@@ -472,7 +472,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			},
 		},
 	}
-	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, operatorConsKeys, optStates, operatorUSDValues, avsUSDValues, nil, nil, nil, operatorAssetUSDValues)
+	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, operatorConsKeys, optStates, operatorUSDValues, avsUSDValues, nil, nil, nil, operatorAssetUSDValues, operatortypes.DefaultParams())
 	genesisState[operatortypes.ModuleName] = app.AppCodec().MustMarshalJSON(operatorGenesis)
 
 	// x/delegation
@@ -735,9 +735,10 @@ func (suite *BaseTestSuite) RegisterOperator(operator string, commission staking
 	registerReq := &operatortypes.RegisterOperatorReq{
 		FromAddress: operator,
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr: operator,
-			ApproveAddr:  operator,
-			Commission:   commission,
+			EarningsAddr:     operator,
+			ApproveAddr:      operator,
+			OperatorMetaInfo: operator,
+			Commission:       commission,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)

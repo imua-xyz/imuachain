@@ -10,6 +10,7 @@ import (
 	"github.com/imua-xyz/imuachain/x/avs/types"
 
 	sdkmath "cosmossdk.io/math"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 
 	"github.com/cometbft/cometbft/libs/rand"
@@ -391,12 +392,24 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 	epochIdentifier := epochstypes.DayEpochID
 	params := []uint64{2, 3, 4, 4}
 
+	rate, _ := sdk.NewDecFromStr("0.1")
+	maxRate, _ := sdk.NewDecFromStr("0.2")
+	maxChangeRate, _ := sdk.NewDecFromStr("0.05")
+
 	registerOperator := func() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddress.String(),
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr: operatorAddress.String(),
-				ApproveAddr:  operatorAddress.String(),
+				EarningsAddr:     operatorAddress.String(),
+				ApproveAddr:      operatorAddress.String(),
+				OperatorMetaInfo: operatorAddress.String(),
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          rate,
+						MaxRate:       maxRate,
+						MaxChangeRate: maxChangeRate,
+					},
+				},
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)
@@ -557,12 +570,24 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 	epochIdentifier := epochstypes.DayEpochID
 	params := []uint64{2, 3, 4, 4}
 
+	rate, _ := sdk.NewDecFromStr("0.1")
+	maxRate, _ := sdk.NewDecFromStr("0.2")
+	maxChangeRate, _ := sdk.NewDecFromStr("0.05")
+
 	registerOperator := func() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddress.String(),
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr: operatorAddress.String(),
-				ApproveAddr:  operatorAddress.String(),
+				EarningsAddr:     operatorAddress.String(),
+				ApproveAddr:      operatorAddress.String(),
+				OperatorMetaInfo: operatorAddress.String(),
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          rate,
+						MaxRate:       maxRate,
+						MaxChangeRate: maxChangeRate,
+					},
+				},
 			},
 		}
 		_, err := suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)

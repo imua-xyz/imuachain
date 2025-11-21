@@ -10,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -78,12 +79,23 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 		_, err := s.App.AssetsKeeper.PerformDepositOrWithdraw(s.Ctx, params)
 		s.Require().NoError(err)
 	}
+	rate, _ := sdk.NewDecFromStr("0.1")
+	maxRate, _ := sdk.NewDecFromStr("0.2")
+	maxChangeRate, _ := sdk.NewDecFromStr("0.05")
 	registerOperator := func() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: opAccAddr,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr: opAccAddr,
-				ApproveAddr:  opAccAddr,
+				EarningsAddr:     opAccAddr,
+				ApproveAddr:      opAccAddr,
+				OperatorMetaInfo: opAccAddr,
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          rate,
+						MaxRate:       maxRate,
+						MaxChangeRate: maxChangeRate,
+					},
+				},
 			},
 		}
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)
@@ -313,12 +325,23 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		err = s.App.DelegationKeeper.DelegateTo(s.Ctx, delegateToParams)
 		s.Require().NoError(err)
 	}
+	rate, _ := sdk.NewDecFromStr("0.1")
+	maxRate, _ := sdk.NewDecFromStr("0.2")
+	maxChangeRate, _ := sdk.NewDecFromStr("0.05")
 	registerOperator := func() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddr,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr: operatorAddr,
-				ApproveAddr:  operatorAddr,
+				EarningsAddr:     operatorAddr,
+				ApproveAddr:      operatorAddr,
+				OperatorMetaInfo: operatorAddr,
+				Commission: stakingtypes.Commission{
+					CommissionRates: stakingtypes.CommissionRates{
+						Rate:          rate,
+						MaxRate:       maxRate,
+						MaxChangeRate: maxChangeRate,
+					},
+				},
 			},
 		}
 		_, err := s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

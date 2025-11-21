@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	// this line is used by starport scaffolding # 1
 
@@ -14,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/imua-xyz/imuachain/x/oracle/client/cli"
@@ -147,7 +149,12 @@ func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // EndBlock contains the logic that is automatically triggered at the end of each block
 func (am AppModule) EndBlock(ctx sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 	am.keeper.FlushCachedNSTStakersEvent(ctx)
 	am.keeper.EndBlock(ctx)
+	if c := am.keeper.GetAndResetCount(); c > 0 {
+		telemetry.ModuleSetGauge(types.ModuleName, float32(c), "block", "tx_exec", "oracle_count")
+		telemetry.ModuleSetGauge(types.ModuleName, am.keeper.GetAndResetTotald(), "block", "tx_exec", "oracle_ms")
+	}
 	return []abci.ValidatorUpdate{}
 }

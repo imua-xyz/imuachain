@@ -12,6 +12,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 
@@ -189,8 +190,16 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	registerReq := &operatorTypes.RegisterOperatorReq{
 		FromAddress: operatorAddress.String(),
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr: operatorAddress.String(),
-			ApproveAddr:  operatorAddress.String(),
+			EarningsAddr:     operatorAddress.String(),
+			ApproveAddr:      operatorAddress.String(),
+			OperatorMetaInfo: operatorAddress.String(),
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          sdk.ZeroDec(),
+					MaxRate:       sdk.ZeroDec(),
+					MaxChangeRate: sdk.ZeroDec(),
+				},
+			},
 		},
 	}
 	_, err = suite.OperatorMsgServer.RegisterOperator(sdk.WrapSDKContext(suite.Ctx), registerReq)

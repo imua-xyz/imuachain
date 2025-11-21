@@ -3,6 +3,7 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
@@ -16,6 +17,12 @@ const (
 	TypeOptIntoAVSReq = "opt_into_avs"
 	// TypeOptOutOfAVSReq is the type for the OptOutOfAVSReq message.
 	TypeOptOutOfAVSReq = "opt_out_of_avs"
+	// TypeUpdateCommissionRateReq is the type for the UpdateCommissionRateReq message.
+	TypeUpdateCommissionRateReq = "update_commission_rate"
+	// TypeEditOperatorReq is the type for the EditOperatorReq message.
+	TypeEditOperatorReq = "edit_operator"
+	// TypeUpdateParamsReq is the type for the UpdateParamsReq message.
+	TypeUpdateParamsReq = "update_params"
 )
 
 // interface guards
@@ -24,6 +31,8 @@ var (
 	_ sdk.Msg = &OptIntoAVSReq{}
 	_ sdk.Msg = &OptOutOfAVSReq{}
 	_ sdk.Msg = &SetConsKeyReq{}
+	_ sdk.Msg = &UpdateCommissionRateReq{}
+	_ sdk.Msg = &EditOperatorReq{}
 )
 
 // GetSigners returns the expected signers for the message.
@@ -163,5 +172,101 @@ func (m *OptOutOfAVSReq) Type() string {
 
 // GetSignBytes returns the bytes all expected signers must sign over.
 func (m *OptOutOfAVSReq) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *UpdateCommissionRateReq) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Address)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *UpdateCommissionRateReq) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Address); err != nil {
+		return errorsmod.Wrap(err, "invalid from address")
+	}
+	if !m.CommissionRate.IsPositive() {
+		return errorsmod.Wrap(ErrParameterInvalid, "commission rate is not positive")
+	}
+	return nil
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *UpdateCommissionRateReq) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *UpdateCommissionRateReq) Type() string {
+	return TypeUpdateCommissionRateReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *UpdateCommissionRateReq) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *EditOperatorReq) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Address)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *EditOperatorReq) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Address); err != nil {
+		return errorsmod.Wrap(err, "invalid from address")
+	}
+	if m.OperatorMetaInfo == "" {
+		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is empty")
+	}
+	if len(m.OperatorMetaInfo) > stakingtypes.MaxMonikerLength {
+		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is too long")
+	}
+	return nil
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *EditOperatorReq) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *EditOperatorReq) Type() string {
+	return TypeEditOperatorReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *EditOperatorReq) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgUpdateParams) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
+	}
+	return m.Params.Validate()
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *MsgUpdateParams) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *MsgUpdateParams) Type() string {
+	return TypeUpdateParamsReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *MsgUpdateParams) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

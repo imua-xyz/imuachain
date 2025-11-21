@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -97,6 +99,7 @@ func (am AppModule) WeightedOperations(module.SimulationState) []simtypes.Weight
 // EndBlock executes all ABCI EndBlock logic respective to this module.
 // It returns no validator updates.
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
+	defer telemetry.ModuleMeasureSince(delegationtype.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 	am.keeper.EndBlock(ctx, req)
 	return []abci.ValidatorUpdate{}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
 
 	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
@@ -26,11 +27,17 @@ import (
 // name (meta info)
 // commission, subject to limits and once within 24 hours.
 // client chain earnings addresses (maybe append only?)
-func (k *Keeper) SetOperatorInfo(
+func (k *Keeper) RegisterOperator(
 	ctx sdk.Context, addr string, info *operatortypes.OperatorInfo,
 ) (err error) {
 	if info == nil {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator info is nil")
+	}
+	if err := info.ValidateBasic(); err != nil {
+		return errorsmod.Wrap(err, "SetOperatorInfo: operator info is invalid")
+	}
+	if info.Commission.UpdateTime.Equal(time.Time{}) {
+		info.Commission.UpdateTime = ctx.BlockTime()
 	}
 	// #nosec G703 // already validated in `ValidateBasic`
 	opAccAddr, err := sdk.AccAddressFromBech32(addr)
@@ -45,16 +52,22 @@ func (k *Keeper) SetOperatorInfo(
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator address does not match approve address")
 	}
 	// if already registered, this request should go to EditOperator.
-	// TODO: EditOperator needs to be implemented.
 	if k.IsOperator(ctx, opAccAddr) {
 		return errorsmod.Wrap(
 			operatortypes.ErrOperatorAlreadyExists,
 			fmt.Sprintf("SetOperatorInfo: operator already exists, address: %s", opAccAddr),
 		)
 	}
-	// TODO: add minimum commission rate module parameter and check that commission exceeds it.
-	info.Commission.UpdateTime = ctx.BlockTime()
-
+	// check if the operator name already exists
+	if has, err := k.HasOperatorName(ctx, info.OperatorMetaInfo); err != nil {
+		return errorsmod.Wrap(err, "SetOperatorInfo: error occurred when checking operator name")
+	} else if has {
+		return errorsmod.Wrap(
+			operatortypes.ErrOperatorNameAlreadyExists,
+			fmt.Sprintf("SetOperatorInfo: operator name already exists, name: %s", info.OperatorMetaInfo),
+		)
+	}
+	// check if the client chain earning addresses are valid
 	if info.ClientChainEarningsAddr != nil {
 		for _, data := range info.ClientChainEarningsAddr.EarningInfoList {
 			if data.ClientChainEarningAddr == "" {
@@ -71,13 +84,9 @@ func (k *Keeper) SetOperatorInfo(
 			}
 		}
 	}
-
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
-	bz := k.cdc.MustMarshal(info)
-	store.Set(opAccAddr, bz)
-
-	// TODO validate operator name does not already exist
-
+	// unchecked data storage
+	k.setOperatorInfo(ctx, opAccAddr, info)
+	// event for the indexer
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			operatortypes.EventTypeRegisterOperator,
@@ -90,8 +99,69 @@ func (k *Keeper) SetOperatorInfo(
 			// TODO: add ClientChainEarningsAddr.EarningInfoList to the event
 		),
 	)
-
 	return nil
+}
+
+// EditOperator edits an operator's meta info.
+func (k *Keeper) EditOperator(
+	ctx sdk.Context, opAccAddr sdk.AccAddress, metaInfo string,
+) error {
+	info, err := k.OperatorInfo(ctx, opAccAddr.String())
+	if err != nil {
+		return err
+	}
+	// this prevents resetting to the same name as well
+	if has, err := k.HasOperatorName(ctx, metaInfo); err != nil {
+		return err
+	} else if has {
+		return errorsmod.Wrap(
+			operatortypes.ErrOperatorNameAlreadyExists,
+			fmt.Sprintf("EditOperator: operator name already exists, name: %s", metaInfo),
+		)
+	}
+	info.OperatorMetaInfo = metaInfo
+	if err := info.ValidateBasic(); err != nil {
+		return err
+	}
+	k.setOperatorInfo(ctx, opAccAddr, info)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeEditOperator,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyMetaInfo, metaInfo),
+		),
+	)
+	return nil
+}
+
+// setOperatorInfo is used to store the operator's information on the chain.
+// It does not validate the operator info.
+// It is used by `RegisterOperator` and `UpdateCommissionRate`.
+func (k *Keeper) setOperatorInfo(
+	ctx sdk.Context, opAccAddr sdk.AccAddress, info *operatortypes.OperatorInfo,
+) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
+	bz := k.cdc.MustMarshal(info)
+	store.Set(opAccAddr, bz)
+}
+
+// HasOperatorName checks if the operator name already exists.
+func (k *Keeper) HasOperatorName(ctx sdk.Context, name string) (bool, error) {
+	res := false
+	opFunc := func(_ sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
+		if operatorInfo.OperatorMetaInfo == name {
+			res = true
+			// stop, no error
+			return true, nil
+		}
+		// continue, no error
+		return false, nil
+	}
+	err := k.IterateOperators(ctx, opFunc)
+	if err != nil {
+		return false, err
+	}
+	return res, nil
 }
 
 func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error) {

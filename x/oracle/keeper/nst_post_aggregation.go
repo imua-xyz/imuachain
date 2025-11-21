@@ -20,16 +20,22 @@ import (
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-// deposit: update staker's totalDeposit
-// withdoraw: update staker's totalDeposit
-// delegate: update operator's price, operator's totalAmount, operator's totalShare, staker's share
-// undelegate: update operator's price, operator's totalAmount, operator's totalShare, staker's share
-// msg(refund or slash on beaconChain): update staker's price, operator's price
+/**
+ deposit: update staker's totalDeposit
+ withdoraw: update staker's totalDeposit
+ delegate: update operator's price, operator's totalAmount, operator's totalShare, staker's share
+ undelegate: update operator's price, operator's totalAmount, operator's totalShare, staker's share
+ msg(refund or slash on beaconChain): update staker's price, operator's price
+**/
+
 // SetStakerInfosForAsset sets the staker information and balances for a given asset (chainID),
 // and updates the latest staker index and version. Used during aggregation or state sync.
 func (k Keeper) SetStakerInfosForAsset(ctx sdk.Context, chainID uint64, stakerInfos []*types.StakerInfo, version types.NSTVersion) {
+	// we don't set anything if stakerInfos is empty
+	if len(stakerInfos) == 0 {
+		return
+	}
 	store := ctx.KVStore(k.storeKey)
-
 	lastIndex := uint32(0)
 	for _, stakerInfo := range stakerInfos {
 		// set staker balances
@@ -110,7 +116,6 @@ func (k Keeper) GetStakerInfos(ctx sdk.Context, req *types.QueryStakerInfosReque
 	if !found {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("version for assetID:%s not found", req.AssetId))
 	}
-
 	store := ctx.KVStore(k.storeKey)
 	storePrefix := prefix.NewStore(store, types.NSTStakerKeyChainIDPrefix(chainID))
 	retStakerInfos := make([]*types.StakerInfo, 0)
@@ -390,6 +395,8 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 			}
 		}
 	} else if action == types.Action_ACTION_WITHDRAW {
+		// we don't need to check staker has enough balance, because assets module has done that check
+		// and the previous check has guaranteed stakerInfo.BalanceList is not empty
 		withdrawVersion := k.IncreaseVersionByWithdraw(ctx, chainID)
 		staker.WithdrawVersion = withdrawVersion
 		k.SetStaker(ctx, chainID, stakerAddr, staker)
@@ -432,7 +439,10 @@ func (k Keeper) GetNSTVersions(ctx sdk.Context, chainID uint64) (types.NSTVersio
 	key := types.NSTVersionKey(chainID)
 	value := store.Get(key)
 	if value == nil {
-		return types.NSTVersion{}, false
+		return types.NSTVersion{
+			Version:     &types.VersionDepositAmount{},
+			FeedVersion: &types.VersionDepositAmount{},
+		}, false
 	}
 	var v types.NSTVersion
 	k.cdc.MustUnmarshal(value, &v)

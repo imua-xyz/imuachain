@@ -13,6 +13,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
@@ -33,12 +34,23 @@ func (suite *AVSManagerPrecompileSuite) prepareOperator(address string) {
 	opAccAddress, err := sdk.AccAddressFromBech32(address)
 	suite.operatorAddress = opAccAddress
 	suite.NoError(err)
+	rate, _ := sdk.NewDecFromStr("0.1")
+	maxRate, _ := sdk.NewDecFromStr("0.2")
+	maxChangeRate, _ := sdk.NewDecFromStr("0.05")
 	// register operator
 	registerReq := &operatorTypes.RegisterOperatorReq{
 		FromAddress: suite.operatorAddress.String(),
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr: suite.operatorAddress.String(),
-			ApproveAddr:  suite.operatorAddress.String(),
+			EarningsAddr:     suite.operatorAddress.String(),
+			ApproveAddr:      suite.operatorAddress.String(),
+			OperatorMetaInfo: suite.operatorAddress.String(),
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          rate,
+					MaxRate:       maxRate,
+					MaxChangeRate: maxChangeRate,
+				},
+			},
 		},
 	}
 	_, err = s.OperatorMsgServer.RegisterOperator(s.Ctx, registerReq)

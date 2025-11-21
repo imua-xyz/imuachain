@@ -36,7 +36,6 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	}
 	// Set all stakerInfos for assetIDs
 	for _, elem := range genState.StakerInfosAssets {
-		// TODO: update the definition of nstVersion to be uint64
 		// #nosec G115
 		k.SetStakerInfosForAsset(ctx, elem.ChainId, elem.StakerInfos, elem.NstVersionInfo)
 	}

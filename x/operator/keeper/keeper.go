@@ -24,6 +24,8 @@ type Keeper struct {
 	hooks            operatortypes.OperatorHooks // set separately via call to SetHooks
 	slashKeeper      operatortypes.SlashKeeper   // for jailing and unjailing check TODO(mm)
 	epochsKeeper     operatortypes.EpochsKeeper
+
+	authority string
 }
 
 func NewKeeper(
@@ -36,6 +38,7 @@ func NewKeeper(
 	stakingKeeper operatortypes.StakingKeeper,
 	slashKeeper operatortypes.SlashKeeper,
 	epochsKeeper operatortypes.EpochsKeeper,
+	authority string,
 ) Keeper {
 	return Keeper{
 		storeKey:         storeKey,
@@ -47,6 +50,7 @@ func NewKeeper(
 		stakingKeeper:    stakingKeeper,
 		slashKeeper:      slashKeeper,
 		epochsKeeper:     epochsKeeper,
+		authority:        authority,
 	}
 }
 
