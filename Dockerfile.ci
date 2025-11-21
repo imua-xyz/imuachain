@@ -1,0 +1,24 @@
+FROM debian:bookworm-slim
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates tzdata curl && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY ./imuad /usr/local/bin/imuad
+
+RUN useradd -r -u 10001 -m -d /home/imua -s /user/sbin/nologin -U imua && \
+    chown -R imua:imua /home/imua /usr/local/bin/imuad
+
+USER imua
+
+
+EXPOSE 26656 26657 1317 9090 8545 8546
+
+ENV HEALTHCHECK_URL=http://127.0.0.1:26657/health
+# Every 30s, allow 3 retries before failing, timeout after 30s.
+HEALTHCHECK --interval=30s --timeout=30s --retries=3 \
+  CMD curl -fsS "$HEALTHCHECK_URL" >/dev/null || exit 1
+
+
+ENTRYPOINT ["/usr/local/bin/imuad"]

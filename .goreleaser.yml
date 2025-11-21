@@ -7,7 +7,7 @@ before:
 builds:
   - id: "imuad-darwin"
     main: ./cmd/imuad
-    binary: bin/imuad
+    binary: imuad
     env:
       - CGO_ENABLED=1
       - CC=o64-clang
@@ -22,7 +22,7 @@ builds:
       - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
   - id: "imuad-darwin-arm64"
     main: ./cmd/imuad
-    binary: bin/imuad
+    binary: imuad
     env:
       - CGO_ENABLED=1
       - CC=oa64-clang
@@ -37,7 +37,7 @@ builds:
       - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
   - id: "imuad-linux"
     main: ./cmd/imuad
-    binary: bin/imuad
+    binary: imuad
     env:
       - CGO_ENABLED=1
       - CC=gcc
@@ -52,7 +52,7 @@ builds:
       - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
   - id: "imuad-linux-arm64"
     main: ./cmd/imuad
-    binary: bin/imuad
+    binary: imuad
     env:
       - CGO_ENABLED=1
       - CC=aarch64-linux-gnu-gcc
@@ -67,7 +67,7 @@ builds:
       - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=imua -X github.com/cosmos/cosmos-sdk/version.AppName=imuad -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
   - id: "imuad-windows"
     main: ./cmd/imuad
-    binary: bin/imuad
+    binary: imuad
     env:
       - CGO_ENABLED=1
       - CC=x86_64-w64-mingw32-gcc
@@ -104,3 +104,55 @@ changelog:
       - '^test:'
 snapshot:
   name_template: "{{ .Tag }}-{{ .Branch }}@{{ .ShortCommit }}-{{ .GitTreeState }}"
+
+dockers:
+  - id: ghcr-amd64
+    skip_push: "{{ .IsSnapshot }}"
+    use: buildx
+    dockerfile: Dockerfile.ci
+    ids: ["imuad-linux"]
+    image_templates:
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-amd64"
+      - '{{ if not (contains .Tag "-") }}ghcr.io/imua-xyz/imuachain:latest-amd64{{ end }}'
+    goos: linux
+    goarch: amd64
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.source={{ .GitURL }}"
+      - "--label=org.opencontainers.image.revision={{ .Commit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ time \"2006-01-02T15:04:05Z07:00\" }}"
+      - "--label=org.opencontainers.image.title=imuachain"
+      - "--label=org.opencontainers.image.description=IMUA full node (release image)"
+
+  - id: ghcr-arm64
+    skip_push: "{{ .IsSnapshot }}"
+    use: buildx
+    dockerfile: Dockerfile.ci
+    ids: [imuad-linux-arm64]
+    image_templates:
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-arm64"
+      - '{{ if not (contains .Tag "-") }}ghcr.io/imua-xyz/imuachain:latest-arm64{{ end }}'
+    goos: linux
+    goarch: arm64
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.source={{ .GitURL }}"
+      - "--label=org.opencontainers.image.revision={{ .Commit }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.created={{ time \"2006-01-02T15:04:05Z07:00\" }}"
+      - "--label=org.opencontainers.image.title=imuachain"
+      - "--label=org.opencontainers.image.description=IMUA full node (release image)"
+
+docker_manifests:
+  - name_template: "ghcr.io/imua-xyz/imuachain:{{ .Tag }}"
+    skip_push: "{{ .IsSnapshot }}"
+    image_templates:
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-amd64"
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-arm64"
+
+  - name_template: "ghcr.io/imua-xyz/imuachain:latest"
+    skip_push: '{{ or .IsSnapshot (contains .Tag "-")}}'
+    image_templates:
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-amd64"
+      - "ghcr.io/imua-xyz/imuachain:{{ .Tag }}-arm64"
