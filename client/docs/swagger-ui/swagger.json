@@ -21244,6 +21244,98 @@
                         },
                         "description": "withdrawn_rewards represents rewards that have been withdrawn."
                       },
+                      "historical_total_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "description": "asset_id is the unique identifier of the reward token."
+                            },
+                            "decimal": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "title": "amount is the reward amount"
+                            }
+                          },
+                          "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                        },
+                        "description": "historical_total_rewards represents the total historical rewards that have been claimed."
+                      },
+                      "delegation_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "description": "asset_id is the unique identifier of the reward token."
+                            },
+                            "decimal": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "title": "amount is the reward amount"
+                            }
+                          },
+                          "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                        },
+                        "description": "delegation_rewards represents rewards that have been re-delegated."
+                      },
+                      "pending_undelegation_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "description": "asset_id is the unique identifier of the reward token."
+                            },
+                            "decimal": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "title": "amount is the reward amount"
+                            }
+                          },
+                          "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                        },
+                        "description": "pending_undelegation_rewards represents the pending undelegation rewards."
+                      },
+                      "withdrawable_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "description": "asset_id is the unique identifier of the reward token."
+                            },
+                            "decimal": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "title": "amount is the reward amount"
+                            }
+                          },
+                          "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                        },
+                        "description": "withdrawable_rewards represents the withdrawable rewards from the completed rewards undelegation."
+                      },
                       "unclaimed_rewards": {
                         "type": "array",
                         "items": {
@@ -21266,6 +21358,29 @@
                           "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
                         },
                         "description": "unclaimed_rewards represents rewards that have not yet been accounted or distributed."
+                      },
+                      "unclaimed_compounding_rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "asset_id": {
+                              "type": "string",
+                              "description": "asset_id is the unique identifier of the reward token."
+                            },
+                            "decimal": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                            },
+                            "amount": {
+                              "type": "string",
+                              "title": "amount is the reward amount"
+                            }
+                          },
+                          "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                        },
+                        "description": "unclaimed_compounding_rewards represents the compounding rewards that have not yet been accounted or distributed."
                       }
                     },
                     "description": "StakerRewardsPerAVS is the response type representing a staker's rewards from a specific AVS."
@@ -21338,40 +21453,55 @@
                   "title": "avs_reward_asset is the reward asset returned for the input avs",
                   "type": "object",
                   "properties": {
-                    "asset_basic_info": {
-                      "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                    "reward_asset_info": {
+                      "description": "reward_asset_info is the information of the reward asset.",
                       "type": "object",
                       "properties": {
-                        "name": {
-                          "type": "string",
-                          "title": "name of the asset, like \"Tether USD\""
+                        "asset_basic_info": {
+                          "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "title": "name of the asset, like \"Tether USD\""
+                            },
+                            "symbol": {
+                              "type": "string",
+                              "title": "symbol of the asset, like \"USDT\""
+                            },
+                            "address": {
+                              "type": "string",
+                              "title": "address of the asset on the client chain"
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimals used in the asset, typically 6 or 18."
+                            },
+                            "layer_zero_chain_id": {
+                              "type": "string",
+                              "format": "uint64",
+                              "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                            },
+                            "imua_chain_index": {
+                              "type": "string",
+                              "format": "uint64",
+                              "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                            },
+                            "meta_info": {
+                              "type": "string",
+                              "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                            }
+                          }
                         },
-                        "symbol": {
+                        "reward_denomination": {
                           "type": "string",
-                          "title": "symbol of the asset, like \"USDT\""
+                          "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
                         },
-                        "address": {
-                          "type": "string",
-                          "title": "address of the asset on the client chain"
-                        },
-                        "decimals": {
+                        "denomination_exponent": {
                           "type": "integer",
                           "format": "int64",
-                          "description": "decimals used in the asset, typically 6 or 18."
-                        },
-                        "layer_zero_chain_id": {
-                          "type": "string",
-                          "format": "uint64",
-                          "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                        },
-                        "imua_chain_index": {
-                          "type": "string",
-                          "format": "uint64",
-                          "description": "imua_chain_index is the index of the client chain within the imuasystem."
-                        },
-                        "meta_info": {
-                          "type": "string",
-                          "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                          "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
                         }
                       }
                     },
@@ -21853,6 +21983,142 @@
           {
             "name": "epoch_identifier",
             "description": "epoch identifier",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Query"
+        ]
+      }
+    },
+    "/imuachain/feedistribution/v1/delegation_unclaimed_rewards/{staker_id}/{asset_id}/{operator}": {
+      "get": {
+        "summary": "DelegationUnclaimedRewards queries the unclaimed rewards for a delegation",
+        "operationId": "DelegationUnclaimedRewards",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "rewards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "avs_address": {
+                        "type": "string",
+                        "title": "avs_address is the AVS address"
+                      },
+                      "rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "denom": {
+                              "type": "string"
+                            },
+                            "amount": {
+                              "type": "string"
+                            }
+                          },
+                          "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                        },
+                        "title": "rewards represents the current rewards or cumulative reward ratios"
+                      }
+                    },
+                    "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                  },
+                  "title": "rewards is the unclaimed rewards from staking assets for all AVSs"
+                },
+                "compounding_rewards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "avs_address": {
+                        "type": "string",
+                        "title": "avs_address is the AVS address"
+                      },
+                      "rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "denom": {
+                              "type": "string"
+                            },
+                            "amount": {
+                              "type": "string"
+                            }
+                          },
+                          "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                        },
+                        "title": "rewards represents the current rewards or cumulative reward ratios"
+                      }
+                    },
+                    "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                  },
+                  "title": "compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs"
+                }
+              },
+              "description": "QueryDelegationUnclaimedRewardsResponse is the response to obtain the unclaimed rewards\nfor specific delegation."
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "details": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type_url": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string",
+                        "format": "byte"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "staker_id",
+            "description": "staker id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "asset_id",
+            "description": "asset id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operator",
+            "description": "operator address",
             "in": "path",
             "required": true,
             "type": "string"
@@ -22613,40 +22879,55 @@
                   "title": "avs_reward_asset is the reward asset returned for the input avs",
                   "type": "object",
                   "properties": {
-                    "asset_basic_info": {
-                      "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                    "reward_asset_info": {
+                      "description": "reward_asset_info is the information of the reward asset.",
                       "type": "object",
                       "properties": {
-                        "name": {
-                          "type": "string",
-                          "title": "name of the asset, like \"Tether USD\""
+                        "asset_basic_info": {
+                          "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "title": "name of the asset, like \"Tether USD\""
+                            },
+                            "symbol": {
+                              "type": "string",
+                              "title": "symbol of the asset, like \"USDT\""
+                            },
+                            "address": {
+                              "type": "string",
+                              "title": "address of the asset on the client chain"
+                            },
+                            "decimals": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "decimals used in the asset, typically 6 or 18."
+                            },
+                            "layer_zero_chain_id": {
+                              "type": "string",
+                              "format": "uint64",
+                              "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                            },
+                            "imua_chain_index": {
+                              "type": "string",
+                              "format": "uint64",
+                              "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                            },
+                            "meta_info": {
+                              "type": "string",
+                              "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                            }
+                          }
                         },
-                        "symbol": {
+                        "reward_denomination": {
                           "type": "string",
-                          "title": "symbol of the asset, like \"USDT\""
+                          "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
                         },
-                        "address": {
-                          "type": "string",
-                          "title": "address of the asset on the client chain"
-                        },
-                        "decimals": {
+                        "denomination_exponent": {
                           "type": "integer",
                           "format": "int64",
-                          "description": "decimals used in the asset, typically 6 or 18."
-                        },
-                        "layer_zero_chain_id": {
-                          "type": "string",
-                          "format": "uint64",
-                          "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                        },
-                        "imua_chain_index": {
-                          "type": "string",
-                          "format": "uint64",
-                          "description": "imua_chain_index is the index of the client chain within the imuasystem."
-                        },
-                        "meta_info": {
-                          "type": "string",
-                          "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                          "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
                         }
                       }
                     },
@@ -22748,40 +23029,55 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "asset_basic_info": {
-                            "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                          "reward_asset_info": {
+                            "description": "reward_asset_info is the information of the reward asset.",
                             "type": "object",
                             "properties": {
-                              "name": {
-                                "type": "string",
-                                "title": "name of the asset, like \"Tether USD\""
+                              "asset_basic_info": {
+                                "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string",
+                                    "title": "name of the asset, like \"Tether USD\""
+                                  },
+                                  "symbol": {
+                                    "type": "string",
+                                    "title": "symbol of the asset, like \"USDT\""
+                                  },
+                                  "address": {
+                                    "type": "string",
+                                    "title": "address of the asset on the client chain"
+                                  },
+                                  "decimals": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "description": "decimals used in the asset, typically 6 or 18."
+                                  },
+                                  "layer_zero_chain_id": {
+                                    "type": "string",
+                                    "format": "uint64",
+                                    "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                                  },
+                                  "imua_chain_index": {
+                                    "type": "string",
+                                    "format": "uint64",
+                                    "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                                  },
+                                  "meta_info": {
+                                    "type": "string",
+                                    "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                                  }
+                                }
                               },
-                              "symbol": {
+                              "reward_denomination": {
                                 "type": "string",
-                                "title": "symbol of the asset, like \"USDT\""
+                                "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
                               },
-                              "address": {
-                                "type": "string",
-                                "title": "address of the asset on the client chain"
-                              },
-                              "decimals": {
+                              "denomination_exponent": {
                                 "type": "integer",
                                 "format": "int64",
-                                "description": "decimals used in the asset, typically 6 or 18."
-                              },
-                              "layer_zero_chain_id": {
-                                "type": "string",
-                                "format": "uint64",
-                                "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                              },
-                              "imua_chain_index": {
-                                "type": "string",
-                                "format": "uint64",
-                                "description": "imua_chain_index is the index of the client chain within the imuasystem."
-                              },
-                              "meta_info": {
-                                "type": "string",
-                                "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                                "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
                               }
                             }
                           },
@@ -23194,7 +23490,7 @@
                             "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
                           }
                         },
-                        "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
+                        "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThe historical_total_rewards includes both withdrawn rewards and slashed rewards, in addition\nto the current balance."
                       }
                     },
                     "title": "StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified\nstaker and AVS"
@@ -23394,7 +23690,7 @@
                       "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
                     }
                   },
-                  "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
+                  "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThe historical_total_rewards includes both withdrawn rewards and slashed rewards, in addition\nto the current balance."
                 }
               },
               "title": "QueryStakerClaimedRewardsResponse is the response to obtain the staker claimed rewards"
@@ -23570,7 +23866,37 @@
                     },
                     "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
                   },
-                  "title": "unclaimed rewards for all AVSs"
+                  "title": "rewards is the unclaimed rewards from staking assets for all AVSs"
+                },
+                "compounding_rewards": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "avs_address": {
+                        "type": "string",
+                        "title": "avs_address is the AVS address"
+                      },
+                      "rewards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "denom": {
+                              "type": "string"
+                            },
+                            "amount": {
+                              "type": "string"
+                            }
+                          },
+                          "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                        },
+                        "title": "rewards represents the current rewards or cumulative reward ratios"
+                      }
+                    },
+                    "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+                  },
+                  "title": "compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs"
                 }
               },
               "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
@@ -44182,7 +44508,7 @@
           "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
         }
       },
-      "description": "AssetInfo defines the information for an asset to be used as the staking asset or\nreward asset."
+      "description": "AssetInfo defines the information for an asset to be used as the staking asset."
     },
     "imuachain.assets.v1.ClientChainInfo": {
       "type": "object",
@@ -47831,8 +48157,84 @@
     "imuachain.feedistribution.v1.AVSRewardAsset": {
       "type": "object",
       "properties": {
+        "reward_asset_info": {
+          "description": "reward_asset_info is the information of the reward asset.",
+          "type": "object",
+          "properties": {
+            "asset_basic_info": {
+              "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "title": "name of the asset, like \"Tether USD\""
+                },
+                "symbol": {
+                  "type": "string",
+                  "title": "symbol of the asset, like \"USDT\""
+                },
+                "address": {
+                  "type": "string",
+                  "title": "address of the asset on the client chain"
+                },
+                "decimals": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "decimals used in the asset, typically 6 or 18."
+                },
+                "layer_zero_chain_id": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                },
+                "imua_chain_index": {
+                  "type": "string",
+                  "format": "uint64",
+                  "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                },
+                "meta_info": {
+                  "type": "string",
+                  "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                }
+              }
+            },
+            "reward_denomination": {
+              "type": "string",
+              "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
+            },
+            "denomination_exponent": {
+              "type": "integer",
+              "format": "int64",
+              "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
+            }
+          }
+        },
+        "reward_asset_state": {
+          "title": "reward_asset_state is the state of reward asset",
+          "type": "object",
+          "properties": {
+            "reward_pool_balance": {
+              "type": "string",
+              "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
+            },
+            "reward_pool_total": {
+              "type": "string",
+              "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
+            },
+            "reward_allocation_total": {
+              "type": "string",
+              "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
+            }
+          }
+        }
+      },
+      "title": "AVSRewardAsset defines the information for an asset to be used as a reward for an AVS"
+    },
+    "imuachain.feedistribution.v1.AVSRewardAssetInfo": {
+      "type": "object",
+      "properties": {
         "asset_basic_info": {
-          "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+          "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
           "type": "object",
           "properties": {
             "name": {
@@ -47868,26 +48270,17 @@
             }
           }
         },
-        "reward_asset_state": {
-          "title": "reward_asset_state is the state of reward asset",
-          "type": "object",
-          "properties": {
-            "reward_pool_balance": {
-              "type": "string",
-              "description": "reward_pool_balance is the asset balance of reward pool. It gets updated each time\nan AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.\nWe use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,\nand we also use it when handling the distribution with F1."
-            },
-            "reward_pool_total": {
-              "type": "string",
-              "description": "reward_pool_total is the total amount of the reward funded by the AVS. It is only updated\neach time an AVS deposits/withdraws funds into/from the treasury. The difference between it and\nreward_pool_balance represents the total amount withdrawn by stakers and operators."
-            },
-            "reward_allocation_total": {
-              "type": "string",
-              "description": "reward_allocation_total is the total amount allocated by AVS. It may exceed `reward_pool_total`\nbecause AVS is allowed to accumulate debt and repay it by funding the reward pool later.\nThe claim of rewards follows a first-come, first-served basis. If an AVS's reward pool remains\nin deficit for an extended period, preventing stakers and operators from claiming their rewards,\nthey may choose to stop serving the AVS. Therefore, the AVS has both the incentive and responsibility\nto ensure its reward pool remains sufficiently funded.\nthe debt is the difference between `reward_allocation_total` and `reward_pool_total`\nTODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues\nwhen handling reward compounding. For example, the reward pool might contribute greater voting\npower than its actual balance due to debt."
-            }
-          }
+        "reward_denomination": {
+          "type": "string",
+          "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
+        },
+        "denomination_exponent": {
+          "type": "integer",
+          "format": "int64",
+          "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
         }
       },
-      "title": "AVSRewardAsset defines the information for an asset to be used as a reward for an AVS"
+      "description": "AVSRewardAsset defines the information for an asset to be used as the reward asset."
     },
     "imuachain.feedistribution.v1.AVSRewardAssetState": {
       "type": "object",
@@ -47915,40 +48308,55 @@
           "items": {
             "type": "object",
             "properties": {
-              "asset_basic_info": {
-                "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+              "reward_asset_info": {
+                "description": "reward_asset_info is the information of the reward asset.",
                 "type": "object",
                 "properties": {
-                  "name": {
-                    "type": "string",
-                    "title": "name of the asset, like \"Tether USD\""
+                  "asset_basic_info": {
+                    "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "title": "name of the asset, like \"Tether USD\""
+                      },
+                      "symbol": {
+                        "type": "string",
+                        "title": "symbol of the asset, like \"USDT\""
+                      },
+                      "address": {
+                        "type": "string",
+                        "title": "address of the asset on the client chain"
+                      },
+                      "decimals": {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "decimals used in the asset, typically 6 or 18."
+                      },
+                      "layer_zero_chain_id": {
+                        "type": "string",
+                        "format": "uint64",
+                        "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                      },
+                      "imua_chain_index": {
+                        "type": "string",
+                        "format": "uint64",
+                        "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                      },
+                      "meta_info": {
+                        "type": "string",
+                        "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                      }
+                    }
                   },
-                  "symbol": {
+                  "reward_denomination": {
                     "type": "string",
-                    "title": "symbol of the asset, like \"USDT\""
+                    "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
                   },
-                  "address": {
-                    "type": "string",
-                    "title": "address of the asset on the client chain"
-                  },
-                  "decimals": {
+                  "denomination_exponent": {
                     "type": "integer",
                     "format": "int64",
-                    "description": "decimals used in the asset, typically 6 or 18."
-                  },
-                  "layer_zero_chain_id": {
-                    "type": "string",
-                    "format": "uint64",
-                    "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                  },
-                  "imua_chain_index": {
-                    "type": "string",
-                    "format": "uint64",
-                    "description": "imua_chain_index is the index of the client chain within the imuasystem."
-                  },
-                  "meta_info": {
-                    "type": "string",
-                    "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                    "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
                   }
                 }
               },
@@ -48595,40 +49003,55 @@
           "title": "avs_reward_asset is the reward asset returned for the input avs",
           "type": "object",
           "properties": {
-            "asset_basic_info": {
-              "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+            "reward_asset_info": {
+              "description": "reward_asset_info is the information of the reward asset.",
               "type": "object",
               "properties": {
-                "name": {
-                  "type": "string",
-                  "title": "name of the asset, like \"Tether USD\""
+                "asset_basic_info": {
+                  "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "title": "name of the asset, like \"Tether USD\""
+                    },
+                    "symbol": {
+                      "type": "string",
+                      "title": "symbol of the asset, like \"USDT\""
+                    },
+                    "address": {
+                      "type": "string",
+                      "title": "address of the asset on the client chain"
+                    },
+                    "decimals": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimals used in the asset, typically 6 or 18."
+                    },
+                    "layer_zero_chain_id": {
+                      "type": "string",
+                      "format": "uint64",
+                      "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                    },
+                    "imua_chain_index": {
+                      "type": "string",
+                      "format": "uint64",
+                      "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                    },
+                    "meta_info": {
+                      "type": "string",
+                      "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                    }
+                  }
                 },
-                "symbol": {
+                "reward_denomination": {
                   "type": "string",
-                  "title": "symbol of the asset, like \"USDT\""
+                  "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
                 },
-                "address": {
-                  "type": "string",
-                  "title": "address of the asset on the client chain"
-                },
-                "decimals": {
+                "denomination_exponent": {
                   "type": "integer",
                   "format": "int64",
-                  "description": "decimals used in the asset, typically 6 or 18."
-                },
-                "layer_zero_chain_id": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                },
-                "imua_chain_index": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "imua_chain_index is the index of the client chain within the imuasystem."
-                },
-                "meta_info": {
-                  "type": "string",
-                  "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                  "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
                 }
               }
             },
@@ -48662,40 +49085,55 @@
           "title": "avs_reward_asset is the reward asset returned for the input avs",
           "type": "object",
           "properties": {
-            "asset_basic_info": {
-              "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+            "reward_asset_info": {
+              "description": "reward_asset_info is the information of the reward asset.",
               "type": "object",
               "properties": {
-                "name": {
-                  "type": "string",
-                  "title": "name of the asset, like \"Tether USD\""
+                "asset_basic_info": {
+                  "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "title": "name of the asset, like \"Tether USD\""
+                    },
+                    "symbol": {
+                      "type": "string",
+                      "title": "symbol of the asset, like \"USDT\""
+                    },
+                    "address": {
+                      "type": "string",
+                      "title": "address of the asset on the client chain"
+                    },
+                    "decimals": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimals used in the asset, typically 6 or 18."
+                    },
+                    "layer_zero_chain_id": {
+                      "type": "string",
+                      "format": "uint64",
+                      "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                    },
+                    "imua_chain_index": {
+                      "type": "string",
+                      "format": "uint64",
+                      "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                    },
+                    "meta_info": {
+                      "type": "string",
+                      "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                    }
+                  }
                 },
-                "symbol": {
+                "reward_denomination": {
                   "type": "string",
-                  "title": "symbol of the asset, like \"USDT\""
+                  "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
                 },
-                "address": {
-                  "type": "string",
-                  "title": "address of the asset on the client chain"
-                },
-                "decimals": {
+                "denomination_exponent": {
                   "type": "integer",
                   "format": "int64",
-                  "description": "decimals used in the asset, typically 6 or 18."
-                },
-                "layer_zero_chain_id": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                },
-                "imua_chain_index": {
-                  "type": "string",
-                  "format": "uint64",
-                  "description": "imua_chain_index is the index of the client chain within the imuasystem."
-                },
-                "meta_info": {
-                  "type": "string",
-                  "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                  "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
                 }
               }
             },
@@ -48888,6 +49326,72 @@
         }
       },
       "description": "QueryDelegationStartingInfoResponse is the response to obtain the delegation starting information."
+    },
+    "imuachain.feedistribution.v1.QueryDelegationUnclaimedRewardsResponse": {
+      "type": "object",
+      "properties": {
+        "rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the AVS address"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "title": "rewards represents the current rewards or cumulative reward ratios"
+              }
+            },
+            "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+          },
+          "title": "rewards is the unclaimed rewards from staking assets for all AVSs"
+        },
+        "compounding_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the AVS address"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "title": "rewards represents the current rewards or cumulative reward ratios"
+              }
+            },
+            "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+          },
+          "title": "compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs"
+        }
+      },
+      "description": "QueryDelegationUnclaimedRewardsResponse is the response to obtain the unclaimed rewards\nfor specific delegation."
     },
     "imuachain.feedistribution.v1.QueryOperatorCommissionResponse": {
       "type": "object",
@@ -49268,40 +49772,55 @@
               "items": {
                 "type": "object",
                 "properties": {
-                  "asset_basic_info": {
-                    "description": "asset_basic_info is the basic information of the asset.\nThe symbol field will be used as the `denom` field of `DecCoin`.",
+                  "reward_asset_info": {
+                    "description": "reward_asset_info is the information of the reward asset.",
                     "type": "object",
                     "properties": {
-                      "name": {
-                        "type": "string",
-                        "title": "name of the asset, like \"Tether USD\""
+                      "asset_basic_info": {
+                        "description": "asset_basic_info is the basic information of the asset.\nEmbedded so its fields are promoted directly in the generated Go struct.",
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "title": "name of the asset, like \"Tether USD\""
+                          },
+                          "symbol": {
+                            "type": "string",
+                            "title": "symbol of the asset, like \"USDT\""
+                          },
+                          "address": {
+                            "type": "string",
+                            "title": "address of the asset on the client chain"
+                          },
+                          "decimals": {
+                            "type": "integer",
+                            "format": "int64",
+                            "description": "decimals used in the asset, typically 6 or 18."
+                          },
+                          "layer_zero_chain_id": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
+                          },
+                          "imua_chain_index": {
+                            "type": "string",
+                            "format": "uint64",
+                            "description": "imua_chain_index is the index of the client chain within the imuasystem."
+                          },
+                          "meta_info": {
+                            "type": "string",
+                            "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                          }
+                        }
                       },
-                      "symbol": {
+                      "reward_denomination": {
                         "type": "string",
-                        "title": "symbol of the asset, like \"USDT\""
+                        "description": "The denomination used in reward records (e.g., \"uUSDT\", \"USDT\").\nThis value specifies the unit in which rewards are expressed.\nDifferent reward assets used by the same AVS must not share the same reward denomination,\nbecause it is used as part of the composite key together with the AVS address in the keystore.\nIf an AVS needs to register the same token from different chains as reward assets,\nit should include the chain information in the denomination when registering\n(e.g., \"ETHUSDT\", \"SOLUSDT\")."
                       },
-                      "address": {
-                        "type": "string",
-                        "title": "address of the asset on the client chain"
-                      },
-                      "decimals": {
+                      "denomination_exponent": {
                         "type": "integer",
                         "format": "int64",
-                        "description": "decimals used in the asset, typically 6 or 18."
-                      },
-                      "layer_zero_chain_id": {
-                        "type": "string",
-                        "format": "uint64",
-                        "description": "layer_zero_chain_id is the chain id of the asset, according to L0."
-                      },
-                      "imua_chain_index": {
-                        "type": "string",
-                        "format": "uint64",
-                        "description": "imua_chain_index is the index of the client chain within the imuasystem."
-                      },
-                      "meta_info": {
-                        "type": "string",
-                        "description": "meta_info about the asset, like \"Tether USD on Ethereum blockchain\"."
+                        "description": "The exponent that defines how the reward denomination scales relative\nto the token's smallest unit. For example:\n- If the token has 6 decimals and the reward denomination is \"USDT\",\n  then denomination_exponent should be 6.\n- If the reward denomination represents the token's smallest unit, such as `uUSDT`\n  then denomination_exponent should be 0."
                       }
                     }
                   },
@@ -49511,7 +50030,7 @@
                     "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
                   }
                 },
-                "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
+                "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThe historical_total_rewards includes both withdrawn rewards and slashed rewards, in addition\nto the current balance."
               }
             },
             "title": "StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified\nstaker and AVS"
@@ -49579,6 +50098,98 @@
                 },
                 "description": "withdrawn_rewards represents rewards that have been withdrawn."
               },
+              "historical_total_rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "asset_id": {
+                      "type": "string",
+                      "description": "asset_id is the unique identifier of the reward token."
+                    },
+                    "decimal": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "title": "amount is the reward amount"
+                    }
+                  },
+                  "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                },
+                "description": "historical_total_rewards represents the total historical rewards that have been claimed."
+              },
+              "delegation_rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "asset_id": {
+                      "type": "string",
+                      "description": "asset_id is the unique identifier of the reward token."
+                    },
+                    "decimal": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "title": "amount is the reward amount"
+                    }
+                  },
+                  "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                },
+                "description": "delegation_rewards represents rewards that have been re-delegated."
+              },
+              "pending_undelegation_rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "asset_id": {
+                      "type": "string",
+                      "description": "asset_id is the unique identifier of the reward token."
+                    },
+                    "decimal": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "title": "amount is the reward amount"
+                    }
+                  },
+                  "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                },
+                "description": "pending_undelegation_rewards represents the pending undelegation rewards."
+              },
+              "withdrawable_rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "asset_id": {
+                      "type": "string",
+                      "description": "asset_id is the unique identifier of the reward token."
+                    },
+                    "decimal": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "title": "amount is the reward amount"
+                    }
+                  },
+                  "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                },
+                "description": "withdrawable_rewards represents the withdrawable rewards from the completed rewards undelegation."
+              },
               "unclaimed_rewards": {
                 "type": "array",
                 "items": {
@@ -49601,6 +50212,29 @@
                   "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
                 },
                 "description": "unclaimed_rewards represents rewards that have not yet been accounted or distributed."
+              },
+              "unclaimed_compounding_rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "asset_id": {
+                      "type": "string",
+                      "description": "asset_id is the unique identifier of the reward token."
+                    },
+                    "decimal": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+                    },
+                    "amount": {
+                      "type": "string",
+                      "title": "amount is the reward amount"
+                    }
+                  },
+                  "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+                },
+                "description": "unclaimed_compounding_rewards represents the compounding rewards that have not yet been accounted or distributed."
               }
             },
             "description": "StakerRewardsPerAVS is the response type representing a staker's rewards from a specific AVS."
@@ -49744,7 +50378,7 @@
               "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
             }
           },
-          "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
+          "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThe historical_total_rewards includes both withdrawn rewards and slashed rewards, in addition\nto the current balance."
         }
       },
       "title": "QueryStakerClaimedRewardsResponse is the response to obtain the staker claimed rewards"
@@ -49801,7 +50435,37 @@
             },
             "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
           },
-          "title": "unclaimed rewards for all AVSs"
+          "title": "rewards is the unclaimed rewards from staking assets for all AVSs"
+        },
+        "compounding_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "avs_address": {
+                "type": "string",
+                "title": "avs_address is the AVS address"
+              },
+              "rewards": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "denom": {
+                      "type": "string"
+                    },
+                    "amount": {
+                      "type": "string"
+                    }
+                  },
+                  "description": "DecCoin defines a token with a denomination and a decimal amount.\n\nNOTE: The amount field is an Dec which implements the custom method\nsignatures required by gogoproto."
+                },
+                "title": "rewards represents the current rewards or cumulative reward ratios"
+              }
+            },
+            "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
+          },
+          "title": "compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs"
         }
       },
       "description": "QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards."
@@ -49981,7 +50645,7 @@
           "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
         }
       },
-      "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
+      "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThe historical_total_rewards includes both withdrawn rewards and slashed rewards, in addition\nto the current balance."
     },
     "imuachain.feedistribution.v1.StakerClaimedRewardsPerAVS": {
       "type": "object",
@@ -50121,7 +50785,7 @@
               "description": "withdrawable_rewards are rewards that can be withdrawn from completed undelegations."
             }
           },
-          "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThis includes both withdrawn rewards and slashed rewards, in addition to the current balance."
+          "description": "StakerClaimedRewards includes the detailed states for claimed rewards.\n\nThe current total rewards assets of a staker in an AVS are calculated as:\n(outstanding_rewards + delegation_rewards + pending_undelegation_rewards +\nwithdrawable_rewards - pending_slashed_rewards).\nThis value reflects the staker’s current reward assets after considering slashing,\nand thus represents the current asset balance rather than the historical total earned.\n\nThe total slashed rewards for a staker can be calculated as:\n(historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards\n- withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).\nThe historical_total_rewards includes both withdrawn rewards and slashed rewards, in addition\nto the current balance."
         }
       },
       "title": "StakerClaimedRewardsPerAVS is a struct used to record the claimed rewards for specified\nstaker and AVS"
@@ -50207,6 +50871,98 @@
           },
           "description": "withdrawn_rewards represents rewards that have been withdrawn."
         },
+        "historical_total_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "description": "asset_id is the unique identifier of the reward token."
+              },
+              "decimal": {
+                "type": "integer",
+                "format": "int64",
+                "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+              },
+              "amount": {
+                "type": "string",
+                "title": "amount is the reward amount"
+              }
+            },
+            "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+          },
+          "description": "historical_total_rewards represents the total historical rewards that have been claimed."
+        },
+        "delegation_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "description": "asset_id is the unique identifier of the reward token."
+              },
+              "decimal": {
+                "type": "integer",
+                "format": "int64",
+                "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+              },
+              "amount": {
+                "type": "string",
+                "title": "amount is the reward amount"
+              }
+            },
+            "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+          },
+          "description": "delegation_rewards represents rewards that have been re-delegated."
+        },
+        "pending_undelegation_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "description": "asset_id is the unique identifier of the reward token."
+              },
+              "decimal": {
+                "type": "integer",
+                "format": "int64",
+                "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+              },
+              "amount": {
+                "type": "string",
+                "title": "amount is the reward amount"
+              }
+            },
+            "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+          },
+          "description": "pending_undelegation_rewards represents the pending undelegation rewards."
+        },
+        "withdrawable_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "description": "asset_id is the unique identifier of the reward token."
+              },
+              "decimal": {
+                "type": "integer",
+                "format": "int64",
+                "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+              },
+              "amount": {
+                "type": "string",
+                "title": "amount is the reward amount"
+              }
+            },
+            "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+          },
+          "description": "withdrawable_rewards represents the withdrawable rewards from the completed rewards undelegation."
+        },
         "unclaimed_rewards": {
           "type": "array",
           "items": {
@@ -50229,6 +50985,29 @@
             "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
           },
           "description": "unclaimed_rewards represents rewards that have not yet been accounted or distributed."
+        },
+        "unclaimed_compounding_rewards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "description": "asset_id is the unique identifier of the reward token."
+              },
+              "decimal": {
+                "type": "integer",
+                "format": "int64",
+                "description": "decimal specifies the number of decimal places for the reward asset,\nwhich is provided during registration."
+              },
+              "amount": {
+                "type": "string",
+                "title": "amount is the reward amount"
+              }
+            },
+            "description": "RewardInfo represents a reward amount for a specific token,\nincluding its identifier, decimal precision, and the actual amount."
+          },
+          "description": "unclaimed_compounding_rewards represents the compounding rewards that have not yet been accounted or distributed."
         }
       },
       "description": "StakerRewardsPerAVS is the response type representing a staker's rewards from a specific AVS."
