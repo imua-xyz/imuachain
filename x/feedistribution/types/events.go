@@ -35,7 +35,9 @@ const (
 	AttributeKeyRewardAllocationTotal = "reward_allocation_total"
 
 	// EventTypeNewAVSRewardAsset : new avs reward asset
-	EventTypeNewAVSRewardAsset = "avs_reward_asset_added"
+	EventTypeNewAVSRewardAsset       = "avs_reward_asset_added"
+	AttributeKeyDenomination         = "reward_denomination"
+	AttributeKeyDenominationExponent = "reward_denomination_exponent"
 
 	// EventTypeUpdatedRewardAssetMetaInfo : reward asset meta info update
 	EventTypeUpdatedRewardAssetMetaInfo = "reward_asset_meta_info_updated"

@@ -38,7 +38,7 @@ func (k Keeper) AllocateRewardsByAVS(ctx sdk.Context, avs, epochIdentifier strin
 	cc, writeFunc := ctx.CacheContext()
 	// update the reward asset state
 	for _, token := range rewardAndProportions.Rewards {
-		assetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, avs, token.Denom)
+		assetID, err := k.GetAVSRewardAssetIDByDenomination(ctx, avs, token.Denom)
 		if err != nil {
 			return err
 		}

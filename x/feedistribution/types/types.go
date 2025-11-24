@@ -941,13 +941,13 @@ func TruncateSDKDec(dec sdk.Dec, decimal uint32) sdk.Dec {
 	return sdk.NewDecFromInt(truncated).QuoInt(multiplier)
 }
 
-// ValidateRewardAssetSymbol is the default validation function for the symbol of reward asset.
-func ValidateRewardAssetSymbol(symbol string) error {
-	// check if it contains the combined delimiter `/`, because symbol might be used in
+// ValidateRewardAssetDenomination is the default validation function for the denomination of reward asset.
+func ValidateRewardAssetDenomination(denomination string) error {
+	// check if it contains the combined delimiter `/`, because denomination might be used in
 	// a combined key.
-	if strings.IndexByte(symbol, oracletypes.DelimiterForCombinedKey) >= 0 {
-		return fmt.Errorf("invalid symbol %q: contains combined delimiter %q",
-			symbol, string(oracletypes.DelimiterForCombinedKey))
+	if strings.IndexByte(denomination, oracletypes.DelimiterForCombinedKey) >= 0 {
+		return fmt.Errorf("invalid denomination %q: contains combined delimiter %q",
+			denomination, string(oracletypes.DelimiterForCombinedKey))
 	}
-	return sdk.ValidateDenom(symbol)
+	return sdk.ValidateDenom(denomination)
 }

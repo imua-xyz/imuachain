@@ -182,8 +182,7 @@ func (m *ClientChainInfo) GetAddressLength() uint32 {
 	return 0
 }
 
-// AssetInfo defines the information for an asset to be used as the staking asset or
-// reward asset.
+// AssetInfo defines the information for an asset to be used as the staking asset.
 type AssetInfo struct {
 	// name of the asset, like "Tether USD"
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`

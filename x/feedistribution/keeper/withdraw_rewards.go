@@ -16,21 +16,20 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 			"generalWithdrawFromAVS, the withdraw amount is nil or negative, amount:%s", withdrawAmount)
 	}
 	// check and calculate the actual amount withdrawable for an AVS
-	rewardAssetInfo, err := k.GetAVSRewardAssetInfo(ctx, avs, assetID)
+	rewardAssetInfo, err := k.GetAVSRewardAsset(ctx, avs, assetID)
 	if err != nil {
 		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, err
 	}
-	rewardDecimalAmount := rewards.AmountOf(rewardAssetInfo.AssetBasicInfo.Symbol)
+	rewardDecimalAmount := rewards.AmountOf(rewardAssetInfo.RewardAssetInfo.RewardDenomination)
 	if rewardDecimalAmount.IsZero() {
 		// do nothing if there isn't this asset in the input rewards
 		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), rewards, sdk.DecCoins{}, nil
 	}
 
-	decimalFactor := sdkmath.NewIntWithDecimal(1, int(rewardAssetInfo.AssetBasicInfo.Decimals)) // #nosec G115
 	// withdraw all rewards if the input amount is 0
 	withdrawAmountPerAVSDec := rewardDecimalAmount
 	if !withdrawAmount.IsZero() {
-		withdrawAmountPerAVSDec = sdk.NewDecFromInt(withdrawAmount).QuoInt(decimalFactor)
+		withdrawAmountPerAVSDec = feedistributiontypes.ScaleIntByDecimals(withdrawAmount, rewardAssetInfo.RewardAssetInfo.DenominationExponent)
 	}
 
 	if withdrawAmountPerAVSDec.LT(sdkmath.LegacyZeroDec()) {
@@ -52,15 +51,15 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 	}
 	// decrease the withdrawing amount from the outstanding reward
 	subReward := sdk.DecCoins{
-		sdk.NewDecCoinFromDec(rewardAssetInfo.AssetBasicInfo.Symbol, actualWithdrawAmountDec),
+		sdk.NewDecCoinFromDec(rewardAssetInfo.RewardAssetInfo.RewardDenomination, actualWithdrawAmountDec),
 	}
 	rewardsAfterSub, hasNegative := rewards.SafeSub(subReward)
 	if hasNegative {
-		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, feedistributiontypes.ErrNegativeCoinAmount.Wrapf("WithdrawStakerRewards: avs:%s, assetID:%s,symbol:%s", avs, assetID, rewardAssetInfo.AssetBasicInfo.Symbol)
+		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, feedistributiontypes.ErrNegativeCoinAmount.Wrapf("WithdrawStakerRewards: avs:%s, assetID:%s,denomination:%s", avs, assetID, rewardAssetInfo.RewardAssetInfo.RewardDenomination)
 	}
 
-	// use TruncateInt to ensure the vault has enough fund
-	actualWithdrawAmountInt := actualWithdrawAmountDec.MulInt(decimalFactor).TruncateInt()
+	// TruncateInt in `UnscaleDecToInt` to ensure the vault has enough fund
+	actualWithdrawAmountInt := feedistributiontypes.UnscaleDecToInt(actualWithdrawAmountDec, rewardAssetInfo.RewardAssetInfo.DenominationExponent)
 	// update the state of AVS reward asset.
 	err = k.UpdateAVSRewardAssetState(ctx, avs, assetID, &feedistributiontypes.DeltaAVSRewardAssetState{
 		RewardPoolBalance: actualWithdrawAmountDec.Neg(),
@@ -227,7 +226,6 @@ func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 	stakerClaimedRewards.WithdrawnRewards = stakerClaimedRewards.WithdrawnRewards.Add(subOutstandingRewards...)
 
 	totalSubRewards := sdk.NewDecCoins(subOutstandingRewards...)
-	endWithdrawableRewards := stakerClaimedRewards.WithdrawableRewards
 	if isWithdrawAllReward || (!isWithdrawAllReward && actualWithdrawAmountInt.LT(expectedWithdrawalAmount)) {
 		if !isWithdrawAllReward {
 			expectedWithdrawalAmount = expectedWithdrawalAmount.Sub(actualWithdrawAmountInt)
@@ -255,7 +253,7 @@ func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, dogfoodAVSAddr),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, totalSubRewards.String()),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endOutstandingRewards.String()),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerWithdrawableRewards, endWithdrawableRewards.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerWithdrawableRewards, stakerClaimedRewards.WithdrawableRewards.String()),
 		),
 	)
 

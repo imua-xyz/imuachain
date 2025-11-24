@@ -98,6 +98,7 @@ func (k *Keeper) RegisterOperator(
 			sdk.NewAttribute(operatortypes.AttributeKeyMaxCommissionRate, info.Commission.MaxRate.String()),
 			sdk.NewAttribute(operatortypes.AttributeKeyMaxChangeRate, info.Commission.MaxChangeRate.String()),
 			sdk.NewAttribute(operatortypes.AttributeKeyCommissionUpdateTime, sdk.FormatTimeString(info.Commission.UpdateTime)),
+			sdk.NewAttribute(operatortypes.AttributeKeyDisableRewardCompounding, fmt.Sprintf("%t", info.DisableCompoundRewards)),
 			// TODO: add ClientChainEarningsAddr.EarningInfoList to the event
 		),
 	)
@@ -131,6 +132,29 @@ func (k *Keeper) EditOperator(
 			operatortypes.EventTypeEditOperator,
 			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
 			sdk.NewAttribute(operatortypes.AttributeKeyMetaInfo, metaInfo),
+		),
+	)
+	return nil
+}
+
+// UpdateRewardCompoundingFlag update the reward compounding flag for an operator
+func (k *Keeper) UpdateRewardCompoundingFlag(
+	ctx sdk.Context, opAccAddr sdk.AccAddress, disableCompoundRewards bool,
+) error {
+	info, err := k.OperatorInfo(ctx, opAccAddr.String())
+	if err != nil {
+		return err
+	}
+	if info.DisableCompoundRewards == disableCompoundRewards {
+		return nil
+	}
+	info.DisableCompoundRewards = disableCompoundRewards
+	k.setOperatorInfo(ctx, opAccAddr, info)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeUpdateRewardCompoundingFlag,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyDisableRewardCompounding, fmt.Sprintf("%t", disableCompoundRewards)),
 		),
 	)
 	return nil

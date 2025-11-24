@@ -57,14 +57,14 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 				// iterate over all reward assets to calculate the delegation amount for specific reward asset
 				indicesToRemove := make([]int, 0)
 				for i, reward := range stakerClaimedRewards.OutstandingRewards {
-					assetID, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avs, reward.Denom)
+					assetID, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, avs, reward.Denom)
 					if err != nil {
 						return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
 					}
-					assetDecimal := assetInfo.AssetBasicInfo.Decimals
+
 					// check if the reward asset can be redelegated
 					if k.assetsKeeper.IsStakingAsset(ctx, assetID) && reward.IsPositive() {
-						rewardAmount := feedistributiontypes.UnscaleDecToInt(reward.Amount, assetDecimal)
+						rewardAmount := feedistributiontypes.UnscaleDecToInt(reward.Amount, rewardAsset.RewardAssetInfo.DenominationExponent)
 						if !rewardAmount.IsPositive() {
 							continue
 						}
@@ -81,6 +81,12 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 							return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
 						}
 
+						stakingAssetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
+						if err != nil {
+							return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
+						}
+						stakingAssetDecimal := stakingAssetInfo.AssetBasicInfo.Decimals
+
 						_, operatorExist := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr]
 						if !operatorExist {
 							delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr] = make(map[string]feedistributiontypes.DelegationChangeInfo, 0)
@@ -94,11 +100,11 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 							}
 							delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = feedistributiontypes.DelegationChangeInfo{
 								StakerDelegationChanges: make([]feedistributiontypes.StakerDelegationChange, 0),
-								TotalAmount:             feedistributiontypes.ScaleIntByDecimals(preOperatorAssets.TotalAmount, assetDecimal),
+								TotalAmount:             feedistributiontypes.ScaleIntByDecimals(preOperatorAssets.TotalAmount, stakingAssetDecimal),
 							}
 						}
 						delegationChanges := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID]
-						delegationChanges.AppendUniqueStakerID(staker, preDelegatedAmount, assetDecimal)
+						delegationChanges.AppendUniqueStakerID(staker, preDelegatedAmount, stakingAssetDecimal)
 						delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = delegationChanges
 
 						indicesToRemove = append(indicesToRemove, i)
@@ -193,7 +199,7 @@ func (k Keeper) UndelegateClaimedRewards(
 				// continue iterating the next AVS
 				return false, false, nil
 			}
-			assetInfo, err := k.GetAVSRewardAssetInfo(ctx, avs, assetID)
+			rewardAsset, err := k.GetAVSRewardAsset(ctx, avs, assetID)
 			if err != nil {
 				return true, false, err
 			}
@@ -202,7 +208,7 @@ func (k Keeper) UndelegateClaimedRewards(
 				// continue iterating the next AVS
 				return false, false, nil
 			}
-			assetShare := rewardShares.AmountOf(assetInfo.AssetBasicInfo.Symbol)
+			assetShare := rewardShares.AmountOf(rewardAsset.RewardAssetInfo.RewardDenomination)
 			if !assetShare.IsPositive() {
 				// continue iterating the next AVS
 				return false, false, nil
@@ -245,13 +251,13 @@ func (k Keeper) UndelegateClaimedRewards(
 				feedistributiontypes.RewardsDelegationShares{
 					{
 						OperatorAddr: operatorAccAddr.String(),
-						Shares:       sdk.NewDecCoins(sdk.NewDecCoinFromDec(assetInfo.AssetBasicInfo.Symbol, undelegateShare)),
+						Shares:       sdk.NewDecCoins(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, undelegateShare)),
 					},
 				})
-			rewards.PendingUndelegationRewards = rewards.PendingUndelegationRewards.Add(sdk.NewDecCoin(assetInfo.AssetBasicInfo.Symbol, amountFromCurAVS))
+			rewards.PendingUndelegationRewards = rewards.PendingUndelegationRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(amountFromCurAVS, rewardAsset.RewardAssetInfo.DenominationExponent)))
 			if instantSlashRatio.IsPositive() {
 				slashedAmount := undelegationAmountPerAVS.Amount.Sub(undelegationAmountPerAVS.ActualCompletedAmount)
-				rewards.PendingSlashedRewards = rewards.PendingSlashedRewards.Add(sdk.NewDecCoin(assetInfo.AssetBasicInfo.Symbol, slashedAmount))
+				rewards.PendingSlashedRewards = rewards.PendingSlashedRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(slashedAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 			}
 			return false, true, nil
 		}
@@ -293,7 +299,7 @@ func (k Keeper) CompleteRewardUndelegation(ctx sdk.Context, record delegationtyp
 	}
 	// iterate over all related AVSs in the undelegation record
 	for _, undelegationPerAVS := range record.RewardUndelegations {
-		rewardAssetInfo, err := k.GetAVSRewardAssetInfo(ctx, undelegationPerAVS.AvsAddress, record.AssetId)
+		rewardAsset, err := k.GetAVSRewardAsset(ctx, undelegationPerAVS.AvsAddress, record.AssetId)
 		if err != nil {
 			return feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
 		}
@@ -304,7 +310,7 @@ func (k Keeper) CompleteRewardUndelegation(ctx sdk.Context, record delegationtyp
 		}
 
 		// update pendingUndelegationRewards
-		subRewards := sdk.NewDecCoins(sdk.NewDecCoin(rewardAssetInfo.AssetBasicInfo.Symbol, undelegationPerAVS.Amount))
+		subRewards := sdk.NewDecCoins(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(undelegationPerAVS.Amount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 		pendingUndelegationRewards, isNegative := stakerClaimedRewards.PendingUndelegationRewards.SafeSub(subRewards)
 		if isNegative {
 			return feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrapf("pending undelegation rewards have negative amount after update,pendingUndelegationRewards:%s", pendingUndelegationRewards)
@@ -313,7 +319,7 @@ func (k Keeper) CompleteRewardUndelegation(ctx sdk.Context, record delegationtyp
 
 		// update pendingSlashedRewards
 		slashedAmount := undelegationPerAVS.Amount.Sub(undelegationPerAVS.ActualCompletedAmount)
-		slashedRewards := sdk.NewDecCoins(sdk.NewDecCoin(rewardAssetInfo.AssetBasicInfo.Symbol, slashedAmount))
+		slashedRewards := sdk.NewDecCoins(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(slashedAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 		pendingSlashedRewards, isNegative := stakerClaimedRewards.PendingSlashedRewards.SafeSub(slashedRewards)
 		if isNegative {
 			return feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrapf("pending slashed rewards have negative amount after update,pendingSlashedRewards:%s", pendingSlashedRewards)
@@ -321,7 +327,7 @@ func (k Keeper) CompleteRewardUndelegation(ctx sdk.Context, record delegationtyp
 		stakerClaimedRewards.PendingSlashedRewards = pendingSlashedRewards
 
 		// update withdrawableRewards
-		stakerClaimedRewards.WithdrawableRewards = stakerClaimedRewards.WithdrawableRewards.Add(sdk.NewDecCoin(rewardAssetInfo.AssetBasicInfo.Symbol, undelegationPerAVS.ActualCompletedAmount))
+		stakerClaimedRewards.WithdrawableRewards = stakerClaimedRewards.WithdrawableRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(undelegationPerAVS.ActualCompletedAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 
 		err = k.SetStakerClaimedRewards(ctx, record.StakerId, undelegationPerAVS.AvsAddress, stakerClaimedRewards)
 		if err != nil {
@@ -338,7 +344,7 @@ func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.
 	}
 	// iterate over all related AVSs in the undelegation record
 	for i, undelegationPerAVS := range record.RewardUndelegations {
-		rewardAssetInfo, err := k.GetAVSRewardAssetInfo(ctx, undelegationPerAVS.AvsAddress, record.AssetId)
+		rewardAsset, err := k.GetAVSRewardAsset(ctx, undelegationPerAVS.AvsAddress, record.AssetId)
 		if err != nil {
 			return feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
 		}
@@ -356,7 +362,7 @@ func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.
 		expectedSlashAmount := slashProportion.MulInt(undelegationPerAVS.Amount).TruncateInt()
 		actualSlashAmount := math.MinInt(expectedSlashAmount, undelegationPerAVS.ActualCompletedAmount)
 		record.RewardUndelegations[i].ActualCompletedAmount = undelegationPerAVS.ActualCompletedAmount.Sub(actualSlashAmount)
-		stakerClaimedRewards.PendingSlashedRewards = stakerClaimedRewards.PendingSlashedRewards.Add(sdk.NewDecCoin(rewardAssetInfo.AssetBasicInfo.Symbol, actualSlashAmount))
+		stakerClaimedRewards.PendingSlashedRewards = stakerClaimedRewards.PendingSlashedRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(actualSlashAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 
 		err = k.SetStakerClaimedRewards(ctx, record.StakerId, undelegationPerAVS.AvsAddress, stakerClaimedRewards)
 		if err != nil {

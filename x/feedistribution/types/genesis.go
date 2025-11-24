@@ -28,13 +28,11 @@ const (
 )
 
 var IMUARewardToken = AVSRewardAsset{
-	AssetBasicInfo: assetstypes.AssetInfo{
-		Name:             "Native IM token",
-		Symbol:           utils.BaseDenom,
-		Address:          "0x0000000000000000000000000000000000000000",
-		Decimals:         0,
-		LayerZeroChainID: 0,
-		MetaInfo:         "IMUA native to Imuachain",
+	RewardAssetInfo: AVSRewardAssetInfo{
+		AssetInfo:          assetstypes.IMUAToken.AssetBasicInfo,
+		RewardDenomination: utils.BaseDenom,
+		// denomination exponent should be set to 0 since `utils.BaseDenom` represents the minimum denomination.
+		DenominationExponent: 0,
 	},
 	RewardAssetState: AVSRewardAssetState{
 		RewardPoolBalance:     sdk.ZeroDec(),
@@ -151,58 +149,62 @@ func (gs GenesisState) ValidateAVSRewardAssets() error {
 		}
 
 		// check the reward assets list
-		seenFieldValueFunc := func(rewardAssetInfo AVSRewardAsset) (string, struct{}) {
+		seenFieldValueFunc := func(rewardAsset AVSRewardAsset) (string, struct{}) {
 			_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(
-				rewardAssetInfo.AssetBasicInfo.LayerZeroChainID,
-				"", rewardAssetInfo.AssetBasicInfo.Address,
+				rewardAsset.RewardAssetInfo.LayerZeroChainID,
+				"", rewardAsset.RewardAssetInfo.Address,
 			)
 			return assetID, struct{}{}
 		}
-		validationFunc := func(_ int, rewardAssetInfo AVSRewardAsset) error {
-			address := rewardAssetInfo.AssetBasicInfo.Address
+		validationFunc := func(_ int, rewardAsset AVSRewardAsset) error {
+			address := rewardAsset.RewardAssetInfo.Address
 			if strings.ToLower(address) != address {
 				return ErrInvalidGenesisData.Wrapf(
-					"ValidateAVSRewardAssets: contains uppercase characters for reward token %s, address: %s,avsAddr:%s", rewardAssetInfo.AssetBasicInfo.Name, rewardAssetInfo.AssetBasicInfo.Address, info.Avs,
+					"ValidateAVSRewardAssets: contains uppercase characters for reward token %s, address: %s,avsAddr:%s", rewardAsset.RewardAssetInfo.Name, rewardAsset.RewardAssetInfo.Address, info.Avs,
 				)
 			}
 			// check the decimal
-			if rewardAssetInfo.AssetBasicInfo.Decimals > assetstypes.MaxDecimal {
-				return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAssetInfo.AssetBasicInfo.Decimals, assetstypes.MaxDecimal)
+			if rewardAsset.RewardAssetInfo.Decimals > assetstypes.MaxDecimal {
+				return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAsset.RewardAssetInfo.Decimals, assetstypes.MaxDecimal)
 			}
-			// check the symbol
-			err := ValidateRewardAssetSymbol(rewardAssetInfo.AssetBasicInfo.Symbol)
+			// check the denomination exponent
+			if rewardAsset.RewardAssetInfo.DenominationExponent > assetstypes.MaxDecimal {
+				return ErrInvalidGenesisData.Wrapf("the denomination exponent is greater than the MaxDecimal,denominationExponent:%v,MaxDecimal:%v", rewardAsset.RewardAssetInfo.DenominationExponent, assetstypes.MaxDecimal)
+			}
+			// check the denomination
+			err := ValidateRewardAssetDenomination(rewardAsset.RewardAssetInfo.RewardDenomination)
 			if err != nil {
-				return ErrInvalidGenesisData.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", rewardAssetInfo.AssetBasicInfo.Symbol, err)
+				return ErrInvalidGenesisData.Wrapf("invalid denomination:%s,err:%s", rewardAsset.RewardAssetInfo.RewardDenomination, err)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNil() ||
-				rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNegative() {
+			if rewardAsset.RewardAssetState.RewardPoolBalance.IsNil() ||
+				rewardAsset.RewardAssetState.RewardPoolBalance.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: nil or negative reward pool balance ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardPoolTotal.IsNil() ||
-				rewardAssetInfo.RewardAssetState.RewardPoolTotal.IsNegative() {
+			if rewardAsset.RewardAssetState.RewardPoolTotal.IsNil() ||
+				rewardAsset.RewardAssetState.RewardPoolTotal.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: nil or negative reward pool total amount ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.GT(rewardAssetInfo.RewardAssetState.RewardPoolTotal) {
+			if rewardAsset.RewardAssetState.RewardPoolBalance.GT(rewardAsset.RewardAssetState.RewardPoolTotal) {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: reward pool balance is great than the reward pool total amount ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardAllocationTotal.IsNil() ||
-				rewardAssetInfo.RewardAssetState.RewardAllocationTotal.IsNegative() {
+			if rewardAsset.RewardAssetState.RewardAllocationTotal.IsNil() ||
+				rewardAsset.RewardAssetState.RewardAllocationTotal.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: nil or negative reward allocation total amount ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
 			return nil

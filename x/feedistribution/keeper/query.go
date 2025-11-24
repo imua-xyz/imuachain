@@ -31,7 +31,7 @@ func (k Keeper) AVSRewardAsset(ctx context.Context, req *types.QueryAVSRewardAss
 	if !common.IsHexAddress(req.Avs) {
 		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
 	}
-	assetInfo, err := k.GetAVSRewardAssetInfo(c, strings.ToLower(req.Avs), strings.ToLower(req.AssetId))
+	assetInfo, err := k.GetAVSRewardAsset(c, strings.ToLower(req.Avs), strings.ToLower(req.AssetId))
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +47,11 @@ func (k Keeper) AVSRewardAssetBySymbol(ctx context.Context, req *types.QueryAVSR
 	if !common.IsHexAddress(req.Avs) {
 		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
 	}
-	err := types.ValidateRewardAssetSymbol(req.Symbol)
+	err := types.ValidateRewardAssetDenomination(req.Symbol)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "symbol should be a valid denomination,symbol:%s,err:%s", req.Symbol, err)
 	}
-	_, assetInfo, err := k.GetAVSRewardAssetBySymbol(c, strings.ToLower(req.Avs), req.Symbol)
+	_, assetInfo, err := k.GetAVSRewardAssetByDenomination(c, strings.ToLower(req.Avs), req.Symbol)
 	if err != nil {
 		return nil, err
 	}
@@ -389,6 +389,34 @@ func (k Keeper) OperatorSlashEvents(ctx context.Context, req *types.QueryOperato
 	return &types.QueryOperatorSlashEventsResponse{OperatorSlashEvents: slashEvents}, nil
 }
 
+// DelegationUnclaimedRewards queries the unclaimed rewards for a delegation.
+func (k Keeper) DelegationUnclaimedRewards(ctx context.Context, req *types.QueryDelegationUnclaimedRewardsRequest) (*types.QueryDelegationUnclaimedRewardsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	c := sdk.UnwrapSDKContext(ctx)
+	_, _, err := assetstype.ValidateID(req.StakerId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
+	}
+	stakingRewards, compoundingRewards, err := k.GetDelegationUnclaimedRewards(c, true, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.Operator)
+	if err != nil {
+		return nil, err
+	}
+	normalizedStakingRewards, err := k.BatchNormalizeRewardDecimals(c, stakingRewards)
+	if err != nil {
+		return nil, err
+	}
+	normalizedCompoundingRewards, err := k.BatchNormalizeRewardDecimals(c, compoundingRewards)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryDelegationUnclaimedRewardsResponse{
+		Rewards:            normalizedStakingRewards,
+		CompoundingRewards: normalizedCompoundingRewards,
+	}, nil
+}
+
 // StakerUnclaimedRewards queries the unclaimed rewards for a staker.
 func (k Keeper) StakerUnclaimedRewards(ctx context.Context, req *types.QueryStakerUnclaimedRewardsRequest) (*types.QueryStakerUnclaimedRewardsResponse, error) {
 	if req == nil {
@@ -399,15 +427,22 @@ func (k Keeper) StakerUnclaimedRewards(ctx context.Context, req *types.QueryStak
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
 	}
-	unclaimedRewards, err := k.GetStakerUnclaimedRewards(c, strings.ToLower(req.StakerId))
+	stakingRewards, compoundingRewards, err := k.GetStakerUnclaimedRewards(c, strings.ToLower(req.StakerId))
 	if err != nil {
 		return nil, err
 	}
-	normalizedRewards, err := k.BatchNormalizeRewardDecimals(c, unclaimedRewards)
+	normalizedStakingRewards, err := k.BatchNormalizeRewardDecimals(c, stakingRewards)
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryStakerUnclaimedRewardsResponse{Rewards: normalizedRewards}, nil
+	normalizedCompoundingRewards, err := k.BatchNormalizeRewardDecimals(c, compoundingRewards)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryStakerUnclaimedRewardsResponse{
+		Rewards:            normalizedStakingRewards,
+		CompoundingRewards: normalizedCompoundingRewards,
+	}, nil
 }
 
 func (k Keeper) StakerAllRewards(
@@ -426,11 +461,11 @@ func (k Keeper) StakerAllRewards(
 	if err != nil {
 		return nil, err
 	}
-	unclaimedRewards, err := k.GetStakerUnclaimedRewards(c, strings.ToLower(req.StakerId))
+	stakingRewards, compoundingRewards, err := k.GetStakerUnclaimedRewards(c, strings.ToLower(req.StakerId))
 	if err != nil {
 		return nil, err
 	}
-	stakerAllRewards, err := k.MergeStakerRewards(c, claimedRewards, unclaimedRewards)
+	stakerAllRewards, err := k.MergeStakerRewards(c, claimedRewards, stakingRewards, compoundingRewards)
 	if err != nil {
 		return nil, err
 	}

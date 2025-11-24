@@ -251,7 +251,8 @@ message RewardsDelegationShare {
 // The total slashed rewards for a staker can be calculated as:
 // (historical_total_rewards - outstanding_rewards - withdrawn_rewards - delegation_rewards
 // - withdrawable_rewards - pending_undelegation_rewards + pending_slashed_rewards).
-// This includes both withdrawn rewards and slashed rewards, in addition to the current balance.
+// The historical_total_rewards includes both withdrawn rewards and slashed rewards, in addition
+// to the current balance.
 message StakerClaimedRewards {
   // outstanding_rewards represents the rewards that have been claimed by the staker
   // but not yet withdrawn; they can either be withdrawn or automatically redelegated.
@@ -376,11 +377,35 @@ message AVSRewardAssetState {
   ];
 }
 
+// AVSRewardAsset defines the information for an asset to be used as the reward asset.
+message AVSRewardAssetInfo {
+  // asset_basic_info is the basic information of the asset.
+  // Embedded so its fields are promoted directly in the generated Go struct.
+  imuachain.assets.v1.AssetInfo asset_basic_info = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.embed) = true
+  ];
+  // The denomination used in reward records (e.g., "uUSDT", "USDT").
+  // This value specifies the unit in which rewards are expressed.
+  // Different reward assets used by the same AVS must not share the same reward denomination,
+  // because it is used as part of the composite key together with the AVS address in the keystore.
+  // If an AVS needs to register the same token from different chains as reward assets,
+  // it should include the chain information in the denomination when registering
+  // (e.g., "ETHUSDT", "SOLUSDT").
+  string reward_denomination = 2;
+  // The exponent that defines how the reward denomination scales relative
+  // to the token's smallest unit. For example:
+  // - If the token has 6 decimals and the reward denomination is "USDT",
+  //   then denomination_exponent should be 6.
+  // - If the reward denomination represents the token's smallest unit, such as `uUSDT`
+  //   then denomination_exponent should be 0.
+  uint32 denomination_exponent = 3;
+}
+
 // AVSRewardAsset defines the information for an asset to be used as a reward for an AVS
 message AVSRewardAsset {
-  // asset_basic_info is the basic information of the asset.
-  // The symbol field will be used as the `denom` field of `DecCoin`.
-  imuachain.assets.v1.AssetInfo asset_basic_info = 1 [(gogoproto.nullable) = false];
+  // reward_asset_info is the information of the reward asset.
+  AVSRewardAssetInfo reward_asset_info = 1 [(gogoproto.nullable) = false];
   // reward_asset_state is the state of reward asset
   AVSRewardAssetState reward_asset_state = 2 [(gogoproto.nullable) = false];
 }

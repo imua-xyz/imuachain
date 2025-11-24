@@ -158,7 +158,7 @@ type EpochsKeeper interface {
 
 // DistributionKeeper represents the expected keeper interface for the distribution module.
 type DistributionKeeper interface {
-	GetAVSRewardAssetIDBySymbol(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
+	GetAVSRewardAssetIDByDenomination(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
 	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) error
 	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]interface{}) (sdkmath.LegacyDec, error)
 	OperatorTotalRewardsUSDValue(ctx sdk.Context, operator string) (map[string]map[string]interface{}, sdkmath.LegacyDec, error)

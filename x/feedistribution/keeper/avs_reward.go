@@ -245,7 +245,7 @@ func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 		// fund the reward pool of dogfood AVS
 		validRewards := make(sdk.DecCoins, 0)
 		for _, singleReward := range feesCollected {
-			assetID, _, err := k.GetAVSRewardAssetBySymbol(ctx, dogfoodAVSAddr, singleReward.Denom)
+			assetID, _, err := k.GetAVSRewardAssetByDenomination(ctx, dogfoodAVSAddr, singleReward.Denom)
 			if err != nil {
 				ctx.Logger().Error("can't get the dogfood reward asset by the denomination", "denomination", singleReward.Denom)
 				// An invalid reward shouldn't affect valid rewards.

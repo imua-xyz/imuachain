@@ -376,9 +376,12 @@ func (p Precompile) RegisterRewardToken(
 	}
 	avsAddr := strings.ToLower(contract.CallerAddress.String())
 	// check the input args
-	rewardAssetAddr, _, err := addressToID(ctx, p.assetsKeeper, registerRewardTokenArgs.ClientChainID, registerRewardTokenArgs.Token)
+	rewardAssetAddr, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, registerRewardTokenArgs.ClientChainID, registerRewardTokenArgs.Token)
 	if err != nil {
 		return nil, err
+	}
+	if registerRewardTokenArgs.DenominationExponent > assetstype.MaxDecimal {
+		return nil, fmt.Errorf(imuacmn.ErrInvalidDenominationExponent, registerRewardTokenArgs.DenominationExponent, assetstype.MaxDecimal)
 	}
 	if registerRewardTokenArgs.Decimals > assetstype.MaxDecimal {
 		return nil, fmt.Errorf(imuacmn.ErrInvalidDecimal, registerRewardTokenArgs.Decimals, assetstype.MaxDecimal)
@@ -390,14 +393,30 @@ func (p Precompile) RegisterRewardToken(
 		return nil, fmt.Errorf(imuacmn.ErrInvalidMetaInfoLength, registerRewardTokenArgs.MetaData,
 			len(registerRewardTokenArgs.MetaData), assetstype.MaxChainTokenMetaInfoLength)
 	}
-	err = p.distributionKeeper.SetAVSRewardAssets(ctx, avsAddr, []assetstype.AssetInfo{
+	if p.assetsKeeper.IsStakingAsset(ctx, rewardAssetID) {
+		stakingAssetInfo, err := p.assetsKeeper.GetStakingAssetInfo(ctx, rewardAssetID)
+		if err != nil {
+			return nil, err
+		}
+
+		if stakingAssetInfo.AssetBasicInfo.Decimals != uint32(registerRewardTokenArgs.Decimals) ||
+			stakingAssetInfo.AssetBasicInfo.Name != registerRewardTokenArgs.Name ||
+			stakingAssetInfo.AssetBasicInfo.Symbol != registerRewardTokenArgs.Symbol {
+			return nil, fmt.Errorf(imuacmn.ErrAssetBasicInfoMismatch, registerRewardTokenArgs.Name, registerRewardTokenArgs.Symbol, registerRewardTokenArgs.Decimals)
+		}
+	}
+	err = p.distributionKeeper.SetAVSRewardAssets(ctx, avsAddr, []feedistributiontypes.AVSRewardAssetInfo{
 		{
-			Name:             registerRewardTokenArgs.Name,
-			Symbol:           registerRewardTokenArgs.Symbol,
-			Address:          hexutil.Encode(rewardAssetAddr),
-			Decimals:         uint32(registerRewardTokenArgs.Decimals),
-			LayerZeroChainID: uint64(registerRewardTokenArgs.ClientChainID),
-			MetaInfo:         registerRewardTokenArgs.MetaData,
+			AssetInfo: assetstype.AssetInfo{
+				Name:             registerRewardTokenArgs.Name,
+				Symbol:           registerRewardTokenArgs.Symbol,
+				Address:          hexutil.Encode(rewardAssetAddr),
+				Decimals:         uint32(registerRewardTokenArgs.Decimals),
+				LayerZeroChainID: uint64(registerRewardTokenArgs.ClientChainID),
+				MetaInfo:         registerRewardTokenArgs.MetaData,
+			},
+			RewardDenomination:   registerRewardTokenArgs.Denomination,
+			DenominationExponent: uint32(registerRewardTokenArgs.DenominationExponent),
 		},
 	})
 	if err != nil {
@@ -573,12 +592,12 @@ func (p Precompile) FundAVSReward(
 		return nil, fmt.Errorf("can't fund the IMUA token for dogfood AVS,rewardAssetID:%s", rewardAssetID)
 	}
 	avsAddr := strings.ToLower(fundAVSRewardArgs.AVSAddress.String())
-	rewardAssetInfo, err := p.distributionKeeper.GetAVSRewardAssetInfo(ctx, avsAddr, rewardAssetID)
+	rewardAssetInfo, err := p.distributionKeeper.GetAVSRewardAsset(ctx, avsAddr, rewardAssetID)
 	if err != nil {
 		return nil, fmt.Errorf("can't find the reward asset for the input avs,rewardAssetID:%s,avs:%s", rewardAssetID, avsAddr)
 	}
 	fundAmountDec := feedistributiontypes.ScaleIntByDecimals(
-		sdkmath.NewIntFromBigInt(fundAVSRewardArgs.OpAmount), rewardAssetInfo.AssetBasicInfo.Decimals)
+		sdkmath.NewIntFromBigInt(fundAVSRewardArgs.OpAmount), rewardAssetInfo.RewardAssetInfo.DenominationExponent)
 	if !fundAmountDec.IsPositive() {
 		return nil, fmt.Errorf("FundAVSReward: invalid fund amount after converting to decimal:%s", fundAmountDec)
 	}

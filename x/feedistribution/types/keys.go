@@ -30,7 +30,7 @@ func init() {
 const (
 	prefixParams byte = iota + 1
 	prefixAVSRewardAssets
-	prefixAVSRewardAssetBySymbol
+	prefixAVSRewardAssetByDenomination
 	prefixAVSRewardParam
 	prefixFeePools
 	prefixAVSRewardDistribution
@@ -55,12 +55,10 @@ var (
 	// The reward assets should be registered by the AVS.
 	KeyPrefixAVSRewardAssets = []byte{prefixAVSRewardAssets}
 
-	// KeyPrefixAVSRewardAssetBySymbol :
-	// avsAddr + '/' + symbol -> assetID
-	// It's used to query the reward asset by its symbol, since the symbol is used as the denomination.
-	// Therefore, we don't allow an AVS to use the same reward token from different chains,
-	// as they would have the same symbol.
-	KeyPrefixAVSRewardAssetBySymbol = []byte{prefixAVSRewardAssetBySymbol}
+	// KeyPrefixAVSRewardAssetByDenomination :
+	// avsAddr + '/' + denomination -> assetID
+	// It's used to query the reward asset by its denomination.
+	KeyPrefixAVSRewardAssetByDenomination = []byte{prefixAVSRewardAssetByDenomination}
 
 	// KeyPrefixAVSRewardParam :
 	// avsAddr -> types.AVSRewardParam

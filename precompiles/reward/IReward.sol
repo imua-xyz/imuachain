@@ -10,10 +10,10 @@ IReward constant REWARD_CONTRACT = IReward(
 );
 
 /// @dev The RewardCoin struct. it's equal to the DecCoin in cosmos-SDK
-/// @param symbol The symbol of the reward coin, it will be used as the denomination in cosmos-SDK
+/// @param denomination is used in the `DecCoins` of Cosmos SDK.
 /// @param amount The amount of the reward coin, it needs to be converted to decimal when using in native module.
     struct RewardCoin {
-        string symbol;
+        string denomination;
         uint256 amount;
     }
 
@@ -164,6 +164,9 @@ interface IReward {
     /// @param name is the name of the token
     /// @param symbol is the symbol of the token, used as its denomination in the Cosmos SDK.
     /// @param metaData is the arbitrary metadata of the token
+    /// @param denomination is used in the `DecCoins` of Cosmos SDK.
+    /// @param denominationExponent defines how the reward denomination scales relative
+    //  to the token's smallest unit.
     /// @return success if the token registration is successful
     /// The AVS address will be fetched from the contract caller instead of the input parameters,
     /// since these interfaces are intended to be called directly by the AVS itself.
@@ -175,7 +178,9 @@ interface IReward {
         uint8 decimals,
         string calldata name,
         string calldata symbol,
-        string calldata metaData
+        string calldata metaData,
+        string calldata denomination,
+        uint8 denominationExponent
     ) external returns (bool success);
 
     /// @dev update the metaInfo for the reward token.

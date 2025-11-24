@@ -67,12 +67,14 @@ type WithdrawIMUATokenCommissionArgs struct {
 }
 
 type RegisterRewardTokenArgs struct {
-	ClientChainID uint32 `abi:"clientChainID"`
-	Token         []byte `abi:"token"`
-	Decimals      uint8  `abi:"decimals"`
-	Name          string `abi:"name"`
-	Symbol        string `abi:"symbol"`
-	MetaData      string `abi:"metaData"`
+	ClientChainID        uint32 `abi:"clientChainID"`
+	Token                []byte `abi:"token"`
+	Decimals             uint8  `abi:"decimals"`
+	Name                 string `abi:"name"`
+	Symbol               string `abi:"symbol"`
+	MetaData             string `abi:"metaData"`
+	Denomination         string `abi:"denomination"`
+	DenominationExponent uint8  `abi:"denominationExponent"`
 }
 
 type UpdateRewardTokenArgs struct {
@@ -82,8 +84,8 @@ type UpdateRewardTokenArgs struct {
 }
 
 type ABIRewardCoin struct {
-	Symbol string   `abi:"symbol"`
-	Amount *big.Int `abi:"amount"`
+	Denomination string   `abi:"denomination"`
+	Amount       *big.Int `abi:"amount"`
 }
 
 type ABIOperatorRewardProportion struct {
@@ -133,22 +135,22 @@ func (ar ABIRewardCoins) ToProtoStruct(ctx sdk.Context, avsAddr string, k feedis
 			return fmt.Errorf("ABIRewardCoins.ToProtoStruct: invalid amount:%v", rewardCoin.Amount)
 		}
 		// get the reward asset decimal
-		_, rewardAssetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Symbol)
+		_, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, avsAddr, rewardCoin.Denomination)
 		if err != nil {
 			return err
 		}
-		amountDecimal := feedistributiontypes.ScaleIntByDecimals(sdkmath.NewIntFromBigInt(rewardCoin.Amount), rewardAssetInfo.AssetBasicInfo.Decimals)
+		amountDecimal := feedistributiontypes.ScaleIntByDecimals(sdkmath.NewIntFromBigInt(rewardCoin.Amount), rewardAsset.RewardAssetInfo.DenominationExponent)
 		if amountDecimal.IsNil() || !amountDecimal.IsPositive() {
 			return fmt.Errorf("ABIRewardCoins.ToProtoStruct: invalid amount after converting to devimal:%s", amountDecimal)
 		}
 		ret = append(ret, sdk.DecCoin{
-			Denom:  rewardCoin.Symbol,
+			Denom:  rewardCoin.Denomination,
 			Amount: amountDecimal,
 		})
 		return nil
 	}
 	seenFieldValueFunc := func(rewardCoin ABIRewardCoin) (string, struct{}) {
-		return rewardCoin.Symbol, struct{}{}
+		return rewardCoin.Denomination, struct{}{}
 	}
 	_, err := utils.CommonValidation(ar, seenFieldValueFunc, validationFunc)
 	if err != nil {

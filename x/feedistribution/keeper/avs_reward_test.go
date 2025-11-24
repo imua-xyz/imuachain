@@ -6,8 +6,6 @@ import (
 
 	"github.com/imua-xyz/imuachain/utils"
 
-	"cosmossdk.io/math"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
@@ -20,17 +18,22 @@ import (
 func (suite *KeeperTestSuite) registerRewardAssets(avsList []common.Address) {
 	// register reward assets for the test AVSs
 	for i, avs := range avsList {
-		rewardAssets := make([]assetstype.AssetInfo, 0)
+		rewardAssets := make([]feedistributiontypes.AVSRewardAssetInfo, 0)
 		for j := 0; j < RewardAssetNumberPerAVS; j++ {
 			addr, _ := testutiltx.NewAddrKey()
 			assetName := fmt.Sprintf("avs%dRewardAsset%d", i, j)
 			assetSymbol := fmt.Sprintf("avs%dsymbol%d", i, j)
-			rewardAssets = append(rewardAssets, assetstype.AssetInfo{
-				Name:             assetName,
-				Symbol:           assetSymbol,
-				Address:          strings.ToLower(addr.String()),
-				Decimals:         6,
-				LayerZeroChainID: suite.ClientChains[0].LayerZeroChainID,
+			assetDenomination := fmt.Sprintf("avs%ddenomination%d", i, j)
+			rewardAssets = append(rewardAssets, feedistributiontypes.AVSRewardAssetInfo{
+				AssetInfo: assetstype.AssetInfo{
+					Name:             assetName,
+					Symbol:           assetSymbol,
+					Address:          strings.ToLower(addr.String()),
+					Decimals:         6,
+					LayerZeroChainID: suite.ClientChains[0].LayerZeroChainID,
+				},
+				RewardDenomination:   assetDenomination,
+				DenominationExponent: 6,
 			})
 		}
 
@@ -110,11 +113,9 @@ func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {
 
 				epochRewards := make(sdk.DecCoins, 0)
 				for _, rewardAsset := range avsRewardAsset.AvsRewardAssets {
-					multiplier := math.NewIntWithDecimal(1, int(rewardAsset.AssetBasicInfo.Decimals)) // 10^decimals
-					rewardAmount := sdk.NewDec(1).MulInt(multiplier)
 					epochRewards = append(epochRewards, sdk.DecCoin{
-						Denom:  rewardAsset.AssetBasicInfo.Symbol,
-						Amount: rewardAmount,
+						Denom:  rewardAsset.RewardAssetInfo.RewardDenomination,
+						Amount: sdk.OneDec(),
 					})
 				}
 				return epochRewards

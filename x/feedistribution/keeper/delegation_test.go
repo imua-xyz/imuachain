@@ -1074,7 +1074,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.Require().Equal(expectedAVSRewards.Rewards, operatorUnclaimedRewards.OutstandingRewards)
 
 				// check the voting power for the test operator
-				expectedRewardsUSDValueDec := utils.CalculateRewardUSDValue(expectedAVSRewards.Rewards[0].Amount, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				expectedRewardsUSDValueDec := utils.CalculateRewardUSDValue(expectedAVSRewards.Rewards[0].Amount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				expectedRewardsUSDValues := []operatortypes.AVSRewardsUSDValues{
 					{
 						AvsAddress: suite.DogfoodAVSAddr,
@@ -1116,7 +1116,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
 
 				compoundingReward := stakingRewardsEpoch1.Rewards[0].Amount
-				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				totalPower.AddMut(compoundingPower.TruncateDec())
 				operatorCurPower := operatorInitialPower.Add(compoundingPower.TruncateDec())
 				rewardsEpoch2, _ := suite.calculateExpectedOperatorReward(
@@ -1145,8 +1145,8 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.Require().Equal(expectedCompoundingRewards, operatorUnclaimedRewards.RewardsFromCompounding)
 
 				// check the voting power for the test operator
-				outstandingRewardsUSD := utils.CalculateRewardUSDValue(expectedOutstandingRewards[0].Amount, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
-				compoundingRewardsUSD := utils.CalculateRewardUSDValue(compoundingRewardsEpoch2[0].Amount, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				outstandingRewardsUSD := utils.CalculateRewardUSDValue(expectedOutstandingRewards[0].Amount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				compoundingRewardsUSD := utils.CalculateRewardUSDValue(compoundingRewardsEpoch2[0].Amount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				expectedRewardsUSDValueDec := outstandingRewardsUSD.Add(compoundingRewardsUSD)
 				expectedRewardsUSDValues := []operatortypes.AVSRewardsUSDValues{
 					{
@@ -1194,7 +1194,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
 
 				compoundingReward := stakingRewardsEpoch1.Rewards[0].Amount
-				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				totalPower.AddMut(compoundingPower.TruncateDec())
 				operatorCurPower := operatorInitialPower.Add(compoundingPower.TruncateDec())
 				rewardsEpoch2, _ := suite.calculateExpectedOperatorReward(
@@ -1275,7 +1275,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
 
 				compoundingReward := stakingRewardsEpoch1.Rewards[0].Amount
-				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				totalPower.AddMut(compoundingPower.TruncateDec())
 				operatorCurPower := operatorInitialPower.Add(compoundingPower.TruncateDec())
 				rewardsEpoch2, _ := suite.calculateExpectedOperatorReward(
@@ -1299,7 +1299,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.Require().NoError(err)
 				suite.Require().Equal(expectedStakerTotalRewards, stakerRewards.HistoricalTotalRewards)
 				suite.Require().True(stakerRewards.OutstandingRewards.IsZero())
-				redelegateAmount := feedistributiontypes.UnscaleDecToInt(expectedStakerTotalRewards[0].Amount, testutil.DefaultIMRewardAsset.Decimals)
+				redelegateAmount := feedistributiontypes.UnscaleDecToInt(expectedStakerTotalRewards[0].Amount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent)
 				suite.Require().Equal([]feedistributiontypes.RewardsDelegationShare{
 					{
 						OperatorAddr: suite.testOperators[0].String(),
@@ -1455,16 +1455,16 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
 
 				compoundingReward := stakingRewardsEpoch1.Rewards[0].Amount
-				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				totalPower.AddMut(compoundingPower.TruncateDec())
 				operatorPowerDurEpoch3 := operatorInitialPower.Add(compoundingPower.TruncateDec())
 
 				operatorUnclaimedRewards, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, suite.testOperators[0].String(), suite.DogfoodAVSAddr)
 				suite.Require().NoError(err)
 				outstandingRewardAmount := operatorUnclaimedRewards.OutstandingRewards.AmountOf(utils.BaseDenom)
-				outstandingRewardsUSDValue := utils.CalculateRewardUSDValue(outstandingRewardAmount, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				outstandingRewardsUSDValue := utils.CalculateRewardUSDValue(outstandingRewardAmount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				compoundingRewardAmount := operatorUnclaimedRewards.RewardsFromCompounding[0].Rewards[0].Rewards.AmountOf(utils.BaseDenom)
-				compoundingRewardsUSDValue := utils.CalculateRewardUSDValue(compoundingRewardAmount, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				compoundingRewardsUSDValue := utils.CalculateRewardUSDValue(compoundingRewardAmount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				operatorTotalUSDValue := outstandingRewardsUSDValue.Add(compoundingRewardsUSDValue).Add(operatorInitialPower)
 				// slash the operator at the end of epoch 3
 				slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
@@ -1585,7 +1585,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
 
 				compoundingReward := stakingRewardsEpoch1.Rewards[0].Amount
-				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, testutil.DefaultIMRewardAsset.Decimals, suite.Assets[1].Decimals, math.NewInt(1), 0)
+				compoundingPower := utils.CalculateRewardUSDValue(compoundingReward, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent, suite.Assets[1].Decimals, math.NewInt(1), 0)
 				totalPower.AddMut(compoundingPower.TruncateDec())
 				operatorPowerDurEpoch3 := operatorInitialPower.Add(compoundingPower.TruncateDec())
 

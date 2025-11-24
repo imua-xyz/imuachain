@@ -44,6 +44,7 @@ func NewTxCmd() *cobra.Command {
 		// operator vs dogfood vs appchain coordinator
 		CmdSetConsKey(),
 		CmdEditOperator(),
+		CmdUpdateRewardCompoundingFlag(),
 		CmdUpdateCommissionRate(),
 		CmdUpdateParams(),
 	)
@@ -262,16 +263,16 @@ func CmdSetConsKey() *cobra.Command {
 // CmdEditOperator returns a CLI command handler for creating a EditOperatorReq transaction.
 func CmdEditOperator() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit-operator <operator-address> <meta-info>",
+		Use:   "edit-operator <meta-info>",
 		Short: "edit the meta info of an operator",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 			// validate the meta info in CLI to save tx
-			metaInfo := args[1]
+			metaInfo := args[0]
 			if len(metaInfo) > stakingtypes.MaxMonikerLength {
 				return errorsmod.Wrap(types.ErrCliCmdInputArg, "meta info is too long")
 			}
@@ -281,6 +282,32 @@ func CmdEditOperator() *cobra.Command {
 			msg := &types.EditOperatorReq{
 				Address:          clientCtx.GetFromAddress().String(),
 				OperatorMetaInfo: metaInfo,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdUpdateRewardCompoundingFlag returns a CLI command handler for creating a UpdateRewardCompoundingFlagReq transaction.
+func CmdUpdateRewardCompoundingFlag() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-reward-compounding-flag <disable-rewards-compounding>",
+		Short: "update the reward compounding flag of an operator",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			disableRewardsCompounding, err := strconv.ParseBool(args[0])
+			if err != nil {
+				return err
+			}
+			msg := &types.UpdateRewardCompoundingFlagReq{
+				Address:                clientCtx.GetFromAddress().String(),
+				DisableCompoundRewards: disableRewardsCompounding,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

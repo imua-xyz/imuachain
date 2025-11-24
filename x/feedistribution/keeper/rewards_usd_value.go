@@ -26,7 +26,7 @@ func (k *Keeper) calculateRewardUSDValue(
 		return "", sdkmath.LegacyZeroDec(), nil
 	}
 	// get the assetID by rewardSourceAVS and symbol
-	assetID, rewardAssetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avs, symbol)
+	assetID, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, avs, symbol)
 	if err != nil {
 		return "", sdkmath.LegacyDec{}, err
 	}
@@ -60,7 +60,7 @@ func (k *Keeper) calculateRewardUSDValue(
 		return "", sdkmath.LegacyZeroDec(), nil
 	}
 	// calculate the USD value of each reward asset
-	usdPerAsset := utils.CalculateRewardUSDValue(amount, rewardAssetInfo.AssetBasicInfo.Decimals, assetInfo.AssetBasicInfo.Decimals, price.Value, price.Decimal)
+	usdPerAsset := utils.CalculateRewardUSDValue(amount, rewardAsset.RewardAssetInfo.DenominationExponent, assetInfo.AssetBasicInfo.Decimals, price.Value, price.Decimal)
 	return assetID, usdPerAsset, nil
 }
 
@@ -272,7 +272,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 		for _, outstandingReward := range unclaimedRewards.OutstandingRewards {
 			if outstandingReward.Amount.IsPositive() {
 				// slash from outstanding rewards
-				assetID, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, rewardSourceAVS, outstandingReward.Denom)
+				assetID, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, rewardSourceAVS, outstandingReward.Denom)
 				if err != nil {
 					return true, false, err
 				}
@@ -280,7 +280,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 				if assetExist {
 					slashAmountDec := outstandingReward.Amount.Mul(slashProportion)
 					outstandingRewardsSlashedTotal = outstandingRewardsSlashedTotal.Add(sdk.NewDecCoinFromDec(outstandingReward.Denom, slashAmountDec))
-					slashAmountInt := feedistributiontypes.UnscaleDecToInt(slashAmountDec, assetInfo.AssetBasicInfo.Decimals)
+					slashAmountInt := feedistributiontypes.UnscaleDecToInt(slashAmountDec, rewardAsset.RewardAssetInfo.DenominationExponent)
 
 					_, slashAVSExist := slashStatesMap[rewardSourceAVS]
 					if !slashAVSExist {
@@ -301,7 +301,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 			// slash from the rewards earned by compounding
 			for _, rewardsPerAsset := range compoundingRewards {
 				for _, reward := range rewardsPerAsset.Rewards {
-					assetID, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, rewardsPerAsset.AVSAddress, reward.Denom)
+					assetID, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, rewardsPerAsset.AVSAddress, reward.Denom)
 					if err != nil {
 						return true, false, err
 					}
@@ -317,7 +317,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 								}),
 						}
 						compoundingRewardsSlashedTotal = compoundingRewardsSlashedTotal.Add(newCompoundingRewardsSlashed)
-						slashAmountInt := feedistributiontypes.UnscaleDecToInt(slashAmountDec, assetInfo.AssetBasicInfo.Decimals)
+						slashAmountInt := feedistributiontypes.UnscaleDecToInt(slashAmountDec, rewardAsset.RewardAssetInfo.DenominationExponent)
 
 						_, slashAVSExist := slashStatesMap[rewardsPerAsset.AVSAddress]
 						if !slashAVSExist {

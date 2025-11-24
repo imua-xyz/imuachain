@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
+
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -472,11 +474,11 @@ func (k Keeper) NormalizeRewardDecCoins(ctx sdk.Context, avsAddr string, rewards
 	normalized := append(sdk.DecCoins(nil), rewards...)
 	for i := range normalized {
 		// get the decimal of reward asset
-		_, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, normalized[i].Denom)
+		_, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, avsAddr, normalized[i].Denom)
 		if err != nil {
 			return nil, err
 		}
-		normalized[i].Amount = feedistributiontypes.TruncateSDKDec(normalized[i].Amount, assetInfo.AssetBasicInfo.Decimals)
+		normalized[i].Amount = feedistributiontypes.TruncateSDKDec(normalized[i].Amount, rewardAsset.RewardAssetInfo.DenominationExponent)
 	}
 	return normalized, nil
 }
@@ -515,15 +517,14 @@ func (k Keeper) DecCoinsToRewardInfos(ctx sdk.Context, avsAddr string, rewards s
 	rewardInfos := make([]feedistributiontypes.RewardInfo, len(rewards))
 	for i := range rewards {
 		// get the decimal of reward asset
-		assetID, assetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, rewards[i].Denom)
+		assetID, assetInfo, err := k.GetAVSRewardAssetByDenomination(ctx, avsAddr, rewards[i].Denom)
 		if err != nil {
 			return nil, err
 		}
-		decimal := assetInfo.AssetBasicInfo.Decimals
-		rewardAmount := feedistributiontypes.UnscaleDecToInt(rewards[i].Amount, decimal)
+		rewardAmount := feedistributiontypes.UnscaleDecToInt(rewards[i].Amount, assetInfo.RewardAssetInfo.DenominationExponent)
 		rewardInfos[i] = feedistributiontypes.RewardInfo{
 			AssetId: assetID,
-			Decimal: decimal,
+			Decimal: assetInfo.RewardAssetInfo.Decimals,
 			Amount:  rewardAmount,
 		}
 	}
@@ -538,36 +539,94 @@ func (k Keeper) DecCoinsToRewardInfos(ctx sdk.Context, avsAddr string, rewards s
 func (k Keeper) MergeStakerRewards(
 	ctx sdk.Context,
 	claimedRewards []feedistributiontypes.StakerClaimedRewardsPerAVS,
-	unclaimedRewards []feedistributiontypes.CommonAVSRewardData,
+	unclaimedStakingRewards, unclaimedCompoundingRewards []feedistributiontypes.CommonAVSRewardData,
 ) ([]feedistributiontypes.StakerRewardsPerAVS, error) {
 	// Create a map to aggregate rewards by AVS address
 	rewardMap := make(map[string]feedistributiontypes.StakerRewardsPerAVS)
 
 	// Process outstanding rewards
-	for _, data := range claimedRewards {
+	for _, claimedRewardsPerAVS := range claimedRewards {
 		// Convert DecCoins to RewardInfo
-		outstandingRewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.ClaimedRewards.OutstandingRewards)
+		outstandingRewardInfos, err := k.DecCoinsToRewardInfos(ctx, claimedRewardsPerAVS.AVSAddress, claimedRewardsPerAVS.ClaimedRewards.OutstandingRewards)
 		if err != nil {
 			return nil, err
 		}
-		withdrawnRewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.ClaimedRewards.WithdrawnRewards)
+		withdrawnRewardInfos, err := k.DecCoinsToRewardInfos(ctx, claimedRewardsPerAVS.AVSAddress, claimedRewardsPerAVS.ClaimedRewards.WithdrawnRewards)
+		if err != nil {
+			return nil, err
+		}
+		historicalTotalRewardInfos, err := k.DecCoinsToRewardInfos(ctx, claimedRewardsPerAVS.AVSAddress, claimedRewardsPerAVS.ClaimedRewards.HistoricalTotalRewards)
+		if err != nil {
+			return nil, err
+		}
+		// calculate the delegation rewards amount from shares.
+		delegatedRewardsMap := make(map[string]feedistributiontypes.RewardInfo)
+		for _, rewardDelegation := range claimedRewardsPerAVS.ClaimedRewards.DelegationRewardsShares {
+			operatorAccAddr, err := sdk.AccAddressFromBech32(rewardDelegation.OperatorAddr)
+			if err != nil {
+				return nil, err
+			}
+			for _, singleRewardShare := range rewardDelegation.Shares {
+				assetID, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, claimedRewardsPerAVS.AVSAddress, singleRewardShare.Denom)
+				if err != nil {
+					return nil, err
+				}
+				operatorAssets, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operatorAccAddr, assetID)
+				if err != nil {
+					return nil, err
+				}
+				assetAmount, err := delegationkeeper.TokensFromShares(singleRewardShare.Amount, operatorAssets.TotalShare, operatorAssets.TotalAmount)
+				if err != nil {
+					return nil, err
+				}
+				delegatedReward, ok := delegatedRewardsMap[assetID]
+				if !ok {
+					delegatedRewardsMap[assetID] = feedistributiontypes.RewardInfo{
+						AssetId: assetID,
+						Decimal: rewardAsset.RewardAssetInfo.Decimals,
+						Amount:  assetAmount,
+					}
+				} else {
+					delegatedReward.Amount = delegatedReward.Amount.Add(assetAmount)
+					delegatedRewardsMap[assetID] = delegatedReward
+				}
+			}
+		}
+		// Convert the delegation rewards map into a slice
+		delegatedRewardsSlice := make([]feedistributiontypes.RewardInfo, 0)
+		for _, v := range delegatedRewardsMap {
+			delegatedRewardsSlice = append(delegatedRewardsSlice, v)
+		}
+		// sort the slice by assetID
+		sort.Slice(delegatedRewardsSlice, func(i, j int) bool { return delegatedRewardsSlice[i].AssetId < delegatedRewardsSlice[j].AssetId })
+
+		pendingUndelegationRewardInfos, err := k.DecCoinsToRewardInfos(ctx, claimedRewardsPerAVS.AVSAddress, claimedRewardsPerAVS.ClaimedRewards.PendingUndelegationRewards)
+		if err != nil {
+			return nil, err
+		}
+		withdrawableRewardInfos, err := k.DecCoinsToRewardInfos(ctx, claimedRewardsPerAVS.AVSAddress, claimedRewardsPerAVS.ClaimedRewards.WithdrawableRewards)
 		if err != nil {
 			return nil, err
 		}
 		// assign to outstanding and withdrawn rewards
-		entry, exists := rewardMap[data.AVSAddress]
+		entry, exists := rewardMap[claimedRewardsPerAVS.AVSAddress]
 		if !exists {
 			entry = feedistributiontypes.StakerRewardsPerAVS{
-				AVSAddress: data.AVSAddress,
+				AVSAddress: claimedRewardsPerAVS.AVSAddress,
 			}
 		}
 		entry.OutstandingRewards = outstandingRewardInfos
 		entry.WithdrawnRewards = withdrawnRewardInfos
-		rewardMap[data.AVSAddress] = entry
+		entry.HistoricalTotalRewards = historicalTotalRewardInfos
+		entry.DelegationRewards = delegatedRewardsSlice
+		entry.PendingUndelegationRewards = pendingUndelegationRewardInfos
+		entry.WithdrawableRewards = withdrawableRewardInfos
+
+		rewardMap[claimedRewardsPerAVS.AVSAddress] = entry
 	}
 
-	// Process unclaimed rewards
-	for _, data := range unclaimedRewards {
+	// Process unclaimed staking rewards
+	for _, data := range unclaimedStakingRewards {
 		// Convert DecCoins to RewardInfo
 		rewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.Rewards)
 		if err != nil {
@@ -582,6 +641,25 @@ func (k Keeper) MergeStakerRewards(
 		}
 		// assign to unclaimed_rewards
 		entry.UnclaimedRewards = rewardInfos
+		rewardMap[data.AVSAddress] = entry
+	}
+
+	// Process unclaimed compounding rewards
+	for _, data := range unclaimedCompoundingRewards {
+		// Convert DecCoins to RewardInfo
+		rewardInfos, err := k.DecCoinsToRewardInfos(ctx, data.AVSAddress, data.Rewards)
+		if err != nil {
+			return nil, err
+		}
+		entry, exists := rewardMap[data.AVSAddress]
+		if !exists {
+			// Initialize the entry if it doesn't exist
+			entry = feedistributiontypes.StakerRewardsPerAVS{
+				AVSAddress: data.AVSAddress,
+			}
+		}
+		// assign to unclaimed_compounding_rewards
+		entry.UnclaimedCompoundingRewards = rewardInfos
 		rewardMap[data.AVSAddress] = entry
 	}
 

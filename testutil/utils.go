@@ -136,18 +136,6 @@ var DefaultTestStakingAssets = []assetstypes.AssetInfo{
 	},
 }
 
-var DefaultIMRewardAsset = assetstypes.AssetInfo{
-	// add the imua token
-	Name: "Native IM token",
-	// using the base denomination as the symbol.
-	Symbol:  utils.BaseDenom,
-	Address: "0x0000000000000000000000000000000000000000",
-	// Decimals should be set to 0 since the symbol represents the minimum denomination.
-	Decimals:         0,
-	LayerZeroChainID: 0,
-	MetaInfo:         "IM native to the Imua chain",
-}
-
 var (
 	DefaultUnbondingPeriod    = uint64(5)
 	DefaultOperatorCommission = stakingtypes.NewCommission(sdk.MustNewDecFromStr("0.1"), sdk.NewDec(1), sdk.MustNewDecFromStr("0.1"))
@@ -565,12 +553,8 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	)
 	distributionGenesis.AllAvsRewardAssets = []distributiontypes.AVSAddrAndRewardAssets{
 		{
-			Avs: avsAddr,
-			AvsRewardAssets: []distributiontypes.AVSRewardAsset{
-				{
-					AssetBasicInfo: DefaultIMRewardAsset,
-				},
-			},
+			Avs:             avsAddr,
+			AvsRewardAssets: []distributiontypes.AVSRewardAsset{distributiontypes.IMUARewardToken},
 		},
 	}
 	genesisState[distributiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(distributionGenesis)

@@ -121,7 +121,7 @@ func (suite *KeeperTestSuite) setAVSEpochRewards(avsList []common.Address, rewar
 		if rewardAmountPerEpoch > 0 {
 			for _, rewardAsset := range avsRewardAsset.AvsRewardAssets {
 				epochRewards = append(epochRewards, sdk.DecCoin{
-					Denom:  rewardAsset.AssetBasicInfo.Symbol,
+					Denom:  rewardAsset.RewardAssetInfo.RewardDenomination,
 					Amount: sdk.NewDec(rewardAmountPerEpoch),
 				})
 			}
@@ -218,7 +218,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 			isDogfood: false,
 			getExpectedStates: func(_ int64) *expectedAllocationStates {
 				testAVSAddr := strings.ToLower(suite.testAVSs[testAVSIndex].String())
-				assetSymbol := fmt.Sprintf("avs%dsymbol%d", testAVSIndex, 0)
+				assetDenomination := fmt.Sprintf("avs%ddenomination%d", testAVSIndex, 0)
 
 				// calculate the expected state
 				totalRewardDec := sdk.NewDec(DefaultEpochRewardAmount)
@@ -237,18 +237,18 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 
 				expectedStates := expectedAllocationStates{
 					rewardAllocationTotal: sdk.NewDec(DefaultEpochRewardAmount),
-					communityFeePool:      sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedCommunityFee)},
+					communityFeePool:      sdk.DecCoins{sdk.NewDecCoinFromDec(assetDenomination, expectedCommunityFee)},
 					accumulatedCommission: make(map[string]sdk.DecCoins),
 					outstandingRewards:    make(map[string]sdk.DecCoins),
 					operatorCurrentReward: make(map[string]map[string]feedistributiontypes.OperatorCurrentRewards),
 				}
 
 				for _, operator := range suite.testOperators {
-					expectedStates.accumulatedCommission[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedOperatorCommission)}
-					expectedStates.outstandingRewards[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, totalStakerRewards)}
+					expectedStates.accumulatedCommission[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetDenomination, expectedOperatorCommission)}
+					expectedStates.outstandingRewards[operator.String()] = sdk.DecCoins{sdk.NewDecCoinFromDec(assetDenomination, totalStakerRewards)}
 					// check the current rewards for the operator after splitting into different asset pools.
 					for _, stakingAssetID := range suite.AssetIDs {
-						expectedStates.addOperatorCurrentReward(testAVSAddr, assetSymbol, operator.String(), stakingAssetID, expectedRewardPerAsset)
+						expectedStates.addOperatorCurrentReward(testAVSAddr, assetDenomination, operator.String(), stakingAssetID, expectedRewardPerAsset)
 					}
 				}
 				return &expectedStates

@@ -253,7 +253,7 @@ func (k Keeper) calculateDelegationRewards(ctx sdk.Context, endingPeriod uint64,
 			for _, rewardPerAVS := range rewardsBetweenPeriod {
 				for _, reward := range rewardPerAVS.Rewards {
 					// get assetID from AVS address and asset symbol
-					rewardAssetID, err := k.GetAVSRewardAssetIDBySymbol(ctx, rewardPerAVS.AVSAddress, reward.Denom)
+					rewardAssetID, err := k.GetAVSRewardAssetIDByDenomination(ctx, rewardPerAVS.AVSAddress, reward.Denom)
 					if err != nil {
 						return true, err
 					}
@@ -334,7 +334,7 @@ func (k Keeper) distributeRewardsToDelegation(
 		rewards := rewardsRawPerAVS.Rewards.Intersect(unclaimedRewards.OutstandingRewards)
 		if !rewards.IsEqual(rewardsRawPerAVS.Rewards) {
 			ctx.Logger().Error(
-				"rounding error distributing rewards to delegation",
+				"distributeRewardsToDelegation: rounding error distributing rewards to delegation",
 				"operator", operator,
 				"avs", rewardsRawPerAVS.AVSAddress,
 				"got", rewards.String(),
@@ -369,6 +369,10 @@ func (k Keeper) distributeRewardsToDelegation(
 						if err != nil {
 							return nil, err
 						}
+						totalCompoundingReward = totalCompoundingReward.Add(feedistributiontypes.CommonAVSRewardData{
+							AVSAddress: stakerRewardsPerAVS.AVSAddress,
+							Rewards:    stakerRewardsPerAVS.Rewards,
+						})
 					}
 					stakerCompoundingRewards = stakerCompoundingRewards.Add(feedistributiontypes.CompoundingRewardsPerAsset{
 						Symbol:  reward.Denom,
@@ -532,64 +536,163 @@ func (k Keeper) ClaimDelegationRewards(ctx sdk.Context, stakerID string) (feedis
 	return totalClaimedRewards, nil
 }
 
-// GetStakerUnclaimedRewards queries the unclaimed rewards for a staker.
+// GetDelegationUnclaimedRewards queries the unclaimed rewards for a specific delegation.
 // Unlike ClaimDelegationRewards, it does not trigger a claim operation.
-func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) (feedistributiontypes.CommonAVSRewards, error) {
+// The unclaimed rewards from staking assets and rewards compounding
+// will be returned separately.
+func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, stakerID, assetID, operatorAddr string) (feedistributiontypes.CommonAVSRewards, feedistributiontypes.CommonAVSRewards, error) {
 	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
-	ret := feedistributiontypes.NewCommonAVSRewards()
-	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
-		for i := range allEpochIdentifiers {
-			epochIdentifier := allEpochIdentifiers[i]
-			epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, epochIdentifier)
-			if !exist {
-				return false, feedistributiontypes.ErrEpochNotFound.Wrapf("GetStakerUnclaimedRewards,epochIdentifier:%s", epochIdentifier)
-			}
-			// get the starting info
-			delegationKey := string(utils.GetJoinedStoreKey(stakerID, keys.AssetId, keys.OperatorAddr))
-			if !k.HasDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier) {
-				// no rewards for the delegation without starting information.
-				continue
-			}
-			startingInfo, err := k.GetDelegationStartingInfo(ctx, delegationKey, epochInfo.Identifier)
-			if err != nil {
-				return false, err
-			}
-			if startingInfo.EpochNumber >= uint64(epochInfo.CurrentEpoch) {
-				// this case shouldn't exist, so return an error
-				return false, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("StakerClaimDelegationReward, epoch number in starting info should be less than the current epoch number, startingEpochNumber:%d, current:%d", startingInfo.EpochNumber, epochInfo.CurrentEpoch)
-			} else if startingInfo.EpochNumber == uint64(epochInfo.CurrentEpoch-1) {
-				// No rewards if the delegation started in the previous epoch,
-				// because the current epoch's reward has not been distributed yet.
-				// It will be distributed at the end of the current epoch.
-				continue
-			}
-			if !startingInfo.Stake.IsPositive() {
-				return false, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("StakerClaimDelegationReward, stake in starting info should be positive, stake:%s", startingInfo.Stake)
-			}
-			// increase the period for the operator before distributing the rewards
-			delegatedAmountAtPreEpoch, err := k.getDelegatedAmountAtPreEpochEnd(ctx, keys.OperatorAddr, keys.AssetId, epochInfo.Identifier)
-			if err != nil {
-				return false, err
-			}
-			endingPeriod, err := k.IncrementOperatorPeriod(ctx, keys.OperatorAddr, keys.AssetId, epochInfo.Identifier, delegatedAmountAtPreEpoch)
-			if err != nil {
-				return false, err
-			}
-			// calculate the rewards
-			allAVSRewardsRaw, _, err := k.calculateDelegationRewards(ctx, endingPeriod, keys.OperatorAddr, keys.AssetId, &epochInfo, startingInfo)
-			if err != nil {
-				return false, err
-			}
+	stakingRewards := feedistributiontypes.NewCommonAVSRewards()
+	compoundingReward := feedistributiontypes.NewCommonAVSRewards()
 
-			ret = ret.Add(allAVSRewardsRaw...)
+	cc := ctx
+	if !isCacheCtx {
+		cc, _ = ctx.CacheContext()
+	}
+	for i := range allEpochIdentifiers {
+		epochIdentifier := allEpochIdentifiers[i]
+		epochInfo, exist := k.epochsKeeper.GetEpochInfo(cc, epochIdentifier)
+		if !exist {
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.ErrEpochNotFound.Wrapf("GetDelegationUnclaimedRewards,epochIdentifier:%s", epochIdentifier)
+		}
+		// get the starting info
+		delegationKey := string(utils.GetJoinedStoreKey(stakerID, assetID, operatorAddr))
+		if !k.HasDelegationStartingInfo(cc, delegationKey, epochInfo.Identifier) {
+			// no rewards for the delegation without starting information.
+			continue
+		}
+		startingInfo, err := k.GetDelegationStartingInfo(cc, delegationKey, epochInfo.Identifier)
+		if err != nil {
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
+		}
+		if startingInfo.EpochNumber >= uint64(epochInfo.CurrentEpoch) {
+			// this case shouldn't exist, so return an error
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("GetDelegationUnclaimedRewards, epoch number in starting info should be less than the current epoch number, startingEpochNumber:%d, current:%d", startingInfo.EpochNumber, epochInfo.CurrentEpoch)
+		} else if startingInfo.EpochNumber == uint64(epochInfo.CurrentEpoch-1) {
+			// No rewards if the delegation started in the previous epoch,
+			// because the current epoch's reward has not been distributed yet.
+			// It will be distributed at the end of the current epoch.
+			continue
+		}
+		if !startingInfo.Stake.IsPositive() {
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("StakerClaimDelegationReward, stake in starting info should be positive, stake:%s", startingInfo.Stake)
+		}
+		// increase the period for the operator before distributing the rewards
+		delegatedAmountAtPreEpoch, err := k.getDelegatedAmountAtPreEpochEnd(cc, operatorAddr, assetID, epochInfo.Identifier)
+		if err != nil {
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
+		}
+		endingPeriod, err := k.IncrementOperatorPeriod(cc, operatorAddr, assetID, epochInfo.Identifier, delegatedAmountAtPreEpoch)
+		if err != nil {
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
+		}
+		// calculate the rewards from staking assets
+		allAVSRewardsRaw, _, err := k.calculateDelegationRewards(cc, endingPeriod, operatorAddr, assetID, &epochInfo, startingInfo)
+		if err != nil {
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
 		}
 
+		// calculate the rewards from rewards compounding
+		for _, rewardsRawPerAVS := range allAVSRewardsRaw {
+			unclaimedRewards, err := k.GetOperatorUnclaimedRewards(cc, operatorAddr, rewardsRawPerAVS.AVSAddress)
+			if err != nil {
+				ctx.Logger().Error("GetStakerUnclaimedRewards: failed to get the unclaimedRewards rewards",
+					"operator", operatorAddr, "avs", rewardsRawPerAVS.AVSAddress, "err", err)
+				return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
+			}
+			// This check is from the implementation of the Cosmos SDK.
+			// Not sure if this edge case also exists in the Imua protocol,
+			// but adding it here to avoid exceptions.
+			// defensive edge case may happen on the very final digits
+			// of the decCoins due to operation order of the distribution mechanism.
+			rewards := rewardsRawPerAVS.Rewards.Intersect(unclaimedRewards.OutstandingRewards)
+			if !rewards.IsEqual(rewardsRawPerAVS.Rewards) {
+				ctx.Logger().Error(
+					"GetStakerUnclaimedRewards: rounding error distributing rewards to delegation",
+					"operator", operatorAddr,
+					"avs", rewardsRawPerAVS.AVSAddress,
+					"got", rewards.String(),
+					"expected", rewardsRawPerAVS.Rewards.String(),
+				)
+			}
+			if len(rewards) == 0 {
+				// no rewards, skipping it.
+				continue
+			}
+			// calculate the compounding rewards based on the proportion of outstanding rewards.
+			stakerCompoundingRewards := feedistributiontypes.NewCompoundingRewards()
+			for _, reward := range rewards {
+				compoundingRewardsPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
+				if compoundingRewardsPerAsset != nil {
+					outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
+					if outstandingRewardAmount.IsPositive() {
+						proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
+						// calculate the compounding rewards for specific reward asset
+						stakerCompoundingRewardsPerAsset, err := compoundingRewardsPerAsset.MulDecTruncate(proportion)
+						if err != nil {
+							return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
+						}
+						// increase the compounding rewards to staker
+						for _, stakerRewardsPerAVS := range stakerCompoundingRewardsPerAsset {
+							compoundingReward = compoundingReward.Add(feedistributiontypes.CommonAVSRewardData{
+								AVSAddress: stakerRewardsPerAVS.AVSAddress,
+								Rewards:    stakerRewardsPerAVS.Rewards,
+							})
+						}
+						stakerCompoundingRewards = stakerCompoundingRewards.Add(feedistributiontypes.CompoundingRewardsPerAsset{
+							Symbol:  reward.Denom,
+							Rewards: stakerCompoundingRewardsPerAsset,
+						})
+					}
+				}
+			}
+
+			// We still reduce the operator’s unclaimed rewards even though this is only a query function,
+			// because the updated state is needed to calculate the rewards for other delegations when it's
+			// called by the `GetStakerUnclaimedRewards` function.
+			// The updated state will not be committed since this is only a query operation.
+			err = k.UpdateOperatorUnclaimedRewards(cc, operatorAddr, rewardsRawPerAVS.AVSAddress, false, feedistributiontypes.DeltaOperatorUnclaimedRewards{
+				OutstandingRewards:     rewards,
+				RewardsFromCompounding: stakerCompoundingRewards,
+			})
+			if err != nil {
+				return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
+			}
+
+			stakingRewards = stakingRewards.Add(feedistributiontypes.CommonAVSRewardData{
+				AVSAddress: rewardsRawPerAVS.AVSAddress,
+				Rewards:    rewards,
+			})
+		}
+	}
+	return stakingRewards, compoundingReward, nil
+}
+
+// GetStakerUnclaimedRewards queries the unclaimed rewards for a staker.
+// Unlike ClaimDelegationRewards, it does not trigger a claim operation.
+// The unclaimed rewards from staking assets and rewards compounding
+// will be returned separately.
+func (k Keeper) GetStakerUnclaimedRewards(ctx sdk.Context, stakerID string) (feedistributiontypes.CommonAVSRewards, feedistributiontypes.CommonAVSRewards, error) {
+	stakingRewards := feedistributiontypes.NewCommonAVSRewards()
+	compoundingReward := feedistributiontypes.NewCommonAVSRewards()
+	// The input ctx will be a cache context, and the state changes will not be committed
+	// if it is called by an RPC function.
+	// We still use a cache context here to avoid accidental state updates
+	// when it is called by a non-RPC function.
+	cc, _ := ctx.CacheContext()
+	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, _ *delegationtype.DelegationAmounts) (bool, error) {
+		delegationStakingRewards, delegationCompoundingRewards, err := k.GetDelegationUnclaimedRewards(cc, true, keys.StakerId, keys.AssetId, keys.OperatorAddr)
+		if err != nil {
+			return false, err
+		}
+		stakingRewards = stakingRewards.Add(delegationStakingRewards...)
+		compoundingReward = compoundingReward.Add(delegationCompoundingRewards...)
 		return false, nil
 	}
-	err := k.delegationKeeper.IterateDelegationsForStaker(ctx, stakerID, opFunc)
+	err := k.delegationKeeper.IterateDelegationsForStaker(cc, stakerID, opFunc)
 	if err != nil {
-		return nil, err
+		return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
 	}
 
-	return ret, nil
+	return stakingRewards, compoundingReward, nil
 }
