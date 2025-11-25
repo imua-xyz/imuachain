@@ -198,7 +198,7 @@ message SlashFromUndelegation {
 message SlashAssetAmount {
   // asset_id is the asset id.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
-  // amount is the slashed amount..
+  // amount is the slashed amount.
   string amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -207,7 +207,7 @@ message SlashAssetAmount {
 }
 // SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards
 message SlashFromUnclaimedRewards {
-  // avs is who the rewards earned from.
+  // avs is the AVS from which the rewards were earned.
   string avs = 1 ;
   // slash_assets represent multiple rewards assets states that are slashed.
   repeated SlashAssetAmount slash_assets = 2 [(gogoproto.nullable) = false];

@@ -728,7 +728,7 @@ func (m *SlashFromUndelegation) GetRewardAsset() bool {
 type SlashAssetAmount struct {
 	// asset_id is the asset id.
 	AssetID string `protobuf:"bytes,1,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
-	// amount is the slashed amount..
+	// amount is the slashed amount.
 	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
 }
 
@@ -774,7 +774,7 @@ func (m *SlashAssetAmount) GetAssetID() string {
 
 // SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards
 type SlashFromUnclaimedRewards struct {
-	// avs is who the rewards earned from.
+	// avs is the AVS from which the rewards were earned.
 	Avs string `protobuf:"bytes,1,opt,name=avs,proto3" json:"avs,omitempty"`
 	// slash_assets represent multiple rewards assets states that are slashed.
 	SlashAssets []SlashAssetAmount `protobuf:"bytes,2,rep,name=slash_assets,json=slashAssets,proto3" json:"slash_assets"`
