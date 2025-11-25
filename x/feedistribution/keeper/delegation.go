@@ -575,7 +575,7 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 			continue
 		}
 		if !startingInfo.Stake.IsPositive() {
-			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("StakerClaimDelegationReward, stake in starting info should be positive, stake:%s", startingInfo.Stake)
+			return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.ErrInvalidStartingInfo.Wrapf("GetDelegationUnclaimedRewards, stake in starting info should be positive, stake:%s", startingInfo.Stake)
 		}
 		// increase the period for the operator before distributing the rewards
 		delegatedAmountAtPreEpoch, err := k.getDelegatedAmountAtPreEpochEnd(cc, operatorAddr, assetID, epochInfo.Identifier)
@@ -596,7 +596,7 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 		for _, rewardsRawPerAVS := range allAVSRewardsRaw {
 			unclaimedRewards, err := k.GetOperatorUnclaimedRewards(cc, operatorAddr, rewardsRawPerAVS.AVSAddress)
 			if err != nil {
-				ctx.Logger().Error("GetStakerUnclaimedRewards: failed to get the unclaimedRewards rewards",
+				ctx.Logger().Error("GetDelegationUnclaimedRewards: failed to get the unclaimedRewards rewards",
 					"operator", operatorAddr, "avs", rewardsRawPerAVS.AVSAddress, "err", err)
 				return feedistributiontypes.CommonAVSRewards{}, feedistributiontypes.CommonAVSRewards{}, err
 			}
@@ -608,7 +608,7 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 			rewards := rewardsRawPerAVS.Rewards.Intersect(unclaimedRewards.OutstandingRewards)
 			if !rewards.IsEqual(rewardsRawPerAVS.Rewards) {
 				ctx.Logger().Error(
-					"GetStakerUnclaimedRewards: rounding error distributing rewards to delegation",
+					"GetDelegationUnclaimedRewards: rounding error distributing rewards to delegation",
 					"operator", operatorAddr,
 					"avs", rewardsRawPerAVS.AVSAddress,
 					"got", rewards.String(),

@@ -1849,7 +1849,7 @@ type MsgClient interface {
 	UpdateCommissionRate(ctx context.Context, in *UpdateCommissionRateReq, opts ...grpc.CallOption) (*UpdateCommissionRateResponse, error)
 	// EditOperator edits an operator.
 	EditOperator(ctx context.Context, in *EditOperatorReq, opts ...grpc.CallOption) (*EditOperatorResponse, error)
-	// EditOperator edits an operator.
+	// UpdateRewardCompoundingFlag updates the reward compounding flag of an operator
 	UpdateRewardCompoundingFlag(ctx context.Context, in *UpdateRewardCompoundingFlagReq, opts ...grpc.CallOption) (*UpdateRewardCompoundingFlagResponse, error)
 	// UpdateParams updates the parameters of the module.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
@@ -1950,7 +1950,7 @@ type MsgServer interface {
 	UpdateCommissionRate(context.Context, *UpdateCommissionRateReq) (*UpdateCommissionRateResponse, error)
 	// EditOperator edits an operator.
 	EditOperator(context.Context, *EditOperatorReq) (*EditOperatorResponse, error)
-	// EditOperator edits an operator.
+	// UpdateRewardCompoundingFlag updates the reward compounding flag of an operator
 	UpdateRewardCompoundingFlag(context.Context, *UpdateRewardCompoundingFlagReq) (*UpdateRewardCompoundingFlagResponse, error)
 	// UpdateParams updates the parameters of the module.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)

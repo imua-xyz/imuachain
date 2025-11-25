@@ -433,7 +433,7 @@ service Msg {
     option (google.api.http).post = "/imuachain/operator/v1/tx/edit_operator";
   }
 
-  // EditOperator edits an operator.
+  // UpdateRewardCompoundingFlag updates the reward compounding flag of an operator
   rpc UpdateRewardCompoundingFlag(UpdateRewardCompoundingFlagReq) returns (UpdateRewardCompoundingFlagResponse) {
     option (google.api.http).post = "/imuachain/operator/v1/tx/update_reward_compounding_flag";
   }

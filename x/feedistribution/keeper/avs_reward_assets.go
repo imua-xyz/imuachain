@@ -88,9 +88,9 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assetsInfo [
 		if err != nil {
 			return types.ErrInvalidRewardAssetParameter.Wrapf("invalid denomination:%s,err:%s", assetInfo.RewardDenomination, err)
 		}
-		// check for symbol duplication
-		if _, ok := denominationMap[assetInfo.Symbol]; ok {
-			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated symbol: %s", assetInfo.Symbol)
+		// check for denomination duplication
+		if _, ok := denominationMap[assetInfo.RewardDenomination]; ok {
+			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated denomination: %s", assetInfo.Symbol)
 		}
 		denominationMap[assetInfo.RewardDenomination] = nil
 		_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(assetInfo.LayerZeroChainID, "", assetInfo.Address)
