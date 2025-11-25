@@ -26644,7 +26644,7 @@
                                     },
                                     "amount": {
                                       "type": "string",
-                                      "description": "amount is the slashed amount.."
+                                      "description": "amount is the slashed amount."
                                     }
                                   },
                                   "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -26668,7 +26668,7 @@
                                   "properties": {
                                     "avs": {
                                       "type": "string",
-                                      "description": "avs is who the rewards earned from."
+                                      "description": "avs is the AVS from which the rewards were earned."
                                     },
                                     "slash_assets": {
                                       "type": "array",
@@ -26681,7 +26681,7 @@
                                           },
                                           "amount": {
                                             "type": "string",
-                                            "description": "amount is the slashed amount.."
+                                            "description": "amount is the slashed amount."
                                           }
                                         },
                                         "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -52552,7 +52552,7 @@
                   },
                   "amount": {
                     "type": "string",
-                    "description": "amount is the slashed amount.."
+                    "description": "amount is the slashed amount."
                   }
                 },
                 "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -52576,7 +52576,7 @@
                 "properties": {
                   "avs": {
                     "type": "string",
-                    "description": "avs is who the rewards earned from."
+                    "description": "avs is the AVS from which the rewards were earned."
                   },
                   "slash_assets": {
                     "type": "array",
@@ -52589,7 +52589,7 @@
                         },
                         "amount": {
                           "type": "string",
-                          "description": "amount is the slashed amount.."
+                          "description": "amount is the slashed amount."
                         }
                       },
                       "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -52698,7 +52698,7 @@
                       },
                       "amount": {
                         "type": "string",
-                        "description": "amount is the slashed amount.."
+                        "description": "amount is the slashed amount."
                       }
                     },
                     "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -52722,7 +52722,7 @@
                     "properties": {
                       "avs": {
                         "type": "string",
-                        "description": "avs is who the rewards earned from."
+                        "description": "avs is the AVS from which the rewards were earned."
                       },
                       "slash_assets": {
                         "type": "array",
@@ -52735,7 +52735,7 @@
                             },
                             "amount": {
                               "type": "string",
-                              "description": "amount is the slashed amount.."
+                              "description": "amount is the slashed amount."
                             }
                           },
                           "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -53184,7 +53184,7 @@
                             },
                             "amount": {
                               "type": "string",
-                              "description": "amount is the slashed amount.."
+                              "description": "amount is the slashed amount."
                             }
                           },
                           "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -53208,7 +53208,7 @@
                           "properties": {
                             "avs": {
                               "type": "string",
-                              "description": "avs is who the rewards earned from."
+                              "description": "avs is the AVS from which the rewards were earned."
                             },
                             "slash_assets": {
                               "type": "array",
@@ -53221,7 +53221,7 @@
                                   },
                                   "amount": {
                                     "type": "string",
-                                    "description": "amount is the slashed amount.."
+                                    "description": "amount is the slashed amount."
                                   }
                                 },
                                 "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -53666,7 +53666,7 @@
         },
         "amount": {
           "type": "string",
-          "description": "amount is the slashed amount.."
+          "description": "amount is the slashed amount."
         }
       },
       "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -53724,7 +53724,7 @@
               },
               "amount": {
                 "type": "string",
-                "description": "amount is the slashed amount.."
+                "description": "amount is the slashed amount."
               }
             },
             "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -53748,7 +53748,7 @@
             "properties": {
               "avs": {
                 "type": "string",
-                "description": "avs is who the rewards earned from."
+                "description": "avs is the AVS from which the rewards were earned."
               },
               "slash_assets": {
                 "type": "array",
@@ -53761,7 +53761,7 @@
                     },
                     "amount": {
                       "type": "string",
-                      "description": "amount is the slashed amount.."
+                      "description": "amount is the slashed amount."
                     }
                   },
                   "title": "SlashAssetAmount records the slash amount of specific assetID"
@@ -53781,7 +53781,7 @@
       "properties": {
         "avs": {
           "type": "string",
-          "description": "avs is who the rewards earned from."
+          "description": "avs is the AVS from which the rewards were earned."
         },
         "slash_assets": {
           "type": "array",
@@ -53794,7 +53794,7 @@
               },
               "amount": {
                 "type": "string",
-                "description": "amount is the slashed amount.."
+                "description": "amount is the slashed amount."
               }
             },
             "title": "SlashAssetAmount records the slash amount of specific assetID"
