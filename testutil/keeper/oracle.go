@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -25,6 +24,12 @@ import (
 	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	"github.com/stretchr/testify/require"
 )
+
+func GetAuthAddrString() string {
+	authAddrBz := address.Module("cosmos.group.v1.GroupPolicy", []byte("1"))
+	authAddr := sdk.AccAddress(authAddrBz)
+	return authAddr.String()
+}
 
 func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	// force to initialize config at the start of each test
@@ -50,10 +55,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		"OracleParams",
 	)
-	authAddrBz := address.Module("cosmos.group.v1.GroupPolicy", fmt.Appendf([]byte{}, "%d", uint64(1)))
-	authAddr := sdk.AccAddress(authAddrBz)
-	authAddrString := authAddr.String()
-	fmt.Println("authAddrString1", authAddrString)
+
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
@@ -62,7 +64,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		dogfoodkeeper.Keeper{},
 		delegationkeeper.Keeper{},
 		assetskeeper.Keeper{},
-		authAddrString,
+		GetAuthAddrString(),
 		slashingkeeper.Keeper{},
 	)
 

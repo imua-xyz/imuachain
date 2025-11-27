@@ -474,7 +474,7 @@ func NewImuachainApp(
 	// until further notice, the authority is the group policy with ID 1.
 	// once governance is implemented in our custom staking world, this will be changed.
 	// since a group is simply identified by its index, its members must be defined at genesis.
-	authAddrBz := address.Module("cosmos.group.v1.GroupPolicy", fmt.Appendf([]byte{}, "%d", uint64(1)))
+	authAddrBz := address.Module("cosmos.group.v1.GroupPolicy", []byte("1"))
 	authAddr := sdk.AccAddress(authAddrBz)
 	authAddrString := authAddr.String()
 
