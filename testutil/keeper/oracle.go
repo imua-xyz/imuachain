@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,8 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/imua-xyz/imuachain/cmd/config"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper"
@@ -50,6 +50,10 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		"OracleParams",
 	)
+	authAddrBz := address.Module("cosmos.group.v1.GroupPolicy", fmt.Appendf([]byte{}, "%d", uint64(1)))
+	authAddr := sdk.AccAddress(authAddrBz)
+	authAddrString := authAddr.String()
+	fmt.Println("authAddrString1", authAddrString)
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
@@ -58,7 +62,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		dogfoodkeeper.Keeper{},
 		delegationkeeper.Keeper{},
 		assetskeeper.Keeper{},
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authAddrString,
 		slashingkeeper.Keeper{},
 	)
 

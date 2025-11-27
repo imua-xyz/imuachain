@@ -7,8 +7,7 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/imua-xyz/imuachain/utils"
@@ -134,7 +133,8 @@ func (suite *KeeperTestSuite) setAVSEpochRewards(avsList []common.Address, rewar
 func (suite *KeeperTestSuite) updateDogfoodAssetsList(assetIDS []string) {
 	dogfoodParam := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx)
 	dogfoodParam.AssetIDs = assetIDS
-	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName)
+	authAddrBz := address.Module("cosmos.group.v1.GroupPolicy", fmt.Appendf([]byte{}, "%d", uint64(1)))
+	authAddr := sdk.AccAddress(authAddrBz)
 	authAddrString := authAddr.String()
 	_, err := suite.App.StakingKeeper.UpdateParams(suite.Ctx, &dogfoodtypes.MsgUpdateParams{
 		Params:    dogfoodParam,
