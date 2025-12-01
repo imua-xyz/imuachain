@@ -2,11 +2,9 @@ package keeper
 
 import (
 	"fmt"
+	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"math"
 	"strings"
-	"time"
-
-	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"golang.org/x/xerrors"
 
@@ -36,7 +34,7 @@ func (k *Keeper) RegisterOperator(
 	if err := info.ValidateBasic(); err != nil {
 		return errorsmod.Wrap(err, "SetOperatorInfo: operator info is invalid")
 	}
-	if info.Commission.UpdateTime.Equal(time.Time{}) {
+	if info.Commission.UpdateTime.Equal(operatortypes.DefaultCommissionUpdateTime) {
 		info.Commission.UpdateTime = ctx.BlockTime()
 	}
 	// #nosec G703 // already validated in `ValidateBasic`
@@ -182,6 +180,9 @@ func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes
 
 // IterateOperators return the list of all operators' detailed information
 func (k *Keeper) IterateOperators(ctx sdk.Context, opFunc func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error)) error {
+	if opFunc == nil {
+		return operatortypes.ErrParameterInvalid.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
 	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
@@ -358,6 +359,9 @@ func (k *Keeper) IsOptedInAndNotJailed(ctx sdk.Context, operatorAddr, avsAddr st
 }
 
 func (k *Keeper) IterateOptInfo(ctx sdk.Context, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error)) error {
+	if opFunc == nil {
+		return operatortypes.ErrParameterInvalid.Wrapf("opFunc callback is nil")
+	}
 	// get all opted-in info
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)

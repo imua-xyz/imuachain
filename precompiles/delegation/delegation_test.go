@@ -314,7 +314,6 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		// deposit asset for delegation test
 		delegateToParams := &delegationtype.DelegationOrUndelegationParams{
 			ClientChainID: 101,
-			Action:        types.DelegateTo,
 			StakerAddress: staker,
 			AssetsAddress: usdtAddress,
 			OpAmount:      delegateAmount,

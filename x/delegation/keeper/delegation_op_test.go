@@ -52,7 +52,6 @@ func (suite *DelegationTestSuite) prepareDeposit(depositAmount sdkmath.Int) *ass
 func (suite *DelegationTestSuite) prepareDelegation(delegationAmount sdkmath.Int, operator sdk.AccAddress) *delegationtype.DelegationOrUndelegationParams {
 	delegationEvent := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   suite.clientChainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   suite.assetAddr.Bytes(),
 		OperatorAddress: operator,
 		StakerAddress:   suite.Address[:],
@@ -114,7 +113,6 @@ func (suite *DelegationTestSuite) prepareOptingInDogfood(assetID string) (sdkmat
 func (suite *DelegationTestSuite) prepareDelegationNativeToken() *delegationtype.DelegationOrUndelegationParams {
 	delegationEvent := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   assetstypes.ImuachainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   common.HexToAddress(assetstypes.ImuachainAssetAddr).Bytes(),
 		OperatorAddress: suite.opAccAddr,
 		StakerAddress:   suite.accAddr[:],
@@ -133,7 +131,6 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	suite.NoError(err)
 	delegationParams := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   suite.clientChainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   suite.assetAddr.Bytes(),
 		OperatorAddress: opAccAddr,
 		StakerAddress:   suite.Address[:],
@@ -197,7 +194,6 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	// delegate imua-native-token
 	delegationParams = &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   assetstypes.ImuachainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   common.HexToAddress(assetstypes.ImuachainAssetAddr).Bytes(),
 		OperatorAddress: opAccAddr,
 		StakerAddress:   suite.accAddr[:],
@@ -266,7 +262,6 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 	suite.NoError(err)
 	delegationParams := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   types.ImuachainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   common.HexToAddress(types.ImuachainAssetAddr).Bytes(),
 		OperatorAddress: opAccAddr,
 		StakerAddress:   opAccAddr,

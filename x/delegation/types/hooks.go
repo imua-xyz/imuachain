@@ -42,3 +42,14 @@ func (hooks MultiDelegationHooks) AfterUndelegationStarted(
 	}
 	return nil
 }
+
+func (hooks MultiDelegationHooks) AfterNSTDelegationSlashed(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
+	preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo) error {
+	for _, hook := range hooks {
+		err := hook.AfterDelegation(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

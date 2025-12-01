@@ -42,6 +42,9 @@ func (k Keeper) SetAllDelegationStates(ctx sdk.Context, delegationStates []deleg
 }
 
 func (k Keeper) IterateDelegations(ctx sdk.Context, iteratorPrefix []byte, opFunc delegationtype.DelegationOpFunc) error {
+	if opFunc == nil {
+		return delegationtype.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
 	iterator := sdk.KVStorePrefixIterator(store, iteratorPrefix)
 	defer iterator.Close()
@@ -139,7 +142,6 @@ func (k *Keeper) AllDelegatedInfoForStakerAsset(ctx sdk.Context, stakerID string
 }
 
 // UpdateDelegationState is used to update the staker's asset amount that is delegated to a specified operator.
-// Compared to `UpdateStakerDelegationTotalAmount`,they use the same kv store, but in this function the store key needs to add the operator address as a suffix.
 func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr string, deltaAmounts *delegationtype.DeltaDelegationAmounts) (bool, delegationtype.DelegationAmounts, error) {
 	var preState delegationtype.DelegationAmounts
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
@@ -185,8 +187,11 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 		shareIsZero = true
 	}
 
-	// todo: should we delete the delegation state if both the share and the WaitUndelegationAmount are zero
-	// to reduce the state storage?
+	// todo: we should delete the delegation state if both the share and the WaitUndelegationAmount are zero
+	// to reduce the state storage.
+	// But the implementation might not be done here, because delegation removal needs to consider
+	// whether a zero-amount delegation still has unclaimed rewards. In addition, the removal should
+	// not be applied immediately when the amount becomes zero, since rewards are distributed per epoch.
 
 	// save single operator delegation state
 	bz := k.cdc.MustMarshal(&delegationState)
@@ -420,12 +425,9 @@ func (k Keeper) DelegationStateByOperatorAssets(ctx sdk.Context, operatorAddr st
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts delegationtype.DelegationAmounts
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
-		keys, err := assetstype.ParseJoinedKey(iterator.Key())
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
 		if err != nil {
 			return nil, err
-		}
-		if len(keys) != 3 {
-			continue
 		}
 		restakerID, assetID, findOperatorAddr := keys[0], keys[1], keys[2]
 		if operatorAddr != findOperatorAddr {
@@ -489,7 +491,8 @@ func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]strin
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
 
-	// assuming that we support 5 client chains, this is a reasonable capacity.
+	// assuming we support 5 client chains and each chain has only one stakerID
+	// associated with an operator, this capacity should be sufficient.
 	// we can of course support more or less than that, but this is a good
 	// starting point.
 	// ideally, we should have a reverse lookup stored for this.

@@ -583,7 +583,7 @@ func (k Keeper) SetStaker(ctx sdk.Context, chainID uint64, stakerAddr string, st
 // convertDecimal converts an amount between asset and oracle module decimals, depending on direction.
 // Handles precision and rounding errors.
 func (k Keeper) convertDecimal(ctx sdk.Context, assetID string, amount sdkmath.Int, feederID uint64, fromAssetsModule bool) (sdkmath.Int, error) {
-	decimalMap, err := k.assetsKeeper.GetAssetsDecimal(ctx, map[string]any{assetID: nil})
+	decimalMap, err := k.assetsKeeper.GetAssetsDecimal(ctx, map[string]struct{}{assetID: {}})
 	if err != nil {
 		return sdkmath.ZeroInt(), err
 	}

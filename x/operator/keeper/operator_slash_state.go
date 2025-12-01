@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -78,85 +77,13 @@ func (k *Keeper) AllOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr str
 	for ; iterator.Valid(); iterator.Next() {
 		var slashInfo operatortypes.OperatorSlashInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &slashInfo)
-		keys, err := assetstype.ParseJoinedKey(iterator.Key())
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
 		if err != nil {
 			return nil, err
 		}
 		ret[keys[2]] = &slashInfo
 	}
 	return ret, nil
-}
-
-// UpdateSlashAssetsState This is a function to update the assets amount that need to be slashed
-// The stored state is:
-// KeyPrefixSlashAssetsState key-value:
-// processedSlashHeight + '/' + assetID -> SlashAmount
-// processedSlashHeight + '/' + assetID + '/' + stakerID -> SlashAmount
-// processedSlashHeight + '/' + assetID + '/' + operatorAddr -> SlashAmount
-// The slashed assets info won't be sent to the client chain immediately after the slash event being processed, env if
-// the asset amounts of related operator and staker have been decreased. This is because we need to wait a veto period.
-// The state updated by this function will be sent to the client chain once the veto period has expired.
-// This function will be called by `SlashStaker` and `SlashOperator` implemented in the 'state_update.go' file.
-func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperator string, processedHeight uint64, opAmount sdkmath.Int) error {
-	if opAmount.IsNil() || opAmount.IsZero() {
-		return nil
-	}
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashAssetsState)
-	var key []byte
-	if stakerOrOperator == "" || assetID == "" {
-		return errorsmod.Wrapf(operatortypes.ErrParameterInvalid, "assetID:%s,stakerOrOperator:%s", assetID, stakerOrOperator)
-	}
-
-	key = assetstype.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID, stakerOrOperator)
-	slashAmount := assetstype.ValueField{Amount: sdkmath.ZeroInt()}
-	value := store.Get(key)
-	if value != nil {
-		k.cdc.MustUnmarshal(value, &slashAmount)
-	}
-
-	err := assetstype.UpdateAssetValue(&slashAmount.Amount, &opAmount)
-	if err != nil {
-		return err
-	}
-	bz := k.cdc.MustMarshal(&slashAmount)
-	store.Set(key, bz)
-
-	key = assetstype.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID)
-	totalSlashAmount := assetstype.ValueField{Amount: sdkmath.ZeroInt()}
-	value = store.Get(key)
-	if value != nil {
-		k.cdc.MustUnmarshal(value, &totalSlashAmount)
-	}
-
-	err = assetstype.UpdateAssetValue(&totalSlashAmount.Amount, &opAmount)
-	if err != nil {
-		return err
-	}
-	bz = k.cdc.MustMarshal(&slashAmount)
-	store.Set(key, bz)
-	return nil
-}
-
-// GetSlashAssetsState This is a function to retrieve the assets awaiting transfer to the client chain for slashing.
-// Now this function hasn't been called, it might be called by the grpc query in the future.
-// Additionally, this function might be called in the schedule function `EndBlock` to send the slash info to client chain.
-// todo: It's to be determined about how to send the slash info to client chain. If we send them in `EndBlock`, then the native code needs to call the gateway contract deployed in imua. This seems a little bit odd.
-func (k *Keeper) GetSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperator string, processedHeight uint64) (sdkmath.Int, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashAssetsState)
-	var key []byte
-	if stakerOrOperator == "" {
-		key = assetstype.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID)
-	} else {
-		key = assetstype.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID, stakerOrOperator)
-	}
-	value := store.Get(key)
-	if value == nil {
-		return sdkmath.Int{}, errorsmod.Wrapf(operatortypes.ErrNoKeyInTheStore, "GetSlashAssetsState: key is %s", key)
-	}
-	var ret assetstype.ValueField
-	k.cdc.MustUnmarshal(value, &ret)
-
-	return ret.Amount, nil
 }
 
 func (k *Keeper) SetAllSlashStates(ctx sdk.Context, slashStates []operatortypes.OperatorSlashState) error {

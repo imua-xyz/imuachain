@@ -140,6 +140,9 @@ func (k *Keeper) IsExistPubKeyForAVS(ctx sdk.Context, operator, avs string) bool
 
 // IterateTaskAVSInfo iterate through task
 func (k Keeper) IterateTaskAVSInfo(ctx sdk.Context, fn func(index int64, taskInfo types.TaskInfo) (stop bool)) {
+	if fn == nil {
+		return
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSTaskInfo)
 
 	iterator := sdk.KVStorePrefixIterator(store, nil)

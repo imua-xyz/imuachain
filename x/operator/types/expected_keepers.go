@@ -18,10 +18,10 @@ type AssetsKeeper interface {
 		ctx sdk.Context, assetID string,
 	) (info *assetstype.StakingAssetInfo, err error)
 	GetAssetsDecimal(
-		ctx sdk.Context, assets map[string]interface{},
+		ctx sdk.Context, assets map[string]struct{},
 	) (decimals map[string]uint32, err error)
 	IterateAssetsForOperator(
-		ctx sdk.Context, isUpdate bool, operator string, assetsFilter map[string]interface{},
+		ctx sdk.Context, isUpdate bool, operator string, assetsFilter map[string]struct{},
 		f func(assetID string, state *assetstype.OperatorAssetInfo) error,
 	) error
 	ClientChainExists(ctx sdk.Context, index uint64) bool
@@ -69,7 +69,7 @@ type OracleKeeper interface {
 	GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (oracletype.Price, error)
 	// GetMultipleAssetsPrices is a function to retrieve multiple assets prices according to the
 	// assetID.
-	GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]interface{}) (map[string]oracletype.Price, error)
+	GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]struct{}) (map[string]oracletype.Price, error)
 }
 
 type MockOracle struct{}
@@ -81,7 +81,7 @@ func (MockOracle) GetSpecifiedAssetsPrice(_ sdk.Context, _ string) (oracletype.P
 	}, nil
 }
 
-func (MockOracle) GetMultipleAssetsPrices(_ sdk.Context, assets map[string]interface{}) (map[string]oracletype.Price, error) {
+func (MockOracle) GetMultipleAssetsPrices(_ sdk.Context, assets map[string]struct{}) (map[string]oracletype.Price, error) {
 	ret := make(map[string]oracletype.Price, 0)
 	for assetID := range assets {
 		ret[assetID] = oracletype.Price{
@@ -97,7 +97,7 @@ type AVSKeeper interface {
 	// wish to retrieve. If the caller want to retrieve a historical assets info supported by
 	// Avs, it needs to generate a historical context through calling
 	// `ContextForHistoricalState` implemented in x/assets/types/general.go
-	GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]interface{}, error)
+	GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]struct{}, error)
 	GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, error)
 	// GetChainIDByAVSAddr converts the hex AVS address to the chainID.
 	GetChainIDByAVSAddr(ctx sdk.Context, avsAddr string) (string, bool)

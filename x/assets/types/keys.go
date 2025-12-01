@@ -73,15 +73,6 @@ func GetJoinedStoreKeyForPrefix(keys ...string) []byte {
 	return ret
 }
 
-func ParseJoinedKey(key []byte) (keys []string, err error) {
-	stringList := strings.Split(string(key), utils.DelimiterForCombinedKey)
-	return stringList, nil
-}
-
-func IsJoinedStoreKey(key string) bool {
-	return strings.Contains(key, utils.DelimiterForCombinedKey)
-}
-
 func ParseJoinedStoreKey(key []byte, number int) (keys []string, err error) {
 	stringList := strings.Split(string(key), utils.DelimiterForCombinedKey)
 	if len(stringList) != number {

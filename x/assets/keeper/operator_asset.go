@@ -44,7 +44,7 @@ func (k Keeper) AllOperatorAssets(ctx sdk.Context) (operatorAssets []assetstype.
 	return ret, nil
 }
 
-func (k Keeper) GetOperatorAssetInfos(ctx sdk.Context, operator string, assetsFilter map[string]interface{}) (assetsInfo []assetstype.AssetByID, err error) {
+func (k Keeper) GetOperatorAssetInfos(ctx sdk.Context, operator string, assetsFilter map[string]struct{}) (assetsInfo []assetstype.AssetByID, err error) {
 	ret := make([]assetstype.AssetByID, 0)
 	opFunc := func(assetID string, state *assetstype.OperatorAssetInfo) error {
 		ret = append(ret, assetstype.AssetByID{
@@ -141,9 +141,12 @@ func (k Keeper) UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.AccAd
 // IteratorAssetsForOperator iterates all assets for the specified operator
 // if `assetsFilter` is nil, the `opFunc` will handle all assets, it equals to an iterator without filter
 // if `assetsFilter` isn't nil, the `opFunc` will only handle the assets that is in the filter map.
-func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operator string, assetsFilter map[string]interface{}, opFunc func(assetID string, state *assetstype.OperatorAssetInfo) error) error {
+func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operator string, assetsFilter map[string]struct{}, opFunc func(assetID string, state *assetstype.OperatorAssetInfo) error) error {
 	if _, err := sdk.AccAddressFromBech32(operator); err != nil {
 		return assetstype.ErrInvalidInputParameter.Wrapf("invalid operator address,err:%s", err)
+	}
+	if opFunc == nil {
+		return assetstype.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(operator))
@@ -153,7 +156,7 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts assetstype.OperatorAssetInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
-		keys, err := assetstype.ParseJoinedKey(iterator.Key())
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 2)
 		if err != nil {
 			return err
 		}

@@ -114,6 +114,10 @@ func (k Keeper) ValidateUndelegationAmount(
 		return share, err
 	}
 
+	if share.IsZero() {
+		return share, delegationtypes.ErrInsufficientShares.Wrap("both the total amount and the share are zero, so there isn’t any asset that can be undelegated.")
+	}
+
 	if share.GT(delegationInfo.UndelegatableShare) {
 		return share, delegationtypes.ErrInsufficientShares
 	}

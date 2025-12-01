@@ -45,9 +45,6 @@ const (
 	DepositNST
 	WithdrawNST
 	WithdrawReward
-	DelegateTo
-	UndelegateFrom
-	Slash
 )
 
 type GeneralAssetsAddr [32]byte
@@ -69,12 +66,6 @@ func (c CrossChainOpType) String() string {
 		return "WithdrawNST"
 	case WithdrawReward:
 		return "WithdrawReward"
-	case DelegateTo:
-		return "DelegateTo"
-	case UndelegateFrom:
-		return "UndelegateFrom"
-	case Slash:
-		return "Slash"
 	default:
 		return "Unknown"
 	}
