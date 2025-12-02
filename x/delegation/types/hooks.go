@@ -47,7 +47,7 @@ func (hooks MultiDelegationHooks) AfterNSTDelegationSlashed(ctx sdk.Context, sta
 	preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo,
 ) error {
 	for _, hook := range hooks {
-		err := hook.AfterDelegation(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
+		err := hook.AfterNSTDelegationSlashed(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
 		if err != nil {
 			return err
 		}
