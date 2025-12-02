@@ -100,11 +100,7 @@ func (k *Keeper) delegateTo(
 		TotalShare:  share,
 	}
 	// Check if the staker belongs to the delegated operator. Increase the operator's share if yes.
-	operator, err := k.GetAssociatedOperator(ctx, stakerID)
-	if err != nil {
-		return err
-	}
-	if operator == params.OperatorAddress.String() {
+	if k.GetAssociatedOperator(ctx, stakerID) == params.OperatorAddress.String() {
 		deltaOperatorAsset.OperatorShare = share
 	}
 
@@ -298,14 +294,11 @@ func (k *Keeper) AssociateOperatorWithStaker(
 	}
 
 	stakerID, _ := assetstype.GetStakerIDAndAssetID(clientChainID, stakerAddress, nil)
-	associatedOperator, err := k.GetAssociatedOperator(ctx, stakerID)
-	if err != nil {
-		return err
-	}
-	if associatedOperator != "" {
+	if k.GetAssociatedOperator(ctx, stakerID) != "" {
 		return delegationtype.ErrOperatorAlreadyAssociated
 	}
 
+	var err error
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// increase the share of new marked operator
 		if keys.OperatorAddr == operatorAddress.String() {
@@ -341,10 +334,7 @@ func (k *Keeper) DissociateOperatorFromStaker(
 	stakerAddress []byte,
 ) error {
 	stakerID, _ := assetstype.GetStakerIDAndAssetID(clientChainID, stakerAddress, nil)
-	associatedOperator, err := k.GetAssociatedOperator(ctx, stakerID)
-	if err != nil {
-		return err
-	}
+	associatedOperator := k.GetAssociatedOperator(ctx, stakerID)
 	if associatedOperator == "" {
 		return delegationtype.ErrNoAssociatedOperatorByStaker
 	}

@@ -474,13 +474,13 @@ func (k *Keeper) DeleteAssociatedOperator(ctx sdk.Context, stakerID string) erro
 	return nil
 }
 
-func (k *Keeper) GetAssociatedOperator(ctx sdk.Context, stakerID string) (string, error) {
+func (k *Keeper) GetAssociatedOperator(ctx sdk.Context, stakerID string) string {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
 	value := store.Get([]byte(stakerID))
 	if value != nil {
-		return string(value), nil
+		return string(value)
 	}
-	return "", nil
+	return ""
 }
 
 func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]string, error) {

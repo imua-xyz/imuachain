@@ -128,12 +128,8 @@ func (k Keeper) QueryAssociatedOperatorByStaker(ctx context.Context, req *delega
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
 	}
-	operator, err := k.GetAssociatedOperator(c, strings.ToLower(req.StakerId))
-	if err != nil {
-		return nil, err
-	}
 	return &delegationtype.QueryAssociatedOperatorByStakerResponse{
-		Operator: operator,
+		Operator: k.GetAssociatedOperator(c, strings.ToLower(req.StakerId)),
 	}, nil
 }
 

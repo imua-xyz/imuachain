@@ -189,6 +189,9 @@ func (m *UpdateCommissionRateReq) ValidateBasic() error {
 	if !m.CommissionRate.IsPositive() {
 		return errorsmod.Wrap(ErrParameterInvalid, "commission rate is not positive")
 	}
+	if m.CommissionRate.GT(sdk.OneDec()) {
+		return errorsmod.Wrap(ErrParameterInvalid, "commission rate exceeds 100%")
+	}
 	return nil
 }
 

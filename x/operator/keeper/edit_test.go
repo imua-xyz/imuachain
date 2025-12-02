@@ -31,13 +31,7 @@ func (suite *EditOperatorTestSuite) TestEditOperator() {
 			EarningsAddr:     suite.AccAddress.String(),
 			ApproveAddr:      suite.AccAddress.String(),
 			OperatorMetaInfo: "operator1",
-			Commission: stakingtypes.Commission{
-				CommissionRates: stakingtypes.CommissionRates{
-					Rate:          sdk.ZeroDec(),
-					MaxRate:       sdk.OneDec(),
-					MaxChangeRate: sdk.OneDec(),
-				},
-			},
+			Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.OneDec(), sdk.OneDec()),
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
@@ -69,12 +63,12 @@ func (suite *EditOperatorTestSuite) TestEditOperator() {
 	suite.Require().Equal("operator4", operatorInfo.OperatorMetaInfo)
 	// change to a large name
 	editReq.OperatorMetaInfo = strings.Repeat("a", stakingtypes.MaxMonikerLength+1)
-	_, err = suite.OperatorMsgServer.EditOperator(suite.Ctx, editReq)
+	err = editReq.ValidateBasic()
 	suite.Require().ErrorAs(err, &operatortypes.ErrParameterInvalid)
-	suite.Require().Contains(err.Error(), "info length exceeds")
+	suite.Require().Contains(err.Error(), "info is too long")
 	// change to a nil name
 	editReq.OperatorMetaInfo = ""
-	_, err = suite.OperatorMsgServer.EditOperator(suite.Ctx, editReq)
+	err = editReq.ValidateBasic()
 	suite.Require().ErrorAs(err, &operatortypes.ErrParameterInvalid)
 	suite.Require().Contains(err.Error(), "operator meta info is empty")
 }

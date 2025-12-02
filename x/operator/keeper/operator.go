@@ -2,9 +2,10 @@ package keeper
 
 import (
 	"fmt"
-	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	"math"
 	"strings"
+
+	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"golang.org/x/xerrors"
 
@@ -118,9 +119,6 @@ func (k *Keeper) EditOperator(
 		)
 	}
 	info.OperatorMetaInfo = metaInfo
-	if err := info.ValidateBasic(); err != nil {
-		return err
-	}
 	k.setOperatorInfo(ctx, opAccAddr, info)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

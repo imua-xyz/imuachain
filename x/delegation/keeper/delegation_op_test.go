@@ -271,8 +271,7 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 	suite.NoError(err)
 	stakerID, assetID := types.GetStakerIDAndAssetID(delegationParams.ClientChainID, delegationParams.StakerAddress, delegationParams.AssetsAddress)
-	operator, err := suite.App.DelegationKeeper.GetAssociatedOperator(suite.Ctx, stakerID)
-	suite.NoError(err)
+	operator := suite.App.DelegationKeeper.GetAssociatedOperator(suite.Ctx, stakerID)
 	suite.Equal(opAccAddr.String(), operator)
 
 	// check state
