@@ -81,31 +81,35 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 							return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
 						}
 
-						stakingAssetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
-						if err != nil {
-							return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
-						}
-						stakingAssetDecimal := stakingAssetInfo.AssetBasicInfo.Decimals
-
-						_, operatorExist := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr]
-						if !operatorExist {
-							delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr] = make(map[string]feedistributiontypes.DelegationChangeInfo, 0)
-						}
-						_, assetExist := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID]
-						if !assetExist {
-							// get the operator asset amount before all delegations using `ctx` instead of `cc`
-							preOperatorAssets, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operatorAccAddr, assetID)
+						// reward redelegation may trigger a reward distribution if the operator
+						// already has delegated assets.
+						if k.assetsKeeper.IsOperatorAssetExist(ctx, operatorAccAddr, assetID) {
+							stakingAssetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 							if err != nil {
 								return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
 							}
-							delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = feedistributiontypes.DelegationChangeInfo{
-								StakerDelegationChanges: make([]feedistributiontypes.StakerDelegationChange, 0),
-								TotalAmount:             feedistributiontypes.ScaleIntByDecimals(preOperatorAssets.TotalAmount, stakingAssetDecimal),
+							stakingAssetDecimal := stakingAssetInfo.AssetBasicInfo.Decimals
+
+							_, operatorExist := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr]
+							if !operatorExist {
+								delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr] = make(map[string]feedistributiontypes.DelegationChangeInfo, 0)
 							}
+							_, assetExist := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID]
+							if !assetExist {
+								// get the operator asset amount before all delegations using `ctx` instead of `cc`
+								preOperatorAssets, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, operatorAccAddr, assetID)
+								if err != nil {
+									return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(err.Error())
+								}
+								delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = feedistributiontypes.DelegationChangeInfo{
+									StakerDelegationChanges: make([]feedistributiontypes.StakerDelegationChange, 0),
+									TotalAmount:             feedistributiontypes.ScaleIntByDecimals(preOperatorAssets.TotalAmount, stakingAssetDecimal),
+								}
+							}
+							delegationChanges := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID]
+							delegationChanges.AppendUniqueStakerID(staker, preDelegatedAmount, stakingAssetDecimal)
+							delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = delegationChanges
 						}
-						delegationChanges := delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID]
-						delegationChanges.AppendUniqueStakerID(staker, preDelegatedAmount, stakingAssetDecimal)
-						delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = delegationChanges
 
 						indicesToRemove = append(indicesToRemove, i)
 						delegationRewardsShare.Shares = delegationRewardsShare.Shares.Add(sdk.NewDecCoinFromDec(reward.Denom, share))

@@ -82,6 +82,7 @@ type AssetsKeeper interface {
 	GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *assetstype.StakingAssetInfo, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 	IsStakingAsset(ctx sdk.Context, assetID string) bool
+	IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) bool
 }
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.
