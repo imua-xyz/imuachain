@@ -212,8 +212,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["operator"]["operator_usd_values"][0]["opted_usd_value"]["active_usd_value"]="12000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operator_asset_usd_values"][0]["key"]="minute/'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["operator"]["operator_asset_usd_values"][0]["value"]["amount"]="9000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["operator"]["operator_asset_usd_values"][0]["key"]="minute/'"$LOCAL_ADDRESS_IM"'/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["operator"]["operator_asset_usd_values"][0]["value"]["amount"]="3000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["operator"]["operator_asset_usd_values"][1]["key"]="minute/'"$LOCAL_ADDRESS_IM"'/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["operator"]["operator_asset_usd_values"][1]["value"]["amount"]="3000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# x/delegation
 	jq '.app_state["delegation"]["delegation_states"][0]["key"]="'"$LOCAL_ADDRESS_HEX"'_0x65/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
