@@ -1,6 +1,8 @@
 package config
 
 import (
+	"regexp"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/evmos/evmos/v16/types"
@@ -27,7 +29,7 @@ const (
 const (
 	// DisplayDenom defines the denomination displayed to users in client applications.
 	// We capitalize it to match ETH and wei logic.
-	DisplayDenom = "IMUA"
+	DisplayDenom = "IM"
 	// BaseDenom defines to the default denomination used in Imuachain (EVM, governance, etc.)
 	BaseDenom = "hua"
 )
@@ -48,6 +50,14 @@ func SetBip44CoinType(config *sdk.Config) {
 
 // RegisterDenoms registers the base and display denominations to the SDK.
 func RegisterDenoms() {
+	// per https://github.com/cosmos/cosmos-sdk/pull/7998, we can use a custom function
+	// for validation of the denom.
+	sdk.SetCoinDenomRegex(func() string {
+		// do not add start and end anchors; they are added in `SetCoinDenomRegex`
+		reg := `[a-zA-Z][a-zA-Z0-9/:._-]{1,127}`
+		regexp.MustCompile(reg)
+		return reg
+	})
 	if err := sdk.RegisterDenom(DisplayDenom, sdk.OneDec()); err != nil {
 		panic(err)
 	}
