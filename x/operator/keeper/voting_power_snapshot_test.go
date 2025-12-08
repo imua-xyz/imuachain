@@ -85,7 +85,7 @@ func (suite *OperatorTestSuite) printAllSnapshot(avs string) {
 	suite.True(found)
 	fmt.Println("epoch", epochInfo.CurrentEpoch, "startHeight", epochInfo.CurrentEpochStartHeight)
 	opFunc := func(height int64, snapshot *types.VotingPowerSnapshot) error {
-		fmt.Println("snapshot height is：", height)
+		fmt.Println("snapshot height is:", height)
 		suite.DebugPrintObject(snapshot)
 		return nil
 	}
