@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 	"math"
+	"math/bits"
 	"strings"
 	"time"
 
@@ -510,10 +511,12 @@ func (k Keeper) GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress)
 			return "", 0, 0, err
 		}
 		unbondingDuration := avs.OptOutUnbondingRemaining
-		if unbondingDuration+uint64(epochInfo.CurrentEpoch) > uint64(math.MaxInt64) {
+		epoch := uint64(epochInfo.CurrentEpoch)
+		maxI64 := uint64(math.MaxInt64)
+		sum, carry := bits.Add64(unbondingDuration, epoch, 0)
+		if carry == 1 || sum > maxI64 {
 			return "", 0, 0, xerrors.New("the sum of unbondingDuration and the current epoch number exceeds the int64 range.")
 		}
-
 		remainingTimeForCurrentEpoch := uint64(epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration).Sub(ctx.BlockTime()))
 		unbondingDurationSeconds := unbondingDuration*uint64(epochInfo.Duration) + remainingTimeForCurrentEpoch
 		if unbondingDurationSeconds > maxDurationSeconds {
@@ -638,10 +641,10 @@ func (k Keeper) IsImpactfulEpochForOperator(ctx sdk.Context, epochIdentifier, op
 	var isImpactfulEpoch bool
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
-		avsAddr := keys[1]
 		if err != nil {
 			return false, err
 		}
+		avsAddr := keys[1]
 		epochInfo, err := k.avsKeeper.GetAVSEpochInfo(ctx, avsAddr)
 		if err != nil {
 			return false, err

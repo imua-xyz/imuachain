@@ -112,11 +112,21 @@ message UndelegationRecord {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // instant_unbonding indicates whether it's an instant unbonding
+  bool instant_unbonding = 11;
+  // apply_slash indicates whether it will be slashed for instant unbonding.
+  bool apply_slash = 12;
+  // instant_penalty_amount indicates the penalty amount for instant unbonding
+  string instant_penalty_amount = 13 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
   // reward_asset indicates whether the undelegation is for rewards
-  bool reward_asset = 11;
+  bool reward_asset = 14;
   // reward_undelegations represents reward undelegation amounts from different AVSs.
   // This field is only populated when `reward_asset` is true.
-  repeated UndelegationAmountPerAVS reward_undelegations = 12 [(gogoproto.nullable) = false];
+  repeated UndelegationAmountPerAVS reward_undelegations = 15 [(gogoproto.nullable) = false];
 }
 
 // UndelegationRecordKeyList is the list of undelegation records.

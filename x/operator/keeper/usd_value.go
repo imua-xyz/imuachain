@@ -790,7 +790,6 @@ func (k *Keeper) UpdateOperatorAssetUSDValue(ctx sdk.Context, epochIdentifiers [
 			// don't return error to continue handling the other assets.
 			return nil
 		}
-		// TODO: for now, we ignore the error when the price round is not found and set the price to 1 to avoid panic
 
 		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 		if err != nil {
@@ -829,11 +828,7 @@ func (k *Keeper) UpdateAllOperatorAssetUSDValues(ctx sdk.Context, epochIdentifie
 		}
 		return false, nil
 	}
-	err := k.IterateOperators(ctx, opFunc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return k.IterateOperators(ctx, opFunc)
 }
 
 func (k *Keeper) SetAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string, assets []string) error {

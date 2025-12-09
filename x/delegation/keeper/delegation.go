@@ -215,6 +215,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		ActualCompletedAmount: removeToken,
 		RewardAsset:           params.RewardAsset,
 		RewardUndelegations:   params.RewardUndelegations,
+		InstantPenaltyAmount:  sdkmath.ZeroInt(),
 	}
 
 	var completedEpochID string
@@ -222,6 +223,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	var applySlash bool
 	instantSlashRatio := sdkmath.LegacyZeroDec()
 	if params.InstantUnbonding {
+		r.InstantUnbonding = params.InstantUnbonding
 		applySlash, completedEpochID, completedEpochNumber, err = k.operatorKeeper.GetInstantUnbondingExpiration(ctx, params.OperatorAddress)
 		if err != nil {
 			return err
@@ -233,6 +235,8 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 			instantSlashRatio = sdkmath.LegacyNewDec(int64(penalty)).QuoInt64(100)
 			penaltyAmount := instantSlashRatio.MulInt(params.OpAmount).TruncateInt()
 			r.ActualCompletedAmount = r.ActualCompletedAmount.Sub(penaltyAmount)
+			r.ApplySlash = true
+			r.InstantPenaltyAmount = penaltyAmount
 		}
 	} else {
 		completedEpochID, completedEpochNumber, _, err = k.operatorKeeper.GetUnbondingExpiration(ctx, params.OperatorAddress)

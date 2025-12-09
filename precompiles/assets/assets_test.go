@@ -7,7 +7,6 @@ import (
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	assetsprecompile "github.com/imua-xyz/imuachain/precompiles/assets"
@@ -750,7 +749,7 @@ func (s *AssetsPrecompileSuite) TestGetTokenInfo() {
 			name: "pass - get existing token info (LST)",
 			malleate: func() (common.Address, []byte) {
 				// Setup LST token first
-				s.lstStaked = math.NewInt(100)
+				s.lstStaked = sdkmath.NewInt(100)
 				lstToken := &assetstypes.StakingAssetInfo{
 					AssetBasicInfo: assetstypes.AssetInfo{
 						Name:             "Liquid Staking Token",

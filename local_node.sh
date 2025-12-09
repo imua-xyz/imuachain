@@ -59,9 +59,15 @@ command -v bc >/dev/null 2>&1 || {
 	exit 1
 }
 
-# check that ALCHEMY_API_KEY is set
+# ensure ALCHEMY_API_KEY is set
 if [ -z "$ALCHEMY_API_KEY" ]; then
 	echo "ALCHEMY_API_KEY is not set"
+	exit 1
+fi
+
+# ensure BOOTSTRAP is set (used by oracle_env_beaconchain.yaml)
+if [ -z "$BOOTSTRAP" ]; then
+	echo "BOOTSTRAP is not set"
 	exit 1
 fi
 
@@ -461,17 +467,33 @@ EOF
 	fi
 
 	# Change proposal periods to pass within a reasonable time for local testing
-	sed -i.bak 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$HOMEDIR"/config/genesis.json
-	sed -i.bak 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$HOMEDIR"/config/genesis.json
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		sed -i.bak '' 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$HOMEDIR"/config/genesis.json
+		sed -i.bak '' 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$HOMEDIR"/config/genesis.json
+	else
+		sed -i.bak 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$HOMEDIR"/config/genesis.json
+		sed -i.bak 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$HOMEDIR"/config/genesis.json
+	fi
 
 	# set custom pruning settings for localnet
-	sed -i.bak 's/pruning = "default"/pruning = "nothing"/g' "$APP_TOML"
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		sed -i.bak '' 's/pruning = "default"/pruning = "nothing"/g' "$APP_TOML"
+	else
+		sed -i.bak 's/pruning = "default"/pruning = "nothing"/g' "$APP_TOML"
+	fi
 
 	# make sure the localhost IP is 0.0.0.0
-	sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$CONFIG"
-	sed -i.bak 's/localhost/0.0.0.0/g' "$CONFIG"
-	sed -i.bak 's/localhost/0.0.0.0/g' "$APP_TOML"
-	sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
+	if [[ "$OSTYPE" == "darwin"* ]]; then
+		sed -i.bak '' 's/127.0.0.1/0.0.0.0/g' "$CONFIG"
+		sed -i.bak '' 's/localhost/0.0.0.0/g' "$CONFIG"
+		sed -i.bak '' 's/localhost/0.0.0.0/g' "$APP_TOML"
+		sed -i.bak '' 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
+	else
+		sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$CONFIG"
+		sed -i.bak 's/localhost/0.0.0.0/g' "$CONFIG"
+		sed -i.bak 's/localhost/0.0.0.0/g' "$APP_TOML"
+		sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
+	fi
 
 	# Allocate genesis accounts (cosmos formatted addresses)
 	for KEY in "${KEYS[@]}"; do
