@@ -987,7 +987,7 @@ func NewImuachainApp(
 		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
-		group.ModuleName, // end blocker only
+		group.ModuleName, // location irrelevant since end blocker only
 	)
 
 	app.mm.SetOrderEndBlockers(
