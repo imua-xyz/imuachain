@@ -474,7 +474,7 @@ func NewImuachainApp(
 	// once governance is implemented in our custom staking world, this will be changed.
 	// since a group is simply identified by its index, its members must be defined at genesis.
 	// this calculation is sourced from the keeper code and validated using `x/group` txs.
-	//https://github.com/imua-xyz/cosmos-sdk/blob/0035968c59f0c989057e00bc7b3330ff4796bc76/x/group/keeper/msg_server.go#L339
+	// https://github.com/imua-xyz/cosmos-sdk/blob/0035968c59f0c989057e00bc7b3330ff4796bc76/x/group/keeper/msg_server.go#L339
 	cred, err := authtypes.NewModuleCredential(
 		group.ModuleName,
 		[]byte{groupkeeper.GroupPolicyTablePrefix},
