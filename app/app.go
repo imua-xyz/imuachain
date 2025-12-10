@@ -102,7 +102,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/streaming"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	srvflags "github.com/evmos/evmos/v16/server/flags"
@@ -161,7 +160,7 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
-	group "github.com/cosmos/cosmos-sdk/x/group"
+	"github.com/cosmos/cosmos-sdk/x/group"
 	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 
@@ -474,8 +473,20 @@ func NewImuachainApp(
 	// until further notice, the authority is the group policy with ID 1.
 	// once governance is implemented in our custom staking world, this will be changed.
 	// since a group is simply identified by its index, its members must be defined at genesis.
-	authAddrBz := address.Module("cosmos.group.v1.GroupPolicy", []byte("1"))
-	authAddr := sdk.AccAddress(authAddrBz)
+	// this calculation is sourced from the keeper code and validated using `x/group` txs.
+	//https://github.com/imua-xyz/cosmos-sdk/blob/0035968c59f0c989057e00bc7b3330ff4796bc76/x/group/keeper/msg_server.go#L339
+	cred, err := authtypes.NewModuleCredential(
+		group.ModuleName,
+		[]byte{groupkeeper.GroupPolicyTablePrefix},
+		sdk.Uint64ToBigEndian(1),
+	)
+	if err != nil {
+		// safe to panic during initialization
+		// an error is returned when any of the derivation keys are empty
+		// our call above ensures they are not; this is more for future devs.
+		panic(fmt.Sprintf("failed to create module credential: %s", err))
+	}
+	authAddr := sdk.AccAddress(cred.Address().Bytes())
 	authAddrString := authAddr.String()
 
 	// set the BaseApp's parameter store which is used for setting Tendermint parameters

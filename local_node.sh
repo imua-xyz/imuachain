@@ -120,7 +120,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	DEV0_ADDR=$(imuad keys show "${KEYS[0]}" -a --keyring-backend "$KEYRING" --home "$HOMEDIR")
 	DEV1_ADDR=$(imuad keys show "${KEYS[1]}" -a --keyring-backend "$KEYRING" --home "$HOMEDIR")
 
-	POLICY_ADDR="im1cc4szsst30cx3648age3pjn7mftpka52rjrpwayfk24eurq8ujzs4wdfg7"
+	POLICY_ADDR="im1afk9zr2hn2jsac63h4hm60vl9z3e5u69gndzf7c99cqge3vzwjzswhsj4w"
 
 	jq --arg local "$LOCAL_ADDRESS_IM" \
 		--arg dev0 "$DEV0_ADDR" \
@@ -168,8 +168,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
             "created_at": "0001-01-01T00:00:00Z"
         }
     ] |
-    .app_state["group"]["group_seq"] = "2" |
-    .app_state["group"]["group_policy_seq"] = "2"' \
+    .app_state["group"]["group_seq"] = "1" |
+    .app_state["group"]["group_policy_seq"] = "1"' \
 		"$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	echo "x/group populated with Policy Address: $POLICY_ADDR"
