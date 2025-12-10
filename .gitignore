@@ -87,3 +87,6 @@ dependency-graph.png
 
 # OpenZeppelin contracts
 contracts/@openzeppelin/*
+
+# asdf configuration
+.tool-versions

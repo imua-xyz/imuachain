@@ -30,14 +30,7 @@ func (msgServer *MsgServerImpl) RegisterOperator(goCtx context.Context, req *typ
 
 // OptIntoAVS is an implementation of the msg server for the operator module.
 func (msgServer *MsgServerImpl) OptIntoAVS(goCtx context.Context, req *types.OptIntoAVSReq) (res *types.OptIntoAVSResponse, err error) {
-	uncachedCtx := sdk.UnwrapSDKContext(goCtx)
-	// only write if both calls succeed
-	ctx, writeFunc := uncachedCtx.CacheContext()
-	defer func() {
-		if err == nil {
-			writeFunc()
-		}
-	}()
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	// check if the AVS is a chain-type of AVS
 	_, isChainAvs := msgServer.keeper.avsKeeper.GetChainIDByAVSAddr(ctx, req.AvsAddress)
 	// #nosec G703 // already validated

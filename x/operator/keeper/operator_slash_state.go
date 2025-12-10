@@ -93,7 +93,7 @@ func (k *Keeper) AllOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr str
 // processedSlashHeight + '/' + assetID -> SlashAmount
 // processedSlashHeight + '/' + assetID + '/' + stakerID -> SlashAmount
 // processedSlashHeight + '/' + assetID + '/' + operatorAddr -> SlashAmount
-// The slashed assets info won't be sent to the client chain immediately after the slash event being processed, env if
+// The slashed assets info won't be sent to the client chain immediately after the slash event being processed, enven if
 // the asset amounts of related operator and staker have been decreased. This is because we need to wait a veto period.
 // The state updated by this function will be sent to the client chain once the veto period has expired.
 // This function will be called by `SlashStaker` and `SlashOperator` implemented in the 'state_update.go' file.
@@ -132,7 +132,7 @@ func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperat
 	if err != nil {
 		return err
 	}
-	bz = k.cdc.MustMarshal(&slashAmount)
+	bz = k.cdc.MustMarshal(&totalSlashAmount)
 	store.Set(key, bz)
 	return nil
 }

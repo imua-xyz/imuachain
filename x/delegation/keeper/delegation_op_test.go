@@ -356,6 +356,7 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		UndelegationId:           initialUndelegationID,
 		CompletedEpochIdentifier: epochtypes.NullEpochIdentifier,
 		CompletedEpochNumber:     epochtypes.NullEpochNumber,
+		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
 	suite.Equal(UndelegationRecord, records[0].Undelegation)
 	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
@@ -413,6 +414,7 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		CompletedEpochIdentifier: epochtypes.NullEpochIdentifier,
 		CompletedEpochNumber:     epochtypes.NullEpochNumber,
 		UndelegationId:           initialUndelegationID + 1,
+		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
 	suite.Equal(UndelegationRecord, records[0].Undelegation)
 
@@ -629,4 +631,58 @@ func (suite *DelegationTestSuite) TestMultipleUndelegations() {
 	undelegations, err = suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx)
 	suite.NoError(err)
 	suite.Equal(undelegationNumber, int64(len(undelegations)))
+}
+
+func (suite *DelegationTestSuite) TestInstantUndelegation() {
+	suite.basicPrepare()
+	stakerID, assetID := types.GetStakerIDAndAssetID(suite.clientChainLzID, suite.Address[:], suite.assetAddr.Bytes())
+	depositAmount, delegationEvent := suite.prepareOptingInDogfood(assetID)
+
+	// test Undelegation
+	initialUndelegationID := uint64(0)
+	delegationEvent.InstantUnbonding = true
+	err := suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, delegationEvent)
+	suite.NoError(err)
+
+	// check the undelegation record for instant unbonding
+	records, err := suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, stakerID, assetID)
+	suite.NoError(err)
+	suite.Equal(1, len(records))
+
+	UndelegationRecord := &delegationtype.UndelegationRecord{
+		StakerId:         stakerID,
+		AssetId:          assetID,
+		OperatorAddr:     delegationEvent.OperatorAddress.String(),
+		TxHash:           delegationEvent.TxHash.String(),
+		BlockNumber:      uint64(suite.Ctx.BlockHeight()),
+		Amount:           delegationEvent.OpAmount,
+		UndelegationId:   initialUndelegationID,
+		InstantUnbonding: true,
+		ApplySlash:       true,
+	}
+
+	epochID := suite.App.StakingKeeper.GetEpochIdentifier(suite.Ctx)
+	epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochID)
+	suite.Equal(true, found)
+	matureEpochs := epochInfo.CurrentEpoch
+	UndelegationRecord.CompletedEpochIdentifier = epochID
+	UndelegationRecord.CompletedEpochNumber = matureEpochs
+
+	penalty := suite.App.DelegationKeeper.GetInstantUndelegationPenalty(suite.Ctx)
+	penaltyAmount := delegationEvent.OpAmount.Mul(sdk.NewInt(int64(penalty))).Quo(sdk.NewInt(100))
+	UndelegationRecord.ActualCompletedAmount = delegationEvent.OpAmount.Sub(penaltyAmount)
+	UndelegationRecord.InstantPenaltyAmount = penaltyAmount
+	suite.Equal(UndelegationRecord, records[0].Undelegation)
+
+	// run to the end of current epoch to complete the undelegation
+	suite.RunToEpochEnd(epochtypes.DayEpochID)
+	// check the related asset states after completing instant undelegation
+	stakerAssetInfo, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, stakerID, assetID)
+	suite.Require().NoError(err)
+	expectedStakerAsset := types.StakerAssetInfo{
+		TotalDepositAmount:        depositAmount,
+		WithdrawableAmount:        depositAmount.Sub(UndelegationRecord.InstantPenaltyAmount),
+		PendingUndelegationAmount: sdkmath.ZeroInt(),
+	}
+	suite.Require().Equal(expectedStakerAsset, *stakerAssetInfo)
 }
