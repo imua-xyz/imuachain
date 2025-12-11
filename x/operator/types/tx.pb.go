@@ -153,7 +153,7 @@ var xxx_messageInfo_OperatorOptedUSDValue proto.InternalMessageInfo
 
 // OperatorVotingPower represents the voting power for the specified operator address
 type OperatorVotingPower struct {
-	// operator_addr is the operator address,its type should be a sdk.AccAddress
+	// operator_addr is the operator address, its type should be a sdk.AccAddress
 	OperatorAddr string `protobuf:"bytes,1,opt,name=operator_addr,json=operatorAddr,proto3" json:"operator_addr,omitempty"`
 	// voting_power is the active voting power for the above operator address
 	VotingPower github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=voting_power,json=votingPower,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"voting_power"`
@@ -431,7 +431,7 @@ func (m *ClientChainEarningAddrInfo) GetClientChainEarningAddr() string {
 
 // OperatorInfo is the operator info.
 type OperatorInfo struct {
-	// operator_addr is the operator address,its type should be a sdk.AccAddress
+	// operator_addr is the operator address, its type should be a sdk.AccAddress
 	OperatorAddr string `protobuf:"bytes,1,opt,name=operator_addr,json=operatorAddr,proto3" json:"operator_addr,omitempty"`
 	// description defines the description terms for the operator.
 	Description types.Description `protobuf:"bytes,2,opt,name=description,proto3" json:"description"`

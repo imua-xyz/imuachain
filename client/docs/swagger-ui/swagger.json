@@ -21568,7 +21568,7 @@
                         "properties": {
                           "operator_addr": {
                             "type": "string",
-                            "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                            "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                           },
                           "reward_proportion": {
                             "type": "string",
@@ -24605,7 +24605,7 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "description": "task_address is the task contract address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -24678,7 +24678,7 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "description": "task_address is the task contract address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -24791,7 +24791,7 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "description": "task_address is the task contract address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -24805,7 +24805,7 @@
           },
           {
             "name": "operator_address",
-            "description": "operator_address is the operator address,its type should be a sdk.AccAddress",
+            "description": "operator_address is the operator address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -25263,7 +25263,7 @@
                               "properties": {
                                 "operator_addr": {
                                   "type": "string",
-                                  "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                                  "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                                 },
                                 "voting_power": {
                                   "type": "string",
@@ -25739,7 +25739,7 @@
               "properties": {
                 "operator_addr": {
                   "type": "string",
-                  "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                  "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                 },
                 "description": {
                   "description": "description defines the description terms for the operator.",
@@ -25865,7 +25865,7 @@
         "parameters": [
           {
             "name": "operator_addr",
-            "description": "operator_addr is the operator address,its type should be a sdk.AccAddress",
+            "description": "operator_addr is the operator address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -26546,7 +26546,7 @@
                         "properties": {
                           "operator_addr": {
                             "type": "string",
-                            "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                            "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                           },
                           "voting_power": {
                             "type": "string",
@@ -47578,7 +47578,7 @@
             "properties": {
               "operator_addr": {
                 "type": "string",
-                "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
               },
               "reward_proportion": {
                 "type": "string",
@@ -47911,7 +47911,7 @@
       "properties": {
         "operator_addr": {
           "type": "string",
-          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
         },
         "reward_proportion": {
           "type": "string",
@@ -48168,7 +48168,7 @@
                 "properties": {
                   "operator_addr": {
                     "type": "string",
-                    "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                    "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                   },
                   "reward_proportion": {
                     "type": "string",
@@ -50356,7 +50356,7 @@
       "properties": {
         "operator_addr": {
           "type": "string",
-          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
         },
         "description": {
           "description": "description defines the description terms for the operator.",
@@ -50669,7 +50669,7 @@
       "properties": {
         "operator_addr": {
           "type": "string",
-          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
         },
         "voting_power": {
           "type": "string",
@@ -50906,7 +50906,7 @@
                       "properties": {
                         "operator_addr": {
                           "type": "string",
-                          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                         },
                         "voting_power": {
                           "type": "string",
@@ -51781,7 +51781,7 @@
             "properties": {
               "operator_addr": {
                 "type": "string",
-                "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
               },
               "voting_power": {
                 "type": "string",
@@ -51832,7 +51832,7 @@
                 "properties": {
                   "operator_addr": {
                     "type": "string",
-                    "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                    "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                   },
                   "voting_power": {
                     "type": "string",
