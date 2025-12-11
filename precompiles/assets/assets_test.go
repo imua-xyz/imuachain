@@ -750,7 +750,7 @@ func (s *AssetsPrecompileSuite) TestGetTokenInfo() {
 			name: "pass - get existing token info (LST)",
 			malleate: func() (common.Address, []byte) {
 				// Setup LST token first
-				s.lstStaked = math.NewInt(100)
+				s.lstStaked = sdkmath.NewInt(100)
 				lstToken := &assetstypes.StakingAssetInfo{
 					AssetBasicInfo: assetstypes.AssetInfo{
 						Name:             "Liquid Staking Token",

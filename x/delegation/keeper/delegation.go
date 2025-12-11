@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
+	"cosmossdk.io/math"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -190,12 +192,14 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 		BlockNumber:           uint64(ctx.BlockHeight()),
 		Amount:                removeToken,
 		ActualCompletedAmount: removeToken,
+		InstantPenaltyAmount:  math.ZeroInt(),
 	}
 
 	var completedEpochID string
 	var completedEpochNumber int64
 	var applySlash bool
 	if params.InstantUnbonding {
+		r.InstantUnbonding = params.InstantUnbonding
 		applySlash, completedEpochID, completedEpochNumber, err = k.operatorKeeper.GetInstantUnbondingExpiration(ctx, params.OperatorAddress)
 		if err != nil {
 			return err
@@ -206,6 +210,8 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 			penalty := k.GetInstantUndelegationPenalty(ctx)
 			penaltyAmount := params.OpAmount.Mul(sdk.NewInt(int64(penalty))).Quo(sdk.NewInt(100))
 			r.ActualCompletedAmount = r.ActualCompletedAmount.Sub(penaltyAmount)
+			r.ApplySlash = true
+			r.InstantPenaltyAmount = penaltyAmount
 		}
 	} else {
 		completedEpochID, completedEpochNumber, _, err = k.operatorKeeper.GetUnbondingExpiration(ctx, params.OperatorAddress)
