@@ -23658,6 +23658,11 @@
                       "type": "integer",
                       "format": "int64",
                       "title": "instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)"
+                    },
+                    "max_undelegation_completions": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "max_undelegation_completions is the maximum number of undelegation completions processed per block.\nA value of 0 indicates no limit."
                     }
                   }
                 }
@@ -49093,6 +49098,11 @@
           "type": "integer",
           "format": "int64",
           "title": "instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)"
+        },
+        "max_undelegation_completions": {
+          "type": "integer",
+          "format": "int64",
+          "description": "max_undelegation_completions is the maximum number of undelegation completions processed per block.\nA value of 0 indicates no limit."
         }
       },
       "description": "Params defines the parameters for the module."
@@ -49194,6 +49204,11 @@
               "type": "integer",
               "format": "int64",
               "title": "instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)"
+            },
+            "max_undelegation_completions": {
+              "type": "integer",
+              "format": "int64",
+              "description": "max_undelegation_completions is the maximum number of undelegation completions processed per block.\nA value of 0 indicates no limit."
             }
           }
         }

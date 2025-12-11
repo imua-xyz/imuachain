@@ -8,4 +8,7 @@ option go_package = "github.com/imua-xyz/imuachain/x/delegation/types";
 message Params {
   // instant_undelegation_penalty is the penalty percentage for instant undelegation (e.g. 25 for 25%)
   uint32 instant_undelegation_penalty = 1;
+  // max_undelegation_completions is the maximum number of undelegation completions processed per block.
+  // A value of 0 indicates no limit.
+  uint32 max_undelegation_completions = 2;
 }
