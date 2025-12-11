@@ -668,9 +668,8 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		return types.Validator{}, false
 	}
 	val.Active = k.stakingKeeper.IsImuachainValidator(ctx, wrappedKey.ToConsAddr())
-	val.OperatorEarningsAddr = ops.EarningsAddr
-	val.OperatorApproveAddr = ops.ApproveAddr
-	val.OperatorMetaInfo = ops.OperatorMetaInfo
+	val.OperatorAddr = ops.OperatorAddr
+	val.Description = ops.Description
 	val.ConsAddress = consAddr.String()
 	val.Commission = ops.Commission
 

@@ -62,9 +62,8 @@ func (suite *DelegationTestSuite) prepareDelegation(delegationAmount sdkmath.Int
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: operator.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr:     operator.String(),
-			ApproveAddr:      operator.String(),
-			OperatorMetaInfo: operator.String(),
+			OperatorAddr: operator.String(),
+			Description:  stakingtypes.NewDescription(operator.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -146,9 +145,8 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr:     opAccAddr.String(),
-			ApproveAddr:      opAccAddr.String(),
-			OperatorMetaInfo: opAccAddr.String(),
+			OperatorAddr: opAccAddr.String(),
+			Description:  stakingtypes.NewDescription(opAccAddr.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -244,9 +242,8 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr:     opAccAddr.String(),
-			ApproveAddr:      opAccAddr.String(),
-			OperatorMetaInfo: opAccAddr.String(),
+			OperatorAddr: opAccAddr.String(),
+			Description:  stakingtypes.NewDescription(opAccAddr.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),

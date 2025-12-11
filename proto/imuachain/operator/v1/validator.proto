@@ -22,42 +22,40 @@ message Validator {
   option (gogoproto.goproto_stringer) = false;
   option (gogoproto.goproto_getters) = false;
 
-  // earnoperator_earnings_addrings_addr is the earnings address.
-  string operator_earnings_addr = 1;
-  // operator_approve_addr is the approve address.
-  string operator_approve_addr = 2;
-  // operator_meta_info is the operator meta info.
-  string operator_meta_info = 3;
+  // operator_addr is the operator address.
+  string operator_addr = 1;
+  // description defines the description terms for the operator.
+  cosmos.staking.v1beta1.Description description = 2 [(gogoproto.nullable) = false, (amino.dont_omitempty) = true];
   // ConsAddress defines a wrapper around bytes meant to present a consensus node.
   // When marshaled to a string or JSON, it uses Bech32.
-  string cons_address = 4;
+  string cons_address = 3;
   // consensus_pubkey is the consensus public key of the validator, as a Protobuf Any
-  google.protobuf.Any consensus_pubkey = 5 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
+  google.protobuf.Any consensus_pubkey = 4 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
   // jailed defined whether the validator has been jailed from bonded status or not
-  bool jailed = 6;
+  bool jailed = 5;
   // status is the validator status (bonded/unbonding/unbonded)
-  cosmos.staking.v1beta1.BondStatus status = 7;
+  cosmos.staking.v1beta1.BondStatus status = 6;
   // voting_power define the validator voting power
-  string voting_power = 8 [
+  string voting_power = 7 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
   // delegator_shares defines total shares issued to a validator's delegators
-  string delegator_shares = 9 [
+  string delegator_shares = 8 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
   // commission defines the commission parameters.
-  cosmos.staking.v1beta1.Commission commission = 10 [
+  cosmos.staking.v1beta1.Commission commission = 9 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
   // delegator_tokens is the list of asset infos
-  repeated DelegatorInfo delegator_tokens = 11 [(gogoproto.nullable) = false];
+  repeated DelegatorInfo delegator_tokens = 10 [(gogoproto.nullable) = false];
   // active defines whether the validator exists in the Tendermint validator set
-  bool active = 12;
+  bool active = 11;
 }
 
 // DelegatorInfo records the total opted-in USD value for the specified operator

@@ -398,11 +398,9 @@ func (suite *AVSManagerPrecompileSuite) TestRegisterOperatorToAVS() {
 
 	registerOperator := func() {
 		registerReq := &operatortypes.RegisterOperatorReq{
-			FromAddress: operatorAddress.String(),
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr:     operatorAddress.String(),
-				ApproveAddr:      operatorAddress.String(),
-				OperatorMetaInfo: operatorAddress.String(),
+				OperatorAddr: operatorAddress.String(),
+				Description:  stakingtypes.NewDescription(operatorAddress.String(), "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          rate,
@@ -576,11 +574,9 @@ func (suite *AVSManagerPrecompileSuite) TestDeregisterOperatorFromAVS() {
 
 	registerOperator := func() {
 		registerReq := &operatortypes.RegisterOperatorReq{
-			FromAddress: operatorAddress.String(),
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr:     operatorAddress.String(),
-				ApproveAddr:      operatorAddress.String(),
-				OperatorMetaInfo: operatorAddress.String(),
+				OperatorAddr: operatorAddress.String(),
+				Description:  stakingtypes.NewDescription(operatorAddress.String(), "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          rate,

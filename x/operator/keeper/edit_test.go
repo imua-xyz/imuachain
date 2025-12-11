@@ -28,9 +28,8 @@ func (suite *EditOperatorTestSuite) TestEditOperator() {
 	registerReq := &operatortypes.RegisterOperatorReq{
 		FromAddress: suite.AccAddress.String(),
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr:     suite.AccAddress.String(),
-			ApproveAddr:      suite.AccAddress.String(),
-			OperatorMetaInfo: "operator1",
+			OperatorAddr: suite.AccAddress.String(),
+			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -44,20 +43,20 @@ func (suite *EditOperatorTestSuite) TestEditOperator() {
 	suite.Require().ErrorAs(err, &operatortypes.ErrOperatorNameAlreadyExists)
 	suite.Commit()
 	// next name
-	registerReq.Info.OperatorMetaInfo = "operator3"
+	registerReq.Info.Description.Moniker = "operator3"
 	_, err = suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
 	suite.Require().NoError(err)
 	suite.Commit()
 	// now edit it but keep the name same
 	editReq := &operatortypes.EditOperatorReq{
-		Address:          suite.AccAddress.String(),
-		OperatorMetaInfo: "operator3",
+		Address:     suite.AccAddress.String(),
+		Description: stakingtypes.NewDescription("operator3", "", "", "", ""),
 	}
 	_, err = suite.OperatorMsgServer.EditOperator(suite.Ctx, editReq)
 	suite.Require().ErrorAs(err, &operatortypes.ErrOperatorNameAlreadyExists)
 	suite.Commit()
 	// now a new name
-	editReq.OperatorMetaInfo = "operator4"
+	editReq.Description.Moniker = "operator4"
 	_, err = suite.OperatorMsgServer.EditOperator(suite.Ctx, editReq)
 	suite.Require().NoError(err)
 	suite.Commit()
@@ -66,17 +65,17 @@ func (suite *EditOperatorTestSuite) TestEditOperator() {
 		suite.Ctx, suite.AccAddress.String(),
 	)
 	suite.Require().NoError(err)
-	suite.Require().Equal("operator4", operatorInfo.OperatorMetaInfo)
+	suite.Require().Equal("operator4", operatorInfo.Description.Moniker)
 	// change to a large name
-	editReq.OperatorMetaInfo = strings.Repeat("a", stakingtypes.MaxMonikerLength+1)
+	editReq.Description.Moniker = strings.Repeat("a", stakingtypes.MaxMonikerLength+1)
 	_, err = suite.OperatorMsgServer.EditOperator(suite.Ctx, editReq)
 	suite.Require().ErrorAs(err, &operatortypes.ErrParameterInvalid)
-	suite.Require().Contains(err.Error(), "info length exceeds")
+	suite.Require().Contains(err.Error(), "invalid moniker length")
 	// change to a nil name
-	editReq.OperatorMetaInfo = ""
+	editReq.Description.Moniker = ""
 	_, err = suite.OperatorMsgServer.EditOperator(suite.Ctx, editReq)
 	suite.Require().ErrorAs(err, &operatortypes.ErrParameterInvalid)
-	suite.Require().Contains(err.Error(), "operator meta info is empty")
+	suite.Require().Contains(err.Error(), "empty description")
 }
 
 func (suite *EditOperatorTestSuite) TestRegisterOperator() {
@@ -85,9 +84,8 @@ func (suite *EditOperatorTestSuite) TestRegisterOperator() {
 	registerReq := &operatortypes.RegisterOperatorReq{
 		FromAddress: suite.AccAddress.String(),
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr:     suite.AccAddress.String(),
-			ApproveAddr:      suite.AccAddress.String(),
-			OperatorMetaInfo: strings.Repeat("a", stakingtypes.MaxMonikerLength+1),
+			OperatorAddr: suite.AccAddress.String(),
+			Description:  stakingtypes.NewDescription(strings.Repeat("a", stakingtypes.MaxMonikerLength+1), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -99,14 +97,14 @@ func (suite *EditOperatorTestSuite) TestRegisterOperator() {
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
 	suite.Require().ErrorAs(err, &operatortypes.ErrParameterInvalid)
-	suite.Require().Contains(err.Error(), "info length exceeds")
+	suite.Require().Contains(err.Error(), "invalid moniker length")
 	// nil name
-	registerReq.Info.OperatorMetaInfo = ""
+	registerReq.Info.Description.Moniker = ""
 	_, err = suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
 	suite.Require().ErrorAs(err, &operatortypes.ErrParameterInvalid)
-	suite.Require().Contains(err.Error(), "operator meta info is empty")
+	suite.Require().Contains(err.Error(), "operator moniker is empty")
 	// real name
-	registerReq.Info.OperatorMetaInfo = "operator3"
+	registerReq.Info.Description.Moniker = "operator3"
 	_, err = suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)
 	suite.Require().NoError(err)
 	suite.Commit()
