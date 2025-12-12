@@ -118,10 +118,11 @@ func (p Precompile) WithdrawReward(
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
-	var withdrawRewardArgs WithdrawRewardArgs
-	if err := method.Inputs.Copy(&withdrawRewardArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgs struct: %s", err)
+	var wrapper WithdrawRewardArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgsWrapper struct: %s", err)
 	}
+	withdrawRewardArgs := wrapper.Params
 	if withdrawRewardArgs.OpAmount == nil || withdrawRewardArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawReward: invalid withdraw amount:%v", withdrawRewardArgs.OpAmount)
 	}
@@ -165,10 +166,11 @@ func (p Precompile) WithdrawIMUATokenReward(
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
-	var withdrawIMUATokenRewardArgs WithdrawIMUATokenRewardArgs
-	if err := method.Inputs.Copy(&withdrawIMUATokenRewardArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to WithdrawIMUATokenRewardArgs struct: %s", err)
+	var wrapper WithdrawIMUATokenRewardArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to WithdrawIMUATokenRewardArgsWrapper struct: %s", err)
 	}
+	withdrawIMUATokenRewardArgs := wrapper.Params
 	if withdrawIMUATokenRewardArgs.OpAmount == nil || withdrawIMUATokenRewardArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawIMUATokenReward: invalid withdraw amount:%v", withdrawIMUATokenRewardArgs.OpAmount)
 	}
@@ -250,11 +252,11 @@ func (p Precompile) UndelegateReward(
 	if err != nil || !authorized {
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
-	var undelegateRewardArgs UndelegateRewardArgs
-	err = method.Inputs.Copy(&undelegateRewardArgs, args)
-	if err != nil {
-		return nil, fmt.Errorf("error while unpacking args to UndelegateRewardArgs struct: %s", err)
+	var wrapper UndelegateRewardArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to UndelegateRewardArgsWrapper struct: %s", err)
 	}
+	undelegateRewardArgs := wrapper.Params
 	if undelegateRewardArgs.OpAmount == nil || undelegateRewardArgs.OpAmount.Cmp(big.NewInt(0)) <= 0 {
 		return nil, fmt.Errorf("UndelegateReward: invalid undelegation amount:%v", undelegateRewardArgs.OpAmount)
 	}
@@ -290,7 +292,7 @@ func (p Precompile) WithdrawCommission(
 
 	var withdrawCommissionArgs WithdrawCommissionArgs
 	if err := method.Inputs.Copy(&withdrawCommissionArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgs struct: %s", err)
+		return nil, fmt.Errorf("error while unpacking args to WithdrawCommissionArgs struct: %s", err)
 	}
 	if withdrawCommissionArgs.OpAmount == nil || withdrawCommissionArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawCommission: invalid withdraw amount:%v", withdrawCommissionArgs.OpAmount)
@@ -370,10 +372,11 @@ func (p Precompile) RegisterRewardToken(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	var registerRewardTokenArgs RegisterRewardTokenArgs
-	if err := method.Inputs.Copy(&registerRewardTokenArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to RegisterRewardTokenArgs struct: %s", err)
+	var wrapper RegisterRewardTokenArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to RegisterRewardTokenArgsWrapper struct: %s", err)
 	}
+	registerRewardTokenArgs := wrapper.Params
 	avsAddr := strings.ToLower(contract.CallerAddress.String())
 	// check the input args
 	rewardAssetAddr, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, registerRewardTokenArgs.ClientChainID, registerRewardTokenArgs.Token)
@@ -462,10 +465,11 @@ func (p Precompile) SetAVSRewardDistribution(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	var rewardDistributionInfoArgs AVSRewardDistributionInfoArgs
-	if err := method.Inputs.Copy(&rewardDistributionInfoArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to AVSRewardDistributionInfoArgs struct: %s", err)
+	var wrapper AVSRewardDistributionInfoArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to AVSRewardDistributionInfoArgsWrapper struct: %s", err)
 	}
+	rewardDistributionInfoArgs := wrapper.RewardDistribution
 	avsAddr := strings.ToLower(contract.CallerAddress.String())
 
 	protoRewardCoins, err := ABIRewardCoins(rewardDistributionInfoArgs.RewardCoins).ToProtoStruct(

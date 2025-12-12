@@ -34,6 +34,74 @@ IReward constant REWARD_CONTRACT = IReward(
         OperatorRewardProportion[] operatorRewardProportions;
     }
 
+/// @dev The WithdrawRewardParams struct for withdrawing rewards
+/// @param doClaim indicates whether to claim reward before withdrawing
+/// @param clientChainLzID The LzID of the client chain the staker originates from
+/// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
+/// @param assetAddress The reward asset Address
+/// @param stakerAddress The address of the staker withdrawing the reward
+/// @param opAmount The reward amount to withdraw, set it to 0 to withdraw all rewards
+    struct WithdrawRewardParams {
+        bool doClaim;
+        uint32 clientChainLzID;
+        uint32 rewardAssetChainLzID;
+        bytes assetAddress;
+        bytes stakerAddress;
+        uint256 opAmount;
+    }
+
+/// @dev The WithdrawIMUATokenRewardParams struct for withdrawing IMUA token rewards
+/// @param doClaim indicates whether to claim reward before withdrawing
+/// @param clientChainLzID The LzID of the client chain the staker originates from
+/// @param stakerAddress The address of the staker withdrawing the reward
+/// @param receiptAddress The address to receive the IMUA reward. It should be an EVM address
+/// @param opAmount The reward amount, set it to 0 to withdraw all rewards
+    struct WithdrawIMUATokenRewardParams {
+        bool doClaim;
+        uint32 clientChainLzID;
+        bytes stakerAddress;
+        bytes receiptAddress;
+        uint256 opAmount;
+    }
+
+/// @dev The UndelegateRewardParams struct for undelegating rewards
+/// @param clientChainLzID The LzID of the client chain the staker originates from
+/// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
+/// @param assetAddress The reward asset Address
+/// @param stakerAddress The address of the staker withdrawing the reward
+/// @param operatorAddr The operator address that wants to unDelegate from
+/// @param opAmount The Undelegation amount
+/// @param instantUnbond Whether to unbond immediately
+    struct UndelegateRewardParams {
+        uint32 clientChainLzID;
+        uint32 rewardAssetChainLzID;
+        bytes assetAddress;
+        bytes stakerAddress;
+        bytes operatorAddr;
+        uint256 opAmount;
+        bool instantUnbond;
+    }
+
+/// @dev The RegisterRewardTokenParams struct for registering a reward token
+/// @param clientChainID The identifier of the token's home chain (LZ or otherwise)
+/// @param token The address of the token on the home chain
+/// @param decimals The number of decimals of the token
+/// @param name The name of the token
+/// @param symbol The symbol of the token, used as its denomination in the Cosmos SDK
+/// @param metaData The arbitrary metadata of the token
+/// @param denomination Used in the `DecCoins` of Cosmos SDK
+/// @param denominationExponent Defines how the reward denomination scales relative to the token's smallest unit
+    struct RegisterRewardTokenParams {
+        uint32 clientChainID;
+        bytes token;
+        uint8 decimals;
+        string name;
+        string symbol;
+        string metaData;
+        string denomination;
+        uint8 denominationExponent;
+    }
+
 /// @author Imuachain Team
 /// @title Reward Precompile Contract
 /// @dev The interface through which solidity contracts will interact with ClaimReward
@@ -59,20 +127,10 @@ interface IReward {
     /// @dev Withdraw the rewards earned from multiple AVSs (excluding the dogfood AVS) to the staker.
     /// This will update the outstanding reward state of the specified staker.
     /// Note that this address cannot be a module account.
-    /// @param doClaim indicates whether to claim reward before withdrawing
-    /// @param clientChainLzID The LzID of the client chain the staker originates from
-    /// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
-    /// @param assetAddress The reward asset Address
-    /// @param stakerAddress The address of the staker withdrawing the reward.
-    /// @param opAmount The reward amount to withdraw, set it to 0 to withdraw all rewards.
-    function withdrawReward(
-        bool doClaim,
-        uint32 clientChainLzID,
-        uint32 rewardAssetChainLzID,
-        bytes calldata assetAddress,
-        bytes calldata stakerAddress,
-        uint256 opAmount
-    ) external returns (bool success, uint256 actualWithdrawAmount);
+    /// @param params The withdrawal parameters
+    function withdrawReward(WithdrawRewardParams calldata params)
+        external
+        returns (bool success, uint256 actualWithdrawAmount);
 
     /// @dev Withdraws rewards in IMUA tokens earned from the dogfood AVS or from other AVSs that also distribute IMUA as rewards.
     /// Unlike `withdrawReward`, if the IMUA reward are from the dogfood AVS, this function sends the IMUA tokens directly
@@ -84,18 +142,10 @@ interface IReward {
     /// `actualWithdrawAmount` and `withdrawAmountFromDogfood`. The difference between them indicates the amount
     /// that remains to be claimed from the contract vault.
     /// Note that this address cannot be a module account.
-    /// @param doClaim indicates whether to claim reward before withdrawing
-    /// @param clientChainLzID The LzID of the client chain the staker originates from
-    /// @param stakerAddress The address of the staker withdrawing the reward.
-    /// @param receiptAddress The address to receive the IMUA reward. It should be an EVM address.
-    /// @param opAmount The reward amount, set it to 0 to withdraw all rewards.
-    function withdrawIMUATokenReward(
-        bool doClaim,
-        uint32 clientChainLzID,
-        bytes calldata stakerAddress,
-        bytes calldata receiptAddress,
-        uint256 opAmount
-    ) external returns (bool success, uint256 actualWithdrawAmount, uint256 withdrawAmountFromDogfood);
+    /// @param params The IMUA token withdrawal parameters
+    function withdrawIMUATokenReward(WithdrawIMUATokenRewardParams calldata params)
+        external
+        returns (bool success, uint256 actualWithdrawAmount, uint256 withdrawAmountFromDogfood);
 
     /// @dev Sets or updates reward parameters for a staker.
     /// @param clientChainLzID LayerZero ID of the staker's client chain.
@@ -110,22 +160,8 @@ interface IReward {
     ) external returns (bool success);
 
     /// @dev undelegate reward from the specific operator
-    /// @param clientChainLzID The LzID of the client chain the staker originates from
-    /// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
-    /// @param assetAddress The reward asset Address
-    /// @param stakerAddress The address of the staker withdrawing the reward.
-    /// @param operatorAddr  The operator address that wants to unDelegate from
-    /// @param opAmount The Undelegation amount
-    /// @param instantUnbond Whether to unbond immediately
-    function undelegateReward(
-        uint32 clientChainLzID,
-        uint32 rewardAssetChainLzID,
-        bytes calldata assetAddress,
-        bytes calldata stakerAddress,
-        bytes calldata operatorAddr,
-        uint256 opAmount,
-        bool instantUnbond
-    ) external returns (bool success);
+    /// @param params The undelegation parameters
+    function undelegateReward(UndelegateRewardParams calldata params) external returns (bool success);
 
     /// @dev Withdraw the commissions earned from multiple AVSs (excluding the dogfood AVS) to the operator.
     /// This will update the commission state of the specified operator.
@@ -158,30 +194,13 @@ interface IReward {
     ///
     /// TRANSACTIONS
     /// @dev register a token as the reward asset for an AVS.
-    /// @param clientChainID is the identifier of the token's home chain (LZ or otherwise)
-    /// @param token is the address of the token on the home chain
-    /// @param decimals is the number of decimals of the token
-    /// @param name is the name of the token
-    /// @param symbol is the symbol of the token, used as its denomination in the Cosmos SDK.
-    /// @param metaData is the arbitrary metadata of the token
-    /// @param denomination is used in the `DecCoins` of Cosmos SDK.
-    /// @param denominationExponent defines how the reward denomination scales relative
-    //  to the token's smallest unit.
+    /// @param params The token registration parameters
     /// @return success if the token registration is successful
     /// The AVS address will be fetched from the contract caller instead of the input parameters,
     /// since these interfaces are intended to be called directly by the AVS itself.
     /// This design ensures proper authorization, as only the AVS address is allowed
     /// to invoke these transaction interfaces.
-    function registerRewardToken(
-        uint32 clientChainID,
-        bytes calldata token,
-        uint8 decimals,
-        string calldata name,
-        string calldata symbol,
-        string calldata metaData,
-        string calldata denomination,
-        uint8 denominationExponent
-    ) external returns (bool success);
+    function registerRewardToken(RegisterRewardTokenParams calldata params) external returns (bool success);
 
     /// @dev update the metaInfo for the reward token.
     /// @param clientChainID is the identifier of the token's home chain (LZ or otherwise)

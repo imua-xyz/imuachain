@@ -19,6 +19,9 @@ type ClaimRewardArgs struct {
 	StakerAddress   []byte `abi:"stakerAddress"`
 }
 
+// WithdrawRewardArgs corresponds to the WithdrawRewardParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
 type WithdrawRewardArgs struct {
 	DoClaim              bool     `abi:"doClaim"`
 	ClientChainLzID      uint32   `abi:"clientChainLzID"`
@@ -28,12 +31,26 @@ type WithdrawRewardArgs struct {
 	OpAmount             *big.Int `abi:"opAmount"`
 }
 
+// WithdrawRewardArgsWrapper wraps WithdrawRewardArgs to match the ABI parameter name.
+// This allows method.Inputs.Copy() to work correctly with single tuple parameters.
+type WithdrawRewardArgsWrapper struct {
+	Params WithdrawRewardArgs `abi:"params"`
+}
+
+// WithdrawIMUATokenRewardArgs corresponds to the WithdrawIMUATokenRewardParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
 type WithdrawIMUATokenRewardArgs struct {
 	DoClaim         bool     `abi:"doClaim"`
 	ClientChainLzID uint32   `abi:"clientChainLzID"`
 	StakerAddress   []byte   `abi:"stakerAddress"`
 	ReceiptAddress  []byte   `abi:"receiptAddress"`
 	OpAmount        *big.Int `abi:"opAmount"`
+}
+
+// WithdrawIMUATokenRewardArgsWrapper wraps WithdrawIMUATokenRewardArgs to match the ABI parameter name.
+type WithdrawIMUATokenRewardArgsWrapper struct {
+	Params WithdrawIMUATokenRewardArgs `abi:"params"`
 }
 
 type SetStakerRewardParamsArgs struct {
@@ -43,6 +60,9 @@ type SetStakerRewardParamsArgs struct {
 	RedelegateOperator string `abi:"redelegateOperator"`
 }
 
+// UndelegateRewardArgs corresponds to the UndelegateRewardParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
 type UndelegateRewardArgs struct {
 	ClientChainLzID      uint32   `abi:"clientChainLzID"`
 	RewardAssetChainLzID uint32   `abi:"rewardAssetChainLzID"`
@@ -51,6 +71,11 @@ type UndelegateRewardArgs struct {
 	OperatorAddr         []byte   `abi:"operatorAddr"`
 	OpAmount             *big.Int `abi:"opAmount"`
 	InstantUnbond        bool     `abi:"instantUnbond"`
+}
+
+// UndelegateRewardArgsWrapper wraps UndelegateRewardArgs to match the ABI parameter name.
+type UndelegateRewardArgsWrapper struct {
+	Params UndelegateRewardArgs `abi:"params"`
 }
 
 type WithdrawCommissionArgs struct {
@@ -66,6 +91,9 @@ type WithdrawIMUATokenCommissionArgs struct {
 	OpAmount        *big.Int `abi:"opAmount"`
 }
 
+// RegisterRewardTokenArgs corresponds to the RegisterRewardTokenParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
 type RegisterRewardTokenArgs struct {
 	ClientChainID        uint32 `abi:"clientChainID"`
 	Token                []byte `abi:"token"`
@@ -75,6 +103,11 @@ type RegisterRewardTokenArgs struct {
 	MetaData             string `abi:"metaData"`
 	Denomination         string `abi:"denomination"`
 	DenominationExponent uint8  `abi:"denominationExponent"`
+}
+
+// RegisterRewardTokenArgsWrapper wraps RegisterRewardTokenArgs to match the ABI parameter name.
+type RegisterRewardTokenArgsWrapper struct {
+	Params RegisterRewardTokenArgs `abi:"params"`
 }
 
 type UpdateRewardTokenArgs struct {
@@ -97,6 +130,11 @@ type ABIOperatorRewardProportion struct {
 type AVSRewardDistributionInfoArgs struct {
 	RewardCoins               []ABIRewardCoin               `abi:"rewardCoins"`
 	OperatorRewardProportions []ABIOperatorRewardProportion `abi:"operatorRewardProportions"`
+}
+
+// AVSRewardDistributionInfoArgsWrapper wraps AVSRewardDistributionInfoArgs to match the ABI parameter name.
+type AVSRewardDistributionInfoArgsWrapper struct {
+	RewardDistribution AVSRewardDistributionInfoArgs `abi:"rewardDistribution"`
 }
 
 type SetAVSEpochRewardArgs struct {
