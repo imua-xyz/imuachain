@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strconv"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -17,10 +19,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/evmos/evmos/v16/x/evm/types"
+	imuachainevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
 
 var _ types.MsgServer = &Keeper{}
+var _ imuachainevmtypes.MsgServer = &Keeper{}
 
 // EthereumTx implements the gRPC MsgServer interface. It receives a transaction which is then
 // executed (i.e applied) against the go-ethereum EVM. The provided SDK Context is set to the Keeper
@@ -144,4 +149,56 @@ func (k *Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams)
 	}
 
 	return &types.MsgUpdateParamsResponse{}, nil
+}
+
+// CallContract implements the gRPC MsgServer interface.
+// It receives a request to call a contract and applies it to the EVM.
+func (k *Keeper) CallContract(
+	goCtx context.Context,
+	req *imuachainevmtypes.MsgCallContract,
+) (resp *imuachainevmtypes.MsgCallContractResponse, retErr error) {
+	if k.authority.String() != req.Authority {
+		return nil, errorsmod.Wrapf(
+			govtypes.ErrInvalidSigner,
+			"invalid authority, expected %s, got %s",
+			k.authority.String(), req.Authority,
+		)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	nonce := k.GetNonce(ctx, common.BytesToAddress(k.authority.Bytes()))
+	gasMeter := ctx.GasMeter()
+	defer func() {
+		if retErr != nil {
+			ctx = ctx.WithGasMeter(gasMeter)
+		}
+	}()
+	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+	contractAddress := common.HexToAddress(req.ContractAddress)
+	data := common.Hex2Bytes(req.Data)
+
+	var gasLimit int64 = 30_000_000
+	params := ctx.ConsensusParams()
+	if params != nil && params.Block != nil && params.Block.MaxGas > 0 {
+		gasLimit = params.Block.MaxGas
+	}
+
+	msg := ethtypes.NewMessage(
+		common.BytesToAddress(k.authority.Bytes()),
+		&contractAddress,
+		nonce,
+		big.NewInt(0), // value
+		uint64(gasLimit),
+		big.NewInt(0), // gas price
+		big.NewInt(0), // gas fee cap
+		big.NewInt(0), // gas tip cap
+		data,
+		nil,
+		false,
+	)
+	_, err := k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), true)
+	if err != nil {
+		return nil, err
+	}
+	return &imuachainevmtypes.MsgCallContractResponse{}, nil
 }
