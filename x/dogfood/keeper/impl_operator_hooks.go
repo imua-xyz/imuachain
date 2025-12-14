@@ -49,24 +49,15 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	// should be cleared.
 	consAddr := oldKey.ToConsAddr()
 	if chainID == avstypes.ChainIDWithoutRevision(ctx.ChainID()) {
-		// is the oldKey already active? if not, we should not do anything.
-		// this can happen if we opt in with a key, then replace it with another key
-		// during the same epoch.
-		_, found := h.keeper.GetImuachainValidator(ctx, consAddr)
-		if found {
-			unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
-			// nb: if operator sets key, it is not "at stake" till the end of the epoch.
-			// before that time, any key replacement will store a superfluous entry for pruning
-			// since the old key will not be in use.
-			// this technically gives an operator the opportunity to spam the pruning queue
-			// but it is not a security risk or a DOS vector given the cost charged.
-			h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, consAddr)
-		} else {
-			// since this consAddr isn't active, we can remove it immediately.
-			h.keeper.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
-				ctx, chainID, consAddr,
-			)
-		}
+		// The reverse lookup (consensus address -> operator address) must be maintained
+		// during the unbonding period to allow slashing of validators who misbehaved while
+		// they were active, even after they've been removed from the active validator set.
+		// This is necessary even if the validator is currently jailed or inactive, as
+		// evidence of misbehavior (e.g., double-signing) from past epochs can be reported
+		// and processed during the unbonding period. Therefore, we always schedule the
+		// pruning for the consensus address at the end of the unbonding completion epoch.
+		unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
+		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, consAddr)
 	}
 }
 
@@ -79,16 +70,10 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 	// this is because GetActiveOperatorsForChainID filters operators who are removing their
 	// keys from the chain.
 	// 2. X epochs later, the removal is marked complete in the operator module.
-	consAddr := key.ToConsAddr()
 	if chainID == avstypes.ChainIDWithoutRevision(ctx.ChainID()) {
-		_, found := h.keeper.GetImuachainValidator(ctx, consAddr)
-		if found {
-			h.keeper.SetOptOutInformation(ctx, operator)
-		} else {
-			h.keeper.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
-				ctx, chainID, consAddr,
-			)
-		}
+		// see AfterOperatorKeyReplaced for the reasoning behind scheduling the opt out,
+		// even if the operator may not be in the active validator set.
+		h.keeper.ScheduleOperatorOptOut(ctx, operator)
 	}
 }
 

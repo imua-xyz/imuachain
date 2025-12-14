@@ -7,15 +7,14 @@ import (
 	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
-// SetOptOutInformation sets information related to an operator's opt out.
-func (k Keeper) SetOptOutInformation(
+// ScheduleOperatorOptOut schedules the operator opt out
+// at the end of the unbonding completion epoch.
+func (k Keeper) ScheduleOperatorOptOut(
 	ctx sdk.Context, addr sdk.AccAddress,
 ) {
 	unbondingCompletionEpoch := k.GetUnbondingCompletionEpoch(ctx)
 	k.AppendOptOutToFinish(ctx, unbondingCompletionEpoch, addr)
 	k.SetOperatorOptOutFinishEpoch(ctx, addr, unbondingCompletionEpoch)
-	// CompleteOperatorKeyRemovalForChainID calls DeleteOperatorAddressForChainIDAndConsAddr,
-	// so we do not need to save ConsensusAddrToPrune in the unbonding case.
 }
 
 // AppendOptOutToFinish appends an operator address to the list of operator addresses that have
