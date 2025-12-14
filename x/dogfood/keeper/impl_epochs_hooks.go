@@ -48,15 +48,6 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 			ctx, types.ConsensusAddresses{List: consAddresses},
 		)
 		wrapper.keeper.ClearConsensusAddrsToPrune(ctx, epoch)
-		// finally, find the undelegations that mature when this epoch ends, and move them to
-		// pending.
-		undelegations := wrapper.keeper.GetUndelegationsToMature(ctx, epoch)
-		wrapper.keeper.SetPendingUndelegations(
-			ctx, types.UndelegationRecordKeys{
-				List: undelegations,
-			},
-		)
-		wrapper.keeper.ClearUndelegationsToMature(ctx, epoch)
 	}
 }
 

@@ -249,7 +249,7 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 			},
 		},
 		[]dogfoodtypes.EpochToOperatorAddrs{}, []dogfoodtypes.EpochToConsensusAddrs{},
-		[]dogfoodtypes.EpochToUndelegationRecordKeys{}, math.NewInt(1),
+		math.NewInt(1),
 	)
 	genesisState[dogfoodtypes.ModuleName] = codec.MustMarshalJSON(dogfoodGenesis)
 

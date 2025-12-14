@@ -30,9 +30,7 @@ message GenesisState {
   // consensus addresses should be pruned from the operator module.
   repeated EpochToConsensusAddrs consensus_addrs_to_prune = 4 [(gogoproto.nullable) = false];
 
-  // undelegation_maturities is a list of epochs at the end of which the corresponding
-  // undelegations will mature. we store its reverse lookup as well.
-  repeated EpochToUndelegationRecordKeys undelegation_maturities = 5 [(gogoproto.nullable) = false];
+  // the undelegation maturities are now stored in the delegation module.
 
   // data against HistoricalInfoBytePrefix is not made available in the module
   // state for import / export. this is in line with Cosmos SDK.
@@ -50,7 +48,7 @@ message GenesisState {
   // update. such an update is most likely to be at the end of the last epoch (or the
   // beginning of this one, to be more precise) and less likely to be at other blocks,
   // since the validator set can otherwise only change as a result of slashing events.
-  bytes last_total_power = 6 [
+  bytes last_total_power = 5 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
@@ -92,15 +90,4 @@ message EpochToConsensusAddrs {
   // cons_addrs is the list of consensus addresses to prune at this epoch.
   // It is of type string for human readability of the genesis file.
   repeated string cons_addrs = 2;
-}
-
-// EpochToUndelegationRecordKeys is used to store a mapping from an epoch to a list of
-// undelegations which mature at that epoch.
-message EpochToUndelegationRecordKeys {
-  // epoch is the epoch in question.
-  int64 epoch = 1;
-  // undelegation_record_keys is the list of undelegations (defined by the record key)
-  // to expire at this epoch.
-  // It is of type string for human readability of the genesis file.
-  repeated string undelegation_record_keys = 2;
 }

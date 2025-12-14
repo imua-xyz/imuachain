@@ -290,8 +290,8 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 				PublicKey: hexutil.Encode(valSet.Validators[0].PubKey.Bytes()),
 			},
 		},
-		[]dogfoodtypes.EpochToOperatorAddrs{}, []dogfoodtypes.EpochToConsensusAddrs{},
-		[]dogfoodtypes.EpochToUndelegationRecordKeys{},
+		[]dogfoodtypes.EpochToOperatorAddrs{},
+		[]dogfoodtypes.EpochToConsensusAddrs{},
 		math.NewInt(1), // total vote power
 	)
 	genesisState[dogfoodtypes.ModuleName] = app.AppCodec().MustMarshalJSON(dogfoodGenesis)

@@ -66,34 +66,6 @@ func (q Querier) OperatorOptOutFinishEpoch(
 	return &types.QueryOperatorOptOutFinishEpochResponse{Epoch: epoch}, nil
 }
 
-func (q Querier) UndelegationsToMature(
-	goCtx context.Context,
-	req *types.QueryUndelegationsToMatureRequest,
-) (*types.UndelegationRecordKeys, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	epoch := req.Epoch
-	keys := q.Keeper.GetUndelegationsToMature(ctx, epoch)
-	return &types.UndelegationRecordKeys{List: keys}, nil
-}
-
-func (q Querier) UndelegationMaturityEpoch(
-	goCtx context.Context,
-	req *types.QueryUndelegationMaturityEpochRequest,
-) (*types.QueryUndelegationMaturityEpochResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	epoch, found := q.Keeper.GetUndelegationMaturityEpoch(ctx, []byte(req.RecordKey))
-	if !found {
-		return nil, status.Error(codes.NotFound, "undelegation record not found")
-	}
-	return &types.QueryUndelegationMaturityEpochResponse{Epoch: epoch}, nil
-}
-
 func (q Querier) Validator(
 	goCtx context.Context,
 	req *types.QueryValidatorRequest,

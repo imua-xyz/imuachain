@@ -61,36 +61,3 @@ func (k Keeper) ClearPendingConsensusAddrs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.PendingConsensusAddrsKey())
 }
-
-// SetPendingUndelegations sets the pending undelegations to be released at the end of the
-// block.
-func (k Keeper) SetPendingUndelegations(
-	ctx sdk.Context,
-	undelegations types.UndelegationRecordKeys,
-) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&undelegations)
-	store.Set(types.PendingUndelegationsKey(), bz)
-}
-
-// GetPendingUndelegations returns the pending undelegations to be released at the end of the
-// block.
-func (k Keeper) GetPendingUndelegations(ctx sdk.Context) types.UndelegationRecordKeys {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.PendingUndelegationsKey())
-	if bz == nil {
-		return types.UndelegationRecordKeys{}
-	}
-	var undelegations types.UndelegationRecordKeys
-	if err := undelegations.Unmarshal(bz); err != nil {
-		return types.UndelegationRecordKeys{}
-	}
-	return undelegations
-}
-
-// ClearPendingUndelegations clears the pending undelegations to be released at the end of the
-// block.
-func (k Keeper) ClearPendingUndelegations(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.PendingUndelegationsKey())
-}
