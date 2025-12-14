@@ -11,9 +11,7 @@ const (
 	TypeMsgCallContract = "call_contract"
 )
 
-var (
-	_ sdk.Msg = &MsgCallContract{}
-)
+var _ sdk.Msg = &MsgCallContract{}
 
 // GetSigners returns the expected signers for a MsgCallContract message.
 func (m *MsgCallContract) GetSigners() []sdk.AccAddress {
@@ -46,5 +44,5 @@ func (m *MsgCallContract) Type() string {
 
 // GetSignBytes returns the bytes all expected signers must sign over.
 func (m *MsgCallContract) GetSignBytes() []byte {
-	return sdk.MustSortJSON(evmostypes.ModuleCdc.MustMarshalJSON(m))
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

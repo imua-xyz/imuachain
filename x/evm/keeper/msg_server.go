@@ -27,8 +27,10 @@ import (
 	imuachainevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
 
-var _ types.MsgServer = &Keeper{}
-var _ imuachainevmtypes.MsgServer = &Keeper{}
+var (
+	_ types.MsgServer             = &Keeper{}
+	_ imuachainevmtypes.MsgServer = &Keeper{}
+)
 
 // EthereumTx implements the gRPC MsgServer interface. It receives a transaction which is then
 // executed (i.e applied) against the go-ethereum EVM. The provided SDK Context is set to the Keeper
@@ -177,8 +179,9 @@ func (k *Keeper) CallContract(
 	}()
 	nonce := k.GetNonce(ctx, common.BytesToAddress(k.authority.Bytes()))
 	if nonce > 0 {
-		// nonce is already incremented by the AnteHandler
-		nonce = nonce - 1
+		// nonce is already incremented by the AnteHandler when execution reaches here.
+		// to get the nonce of this transaction, we need to decrement it.
+		nonce--
 	} else {
 		// a value of 0 is not possible since it is already incremented.
 		return nil, errorsmod.Wrapf(

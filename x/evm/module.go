@@ -23,7 +23,6 @@ import (
 	"github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/x/evm/client/cli"
 	"github.com/imua-xyz/imuachain/x/evm/keeper"
-	imuachainevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
 
 // consensusVersion defines the current x/evm module consensus version.
@@ -94,7 +93,7 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // RegisterInterfaces registers interfaces and implementations of the evm module.
 func (AppModuleBasic) RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
-	imuachainevmtypes.RegisterInterfaces(registry)
+	evmtype.RegisterInterfaces(registry)
 }
 
 // ____________________________________________________________________________
@@ -132,7 +131,7 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), am.keeper)
-	imuachainevmtypes.RegisterMsgServer(cfg.MsgServer(), am.keeper)
+	evmtype.RegisterMsgServer(cfg.MsgServer(), am.keeper)
 	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
 
 	m := keeper.NewMigrator(*am.keeper, am.legacySubspace)

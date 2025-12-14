@@ -150,7 +150,8 @@ func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
 
 func (suite *MsgServerTestSuite) encodeSetValueCall(value *big.Int) []byte {
 	// Get the setValue method from the ABI
-	method := testdata.GroupDeployeeContract.ABI.Methods["setValue"]
+	method, ok := testdata.GroupDeployeeContract.ABI.Methods["setValue"]
+	suite.Require().True(ok, "setValue method should exist")
 
 	// Pack the arguments
 	packed, err := method.Inputs.Pack(value)
@@ -163,7 +164,8 @@ func (suite *MsgServerTestSuite) encodeSetValueCall(value *big.Int) []byte {
 
 func (suite *MsgServerTestSuite) encodeFailingFunctionCall() []byte {
 	// Get the failingFunction method from the ABI
-	method := testdata.GroupDeployeeContract.ABI.Methods["failingFunction"]
+	method, ok := testdata.GroupDeployeeContract.ABI.Methods["failingFunction"]
+	suite.Require().True(ok, "failingFunction method should exist")
 
 	// Pack the arguments
 	packed, err := method.Inputs.Pack()
