@@ -51,7 +51,12 @@ func init() {
 }
 
 // DefaultTestingAppInit defines the IBC application used for testing
-var DefaultTestingAppInit func(chainID string, pruneOpts *pruningtypes.PruningOptions, isPrintLog bool) func() (ibctesting.TestingApp, map[string]json.RawMessage) = SetupTestingApp
+var DefaultTestingAppInit func(
+	chainID string,
+	authAddrString string,
+	pruneOpts *pruningtypes.PruningOptions,
+	isPrintLog bool,
+) func() (ibctesting.TestingApp, map[string]json.RawMessage) = SetupTestingApp
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
 // Evmos testing.
@@ -114,6 +119,7 @@ func Setup(
 		DefaultNodeHome, 5,
 		encoding.MakeConfig(ModuleBasics),
 		simtestutil.NewAppOptionsWithFlagHome(DefaultNodeHome),
+		"",
 		baseapp.SetChainID(chainID),
 	)
 	if !isCheckTx {
@@ -316,7 +322,12 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 // SetupTestingApp initializes the IBC-go testing application
 // need to keep this design to comply with the ibctesting SetupTestingApp func
 // and be able to set the chainID for the tests properly
-func SetupTestingApp(chainID string, pruneOpts *pruningtypes.PruningOptions, isPrintLog bool) func() (ibctesting.TestingApp, map[string]json.RawMessage) {
+func SetupTestingApp(
+	chainID string,
+	authAddrString string,
+	pruneOpts *pruningtypes.PruningOptions,
+	isPrintLog bool,
+) func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	return func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		db := dbm.NewMemDB()
 		cfg := encoding.MakeConfig(ModuleBasics)
@@ -335,6 +346,7 @@ func SetupTestingApp(chainID string, pruneOpts *pruningtypes.PruningOptions, isP
 			map[int64]bool{},
 			DefaultNodeHome, 5, cfg,
 			simtestutil.NewAppOptionsWithFlagHome(DefaultNodeHome),
+			authAddrString,
 			baseAppOptions...,
 		)
 		return app, NewDefaultGenesisState(app.appCodec)

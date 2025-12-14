@@ -379,6 +379,7 @@ func NewImuachainApp(
 	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
+	authAddrString string,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *ImuachainApp {
 	appCodec := encodingConfig.Codec
@@ -465,8 +466,13 @@ func NewImuachainApp(
 	// get the address of the authority, which is the governance module.
 	// as the authority, the governance module can modify parameters in the modules that support
 	// such modifications.
-	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName)
-	authAddrString := authAddr.String()
+	var authAddr sdk.AccAddress
+	if authAddrString != "" {
+		authAddr = sdk.MustAccAddressFromBech32(authAddrString)
+	} else {
+		authAddr = authtypes.NewModuleAddress(govtypes.ModuleName)
+	}
+	authAddrString = authAddr.String()
 
 	// set the BaseApp's parameter store which is used for setting Tendermint parameters
 	app.ConsensusParamsKeeper = consensusparamkeeper.NewKeeper(

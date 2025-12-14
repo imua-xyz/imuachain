@@ -18,6 +18,7 @@ import (
 	"github.com/armon/go-metrics"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/evmos/evmos/v16/x/evm/types"
@@ -165,16 +166,31 @@ func (k *Keeper) CallContract(
 		)
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	nonce := k.GetNonce(ctx, common.BytesToAddress(k.authority.Bytes()))
-	gasMeter := ctx.GasMeter()
+	staticCtx := sdk.UnwrapSDKContext(goCtx)
+	ctx, writeFunc := staticCtx.CacheContext()
 	defer func() {
-		if retErr != nil {
-			ctx = ctx.WithGasMeter(gasMeter)
+		if retErr == nil {
+			writeFunc()
 		}
 	}()
+	nonce := k.GetNonce(ctx, common.BytesToAddress(k.authority.Bytes()))
+	if nonce > 0 {
+		// nonce is already incremented by the AnteHandler
+		nonce = nonce - 1
+	} else {
+		// a value of 0 is not possible since it is already incremented.
+		return nil, errorsmod.Wrapf(
+			errortypes.ErrInvalidRequest, "nonce is 0",
+		)
+	}
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	contractAddress := common.HexToAddress(req.ContractAddress)
+	var contractAddress *common.Address
+	if req.ContractAddress != "" {
+		addr := common.HexToAddress(req.ContractAddress)
+		contractAddress = &addr
+	} else {
+		contractAddress = nil
+	}
 	data := common.Hex2Bytes(req.Data)
 
 	var gasLimit int64 = 30_000_000
@@ -185,7 +201,7 @@ func (k *Keeper) CallContract(
 
 	msg := ethtypes.NewMessage(
 		common.BytesToAddress(k.authority.Bytes()),
-		&contractAddress,
+		contractAddress,
 		nonce,
 		big.NewInt(0), // value
 		uint64(gasLimit),
@@ -196,9 +212,16 @@ func (k *Keeper) CallContract(
 		nil,
 		false,
 	)
-	_, err := k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), true)
+	response, err := k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), true)
 	if err != nil {
 		return nil, err
+	}
+	if response.VmError != "" {
+		return nil, errorsmod.Wrapf(
+			errortypes.ErrInvalidRequest,
+			"VM execution error: %s",
+			response.VmError,
+		)
 	}
 	return &imuachainevmtypes.MsgCallContractResponse{}, nil
 }

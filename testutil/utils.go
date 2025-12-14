@@ -87,6 +87,8 @@ type BaseTestSuite struct {
 
 	// tests may use this to allocate a genesis balance
 	Balances []banktypes.Balance
+
+	SetAuthority bool
 }
 
 var EpochsForTest = []string{
@@ -164,8 +166,12 @@ func (suite *BaseTestSuite) SetupTest() {
 // SetupWithGenesisValSet initializes a new ImuachainApp with a validator set and genesis accounts
 // that also act as delegators.
 func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) {
+	authAddr := ""
+	if suite.SetAuthority {
+		authAddr = sdk.AccAddress(suite.Address.Bytes()).String()
+	}
 	pruneOpts := pruningtypes.NewPruningOptionsFromString(pruningtypes.PruningOptionDefault)
-	appI, genesisState := imuaapp.SetupTestingApp(utils.DefaultChainID, &pruneOpts, false)()
+	appI, genesisState := imuaapp.SetupTestingApp(utils.DefaultChainID, authAddr, &pruneOpts, false)()
 	app, ok := appI.(*imuaapp.ImuachainApp)
 	suite.Require().True(ok)
 

@@ -9,8 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
-	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/testutil"
 	"github.com/imua-xyz/imuachain/x/evm/keeper/testdata"
 	imuachainevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
@@ -26,14 +24,15 @@ func TestMsgServerTestSuite(t *testing.T) {
 
 func (suite *MsgServerTestSuite) SetupTest() {
 	// Set up the test suite
+	suite.SetAuthority = true
 	suite.DoSetupTest()
-
-	// Note: In a production scenario, the authority would be set up as a group policy address
-	// in genesis. For this test, we use the app's default authority (gov module).
-	// The group policy address for a single address group with ID 1 would be:
-	// groupPolicyId := uint64(1)
-	// policyAddr := address.Module("cosmos.group.v1.GroupPolicy", []byte("1"))
-	// authority := sdk.AccAddress(policyAddr)
+	// check authority is correctly set
+	suite.Require().Equal(
+		sdk.AccAddress(suite.Address.Bytes()),
+		suite.App.EvmKeeper.GetAuthority(),
+		"authority should be set correctly",
+	)
+	// the authority address is already funded in the setup
 }
 
 func (suite *MsgServerTestSuite) TestCallContract() {
@@ -50,22 +49,27 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 	callData := suite.encodeSetValueCall(newValue)
 
 	// Get the authority address (the keeper's authority)
-	authorityAddr := suite.App.EvmKeeper.GetAuthority()
+	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
+	suite.Require().Equal(nonce, uint64(1))
 
-	// Call CallContract
-	req := &imuachainevmtypes.MsgCallContract{
-		Authority:       authorityAddr.String(),
+	// Create the MsgCallContract message
+	msg := &imuachainevmtypes.MsgCallContract{
+		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
 		ContractAddress: contractAddr.Hex(),
 		Data:            common.Bytes2Hex(callData),
 	}
 
-	resp, err := suite.App.EvmKeeper.CallContract(sdk.WrapSDKContext(suite.Ctx), req)
+	res, err := testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
 	suite.Require().NoError(err)
-	suite.Require().NotNil(resp)
+	suite.Require().True(res.IsOK(), "transaction should succeed: %s", res.Log)
 
 	// Verify the storage value was updated
 	updatedValue := suite.getStorageValue(contractAddr, common.Hash{})
 	suite.Require().Equal(newValue, updatedValue)
+
+	// Check nonce - it should be incremented by the AnteHandler
+	postNonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
+	suite.Require().Equal(nonce+1, postNonce, "nonce should be incremented by AnteHandler")
 }
 
 func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
@@ -74,29 +78,22 @@ func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
 	authorityAddr := suite.App.EvmKeeper.GetAuthority()
 	deployerAddr := common.BytesToAddress(authorityAddr.Bytes())
 	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, deployerAddr)
+	// check nonce is 0
+	suite.Require().Equal(nonce, uint64(0))
 
 	// Prepare contract deployment data (bytecode)
 	contractData := []byte(testdata.GroupDeployeeContract.Bin)
 
 	// Create a deployment message
-	msg := ethtypes.NewMessage(
-		deployerAddr,
-		nil, // to is nil for contract creation
-		nonce,
-		big.NewInt(0), // value
-		2000000,       // gas limit
-		big.NewInt(1), // gas price
-		nil,           // gas fee cap
-		nil,           // gas tip cap
-		contractData,  // data (contract bytecode)
-		nil,           // access list
-		true,          // is fake
-	)
+	msg := &imuachainevmtypes.MsgCallContract{
+		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
+		ContractAddress: "",
+		Data:            common.Bytes2Hex(contractData),
+	}
 
-	// Apply the message to deploy the contract
-	resp, err := suite.App.EvmKeeper.ApplyMessage(suite.Ctx, msg, evmtypes.NewNoOpTracer(), true)
+	res, err := testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
 	suite.Require().NoError(err)
-	suite.Require().False(resp.Failed(), "contract deployment failed: %s", resp.VmError)
+	suite.Require().True(res.IsOK(), "transaction should succeed: %s", res.Log)
 
 	// Calculate the contract address
 	contractAddr := crypto.CreateAddress(deployerAddr, nonce)
@@ -114,6 +111,10 @@ func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
 	ownerHex := common.BytesToAddress(owner.Bytes()).Hex()
 	authorityHex := common.BytesToAddress(authorityAddr.Bytes()).Hex()
 	suite.Require().Equal(authorityHex, ownerHex)
+
+	// check nonce
+	postNonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, deployerAddr)
+	suite.Require().Equal(nonce+1, postNonce)
 
 	return contractAddr
 }

@@ -299,6 +299,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		cast.ToUint(appOpts.Get(sdkserver.FlagInvCheckPeriod)),
 		a.encCfg,
 		appOpts,
+		"",
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(sdkserver.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(sdkserver.FlagHaltHeight))),
@@ -339,7 +340,7 @@ func (a appCreator) appExport(
 	if height != -1 {
 		imuaApp = app.NewImuachainApp(
 			logger, db, traceStore, false,
-			map[int64]bool{}, "", uint(1), a.encCfg, appOpts,
+			map[int64]bool{}, "", uint(1), a.encCfg, appOpts, "",
 			baseapp.SetChainID(chainID),
 		)
 
@@ -349,7 +350,7 @@ func (a appCreator) appExport(
 	} else {
 		imuaApp = app.NewImuachainApp(
 			logger, db, traceStore, true,
-			map[int64]bool{}, "", uint(1), a.encCfg, appOpts,
+			map[int64]bool{}, "", uint(1), a.encCfg, appOpts, "",
 			baseapp.SetChainID(chainID),
 		)
 	}

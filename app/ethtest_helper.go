@@ -72,6 +72,7 @@ func EthSetupWithDB(isCheckTx bool, patchGenesis func(*ImuachainApp, simapp.Gene
 		5,
 		encoding.MakeConfig(ModuleBasics),
 		simtestutil.NewAppOptionsWithFlagHome(DefaultNodeHome),
+		"",
 		baseapp.SetChainID(chainID),
 	)
 	if !isCheckTx {
