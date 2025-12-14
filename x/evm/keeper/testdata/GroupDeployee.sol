@@ -18,4 +18,10 @@ contract GroupDeployee {
         value = _value;
     }
 
+    function failingFunction() external {
+        // to avoid marking it as pure, add a state change op.
+        value += 1;
+        revert("This function is failing");
+    }
+
 }

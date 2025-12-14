@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
@@ -21,6 +22,7 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/evmos/evmos/v16/x/evm/types"
 	imuachainevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
@@ -216,12 +218,14 @@ func (k *Keeper) CallContract(
 	if err != nil {
 		return nil, err
 	}
-	if response.VmError != "" {
-		return nil, errorsmod.Wrapf(
-			errortypes.ErrInvalidRequest,
-			"VM execution error: %s",
-			response.VmError,
-		)
+	if response.Failed() {
+		errStr := response.VmError
+		if response.VmError == vm.ErrExecutionReverted.Error() {
+			if cause, err := abi.UnpackRevert(common.CopyBytes(response.Ret)); err == nil {
+				errStr = cause
+			}
+		}
+		return nil, types.ErrVMExecution.Wrap(errStr)
 	}
 	return &imuachainevmtypes.MsgCallContractResponse{}, nil
 }
