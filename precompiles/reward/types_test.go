@@ -184,53 +184,30 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 				err := method.Inputs.Copy(&wrapper, args)
 				s.Require().NoError(err, "method.Inputs.Copy() should succeed for WithdrawRewardArgsWrapper")
 				s.Require().True(tc.verify(wrapper), "decoded wrapper should match original values")
-				s.Require().Equal(true, wrapper.Params.DoClaim)
-				s.Require().Equal(uint32(1), wrapper.Params.ClientChainLzID)
-				s.Require().Equal(uint32(1), wrapper.Params.RewardAssetChainLzID)
-				s.Require().Equal(big.NewInt(1000), wrapper.Params.OpAmount)
 
 			case reward.MethodWithdrawIMUATokenReward:
 				var wrapper reward.WithdrawIMUATokenRewardArgsWrapper
 				err := method.Inputs.Copy(&wrapper, args)
 				s.Require().NoError(err, "method.Inputs.Copy() should succeed for WithdrawIMUATokenRewardArgsWrapper")
 				s.Require().True(tc.verify(wrapper), "decoded wrapper should match original values")
-				s.Require().Equal(true, wrapper.Params.DoClaim)
-				s.Require().Equal(uint32(1), wrapper.Params.ClientChainLzID)
-				s.Require().Equal(big.NewInt(2000), wrapper.Params.OpAmount)
 
 			case reward.MethodUndelegateReward:
 				var wrapper reward.UndelegateRewardArgsWrapper
 				err := method.Inputs.Copy(&wrapper, args)
 				s.Require().NoError(err, "method.Inputs.Copy() should succeed for UndelegateRewardArgsWrapper")
 				s.Require().True(tc.verify(wrapper), "decoded wrapper should match original values")
-				s.Require().Equal(uint32(1), wrapper.Params.ClientChainLzID)
-				s.Require().Equal(uint32(1), wrapper.Params.RewardAssetChainLzID)
-				s.Require().Equal(big.NewInt(3000), wrapper.Params.OpAmount)
-				s.Require().Equal(false, wrapper.Params.InstantUnbond)
 
 			case reward.MethodRegisterRewardToken:
 				var wrapper reward.RegisterRewardTokenArgsWrapper
 				err := method.Inputs.Copy(&wrapper, args)
 				s.Require().NoError(err, "method.Inputs.Copy() should succeed for RegisterRewardTokenArgsWrapper")
 				s.Require().True(tc.verify(wrapper), "decoded wrapper should match original values")
-				s.Require().Equal(uint32(1), wrapper.Params.ClientChainID)
-				s.Require().Equal(uint8(18), wrapper.Params.Decimals)
-				s.Require().Equal("TestToken", wrapper.Params.Name)
-				s.Require().Equal("TEST", wrapper.Params.Symbol)
-				s.Require().Equal("test", wrapper.Params.Denomination)
 
 			case reward.MethodSetAVSRewardDistribution:
 				var wrapper reward.AVSRewardDistributionInfoArgsWrapper
 				err := method.Inputs.Copy(&wrapper, args)
 				s.Require().NoError(err, "method.Inputs.Copy() should succeed for AVSRewardDistributionInfoArgsWrapper")
 				s.Require().True(tc.verify(wrapper), "decoded wrapper should match original values")
-				s.Require().Len(wrapper.RewardDistribution.RewardCoins, 1)
-				s.Require().Equal("test", wrapper.RewardDistribution.RewardCoins[0].Denomination)
-				s.Require().Equal(big.NewInt(1000), wrapper.RewardDistribution.RewardCoins[0].Amount)
-				s.Require().Len(wrapper.RewardDistribution.OperatorRewardProportions, 1)
-				s.Require().Equal("operator1", wrapper.RewardDistribution.OperatorRewardProportions[0].Operator)
-				s.Require().Equal(big.NewInt(1), wrapper.RewardDistribution.OperatorRewardProportions[0].Numerator)
-				s.Require().Equal(big.NewInt(2), wrapper.RewardDistribution.OperatorRewardProportions[0].Denominator)
 			}
 		})
 	}
