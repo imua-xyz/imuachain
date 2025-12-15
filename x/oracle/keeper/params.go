@@ -199,19 +199,19 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 //	- Quoting window = {6, 7, 8}
 func GetStartBaseBlock(firstQuotingHeight, window, interval uint64, tfs []*types.TokenFeeder) uint64 {
 	blocks := make([]uint64, interval)
+	scanEnd := firstQuotingHeight + interval
 	for _, tf := range tfs {
 		if tf.EndBlock > 0 && tf.EndBlock < firstQuotingHeight {
+			// tokenFeeder already ended
 			continue
 		}
 		tfStartL := tf.StartBaseBlock
 		// Calculate the first quoting block of this feeder's latest round that's <= firstQuotingHeight
 		if firstQuotingHeight < tfStartL {
 			rounds := (tfStartL - firstQuotingHeight) / tf.Interval
-			// tfStartL = tfStartL - (rounds+1)*tf.Interval
-			if (rounds+1)*tf.Interval > tfStartL {
-				tfStartL = 0
-			} else {
-				tfStartL -= (rounds + 1) * tf.Interval
+			gap := (rounds + 1) * tf.Interval
+			if gap <= tfStartL {
+				tfStartL -= gap
 			}
 		} else {
 			rounds := (firstQuotingHeight - tfStartL) / tf.Interval
@@ -219,18 +219,17 @@ func GetStartBaseBlock(firstQuotingHeight, window, interval uint64, tfs []*types
 		}
 
 		// Process all quoting windows of this feeder that overlap with our interval
-		scanUntil := firstQuotingHeight + interval
-		for tfStartL < scanUntil {
-			tfStartR := tfStartL + window
-			tmp := tfStartL + 1 // first quoting block
-			for tmp < scanUntil && tmp <= tfStartR {
-				if tmp >= firstQuotingHeight {
-					offset := tmp - firstQuotingHeight
-					if offset < interval {
-						blocks[offset]++
-					}
-				}
-				tmp++
+		for tfStartL < scanEnd {
+			qStart := tfStartL + 1
+			qEnd := tfStartL + window
+			if qStart < firstQuotingHeight {
+				qStart = firstQuotingHeight
+			}
+			if qEnd >= scanEnd {
+				qEnd = scanEnd - 1
+			}
+			for i := qStart; i <= qEnd; i++ {
+				blocks[i-firstQuotingHeight]++
 			}
 			tfStartL += tf.Interval
 			if tf.EndBlock > 0 && tfStartL >= tf.EndBlock {
