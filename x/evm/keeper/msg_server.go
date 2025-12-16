@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
@@ -22,7 +21,6 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/evmos/evmos/v16/x/evm/types"
 	imuachainevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
@@ -57,6 +55,22 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 		return nil, errorsmod.Wrap(err, "failed to apply transaction")
 	}
 
+	err = k.postProcessResponse(
+		ctx, labels, response,
+		sender, txIndex, tx.Gas(), tx.Value(), tx.To(), tx.Type(),
+	)
+	if err != nil {
+		// leave it unchanged since callee has already wrapped it
+		return nil, err
+	}
+	return response, nil
+}
+
+func (k *Keeper) postProcessResponse(
+	ctx sdk.Context, labels []metrics.Label, response *types.MsgEthereumTxResponse,
+	sender string, txIndex uint64, txGas uint64, txValue *big.Int, txTo *common.Address,
+	txType uint8,
+) error {
 	defer func() {
 		telemetry.IncrCounterWithLabels(
 			[]string{"tx", "msg", "ethereum_tx", "total"},
@@ -73,7 +87,7 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 
 			// Observe which users define a gas limit >> gas used. Note, that
 			// gas_limit and gas_used are always > 0
-			gasLimit := math.LegacyNewDec(int64(tx.Gas()))                        // #nosec G115
+			gasLimit := math.LegacyNewDec(int64(txGas))                           // #nosec G115
 			gasRatio, err := gasLimit.QuoInt64(int64(response.GasUsed)).Float64() // #nosec G115
 			if err == nil {
 				telemetry.SetGaugeWithLabels(
@@ -86,7 +100,7 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 	}()
 
 	attrs := []sdk.Attribute{
-		sdk.NewAttribute(sdk.AttributeKeyAmount, tx.Value().String()),
+		sdk.NewAttribute(sdk.AttributeKeyAmount, txValue.String()),
 		// add event for ethereum transaction hash format
 		sdk.NewAttribute(types.AttributeKeyEthereumTxHash, response.Hash),
 		// add event for index of valid ethereum tx
@@ -101,8 +115,8 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyTxHash, hash.String()))
 	}
 
-	if to := tx.To(); to != nil {
-		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyRecipient, to.Hex()))
+	if txTo != nil {
+		attrs = append(attrs, sdk.NewAttribute(types.AttributeKeyRecipient, txTo.Hex()))
 	}
 
 	if response.Failed() {
@@ -113,7 +127,7 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 	for i, log := range response.Logs {
 		value, err := json.Marshal(log)
 		if err != nil {
-			return nil, errorsmod.Wrap(err, "failed to encode log")
+			return errorsmod.Wrap(err, "failed to encode log")
 		}
 		txLogAttrs[i] = sdk.NewAttribute(types.AttributeKeyTxLog, string(value))
 	}
@@ -132,11 +146,11 @@ func (k *Keeper) EthereumTx(goCtx context.Context, msg *types.MsgEthereumTx) (*t
 			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(sdk.AttributeKeySender, sender),
-			sdk.NewAttribute(types.AttributeKeyTxType, fmt.Sprintf("%d", tx.Type())),
+			sdk.NewAttribute(types.AttributeKeyTxType, fmt.Sprintf("%d", txType)),
 		),
 	})
 
-	return response, nil
+	return nil
 }
 
 // UpdateParams implements the gRPC MsgServer interface. When an UpdateParams
@@ -161,7 +175,7 @@ func (k *Keeper) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams)
 func (k *Keeper) CallContract(
 	goCtx context.Context,
 	req *imuachainevmtypes.MsgCallContract,
-) (resp *imuachainevmtypes.MsgCallContractResponse, retErr error) {
+) (response *types.MsgEthereumTxResponse, retErr error) {
 	if k.authority.String() != req.Authority {
 		return nil, errorsmod.Wrapf(
 			govtypes.ErrInvalidSigner,
@@ -170,13 +184,8 @@ func (k *Keeper) CallContract(
 		)
 	}
 
-	staticCtx := sdk.UnwrapSDKContext(goCtx)
-	ctx, writeFunc := staticCtx.CacheContext()
-	defer func() {
-		if retErr == nil {
-			writeFunc()
-		}
-	}()
+	// use the same logic as k.EthereumTx(); do not cache the context
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	nonce := k.GetNonce(ctx, common.BytesToAddress(k.authority.Bytes()))
 	if nonce > 0 {
 		// nonce is already incremented by the AnteHandler when execution reaches here.
@@ -188,28 +197,57 @@ func (k *Keeper) CallContract(
 			errortypes.ErrInvalidRequest, "nonce is 0",
 		)
 	}
+
+	// since our message has gas fee cap and gas tip cap, we use dynamic fee tx type
+	txType := uint8(ethtypes.DynamicFeeTxType)
+	labels := []metrics.Label{
+		telemetry.NewLabel("tx_type", fmt.Sprintf("%d", txType)),
+	}
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 	var contractAddress *common.Address
 	if req.ContractAddress != "" {
+		// caller must provide a valid contract address
+		if !common.IsHexAddress(req.ContractAddress) {
+			return nil, errorsmod.Wrapf(
+				errortypes.ErrInvalidRequest, "invalid contract address",
+			)
+		}
 		addr := common.HexToAddress(req.ContractAddress)
 		contractAddress = &addr
+		labels = append(labels, telemetry.NewLabel("execution", "call"))
 	} else {
+		// or it can be nil to indicate contract creation
 		contractAddress = nil
+		labels = append(labels, telemetry.NewLabel("execution", "create"))
 	}
 	data := common.Hex2Bytes(req.Data)
 
-	var gasLimit int64 = 30_000_000
-	params := ctx.ConsensusParams()
-	if params != nil && params.Block != nil && params.Block.MaxGas > 0 {
-		gasLimit = params.Block.MaxGas
+	gasLimit := uint64(0)
+	if req.GasLimit != 0 {
+		gasLimit = req.GasLimit
+	} else {
+		// if caller forgets to provide a gas limit, use the block max gas limit
+		// we can do this safely since this function is only called by the authority
+		params := ctx.ConsensusParams()
+		if params != nil && params.Block != nil && params.Block.MaxGas > 0 {
+			gasLimit = uint64(params.Block.MaxGas)
+		}
 	}
-
+	if gasLimit == 0 {
+		// if caller didn't provide a limit and a system-wide value is not set,
+		// quit.
+		return nil, errorsmod.Wrapf(
+			errortypes.ErrInvalidRequest, "gas limit is 0",
+		)
+	}
+	txIndex := k.GetTxIndexTransient(ctx)
+	sender := common.BytesToAddress(k.authority.Bytes())
 	msg := ethtypes.NewMessage(
-		common.BytesToAddress(k.authority.Bytes()),
+		sender,
 		contractAddress,
 		nonce,
 		big.NewInt(0), // value
-		uint64(gasLimit),
+		gasLimit,
 		big.NewInt(0), // gas price
 		big.NewInt(0), // gas fee cap
 		big.NewInt(0), // gas tip cap
@@ -217,18 +255,17 @@ func (k *Keeper) CallContract(
 		nil,
 		false,
 	)
-	response, err := k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), true)
-	if err != nil {
-		return nil, err
+	response, retErr = k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), true)
+	if retErr != nil {
+		return nil, retErr
 	}
-	if response.Failed() {
-		errStr := response.VmError
-		if response.VmError == vm.ErrExecutionReverted.Error() {
-			if cause, err := abi.UnpackRevert(common.CopyBytes(response.Ret)); err == nil {
-				errStr = cause
-			}
-		}
-		return nil, types.ErrVMExecution.Wrap(errStr)
+	retErr = k.postProcessResponse(
+		ctx, labels, response,
+		sender.Hex(), txIndex, msg.Gas(), msg.Value(), msg.To(), txType,
+	)
+	if retErr != nil {
+		// leave it unchanged since callee has already wrapped it
+		return nil, retErr
 	}
-	return &imuachainevmtypes.MsgCallContractResponse{}, nil
+	return response, nil
 }

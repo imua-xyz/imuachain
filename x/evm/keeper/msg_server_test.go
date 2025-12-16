@@ -4,12 +4,17 @@ import (
 	"math/big"
 	"testing"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/gogoproto/proto"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
+	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/imua-xyz/imuachain/x/evm/keeper/testdata"
@@ -59,11 +64,15 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
 		ContractAddress: contractAddr.Hex(),
 		Data:            common.Bytes2Hex(callData),
+		GasLimit:        1_000_000,
 	}
 
 	res, err := testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
 	suite.Require().NoError(err)
 	suite.Require().True(res.IsOK(), "transaction should succeed: %s", res.Log)
+	callContractRes := suite.extractCallContractResponse(res)
+	suite.Require().NotNil(callContractRes, "CallContract response should not be nil")
+	suite.Require().Empty(callContractRes.VmError, "contract deployment should not have VM error")
 
 	// Verify the storage value was updated
 	updatedValue := suite.getStorageValue(contractAddr, common.Hash{})
@@ -79,9 +88,20 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
 		ContractAddress: contractAddr.Hex(),
 		Data:            common.Bytes2Hex(callData),
+		GasLimit:        1_000_000,
 	}
 	res, err = testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
-	suite.Require().ErrorContains(err, "This function is failing")
+	// when an EVM error is returned, the response of err is nil
+	suite.Require().Nil(err)
+	callContractRes = suite.extractCallContractResponse(res)
+	// when evm error is returned, the error is wrapped in the response.
+	suite.Require().NotNil(callContractRes, "CallContract response should not be nil")
+	suite.Require().NotEmpty(callContractRes.VmError, "contract deployment should have VM error")
+	suite.Require().Contains(callContractRes.VmError, vm.ErrExecutionReverted.Error())
+	// now decode the error
+	cause, err := abi.UnpackRevert(common.CopyBytes(callContractRes.Ret))
+	suite.Require().NoError(err)
+	suite.Require().Contains(cause, "This function is failing")
 	// Note: When DeliverTx returns an error, BroadcastTxBytes returns an empty response
 	// with Code == 0, so res.IsOK() would be true. We only check the error here.
 
@@ -91,6 +111,7 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 		Authority:       sdk.AccAddress(addr.Bytes()).String(),
 		ContractAddress: contractAddr.Hex(),
 		Data:            common.Bytes2Hex(callData),
+		GasLimit:        1_000_000,
 	}
 	// fund the address
 	testutil.FundAccountWithBaseDenom(
@@ -99,6 +120,9 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 	)
 	res, err = testutil.DeliverTx(suite.Ctx, suite.App, priv, nil, msg)
 	suite.Require().ErrorContains(err, govtypes.ErrInvalidSigner.Error())
+	callContractRes = suite.extractCallContractResponse(res)
+	// cosmos error is returned, so the response should be nil
+	suite.Require().Nil(callContractRes, "CallContract response should be nil")
 }
 
 func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
@@ -118,11 +142,18 @@ func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
 		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
 		ContractAddress: "",
 		Data:            common.Bytes2Hex(contractData),
+		GasLimit:        1_000_000,
 	}
 
 	res, err := testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
 	suite.Require().NoError(err)
 	suite.Require().True(res.IsOK(), "transaction should succeed: %s", res.Log)
+
+	// Extract and validate the message response
+	callContractRes := suite.extractCallContractResponse(res)
+	suite.Require().NotNil(callContractRes, "CallContract response should not be nil")
+	// Validate that the contract deployment was successful (no VM error)
+	suite.Require().Empty(callContractRes.VmError, "contract deployment should not have VM error")
 
 	// Calculate the contract address
 	contractAddr := crypto.CreateAddress(deployerAddr, nonce)
@@ -180,4 +211,45 @@ func (suite *MsgServerTestSuite) getStorageValue(contractAddr common.Address, sl
 	// In Solidity, the first state variable is at slot 0
 	storageValue := suite.App.EvmKeeper.GetState(suite.Ctx, contractAddr, slot)
 	return storageValue.Big()
+}
+
+// extractCallContractResponse extracts the MsgEthereumTxResponse from the transaction response.
+// CallContract internally uses ApplyMessage which returns MsgEthereumTxResponse.
+// Returns nil if the response is empty or cannot be extracted (e.g., when there's a Cosmos-level error).
+func (suite *MsgServerTestSuite) extractCallContractResponse(res abci.ResponseDeliverTx) *evmtypes.MsgEthereumTxResponse {
+	// If the response data is empty, return nil
+	if len(res.Data) == 0 {
+		return nil
+	}
+
+	// First, try to decode directly using DecodeTxResponse (used for EVM transactions)
+	// This works even when there's a VM error, as the response is still encoded in res.Data
+	ethRes, err := evmtypes.DecodeTxResponse(res.Data)
+	if err == nil {
+		return ethRes
+	}
+
+	// If direct decoding fails, try extracting from TxMsgData (standard SDK message response format)
+	var txData sdk.TxMsgData
+	err = suite.App.AppCodec().Unmarshal(res.Data, &txData)
+	if err != nil {
+		// If unmarshaling fails, the response might be in a different format
+		return nil
+	}
+
+	// If there are no message responses, return nil
+	if len(txData.MsgResponses) == 0 {
+		return nil
+	}
+
+	// Extract the first message response (should be the CallContract response)
+	// CallContract returns MsgEthereumTxResponse internally
+	var ethResFromMsg evmtypes.MsgEthereumTxResponse
+	err = proto.Unmarshal(txData.MsgResponses[0].Value, &ethResFromMsg)
+	if err != nil {
+		// If unmarshaling fails, return nil
+		return nil
+	}
+
+	return &ethResFromMsg
 }
