@@ -287,14 +287,17 @@ func (k *Keeper) GetUnCompletableUndelegations(ctx sdk.Context, epochIdentifier 
 	return records, nil
 }
 
-// GetCompletableUndelegations returns the undelegation records scheduled to completed at the end
-// of the block. The pending undelegations should be expired and aren't held.
-// It applies the max_undelegation_completions limit.
-func (k *Keeper) GetCompletableUndelegations(ctx sdk.Context) ([]*types.UndelegationRecord, error) {
-	params := k.GetParams(ctx)
+// GetCompletableUndelegations returns the undelegation records that are matured and ready to be completed.
+// If applyLimit is true, the number of records returned is capped by the MaxUndelegationCompletions param.
+func (k *Keeper) GetCompletableUndelegations(ctx sdk.Context, applyLimit bool) ([]*types.UndelegationRecord, error) {
+	var limit uint32
+	if applyLimit {
+		params := k.GetParams(ctx)
+		limit = params.MaxUndelegationCompletions
+	}
 	records := make([]*types.UndelegationRecord, 0)
 	expiredUndelegationOpFunc := func(_ []byte, record *types.UndelegationRecord) (bool, error) {
-		if params.MaxUndelegationCompletions != 0 && uint32(len(records)) >= params.MaxUndelegationCompletions {
+		if applyLimit && limit != 0 && uint32(len(records)) >= limit {
 			return true, nil
 		}
 		records = append(records, record)
@@ -307,7 +310,7 @@ func (k *Keeper) GetCompletableUndelegations(ctx sdk.Context) ([]*types.Undelega
 	if err != nil {
 		return nil, err
 	}
-	if params.MaxUndelegationCompletions != 0 && uint32(len(records)) >= params.MaxUndelegationCompletions {
+	if applyLimit && limit != 0 && uint32(len(records)) >= limit {
 		return records, nil
 	}
 	// iterate all pending undelegations across multiple epochs.
