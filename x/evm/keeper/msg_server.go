@@ -204,23 +204,23 @@ func (k *Keeper) CallContract(
 		telemetry.NewLabel("tx_type", fmt.Sprintf("%d", txType)),
 	}
 	ctx = ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
-	var contractAddress *common.Address
-	if req.ContractAddress != "" {
+	var to *common.Address
+	if req.To != "" {
 		// caller must provide a valid contract address
-		if !common.IsHexAddress(req.ContractAddress) {
+		if !common.IsHexAddress(req.To) {
 			return nil, errorsmod.Wrapf(
 				errortypes.ErrInvalidRequest, "invalid contract address",
 			)
 		}
-		addr := common.HexToAddress(req.ContractAddress)
-		contractAddress = &addr
+		addr := common.HexToAddress(req.To)
+		to = &addr
 		labels = append(labels, telemetry.NewLabel("execution", "call"))
 	} else {
 		// or it can be nil to indicate contract creation
-		contractAddress = nil
+		to = nil
 		labels = append(labels, telemetry.NewLabel("execution", "create"))
 	}
-	data := common.Hex2Bytes(req.Data)
+	data := req.Data
 
 	gasLimit := uint64(0)
 	if req.GasLimit != 0 {
@@ -242,12 +242,19 @@ func (k *Keeper) CallContract(
 	}
 	txIndex := k.GetTxIndexTransient(ctx)
 	sender := common.BytesToAddress(k.authority.Bytes())
+	value := big.NewInt(0)
+	if req.Amount != nil {
+		// internally this takes care of req.Amount.IsNil()
+		value = req.Amount.BigInt()
+	}
 	msg := ethtypes.NewMessage(
 		sender,
-		contractAddress,
+		to,
 		nonce,
-		big.NewInt(0), // value
+		value,
 		gasLimit,
+		// the gas prices are EVM constructs and this is a Cosmos execution
+		// so they are not relevant.
 		big.NewInt(0), // gas price
 		big.NewInt(0), // gas fee cap
 		big.NewInt(0), // gas tip cap

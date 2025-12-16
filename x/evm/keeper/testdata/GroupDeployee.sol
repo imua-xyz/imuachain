@@ -24,4 +24,9 @@ contract GroupDeployee {
         revert("This function is failing");
     }
 
+    function setValueWithAmount(uint256 _value) external payable {
+        require(msg.sender == owner, "Only owner can set value");
+        value = _value;
+    }
+
 }

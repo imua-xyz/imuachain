@@ -1,8 +1,11 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,6 +20,7 @@ import (
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	utils "github.com/imua-xyz/imuachain/utils"
 	"github.com/imua-xyz/imuachain/x/evm/keeper/testdata"
 	imuachainevmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
@@ -45,6 +49,7 @@ func (suite *MsgServerTestSuite) SetupTest() {
 func (suite *MsgServerTestSuite) TestCallContract() {
 	// Deploy the GroupDeployee contract
 	contractAddr := suite.deployGroupDeployee()
+	authAccAddr := sdk.AccAddress(suite.Address.Bytes())
 
 	// Get the initial value from storage (should be 1 from constructor)
 	initialValue := suite.getStorageValue(contractAddr, common.Hash{})
@@ -53,7 +58,7 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 	// Prepare the setValue function call
 	// setValue(uint256 _value) - we'll set it to 42
 	newValue := big.NewInt(42)
-	callData := suite.encodeSetValueCall(newValue)
+	callData := suite.encodeCall("setValue", newValue)
 
 	// Get the authority address (the keeper's authority)
 	nonce := suite.App.EvmKeeper.GetNonce(suite.Ctx, suite.Address)
@@ -61,10 +66,10 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 
 	// Create the MsgCallContract message
 	msg := &imuachainevmtypes.MsgCallContract{
-		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
-		ContractAddress: contractAddr.Hex(),
-		Data:            common.Bytes2Hex(callData),
-		GasLimit:        1_000_000,
+		Authority: authAccAddr.String(),
+		To:        contractAddr.Hex(),
+		Data:      callData,
+		GasLimit:  1_000_000,
 	}
 
 	res, err := testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
@@ -83,12 +88,12 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 	suite.Require().Equal(nonce+1, postNonce, "nonce should be incremented by AnteHandler")
 
 	// check failingFunction case
-	callData = suite.encodeFailingFunctionCall()
+	callData = suite.encodeCall("failingFunction")
 	msg = &imuachainevmtypes.MsgCallContract{
-		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
-		ContractAddress: contractAddr.Hex(),
-		Data:            common.Bytes2Hex(callData),
-		GasLimit:        1_000_000,
+		Authority: authAccAddr.String(),
+		To:        contractAddr.Hex(),
+		Data:      callData,
+		GasLimit:  1_000_000,
 	}
 	res, err = testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
 	// when an EVM error is returned, the response of err is nil
@@ -102,16 +107,38 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 	cause, err := abi.UnpackRevert(common.CopyBytes(callContractRes.Ret))
 	suite.Require().NoError(err)
 	suite.Require().Contains(cause, "This function is failing")
-	// Note: When DeliverTx returns an error, BroadcastTxBytes returns an empty response
-	// with Code == 0, so res.IsOK() would be true. We only check the error here.
+
+	// try giving it funds
+	amount := sdkmath.NewInt(5)
+	newValue = big.NewInt(43)
+	callData = suite.encodeCall("setValueWithAmount", newValue)
+	msg = &imuachainevmtypes.MsgCallContract{
+		Authority: authAccAddr.String(),
+		To:        contractAddr.Hex(),
+		Data:      callData,
+		GasLimit:  1_000_000,
+		Amount:    &amount,
+	}
+	res, err = testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
+	suite.Require().NoError(err)
+	suite.Require().True(res.IsOK(), "transaction should succeed: %s", res.Log)
+	callContractRes = suite.extractCallContractResponse(res)
+	suite.Require().NotNil(callContractRes, "CallContract response should not be nil")
+	suite.Require().Empty(callContractRes.VmError, "setValueWithAmount should not have VM error")
+	updatedValue = suite.getStorageValue(contractAddr, common.Hash{})
+	suite.Require().Equal(newValue, updatedValue)
+	// check balance of the contract
+	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, sdk.AccAddress(contractAddr.Bytes()), utils.BaseDenom)
+	suite.Require().Equal(amount.BigInt(), balance.Amount.BigInt())
+	// TODO check balance of the authority should change by 5, when authority is not the executor.
 
 	// check different caller case
 	addr, priv := testutiltx.NewAddrKey()
 	msg = &imuachainevmtypes.MsgCallContract{
-		Authority:       sdk.AccAddress(addr.Bytes()).String(),
-		ContractAddress: contractAddr.Hex(),
-		Data:            common.Bytes2Hex(callData),
-		GasLimit:        1_000_000,
+		Authority: sdk.AccAddress(addr.Bytes()).String(),
+		To:        contractAddr.Hex(),
+		Data:      callData,
+		GasLimit:  1_000_000,
 	}
 	// fund the address
 	testutil.FundAccountWithBaseDenom(
@@ -139,10 +166,10 @@ func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
 
 	// Create a deployment message
 	msg := &imuachainevmtypes.MsgCallContract{
-		Authority:       sdk.AccAddress(suite.Address.Bytes()).String(),
-		ContractAddress: "",
-		Data:            common.Bytes2Hex(contractData),
-		GasLimit:        1_000_000,
+		Authority: sdk.AccAddress(suite.Address.Bytes()).String(),
+		To:        "",
+		Data:      contractData,
+		GasLimit:  1_000_000,
 	}
 
 	res, err := testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
@@ -179,29 +206,16 @@ func (suite *MsgServerTestSuite) deployGroupDeployee() common.Address {
 	return contractAddr
 }
 
-func (suite *MsgServerTestSuite) encodeSetValueCall(value *big.Int) []byte {
-	// Get the setValue method from the ABI
-	method, ok := testdata.GroupDeployeeContract.ABI.Methods["setValue"]
-	suite.Require().True(ok, "setValue method should exist")
+func (suite *MsgServerTestSuite) encodeCall(methodName string, args ...interface{}) []byte {
+	// Get the method from the ABI
+	method, ok := testdata.GroupDeployeeContract.ABI.Methods[methodName]
+	suite.Require().True(ok, fmt.Sprintf("%s method should exist", methodName))
 
 	// Pack the arguments
-	packed, err := method.Inputs.Pack(value)
+	packed, err := method.Inputs.Pack(args...)
 	suite.Require().NoError(err)
 
 	// Prepend the method ID (first 4 bytes of the keccak256 hash of the method signature)
-	callData := append(method.ID, packed...)
-	return callData
-}
-
-func (suite *MsgServerTestSuite) encodeFailingFunctionCall() []byte {
-	// Get the failingFunction method from the ABI
-	method, ok := testdata.GroupDeployeeContract.ABI.Methods["failingFunction"]
-	suite.Require().True(ok, "failingFunction method should exist")
-
-	// Pack the arguments
-	packed, err := method.Inputs.Pack()
-	suite.Require().NoError(err)
-
 	callData := append(method.ID, packed...)
 	return callData
 }

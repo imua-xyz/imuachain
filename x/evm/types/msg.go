@@ -3,7 +3,6 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	evmostypes "github.com/evmos/evmos/v16/x/evm/types"
 )
 
@@ -24,11 +23,10 @@ func (m *MsgCallContract) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
 		return errorsmod.Wrap(err, "invalid authority address")
 	}
-	// contract address can be empty for contract creation
-	// data should not be empty since plain value transfers are not allowed
-	if m.Data == "" {
-		return errorsmod.Wrap(errortypes.ErrInvalidRequest, "data cannot be empty")
-	}
+	// data can be empty for calling fallback payable functions
+	// to can be empty for contract creation
+	// gas limit can be 0 for caller to use the block max gas limit
+	// thus, no more validation can be applied.
 	return nil
 }
 

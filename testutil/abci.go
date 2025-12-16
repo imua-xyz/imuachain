@@ -1,7 +1,6 @@
 package testutil
 
 import (
-	"fmt"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -193,7 +192,6 @@ func BroadcastTxBytes(app *app.ImuachainApp, txEncoder sdk.TxEncoder, tx sdk.Tx)
 	if res.Code != 0 {
 		// Return the response even when there's an error, so the response data
 		// (e.g., MsgEthereumTxResponse with VmError) can still be extracted
-		fmt.Println("DeliverTx failed", res.Code, res.Log, len(res.Data), string(res.Data))
 		return res, errortypes.ErrInvalidRequest.Wrap(res.Log)
 	}
 
