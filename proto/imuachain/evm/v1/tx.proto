@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package imuachain.evm.v1;
+
+import "cosmos/msg/v1/msg.proto";
+import "cosmos_proto/cosmos.proto";
+import "amino/amino.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/evm/types";
+
+// Msg defines the x/evm Msg service.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  // CallContract defines a message that can be called by the module's
+  // authority to call a contract. While it is technically feasible
+  // for any Cosmos address to call an x/evm contract, we intentionally
+  // restrict this functionality to the module's authority. It is used
+  // by the authority to manage the ImuachainGateway contract.
+  rpc CallContract(MsgCallContract) returns (MsgCallContractResponse);
+}
+
+// MsgCallContract defines the request structure for executing a CallContract
+// message.
+message MsgCallContract {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "evm/MsgCallContract";
+
+  // authority is the controlling address
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // contract_address is the address of the contract to call
+  string contract_address = 2;
+  // data is the data to send to the contract
+  string data = 3;
+}
+
+// MsgCallContractResponse defines the response structure for executing a
+// MsgCallContract message.
+message MsgCallContractResponse {}
