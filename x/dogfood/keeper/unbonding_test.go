@@ -166,7 +166,7 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
 			OperatorAddr: operatorAddressString,
-			Description:  stakingtypes.NewDescription("operatorAddressString", "", "", "", ""),
+			Description:  stakingtypes.NewDescription(operatorAddressString, "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
