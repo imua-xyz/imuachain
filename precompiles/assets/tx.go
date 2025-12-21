@@ -36,7 +36,7 @@ func (p Precompile) DepositOrWithdraw(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
+	// check the invalidation of caller contract, the caller must be Imuachain LzApp contract
 	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
 	if err != nil || !authorized {
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)

@@ -3,11 +3,13 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
@@ -106,18 +108,27 @@ type AggFinalPrice struct {
 type NSTType string
 
 const (
+	HexPrefix              = "0x"
 	NSTTokenPrefix         = "nst"
 	NSTIDPrefix            = "nst_"
 	ETHChain       NSTType = "eth"
 	SOLChain       NSTType = "sol"
+	BSCChain       NSTType = "bsc"
 
 	ETHMainnetChainID  = "0x7595"
 	ETHLocalnetChainID = "0x65"
 	ETHHoleskyChainID  = "0x9d19"
 	ETHSepoliaChainID  = "0x9ce1"
+	BSCMainnetChainID  = "0x38"
+	BSCTestnetChainID  = "0x61"
 	SOLLocalChainID    = "0x123"
-	NSTETHAssetAddr    = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-	NSTSOLAssetAddr    = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+
+	BSCAddressLength = 20
+	SOLAddressLength = 32
+
+	NSTETHAssetAddr = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+	NSTBSCAssetAddr = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+	NSTSOLAssetAddr = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 
 	DefaultPriceValue   = 0
 	DefaultPriceDecimal = 0
@@ -159,6 +170,8 @@ const (
 var (
 	NSTChains = map[NSTType][]string{
 		ETHChain: {ETHMainnetChainID, ETHLocalnetChainID, ETHHoleskyChainID, ETHSepoliaChainID},
+		BSCChain: {BSCMainnetChainID, BSCTestnetChainID},
+		SOLChain: {SOLLocalChainID},
 	}
 	NSTChainsInverted = map[string]NSTType{
 		ETHMainnetChainID:  ETHChain,
@@ -166,10 +179,13 @@ var (
 		ETHHoleskyChainID:  ETHChain,
 		ETHSepoliaChainID:  ETHChain,
 		SOLLocalChainID:    SOLChain,
+		BSCMainnetChainID:  BSCChain,
+		BSCTestnetChainID:  BSCChain,
 	}
 	NSTAssetAddr = map[NSTType]string{
 		ETHChain: NSTETHAssetAddr,
 		SOLChain: NSTSOLAssetAddr,
+		BSCChain: NSTBSCAssetAddr,
 	}
 
 	DelimiterForCombinedKeyBytes = []byte{DelimiterForCombinedKey}
@@ -219,12 +235,55 @@ func GetClientChainIDFromNSTAssetID(assetID string) (uint64, bool) {
 	return 0, false
 }
 
+func GetNSTChainFromNSTAssetID(assetID string) (chain NSTType, ok bool) {
+	chainIDStr, ok := strings.CutPrefix(strings.ToLower(assetID), NSTIDPrefix)
+	if !ok {
+		return "", false
+	}
+	chain, ok = NSTChainsInverted[chainIDStr]
+	return
+}
+
 func NSTAssetIDFromClientChainID(chainID uint64) string {
 	chainIDStr := hexutil.EncodeUint64(chainID)
 	if NSTChain, ok := NSTChainsInverted[chainIDStr]; ok {
 		return fmt.Sprintf("%s_%s", NSTAssetAddr[NSTChain], chainIDStr)
 	}
 	return ""
+}
+
+// GetBSCAddressStrFromValidatorPubkey returns the BSC address string from the validator pubkey string
+func GetBSCAddressStrFromValidatorPubkeyStr(validatorPubkey string) (string, error) {
+	s := strings.TrimSpace(validatorPubkey)
+	// allow optional 0x prefix
+	s, _ = strings.CutPrefix(strings.ToLower(s), HexPrefix)
+	// must have at least 20 bytes (40 hex chars)
+	if len(s) < BSCAddressLength*2 {
+		return "", errors.New("invalid BSC validator pubkey")
+	}
+	// take the right-most 20 bytes in case input is left-padded
+	s = s[len(s)-BSCAddressLength*2:]
+	addr := HexPrefix + s
+
+	if !common.IsHexAddress(addr) {
+		return "", errors.New("invalid BSC validator pubkey")
+	}
+	if common.HexToAddress(addr) == (common.Address{}) {
+		return "", errors.New("invalid BSC validator pubkey")
+	}
+	return addr, nil
+
+}
+
+// ValidSOLAddressWithPrefix validates a Solana validator pubkey encoded as hex bytes with a 0x prefix.
+// A Solana public key is 32 bytes, so the string should decode to exactly 32 bytes.
+func ValidSOLAddressWithPrefix(addr string) bool {
+	// fast-path length + prefix
+	if len(addr) != 2+SOLAddressLength*2 || !strings.HasPrefix(strings.ToLower(addr), "0x") {
+		return false
+	}
+	_, err := hexutil.Decode(addr)
+	return err == nil
 }
 
 func AppendMultiple(slice []byte, elems ...[]byte) []byte {

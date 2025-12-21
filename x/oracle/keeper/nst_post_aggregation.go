@@ -278,6 +278,24 @@ func (k Keeper) GetStakerList(ctx sdk.Context, assetID string, chainID uint64) t
 // UpdateNSTValidatorListForStaker handles deposits from the assets module, updating the staker's validator list and balance.
 // Emits an event for the deposit and updates the version.
 func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, stakerID, validatorPubkey string, amount sdkmath.Int) error {
+	nstChain, ok := types.GetNSTChainFromNSTAssetID(assetID)
+	if !ok {
+		return errors.New("invalid NST assetID")
+	}
+	switch nstChain {
+	case types.ETHChain:
+		// currently validatorPubkey is the validator index, we don't need to check it
+	case types.BSCChain:
+		normalized, err := types.GetBSCAddressStrFromValidatorPubkeyStr(validatorPubkey)
+		if err != nil {
+			return err
+		}
+		validatorPubkey = normalized
+	case types.SOLChain:
+		if !types.ValidSOLAddressWithPrefix(validatorPubkey) {
+			return errors.New("invalid SOL validator pubkey")
+		}
+	}
 	// zero value will cause no change, so we do not allow it
 	if amount.IsZero() {
 		return errors.New("amount should not be zero")
