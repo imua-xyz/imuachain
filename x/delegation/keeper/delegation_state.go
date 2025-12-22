@@ -323,10 +323,7 @@ func (k Keeper) HasStakerList(ctx sdk.Context, operator, assetID string) bool {
 	key := assetstype.GetJoinedStoreKey(operator, assetID)
 	iterator := sdk.KVStorePrefixIterator(store, key)
 	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		return true
-	}
-	return false
+	return iterator.Valid()
 }
 
 func (k Keeper) GetStakersByOperator(
