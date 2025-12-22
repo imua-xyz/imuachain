@@ -894,25 +894,25 @@ func (k *Keeper) GetRecentEndedEpochAVSAssets(ctx sdk.Context, avsAddr string) (
 // SetOperatorRewardUSDValue stores the USD value of reward earned by an operator
 // from a specific rewardSourceAVS, credited to the operator's receivingAVS.
 //
-// receivingAVS:    The AVS that will receive the voting power (operator opted in).
-// rewardSourceAVS: The AVS from which the rewards were actually earned.
-// operator: 		The operator that have the reward.
-// symbol:          The symbol of the reward asset.
-// amount:          The USD-denominated value of the reward.
+// receivingAVS:    			The AVS that will receive the voting power (operator opted in).
+// rewardSourceAVS: 			The AVS from which the rewards were actually earned.
+// operator: 					The operator that have the reward.
+// rewardDenomination:          The denomination of the reward asset.
+// amount:          			The USD-denominated value of the reward.
 //
 // Since an operator can opt in to multiple AVSs, it may earn rewards from multiple AVSs.
 // These rewards can each contribute voting power to the operator's opted-in (receiving) AVS.
 // Therefore, the storage key includes both the receivingAVS address and the rewardSourceAVS address.
 func (k *Keeper) SetOperatorRewardUSDValue(
 	ctx sdk.Context,
-	receivingAVS, rewardSourceAVS, operator, symbol string,
+	receivingAVS, rewardSourceAVS, operator, rewardDenomination string,
 	amount sdkmath.LegacyDec,
 ) error {
 	if amount.IsNil() {
 		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("SetOperatorRewardUSDValue the amount is:%v", amount))
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixCompoundingRewardsUSDValues)
-	key := utils.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, symbol)
+	key := utils.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, rewardDenomination)
 	setValue := operatortypes.DecValueField{Amount: amount}
 	bz := k.cdc.MustMarshal(&setValue)
 	store.Set(key, bz)

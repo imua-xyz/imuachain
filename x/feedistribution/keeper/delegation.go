@@ -375,8 +375,8 @@ func (k Keeper) distributeRewardsToDelegation(
 						})
 					}
 					stakerCompoundingRewards = stakerCompoundingRewards.Add(feedistributiontypes.CompoundingRewardsPerAsset{
-						Symbol:  reward.Denom,
-						Rewards: stakerCompoundingRewardsPerAsset,
+						RewardDenomination: reward.Denom,
+						Rewards:            stakerCompoundingRewardsPerAsset,
 					})
 				}
 			}
@@ -640,8 +640,8 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 							})
 						}
 						stakerCompoundingRewards = stakerCompoundingRewards.Add(feedistributiontypes.CompoundingRewardsPerAsset{
-							Symbol:  reward.Denom,
-							Rewards: stakerCompoundingRewardsPerAsset,
+							RewardDenomination: reward.Denom,
+							Rewards:            stakerCompoundingRewardsPerAsset,
 						})
 					}
 				}

@@ -150,9 +150,9 @@ var (
 	KeyPrefixAVSAssetListPerEpoch = []byte{prefixAVSAssetListPerEpoch}
 
 	// KeyPrefixCompoundingRewardsUSDValues key-value:
-	// AVSAddr + '/' + operatorAddr + '/'  + AVSAddr  + '/'  + symbol -> types.DecValueField
+	// AVSAddr + '/' + operatorAddr + '/'  + AVSAddr  + '/'  + rewardDenomination -> types.DecValueField
 	// Under this key, all USD values from compounding rewards are stored.
-	// We append `AVSAddr` and `symbol `as a suffix because an operator can opt into multiple
+	// We append `AVSAddr` and `rewardDenomination `as a suffix because an operator can opt into multiple
 	// AVSs earning rewards from each of them. And an AVS can use multiple assets as rewards.
 	// The USD value of every reward assets from each AVS is stored separately, since compounded
 	// rewards must be distributed per AVS reward asset to ensure distribution to the

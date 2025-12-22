@@ -309,7 +309,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 					if assetExist {
 						slashAmountDec := reward.Amount.Mul(slashProportion)
 						newCompoundingRewardsSlashed := feedistributiontypes.CompoundingRewardsPerAsset{
-							Symbol: outstandingReward.Denom,
+							RewardDenomination: outstandingReward.Denom,
 							Rewards: feedistributiontypes.NewCommonAVSRewards(
 								feedistributiontypes.CommonAVSRewardData{
 									AVSAddress: rewardsPerAsset.AVSAddress,

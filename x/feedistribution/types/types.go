@@ -428,12 +428,12 @@ func (cra CompoundingRewardsPerAsset) IsPositive() bool {
 }
 
 func (cra CompoundingRewardsPerAsset) Add(compoundingRewardB CompoundingRewardsPerAsset) CompoundingRewardsPerAsset {
-	if cra.Symbol != compoundingRewardB.Symbol {
+	if cra.RewardDenomination != compoundingRewardB.RewardDenomination {
 		return cra
 	}
 	return CompoundingRewardsPerAsset{
-		Symbol:  cra.Symbol,
-		Rewards: CommonAVSRewards(cra.Rewards).Add(compoundingRewardB.Rewards...),
+		RewardDenomination: cra.RewardDenomination,
+		Rewards:            CommonAVSRewards(cra.Rewards).Add(compoundingRewardB.Rewards...),
 	}
 }
 
@@ -444,7 +444,9 @@ var _ sort.Interface = CompoundingRewards{}
 func (cmr CompoundingRewards) Len() int { return len(cmr) }
 
 // Less implements sort.Interface for CompoundingRewards
-func (cmr CompoundingRewards) Less(i, j int) bool { return cmr[i].Symbol < cmr[j].Symbol }
+func (cmr CompoundingRewards) Less(i, j int) bool {
+	return cmr[i].RewardDenomination < cmr[j].RewardDenomination
+}
 
 // Swap implements sort.Interface for CompoundingRewards
 func (cmr CompoundingRewards) Swap(i, j int) { cmr[i], cmr[j] = cmr[j], cmr[i] }
@@ -500,7 +502,7 @@ func (cmr CompoundingRewards) Validate() error {
 
 	case 1:
 		if !cmr[0].IsPositive() {
-			return fmt.Errorf("rewardsPerAsset amount is not positive,symbol:%s", cmr[0].Symbol)
+			return fmt.Errorf("rewardsPerAsset amount is not positive,rewardDenomination:%s", cmr[0].RewardDenomination)
 		}
 		return nil
 	default:
@@ -509,17 +511,17 @@ func (cmr CompoundingRewards) Validate() error {
 			return err
 		}
 
-		lowSymbol := cmr[0].Symbol
+		lowRewardDenomination := cmr[0].RewardDenomination
 		for _, rewardsPerAsset := range cmr[1:] {
-			if rewardsPerAsset.Symbol <= lowSymbol {
-				return fmt.Errorf("symbol %s is not sorted", rewardsPerAsset.Symbol)
+			if rewardsPerAsset.RewardDenomination <= lowRewardDenomination {
+				return fmt.Errorf("rewardDenomination %s is not sorted", rewardsPerAsset.RewardDenomination)
 			}
 			if !rewardsPerAsset.IsPositive() {
-				return fmt.Errorf("symbol %s amount is not positive", rewardsPerAsset.Symbol)
+				return fmt.Errorf("rewardDenomination %s amount is not positive", rewardsPerAsset.RewardDenomination)
 			}
 
 			// we compare each rewardsPerAsset against the last avs address
-			lowSymbol = rewardsPerAsset.Symbol
+			lowRewardDenomination = rewardsPerAsset.RewardDenomination
 		}
 
 		return nil
@@ -528,7 +530,7 @@ func (cmr CompoundingRewards) Validate() error {
 
 func (cmr CompoundingRewards) RewardsOf(symbol string) CommonAVSRewards {
 	for _, assetRewards := range cmr {
-		if symbol == assetRewards.Symbol {
+		if symbol == assetRewards.RewardDenomination {
 			return assetRewards.Rewards
 		}
 	}
@@ -566,15 +568,15 @@ func (cmr CompoundingRewards) safeAdd(compoundingRewardsB CompoundingRewards) Co
 
 		compoundingRewardA, compoundingRewardB := cmr[indexA], compoundingRewardsB[indexB]
 
-		switch strings.Compare(compoundingRewardA.Symbol, compoundingRewardB.Symbol) {
-		case -1: // coin A symbol < coin B symbol
+		switch strings.Compare(compoundingRewardA.RewardDenomination, compoundingRewardB.RewardDenomination) {
+		case -1: // coin A rewardDenomination < coin B rewardDenomination
 			if !compoundingRewardA.IsZeroRewards() {
 				sum = append(sum, compoundingRewardA)
 			}
 
 			indexA++
 
-		case 0: // coin A symbol = coin B symbol
+		case 0: // coin A rewardDenomination = coin B rewardDenomination
 			res := compoundingRewardA.Add(compoundingRewardB)
 			if !res.IsZeroRewards() {
 				sum = append(sum, res)
@@ -583,7 +585,7 @@ func (cmr CompoundingRewards) safeAdd(compoundingRewardsB CompoundingRewards) Co
 			indexA++
 			indexB++
 
-		case 1: // coin A symbol > coin B symbol
+		case 1: // coin A rewardDenomination > coin B rewardDenomination
 			if !compoundingRewardB.IsZeroRewards() {
 				sum = append(sum, compoundingRewardB)
 			}
@@ -610,8 +612,8 @@ func (cmr CompoundingRewards) negative() CompoundingRewards {
 	res := make([]CompoundingRewardsPerAsset, 0, len(cmr))
 	for _, compoundingReward := range cmr {
 		res = append(res, CompoundingRewardsPerAsset{
-			Symbol:  compoundingReward.Symbol,
-			Rewards: CommonAVSRewards(compoundingReward.Rewards).negative(),
+			RewardDenomination: compoundingReward.RewardDenomination,
+			Rewards:            CommonAVSRewards(compoundingReward.Rewards).negative(),
 		})
 	}
 	return res

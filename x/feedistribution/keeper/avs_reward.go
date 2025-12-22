@@ -395,7 +395,6 @@ func (k Keeper) CommonRewardProportion(
 	operatorVotingPowersAfterJail := make([]operatortypes.OperatorVotingPower, 0)
 	totalPowerAfterJail := totalVotingPower
 	isHandleJail := false
-
 	if !totalVotingPower.IsPositive() {
 		// return null reward proportions, because the rewards should be allocated to
 		// the community pool.

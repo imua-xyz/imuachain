@@ -243,7 +243,7 @@ func (k Keeper) CalculateRewardsForCompounding(ctx sdk.Context, operator, reward
 	avsRewards := make([]types.CompoundingRewardsWithAVS, 0)
 	targetAVS := ""
 	// the iteration is ordered, so all reward assets of one AVS will be handled in batches.
-	opFunc := func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error) {
+	opFunc := func(avs, rewardDenomination string, usdValue *operatortypes.DecValueField) (bool, bool, error) {
 		if usdValue == nil || usdValue.Amount.IsNil() || usdValue.Amount.IsZero() {
 			// no rewards for assets with a zero USD value.
 			ctx.Logger().Info("CalculateRewardsForCompounding: no rewards for compounding rewards with an invalid USD value.", "operator", operator, "avs", avs)
@@ -268,7 +268,7 @@ func (k Keeper) CalculateRewardsForCompounding(ctx sdk.Context, operator, reward
 			length := len(avsRewards)
 			targetAVSRewards := avsRewards[length-1]
 			avsRewards[length-1].CompoundingRewards = targetAVSRewards.CompoundingRewards.Add(types.CompoundingRewardsPerAsset{
-				Symbol: symbol,
+				RewardDenomination: rewardDenomination,
 				Rewards: types.CommonAVSRewards{
 					{
 						AVSAddress: rewardSourceAVS,
