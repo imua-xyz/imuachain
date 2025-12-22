@@ -502,19 +502,9 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			StakerId: stakerID2,
 		},
 	}
-	stakersByOperator := []delegationtypes.StakersByOperator{
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID)),
-			Stakers: []string{
-				stakerID1,
-			},
-		},
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID)),
-			Stakers: []string{
-				stakerID2,
-			},
-		},
+	stakersByOperator := []string{
+		string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID, stakerID1)),
+		string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID, stakerID2)),
 	}
 	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = app.AppCodec().MustMarshalJSON(delegationGenesis)

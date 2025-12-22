@@ -229,13 +229,8 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 			StakerId: stakerID,
 		},
 	}
-	stakersByOperator := []delegationtypes.StakersByOperator{
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator.String(), assetID)),
-			Stakers: []string{
-				stakerID,
-			},
-		},
+	stakersByOperator := []string{
+		string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
 	}
 	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = codec.MustMarshalJSON(delegationGenesis)

@@ -378,7 +378,7 @@ func getTestImuachainGenesis(
 	operatorInfos := []operatortypes.OperatorDetail{}
 	delegationStates := []delegationtypes.DelegationStates{}
 	associations := []delegationtypes.StakerToOperator{}
-	stakersByOperator := []delegationtypes.StakersByOperator{}
+	stakersByOperator := []string{}
 	validators := []dogfoodtypes.GenesisValidator{}
 	for i := range operatorAddrs {
 		operator := operatorAddrs[i]
@@ -424,12 +424,9 @@ func getTestImuachainGenesis(
 			Operator: operator.String(),
 			StakerId: stakerID,
 		})
-		stakersByOperator = append(stakersByOperator, delegationtypes.StakersByOperator{
-			Key: string(assetstypes.GetJoinedStoreKey(operator.String(), assetID)),
-			Stakers: []string{
-				stakerID,
-			},
-		})
+		stakersByOperator = append(
+			stakersByOperator, string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
+		)
 		validators = append(validators, dogfoodtypes.GenesisValidator{
 			PublicKey: pubKeyHex,
 			Power:     power,

@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"math"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
@@ -20,7 +21,7 @@ func (suite *DelegationTestSuite) TestAppendStakerForOperator_GasScalesWithListS
 	)
 	operator := suite.opAccAddr.String()
 
-	lengths := []int{1, 10, 50, 100, 200, 500}
+	lengths := []int{1, 10, 50, 100, 200, 500, 1000, 10000}
 	gasUsed := make([]uint64, 0, len(lengths))
 
 	for _, n := range lengths {
@@ -57,10 +58,10 @@ func (suite *DelegationTestSuite) TestAppendStakerForOperator_GasScalesWithListS
 		suite.NoError(err)
 	}
 
-	// We only assert relative behavior (not exact gas numbers)
+	// The gas difference should be less than 100
 	for i := 1; i < len(gasUsed); i++ {
 		suite.True(
-			gasUsed[i] >= gasUsed[i-1],
+			math.Abs(float64(gasUsed[i]-gasUsed[i-1])) <= 100.0,
 			"expected non-decreasing gas: len=%d gas=%d < len=%d gas=%d",
 			lengths[i], gasUsed[i], lengths[i-1], gasUsed[i-1],
 		)

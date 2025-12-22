@@ -19,11 +19,9 @@ message DelegationInfoReq {
   string asset_id = 2;
 }
 
-// StakerList is a list to save a batch of stakers
+// StakerList is a list to return a batch of stakers.
 message StakerList {
-  // stakers is a list of stakers. the caller is responsible for ensuring
-  // uniqueness of the stakers, since dumping this into a map could lead
-  // to non-deterministic behavior.
+  // stakers is a list of stakers.
   repeated string stakers = 1;
 }
 

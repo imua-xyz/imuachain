@@ -88,11 +88,9 @@ func (m *DelegationInfoReq) GetAssetId() string {
 	return ""
 }
 
-// StakerList is a list to save a batch of stakers
+// StakerList is a list to return a batch of stakers.
 type StakerList struct {
-	// stakers is a list of stakers. the caller is responsible for ensuring
-	// uniqueness of the stakers, since dumping this into a map could lead
-	// to non-deterministic behavior.
+	// stakers is a list of stakers.
 	Stakers []string `protobuf:"bytes,1,rep,name=stakers,proto3" json:"stakers,omitempty"`
 }
 
