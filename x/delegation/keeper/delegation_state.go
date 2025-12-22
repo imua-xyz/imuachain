@@ -334,10 +334,14 @@ func (k Keeper) GetStakersByOperator(
 	iterator := sdk.KVStorePrefixIterator(store, key)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		subkey := string(iterator.Key())
-		// prefix + "/" to be removed
-		stakerID := subkey[len(key)+1:]
-		stakerList.Stakers = append(stakerList.Stakers, stakerID)
+		// parse the key to get the staker ID. this is done using the function
+		// and not using the `+1:` approach in case the delimiter changes in
+		// the future.
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
+		if err != nil {
+			return delegationtype.StakerList{}, err
+		}
+		stakerList.Stakers = append(stakerList.Stakers, keys[2])
 	}
 	// we do not return an error if the staker list is empty
 	return stakerList, nil
