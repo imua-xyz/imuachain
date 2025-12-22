@@ -62,9 +62,11 @@ func (suite *DelegationTestSuite) TestAppendStakerForOperator_GasScalesWithListS
 	for i := 1; i < len(gasUsed); i++ {
 		suite.True(
 			math.Abs(float64(gasUsed[i]-gasUsed[i-1])) <= 100.0,
-			"expected non-decreasing gas: len=%d gas=%d < len=%d gas=%d",
+			"expected O(1) gas: len=%d gas=%d < len=%d gas=%d",
 			lengths[i], gasUsed[i], lengths[i-1], gasUsed[i-1],
 		)
 	}
-	suite.True(gasUsed[len(gasUsed)-1] > gasUsed[0], "expected len=500 gas > len=1 gas")
+	// With the sentinel approach, the gas difference between consecutive lengths is less
+	// than 100. However, this does not provide any information about the gas consumption
+	// between the lowest and the highest lengths. Hence, we do not assert this.
 }
