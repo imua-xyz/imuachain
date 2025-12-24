@@ -4,9 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -164,13 +167,26 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
-	stakers, err := k.GetStakersByOperator(c, req.Operator, strings.ToLower(req.AssetId))
+	keyPrefix := utils.AppendMany(
+		delegationtype.KeyPrefixStakersByOperator,
+		assetstype.GetJoinedStoreKey(req.Operator, req.AssetId),
+	)
+	store := prefix.NewStore(c.KVStore(k.storeKey), keyPrefix)
+	var stakers []string
+	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
+		keys, err := assetstype.ParseJoinedStoreKey(key, 3)
+		if err != nil {
+			return err
+		}
+		stakers = append(stakers, keys[2])
+		return nil
+	})
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	return &delegationtype.QueryDelegatedStakersByOperatorResponse{
-		Count:   uint64(len(stakers.Stakers)),
-		Stakers: stakers.Stakers,
+		Stakers:    stakers,
+		Pagination: pageRes,
 	}, nil
 }
 
