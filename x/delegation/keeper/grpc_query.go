@@ -173,7 +173,7 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 	)
 	store := prefix.NewStore(c.KVStore(k.storeKey), keyPrefix)
 	var stakers []string
-	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, value []byte) error {
+	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, _ []byte) error {
 		keys, err := assetstype.ParseJoinedStoreKey(key, 3)
 		if err != nil {
 			return err
