@@ -12,9 +12,13 @@ import (
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
+var (
+	sentinelValue = []byte{1}
+)
+
 func (k Keeper) AllDelegationStates(ctx sdk.Context) (delegationStates []delegationtype.DelegationStates, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	ret := make([]delegationtype.DelegationStates, 0)
@@ -264,7 +268,7 @@ func (k *Keeper) GetDelegationInfo(ctx sdk.Context, stakerID, assetID string) (*
 func (k *Keeper) AppendStakerForOperator(ctx sdk.Context, operator, assetID, stakerID string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
 	key := assetstype.GetJoinedStoreKey(operator, assetID, stakerID)
-	store.Set(key, []byte{1})
+	store.Set(key, sentinelValue)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			delegationtype.EventTypeStakerAppended,
@@ -349,7 +353,7 @@ func (k Keeper) GetStakersByOperator(
 
 func (k Keeper) AllStakerList(ctx sdk.Context) (keyList []string, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	ret := make([]string, 0)
@@ -362,7 +366,7 @@ func (k Keeper) AllStakerList(ctx sdk.Context) (keyList []string, err error) {
 func (k Keeper) SetAllStakerList(ctx sdk.Context, keyList []string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
 	for i := range keyList {
-		store.Set([]byte(keyList[i]), []byte{1})
+		store.Set([]byte(keyList[i]), sentinelValue)
 	}
 	// only used at genesis, so no events
 	return nil
@@ -474,7 +478,7 @@ func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]strin
 		return nil, delegationtype.ErrOperatorAddrIsNotAccAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	// assuming that we support 5 client chains, this is a reasonable capacity.
@@ -492,7 +496,7 @@ func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]strin
 
 func (k *Keeper) GetAllAssociations(ctx sdk.Context) ([]delegationtype.StakerToOperator, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	ret := make([]delegationtype.StakerToOperator, 0)
