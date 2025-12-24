@@ -169,8 +169,7 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 	}
 	keyPrefix := utils.AppendMany(
 		delegationtype.KeyPrefixStakersByOperator,
-		assetstype.GetJoinedStoreKey(req.Operator, req.AssetId),
-		[]byte(utils.DelimiterForCombinedKey),
+		assetstype.GetJoinedStoreKeyForPrefix(req.Operator, strings.ToLower(req.AssetId)),
 	)
 	// prefix.NewStore returns keys stripped of the prefix.
 	// sdk.KVStorePrefixIterator returns keys with the prefix.
