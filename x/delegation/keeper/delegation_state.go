@@ -12,9 +12,7 @@ import (
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
-var (
-	sentinelValue = []byte{1}
-)
+var sentinelValue = []byte{1}
 
 func (k Keeper) AllDelegationStates(ctx sdk.Context) (delegationStates []delegationtype.DelegationStates, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
