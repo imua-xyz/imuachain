@@ -170,15 +170,16 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 	keyPrefix := utils.AppendMany(
 		delegationtype.KeyPrefixStakersByOperator,
 		assetstype.GetJoinedStoreKey(req.Operator, req.AssetId),
+		[]byte(utils.DelimiterForCombinedKey),
 	)
+	// prefix.NewStore returns keys stripped of the prefix.
+	// sdk.KVStorePrefixIterator returns keys with the prefix.
 	store := prefix.NewStore(c.KVStore(k.storeKey), keyPrefix)
 	var stakers []string
 	pageRes, err := query.Paginate(store, req.Pagination, func(key []byte, _ []byte) error {
-		keys, err := assetstype.ParseJoinedStoreKey(key, 3)
-		if err != nil {
-			return err
-		}
-		stakers = append(stakers, keys[2])
+		// the key is relative to the prefix, so we simply append it to the list.
+		// the value is []byte{1} which we can ignore.
+		stakers = append(stakers, string(key))
 		return nil
 	})
 	if err != nil {
