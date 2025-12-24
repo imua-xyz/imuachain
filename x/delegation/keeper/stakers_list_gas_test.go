@@ -8,9 +8,10 @@ import (
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
-// This test is meant to confirm the suspected source of gas fluctuation:
-// `AppendStakerForOperator` reads + unmarshals + appends + marshals + writes the full staker list,
-// so the KV write size grows with the list length.
+// This test is meant to confirm the fix for gas scaling with list size.
+// Previously, the gas consumption grew linearly with the list size, but now it is constant.
+// This is because we changed the implementation to not use a list and instead use a
+// prefix store with the operator/assetID key.
 func (suite *DelegationTestSuite) TestAppendStakerForOperator_GasScalesWithListSize() {
 	suite.basicPrepare()
 
@@ -21,7 +22,12 @@ func (suite *DelegationTestSuite) TestAppendStakerForOperator_GasScalesWithListS
 	)
 	operator := suite.opAccAddr.String()
 
-	lengths := []int{1, 10, 50, 100, 200, 500, 1000, 10000}
+	lengths := []int{
+		1, 10, 50, 100, 200, 500, 1000,
+		10000, 100_000, 500_000, 1_000_000,
+		// the test is too slow to run with these lengths
+		// 2_000_000, 5_000_000, 10_000_000,
+	}
 	gasUsed := make([]uint64, 0, len(lengths))
 
 	for _, n := range lengths {
