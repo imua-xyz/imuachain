@@ -14,6 +14,7 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 )
 
 var (
@@ -70,7 +71,7 @@ func (expectedStates *expectedAllocationStates) addOperatorCurrentReward(avsAddr
 		rewardMap[assetID] = pre
 	} else {
 		rewardMap[assetID] = feedistributiontypes.OperatorCurrentRewards{
-			Rewards: []feedistributiontypes.CommonAVSRewardData{
+			Rewards: []imuachaintypes.CommonAVSRewardData{
 				{
 					AVSAddress: avsAddr,
 					Rewards:    sdk.DecCoins{coin},
@@ -292,7 +293,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 					operatorCurrentReward: map[string]map[string]feedistributiontypes.OperatorCurrentRewards{
 						suite.Operators[0].String(): {
 							suite.AssetIDs[0]: {
-								Rewards: []feedistributiontypes.CommonAVSRewardData{
+								Rewards: []imuachaintypes.CommonAVSRewardData{
 									{
 										AVSAddress: suite.DogfoodAVSAddr,
 										Rewards:    sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedOperator0RewardPerAsset)},
@@ -303,7 +304,7 @@ func (suite *KeeperTestSuite) TestAllocateRewardsByAVS() {
 						},
 						suite.Operators[1].String(): {
 							suite.AssetIDs[0]: {
-								Rewards: []feedistributiontypes.CommonAVSRewardData{
+								Rewards: []imuachaintypes.CommonAVSRewardData{
 									{
 										AVSAddress: suite.DogfoodAVSAddr,
 										Rewards:    sdk.DecCoins{sdk.NewDecCoinFromDec(assetSymbol, expectedOperator1RewardPerAsset)},

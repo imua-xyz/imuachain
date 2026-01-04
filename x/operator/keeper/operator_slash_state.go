@@ -100,7 +100,7 @@ func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperat
 	if opAmount.IsNil() || opAmount.IsZero() {
 		return nil
 	}
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashAssetsState)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
 	var key []byte
 	if stakerOrOperator == "" || assetID == "" {
 		return errorsmod.Wrapf(operatortypes.ErrParameterInvalid, "assetID:%s,stakerOrOperator:%s", assetID, stakerOrOperator)
@@ -141,7 +141,7 @@ func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperat
 // Additionally, this function might be called in the schedule function `EndBlock` to send the slash info to client chain.
 // todo: It's to be determined about how to send the slash info to client chain. If we send them in `EndBlock`, then the native code needs to call the gateway contract deployed in imua. This seems a little bit odd.
 func (k *Keeper) GetSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperator string, processedHeight uint64) (sdkmath.Int, error) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashAssetsState)
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
 	var key []byte
 	if stakerOrOperator == "" {
 		key = utils.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID)

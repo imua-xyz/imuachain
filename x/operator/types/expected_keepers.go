@@ -140,7 +140,7 @@ type OperatorHooks interface {
 	// AfterSlash This hook is called when an operator is slashed
 	AfterSlash(
 		ctx sdk.Context, addr sdk.AccAddress, slashProportion sdk.Dec, affectedAVSList []string,
-		slashAssetsPool []SlashAssetAmount, slashUnclaimedRewards []SlashFromUnclaimedRewards,
+		slashAssetsPool []SlashFromAssetPool, slashUnclaimedRewards []SlashFromUnclaimedRewards,
 	)
 	// AfterJail This hook is called when an operator is jailed
 	AfterJail(

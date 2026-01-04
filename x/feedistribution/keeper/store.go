@@ -10,6 +10,7 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	"github.com/imua-xyz/imuachain/x/operator/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 )
 
 func (k Keeper) SetStakeChangedDelegations(ctx sdk.Context, epochIdentifier, operator, assetID string,
@@ -348,14 +349,14 @@ func (k Keeper) HasOperatorCurrentRewards(ctx sdk.Context, operator, assetID, ep
 // UpdateOperatorCurrentRewards : increase or decrease the current rewards for the specific operator,
 // epochIdentifier and assetID. The isIncrease flag is used to indicate whether the update is an
 // increase or a decrease
-func (k Keeper) UpdateOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string, isIncrease bool, deltaRewards feedistributiontypes.CommonAVSRewardData) error {
+func (k Keeper) UpdateOperatorCurrentRewards(ctx sdk.Context, operator, assetID, epochIdentifier string, isIncrease bool, deltaRewards imuachaintypes.CommonAVSRewardData) error {
 	if len(deltaRewards.Rewards) == 0 {
 		return nil
 	}
 	// It sets 1 as the start period and initializes the rewards slice as null.
 	// set the initialized value
 	rewards := feedistributiontypes.OperatorCurrentRewards{
-		Rewards: feedistributiontypes.NewCommonAVSRewards(),
+		Rewards: imuachaintypes.NewCommonAVSRewards(),
 		// the period in current rewards starts from 1.
 		Period: 1,
 	}

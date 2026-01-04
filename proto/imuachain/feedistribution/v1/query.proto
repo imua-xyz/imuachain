@@ -8,6 +8,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "imuachain/feedistribution/v1/distribution.proto";
 import "imuachain/feedistribution/v1/params.proto";
+import "imuachain/types/v1/reward.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 
@@ -401,9 +402,9 @@ message QueryStakerUnclaimedRewardsRequest {
 // QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
 message QueryStakerUnclaimedRewardsResponse {
   // rewards is the unclaimed rewards from staking assets for all AVSs
-  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
   // compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs
-  repeated CommonAVSRewardData compounding_rewards = 2 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CommonAVSRewardData compounding_rewards = 2 [(gogoproto.nullable) = false];
 }
 
 // QueryDelegationUnclaimedRewardsRequest is the request to obtain the unclaimed rewards
@@ -421,9 +422,9 @@ message QueryDelegationUnclaimedRewardsRequest {
 // for specific delegation.
 message QueryDelegationUnclaimedRewardsResponse {
   // rewards is the unclaimed rewards from staking assets for all AVSs
-  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
   // compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs
-  repeated CommonAVSRewardData compounding_rewards = 2 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CommonAVSRewardData compounding_rewards = 2 [(gogoproto.nullable) = false];
 }
 
 

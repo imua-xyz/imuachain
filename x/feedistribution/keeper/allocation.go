@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/feedistribution/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 )
 
 // AllocateRewardsByEpoch performs reward and fee distribution to all operators for the AVS with same epoch
@@ -213,7 +214,7 @@ func (k Keeper) SplitRewardsToAssetsPool(ctx sdk.Context, operator, avsAddr, epo
 			}
 			err = k.UpdateOperatorCurrentRewards(
 				ctx, operator, assetID, epochIdentifier,
-				true, types.CommonAVSRewardData{
+				true, imuachaintypes.CommonAVSRewardData{
 					Rewards:    assetRewards,
 					AVSAddress: avsAddr,
 				})
@@ -267,9 +268,9 @@ func (k Keeper) CalculateRewardsForCompounding(ctx sdk.Context, operator, reward
 			distributedRewards = distributedRewards.Add(rewardsForCompounding...)
 			length := len(avsRewards)
 			targetAVSRewards := avsRewards[length-1]
-			avsRewards[length-1].CompoundingRewards = targetAVSRewards.CompoundingRewards.Add(types.CompoundingRewardsPerAsset{
+			avsRewards[length-1].CompoundingRewards = targetAVSRewards.CompoundingRewards.Add(imuachaintypes.CompoundingRewardsPerAsset{
 				RewardDenomination: rewardDenomination,
-				Rewards: types.CommonAVSRewards{
+				Rewards: imuachaintypes.CommonAVSRewards{
 					{
 						AVSAddress: rewardSourceAVS,
 						Rewards:    rewardsForCompounding,

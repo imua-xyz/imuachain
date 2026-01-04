@@ -2,12 +2,14 @@ syntax = "proto3";
 package imuachain.operator.v1;
 
 import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos/staking/v1beta1/staking.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "imuachain/operator/v1/params.proto";
+import "imuachain/types/v1/reward.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
 
@@ -194,23 +196,40 @@ message SlashFromUndelegation {
   bool reward_asset = 5;
 }
 
-// SlashAssetAmount records the slash amount of specific assetID
-message SlashAssetAmount {
+// SlashFromAssetPool records the slash info from a specific asset pool.
+// Note: The detailed delegation share information for each related staker is stored separately
+// under a dedicated Key to prevent excessive memory usage when processing slashes involving
+// a large number of stakers.
+message SlashFromAssetPool {
   // asset_id is the asset id.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
-  // amount is the slashed amount.
-  string amount = 2 [
+  // total_amount is the total amount of the slashed asset..
+  string total_amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // snapshot_total_share is the total share of the operator asset pool at the time of slash execution.
+  // This snapshot is used for slash veto scenarios to restore the state before the slash was applied.
+  string snapshot_total_share = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
 }
+
 // SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards
 message SlashFromUnclaimedRewards {
   // avs is the AVS from which the rewards were earned.
-  string avs = 1 ;
-  // slash_assets represent multiple rewards assets states that are slashed.
-  repeated SlashAssetAmount slash_assets = 2 [(gogoproto.nullable) = false];
+  string avs = 1;
+  // outstanding_rewards_slashed represents the rewards that were slashed from the outstanding rewards.
+  repeated cosmos.base.v1beta1.DecCoin outstanding_rewards_slashed = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // compounding_rewards_slashed represents the rewards that were slashed from the compounding rewards.
+  repeated imuachain.types.v1.CompoundingRewardsPerAsset compounding_rewards_slashed = 3 [(gogoproto.nullable) = false];
 }
 
 // SlashExecutionInfo is the actual execution state for a slash event
@@ -230,7 +249,7 @@ message SlashExecutionInfo {
   // slash_undelegations records all slash info related to the undelegation
   repeated SlashFromUndelegation slash_undelegations = 3 [(gogoproto.nullable) = false];
   // slash_assets_pool records all slash info related to the assets pool
-  repeated SlashAssetAmount slash_assets_pool = 4 [(gogoproto.nullable) = false];
+  repeated SlashFromAssetPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
   // undelegation_filter_height records the height before which undelegations are not slashed
   int64 undelegation_filter_height = 5;
   // the historical voting power at the time of the slash event.

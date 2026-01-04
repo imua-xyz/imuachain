@@ -94,7 +94,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 
 func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, _ sdk.Dec, affectedAVSList []string,
-	_ []operatortypes.SlashAssetAmount, _ []operatortypes.SlashFromUnclaimedRewards,
+	_ []operatortypes.SlashFromAssetPool, _ []operatortypes.SlashFromUnclaimedRewards,
 ) {
 	h.afterStakingOrJailChange(ctx, operator, false, affectedAVSList)
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 	"golang.org/x/xerrors"
 )
 
@@ -446,7 +447,7 @@ func (gs GenesisState) ValidateOperatorHistoricalRewards() error {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorHistoricalRewards: reference count shouldn't be zero, key:%s", info.Key)
 		}
 		// check the historical reward ratios for an operator
-		validationFunc := func(_ int, rewards CommonAVSRewardData) error {
+		validationFunc := func(_ int, rewards imuachaintypes.CommonAVSRewardData) error {
 			// check the avs address
 			if !CheckEVMHexAddress(rewards.AVSAddress, true) {
 				return ErrInvalidGenesisData.Wrapf("ValidateOperatorHistoricalRewards: invalid avs address, avsAddr:%s,key:%s", rewards.AVSAddress, info.Key)
@@ -456,7 +457,7 @@ func (gs GenesisState) ValidateOperatorHistoricalRewards() error {
 			}
 			return nil
 		}
-		seenFieldValueFunc := func(rewards CommonAVSRewardData) (string, struct{}) {
+		seenFieldValueFunc := func(rewards imuachaintypes.CommonAVSRewardData) (string, struct{}) {
 			return rewards.AVSAddress, struct{}{}
 		}
 		_, err = utils.CommonValidation(info.OperatorHistoricalRewards.CumulativeRewardRatios, seenFieldValueFunc, validationFunc)
@@ -488,7 +489,7 @@ func (gs GenesisState) ValidateOperatorCurrentRewards() error {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorCurrentRewards: period shouldn't be zero, key:%s", info.Key)
 		}
 		// check the historical reward ratios for an operator
-		validationFunc := func(_ int, rewards CommonAVSRewardData) error {
+		validationFunc := func(_ int, rewards imuachaintypes.CommonAVSRewardData) error {
 			// check the avs address
 			if !CheckEVMHexAddress(rewards.AVSAddress, true) {
 				return ErrInvalidGenesisData.Wrapf("ValidateOperatorCurrentRewards: invalid avs address, avsAddr:%s,key:%s", rewards.AVSAddress, info.Key)
@@ -498,7 +499,7 @@ func (gs GenesisState) ValidateOperatorCurrentRewards() error {
 			}
 			return nil
 		}
-		seenFieldValueFunc := func(rewards CommonAVSRewardData) (string, struct{}) {
+		seenFieldValueFunc := func(rewards imuachaintypes.CommonAVSRewardData) (string, struct{}) {
 			return rewards.AVSAddress, struct{}{}
 		}
 		_, err = utils.CommonValidation(info.OperatorCurrentRewards.Rewards, seenFieldValueFunc, validationFunc)

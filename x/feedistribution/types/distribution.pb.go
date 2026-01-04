@@ -11,7 +11,8 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
-	types1 "github.com/imua-xyz/imuachain/x/assets/types"
+	types2 "github.com/imua-xyz/imuachain/x/assets/types"
+	types1 "github.com/imua-xyz/imuachain/x/types"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -214,62 +215,6 @@ func (m *AVSRewardDistribution) GetProportionsEpochNumber() int64 {
 	return 0
 }
 
-// CommonAVSRewardData is a common struct used to record the current rewards and cumulative
-// reward ratios of a specified AVS for the operator.
-type CommonAVSRewardData struct {
-	// avs_address is the AVS address
-	AVSAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
-	// rewards represents the current rewards or cumulative reward ratios
-	Rewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,2,rep,name=rewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"rewards"`
-}
-
-func (m *CommonAVSRewardData) Reset()         { *m = CommonAVSRewardData{} }
-func (m *CommonAVSRewardData) String() string { return proto.CompactTextString(m) }
-func (*CommonAVSRewardData) ProtoMessage()    {}
-func (*CommonAVSRewardData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{3}
-}
-func (m *CommonAVSRewardData) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *CommonAVSRewardData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_CommonAVSRewardData.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *CommonAVSRewardData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CommonAVSRewardData.Merge(m, src)
-}
-func (m *CommonAVSRewardData) XXX_Size() int {
-	return m.Size()
-}
-func (m *CommonAVSRewardData) XXX_DiscardUnknown() {
-	xxx_messageInfo_CommonAVSRewardData.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CommonAVSRewardData proto.InternalMessageInfo
-
-func (m *CommonAVSRewardData) GetAVSAddress() string {
-	if m != nil {
-		return m.AVSAddress
-	}
-	return ""
-}
-
-func (m *CommonAVSRewardData) GetRewards() github_com_cosmos_cosmos_sdk_types.DecCoins {
-	if m != nil {
-		return m.Rewards
-	}
-	return nil
-}
-
 // OperatorHistoricalRewards represents historical rewards for an operator.
 // Operator, assetID, epochIdentifier and period are implicit within the store key.
 // Cumulative reward ratio is the sum from the zero period
@@ -294,7 +239,7 @@ func (m *CommonAVSRewardData) GetRewards() github_com_cosmos_cosmos_sdk_types.De
 // slice to store the accumulated reward factors for all AVSs separately.
 type OperatorHistoricalRewards struct {
 	// cumulative_reward_ratios is the reward ratios for multiple AVSs
-	CumulativeRewardRatios []CommonAVSRewardData `protobuf:"bytes,1,rep,name=cumulative_reward_ratios,json=cumulativeRewardRatios,proto3" json:"cumulative_reward_ratios"`
+	CumulativeRewardRatios []types1.CommonAVSRewardData `protobuf:"bytes,1,rep,name=cumulative_reward_ratios,json=cumulativeRewardRatios,proto3" json:"cumulative_reward_ratios"`
 	// reference_count is for F1 distribution.
 	ReferenceCount uint32 `protobuf:"varint,2,opt,name=reference_count,json=referenceCount,proto3" json:"reference_count,omitempty"`
 }
@@ -303,7 +248,7 @@ func (m *OperatorHistoricalRewards) Reset()         { *m = OperatorHistoricalRew
 func (m *OperatorHistoricalRewards) String() string { return proto.CompactTextString(m) }
 func (*OperatorHistoricalRewards) ProtoMessage()    {}
 func (*OperatorHistoricalRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{4}
+	return fileDescriptor_0f6c992ffbed4713, []int{3}
 }
 func (m *OperatorHistoricalRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -332,7 +277,7 @@ func (m *OperatorHistoricalRewards) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_OperatorHistoricalRewards proto.InternalMessageInfo
 
-func (m *OperatorHistoricalRewards) GetCumulativeRewardRatios() []CommonAVSRewardData {
+func (m *OperatorHistoricalRewards) GetCumulativeRewardRatios() []types1.CommonAVSRewardData {
 	if m != nil {
 		return m.CumulativeRewardRatios
 	}
@@ -356,7 +301,7 @@ func (m *OperatorHistoricalRewards) GetReferenceCount() uint32 {
 // Operator, assetID and epochIdentifier are implicit within the store key.
 type OperatorCurrentRewards struct {
 	// current rewards
-	Rewards []CommonAVSRewardData `protobuf:"bytes,1,rep,name=rewards,proto3" json:"rewards"`
+	Rewards []types1.CommonAVSRewardData `protobuf:"bytes,1,rep,name=rewards,proto3" json:"rewards"`
 	// period is for a validator kept as a running counter
 	Period uint64 `protobuf:"varint,2,opt,name=period,proto3" json:"period,omitempty"`
 }
@@ -365,7 +310,7 @@ func (m *OperatorCurrentRewards) Reset()         { *m = OperatorCurrentRewards{}
 func (m *OperatorCurrentRewards) String() string { return proto.CompactTextString(m) }
 func (*OperatorCurrentRewards) ProtoMessage()    {}
 func (*OperatorCurrentRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{5}
+	return fileDescriptor_0f6c992ffbed4713, []int{4}
 }
 func (m *OperatorCurrentRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -394,7 +339,7 @@ func (m *OperatorCurrentRewards) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_OperatorCurrentRewards proto.InternalMessageInfo
 
-func (m *OperatorCurrentRewards) GetRewards() []CommonAVSRewardData {
+func (m *OperatorCurrentRewards) GetRewards() []types1.CommonAVSRewardData {
 	if m != nil {
 		return m.Rewards
 	}
@@ -421,7 +366,7 @@ func (m *StakerDelegationChange) Reset()         { *m = StakerDelegationChange{}
 func (m *StakerDelegationChange) String() string { return proto.CompactTextString(m) }
 func (*StakerDelegationChange) ProtoMessage()    {}
 func (*StakerDelegationChange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{6}
+	return fileDescriptor_0f6c992ffbed4713, []int{5}
 }
 func (m *StakerDelegationChange) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -475,7 +420,7 @@ func (m *DelegationChangeInfo) Reset()         { *m = DelegationChangeInfo{} }
 func (m *DelegationChangeInfo) String() string { return proto.CompactTextString(m) }
 func (*DelegationChangeInfo) ProtoMessage()    {}
 func (*DelegationChangeInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{7}
+	return fileDescriptor_0f6c992ffbed4713, []int{6}
 }
 func (m *DelegationChangeInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -537,7 +482,7 @@ func (m *DelegationStartingInfo) Reset()         { *m = DelegationStartingInfo{}
 func (m *DelegationStartingInfo) String() string { return proto.CompactTextString(m) }
 func (*DelegationStartingInfo) ProtoMessage()    {}
 func (*DelegationStartingInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{8}
+	return fileDescriptor_0f6c992ffbed4713, []int{7}
 }
 func (m *DelegationStartingInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -595,7 +540,7 @@ func (m *OperatorCommission) Reset()         { *m = OperatorCommission{} }
 func (m *OperatorCommission) String() string { return proto.CompactTextString(m) }
 func (*OperatorCommission) ProtoMessage()    {}
 func (*OperatorCommission) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{9}
+	return fileDescriptor_0f6c992ffbed4713, []int{8}
 }
 func (m *OperatorCommission) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -638,62 +583,6 @@ func (m *OperatorCommission) GetWithdrawnCommission() github_com_cosmos_cosmos_s
 	return nil
 }
 
-// CompoundingRewardsPerAsset records compounding rewards for
-// a specific reward asset
-type CompoundingRewardsPerAsset struct {
-	// reward_denomination is the denomination of the reward asset
-	RewardDenomination string `protobuf:"bytes,1,opt,name=reward_denomination,json=rewardDenomination,proto3" json:"reward_denomination,omitempty"`
-	// rewards represents the cumulative compounding reward from multiple AVSs
-	Rewards []CommonAVSRewardData `protobuf:"bytes,2,rep,name=rewards,proto3" json:"rewards"`
-}
-
-func (m *CompoundingRewardsPerAsset) Reset()         { *m = CompoundingRewardsPerAsset{} }
-func (m *CompoundingRewardsPerAsset) String() string { return proto.CompactTextString(m) }
-func (*CompoundingRewardsPerAsset) ProtoMessage()    {}
-func (*CompoundingRewardsPerAsset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{10}
-}
-func (m *CompoundingRewardsPerAsset) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *CompoundingRewardsPerAsset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_CompoundingRewardsPerAsset.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *CompoundingRewardsPerAsset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CompoundingRewardsPerAsset.Merge(m, src)
-}
-func (m *CompoundingRewardsPerAsset) XXX_Size() int {
-	return m.Size()
-}
-func (m *CompoundingRewardsPerAsset) XXX_DiscardUnknown() {
-	xxx_messageInfo_CompoundingRewardsPerAsset.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_CompoundingRewardsPerAsset proto.InternalMessageInfo
-
-func (m *CompoundingRewardsPerAsset) GetRewardDenomination() string {
-	if m != nil {
-		return m.RewardDenomination
-	}
-	return ""
-}
-
-func (m *CompoundingRewardsPerAsset) GetRewards() []CommonAVSRewardData {
-	if m != nil {
-		return m.Rewards
-	}
-	return nil
-}
-
 // OperatorUnclaimedRewards represents the accumulated rewards for an operator that have not
 // been claimed by stakers. This structure is inexpensive to track and allows simple sanity checks.
 // The AVS address is implicit in the store key.
@@ -706,7 +595,7 @@ type OperatorUnclaimedRewards struct {
 	// Stores the rewards pool for each asset, allowing calculation of compounding rewards
 	// for stakers. Asset denominations in the list must correspond to the denominations in outstanding_rewards,
 	// since all compounding rewards are derived from the outstanding rewards.
-	RewardsFromCompounding []CompoundingRewardsPerAsset `protobuf:"bytes,2,rep,name=rewards_from_compounding,json=rewardsFromCompounding,proto3" json:"rewards_from_compounding"`
+	RewardsFromCompounding []types1.CompoundingRewardsPerAsset `protobuf:"bytes,2,rep,name=rewards_from_compounding,json=rewardsFromCompounding,proto3" json:"rewards_from_compounding"`
 	// outstanding_rewards_slashed represents the total amount of rewards slashed from outstanding rewards.
 	// We need to apply slashing here because outstanding rewards are automatically compounded
 	// to contribute voting power.
@@ -714,14 +603,22 @@ type OperatorUnclaimedRewards struct {
 	// compounding_rewards_slashed represents the total amount of rewards slashed from compounding rewards.
 	// We need to apply slashing here because compounding rewards are automatically compounded
 	// to contribute voting power.
-	CompoundingRewardsSlashed []CompoundingRewardsPerAsset `protobuf:"bytes,4,rep,name=compounding_rewards_slashed,json=compoundingRewardsSlashed,proto3" json:"compounding_rewards_slashed"`
+	CompoundingRewardsSlashed []types1.CompoundingRewardsPerAsset `protobuf:"bytes,4,rep,name=compounding_rewards_slashed,json=compoundingRewardsSlashed,proto3" json:"compounding_rewards_slashed"`
+	// outstanding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted)
+	// for outstanding rewards. This tracks the rewards that were originally targeted for slashing but were
+	// restored due to a slash veto.
+	OutstandingRewardsVetoed github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,5,rep,name=outstanding_rewards_vetoed,json=outstandingRewardsVetoed,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"outstanding_rewards_vetoed"`
+	// compounding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted) for
+	// compounding rewards. This tracks the rewards that were originally targeted for slashing but were restored
+	// due to a slash veto.
+	CompoundingRewardsVetoed []types1.CompoundingRewardsPerAsset `protobuf:"bytes,6,rep,name=compounding_rewards_vetoed,json=compoundingRewardsVetoed,proto3" json:"compounding_rewards_vetoed"`
 }
 
 func (m *OperatorUnclaimedRewards) Reset()         { *m = OperatorUnclaimedRewards{} }
 func (m *OperatorUnclaimedRewards) String() string { return proto.CompactTextString(m) }
 func (*OperatorUnclaimedRewards) ProtoMessage()    {}
 func (*OperatorUnclaimedRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{11}
+	return fileDescriptor_0f6c992ffbed4713, []int{9}
 }
 func (m *OperatorUnclaimedRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -757,7 +654,7 @@ func (m *OperatorUnclaimedRewards) GetOutstandingRewards() github_com_cosmos_cos
 	return nil
 }
 
-func (m *OperatorUnclaimedRewards) GetRewardsFromCompounding() []CompoundingRewardsPerAsset {
+func (m *OperatorUnclaimedRewards) GetRewardsFromCompounding() []types1.CompoundingRewardsPerAsset {
 	if m != nil {
 		return m.RewardsFromCompounding
 	}
@@ -771,9 +668,23 @@ func (m *OperatorUnclaimedRewards) GetOutstandingRewardsSlashed() github_com_cos
 	return nil
 }
 
-func (m *OperatorUnclaimedRewards) GetCompoundingRewardsSlashed() []CompoundingRewardsPerAsset {
+func (m *OperatorUnclaimedRewards) GetCompoundingRewardsSlashed() []types1.CompoundingRewardsPerAsset {
 	if m != nil {
 		return m.CompoundingRewardsSlashed
+	}
+	return nil
+}
+
+func (m *OperatorUnclaimedRewards) GetOutstandingRewardsVetoed() github_com_cosmos_cosmos_sdk_types.DecCoins {
+	if m != nil {
+		return m.OutstandingRewardsVetoed
+	}
+	return nil
+}
+
+func (m *OperatorUnclaimedRewards) GetCompoundingRewardsVetoed() []types1.CompoundingRewardsPerAsset {
+	if m != nil {
+		return m.CompoundingRewardsVetoed
 	}
 	return nil
 }
@@ -793,7 +704,7 @@ func (m *RewardsDelegationShare) Reset()         { *m = RewardsDelegationShare{}
 func (m *RewardsDelegationShare) String() string { return proto.CompactTextString(m) }
 func (*RewardsDelegationShare) ProtoMessage()    {}
 func (*RewardsDelegationShare) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{12}
+	return fileDescriptor_0f6c992ffbed4713, []int{10}
 }
 func (m *RewardsDelegationShare) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -878,7 +789,7 @@ func (m *StakerClaimedRewards) Reset()         { *m = StakerClaimedRewards{} }
 func (m *StakerClaimedRewards) String() string { return proto.CompactTextString(m) }
 func (*StakerClaimedRewards) ProtoMessage()    {}
 func (*StakerClaimedRewards) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{13}
+	return fileDescriptor_0f6c992ffbed4713, []int{11}
 }
 func (m *StakerClaimedRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -968,7 +879,7 @@ func (m *StakerRewardParams) Reset()         { *m = StakerRewardParams{} }
 func (m *StakerRewardParams) String() string { return proto.CompactTextString(m) }
 func (*StakerRewardParams) ProtoMessage()    {}
 func (*StakerRewardParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{14}
+	return fileDescriptor_0f6c992ffbed4713, []int{12}
 }
 func (m *StakerRewardParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1011,6 +922,60 @@ func (m *StakerRewardParams) GetRedelegateOperatorAddr() string {
 	return ""
 }
 
+type AVSRewardAssetsList struct {
+	// avs_address is the AVS address
+	AVSAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
+	// asset_ids represents the list of reward asset ids
+	AssetIDs []string `protobuf:"bytes,2,rep,name=asset_ids,json=assetIds,proto3" json:"asset_ids,omitempty"`
+}
+
+func (m *AVSRewardAssetsList) Reset()         { *m = AVSRewardAssetsList{} }
+func (m *AVSRewardAssetsList) String() string { return proto.CompactTextString(m) }
+func (*AVSRewardAssetsList) ProtoMessage()    {}
+func (*AVSRewardAssetsList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_0f6c992ffbed4713, []int{13}
+}
+func (m *AVSRewardAssetsList) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *AVSRewardAssetsList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_AVSRewardAssetsList.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *AVSRewardAssetsList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AVSRewardAssetsList.Merge(m, src)
+}
+func (m *AVSRewardAssetsList) XXX_Size() int {
+	return m.Size()
+}
+func (m *AVSRewardAssetsList) XXX_DiscardUnknown() {
+	xxx_messageInfo_AVSRewardAssetsList.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AVSRewardAssetsList proto.InternalMessageInfo
+
+func (m *AVSRewardAssetsList) GetAVSAddress() string {
+	if m != nil {
+		return m.AVSAddress
+	}
+	return ""
+}
+
+func (m *AVSRewardAssetsList) GetAssetIDs() []string {
+	if m != nil {
+		return m.AssetIDs
+	}
+	return nil
+}
+
 // OperatorSlashEvent represents an operator slash event.
 // operator, assetID, epochIdentifier, epochNumber and height are implicit within the store key.
 // This is needed to calculate appropriate amount of staking tokens
@@ -1020,17 +985,17 @@ type OperatorSlashEvent struct {
 	OperatorPeriod uint64 `protobuf:"varint,1,opt,name=operator_period,json=operatorPeriod,proto3" json:"operator_period,omitempty"`
 	// fraction is the slash fraction.
 	Fraction github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=fraction,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"fraction"`
-	// slashed_reward_assets records the list of reward assets that have been slashed.
-	// It is used to calculate stakers' rewards, taking into account slashing that occurs
+	// slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have
+	// been slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs
 	// due to reward compounding.
-	SlashedRewardAssets []string `protobuf:"bytes,3,rep,name=slashed_reward_assets,json=slashedRewardAssets,proto3" json:"slashed_reward_assets,omitempty"`
+	SlashedOutstandingRewardsAssets []AVSRewardAssetsList `protobuf:"bytes,3,rep,name=slashed_outstanding_rewards_assets,json=slashedOutstandingRewardsAssets,proto3" json:"slashed_outstanding_rewards_assets"`
 }
 
 func (m *OperatorSlashEvent) Reset()         { *m = OperatorSlashEvent{} }
 func (m *OperatorSlashEvent) String() string { return proto.CompactTextString(m) }
 func (*OperatorSlashEvent) ProtoMessage()    {}
 func (*OperatorSlashEvent) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{15}
+	return fileDescriptor_0f6c992ffbed4713, []int{14}
 }
 func (m *OperatorSlashEvent) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1066,9 +1031,9 @@ func (m *OperatorSlashEvent) GetOperatorPeriod() uint64 {
 	return 0
 }
 
-func (m *OperatorSlashEvent) GetSlashedRewardAssets() []string {
+func (m *OperatorSlashEvent) GetSlashedOutstandingRewardsAssets() []AVSRewardAssetsList {
 	if m != nil {
-		return m.SlashedRewardAssets
+		return m.SlashedOutstandingRewardsAssets
 	}
 	return nil
 }
@@ -1085,7 +1050,7 @@ func (m *FeePool) Reset()         { *m = FeePool{} }
 func (m *FeePool) String() string { return proto.CompactTextString(m) }
 func (*FeePool) ProtoMessage()    {}
 func (*FeePool) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{16}
+	return fileDescriptor_0f6c992ffbed4713, []int{15}
 }
 func (m *FeePool) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1149,7 +1114,7 @@ func (m *AVSRewardAssetState) Reset()         { *m = AVSRewardAssetState{} }
 func (m *AVSRewardAssetState) String() string { return proto.CompactTextString(m) }
 func (*AVSRewardAssetState) ProtoMessage()    {}
 func (*AVSRewardAssetState) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{17}
+	return fileDescriptor_0f6c992ffbed4713, []int{16}
 }
 func (m *AVSRewardAssetState) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1182,7 +1147,7 @@ var xxx_messageInfo_AVSRewardAssetState proto.InternalMessageInfo
 type AVSRewardAssetInfo struct {
 	// asset_basic_info is the basic information of the asset.
 	// Embedded so its fields are promoted directly in the generated Go struct.
-	types1.AssetInfo `protobuf:"bytes,1,opt,name=asset_basic_info,json=assetBasicInfo,proto3,embedded=asset_basic_info" json:"asset_basic_info"`
+	types2.AssetInfo `protobuf:"bytes,1,opt,name=asset_basic_info,json=assetBasicInfo,proto3,embedded=asset_basic_info" json:"asset_basic_info"`
 	// The denomination used in reward records (e.g., "uUSDT", "USDT").
 	// This value specifies the unit in which rewards are expressed.
 	// Different reward assets used by the same AVS must not share the same reward denomination,
@@ -1204,7 +1169,7 @@ func (m *AVSRewardAssetInfo) Reset()         { *m = AVSRewardAssetInfo{} }
 func (m *AVSRewardAssetInfo) String() string { return proto.CompactTextString(m) }
 func (*AVSRewardAssetInfo) ProtoMessage()    {}
 func (*AVSRewardAssetInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{18}
+	return fileDescriptor_0f6c992ffbed4713, []int{17}
 }
 func (m *AVSRewardAssetInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1259,7 +1224,7 @@ func (m *AVSRewardAsset) Reset()         { *m = AVSRewardAsset{} }
 func (m *AVSRewardAsset) String() string { return proto.CompactTextString(m) }
 func (*AVSRewardAsset) ProtoMessage()    {}
 func (*AVSRewardAsset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{19}
+	return fileDescriptor_0f6c992ffbed4713, []int{18}
 }
 func (m *AVSRewardAsset) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1312,7 +1277,7 @@ func (m *AVSRewardAssets) Reset()         { *m = AVSRewardAssets{} }
 func (m *AVSRewardAssets) String() string { return proto.CompactTextString(m) }
 func (*AVSRewardAssets) ProtoMessage()    {}
 func (*AVSRewardAssets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0f6c992ffbed4713, []int{20}
+	return fileDescriptor_0f6c992ffbed4713, []int{19}
 }
 func (m *AVSRewardAssets) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1352,18 +1317,17 @@ func init() {
 	proto.RegisterType((*AVSRewardParam)(nil), "imuachain.feedistribution.v1.AVSRewardParam")
 	proto.RegisterType((*OperatorRewardProportion)(nil), "imuachain.feedistribution.v1.OperatorRewardProportion")
 	proto.RegisterType((*AVSRewardDistribution)(nil), "imuachain.feedistribution.v1.AVSRewardDistribution")
-	proto.RegisterType((*CommonAVSRewardData)(nil), "imuachain.feedistribution.v1.CommonAVSRewardData")
 	proto.RegisterType((*OperatorHistoricalRewards)(nil), "imuachain.feedistribution.v1.OperatorHistoricalRewards")
 	proto.RegisterType((*OperatorCurrentRewards)(nil), "imuachain.feedistribution.v1.OperatorCurrentRewards")
 	proto.RegisterType((*StakerDelegationChange)(nil), "imuachain.feedistribution.v1.StakerDelegationChange")
 	proto.RegisterType((*DelegationChangeInfo)(nil), "imuachain.feedistribution.v1.DelegationChangeInfo")
 	proto.RegisterType((*DelegationStartingInfo)(nil), "imuachain.feedistribution.v1.DelegationStartingInfo")
 	proto.RegisterType((*OperatorCommission)(nil), "imuachain.feedistribution.v1.OperatorCommission")
-	proto.RegisterType((*CompoundingRewardsPerAsset)(nil), "imuachain.feedistribution.v1.CompoundingRewardsPerAsset")
 	proto.RegisterType((*OperatorUnclaimedRewards)(nil), "imuachain.feedistribution.v1.OperatorUnclaimedRewards")
 	proto.RegisterType((*RewardsDelegationShare)(nil), "imuachain.feedistribution.v1.RewardsDelegationShare")
 	proto.RegisterType((*StakerClaimedRewards)(nil), "imuachain.feedistribution.v1.StakerClaimedRewards")
 	proto.RegisterType((*StakerRewardParams)(nil), "imuachain.feedistribution.v1.StakerRewardParams")
+	proto.RegisterType((*AVSRewardAssetsList)(nil), "imuachain.feedistribution.v1.AVSRewardAssetsList")
 	proto.RegisterType((*OperatorSlashEvent)(nil), "imuachain.feedistribution.v1.OperatorSlashEvent")
 	proto.RegisterType((*FeePool)(nil), "imuachain.feedistribution.v1.FeePool")
 	proto.RegisterType((*AVSRewardAssetState)(nil), "imuachain.feedistribution.v1.AVSRewardAssetState")
@@ -1377,107 +1341,111 @@ func init() {
 }
 
 var fileDescriptor_0f6c992ffbed4713 = []byte{
-	// 1600 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0xcd, 0x6f, 0x1b, 0x45,
-	0x14, 0xcf, 0x38, 0x69, 0x3e, 0x5e, 0x9a, 0xaf, 0x49, 0xe2, 0xd8, 0x49, 0xe5, 0x94, 0x3d, 0xd0,
-	0x8a, 0x12, 0xbb, 0x49, 0xa1, 0xea, 0x01, 0x0e, 0x71, 0xd2, 0x8a, 0x5e, 0x68, 0x58, 0xd3, 0x0a,
-	0x71, 0x60, 0x35, 0xde, 0x9d, 0xc4, 0xab, 0x7a, 0x77, 0xdc, 0x9d, 0xb5, 0x9b, 0xa2, 0xc2, 0xa5,
-	0x07, 0xe0, 0x00, 0xea, 0x05, 0xc4, 0x91, 0x63, 0xc5, 0x85, 0x1e, 0x2a, 0xb5, 0x7f, 0x00, 0x12,
-	0x95, 0x90, 0x50, 0xd5, 0x13, 0x02, 0x29, 0xa0, 0xe4, 0x80, 0x38, 0x71, 0xe0, 0x1f, 0x40, 0xf3,
-	0xb1, 0x1f, 0x89, 0x9d, 0xb4, 0xd0, 0x38, 0xe2, 0x92, 0x78, 0xe7, 0xed, 0x7b, 0xbf, 0xdf, 0xbc,
-	0xf7, 0xe6, 0xbd, 0xb7, 0x03, 0x25, 0xd7, 0x6b, 0x12, 0xbb, 0x46, 0x5c, 0xbf, 0xb4, 0x4e, 0xa9,
-	0xe3, 0xf2, 0x30, 0x70, 0xab, 0xcd, 0xd0, 0x65, 0x7e, 0xa9, 0xb5, 0x58, 0x4a, 0x3f, 0x17, 0x1b,
-	0x01, 0x0b, 0x19, 0x3e, 0x11, 0x2b, 0x14, 0xf7, 0x28, 0x14, 0x5b, 0x8b, 0xb3, 0x13, 0xc4, 0x73,
-	0x7d, 0x56, 0x92, 0x7f, 0x95, 0xc2, 0x6c, 0xc1, 0x66, 0xdc, 0x63, 0xbc, 0x54, 0x25, 0x9c, 0x96,
-	0x5a, 0x8b, 0x55, 0x1a, 0x92, 0xc5, 0x92, 0xcd, 0x5c, 0x6d, 0x70, 0x36, 0xaf, 0xe4, 0x96, 0x7c,
-	0x2a, 0xa9, 0x07, 0x2d, 0x9a, 0xda, 0x60, 0x1b, 0x4c, 0xad, 0x8b, 0x5f, 0x7a, 0x35, 0x61, 0x50,
-	0x22, 0x9c, 0xd3, 0x90, 0x0b, 0xa6, 0xe1, 0xa6, 0x92, 0x1a, 0xb7, 0x61, 0x74, 0xf9, 0x5a, 0xc5,
-	0xa4, 0x37, 0x49, 0xe0, 0xac, 0x91, 0x80, 0x78, 0xf8, 0x3c, 0xcc, 0xd8, 0x4d, 0x1e, 0x32, 0xcf,
-	0x0a, 0xe4, 0xaa, 0xe5, 0xfa, 0xeb, 0x75, 0x22, 0x18, 0xe7, 0xd0, 0x49, 0x74, 0x7a, 0xd0, 0x9c,
-	0x56, 0x62, 0xa5, 0x73, 0x39, 0x12, 0xe2, 0x25, 0xd0, 0x02, 0x8b, 0x35, 0x68, 0x40, 0x42, 0x16,
-	0x58, 0x81, 0x90, 0xe4, 0x32, 0x52, 0x6b, 0x52, 0x09, 0xaf, 0x68, 0x99, 0x29, 0x44, 0xc6, 0xf7,
-	0x08, 0x72, 0xf1, 0x8a, 0xe2, 0x10, 0xb0, 0x06, 0x0b, 0xa4, 0xc1, 0x37, 0x61, 0x24, 0xb6, 0x44,
-	0x1c, 0x27, 0x90, 0xf0, 0x43, 0xe5, 0xdc, 0xd3, 0x07, 0x0b, 0x53, 0x7a, 0xdf, 0xcb, 0x8e, 0x13,
-	0x50, 0xce, 0x2b, 0x61, 0xe0, 0xfa, 0x1b, 0xe6, 0xf1, 0xe8, 0x75, 0xb1, 0x8c, 0x5d, 0x98, 0xd0,
-	0x1b, 0x68, 0xc4, 0x36, 0x25, 0x97, 0xa1, 0xf2, 0x1b, 0x8f, 0xb7, 0xe6, 0x7b, 0x7e, 0xd9, 0x9a,
-	0x7f, 0x79, 0xc3, 0x0d, 0x6b, 0xcd, 0x6a, 0xd1, 0x66, 0x9e, 0xf6, 0xa4, 0xfe, 0xb7, 0xc0, 0x9d,
-	0xeb, 0xa5, 0xf0, 0x56, 0x83, 0xf2, 0xe2, 0x2a, 0xb5, 0x9f, 0x3e, 0x58, 0x00, 0x0d, 0xb8, 0x4a,
-	0x6d, 0x73, 0x3c, 0xd8, 0xc3, 0xd4, 0xf8, 0x3b, 0x03, 0xd3, 0xb1, 0x17, 0x57, 0x53, 0x31, 0xc6,
-	0x0d, 0x18, 0x50, 0x6f, 0xf3, 0x1c, 0x3a, 0xd9, 0x7b, 0x7a, 0x78, 0xe9, 0x44, 0x51, 0x5b, 0x12,
-	0xf1, 0x2d, 0xea, 0xf8, 0x0a, 0xb3, 0x2b, 0xcc, 0xf5, 0xcb, 0x17, 0x04, 0xb1, 0x6f, 0x7f, 0x9b,
-	0x3f, 0xf3, 0x7c, 0xc4, 0x84, 0x0e, 0xbf, 0xf7, 0xc7, 0xfd, 0x57, 0x90, 0x19, 0xc1, 0xe0, 0xdb,
-	0x30, 0x97, 0xf8, 0x7f, 0xef, 0xfe, 0x79, 0x2e, 0x23, 0x59, 0x9c, 0x2f, 0x1e, 0x94, 0x96, 0xc5,
-	0xfd, 0x42, 0x52, 0xee, 0x13, 0xfc, 0xcc, 0x3c, 0xdb, 0x47, 0xce, 0xf1, 0x59, 0x98, 0xd2, 0x44,
-	0x2c, 0xda, 0x60, 0x76, 0xcd, 0xf2, 0x9b, 0x5e, 0x95, 0x06, 0xb9, 0xde, 0x93, 0xe8, 0x74, 0xaf,
-	0x89, 0xb5, 0xec, 0xa2, 0x10, 0xbd, 0x2d, 0x25, 0xf8, 0x02, 0xe4, 0x52, 0xfc, 0x76, 0x6b, 0xf5,
-	0x49, 0xad, 0x6c, 0x4a, 0x9e, 0xd2, 0x34, 0x1e, 0x21, 0x98, 0x5c, 0x61, 0x9e, 0xc7, 0xfc, 0xc4,
-	0xf7, 0x24, 0x24, 0xb8, 0x04, 0xc3, 0xa4, 0xc5, 0x65, 0xca, 0x50, 0xce, 0x75, 0xd6, 0x8c, 0x6e,
-	0x6f, 0xcd, 0xc3, 0xf2, 0xb5, 0x8a, 0xce, 0x18, 0x13, 0x48, 0x8b, 0xeb, 0xdf, 0xe9, 0x20, 0x65,
-	0x8e, 0x24, 0x48, 0xc6, 0x43, 0x04, 0xf9, 0xc8, 0xc9, 0x6f, 0xb9, 0x3c, 0x64, 0x81, 0x6b, 0x93,
-	0xba, 0xa9, 0x43, 0x78, 0x03, 0x72, 0x76, 0xd3, 0x6b, 0x8a, 0x73, 0xd5, 0xa2, 0x51, 0x10, 0xe5,
-	0x59, 0x8a, 0xb2, 0x68, 0xf1, 0xe0, 0xf8, 0x75, 0xf0, 0x8a, 0x0e, 0x5d, 0x36, 0x31, 0xac, 0x64,
-	0xf2, 0x1c, 0x72, 0x7c, 0x0a, 0xc6, 0x02, 0xba, 0x4e, 0x03, 0xea, 0xdb, 0xd4, 0xb2, 0x59, 0xd3,
-	0x0f, 0xe5, 0x51, 0x19, 0x31, 0x47, 0xe3, 0xe5, 0x15, 0xb1, 0x6a, 0xdc, 0x41, 0x90, 0x8d, 0x98,
-	0xaf, 0x34, 0x83, 0x80, 0xfa, 0x61, 0x44, 0xfb, 0x9d, 0xbd, 0xb9, 0xfe, 0x9f, 0x59, 0xc6, 0xc9,
-	0x9c, 0x85, 0xfe, 0x06, 0x0d, 0x5c, 0xe6, 0x48, 0x36, 0x7d, 0xa6, 0x7e, 0x32, 0xbe, 0x43, 0x90,
-	0xad, 0x84, 0xe4, 0x3a, 0x0d, 0x56, 0x69, 0x9d, 0x6e, 0xc8, 0x02, 0xb4, 0x52, 0x23, 0xfe, 0x06,
-	0xc5, 0x73, 0x30, 0xc4, 0xa5, 0xc4, 0x72, 0x1d, 0x15, 0x7b, 0x73, 0x50, 0x2d, 0x5c, 0x76, 0xf0,
-	0x26, 0xe4, 0x1b, 0x01, 0x6d, 0xb9, 0xac, 0xc9, 0x2d, 0x47, 0x69, 0x52, 0xc7, 0x22, 0x5e, 0xbc,
-	0xe1, 0x17, 0xad, 0x0d, 0x33, 0x91, 0xf9, 0xd5, 0xc8, 0xfa, 0xb2, 0x34, 0x6e, 0xfc, 0x85, 0x60,
-	0x6a, 0x2f, 0xd7, 0xcb, 0xfe, 0x3a, 0xc3, 0x2d, 0xc8, 0x6b, 0xbe, 0x4e, 0x2c, 0xb6, 0x6c, 0x29,
-	0x8f, 0xfc, 0xf8, 0xda, 0xc1, 0x7e, 0xec, 0xec, 0x08, 0xed, 0xca, 0x19, 0xde, 0x51, 0xca, 0xb1,
-	0x05, 0xc7, 0x43, 0x16, 0x92, 0xfa, 0x61, 0xee, 0x7e, 0x58, 0x5a, 0xd4, 0x3b, 0x7e, 0x84, 0x20,
-	0x9b, 0xc0, 0x56, 0x42, 0x12, 0x84, 0xae, 0xbf, 0x21, 0xf7, 0x7c, 0x0a, 0xc6, 0xe2, 0x30, 0xe8,
-	0xf8, 0x22, 0x19, 0xdf, 0xd1, 0x68, 0x79, 0x4d, 0xae, 0x62, 0x13, 0x8e, 0x49, 0xfe, 0x87, 0xc2,
-	0x4e, 0x99, 0xc2, 0x2f, 0xc1, 0xf1, 0xb6, 0xd2, 0xd4, 0x67, 0x0e, 0xd3, 0x54, 0x65, 0xb9, 0x9f,
-	0x01, 0x1c, 0x27, 0x39, 0xf3, 0x3c, 0x97, 0x73, 0x51, 0xcc, 0x3f, 0x47, 0x90, 0x6d, 0xfa, 0x37,
-	0xdd, 0xb0, 0xe6, 0x04, 0xe4, 0xa6, 0x6f, 0xd9, 0xb1, 0xa8, 0xcb, 0xc5, 0x7d, 0x3a, 0x85, 0x9a,
-	0xe2, 0xf3, 0x19, 0x82, 0xa9, 0x8e, 0x6c, 0xba, 0x5b, 0xc5, 0x26, 0x3b, 0x70, 0x31, 0xbe, 0x41,
-	0x30, 0xbb, 0xc2, 0xbc, 0x06, 0x6b, 0xfa, 0x8e, 0xe8, 0xc5, 0xea, 0x00, 0xaf, 0xd1, 0x60, 0x59,
-	0xcc, 0x1c, 0xb8, 0x04, 0x93, 0xba, 0x8e, 0x39, 0xd4, 0x67, 0x9e, 0xeb, 0x27, 0x03, 0xc5, 0x50,
-	0xd4, 0x16, 0x56, 0x53, 0x92, 0x74, 0x31, 0xc9, 0x1c, 0x4e, 0x31, 0x31, 0x1e, 0xf6, 0x25, 0xc3,
-	0xc6, 0x55, 0xdf, 0xae, 0x13, 0xd7, 0xa3, 0x4e, 0x54, 0xbc, 0x3e, 0x41, 0x30, 0xc9, 0x9a, 0x21,
-	0x0f, 0x89, 0xe4, 0x6f, 0x1d, 0x4d, 0xd7, 0xc6, 0x29, 0xc8, 0x88, 0xc9, 0x26, 0xe4, 0xa2, 0x16,
-	0xba, 0x1e, 0x30, 0x4f, 0xc4, 0x35, 0xf2, 0xaa, 0x76, 0xc5, 0x85, 0x67, 0xba, 0x62, 0x9f, 0x30,
-	0x44, 0x4d, 0x40, 0xdb, 0xbf, 0x14, 0x30, 0x2f, 0xf5, 0x32, 0xfe, 0x0a, 0xc1, 0x5c, 0x07, 0x1f,
-	0x58, 0xbc, 0x4e, 0x78, 0x8d, 0x3a, 0xb9, 0xde, 0xae, 0xfa, 0x22, 0xdf, 0xee, 0x8b, 0x8a, 0x02,
-	0xc6, 0x1f, 0xc3, 0x5c, 0xca, 0x0b, 0x6d, 0xbc, 0xfa, 0x0e, 0xc5, 0x2b, 0x79, 0xbb, 0xed, 0x0d,
-	0x8d, 0x6f, 0xfc, 0x80, 0x20, 0xab, 0x97, 0x52, 0x15, 0xad, 0x46, 0x02, 0xfa, 0xa2, 0x43, 0xaa,
-	0x0f, 0xfd, 0x5c, 0xd8, 0xe9, 0xf6, 0xe4, 0xa1, 0x51, 0x8c, 0x3f, 0x07, 0x60, 0x4a, 0xf5, 0x8b,
-	0x95, 0xff, 0x6b, 0xfe, 0xdf, 0x41, 0x30, 0x91, 0x54, 0xb5, 0xa3, 0x19, 0xcc, 0xc6, 0x63, 0xc0,
-	0x88, 0xc5, 0x5d, 0x04, 0xb9, 0x5a, 0x3c, 0x99, 0x59, 0xaa, 0x55, 0x46, 0x64, 0xba, 0x7b, 0x10,
-	0xb2, 0x09, 0xee, 0xbb, 0x02, 0x36, 0xa2, 0xd4, 0x82, 0x7c, 0x6a, 0x44, 0x88, 0x0f, 0x81, 0x4a,
-	0x9f, 0xbe, 0xe7, 0x99, 0x14, 0x3a, 0xe7, 0x70, 0x34, 0x29, 0x24, 0xc6, 0xa3, 0xf4, 0x97, 0xa6,
-	0xf1, 0xd7, 0x08, 0x4e, 0x34, 0xa8, 0x4a, 0x8b, 0xa6, 0xdf, 0x4e, 0x21, 0x77, 0xac, 0xab, 0xee,
-	0x98, 0xd5, 0xd8, 0x57, 0xfd, 0x36, 0x82, 0xf8, 0x0b, 0x04, 0x33, 0x11, 0x35, 0x5d, 0x0d, 0x62,
-	0x56, 0xfd, 0xdd, 0x6d, 0xc9, 0x1a, 0x56, 0x97, 0x88, 0x88, 0x50, 0xba, 0x25, 0x93, 0x6a, 0x9d,
-	0xc6, 0x6c, 0x06, 0x8e, 0xa6, 0x25, 0x0b, 0x4c, 0xcd, 0xc5, 0xf8, 0x12, 0x01, 0x56, 0x67, 0x3d,
-	0xf5, 0x79, 0xcf, 0xf1, 0x19, 0xf1, 0x5d, 0x1c, 0x0d, 0xbf, 0x9a, 0x9f, 0xfe, 0xb2, 0x1f, 0x4f,
-	0x04, 0x4a, 0x05, 0x9b, 0xa2, 0x19, 0xc5, 0x2f, 0xef, 0xae, 0x74, 0x99, 0x67, 0x54, 0xba, 0x6c,
-	0xa2, 0x79, 0x25, 0x55, 0xf3, 0x8c, 0x1f, 0x51, 0x32, 0x5d, 0x49, 0xf7, 0x5d, 0x6c, 0x51, 0x3f,
-	0x14, 0x43, 0x61, 0x6c, 0x7f, 0xf7, 0x50, 0x18, 0x2d, 0xeb, 0xa1, 0xf0, 0x3d, 0x18, 0x5c, 0x0f,
-	0x88, 0x7d, 0x68, 0xdf, 0xf3, 0xb1, 0x35, 0xbc, 0x04, 0xd3, 0xbb, 0xb3, 0xc8, 0x52, 0x37, 0x26,
-	0xf2, 0xc0, 0x0f, 0x99, 0x93, 0x3c, 0x1d, 0x6c, 0xd9, 0x3b, 0xb8, 0xf1, 0x29, 0x82, 0x81, 0x4b,
-	0x94, 0xae, 0x31, 0x56, 0xc7, 0x1f, 0xc1, 0xa8, 0x98, 0xc2, 0x9a, 0xbe, 0x1b, 0xde, 0xb2, 0x1a,
-	0x8c, 0xd5, 0xbb, 0x5c, 0x3e, 0x47, 0x62, 0x34, 0x01, 0x6f, 0xec, 0x64, 0x60, 0x32, 0x9e, 0x80,
-	0x24, 0xbd, 0x4a, 0x48, 0x42, 0x8a, 0xeb, 0xf1, 0xf0, 0x25, 0x38, 0x59, 0x55, 0x52, 0x27, 0xbe,
-	0x4d, 0x75, 0xa7, 0x7a, 0x31, 0xdf, 0xe9, 0x2b, 0x16, 0x01, 0x5f, 0x56, 0x66, 0x71, 0x2d, 0xb9,
-	0x77, 0x11, 0x68, 0xb2, 0x72, 0x1e, 0x4a, 0x9c, 0xc6, 0x12, 0x2c, 0x59, 0x17, 0x71, 0x08, 0x33,
-	0x51, 0x98, 0xea, 0x75, 0x66, 0xab, 0xa2, 0xa4, 0xf0, 0x7a, 0x0f, 0x01, 0x6f, 0x5a, 0x19, 0x5f,
-	0x8e, 0x6d, 0x4b, 0x54, 0xe3, 0x27, 0x04, 0x78, 0xb7, 0x97, 0xe5, 0x37, 0x8d, 0x09, 0xe3, 0x32,
-	0x59, 0xac, 0x2a, 0xe1, 0xae, 0x6d, 0xb9, 0xfe, 0x3a, 0x93, 0x1e, 0x1e, 0x5e, 0x2a, 0xa4, 0x8a,
-	0xb2, 0xca, 0x27, 0x51, 0x8b, 0x63, 0xcd, 0xf2, 0xa0, 0x60, 0xf9, 0x64, 0x6b, 0x1e, 0x99, 0xa3,
-	0x52, 0x5c, 0x16, 0x06, 0xa4, 0xcd, 0x7d, 0xa6, 0xe6, 0xcc, 0xbe, 0x53, 0xf3, 0x39, 0x98, 0x4e,
-	0xbf, 0x69, 0xd1, 0xcd, 0x06, 0xf3, 0xa9, 0x1f, 0x4a, 0x7f, 0x8c, 0x98, 0x53, 0x69, 0xe1, 0x45,
-	0x2d, 0x33, 0x7e, 0x45, 0xa9, 0x3b, 0x40, 0x35, 0xae, 0x57, 0xe3, 0x18, 0xaa, 0x3d, 0xa5, 0x76,
-	0x73, 0xf6, 0xe0, 0x16, 0xd3, 0xee, 0x19, 0xdd, 0x5e, 0x74, 0xf4, 0x12, 0x87, 0x51, 0xc0, 0xbb,
-	0x30, 0xb8, 0xc8, 0x55, 0xb9, 0xb7, 0x67, 0x0e, 0xfb, 0x1d, 0x92, 0x5c, 0xa3, 0x8c, 0x07, 0x7b,
-	0xd6, 0x8d, 0x1b, 0x30, 0xb6, 0xfb, 0x75, 0x8e, 0x3f, 0x80, 0x09, 0xd2, 0xe2, 0x7b, 0x8e, 0xb8,
-	0x3a, 0xa9, 0xaf, 0xfe, 0x1b, 0xe0, 0x68, 0x67, 0xa4, 0xc5, 0xd3, 0xf6, 0xcb, 0x95, 0x7b, 0xdb,
-	0x05, 0xf4, 0x78, 0xbb, 0x80, 0x9e, 0x6c, 0x17, 0xd0, 0xef, 0xdb, 0x05, 0x74, 0x77, 0xa7, 0xd0,
-	0xf3, 0x64, 0xa7, 0xd0, 0xf3, 0xf3, 0x4e, 0xa1, 0xe7, 0xfd, 0xd7, 0x53, 0xc9, 0x28, 0xc0, 0x16,
-	0x36, 0x6f, 0x7d, 0x98, 0xba, 0x56, 0xde, 0x6c, 0xbb, 0x58, 0x96, 0xf9, 0x59, 0xed, 0x97, 0xf7,
-	0xb5, 0xe7, 0xfe, 0x09, 0x00, 0x00, 0xff, 0xff, 0xc0, 0x99, 0x2a, 0xc8, 0x82, 0x16, 0x00, 0x00,
+	// 1660 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x58, 0xcd, 0x6f, 0x1b, 0xc7,
+	0x15, 0xd7, 0x4a, 0xb2, 0x3e, 0x46, 0xdf, 0x23, 0x89, 0x22, 0x25, 0x83, 0x74, 0xf7, 0x50, 0xbb,
+	0x75, 0x45, 0x5a, 0x76, 0x6b, 0xf8, 0xd0, 0x1e, 0x44, 0xc9, 0x6e, 0x05, 0x14, 0xb5, 0xb0, 0xac,
+	0x8d, 0xa2, 0x87, 0x2e, 0x86, 0xbb, 0x23, 0x72, 0x61, 0xee, 0x0e, 0x3d, 0x33, 0xa4, 0xa5, 0xc2,
+	0x39, 0x25, 0x40, 0x92, 0x43, 0x02, 0x1f, 0x92, 0x20, 0xa7, 0x9c, 0x8d, 0x00, 0x49, 0x7c, 0xf0,
+	0x21, 0x7f, 0x40, 0x80, 0xf8, 0x14, 0x18, 0x3e, 0x05, 0x09, 0xa0, 0x04, 0xd2, 0x21, 0xc8, 0x29,
+	0x87, 0xfc, 0x03, 0xc1, 0x7c, 0xed, 0xae, 0x48, 0xda, 0xb1, 0x20, 0xd1, 0xc8, 0xc5, 0x16, 0xe7,
+	0xcd, 0xbc, 0xdf, 0xef, 0xfd, 0xe6, 0xbd, 0x37, 0xb3, 0x03, 0x4a, 0x41, 0xd8, 0x42, 0x5e, 0x1d,
+	0x05, 0x51, 0x69, 0x07, 0x63, 0x3f, 0x60, 0x9c, 0x06, 0xd5, 0x16, 0x0f, 0x48, 0x54, 0x6a, 0xaf,
+	0x95, 0xd2, 0xbf, 0x8b, 0x4d, 0x4a, 0x38, 0x81, 0x67, 0xe3, 0x05, 0xc5, 0x8e, 0x05, 0xc5, 0xf6,
+	0xda, 0xf2, 0x1c, 0x0a, 0x83, 0x88, 0x94, 0xe4, 0xbf, 0x6a, 0xc1, 0x72, 0xde, 0x23, 0x2c, 0x24,
+	0xac, 0x54, 0x45, 0x0c, 0x97, 0xda, 0x6b, 0x55, 0xcc, 0xd1, 0x5a, 0xc9, 0x23, 0x81, 0x76, 0xb8,
+	0x9c, 0x53, 0x76, 0x57, 0xfe, 0x2a, 0xa9, 0x1f, 0xda, 0xb4, 0x50, 0x23, 0x35, 0xa2, 0xc6, 0xc5,
+	0x5f, 0x7a, 0x34, 0x61, 0x50, 0x42, 0x8c, 0x61, 0xce, 0x04, 0x53, 0xbe, 0xab, 0xad, 0x85, 0xc4,
+	0xca, 0xf7, 0x9a, 0x58, 0x1a, 0x29, 0xbe, 0x87, 0xa8, 0xaf, 0x26, 0xd8, 0xf7, 0xc1, 0xf4, 0xfa,
+	0xed, 0x8a, 0x23, 0x87, 0xb6, 0x11, 0x45, 0x21, 0xbc, 0x0a, 0x96, 0xbc, 0x16, 0xe3, 0x24, 0x74,
+	0xd5, 0x44, 0x37, 0x88, 0x76, 0x1a, 0x48, 0x84, 0x94, 0xb5, 0xce, 0x59, 0x17, 0xc6, 0x9c, 0x45,
+	0x65, 0x56, 0x6b, 0xb6, 0x8c, 0x11, 0x5e, 0x06, 0xda, 0xe0, 0x92, 0x26, 0xa6, 0x88, 0x13, 0xea,
+	0x52, 0x61, 0xc9, 0x0e, 0xca, 0x55, 0xf3, 0xca, 0x78, 0x53, 0xdb, 0x1c, 0x61, 0xb2, 0xbf, 0xb0,
+	0x40, 0x36, 0x1e, 0x51, 0x1c, 0x28, 0x69, 0x12, 0x2a, 0x1d, 0xfe, 0x0d, 0x4c, 0xc5, 0x9e, 0x90,
+	0xef, 0x53, 0x09, 0x3f, 0x5e, 0xce, 0x3e, 0x7b, 0xbc, 0xba, 0xa0, 0x85, 0x59, 0xf7, 0x7d, 0x8a,
+	0x19, 0xab, 0x70, 0x1a, 0x44, 0x35, 0x67, 0xd2, 0x4c, 0x17, 0xc3, 0x30, 0x00, 0x73, 0x3a, 0x80,
+	0x66, 0xec, 0x53, 0x72, 0x19, 0x2f, 0xff, 0xf5, 0xc9, 0x7e, 0x61, 0xe0, 0x9b, 0xfd, 0xc2, 0xef,
+	0x6b, 0x01, 0xaf, 0xb7, 0xaa, 0x45, 0x8f, 0x84, 0x5a, 0x6a, 0xfd, 0xdf, 0x2a, 0xf3, 0xef, 0x28,
+	0xc1, 0x8a, 0x9b, 0xd8, 0x7b, 0xf6, 0x78, 0x15, 0x68, 0xc0, 0x4d, 0xec, 0x39, 0xb3, 0xb4, 0x83,
+	0xa9, 0xfd, 0xf3, 0x20, 0x58, 0x8c, 0x55, 0xdc, 0x4c, 0x25, 0x01, 0x6c, 0x82, 0x51, 0x35, 0x9b,
+	0x65, 0xad, 0x73, 0x43, 0x17, 0x26, 0x2e, 0x9f, 0x2d, 0x6a, 0x4f, 0x22, 0x01, 0x8a, 0x3a, 0x01,
+	0x84, 0xdb, 0x0d, 0x12, 0x44, 0xe5, 0x6b, 0x82, 0xd8, 0xc7, 0xdf, 0x15, 0x2e, 0xbe, 0x1c, 0x31,
+	0xb1, 0x86, 0x3d, 0xfc, 0xe1, 0xd1, 0x1f, 0x2d, 0xc7, 0xc0, 0xc0, 0xfb, 0x60, 0x25, 0xd1, 0xbf,
+	0x33, 0x7e, 0x96, 0x1d, 0x94, 0x2c, 0xae, 0x16, 0x5f, 0x94, 0xb7, 0xc5, 0xe7, 0x6d, 0x49, 0x79,
+	0x58, 0xf0, 0x73, 0x72, 0xe4, 0x39, 0x76, 0x06, 0x2f, 0x81, 0x05, 0x4d, 0xc4, 0xc5, 0x4d, 0xe2,
+	0xd5, 0xdd, 0xa8, 0x15, 0x56, 0x31, 0xcd, 0x0e, 0x9d, 0xb3, 0x2e, 0x0c, 0x39, 0x50, 0xdb, 0xae,
+	0x0b, 0xd3, 0xbf, 0xa4, 0x05, 0x5e, 0x03, 0xd9, 0x14, 0xbf, 0xa3, 0xab, 0x86, 0xe5, 0xaa, 0x4c,
+	0xca, 0x9e, 0x5a, 0x69, 0x7f, 0x62, 0x81, 0x9c, 0x61, 0xfa, 0x8f, 0x80, 0x71, 0x42, 0x03, 0x0f,
+	0x35, 0x1c, 0xad, 0x43, 0x0d, 0x64, 0xbd, 0x56, 0xd8, 0x12, 0xc9, 0xd9, 0xc6, 0x46, 0x09, 0x99,
+	0x90, 0x66, 0x2b, 0xce, 0xa7, 0x44, 0x50, 0x92, 0xb6, 0xd7, 0x8a, 0x1b, 0x24, 0x0c, 0x49, 0x94,
+	0x6c, 0x26, 0xe2, 0x48, 0x47, 0x9d, 0x49, 0xdc, 0x29, 0x9b, 0x4c, 0x61, 0x06, 0xcf, 0x83, 0x19,
+	0x8a, 0x77, 0x30, 0xc5, 0x91, 0x87, 0x5d, 0x8f, 0xb4, 0x22, 0x2e, 0xb3, 0x6c, 0xca, 0x99, 0x8e,
+	0x87, 0x37, 0xc4, 0xa8, 0xbd, 0x07, 0x32, 0x86, 0xee, 0x46, 0x8b, 0x52, 0x1c, 0x71, 0xc3, 0xf5,
+	0xef, 0x9d, 0x59, 0x72, 0x4c, 0x6a, 0xf1, 0xe6, 0x67, 0xc0, 0x48, 0x13, 0xd3, 0x80, 0xf8, 0x92,
+	0xc2, 0xb0, 0xa3, 0x7f, 0xd9, 0x9f, 0x59, 0x20, 0x53, 0xe1, 0xe8, 0x0e, 0xa6, 0x9b, 0xb8, 0x81,
+	0x6b, 0xb2, 0x60, 0x37, 0xea, 0x28, 0xaa, 0x61, 0xb8, 0x02, 0xc6, 0x99, 0xb4, 0xb8, 0x81, 0xaf,
+	0x2a, 0xcc, 0x19, 0x53, 0x03, 0x5b, 0x3e, 0xdc, 0x05, 0xb9, 0x26, 0xc5, 0xed, 0x80, 0xb4, 0x98,
+	0xeb, 0xab, 0x95, 0xd8, 0x77, 0x51, 0x18, 0x47, 0x79, 0xd2, 0x5a, 0x5a, 0x32, 0xee, 0x37, 0x8d,
+	0xf7, 0x75, 0xe9, 0xdc, 0xfe, 0xc9, 0x02, 0x0b, 0x9d, 0x5c, 0xb7, 0xa2, 0x1d, 0x02, 0xdb, 0x20,
+	0xa7, 0xf9, 0xfa, 0xb1, 0xd9, 0xf5, 0xa4, 0xdd, 0xa8, 0xf7, 0xe7, 0x17, 0x67, 0x77, 0x6f, 0x21,
+	0xb4, 0x94, 0x4b, 0xac, 0xa7, 0x95, 0x41, 0x17, 0x4c, 0x72, 0xc2, 0x51, 0xe3, 0x34, 0xa3, 0x9f,
+	0x90, 0x1e, 0x75, 0xc4, 0x9f, 0x5b, 0x20, 0x93, 0xc0, 0x56, 0x38, 0xa2, 0x3c, 0x88, 0x6a, 0x32,
+	0xe6, 0xf3, 0x60, 0x26, 0xde, 0x06, 0xbd, 0xbf, 0x96, 0xdc, 0xdf, 0x69, 0x33, 0xbc, 0x2d, 0x47,
+	0xa1, 0x03, 0xce, 0x48, 0xfe, 0xa7, 0xc2, 0x4e, 0xb9, 0x82, 0xbf, 0x03, 0x93, 0x5d, 0xa5, 0x3c,
+	0xec, 0x4c, 0xe0, 0x54, 0x25, 0x3e, 0x1a, 0x04, 0x30, 0x4e, 0x6d, 0x12, 0x86, 0x01, 0x63, 0xa2,
+	0xf9, 0xbd, 0x63, 0x81, 0x4c, 0x2b, 0xba, 0x17, 0xf0, 0xba, 0x4f, 0xd1, 0xbd, 0xc8, 0xf5, 0x62,
+	0x53, 0x9f, 0x9b, 0xe1, 0x62, 0x0a, 0x35, 0xc5, 0xe7, 0x6d, 0x0b, 0x2c, 0xf4, 0x64, 0x33, 0xd8,
+	0x57, 0x36, 0xf3, 0x3d, 0xb8, 0xd8, 0x9f, 0x8e, 0x24, 0x27, 0xdf, 0xad, 0xc8, 0x6b, 0xa0, 0x20,
+	0xc4, 0xbe, 0xe9, 0x07, 0x6f, 0x5a, 0x60, 0x9e, 0xb4, 0x38, 0xe3, 0x28, 0xf2, 0x83, 0xa8, 0xe6,
+	0xbe, 0x9a, 0x23, 0x04, 0xa6, 0x20, 0x0d, 0x93, 0x08, 0x64, 0x4d, 0x3f, 0xdf, 0xa1, 0x24, 0x14,
+	0xa2, 0x35, 0x49, 0x4b, 0x4e, 0xd1, 0xaa, 0x15, 0x9f, 0xd3, 0xaa, 0xcc, 0x34, 0xed, 0x69, 0x1b,
+	0xd3, 0x75, 0x71, 0x3d, 0x31, 0xcd, 0x54, 0x7b, 0xbd, 0x41, 0x49, 0x98, 0x9a, 0x0c, 0x3f, 0xb0,
+	0xc0, 0x4a, 0x8f, 0xc8, 0x5d, 0xd6, 0x40, 0xac, 0x8e, 0xfd, 0xec, 0x50, 0x5f, 0x15, 0xc8, 0x75,
+	0x2b, 0x50, 0x51, 0xc0, 0x90, 0x83, 0x95, 0x54, 0xec, 0x5d, 0xbc, 0x86, 0x4f, 0xa0, 0x45, 0xce,
+	0xeb, 0x9a, 0x61, 0x50, 0xdf, 0xb3, 0xc0, 0x72, 0x2f, 0x39, 0xda, 0x98, 0x13, 0xec, 0x67, 0xcf,
+	0xf4, 0x55, 0x8d, 0x6c, 0xb7, 0x1a, 0xb7, 0x25, 0x2e, 0xa4, 0x60, 0xb9, 0x97, 0x18, 0x9a, 0xd5,
+	0xc8, 0x09, 0xb4, 0xc8, 0x76, 0x6b, 0xa1, 0x30, 0xed, 0x2f, 0x2d, 0x90, 0xd1, 0x23, 0xa9, 0x2e,
+	0x59, 0x47, 0x14, 0x9f, 0xf4, 0xa2, 0x18, 0x81, 0x11, 0x26, 0xfc, 0xb0, 0x3e, 0xf7, 0x01, 0x8d,
+	0x62, 0xff, 0x38, 0x0a, 0x16, 0xd4, 0x19, 0xb4, 0xf1, 0x5b, 0x2d, 0xfb, 0xd7, 0x2d, 0x30, 0x97,
+	0x74, 0x4a, 0xc3, 0xa3, 0xbf, 0xf2, 0xcc, 0xc6, 0x80, 0x86, 0xc5, 0x03, 0x0b, 0x64, 0xeb, 0xf1,
+	0xc5, 0xce, 0x55, 0xc7, 0xaf, 0x21, 0xd3, 0xdf, 0x4e, 0x90, 0x49, 0x70, 0xff, 0x2d, 0x60, 0x0d,
+	0xa5, 0x36, 0xc8, 0xa5, 0xae, 0x1d, 0x71, 0x17, 0x50, 0xe9, 0x33, 0xfc, 0x32, 0xb7, 0x8f, 0xde,
+	0x39, 0x6c, 0x6e, 0x1f, 0x89, 0x73, 0xd3, 0x09, 0xa4, 0x6b, 0xf8, 0xa1, 0x05, 0xce, 0x36, 0xb1,
+	0x4a, 0x8b, 0x56, 0xd4, 0x4d, 0xa1, 0xcf, 0xad, 0x60, 0x59, 0x63, 0xdf, 0x8a, 0xba, 0x08, 0xc2,
+	0x77, 0x2d, 0xb0, 0x64, 0xa8, 0xe9, 0x76, 0x18, 0xb3, 0x1a, 0xe9, 0xef, 0x31, 0xaf, 0x61, 0x75,
+	0xb7, 0x34, 0x84, 0xd2, 0xc7, 0x3c, 0xaa, 0x36, 0x70, 0xcc, 0x66, 0xf4, 0xd5, 0x1c, 0xf3, 0x02,
+	0x53, 0x73, 0xb1, 0xdf, 0xb7, 0x00, 0x54, 0xb5, 0x9e, 0xfa, 0xc4, 0x66, 0xf0, 0xa2, 0xf8, 0x36,
+	0x35, 0x17, 0x6a, 0xcd, 0x4f, 0x7f, 0x5d, 0xcf, 0x26, 0x06, 0xb5, 0x04, 0x3a, 0xe2, 0x0c, 0x8e,
+	0x27, 0x1f, 0xed, 0x74, 0x83, 0xbf, 0xd2, 0xe9, 0x32, 0xc9, 0xca, 0x9b, 0xa9, 0x9e, 0x67, 0xdf,
+	0x05, 0xf3, 0xf1, 0x87, 0x84, 0xec, 0xbf, 0xec, 0x9f, 0x01, 0xe3, 0xb0, 0x04, 0x26, 0x50, 0x9b,
+	0x49, 0xd7, 0x98, 0x31, 0xdd, 0x47, 0xa7, 0x0f, 0xf6, 0x0b, 0x60, 0xfd, 0x76, 0x45, 0x7b, 0x76,
+	0x00, 0x6a, 0x33, 0xfd, 0x37, 0xfc, 0x03, 0x18, 0x97, 0xaf, 0x0e, 0x6e, 0xa0, 0xfb, 0xc3, 0x78,
+	0x79, 0xf2, 0x60, 0xbf, 0x30, 0x26, 0x7d, 0x6e, 0x6d, 0x32, 0x67, 0x4c, 0x9a, 0xb7, 0x7c, 0x66,
+	0x7f, 0x94, 0xba, 0x24, 0xca, 0x1d, 0xbb, 0xde, 0xc6, 0x11, 0x17, 0x77, 0xdb, 0x38, 0xa4, 0xa3,
+	0x77, 0x5b, 0x33, 0xac, 0xef, 0xb6, 0xff, 0x01, 0x63, 0x3b, 0x14, 0x79, 0xa7, 0xf6, 0x19, 0x1f,
+	0x7b, 0x83, 0x6f, 0x58, 0xc0, 0x36, 0x99, 0xdb, 0xeb, 0xb4, 0x55, 0xef, 0x2a, 0xba, 0xe3, 0xac,
+	0xbd, 0xb8, 0xbc, 0x7b, 0xa8, 0xaa, 0x6b, 0xbb, 0xa0, 0x21, 0x6e, 0x76, 0xb5, 0x5b, 0x35, 0xd5,
+	0x7e, 0xcb, 0x02, 0xa3, 0x37, 0x30, 0xde, 0x26, 0xa4, 0x01, 0x5f, 0x03, 0xd3, 0xe2, 0x7e, 0xda,
+	0x8a, 0x02, 0xbe, 0xe7, 0x36, 0x09, 0x69, 0xf4, 0xf9, 0x10, 0x98, 0x8a, 0xd1, 0x04, 0xbc, 0x7d,
+	0x38, 0xd8, 0x99, 0x1f, 0x15, 0x8e, 0x38, 0x86, 0x0d, 0x30, 0x6f, 0xde, 0x14, 0x08, 0x69, 0xb8,
+	0x55, 0xd4, 0x40, 0x91, 0x87, 0x75, 0x9e, 0x9c, 0x6c, 0x3b, 0xf4, 0x63, 0x8d, 0x80, 0x2f, 0x2b,
+	0xb7, 0xb0, 0x9e, 0xbc, 0xe0, 0x08, 0x34, 0xd9, 0xff, 0x4f, 0x65, 0xeb, 0x67, 0x12, 0x2c, 0xd9,
+	0xdd, 0x21, 0x07, 0x4b, 0x1a, 0x09, 0x35, 0x1a, 0xc4, 0x53, 0xad, 0x55, 0xe1, 0x0d, 0x9d, 0x02,
+	0xde, 0xa2, 0x72, 0xbe, 0x1e, 0xfb, 0x96, 0xa8, 0xf6, 0x57, 0x16, 0x80, 0x47, 0x55, 0x96, 0x5f,
+	0x7b, 0x0e, 0x98, 0x55, 0x35, 0x55, 0x45, 0x2c, 0xf0, 0xdc, 0x20, 0xda, 0x21, 0x52, 0xe1, 0x89,
+	0xcb, 0xf9, 0x54, 0xee, 0xa9, 0xa4, 0x94, 0x29, 0x67, 0x56, 0x96, 0xc7, 0x04, 0xcb, 0xa7, 0xfb,
+	0x05, 0xcb, 0x99, 0x96, 0xe6, 0xb2, 0x70, 0x20, 0x7d, 0x96, 0xe2, 0x8d, 0xf3, 0x71, 0x44, 0xc2,
+	0x20, 0x42, 0x49, 0x1d, 0x99, 0x67, 0x99, 0xcd, 0x94, 0x05, 0x5e, 0x01, 0x8b, 0xe9, 0x99, 0x2e,
+	0xde, 0x6d, 0x92, 0x08, 0x47, 0x5c, 0xea, 0x31, 0xe5, 0x2c, 0xa4, 0x8d, 0xd7, 0xb5, 0xcd, 0xfe,
+	0xd6, 0x4a, 0xbd, 0x26, 0x4a, 0x5a, 0xb0, 0x1a, 0xef, 0xa1, 0xee, 0x13, 0x49, 0x34, 0x97, 0x8e,
+	0x53, 0x49, 0x32, 0x3e, 0x55, 0x48, 0x7a, 0xf7, 0x12, 0xc1, 0x30, 0x80, 0x47, 0x30, 0x98, 0xc8,
+	0x55, 0x19, 0xdb, 0x31, 0xcb, 0x55, 0x26, 0xb9, 0x46, 0x99, 0xa5, 0x1d, 0xe3, 0xf6, 0x5d, 0x30,
+	0xd3, 0x51, 0xdd, 0xf0, 0x7f, 0x60, 0x4e, 0xf4, 0xcb, 0x34, 0xba, 0xb9, 0xae, 0xfd, 0xe9, 0x38,
+	0xc0, 0x26, 0x32, 0xd4, 0x66, 0x69, 0xff, 0xe5, 0xca, 0xc3, 0x83, 0xbc, 0xf5, 0xe4, 0x20, 0x6f,
+	0x3d, 0x3d, 0xc8, 0x5b, 0xdf, 0x1f, 0xe4, 0xad, 0x07, 0x87, 0xf9, 0x81, 0xa7, 0x87, 0xf9, 0x81,
+	0xaf, 0x0f, 0xf3, 0x03, 0xff, 0xfd, 0x4b, 0x2a, 0x19, 0x05, 0xd8, 0xea, 0xee, 0xde, 0xff, 0x53,
+	0x2f, 0xd8, 0xbb, 0x5d, 0x6f, 0xd8, 0x32, 0x3f, 0xab, 0x23, 0xf2, 0xe5, 0xf7, 0xca, 0x2f, 0x01,
+	0x00, 0x00, 0xff, 0xff, 0x5f, 0x74, 0x96, 0x10, 0xed, 0x16, 0x00, 0x00,
 }
 
 func (this *AVSRewardParam) Equal(that interface{}) bool {
@@ -1574,38 +1542,6 @@ func (this *AVSRewardDistribution) Equal(that interface{}) bool {
 	}
 	if this.ProportionsEpochNumber != that1.ProportionsEpochNumber {
 		return false
-	}
-	return true
-}
-func (this *CommonAVSRewardData) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*CommonAVSRewardData)
-	if !ok {
-		that2, ok := that.(CommonAVSRewardData)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.AVSAddress != that1.AVSAddress {
-		return false
-	}
-	if len(this.Rewards) != len(that1.Rewards) {
-		return false
-	}
-	for i := range this.Rewards {
-		if !this.Rewards[i].Equal(&that1.Rewards[i]) {
-			return false
-		}
 	}
 	return true
 }
@@ -1799,38 +1735,6 @@ func (this *OperatorCommission) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (this *CompoundingRewardsPerAsset) Equal(that interface{}) bool {
-	if that == nil {
-		return this == nil
-	}
-
-	that1, ok := that.(*CompoundingRewardsPerAsset)
-	if !ok {
-		that2, ok := that.(CompoundingRewardsPerAsset)
-		if ok {
-			that1 = &that2
-		} else {
-			return false
-		}
-	}
-	if that1 == nil {
-		return this == nil
-	} else if this == nil {
-		return false
-	}
-	if this.RewardDenomination != that1.RewardDenomination {
-		return false
-	}
-	if len(this.Rewards) != len(that1.Rewards) {
-		return false
-	}
-	for i := range this.Rewards {
-		if !this.Rewards[i].Equal(&that1.Rewards[i]) {
-			return false
-		}
-	}
-	return true
-}
 func (this *OperatorUnclaimedRewards) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -1879,6 +1783,22 @@ func (this *OperatorUnclaimedRewards) Equal(that interface{}) bool {
 	}
 	for i := range this.CompoundingRewardsSlashed {
 		if !this.CompoundingRewardsSlashed[i].Equal(&that1.CompoundingRewardsSlashed[i]) {
+			return false
+		}
+	}
+	if len(this.OutstandingRewardsVetoed) != len(that1.OutstandingRewardsVetoed) {
+		return false
+	}
+	for i := range this.OutstandingRewardsVetoed {
+		if !this.OutstandingRewardsVetoed[i].Equal(&that1.OutstandingRewardsVetoed[i]) {
+			return false
+		}
+	}
+	if len(this.CompoundingRewardsVetoed) != len(that1.CompoundingRewardsVetoed) {
+		return false
+	}
+	for i := range this.CompoundingRewardsVetoed {
+		if !this.CompoundingRewardsVetoed[i].Equal(&that1.CompoundingRewardsVetoed[i]) {
 			return false
 		}
 	}
@@ -2020,6 +1940,38 @@ func (this *StakerRewardParams) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *AVSRewardAssetsList) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*AVSRewardAssetsList)
+	if !ok {
+		that2, ok := that.(AVSRewardAssetsList)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.AVSAddress != that1.AVSAddress {
+		return false
+	}
+	if len(this.AssetIDs) != len(that1.AssetIDs) {
+		return false
+	}
+	for i := range this.AssetIDs {
+		if this.AssetIDs[i] != that1.AssetIDs[i] {
+			return false
+		}
+	}
+	return true
+}
 func (this *OperatorSlashEvent) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -2045,11 +1997,11 @@ func (this *OperatorSlashEvent) Equal(that interface{}) bool {
 	if !this.Fraction.Equal(that1.Fraction) {
 		return false
 	}
-	if len(this.SlashedRewardAssets) != len(that1.SlashedRewardAssets) {
+	if len(this.SlashedOutstandingRewardsAssets) != len(that1.SlashedOutstandingRewardsAssets) {
 		return false
 	}
-	for i := range this.SlashedRewardAssets {
-		if this.SlashedRewardAssets[i] != that1.SlashedRewardAssets[i] {
+	for i := range this.SlashedOutstandingRewardsAssets {
+		if !this.SlashedOutstandingRewardsAssets[i].Equal(&that1.SlashedOutstandingRewardsAssets[i]) {
 			return false
 		}
 	}
@@ -2344,50 +2296,6 @@ func (m *AVSRewardDistribution) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *CommonAVSRewardData) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *CommonAVSRewardData) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *CommonAVSRewardData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Rewards) > 0 {
-		for iNdEx := len(m.Rewards) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Rewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintDistribution(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.AVSAddress) > 0 {
-		i -= len(m.AVSAddress)
-		copy(dAtA[i:], m.AVSAddress)
-		i = encodeVarintDistribution(dAtA, i, uint64(len(m.AVSAddress)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
 func (m *OperatorHistoricalRewards) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2653,50 +2561,6 @@ func (m *OperatorCommission) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *CompoundingRewardsPerAsset) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *CompoundingRewardsPerAsset) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *CompoundingRewardsPerAsset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Rewards) > 0 {
-		for iNdEx := len(m.Rewards) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Rewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintDistribution(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.RewardDenomination) > 0 {
-		i -= len(m.RewardDenomination)
-		copy(dAtA[i:], m.RewardDenomination)
-		i = encodeVarintDistribution(dAtA, i, uint64(len(m.RewardDenomination)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
 func (m *OperatorUnclaimedRewards) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2717,6 +2581,34 @@ func (m *OperatorUnclaimedRewards) MarshalToSizedBuffer(dAtA []byte) (int, error
 	_ = i
 	var l int
 	_ = l
+	if len(m.CompoundingRewardsVetoed) > 0 {
+		for iNdEx := len(m.CompoundingRewardsVetoed) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.CompoundingRewardsVetoed[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.OutstandingRewardsVetoed) > 0 {
+		for iNdEx := len(m.OutstandingRewardsVetoed) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.OutstandingRewardsVetoed[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
 	if len(m.CompoundingRewardsSlashed) > 0 {
 		for iNdEx := len(m.CompoundingRewardsSlashed) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -2981,6 +2873,45 @@ func (m *StakerRewardParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *AVSRewardAssetsList) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *AVSRewardAssetsList) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AVSRewardAssetsList) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.AssetIDs) > 0 {
+		for iNdEx := len(m.AssetIDs) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.AssetIDs[iNdEx])
+			copy(dAtA[i:], m.AssetIDs[iNdEx])
+			i = encodeVarintDistribution(dAtA, i, uint64(len(m.AssetIDs[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.AVSAddress) > 0 {
+		i -= len(m.AVSAddress)
+		copy(dAtA[i:], m.AVSAddress)
+		i = encodeVarintDistribution(dAtA, i, uint64(len(m.AVSAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *OperatorSlashEvent) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -3001,11 +2932,16 @@ func (m *OperatorSlashEvent) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.SlashedRewardAssets) > 0 {
-		for iNdEx := len(m.SlashedRewardAssets) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.SlashedRewardAssets[iNdEx])
-			copy(dAtA[i:], m.SlashedRewardAssets[iNdEx])
-			i = encodeVarintDistribution(dAtA, i, uint64(len(m.SlashedRewardAssets[iNdEx])))
+	if len(m.SlashedOutstandingRewardsAssets) > 0 {
+		for iNdEx := len(m.SlashedOutstandingRewardsAssets) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.SlashedOutstandingRewardsAssets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintDistribution(dAtA, i, uint64(size))
+			}
 			i--
 			dAtA[i] = 0x1a
 		}
@@ -3311,25 +3247,6 @@ func (m *AVSRewardDistribution) Size() (n int) {
 	return n
 }
 
-func (m *CommonAVSRewardData) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.AVSAddress)
-	if l > 0 {
-		n += 1 + l + sovDistribution(uint64(l))
-	}
-	if len(m.Rewards) > 0 {
-		for _, e := range m.Rewards {
-			l = e.Size()
-			n += 1 + l + sovDistribution(uint64(l))
-		}
-	}
-	return n
-}
-
 func (m *OperatorHistoricalRewards) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3436,25 +3353,6 @@ func (m *OperatorCommission) Size() (n int) {
 	return n
 }
 
-func (m *CompoundingRewardsPerAsset) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.RewardDenomination)
-	if l > 0 {
-		n += 1 + l + sovDistribution(uint64(l))
-	}
-	if len(m.Rewards) > 0 {
-		for _, e := range m.Rewards {
-			l = e.Size()
-			n += 1 + l + sovDistribution(uint64(l))
-		}
-	}
-	return n
-}
-
 func (m *OperatorUnclaimedRewards) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3481,6 +3379,18 @@ func (m *OperatorUnclaimedRewards) Size() (n int) {
 	}
 	if len(m.CompoundingRewardsSlashed) > 0 {
 		for _, e := range m.CompoundingRewardsSlashed {
+			l = e.Size()
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	if len(m.OutstandingRewardsVetoed) > 0 {
+		for _, e := range m.OutstandingRewardsVetoed {
+			l = e.Size()
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	if len(m.CompoundingRewardsVetoed) > 0 {
+		for _, e := range m.CompoundingRewardsVetoed {
 			l = e.Size()
 			n += 1 + l + sovDistribution(uint64(l))
 		}
@@ -3574,6 +3484,25 @@ func (m *StakerRewardParams) Size() (n int) {
 	return n
 }
 
+func (m *AVSRewardAssetsList) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.AVSAddress)
+	if l > 0 {
+		n += 1 + l + sovDistribution(uint64(l))
+	}
+	if len(m.AssetIDs) > 0 {
+		for _, s := range m.AssetIDs {
+			l = len(s)
+			n += 1 + l + sovDistribution(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *OperatorSlashEvent) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3585,9 +3514,9 @@ func (m *OperatorSlashEvent) Size() (n int) {
 	}
 	l = m.Fraction.Size()
 	n += 1 + l + sovDistribution(uint64(l))
-	if len(m.SlashedRewardAssets) > 0 {
-		for _, s := range m.SlashedRewardAssets {
-			l = len(s)
+	if len(m.SlashedOutstandingRewardsAssets) > 0 {
+		for _, e := range m.SlashedOutstandingRewardsAssets {
+			l = e.Size()
 			n += 1 + l + sovDistribution(uint64(l))
 		}
 	}
@@ -4038,122 +3967,6 @@ func (m *AVSRewardDistribution) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CommonAVSRewardData) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowDistribution
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: CommonAVSRewardData: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CommonAVSRewardData: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AVSAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowDistribution
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.AVSAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Rewards", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowDistribution
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Rewards = append(m.Rewards, types.DecCoin{})
-			if err := m.Rewards[len(m.Rewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipDistribution(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *OperatorHistoricalRewards) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -4212,7 +4025,7 @@ func (m *OperatorHistoricalRewards) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CumulativeRewardRatios = append(m.CumulativeRewardRatios, CommonAVSRewardData{})
+			m.CumulativeRewardRatios = append(m.CumulativeRewardRatios, types1.CommonAVSRewardData{})
 			if err := m.CumulativeRewardRatios[len(m.CumulativeRewardRatios)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4315,7 +4128,7 @@ func (m *OperatorCurrentRewards) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Rewards = append(m.Rewards, CommonAVSRewardData{})
+			m.Rewards = append(m.Rewards, types1.CommonAVSRewardData{})
 			if err := m.Rewards[len(m.Rewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -4834,122 +4647,6 @@ func (m *OperatorCommission) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CompoundingRewardsPerAsset) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowDistribution
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: CompoundingRewardsPerAsset: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CompoundingRewardsPerAsset: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RewardDenomination", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowDistribution
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.RewardDenomination = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Rewards", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowDistribution
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Rewards = append(m.Rewards, CommonAVSRewardData{})
-			if err := m.Rewards[len(m.Rewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipDistribution(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthDistribution
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
 func (m *OperatorUnclaimedRewards) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -5042,7 +4739,7 @@ func (m *OperatorUnclaimedRewards) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.RewardsFromCompounding = append(m.RewardsFromCompounding, CompoundingRewardsPerAsset{})
+			m.RewardsFromCompounding = append(m.RewardsFromCompounding, types1.CompoundingRewardsPerAsset{})
 			if err := m.RewardsFromCompounding[len(m.RewardsFromCompounding)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -5110,8 +4807,76 @@ func (m *OperatorUnclaimedRewards) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CompoundingRewardsSlashed = append(m.CompoundingRewardsSlashed, CompoundingRewardsPerAsset{})
+			m.CompoundingRewardsSlashed = append(m.CompoundingRewardsSlashed, types1.CompoundingRewardsPerAsset{})
 			if err := m.CompoundingRewardsSlashed[len(m.CompoundingRewardsSlashed)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OutstandingRewardsVetoed", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OutstandingRewardsVetoed = append(m.OutstandingRewardsVetoed, types.DecCoin{})
+			if err := m.OutstandingRewardsVetoed[len(m.OutstandingRewardsVetoed)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CompoundingRewardsVetoed", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CompoundingRewardsVetoed = append(m.CompoundingRewardsVetoed, types1.CompoundingRewardsPerAsset{})
+			if err := m.CompoundingRewardsVetoed[len(m.CompoundingRewardsVetoed)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -5642,6 +5407,120 @@ func (m *StakerRewardParams) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *AVSRewardAssetsList) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowDistribution
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: AVSRewardAssetsList: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: AVSRewardAssetsList: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AVSAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AVSAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AssetIDs", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowDistribution
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AssetIDs = append(m.AssetIDs, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipDistribution(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthDistribution
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *OperatorSlashEvent) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -5726,9 +5605,9 @@ func (m *OperatorSlashEvent) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlashedRewardAssets", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashedOutstandingRewardsAssets", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowDistribution
@@ -5738,23 +5617,25 @@ func (m *OperatorSlashEvent) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthDistribution
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthDistribution
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.SlashedRewardAssets = append(m.SlashedRewardAssets, string(dAtA[iNdEx:postIndex]))
+			m.SlashedOutstandingRewardsAssets = append(m.SlashedOutstandingRewardsAssets, AVSRewardAssetsList{})
+			if err := m.SlashedOutstandingRewardsAssets[len(m.SlashedOutstandingRewardsAssets)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

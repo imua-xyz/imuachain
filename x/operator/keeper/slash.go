@@ -96,7 +96,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		SlashProportion:          newSlashProportion,
 		SlashValue:               slashUSDValue,
 		SlashUndelegations:       make([]types.SlashFromUndelegation, 0),
-		SlashAssetsPool:          make([]types.SlashAssetAmount, 0),
+		SlashAssetsPool:          make([]types.SlashFromAssetPool, 0),
 		UndelegationFilterHeight: snapshotHeight,
 		HistoricalVotingPower:    parameter.Power,
 	}
@@ -141,6 +141,13 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 			return nil
 		}
 		remainingAmount := state.TotalAmount.Sub(slashAmount)
+
+		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashFromAssetPool{
+			AssetID:            assetID,
+			TotalAmount:        slashAmount,
+			SnapshotTotalShare: state.TotalShare,
+		})
+
 		// todo: consider slash all assets if the remaining amount is too small,
 		// which can avoid the unbalance between share and amount
 
@@ -167,10 +174,6 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		state.TotalAmount = remainingAmount
 		// TODO: check if pendingUndelegation also zero => delete this item, and this operator should be opted out if
 		// all assets falls to 0 since the miniself is not satisfied then.
-		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashAssetAmount{
-			AssetID: assetID,
-			Amount:  slashAmount,
-		})
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				types.EventTypeOperatorAssetSlashed,

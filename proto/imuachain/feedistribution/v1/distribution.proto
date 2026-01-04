@@ -6,6 +6,7 @@ import "cosmos/base/v1beta1/coin.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "imuachain/assets/v1/tx.proto";
+import "imuachain/types/v1/reward.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 option (gogoproto.equal_all) = true;
@@ -56,18 +57,6 @@ message AVSRewardDistribution {
   int64 proportions_epoch_number = 4;
 }
 
-// CommonAVSRewardData is a common struct used to record the current rewards and cumulative
-// reward ratios of a specified AVS for the operator.
-message CommonAVSRewardData {
-  // avs_address is the AVS address
-  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
-  // rewards represents the current rewards or cumulative reward ratios
-  repeated cosmos.base.v1beta1.DecCoin rewards = 2 [
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
-    (gogoproto.nullable) = false,
-    (amino.dont_omitempty) = true
-  ];
-}
 // OperatorHistoricalRewards represents historical rewards for an operator.
 // Operator, assetID, epochIdentifier and period are implicit within the store key.
 // Cumulative reward ratio is the sum from the zero period
@@ -90,7 +79,7 @@ message CommonAVSRewardData {
 // slice to store the accumulated reward factors for all AVSs separately.
 message OperatorHistoricalRewards {
   // cumulative_reward_ratios is the reward ratios for multiple AVSs
-  repeated CommonAVSRewardData cumulative_reward_ratios = 1 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CommonAVSRewardData cumulative_reward_ratios = 1 [(gogoproto.nullable) = false];
   // reference_count is for F1 distribution.
   uint32 reference_count = 2;
 }
@@ -105,7 +94,7 @@ message OperatorHistoricalRewards {
 // Operator, assetID and epochIdentifier are implicit within the store key.
 message OperatorCurrentRewards {
   // current rewards
-  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
   // period is for a validator kept as a running counter
   uint64 period = 2;
 }
@@ -186,15 +175,6 @@ message OperatorCommission {
   ];
 }
 
-// CompoundingRewardsPerAsset records compounding rewards for
-// a specific reward asset
-message CompoundingRewardsPerAsset {
-  // reward_denomination is the denomination of the reward asset
-  string reward_denomination = 1 ;
-  // rewards represents the cumulative compounding reward from multiple AVSs
-  repeated CommonAVSRewardData rewards = 2 [(gogoproto.nullable) = false];
-}
-
 // OperatorUnclaimedRewards represents the accumulated rewards for an operator that have not
 // been claimed by stakers. This structure is inexpensive to track and allows simple sanity checks.
 // The AVS address is implicit in the store key.
@@ -211,7 +191,8 @@ message OperatorUnclaimedRewards {
   // Stores the rewards pool for each asset, allowing calculation of compounding rewards
   // for stakers. Asset denominations in the list must correspond to the denominations in outstanding_rewards,
   // since all compounding rewards are derived from the outstanding rewards.
-  repeated CompoundingRewardsPerAsset rewards_from_compounding = 2 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CompoundingRewardsPerAsset rewards_from_compounding = 2 [(gogoproto.nullable) = false];
+
   // outstanding_rewards_slashed represents the total amount of rewards slashed from outstanding rewards.
   // We need to apply slashing here because outstanding rewards are automatically compounded
   // to contribute voting power.
@@ -223,7 +204,42 @@ message OperatorUnclaimedRewards {
   // compounding_rewards_slashed represents the total amount of rewards slashed from compounding rewards.
   // We need to apply slashing here because compounding rewards are automatically compounded
   // to contribute voting power.
-  repeated CompoundingRewardsPerAsset compounding_rewards_slashed = 4 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CompoundingRewardsPerAsset compounding_rewards_slashed = 4 [(gogoproto.nullable) = false];
+
+  // We introduce separate state variables to store vetoed rewards instead of directly adding them back
+  // to `outstanding_rewards` or `rewards_from_compounding`. This design choice addresses the following issues:
+  //
+  // 1. Conflict with F1 Mechanism:
+  //    If we simply added rewards back, the F1 calculation for stakers would still account for the historical
+  //    slash event, resulting in lower calculated rewards. However, the operator's `outstanding_rewards` pool
+  //    would be fully restored. This creates a discrepancy where `total_staker_rewards < operator_outstanding_rewards`,
+  //    breaking the compounding reward calculation which relies on the ratio of these two values.
+  //
+  // 2. Infeasibility of Deleting Slash Events:
+  //    Removing the F1 slash event during a veto is not a viable solution. While it would fix future calculations,
+  //    it cannot retroactively correct delegations that claimed rewards in the window between the Slash execution
+  //    and the Veto execution, leading to state inconsistencies.
+  //
+  // 3. The Solution & Trade-off:
+  //    We store reverted rewards separately and distribute them to *current* unclaimed stakers of the operator.
+  //    This logic mimics the compounding reward distribution (proportional to the staker's reward share of outstanding rewards).
+  //
+  //    While slashed staking assets (principal) are returned precisely to the affected stakers, slashed *unclaimed rewards*
+  //    are returned to the operator's collective staker pool. This effectively restores the operator's reward-earning
+  //    capacity without the extreme complexity required to track and restore exact reward ownership for every reverted slash.
+
+  // outstanding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted)
+  // for outstanding rewards. This tracks the rewards that were originally targeted for slashing but were
+  // restored due to a slash veto.
+  repeated cosmos.base.v1beta1.DecCoin outstanding_rewards_vetoed = 5 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+  // compounding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted) for
+  // compounding rewards. This tracks the rewards that were originally targeted for slashing but were restored
+  // due to a slash veto.
+  repeated imuachain.types.v1.CompoundingRewardsPerAsset compounding_rewards_vetoed = 6 [(gogoproto.nullable) = false];
 }
 
 // RewardsDelegationShare is a helper struct that records all the delegated rewards shares
@@ -240,6 +256,7 @@ message RewardsDelegationShare {
     (amino.dont_omitempty) = true
   ];
 }
+
 // StakerClaimedRewards includes the detailed states for claimed rewards.
 //
 // The current total rewards assets of a staker in an AVS are calculated as:
@@ -310,6 +327,13 @@ message StakerRewardParams {
   string redelegate_operator_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
+message AVSRewardAssetsList {
+  // avs_address is the AVS address
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
+  // asset_ids represents the list of reward asset ids
+  repeated string asset_ids = 2 [(gogoproto.customname) = "AssetIDs"];
+}
+
 // OperatorSlashEvent represents an operator slash event.
 // operator, assetID, epochIdentifier, epochNumber and height are implicit within the store key.
 // This is needed to calculate appropriate amount of staking tokens
@@ -323,10 +347,10 @@ message OperatorSlashEvent {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // slashed_reward_assets records the list of reward assets that have been slashed.
-  // It is used to calculate stakers' rewards, taking into account slashing that occurs
+  // slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have
+  // been slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs
   // due to reward compounding.
-  repeated string slashed_reward_assets = 3;
+  repeated AVSRewardAssetsList slashed_outstanding_rewards_assets = 3 [(gogoproto.nullable) = false];
 }
 
 // FeePool is the global fee pool for distribution.
@@ -347,7 +371,7 @@ message AVSRewardAssetState {
   // an AVS deposits/withdraws funds into/from the treasury or stakers/operators withdraw from it.
   // We use decimal to keep compatible with `DecCoin`, which is used in cosmos-sdk,
   // and we also use it when handling the distribution with F1.
-  string reward_pool_balance = 1  [
+  string reward_pool_balance = 1 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -355,7 +379,7 @@ message AVSRewardAssetState {
   // reward_pool_total is the total amount of the reward funded by the AVS. It is only updated
   // each time an AVS deposits/withdraws funds into/from the treasury. The difference between it and
   // reward_pool_balance represents the total amount withdrawn by stakers and operators.
-  string reward_pool_total = 2  [
+  string reward_pool_total = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
@@ -370,7 +394,7 @@ message AVSRewardAssetState {
   // TODO: Reconsider whether debt should be allowed in the AVS reward pool, as it may cause issues
   // when handling reward compounding. For example, the reward pool might contribute greater voting
   // power than its actual balance due to debt.
-  string reward_allocation_total = 3  [
+  string reward_allocation_total = 3 [
     (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false

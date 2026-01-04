@@ -1,0 +1,32 @@
+syntax = "proto3";
+package imuachain.types.v1;
+
+import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/imua-xyz/imuachain/x/types";
+option (gogoproto.equal_all) = true;
+
+
+// CommonAVSRewardData is a common struct used to record the current rewards and cumulative
+// reward ratios of a specified AVS for the operator.
+message CommonAVSRewardData {
+  // avs_address is the AVS address
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
+  // rewards represents the current rewards or cumulative reward ratios
+  repeated cosmos.base.v1beta1.DecCoin rewards = 2 [
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
+}
+
+// CompoundingRewardsPerAsset records compounding rewards for
+// a specific reward asset
+message CompoundingRewardsPerAsset {
+  // reward_denomination is the denomination of the reward asset
+  string reward_denomination = 1;
+  // rewards represents the cumulative compounding reward from multiple AVSs
+  repeated CommonAVSRewardData rewards = 2 [(gogoproto.nullable) = false];
+}

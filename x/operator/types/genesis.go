@@ -424,18 +424,24 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 			return err
 		}
 		// validate the slashing record regarding assets pool
-		SlashFromAssetsPoolVal := func(_ int, slashFromAssetsPool SlashAssetAmount) error {
+		SlashFromAssetsPoolVal := func(_ int, slashFromAssetsPool SlashFromAssetPool) error {
 			// when the data is exported, no check for 0 value is added, that is, even 0 values are exported.
 			// to maintain consistency, we allow 0 values here.
-			if slashFromAssetsPool.Amount.IsNil() || slashFromAssetsPool.Amount.LT(sdkmath.ZeroInt()) {
+			if slashFromAssetsPool.TotalAmount.IsNil() || slashFromAssetsPool.TotalAmount.LT(sdkmath.ZeroInt()) {
 				return ErrInvalidGenesisData.Wrapf(
 					"ValidateSlashStates: invalid slashing amount from the assets pool, it's nil or negative: %+v",
 					slash,
 				)
 			}
+			if slashFromAssetsPool.SnapshotTotalShare.IsNil() || slashFromAssetsPool.SnapshotTotalShare.LT(sdkmath.LegacyZeroDec()) {
+				return ErrInvalidGenesisData.Wrapf(
+					"ValidateSlashStates: invalid snapshot total share from the assets pool, it's nil or negative: %+v",
+					slash,
+				)
+			}
 			return nil
 		}
-		SlashFromAssetsPooLSeenFunc := func(slashFromAssetsPool SlashAssetAmount) (string, struct{}) {
+		SlashFromAssetsPooLSeenFunc := func(slashFromAssetsPool SlashFromAssetPool) (string, struct{}) {
 			return slashFromAssetsPool.AssetID, struct{}{}
 		}
 		_, err = utils.CommonValidation(slash.Info.ExecutionInfo.SlashAssetsPool, SlashFromAssetsPooLSeenFunc, SlashFromAssetsPoolVal)

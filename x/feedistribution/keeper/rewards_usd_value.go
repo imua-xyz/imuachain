@@ -1,14 +1,13 @@
 package keeper
 
 import (
-	"sort"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/utils"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 )
 
 // calculateRewardUSDValue calculates the USD value of a specific reward asset.
@@ -205,50 +204,8 @@ func (k *Keeper) OperatorTotalRewardsUSDValue(
 	return usdValueSources, totalUSDValue, nil
 }
 
-// convertSlashStates converts a nested map (avs -> assetID -> amount)
-// into a sorted slice of SlashFromUnclaimedRewards.
-// The result is deterministic:
-// - the outer slice is sorted by avs
-// - the inner slice (SlashAssets) is sorted by assetID
-func convertSlashStates(
-	slashStatesMap map[string]map[string]sdkmath.Int,
-) []operatortypes.SlashFromUnclaimedRewards {
-	// collect and sort AVS keys
-	avsList := make([]string, 0, len(slashStatesMap))
-	for avs := range slashStatesMap {
-		avsList = append(avsList, avs)
-	}
-	sort.Strings(avsList)
-
-	result := make([]operatortypes.SlashFromUnclaimedRewards, 0, len(avsList))
-	for _, avs := range avsList {
-		assetMap := slashStatesMap[avs]
-
-		// collect and sort asset IDs
-		assetIDs := make([]string, 0, len(assetMap))
-		for assetID := range assetMap {
-			assetIDs = append(assetIDs, assetID)
-		}
-		sort.Strings(assetIDs)
-
-		// build sorted SlashAssets
-		slashAssets := make([]operatortypes.SlashAssetAmount, 0, len(assetIDs))
-		for _, assetID := range assetIDs {
-			slashAssets = append(slashAssets, operatortypes.SlashAssetAmount{
-				AssetID: assetID,
-				Amount:  assetMap[assetID],
-			})
-		}
-
-		// append to result
-		result = append(result, operatortypes.SlashFromUnclaimedRewards{
-			Avs:         avs,
-			SlashAssets: slashAssets,
-		})
-	}
-	return result
-}
-
+// SlashOperatorUnclaimedRewards slashes the unclaimed rewards for a specific operator.
+// It returns the slashed rewards from each reward source AVS.
 func (k *Keeper) SlashOperatorUnclaimedRewards(
 	ctx sdk.Context, operator string,
 	slashSources map[string]map[string]interface{},
@@ -259,41 +216,38 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 	} else if slashProportion.IsNegative() || slashProportion.GT(sdkmath.LegacyOneDec()) {
 		return nil, feedistributiontypes.ErrFailedToSlashUnclaimedRewards.Wrapf("invalid slash proportion:%s", slashProportion)
 	}
-	slashStatesMap := make(map[string]map[string]sdkmath.Int, 0)
+
+	result := make([]operatortypes.SlashFromUnclaimedRewards, 0)
 	opFunc := func(rewardSourceAVS string, unclaimedRewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error) {
 		relatedAssets, avsExist := slashSources[rewardSourceAVS]
 		if !avsExist || len(relatedAssets) == 0 {
 			return false, false, nil
 		}
+		slashFromUnclaimedRewards := operatortypes.SlashFromUnclaimedRewards{
+			Avs:                       rewardSourceAVS,
+			OutstandingRewardsSlashed: sdk.NewDecCoins(),
+			CompoundingRewardsSlashed: feedistributiontypes.NewCompoundingRewards(),
+		}
+
 		outstandingRewardsSlashedTotal := sdk.NewDecCoins()
 		compoundingRewardsSlashedTotal := feedistributiontypes.NewCompoundingRewards()
-		isChanged := false
+		hasSlashedRewards := false
 		// iterate over the outstanding rewards
 		for _, outstandingReward := range unclaimedRewards.OutstandingRewards {
 			if outstandingReward.Amount.IsPositive() {
 				// slash from outstanding rewards
-				assetID, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, rewardSourceAVS, outstandingReward.Denom)
+				assetID, err := k.GetAVSRewardAssetIDByDenomination(ctx, rewardSourceAVS, outstandingReward.Denom)
 				if err != nil {
 					return true, false, err
 				}
 				_, assetExist := relatedAssets[assetID]
 				if assetExist {
 					slashAmountDec := outstandingReward.Amount.Mul(slashProportion)
-					outstandingRewardsSlashedTotal = outstandingRewardsSlashedTotal.Add(sdk.NewDecCoinFromDec(outstandingReward.Denom, slashAmountDec))
-					slashAmountInt := feedistributiontypes.UnscaleDecToInt(slashAmountDec, rewardAsset.RewardAssetInfo.DenominationExponent)
-
-					_, slashAVSExist := slashStatesMap[rewardSourceAVS]
-					if !slashAVSExist {
-						slashStatesMap[rewardSourceAVS] = make(map[string]sdkmath.Int)
-					}
-					_, slashAssetExist := slashStatesMap[rewardSourceAVS][assetID]
-					if !slashAssetExist {
-						slashStatesMap[rewardSourceAVS][assetID] = sdkmath.ZeroInt()
-					}
-					slashStatesMap[rewardSourceAVS][assetID] = slashStatesMap[rewardSourceAVS][assetID].Add(slashAmountInt)
-
-					if !isChanged {
-						isChanged = true
+					slashedDecCoin := sdk.NewDecCoinFromDec(outstandingReward.Denom, slashAmountDec)
+					outstandingRewardsSlashedTotal = outstandingRewardsSlashedTotal.Add(slashedDecCoin)
+					slashFromUnclaimedRewards.OutstandingRewardsSlashed = slashFromUnclaimedRewards.OutstandingRewardsSlashed.Add(slashedDecCoin)
+					if !hasSlashedRewards {
+						hasSlashedRewards = true
 					}
 				}
 			}
@@ -301,43 +255,34 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 			// slash from the rewards earned by compounding
 			for _, rewardsPerAsset := range compoundingRewards {
 				for _, reward := range rewardsPerAsset.Rewards {
-					assetID, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, rewardsPerAsset.AVSAddress, reward.Denom)
+					assetID, err := k.GetAVSRewardAssetIDByDenomination(ctx, rewardsPerAsset.AVSAddress, reward.Denom)
 					if err != nil {
 						return true, false, err
 					}
 					_, assetExist := relatedAssets[assetID]
 					if assetExist {
 						slashAmountDec := reward.Amount.Mul(slashProportion)
-						newCompoundingRewardsSlashed := feedistributiontypes.CompoundingRewardsPerAsset{
+						newCompoundingRewardsSlashed := imuachaintypes.CompoundingRewardsPerAsset{
 							RewardDenomination: outstandingReward.Denom,
-							Rewards: feedistributiontypes.NewCommonAVSRewards(
-								feedistributiontypes.CommonAVSRewardData{
+							Rewards: imuachaintypes.NewCommonAVSRewards(
+								imuachaintypes.CommonAVSRewardData{
 									AVSAddress: rewardsPerAsset.AVSAddress,
 									Rewards:    sdk.NewDecCoins(sdk.NewDecCoinFromDec(reward.Denom, slashAmountDec)),
 								}),
 						}
 						compoundingRewardsSlashedTotal = compoundingRewardsSlashedTotal.Add(newCompoundingRewardsSlashed)
-						slashAmountInt := feedistributiontypes.UnscaleDecToInt(slashAmountDec, rewardAsset.RewardAssetInfo.DenominationExponent)
-
-						_, slashAVSExist := slashStatesMap[rewardsPerAsset.AVSAddress]
-						if !slashAVSExist {
-							slashStatesMap[rewardsPerAsset.AVSAddress] = make(map[string]sdkmath.Int)
-						}
-						_, slashAssetExist := slashStatesMap[rewardsPerAsset.AVSAddress][assetID]
-						if !slashAssetExist {
-							slashStatesMap[rewardsPerAsset.AVSAddress][assetID] = sdkmath.ZeroInt()
-						}
-						slashStatesMap[rewardsPerAsset.AVSAddress][assetID] = slashStatesMap[rewardsPerAsset.AVSAddress][assetID].Add(slashAmountInt)
-
-						if !isChanged {
-							isChanged = true
+						slashFromUnclaimedRewards.CompoundingRewardsSlashed = feedistributiontypes.CompoundingRewards(slashFromUnclaimedRewards.CompoundingRewardsSlashed).Add(newCompoundingRewardsSlashed)
+						if !hasSlashedRewards {
+							hasSlashedRewards = true
 						}
 					}
 				}
 			}
 		}
 
-		if isChanged {
+		if hasSlashedRewards {
+			result = append(result, slashFromUnclaimedRewards)
+
 			unclaimedRewards.OutstandingRewardsSlashed = unclaimedRewards.OutstandingRewardsSlashed.Add(outstandingRewardsSlashedTotal...)
 			unclaimedRewards.CompoundingRewardsSlashed = feedistributiontypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsSlashed).Add(compoundingRewardsSlashedTotal...)
 
@@ -352,6 +297,5 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 		return nil, err
 	}
 
-	// convert the slashed states map to sorted slice and return.
-	return convertSlashStates(slashStatesMap), nil
+	return result, nil
 }

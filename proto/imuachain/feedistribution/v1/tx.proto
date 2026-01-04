@@ -9,6 +9,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "imuachain/feedistribution/v1/distribution.proto";
 import "imuachain/feedistribution/v1/params.proto";
+import "imuachain/types/v1/reward.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/feedistribution/types";
 
@@ -97,7 +98,7 @@ message MsgClaimAndWithdrawDogfoodReward {
 // MsgClaimAndWithdrawDogfoodRewardResponse is response to claim and withdraw the dogfood reward
 message MsgClaimAndWithdrawDogfoodRewardResponse {
   // claimed_rewards is the claimed rewards
-  repeated CommonAVSRewardData claimed_rewards = 1 [(gogoproto.nullable) = false];
+  repeated imuachain.types.v1.CommonAVSRewardData claimed_rewards = 1 [(gogoproto.nullable) = false];
   // withdraw_amount is the withdrawn reward
   repeated cosmos.base.v1beta1.Coin withdrawn_amount = 2 [
     (gogoproto.nullable) = false,

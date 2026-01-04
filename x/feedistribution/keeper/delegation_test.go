@@ -21,6 +21,7 @@ import (
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 )
 
 type markChangedDelegationsArgs struct {
@@ -106,7 +107,7 @@ func (suite *KeeperTestSuite) defaultDelegationRewardStates() expectedDelegation
 	// the period in current rewards starts from 1.
 	defaultOperatorCurrentPeriod := uint64(1)
 	defaultOperatorHistoricalReward := feedistributiontypes.OperatorHistoricalRewards{
-		CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData(nil),
+		CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData(nil),
 		// set the reference count to 2 because it will be referenced by the current reward and a default delegation.
 		ReferenceCount: 2,
 	}
@@ -314,7 +315,7 @@ func (suite *KeeperTestSuite) calcExpectedOperatorAssetReward(
 	operatorAssetUSDValue, operatorTotalUSDValue, stakerTotalStake,
 	rewardPerEpoch, communityTax, commissionRate sdk.Dec,
 	epochNumber int, avsAddr, rewardAssetSymbol string,
-) (feedistributiontypes.CommonAVSRewardData, feedistributiontypes.CommonAVSRewardData) {
+) (imuachaintypes.CommonAVSRewardData, imuachaintypes.CommonAVSRewardData) {
 	totalReward := rewardPerEpoch.MulInt64(int64(epochNumber))
 	proportion := math.LegacyOneDec().Sub(communityTax)
 	totalRewardsExcludeCommunityTax := totalReward.MulTruncate(proportion)
@@ -327,10 +328,10 @@ func (suite *KeeperTestSuite) calcExpectedOperatorAssetReward(
 	totalAssetReward := totalRewardForStakers.MulTruncate(operatorAssetUSDValue.QuoTruncate(operatorTotalUSDValue))
 	rewardRito := totalAssetReward.QuoTruncate(stakerTotalStake)
 
-	return feedistributiontypes.CommonAVSRewardData{
+	return imuachaintypes.CommonAVSRewardData{
 			AVSAddress: avsAddr,
 			Rewards:    sdk.NewDecCoins(sdk.NewDecCoinFromDec(rewardAssetSymbol, totalAssetReward)),
-		}, feedistributiontypes.CommonAVSRewardData{
+		}, imuachaintypes.CommonAVSRewardData{
 			AVSAddress: avsAddr,
 			Rewards:    sdk.NewDecCoins(sdk.NewDecCoinFromDec(rewardAssetSymbol, rewardRito)),
 		}
@@ -438,7 +439,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 						sdk.ZeroDec(), 1, suite.DogfoodAVSAddr, utils.BaseDenom,
 					)
 					operatorAssetState.OperatorHistoricalRewards[1] = feedistributiontypes.OperatorHistoricalRewards{
-						CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{rewardRatio},
+						CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData{rewardRatio},
 						ReferenceCount:         uint32(1 + len(suite.testStakers)),
 					}
 					defaultDelegationRewardState.OperatorAssetStates[defaultOperator.String()][suite.AssetIDs[0]] = operatorAssetState
@@ -499,7 +500,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				operatorPower := suite.Powers[operatorIndex]
 				totalPower := suite.TotalPower
 				delegationStake := operatorPower
-				rewardRatio := feedistributiontypes.CommonAVSRewardData{}
+				rewardRatio := imuachaintypes.CommonAVSRewardData{}
 				stakerReward := sdk.DecCoins{}
 				var numEpochsNoPowerChange int
 				for i := 0; i < distributionCount; i++ {
@@ -541,7 +542,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 				// Only one delegation refers to the operator period, and each change in the delegation
 				// will increment the period. So only the period at (0 + distributionCount) needs to be stored.
 				operatorAssetState.OperatorHistoricalRewards[uint64(distributionCount)] = feedistributiontypes.OperatorHistoricalRewards{
-					CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{rewardRatio},
+					CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData{rewardRatio},
 					ReferenceCount:         2,
 				}
 				defaultDelegationRewardState.OperatorAssetStates[testOperator.String()][suite.AssetIDs[0]] = operatorAssetState
@@ -687,7 +688,7 @@ func (suite *KeeperTestSuite) TestDistributeRewardsToDelegations() {
 						2: {
 							// it will only be referenced by the current reward
 							ReferenceCount:         1,
-							CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{assetRewardRatio2.Add(assetRewardRatio1)},
+							CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData{assetRewardRatio2.Add(assetRewardRatio1)},
 						},
 					},
 				}
@@ -846,7 +847,7 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 								OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
 									1: {
 										ReferenceCount: 2,
-										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+										CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData{
 											operatorAsset1RewardRatio1.Add(operatorAsset1RewardRatio2),
 										},
 									},
@@ -865,7 +866,7 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 								OperatorHistoricalRewards: map[uint64]feedistributiontypes.OperatorHistoricalRewards{
 									1: {
 										ReferenceCount: 2,
-										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+										CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData{
 											operatorAsset2RewardRatio,
 										},
 									},
@@ -898,7 +899,7 @@ func (suite *KeeperTestSuite) TestClaimDelegationRewards() {
 			// check the state after unit test
 			suite.checkDelegationStates(&expectedStates)
 
-			suite.Require().Equal(feedistributiontypes.CommonAVSRewards{
+			suite.Require().Equal(imuachaintypes.CommonAVSRewards{
 				{
 					AVSAddress: suite.DogfoodAVSAddr,
 					Rewards:    expectedStates.StakerClaimedRewards[testStakerID].OutstandingRewards,
@@ -977,7 +978,7 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 				// The reward ratio caused by the slash event should be zero, as the current rewards are empty —
 				// the rewards for epoch 1 have already been distributed. The reward ratio will be non-zero if
 				// there was no new delegation in epoch 1.
-				rewardRatioForSlash := feedistributiontypes.CommonAVSRewardData{}
+				rewardRatioForSlash := imuachaintypes.CommonAVSRewardData{}
 				rewardEpoch1 := rewardRatioEpoch1.Rewards.MulDecTruncate(sdk.NewDec(suite.Powers[0]))
 
 				stakerTotalStake := operatorPowerAfterSlash
@@ -1009,14 +1010,14 @@ func (suite *KeeperTestSuite) TestSlashedDelegationRewards() {
 									2: {
 										// it's only referenced by the slash event.
 										ReferenceCount: 1,
-										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+										CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData{
 											rewardRatioEpoch1.Add(rewardRatioForSlash),
 										},
 									},
 									3: {
 										// it's only referenced by the current reward
 										ReferenceCount: 1,
-										CumulativeRewardRatios: []feedistributiontypes.CommonAVSRewardData{
+										CumulativeRewardRatios: []imuachaintypes.CommonAVSRewardData{
 											rewardRatioEpoch1.Add(rewardRatioForSlash).Add(rewardRatioForEpoch2And3),
 										},
 									},
@@ -1162,10 +1163,10 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.Require().NoError(err)
 				expectedOutstandingRewards := stakingRewardsEpoch1.Rewards.Add(stakingRewardsEpoch2.Rewards...)
 				suite.Require().Equal(expectedOutstandingRewards, operatorUnclaimedRewards.OutstandingRewards)
-				expectedCompoundingRewards := []feedistributiontypes.CompoundingRewardsPerAsset{
+				expectedCompoundingRewards := []imuachaintypes.CompoundingRewardsPerAsset{
 					{
 						RewardDenomination: utils.BaseDenom,
-						Rewards: feedistributiontypes.NewCommonAVSRewards(feedistributiontypes.CommonAVSRewardData{
+						Rewards: imuachaintypes.NewCommonAVSRewards(imuachaintypes.CommonAVSRewardData{
 							AVSAddress: suite.DogfoodAVSAddr,
 							Rewards:    compoundingRewardsEpoch2.Rewards,
 						}),
@@ -1259,10 +1260,10 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				operatorUnclaimedRewards, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, suite.testOperators[0].String(), suite.DogfoodAVSAddr)
 				suite.Require().NoError(err)
 				suite.Require().Equal(totalStakingRewards.Sub(stakerStakingRewards), operatorUnclaimedRewards.OutstandingRewards)
-				expectedCompoundingRewards := []feedistributiontypes.CompoundingRewardsPerAsset{
+				expectedCompoundingRewards := []imuachaintypes.CompoundingRewardsPerAsset{
 					{
 						RewardDenomination: utils.BaseDenom,
-						Rewards: feedistributiontypes.NewCommonAVSRewards(feedistributiontypes.CommonAVSRewardData{
+						Rewards: imuachaintypes.NewCommonAVSRewards(imuachaintypes.CommonAVSRewardData{
 							AVSAddress: suite.DogfoodAVSAddr,
 							Rewards:    compoundingRewardsEpoch2.Rewards.Sub(stakerCompoundingRewards),
 						}),
@@ -1535,23 +1536,26 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 					ExecutionInfo: &operatortypes.SlashExecutionInfo{
 						SlashProportion: actualSlashProportion,
 						SlashValue:      totalSlashedAmount,
-						SlashAssetsPool: []operatortypes.SlashAssetAmount{
+						SlashAssetsPool: []operatortypes.SlashFromAssetPool{
 							{
-								AssetID: assetstype.ImuachainAssetID,
-								Amount:  slashedAmountFromAssetPool,
+								AssetID:            assetstype.ImuachainAssetID,
+								TotalAmount:        slashedAmountFromAssetPool,
+								SnapshotTotalShare: sdk.NewDecFromInt(feedistributiontypes.UnscaleDecToInt(operatorInitialPower, suite.Assets[1].Decimals)),
 							},
 						},
 						UndelegationFilterHeight: infractionHeight,
 						HistoricalVotingPower:    infractionPower,
 						SlashUnclaimedRewards: []operatortypes.SlashFromUnclaimedRewards{
 							{
-								Avs: suite.DogfoodAVSAddr,
-								SlashAssets: []operatortypes.SlashAssetAmount{
-									{
-										AssetID: assetstype.ImuachainAssetID,
-										Amount:  slashedAmountDecFromOutStandingReward.TruncateInt().Add(slashedAmountDecFromCompoundingReward.TruncateInt()),
-									},
-								},
+								Avs:                       suite.DogfoodAVSAddr,
+								OutstandingRewardsSlashed: sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedAmountDecFromOutStandingReward)),
+								CompoundingRewardsSlashed: feedistributiontypes.NewCompoundingRewards(imuachaintypes.CompoundingRewardsPerAsset{
+									RewardDenomination: utils.BaseDenom,
+									Rewards: imuachaintypes.NewCommonAVSRewards(imuachaintypes.CommonAVSRewardData{
+										AVSAddress: suite.DogfoodAVSAddr,
+										Rewards:    sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedAmountDecFromCompoundingReward)),
+									}),
+								}),
 							},
 						},
 					},
@@ -1560,14 +1564,19 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 
 				operatorSlashEvents, err := suite.App.DistrKeeper.GetOperatorSlashEvents(suite.Ctx, suite.testOperators[0].String(), assetstype.ImuachainAssetID, dogfoodtypes.DefaultEpochIdentifier)
 				suite.Require().NoError(err)
-				suite.Require().Equal([]string{assetstype.ImuachainAssetID}, operatorSlashEvents[0].OperatorSlashEvent.SlashedRewardAssets)
+				suite.Require().Equal([]feedistributiontypes.AVSRewardAssetsList{
+					{
+						AVSAddress: suite.DogfoodAVSAddr,
+						AssetIDs:   []string{assetstype.ImuachainAssetID},
+					},
+				}, operatorSlashEvents[0].OperatorSlashEvent.SlashedOutstandingRewardsAssets)
 
 				unclaimedRewardsAfterSlash, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, suite.testOperators[0].String(), suite.DogfoodAVSAddr)
 				suite.Require().NoError(err)
 				outstandingRewardsSlashed := sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedAmountDecFromOutStandingReward))
-				compoundingRewardsSlashed := feedistributiontypes.NewCompoundingRewards(feedistributiontypes.CompoundingRewardsPerAsset{
+				compoundingRewardsSlashed := feedistributiontypes.NewCompoundingRewards(imuachaintypes.CompoundingRewardsPerAsset{
 					RewardDenomination: utils.BaseDenom,
-					Rewards: feedistributiontypes.NewCommonAVSRewards(feedistributiontypes.CommonAVSRewardData{
+					Rewards: imuachaintypes.NewCommonAVSRewards(imuachaintypes.CommonAVSRewardData{
 						AVSAddress: suite.DogfoodAVSAddr,
 						Rewards:    sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedAmountDecFromCompoundingReward)),
 					}),
@@ -1726,13 +1735,13 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 	testcases := []struct {
 		name     string
-		malleate func() (string, feedistributiontypes.CommonAVSRewards, feedistributiontypes.CommonAVSRewards)
+		malleate func() (string, imuachaintypes.CommonAVSRewards, imuachaintypes.CommonAVSRewards)
 		expPass  bool
 	}{
 		{
 			name:    "pass - query unclaimed rewards with no triggered actions (pure accumulation)",
 			expPass: true,
-			malleate: func() (string, feedistributiontypes.CommonAVSRewards, feedistributiontypes.CommonAVSRewards) {
+			malleate: func() (string, imuachaintypes.CommonAVSRewards, imuachaintypes.CommonAVSRewards) {
 				// 1. Setup: Register asset and update dogfood list
 				testStakerID := suite.StakerIDs[0]
 
@@ -1759,19 +1768,19 @@ func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 
 				// Return stakerID, expected Staking Rewards, expected Compounding Rewards (0 in this case)
 				return testStakerID,
-					feedistributiontypes.CommonAVSRewards{
+					imuachaintypes.CommonAVSRewards{
 						{
 							AVSAddress: suite.DogfoodAVSAddr,
 							Rewards:    expectedStakingRewards,
 						},
 					},
-					([]feedistributiontypes.CommonAVSRewardData)(nil)
+					([]imuachaintypes.CommonAVSRewardData)(nil)
 			},
 		},
 		{
 			name:    "pass - verify unclaimed rewards are zero after claim(triggered by new delegation) and before next epoch accumulation",
 			expPass: true,
-			malleate: func() (string, feedistributiontypes.CommonAVSRewards, feedistributiontypes.CommonAVSRewards) {
+			malleate: func() (string, imuachaintypes.CommonAVSRewards, imuachaintypes.CommonAVSRewards) {
 				// 1. Setup & Accumulate
 				testStakerID := suite.StakerIDs[0]
 				testOperator := suite.Operators[0]
@@ -1796,14 +1805,14 @@ func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 				// Since undelegation triggers an auto-claim, the "Unclaimed Rewards" in the store
 				// should be cleared. The expected return value for this test case is EMPTY.
 				return testStakerID,
-					([]feedistributiontypes.CommonAVSRewardData)(nil), // Expecting 0 rewards
-					([]feedistributiontypes.CommonAVSRewardData)(nil)
+					([]imuachaintypes.CommonAVSRewardData)(nil), // Expecting 0 rewards
+					([]imuachaintypes.CommonAVSRewardData)(nil)
 			},
 		},
 		{
 			name:    "pass - verify rewards re-accumulate correctly for the remaining stake after a cleared epoch",
 			expPass: true,
-			malleate: func() (string, feedistributiontypes.CommonAVSRewards, feedistributiontypes.CommonAVSRewards) {
+			malleate: func() (string, imuachaintypes.CommonAVSRewards, imuachaintypes.CommonAVSRewards) {
 				// 1. Setup & Accumulate (Same as above)
 				testStakerID := suite.StakerIDs[0]
 				testOperator := suite.Operators[0]
@@ -1847,14 +1856,14 @@ func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 
 				// Return only the NEW rewards generated in Phase 2
 				return testStakerID,
-					feedistributiontypes.CommonAVSRewards{{AVSAddress: suite.DogfoodAVSAddr, Rewards: expectedNewStakingRewards}},
-					([]feedistributiontypes.CommonAVSRewardData)(nil)
+					imuachaintypes.CommonAVSRewards{{AVSAddress: suite.DogfoodAVSAddr, Rewards: expectedNewStakingRewards}},
+					([]imuachaintypes.CommonAVSRewardData)(nil)
 			},
 		},
 		{
 			name:    "pass - verify compounding rewards when operator reward compounding is enabled",
 			expPass: true,
-			malleate: func() (string, feedistributiontypes.CommonAVSRewards, feedistributiontypes.CommonAVSRewards) {
+			malleate: func() (string, imuachaintypes.CommonAVSRewards, imuachaintypes.CommonAVSRewards) {
 				// 1. enable the reward compounding and add the reward asset to the support list of dogfood.
 				err := suite.App.OperatorKeeper.UpdateRewardCompoundingFlag(suite.Ctx, suite.Operators[0], false)
 				suite.Require().NoError(err)
@@ -1885,7 +1894,7 @@ func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 					feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
 				expectedOperatorStakingRewardEpoch1 := operatorStakingRewardRatio.Rewards.MulDecTruncate(sdk.NewDec(suite.Powers[0]))
-				suite.Require().Equal(feedistributiontypes.CommonAVSRewards{{AVSAddress: suite.DogfoodAVSAddr, Rewards: expectedOperatorStakingRewardEpoch1}}, stakingRewards)
+				suite.Require().Equal(imuachaintypes.CommonAVSRewards{{AVSAddress: suite.DogfoodAVSAddr, Rewards: expectedOperatorStakingRewardEpoch1}}, stakingRewards)
 
 				// 4. calculate the voting power of stakingRewards
 				avsRewardAssets, err := suite.App.DistrKeeper.GetAllRewardAssetsByAVS(suite.Ctx, suite.DogfoodAVSAddr)
@@ -1912,7 +1921,7 @@ func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 					feedistributiontypes.DefaultParams().CommunityTax, sdk.ZeroDec(),
 					1, suite.DogfoodAVSAddr, utils.BaseDenom)
 				newStakingRewards := operatorStakingRewardRatio.Rewards.MulDecTruncate(sdk.NewDec(suite.Powers[0]))
-				expectedTotalStakingRewards := stakingRewards.Add(feedistributiontypes.CommonAVSRewardData{AVSAddress: suite.DogfoodAVSAddr, Rewards: newStakingRewards})
+				expectedTotalStakingRewards := stakingRewards.Add(imuachaintypes.CommonAVSRewardData{AVSAddress: suite.DogfoodAVSAddr, Rewards: newStakingRewards})
 
 				rewardAmount := feedistributiontypes.UnscaleDecToInt(rewardAmountDec, imRewardAssetInfo.DenominationExponent)
 				operatorCompoundingRewards, _ := suite.calcExpectedOperatorAssetReward(
@@ -1925,7 +1934,7 @@ func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 				totalStakingRewardAmount := expectedTotalStakingRewards.RewardsOf(suite.DogfoodAVSAddr).AmountOf(imRewardAssetInfo.RewardDenomination)
 				operatorUnclaimedRewardAmount := operatorStakingRewardEpoch1.Add(operatorStakingRewardEpoch2).Rewards.AmountOf(imRewardAssetInfo.RewardDenomination)
 				compoundingRewardProportion := totalStakingRewardAmount.QuoTruncate(operatorUnclaimedRewardAmount)
-				expectedCompoundingReward, err := feedistributiontypes.CommonAVSRewards{operatorCompoundingRewards}.MulDecTruncate(compoundingRewardProportion)
+				expectedCompoundingReward, err := imuachaintypes.CommonAVSRewards{operatorCompoundingRewards}.MulDecTruncate(compoundingRewardProportion)
 				suite.NoError(err)
 
 				return testStakerID,

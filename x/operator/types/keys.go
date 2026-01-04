@@ -45,7 +45,9 @@ const (
 
 	prefixOperatorSlashInfo
 
-	prefixSlashAssetsState
+	// prefixSlashStakerShareSnapshot is the prefix to store detailed staker delegation share
+	// snapshot information for slashed asset pools, used for slash veto scenarios.
+	prefixSlashStakerShareSnapshot
 
 	// BytePrefixForOperatorAndChainIDToConsKey is the prefix to store the consensus key for
 	// an operator for a chainID.
@@ -106,11 +108,11 @@ var (
 	// operator + '/' + AVSAddr + '/' + slashId -> OperatorSlashInfo
 	KeyPrefixOperatorSlashInfo = []byte{prefixOperatorSlashInfo}
 
-	// KeyPrefixSlashAssetsState key-value:
-	// processedSlashHeight + '/' + assetID -> SlashAmount
-	// processedSlashHeight + '/' + assetID + '/' + stakerID -> SlashAmount
-	// processedSlashHeight + '/' + assetID + '/' + operatorAddr -> SlashAmount
-	KeyPrefixSlashAssetsState = []byte{prefixSlashAssetsState}
+	// KeyPrefixSlashStakerShareSnapshot key-value:
+	// slashID + '/' + assetID + '/' + stakerID -> types.DecValueField
+	// This stores detailed staker delegation share snapshot information for slashed asset pools,
+	// used for slash veto scenarios to restore the state before the slash was applied.
+	KeyPrefixSlashStakerShareSnapshot = []byte{prefixSlashStakerShareSnapshot}
 
 	// KeyPrefixVotingPowerSnapshot key-value:
 	// In general, the key used to store the voting power snapshot is based on the epoch number as

@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	stakingkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 )
 
 type (
@@ -501,8 +502,8 @@ func (k Keeper) BatchNormalizeClaimedRewardDecimals(ctx sdk.Context, rewards []f
 	return out, nil
 }
 
-func (k Keeper) BatchNormalizeRewardDecimals(ctx sdk.Context, rewards feedistributiontypes.CommonAVSRewards) (feedistributiontypes.CommonAVSRewards, error) {
-	out := append(feedistributiontypes.CommonAVSRewards(nil), rewards...)
+func (k Keeper) BatchNormalizeRewardDecimals(ctx sdk.Context, rewards imuachaintypes.CommonAVSRewards) (imuachaintypes.CommonAVSRewards, error) {
+	out := append(imuachaintypes.CommonAVSRewards(nil), rewards...)
 	for i := range out {
 		normalized, err := k.NormalizeRewardDecCoins(ctx, out[i].AVSAddress, out[i].Rewards)
 		if err != nil {
@@ -539,7 +540,7 @@ func (k Keeper) DecCoinsToRewardInfos(ctx sdk.Context, avsAddr string, rewards s
 func (k Keeper) MergeStakerRewards(
 	ctx sdk.Context,
 	claimedRewards []feedistributiontypes.StakerClaimedRewardsPerAVS,
-	unclaimedStakingRewards, unclaimedCompoundingRewards []feedistributiontypes.CommonAVSRewardData,
+	unclaimedStakingRewards, unclaimedCompoundingRewards []imuachaintypes.CommonAVSRewardData,
 ) ([]feedistributiontypes.StakerRewardsPerAVS, error) {
 	// Create a map to aggregate rewards by AVS address
 	rewardMap := make(map[string]feedistributiontypes.StakerRewardsPerAVS)
