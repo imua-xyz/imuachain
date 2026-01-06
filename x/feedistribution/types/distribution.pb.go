@@ -607,6 +607,27 @@ type OperatorUnclaimedRewards struct {
 	// outstanding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted)
 	// for outstanding rewards. This tracks the rewards that were originally targeted for slashing but were
 	// restored due to a slash veto.
+	// We introduce separate state variables to store vetoed rewards instead of directly adding them back
+	// to `outstanding_rewards` or `rewards_from_compounding`. This design choice addresses the following issues:
+	//
+	//  1. Conflict with F1 Mechanism:
+	//     If we simply added rewards back, the F1 calculation for stakers would still account for the historical
+	//     slash event, resulting in lower calculated rewards. However, the operator's `outstanding_rewards` pool
+	//     would be fully restored. This creates a discrepancy where `total_staker_rewards < operator_outstanding_rewards`,
+	//     breaking the compounding reward calculation which relies on the ratio of these two values.
+	//
+	//  2. Infeasibility of Deleting Slash Events:
+	//     Removing the F1 slash event during a veto is not a viable solution. While it would fix future calculations,
+	//     it cannot retroactively correct delegations that claimed rewards in the window between the Slash execution
+	//     and the Veto execution, leading to state inconsistencies.
+	//
+	//  3. The Solution & Trade-off:
+	//     We store reverted rewards separately and distribute them to *current* unclaimed stakers of the operator.
+	//     This logic mimics the compounding reward distribution (proportional to the staker's reward share of outstanding rewards).
+	//
+	//     While slashed staking assets (principal) are returned precisely to the affected stakers, slashed *unclaimed rewards*
+	//     are returned to the operator's collective staker pool. This effectively restores the operator's reward-earning
+	//     capacity without the extreme complexity required to track and restore exact reward ownership for every reverted slash.
 	OutstandingRewardsVetoed github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,5,rep,name=outstanding_rewards_vetoed,json=outstandingRewardsVetoed,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"outstanding_rewards_vetoed"`
 	// compounding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted) for
 	// compounding rewards. This tracks the rewards that were originally targeted for slashing but were restored

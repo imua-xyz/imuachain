@@ -145,4 +145,9 @@ var (
 		ModuleName, 31,
 		"operator name already exists",
 	)
+
+	ErrStoreStakerShareSnapshot = errorsmod.Register(
+		ModuleName, 32,
+		"failed to store the staker share snapshot",
+	)
 )

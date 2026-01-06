@@ -177,6 +177,21 @@ enum SlashType {
   SLASH_TYPE_NO_INSTANTANEOUS_SLASH = 2;
 }
 
+// SlashRewardAmountPerAVS represents the slashed amount from a reward undelegation for a specific
+// reward source AVS. When slashing a reward asset undelegation, we need to track the slashed amount
+// from each AVS separately, as rewards may come from multiple AVSs. This message is used in
+// SlashFromUndelegation to record the breakdown of slashed amounts from each reward source AVS.
+message SlashRewardAmountPerAVS {
+  // avs_address is the AVS address the rewards come from.
+  string avs_address = 1;
+  // amount is the slashed undelegation amount from specific AVS.
+  string amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 // SlashFromUndelegation records the slash detail from the undelegation
 message SlashFromUndelegation {
   // staker_id is the staker id.
@@ -194,6 +209,39 @@ message SlashFromUndelegation {
   uint64 undelegation_id = 4;
   // reward_asset indicates whether the undelegation is for rewards
   bool reward_asset = 5;
+  // slash_reward_amount_per_avs records the slashed amount from each reward source AVS,
+  // which can be used in the slash veto scenario.
+  // This field is only used when the undelegation is for rewards.
+  repeated SlashRewardAmountPerAVS slash_reward_amount_per_avs = 6 [(gogoproto.nullable) = false];
+}
+
+// StakerUndelegatableSharePerAVS records the undelegatable share of reward from a specific reward source AVS.
+message StakerUndelegatableSharePerAVS {
+  // avs_address is the AVS address the rewards come from.
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
+  // reward_undelegatable_share is the undelegatable share of reward when the slash occurs.
+  string reward_undelegatable_share = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// StakerUndelegatableSharesSnapshot records the undelegatable shares including staking and reward assets of
+// the staker when the slash occurs.
+// This snapshot is used for slash veto scenarios to calculate the slashed amount of each related staker
+// along with SlashFromAssetPool.
+// slashedAmount = share * SlashFromAssetPool.total_amount / SlashFromAssetPool.snapshot_total_share
+// The slashID, assetID and stakerID are implicit within the store key.
+message StakerUndelegatableSharesSnapshot {
+  // staking_undelegatable_share is the undelegatable share of the staking asset when the slash occurs.
+  string staking_undelegatable_share = 1 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  // reward_undelegatable_share_breakdown records the undelegatable share of reward from each reward source AVS.
+  repeated StakerUndelegatableSharePerAVS reward_undelegatable_share_breakdown = 2 [(gogoproto.nullable) = false];
 }
 
 // SlashFromAssetPool records the slash info from a specific asset pool.
@@ -220,8 +268,8 @@ message SlashFromAssetPool {
 
 // SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards
 message SlashFromUnclaimedRewards {
-  // avs is the AVS from which the rewards were earned.
-  string avs = 1;
+  // avs_address is the AVS from which the rewards were earned.
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
   // outstanding_rewards_slashed represents the rewards that were slashed from the outstanding rewards.
   repeated cosmos.base.v1beta1.DecCoin outstanding_rewards_slashed = 2 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",

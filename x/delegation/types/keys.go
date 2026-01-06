@@ -61,10 +61,10 @@ var (
 	// KeyPrefixRestakerDelegationInfo restakerID = clientChainAddr+'_'+ImuachainIndex
 	// KeyPrefixRestakerDelegationInfo
 	// key-value:
-	// restakerID +'/'+assetID+'/'+operatorAddr -> DelegationAmounts
+	// restakerID +'/'+assetID+'/'+operatorAddr -> [DelegationAmounts]
 	KeyPrefixRestakerDelegationInfo = []byte{prefixRestakerDelegationInfo}
 
-	// KeyPrefixStakersByOperator key->value: operatorAddr+'/'+assetID -> stakerList
+	// KeyPrefixStakersByOperator key->value: operatorAddr+'/'+assetID -> [StakerList]
 	KeyPrefixStakersByOperator = []byte{prefixStakersByOperator}
 
 	// KeyPrefixLastUndelegationID key-value:
@@ -75,7 +75,7 @@ var (
 
 	// KeyPrefixUndelegationInfo singleRecordKey = operatorAddr+BlockHeight+UndelegationID+txHash
 	// it can be constructed by GetUndelegationRecordKey
-	// singleRecordKey -> UndelegationRecord
+	// singleRecordKey -> [UndelegationRecord]
 	KeyPrefixUndelegationInfo = []byte{prefixUndelegationInfo}
 	// KeyPrefixStakerUndelegationInfo restakerID+'/'+assetID+'/'+UndelegationID -> singleRecordKey
 	KeyPrefixStakerUndelegationInfo = []byte{prefixStakerUndelegationInfo}

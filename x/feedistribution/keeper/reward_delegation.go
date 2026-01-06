@@ -12,6 +12,7 @@ import (
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
+	operatorstypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier string, avsList, stakerList []string) error {
@@ -341,20 +342,21 @@ func (k Keeper) CompleteRewardUndelegation(ctx sdk.Context, record delegationtyp
 	return nil
 }
 
-func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion math.LegacyDec) error {
+func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion math.LegacyDec) ([]operatorstypes.SlashRewardAmountPerAVS, error) {
 	if record == nil || !record.RewardAsset {
 		// do nothing if it isn't a reward undelegation
-		return nil
+		return nil, nil
 	}
+	slashRewardAmountPerAVSList := make([]operatorstypes.SlashRewardAmountPerAVS, 0)
 	// iterate over all related AVSs in the undelegation record
 	for i, undelegationPerAVS := range record.RewardUndelegations {
 		rewardAsset, err := k.GetAVSRewardAsset(ctx, undelegationPerAVS.AvsAddress, record.AssetId)
 		if err != nil {
-			return feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
+			return nil, feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
 		}
 		stakerClaimedRewards, err := k.GetStakerClaimedRewards(ctx, record.StakerId, undelegationPerAVS.AvsAddress)
 		if err != nil {
-			return feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
+			return nil, feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
 		}
 		// calculate the slashed reward amount from each AVS
 		if undelegationPerAVS.ActualCompletedAmount.IsZero() {
@@ -366,12 +368,57 @@ func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.
 		expectedSlashAmount := slashProportion.MulInt(undelegationPerAVS.Amount).TruncateInt()
 		actualSlashAmount := math.MinInt(expectedSlashAmount, undelegationPerAVS.ActualCompletedAmount)
 		record.RewardUndelegations[i].ActualCompletedAmount = undelegationPerAVS.ActualCompletedAmount.Sub(actualSlashAmount)
-		stakerClaimedRewards.PendingSlashedRewards = stakerClaimedRewards.PendingSlashedRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(actualSlashAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
+		stakerClaimedRewards.PendingSlashedRewards = stakerClaimedRewards.PendingSlashedRewards.Add(
+			sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination,
+				feedistributiontypes.ScaleIntByDecimals(actualSlashAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 
 		err = k.SetStakerClaimedRewards(ctx, record.StakerId, undelegationPerAVS.AvsAddress, stakerClaimedRewards)
 		if err != nil {
-			return feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
+			return nil, feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
+		}
+		slashRewardAmountPerAVSList = append(slashRewardAmountPerAVSList, operatorstypes.SlashRewardAmountPerAVS{
+			AvsAddress: undelegationPerAVS.AvsAddress,
+			Amount:     actualSlashAmount,
+		})
+	}
+	return slashRewardAmountPerAVSList, nil
+}
+
+func (k Keeper) VetoSlashRewardUndelegation(ctx sdk.Context, stakerID, assetID string, slashRewardAmountPerAVSList []operatorstypes.SlashRewardAmountPerAVS) error {
+	for _, slashRewardAmountPerAVS := range slashRewardAmountPerAVSList {
+		stakerClaimedRewards, err := k.GetStakerClaimedRewards(ctx, stakerID, slashRewardAmountPerAVS.AvsAddress)
+		if err != nil {
+			return err
+		}
+		rewardAsset, err := k.GetAVSRewardAsset(ctx, slashRewardAmountPerAVS.AvsAddress, assetID)
+		if err != nil {
+			return err
+		}
+		// return the slashed amount to the withdrawable amount, because the slashed amount is 
+		// from pending undelegation rewards, the amount should be added to the withdrawable amount 
+		// if there isn't a slashing event.
+		stakerClaimedRewards.WithdrawableRewards = stakerClaimedRewards.WithdrawableRewards.Add(
+			sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination,
+				feedistributiontypes.ScaleIntByDecimals(slashRewardAmountPerAVS.Amount, rewardAsset.RewardAssetInfo.DenominationExponent)))
+		err = k.SetStakerClaimedRewards(ctx, stakerID, slashRewardAmountPerAVS.AvsAddress, stakerClaimedRewards)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+func (k Keeper) VetoSlashRewardFromDelegation(ctx sdk.Context, stakerID, assetID string, avsAddress string, slashedRewardAmount math.Int) error {
+	rewardAssetInfo, err := k.GetAVSRewardAsset(ctx, avsAddress, assetID)
+	if err != nil {
+		return err
+	}
+	deltaRewards := sdk.NewDecCoinFromDec(
+		rewardAssetInfo.RewardAssetInfo.RewardDenomination,
+		feedistributiontypes.ScaleIntByDecimals(
+			slashedRewardAmount,
+			rewardAssetInfo.RewardAssetInfo.DenominationExponent))
+	return k.UpdateStakerClaimedRewards(ctx, stakerID, avsAddress, feedistributiontypes.DeltaStakerClaimedRewards{
+		WithdrawableRewards: sdk.NewDecCoins(deltaRewards),
+	})
 }

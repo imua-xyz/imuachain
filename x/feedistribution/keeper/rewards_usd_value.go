@@ -224,7 +224,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 			return false, false, nil
 		}
 		slashFromUnclaimedRewards := operatortypes.SlashFromUnclaimedRewards{
-			Avs:                       rewardSourceAVS,
+			AVSAddress:                rewardSourceAVS,
 			OutstandingRewardsSlashed: sdk.NewDecCoins(),
 			CompoundingRewardsSlashed: feedistributiontypes.NewCompoundingRewards(),
 		}
@@ -298,4 +298,17 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 	}
 
 	return result, nil
+}
+
+func (k Keeper) VetoSlashUnclaimedRewards(ctx sdk.Context, operatorAddr string, slashFromUnclaimedRewards []operatortypes.SlashFromUnclaimedRewards) error {
+	for _, slashFromUnclaimedReward := range slashFromUnclaimedRewards {
+		err := k.UpdateOperatorUnclaimedRewards(ctx, operatorAddr, slashFromUnclaimedReward.AVSAddress, true, feedistributiontypes.DeltaOperatorUnclaimedRewards{
+			OutstandingRewardsVetoed: slashFromUnclaimedReward.OutstandingRewardsSlashed,
+			CompoundingRewardsVetoed: slashFromUnclaimedReward.CompoundingRewardsSlashed,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

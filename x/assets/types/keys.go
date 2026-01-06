@@ -42,20 +42,20 @@ const (
 
 // KVStore key prefixes
 var (
-	// KeyPrefixClientChainInfo key->value: clientChainID -> ClientChainInfo
+	// KeyPrefixClientChainInfo key->value: clientChainID -> [ClientChainInfo]
 	KeyPrefixClientChainInfo = []byte{prefixClientChainInfo}
 
 	// KeyPrefixReStakingAssetInfo AssetID = AssetAddr+'_'+ clientChainID
-	// KeyPrefixReStakingAssetInfo key->value: AssetID-> StakingAssetInfo
+	// KeyPrefixReStakingAssetInfo key->value: AssetID-> [StakingAssetInfo]
 	// the `_` will only be used as a separated character for the stakerID and assetID
 	KeyPrefixReStakingAssetInfo = []byte{prefixRestakingAssetInfo}
 
 	// KeyPrefixReStakerAssetInfos restakerID = clientChainAddr+'_'+clientChainID
-	// KeyPrefixReStakerAssetInfos key->value: restakerID+'/'+AssetID-> StakerAssetInfo
+	// KeyPrefixReStakerAssetInfos key->value: restakerID+'/'+AssetID-> [StakerAssetInfo]
 	// the `/` will be used as a separated character for the other joined keys.
 	KeyPrefixReStakerAssetInfos = []byte{prefixRestakerAssetInfo}
 
-	// KeyPrefixOperatorAssetInfos key->value: operatorAddr+'/'+AssetID-> OperatorAssetInfo
+	// KeyPrefixOperatorAssetInfos key->value: operatorAddr+'/'+AssetID-> [OperatorAssetInfo]
 	KeyPrefixOperatorAssetInfos = []byte{prefixOperatorAssetInfo}
 
 	// KeyPrefixParams This is a key prefix for module parameter

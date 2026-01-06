@@ -89,27 +89,27 @@ const (
 )
 
 var (
-	// KeyPrefixOperatorInfo key-value: operatorAddr->types.OperatorInfo
+	// KeyPrefixOperatorInfo key-value: operatorAddr->[OperatorInfo]
 	KeyPrefixOperatorInfo = []byte{prefixOperatorInfo}
 
 	// KeyPrefixOperatorOptedAVSInfo key-value:
-	// operatorAddr + '/' + AVSAddr -> OptedInfo
+	// operatorAddr + '/' + AVSAddr -> [OptedInfo]
 	KeyPrefixOperatorOptedAVSInfo = []byte{prefixOperatorOptedAVSInfo}
 
 	// KeyPrefixUSDValueForAVS key-value:
-	// AVSAddr -> types.DecValueField（the USD value of specified Avs）
+	// AVSAddr -> [DecValueField]（the USD value of specified Avs）
 	KeyPrefixUSDValueForAVS = []byte{prefixUSDValueForAVS}
 
 	// KeyPrefixUSDValueForOperator key-value:
-	// AVSAddr + '/' + operatorAddr -> types.OperatorOptedUSDValue (the voting power of specified operator and Avs)
+	// AVSAddr + '/' + operatorAddr -> [OperatorOptedUSDValue] (the voting power of specified operator and Avs)
 	KeyPrefixUSDValueForOperator = []byte{prefixUSDValueForOperator}
 
 	// KeyPrefixOperatorSlashInfo key-value:
-	// operator + '/' + AVSAddr + '/' + slashId -> OperatorSlashInfo
+	// operator + '/' + AVSAddr + '/' + slashId -> [OperatorSlashInfo]
 	KeyPrefixOperatorSlashInfo = []byte{prefixOperatorSlashInfo}
 
 	// KeyPrefixSlashStakerShareSnapshot key-value:
-	// slashID + '/' + assetID + '/' + stakerID -> types.DecValueField
+	// slashID + '/' + assetID + '/' + stakerID -> [StakerUndelegatableSharesSnapshot]
 	// This stores detailed staker delegation share snapshot information for slashed asset pools,
 	// used for slash veto scenarios to restore the state before the slash was applied.
 	KeyPrefixSlashStakerShareSnapshot = []byte{prefixSlashStakerShareSnapshot}
@@ -123,15 +123,15 @@ var (
 	// Additionally, when a slash event occurs,
 	// the voting power needs to be updated immediately to ensure the slash takes effect for the relevant operator.
 	// In this case, we need to store an additional snapshot at the height where the slash is executed.
-	// AVSAddr+ '/' + Height -> VotingPowerSnapshot
+	// AVSAddr+ '/' + Height -> [VotingPowerSnapshot]
 	KeyPrefixVotingPowerSnapshot = []byte{prefixForVotingPowerSnapshot}
 
 	// KeyPrefixSnapshotHelper key-value:
-	// avsAddr -> SnapshotHelper
+	// avsAddr -> [SnapshotHelper]
 	KeyPrefixSnapshotHelper = []byte{prefixForSnapshotHelper}
 
 	// KeyPrefixOperatorAssetUSDValue key-value:
-	// epochIdentifier + '/' + operator + '/' + assetID  ->  types.DecValueField
+	// epochIdentifier + '/' + operator + '/' + assetID  ->  [DecValueField]
 	// It records the USD value of operator asset. It can be used to calculate the voting power
 	// for operators and AVSs. It will also be used for reward distribution because the rewards
 	// need to be split into multiple asset pools, so we need this state to calculate the proportion.
@@ -140,7 +140,7 @@ var (
 	KeyPrefixOperatorAssetUSDValue = []byte{prefixOperatorAssetUSDValue}
 
 	// KeyPrefixAVSAssetListPerEpoch key-value:
-	// avsAddr -> AVSAssetsPerEpoch
+	// avsAddr -> [AVSAssetsPerEpoch]
 	// Since the real-time asset list is already stored in AVS information, we only record
 	// the asset list here when the AVS asset list is changed.
 	// If there is no change, we can directly use the asset list from AVS information.
@@ -152,7 +152,7 @@ var (
 	KeyPrefixAVSAssetListPerEpoch = []byte{prefixAVSAssetListPerEpoch}
 
 	// KeyPrefixCompoundingRewardsUSDValues key-value:
-	// AVSAddr + '/' + operatorAddr + '/'  + AVSAddr  + '/'  + rewardDenomination -> types.DecValueField
+	// AVSAddr + '/' + operatorAddr + '/'  + AVSAddr  + '/'  + rewardDenomination -> [DecValueField]
 	// Under this key, all USD values from compounding rewards are stored.
 	// We append `AVSAddr` and `rewardDenomination `as a suffix because an operator can opt into multiple
 	// AVSs earning rewards from each of them. And an AVS can use multiple assets as rewards.
@@ -162,7 +162,7 @@ var (
 	KeyPrefixCompoundingRewardsUSDValues = []byte{prefixCompoundingRewardsUSDValues}
 
 	// KeyPrefixParams key-value:
-	// params -> Params
+	// params -> [Params]
 	KeyPrefixParams = []byte{prefixParams}
 )
 

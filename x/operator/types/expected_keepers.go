@@ -27,6 +27,8 @@ type AssetsKeeper interface {
 	ClientChainExists(ctx sdk.Context, index uint64) bool
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 	GetAllStakingAssetsInfo(ctx sdk.Context) (allAssets []assetstype.StakingAssetInfo, err error)
+	GetStakerSpecifiedAssetInfo(ctx sdk.Context, stakerID string, assetID string) (info *assetstype.StakerAssetInfo, err error)
+	UpdateStakerAssetState(ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset) (info *assetstype.StakerAssetInfo, err error)
 }
 
 var _ DelegationKeeper = &delegationkeeper.Keeper{}
@@ -45,6 +47,8 @@ type DelegationKeeper interface {
 	DeleteStakersListForOperator(ctx sdk.Context, operator, assetID string) error
 
 	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
+
+	GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, error) 
 }
 
 type PriceChange struct {
@@ -159,11 +163,20 @@ type EpochsKeeper interface {
 // DistributionKeeper represents the expected keeper interface for the distribution module.
 type DistributionKeeper interface {
 	GetAVSRewardAssetIDByDenomination(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
-	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) error
+	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) ([]SlashRewardAmountPerAVS,error)
+	VetoSlashRewardUndelegation(ctx sdk.Context,stakerID, assetID string, slashRewardAmountPerAVSList []SlashRewardAmountPerAVS) error
 	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]interface{}) (sdkmath.LegacyDec, error)
 	OperatorTotalRewardsUSDValue(ctx sdk.Context, operator string) (map[string]map[string]interface{}, sdkmath.LegacyDec, error)
 	SlashOperatorUnclaimedRewards(
 		ctx sdk.Context, operator string,
 		slashSources map[string]map[string]interface{},
 		slashProportion sdkmath.LegacyDec) ([]SlashFromUnclaimedRewards, error)
+	GetAVSListByRewardAssetID(ctx sdk.Context, assetID string) []string
+	GetRewardUndelegatableShareBreakdown(ctx sdk.Context, stakerID, assetID, operatorAddr string,avsList []string) ([]StakerUndelegatableSharePerAVS, error)
+	VetoSlashRewardFromDelegation(ctx sdk.Context, stakerID, assetID string, avsAddress string, slashedRewardAmount sdkmath.Int) error
+	VetoSlashUnclaimedRewards(ctx sdk.Context, operatorAddr string, slashFromUnclaimedRewards []SlashFromUnclaimedRewards) error
+}
+
+type BankKeeper interface {
+	UndelegateCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 }

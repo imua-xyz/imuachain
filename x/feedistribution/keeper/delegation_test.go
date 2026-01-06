@@ -1547,7 +1547,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 						HistoricalVotingPower:    infractionPower,
 						SlashUnclaimedRewards: []operatortypes.SlashFromUnclaimedRewards{
 							{
-								Avs:                       suite.DogfoodAVSAddr,
+								AVSAddress:                suite.DogfoodAVSAddr,
 								OutstandingRewardsSlashed: sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedAmountDecFromOutStandingReward)),
 								CompoundingRewardsSlashed: feedistributiontypes.NewCompoundingRewards(imuachaintypes.CompoundingRewardsPerAsset{
 									RewardDenomination: utils.BaseDenom,

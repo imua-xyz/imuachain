@@ -7,12 +7,10 @@ import (
 
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
-	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -29,7 +27,7 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 	}
 	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
 	if store.Has(slashInfoKey) {
-		return errorsmod.Wrapf(operatortypes.ErrSlashInfoExist, "slashInfoKey:%s", slashInfoKey)
+		return operatortypes.ErrSlashInfoExist.Wrapf("slashInfoKey:%s", slashInfoKey)
 	}
 	// check the validation of slash info
 	slashContract, err := k.avsKeeper.GetAVSSlashContract(ctx, avsAddr)
@@ -37,14 +35,14 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 		return err
 	}
 	if slashInfo.SlashContract != slashContract {
-		return errorsmod.Wrapf(operatortypes.ErrSlashInfo, "err slashContract:%s, stored contract:%s", slashInfo.SlashContract, slashContract)
+		return operatortypes.ErrSlashInfo.Wrapf("err slashContract:%s, stored contract:%s", slashInfo.SlashContract, slashContract)
 	}
 	if slashInfo.EventHeight > slashInfo.SubmittedHeight {
-		return errorsmod.Wrapf(operatortypes.ErrSlashInfo, "err SubmittedHeight:%v,EventHeight:%v", slashInfo.SubmittedHeight, slashInfo.EventHeight)
+		return operatortypes.ErrSlashInfo.Wrapf("err SubmittedHeight:%v,EventHeight:%v", slashInfo.SubmittedHeight, slashInfo.EventHeight)
 	}
 
 	if slashInfo.SlashProportion.IsNil() || slashInfo.SlashProportion.IsNegative() || slashInfo.SlashProportion.GT(sdkmath.LegacyNewDec(1)) {
-		return errorsmod.Wrapf(operatortypes.ErrSlashInfo, "err SlashProportion:%v", slashInfo.SlashProportion)
+		return operatortypes.ErrSlashInfo.Wrapf("err SlashProportion:%v", slashInfo.SlashProportion)
 	}
 
 	// save single operator delegation state
@@ -62,7 +60,7 @@ func (k *Keeper) GetOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr, sl
 	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
 	value := store.Get(slashInfoKey)
 	if value == nil {
-		return nil, errorsmod.Wrapf(operatortypes.ErrNoKeyInTheStore, "GetOperatorSlashInfo: key is %s", slashInfoKey)
+		return nil, operatortypes.ErrNoKeyInTheStore.Wrapf("GetOperatorSlashInfo: key is %s", slashInfoKey)
 	}
 	operatorSlashInfo := operatortypes.OperatorSlashInfo{}
 	k.cdc.MustUnmarshal(value, &operatorSlashInfo)
@@ -86,76 +84,69 @@ func (k *Keeper) AllOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr str
 	return ret, nil
 }
 
-// UpdateSlashAssetsState This is a function to update the assets amount that need to be slashed
-// The stored state is:
-// KeyPrefixSlashAssetsState key-value:
-// processedSlashHeight + '/' + assetID -> SlashAmount
-// processedSlashHeight + '/' + assetID + '/' + stakerID -> SlashAmount
-// processedSlashHeight + '/' + assetID + '/' + operatorAddr -> SlashAmount
-// The slashed assets info won't be sent to the client chain immediately after the slash event being processed, enven if
-// the asset amounts of related operator and staker have been decreased. This is because we need to wait a veto period.
-// The state updated by this function will be sent to the client chain once the veto period has expired.
-// This function will be called by `SlashStaker` and `SlashOperator` implemented in the 'state_update.go' file.
-func (k *Keeper) UpdateSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperator string, processedHeight uint64, opAmount sdkmath.Int) error {
-	if opAmount.IsNil() || opAmount.IsZero() {
-		return nil
-	}
+// StoreSlashStakerShareSnapshot This is a function to store the slashed delegation share snapshot for slash veto
+func (k *Keeper) StoreSlashStakerShareSnapshot(ctx sdk.Context, operatorAddr, assetID, slashID string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
-	var key []byte
-	if stakerOrOperator == "" || assetID == "" {
-		return errorsmod.Wrapf(operatortypes.ErrParameterInvalid, "assetID:%s,stakerOrOperator:%s", assetID, stakerOrOperator)
-	}
-
-	key = utils.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID, stakerOrOperator)
-	slashAmount := assetstype.ValueField{Amount: sdkmath.ZeroInt()}
-	value := store.Get(key)
-	if value != nil {
-		k.cdc.MustUnmarshal(value, &slashAmount)
-	}
-
-	err := assetstype.UpdateAssetValue(&slashAmount.Amount, &opAmount)
+	// get all stakers related the asset pool
+	stakerList, err := k.delegationKeeper.GetStakersByOperator(ctx, operatorAddr, assetID)
 	if err != nil {
 		return err
 	}
-	bz := k.cdc.MustMarshal(&slashAmount)
-	store.Set(key, bz)
+	avsList := k.distributionKeeper.GetAVSListByRewardAssetID(ctx, assetID)
 
-	key = utils.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID)
-	totalSlashAmount := assetstype.ValueField{Amount: sdkmath.ZeroInt()}
-	value = store.Get(key)
-	if value != nil {
-		k.cdc.MustUnmarshal(value, &totalSlashAmount)
+	for _, stakerID := range stakerList.Stakers {
+		// get the staker's delegation share
+		delegationInfo, err := k.delegationKeeper.GetSingleDelegationInfo(ctx, stakerID, assetID, operatorAddr)
+		if err != nil {
+			return err
+		}
+		stakerUndelegatableSharesSnapshot := &operatortypes.StakerUndelegatableSharesSnapshot{
+			StakingUndelegatableShare: delegationInfo.UndelegatableShare,
+		}
+		if delegationInfo.RewardUndelegatableShare.IsPositive() {
+			if len(avsList) == 0 {
+				// This case shouldn't occur, because it means a reward asset isn't registered as a reward asset by any AVS,
+				// but a staker still owns the undelegatable share of this reward.
+				// If we want to support reward asset deregistration in the future, we should wait for all rewards
+				// to be undelegated and claimed before deregistering an AVS reward. Currently, this functionality is not supported.
+				return operatortypes.ErrStoreStakerShareSnapshot.Wrapf("rewardUndelegatableShare is positive, but avsList is empty, assetID:%s, stakerID:%s", assetID, stakerID)
+			}
+			rewardUndelegatableShareBreakdown, err := k.distributionKeeper.GetRewardUndelegatableShareBreakdown(ctx, stakerID, assetID, operatorAddr, avsList)
+			if err != nil {
+				return err
+			}
+			stakerUndelegatableSharesSnapshot.RewardUndelegatableShareBreakdown = rewardUndelegatableShareBreakdown
+		}
+		bz := k.cdc.MustMarshal(stakerUndelegatableSharesSnapshot)
+		store.Set(utils.GetJoinedStoreKey(slashID, assetID, stakerID), bz)
 	}
-
-	err = assetstype.UpdateAssetValue(&totalSlashAmount.Amount, &opAmount)
-	if err != nil {
-		return err
-	}
-	bz = k.cdc.MustMarshal(&totalSlashAmount)
-	store.Set(key, bz)
 	return nil
 }
 
-// GetSlashAssetsState This is a function to retrieve the assets awaiting transfer to the client chain for slashing.
-// Now this function hasn't been called, it might be called by the grpc query in the future.
-// Additionally, this function might be called in the schedule function `EndBlock` to send the slash info to client chain.
-// todo: It's to be determined about how to send the slash info to client chain. If we send them in `EndBlock`, then the native code needs to call the gateway contract deployed in imua. This seems a little bit odd.
-func (k *Keeper) GetSlashAssetsState(ctx sdk.Context, assetID, stakerOrOperator string, processedHeight uint64) (sdkmath.Int, error) {
+// IterateSlashStakerShareSnapshot This is a function to iterate the slashed delegation share
+// snapshot for slash veto.
+func (k *Keeper) IterateSlashStakerShareSnapshot(
+	ctx sdk.Context, slashID, assetID string,
+	opFunc func(stakerID string, shares *operatortypes.StakerUndelegatableSharesSnapshot) (stop bool, err error)) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
-	var key []byte
-	if stakerOrOperator == "" {
-		key = utils.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID)
-	} else {
-		key = utils.GetJoinedStoreKey(hexutil.EncodeUint64(processedHeight), assetID, stakerOrOperator)
+	iterator := sdk.KVStorePrefixIterator(store, utils.GetJoinedStoreKey(slashID, assetID))
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		var shares operatortypes.StakerUndelegatableSharesSnapshot
+		k.cdc.MustUnmarshal(iterator.Value(), &shares)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 3)
+		if err != nil {
+			return err
+		}
+		stop, err := opFunc(keys[2], &shares)
+		if err != nil {
+			return err
+		}
+		if stop {
+			break
+		}
 	}
-	value := store.Get(key)
-	if value == nil {
-		return sdkmath.Int{}, errorsmod.Wrapf(operatortypes.ErrNoKeyInTheStore, "GetSlashAssetsState: key is %s", key)
-	}
-	var ret assetstype.ValueField
-	k.cdc.MustUnmarshal(value, &ret)
-
-	return ret.Amount, nil
+	return nil
 }
 
 func (k *Keeper) SetAllSlashStates(ctx sdk.Context, slashStates []operatortypes.OperatorSlashState) error {

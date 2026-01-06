@@ -11,6 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
+	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -31,6 +32,12 @@ func (k *Keeper) SlashFromUndelegation(ctx sdk.Context, undelegation *delegation
 		// do nothing because there isn't amount to be slashed
 		return nil, nil
 	}
+	slashFromUndelegation := &types.SlashFromUndelegation{
+		StakerID:       undelegation.StakerId,
+		AssetID:        undelegation.AssetId,
+		UndelegationId: undelegation.UndelegationId,
+		RewardAsset:    undelegation.RewardAsset,
+	}
 	slashAmount := slashProportion.MulInt(undelegation.Amount).TruncateInt()
 	// reduce the actual_completed_amount in the record
 	if slashAmount.GTE(undelegation.ActualCompletedAmount) {
@@ -39,22 +46,18 @@ func (k *Keeper) SlashFromUndelegation(ctx sdk.Context, undelegation *delegation
 	} else {
 		undelegation.ActualCompletedAmount = undelegation.ActualCompletedAmount.Sub(slashAmount)
 	}
+	slashFromUndelegation.Amount = slashAmount
 
 	if undelegation.RewardAsset {
 		// handle the reward states if it's a reward asset undelegation
-		err := k.distributionKeeper.SlashRewardUndelegation(ctx, undelegation, slashProportion)
+		slashRewardAmountPerAVS, err := k.distributionKeeper.SlashRewardUndelegation(ctx, undelegation, slashProportion)
 		if err != nil {
 			return nil, err
 		}
+		slashFromUndelegation.SlashRewardAmountPerAvs = slashRewardAmountPerAVS
 	}
 
-	return &types.SlashFromUndelegation{
-		StakerID:       undelegation.StakerId,
-		AssetID:        undelegation.AssetId,
-		Amount:         slashAmount,
-		UndelegationId: undelegation.UndelegationId,
-		RewardAsset:    undelegation.RewardAsset,
-	}, nil
+	return slashFromUndelegation, nil
 }
 
 func (k *Keeper) CheckSlashParameter(ctx sdk.Context, parameter *types.SlashInputInfo) error {
@@ -147,6 +150,11 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 			TotalAmount:        slashAmount,
 			SnapshotTotalShare: state.TotalShare,
 		})
+		// store the slashed delegation share snapshot for slash veto
+		err = k.StoreSlashStakerShareSnapshot(ctx, parameter.Operator.String(), assetID, parameter.SlashID)
+		if err != nil {
+			return err
+		}
 
 		// todo: consider slash all assets if the remaining amount is too small,
 		// which can avoid the unbalance between share and amount
@@ -381,4 +389,126 @@ func (k Keeper) Jail(ctx sdk.Context, consAddr sdk.ConsAddress, chainID string) 
 // Unjail an operator
 func (k Keeper) Unjail(ctx sdk.Context, consAddr sdk.ConsAddress, chainID string) {
 	k.SetJailedState(ctx, consAddr, chainID, false)
+}
+
+// VetoSlash vetoes a slash event
+func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID string) error {
+	slashInfo, err := k.GetOperatorSlashInfo(ctx, avsAddr, operatorAddr, slashID)
+	if err != nil {
+		return err
+	}
+	// veto the slashed amounts from pending undelegations.
+	for _, slashFromUndelegation := range slashInfo.ExecutionInfo.SlashUndelegations {
+		if !slashFromUndelegation.RewardAsset {
+			if slashFromUndelegation.AssetID != assetstype.ImuachainAssetID {
+				// return the slashed amount to the withdrawable amount of staking asset.
+				_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, slashFromUndelegation.StakerID, slashFromUndelegation.AssetID, assetstype.DeltaStakerSingleAsset{
+					WithdrawableAmount: slashFromUndelegation.Amount,
+				})
+				if err != nil {
+					return err
+				}
+			} else {
+				// return the slashed amount to the account of the staker if the asset is imua-native-token.
+				stakerAddrHex, _, err := assetstype.ParseID(slashFromUndelegation.StakerID)
+				if err != nil {
+					return err
+				}
+				stakerAddrBytes, err := hexutil.Decode(stakerAddrHex)
+				if err != nil {
+					return err
+				}
+				stakerAddr := sdk.AccAddress(stakerAddrBytes)
+				if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
+					ctx, delegationtype.DelegatedPoolName, stakerAddr,
+					sdk.NewCoins(
+						sdk.NewCoin(assetstype.ImuachainAssetDenom, slashFromUndelegation.Amount),
+					),
+				); err != nil {
+					return err
+				}
+			}
+		} else {
+			// return the slashed amount to the withdrawable amount of claimed rewards.
+			err = k.distributionKeeper.VetoSlashRewardUndelegation(ctx, slashFromUndelegation.StakerID, slashFromUndelegation.AssetID, slashFromUndelegation.SlashRewardAmountPerAvs)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	// veto the slashed amounts from operator asset pool.
+	for _, slashFromAssetPool := range slashInfo.ExecutionInfo.SlashAssetsPool {
+		opFunc := func(stakerID string, shares *types.StakerUndelegatableSharesSnapshot) (bool, error) {
+			if shares.StakingUndelegatableShare.IsPositive() {
+				// calculate the slashed amount according to the snapshot share.
+				slashedStakingAmount, err := delegationkeeper.TokensFromShares(shares.StakingUndelegatableShare, slashFromAssetPool.SnapshotTotalShare, slashFromAssetPool.TotalAmount)
+				if err != nil {
+					return true, err
+				}
+				if slashFromAssetPool.AssetID != assetstype.ImuachainAssetID {
+					// return the slashed amount to the withdrawable amount of staking asset.
+					_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, slashFromAssetPool.AssetID, assetstype.DeltaStakerSingleAsset{
+						WithdrawableAmount: slashedStakingAmount,
+					})
+					if err != nil {
+						return true, err
+					}
+				} else {
+					// return the slashed amount to the account of the staker if the asset is imua-native-token.
+					stakerAddrHex, _, err := assetstype.ParseID(stakerID)
+					if err != nil {
+						return true, err
+					}
+					stakerAddrBytes, err := hexutil.Decode(stakerAddrHex)
+					if err != nil {
+						return true, err
+					}
+					stakerAddr := sdk.AccAddress(stakerAddrBytes)
+					if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
+						ctx, delegationtype.DelegatedPoolName, stakerAddr,
+						sdk.NewCoins(
+							sdk.NewCoin(assetstype.ImuachainAssetDenom, slashedStakingAmount),
+						),
+					); err != nil {
+						return true, err
+					}
+				}
+			}
+			for _, rewardUndelegatableSharePerAVS := range shares.RewardUndelegatableShareBreakdown {
+				// calculate the slashed amount according to the snapshot share.
+				slashedRewardAmount, err := delegationkeeper.TokensFromShares(rewardUndelegatableSharePerAVS.RewardUndelegatableShare, slashFromAssetPool.SnapshotTotalShare, slashFromAssetPool.TotalAmount)
+				if err != nil {
+					return true, err
+				}
+				// Return the slashed amount back to the withdrawable rewards of the staker.
+				// The returned amount can be withdrawn by the staker from the reward pool.
+				// Alternatively, we could return it to the outstanding rewards if we want the
+				// returned rewards to be automatically redelegated in the future.
+				err = k.distributionKeeper.VetoSlashRewardFromDelegation(
+					ctx, stakerID, slashFromAssetPool.AssetID,
+					rewardUndelegatableSharePerAVS.AVSAddress, slashedRewardAmount)
+				if err != nil {
+					return true, err
+				}
+			}
+			return false, nil
+		}
+		err = k.IterateSlashStakerShareSnapshot(ctx, slashID, slashFromAssetPool.AssetID, opFunc)
+		if err != nil {
+			return err
+		}
+	}
+
+	// veto the slashed amounts from operator unclaimed rewards.
+	err = k.distributionKeeper.VetoSlashUnclaimedRewards(ctx, operatorAddr,slashInfo.ExecutionInfo.SlashUnclaimedRewards )
+	if err != nil {
+		return err
+	}
+
+	slashInfo.IsVetoed = true
+	err = k.UpdateOperatorSlashInfo(ctx, operatorAddr, avsAddr, slashID, *slashInfo)
+	if err != nil {
+		return err
+	}
+	return nil
 }

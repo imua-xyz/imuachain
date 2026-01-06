@@ -25,6 +25,7 @@ type Keeper struct {
 	slashKeeper        operatortypes.SlashKeeper   // for jailing and unjailing check TODO(mm)
 	epochsKeeper       operatortypes.EpochsKeeper
 	distributionKeeper operatortypes.DistributionKeeper
+	bankKeeper         operatortypes.BankKeeper
 	authority          string
 }
 

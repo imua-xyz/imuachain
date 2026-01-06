@@ -206,6 +206,9 @@ message OperatorUnclaimedRewards {
   // to contribute voting power.
   repeated imuachain.types.v1.CompoundingRewardsPerAsset compounding_rewards_slashed = 4 [(gogoproto.nullable) = false];
 
+  // outstanding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted)
+  // for outstanding rewards. This tracks the rewards that were originally targeted for slashing but were
+  // restored due to a slash veto.
   // We introduce separate state variables to store vetoed rewards instead of directly adding them back
   // to `outstanding_rewards` or `rewards_from_compounding`. This design choice addresses the following issues:
   //
@@ -227,10 +230,6 @@ message OperatorUnclaimedRewards {
   //    While slashed staking assets (principal) are returned precisely to the affected stakers, slashed *unclaimed rewards*
   //    are returned to the operator's collective staker pool. This effectively restores the operator's reward-earning
   //    capacity without the extreme complexity required to track and restore exact reward ownership for every reverted slash.
-
-  // outstanding_rewards_vetoed represents the total amount of slashed rewards that were vetoed (reverted)
-  // for outstanding rewards. This tracks the rewards that were originally targeted for slashing but were
-  // restored due to a slash veto.
   repeated cosmos.base.v1beta1.DecCoin outstanding_rewards_vetoed = 5 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,

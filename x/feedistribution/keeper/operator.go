@@ -287,12 +287,12 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 	slashedOutstandingRewardsAssets := make([]feedistributiontypes.AVSRewardAssetsList, len(slashUnclaimedRewards))
 	for i, s := range slashUnclaimedRewards {
 		avsRewardAssetsList := feedistributiontypes.AVSRewardAssetsList{
-			AVSAddress: s.Avs,
+			AVSAddress: s.AVSAddress,
 			AssetIDs:   make([]string, len(s.OutstandingRewardsSlashed)),
 		}
 		// collect assetIDs
 		for j, decCoin := range s.OutstandingRewardsSlashed {
-			assetID, err := k.GetAVSRewardAssetIDByDenomination(ctx, s.Avs, decCoin.Denom)
+			assetID, err := k.GetAVSRewardAssetIDByDenomination(ctx, s.AVSAddress, decCoin.Denom)
 			if err != nil {
 				return err
 			}

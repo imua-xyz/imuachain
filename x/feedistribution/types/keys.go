@@ -50,7 +50,7 @@ var (
 	KeyPrefixParams = []byte{prefixParams}
 
 	// KeyPrefixAVSRewardAssets :
-	// avsAddr + '/' + assetID -> types.AVSRewardAsset
+	// avsAddr + '/' + assetID -> [AVSRewardAsset]
 	// Key for the avs reward assets, it supports multiple reward assets for an AVS.
 	// The reward assets should be registered by the AVS.
 	KeyPrefixAVSRewardAssets = []byte{prefixAVSRewardAssets}
@@ -61,29 +61,29 @@ var (
 	KeyPrefixAVSRewardAssetByDenomination = []byte{prefixAVSRewardAssetByDenomination}
 
 	// KeyPrefixAVSRewardParam :
-	// avsAddr -> types.AVSRewardParam
+	// avsAddr -> [AVSRewardParam]
 	// Key for the reward parameters of all AVSs, the avs can choose the distribution strategy by it.
 	KeyPrefixAVSRewardParam = []byte{prefixAVSRewardParam}
 
 	// KeyPrefixFeePools :
-	// avsAddr -> types.FeePool
+	// avsAddr -> [FeePool]
 	// Key for the fee pools of all AVSs; it will track multiple community reward pools for different AVSs,
 	// unlike the cosmos-sdk.
 	KeyPrefixFeePools = []byte{prefixFeePools}
 
 	// KeyPrefixAVSRewardDistribution :
-	// avsAddr -> AVSRewardDistribution
+	// avsAddr -> [AVSRewardDistribution]
 	// key for avs rewards distribution, it will track the reward distribution information of multiple
 	// AVSs in the current epoch.
 	KeyPrefixAVSRewardDistribution = []byte{prefixAVSRewardDistribution}
 
 	// KeyPrefixOperatorUnclaimedRewards :
-	// operator + '/' + AVSAddr -> OperatorUnclaimedRewards
+	// operator + '/' + AVSAddr -> [OperatorUnclaimedRewards]
 	// key for unclaimed rewards, it will track multiple unclaimed rewards from different AVSs
 	KeyPrefixOperatorUnclaimedRewards = []byte{prefixOperatorUnclaimedRewards}
 
 	// KeyPrefixStakeChangeDelegations :
-	// epochIdentifier + '/' + operatorAddr + '/' + assetID -> DelegationChangeInfo
+	// epochIdentifier + '/' + operatorAddr + '/' + assetID -> [DelegationChangeInfo]
 	// In imua chain, the F1 distribution is integrated per epoch, so we need to track the
 	// delegations whose stake has changed each epoch. Then, we trigger the distribution lazily at
 	// the end of epoch and update their startingInfos for future distributions. The slices need to
@@ -93,7 +93,7 @@ var (
 
 	// KeyPrefixDelegationStartingInfo :
 	// delegationKey = restakerID +'/'+assetID+'/'+operatorAddr
-	// delegationKey + '/' + epochIdentifier -> DelegationStartingInfo
+	// delegationKey + '/' + epochIdentifier -> [DelegationStartingInfo]
 	// key for delegation starting info, it will be used to track the starting info for a delegation reward
 	// period.
 	// Due to different epoch configurations for different AVSs, the startingInfo for the same delegation
@@ -105,22 +105,22 @@ var (
 	KeyPrefixDelegationStartingInfo = []byte{prefixDelegationStartingInfo}
 
 	// KeyPrefixOperatorHistoricalRewards :
-	// operator + '/' +assetID + '/'+ epochIdentifier + '/' + period -> OperatorHistoricalRewards
+	// operator + '/' +assetID + '/'+ epochIdentifier + '/' + period -> [OperatorHistoricalRewards]
 	// key for historical operators rewards / stake
 	KeyPrefixOperatorHistoricalRewards = []byte{prefixOperatorHistoricalRewards}
 
 	// KeyPrefixOperatorCurrentRewards :
-	// operator + '/' +assetID + '/'+ epochIdentifier -> OperatorCurrentRewards
+	// operator + '/' +assetID + '/'+ epochIdentifier -> [OperatorCurrentRewards]
 	// key for current operator rewards
 	KeyPrefixOperatorCurrentRewards = []byte{prefixOperatorCurrentRewards}
 
 	// KeyPrefixOperatorCommission :
-	// operator + '/' + AVSAddr -> OperatorCommission
+	// operator + '/' + AVSAddr -> [OperatorCommission]
 	// key for accumulated operator commission
 	KeyPrefixOperatorCommission = []byte{prefixOperatorCommission}
 
 	// KeyPrefixOperatorSlashEvent :
-	// operator + '/' + assetID + '/' + epochIdentifier + '/' + epochNumber + '/' + blockHeight-> OperatorSlashEvent
+	// operator + '/' + assetID + '/' + epochIdentifier + '/' + epochNumber + '/' + blockHeight-> [OperatorSlashEvent]
 	// key for operator slash fraction, the periods of different epochs will differ when a
 	// slash event occurs, so the slash event should be recorded for all epochs.
 	// todo: We defer implementing the deletion mechanism, as the expected number of slash events
@@ -128,7 +128,7 @@ var (
 	KeyPrefixOperatorSlashEvent = []byte{prefixOperatorSlashEvent}
 
 	// KeyPrefixStakerClaimedRewards :
-	// stakerID + '/' + AVSAddr -> StakerClaimedRewards
+	// stakerID + '/' + AVSAddr -> [StakerClaimedRewards]
 	// key for claimed rewards of staker, including the outstanding and withdrawn rewards.
 	// Unlike the F1 distribution in Cosmos SDK, the reward vault for restakers in the Imua
 	// protocol may be distributed across different client chains as well as the Imua chain
@@ -159,6 +159,6 @@ var (
 	// addressed when distributing Imua rewards to stakers with address incompatibility on the chain.
 	KeyPrefixDelegatorWithdrawAddr = []byte{prefixDelegatorWithdrawAddr}
 
-	// KeyPrefixStakerRewardParams stakerID -> StakerRewardParams
+	// KeyPrefixStakerRewardParams stakerID -> [StakerRewardParams]
 	KeyPrefixStakerRewardParams = []byte{prefixStakerRewardParams}
 )
