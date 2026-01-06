@@ -127,7 +127,8 @@ func (k *Keeper) StoreSlashStakerShareSnapshot(ctx sdk.Context, operatorAddr, as
 // snapshot for slash veto.
 func (k *Keeper) IterateSlashStakerShareSnapshot(
 	ctx sdk.Context, slashID, assetID string,
-	opFunc func(stakerID string, shares *operatortypes.StakerUndelegatableSharesSnapshot) (stop bool, err error)) error {
+	opFunc func(stakerID string, shares *operatortypes.StakerUndelegatableSharesSnapshot) (stop bool, err error),
+) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
 	iterator := sdk.KVStorePrefixIterator(store, utils.GetJoinedStoreKey(slashID, assetID))
 	defer iterator.Close()

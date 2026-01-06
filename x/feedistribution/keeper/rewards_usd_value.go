@@ -302,10 +302,25 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 
 func (k Keeper) VetoSlashUnclaimedRewards(ctx sdk.Context, operatorAddr string, slashFromUnclaimedRewards []operatortypes.SlashFromUnclaimedRewards) error {
 	for _, slashFromUnclaimedReward := range slashFromUnclaimedRewards {
-		err := k.UpdateOperatorUnclaimedRewards(ctx, operatorAddr, slashFromUnclaimedReward.AVSAddress, true, feedistributiontypes.DeltaOperatorUnclaimedRewards{
-			OutstandingRewardsVetoed: slashFromUnclaimedReward.OutstandingRewardsSlashed,
-			CompoundingRewardsVetoed: slashFromUnclaimedReward.CompoundingRewardsSlashed,
-		})
+		operatorUnclaimedRewards, err := k.GetOperatorUnclaimedRewards(ctx, operatorAddr, slashFromUnclaimedReward.AVSAddress)
+		if err != nil {
+			return err
+		}
+
+		operatorUnclaimedRewards.OutstandingRewardsVetoed = operatorUnclaimedRewards.OutstandingRewardsVetoed.Add(slashFromUnclaimedReward.OutstandingRewardsSlashed...)
+		operatorUnclaimedRewards.CompoundingRewardsVetoed = feedistributiontypes.CompoundingRewards(operatorUnclaimedRewards.CompoundingRewardsVetoed).Add(slashFromUnclaimedReward.CompoundingRewardsSlashed...)
+
+		var negative bool
+		operatorUnclaimedRewards.OutstandingRewardsSlashed, negative = operatorUnclaimedRewards.OutstandingRewardsSlashed.SafeSub(slashFromUnclaimedReward.OutstandingRewardsSlashed)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to veto slashed outstanding rewards,operator:%s,avsAddr:%s", operatorAddr, slashFromUnclaimedReward.AVSAddress)
+		}
+		operatorUnclaimedRewards.CompoundingRewardsSlashed, negative = feedistributiontypes.CompoundingRewards(operatorUnclaimedRewards.CompoundingRewardsSlashed).SafeSub(slashFromUnclaimedReward.CompoundingRewardsSlashed)
+		if negative {
+			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to veto slashed compounding rewards,operator:%s,avsAddr:%s", operatorAddr, slashFromUnclaimedReward.AVSAddress)
+		}
+
+		err = k.SetOperatorUnclaimedRewards(ctx, operatorAddr, slashFromUnclaimedReward.AVSAddress, operatorUnclaimedRewards)
 		if err != nil {
 			return err
 		}

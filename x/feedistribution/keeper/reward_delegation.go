@@ -394,8 +394,8 @@ func (k Keeper) VetoSlashRewardUndelegation(ctx sdk.Context, stakerID, assetID s
 		if err != nil {
 			return err
 		}
-		// return the slashed amount to the withdrawable amount, because the slashed amount is 
-		// from pending undelegation rewards, the amount should be added to the withdrawable amount 
+		// return the slashed amount to the withdrawable amount, because the slashed amount is
+		// from pending undelegation rewards, the amount should be added to the withdrawable amount
 		// if there isn't a slashing event.
 		stakerClaimedRewards.WithdrawableRewards = stakerClaimedRewards.WithdrawableRewards.Add(
 			sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination,

@@ -48,7 +48,7 @@ type DelegationKeeper interface {
 
 	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
 
-	GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, error) 
+	GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, error)
 }
 
 type PriceChange struct {
@@ -163,8 +163,8 @@ type EpochsKeeper interface {
 // DistributionKeeper represents the expected keeper interface for the distribution module.
 type DistributionKeeper interface {
 	GetAVSRewardAssetIDByDenomination(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
-	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) ([]SlashRewardAmountPerAVS,error)
-	VetoSlashRewardUndelegation(ctx sdk.Context,stakerID, assetID string, slashRewardAmountPerAVSList []SlashRewardAmountPerAVS) error
+	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) ([]SlashRewardAmountPerAVS, error)
+	VetoSlashRewardUndelegation(ctx sdk.Context, stakerID, assetID string, slashRewardAmountPerAVSList []SlashRewardAmountPerAVS) error
 	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]interface{}) (sdkmath.LegacyDec, error)
 	OperatorTotalRewardsUSDValue(ctx sdk.Context, operator string) (map[string]map[string]interface{}, sdkmath.LegacyDec, error)
 	SlashOperatorUnclaimedRewards(
@@ -172,7 +172,7 @@ type DistributionKeeper interface {
 		slashSources map[string]map[string]interface{},
 		slashProportion sdkmath.LegacyDec) ([]SlashFromUnclaimedRewards, error)
 	GetAVSListByRewardAssetID(ctx sdk.Context, assetID string) []string
-	GetRewardUndelegatableShareBreakdown(ctx sdk.Context, stakerID, assetID, operatorAddr string,avsList []string) ([]StakerUndelegatableSharePerAVS, error)
+	GetRewardUndelegatableShareBreakdown(ctx sdk.Context, stakerID, assetID, operatorAddr string, avsList []string) ([]StakerUndelegatableSharePerAVS, error)
 	VetoSlashRewardFromDelegation(ctx sdk.Context, stakerID, assetID string, avsAddress string, slashedRewardAmount sdkmath.Int) error
 	VetoSlashUnclaimedRewards(ctx sdk.Context, operatorAddr string, slashFromUnclaimedRewards []SlashFromUnclaimedRewards) error
 }

@@ -337,6 +337,8 @@ func (k Keeper) distributeRewardsToDelegation(
 	}
 	totalReward := imuachaintypes.NewCommonAVSRewards()
 	totalCompoundingReward := imuachaintypes.NewCommonAVSRewards()
+	totalRewardFromSlashVetoed := imuachaintypes.NewCommonAVSRewards()
+	totalCompoundingRewardFromSlashVetoed := imuachaintypes.NewCommonAVSRewards()
 	for _, rewardsRawPerAVS := range allAVSRewardsRaw {
 		unclaimedRewards, err := k.GetOperatorUnclaimedRewards(ctx, operator, rewardsRawPerAVS.AVSAddress)
 		if err != nil {
@@ -363,19 +365,19 @@ func (k Keeper) distributeRewardsToDelegation(
 			// no rewards, skipping it.
 			continue
 		}
-		// move the rewards to staker from the operator outstanding rewards.
-		err = k.IncreaseStakerOutstandingRewards(ctx, stakerID, rewardsRawPerAVS.AVSAddress, rewards)
-		if err != nil {
-			return nil, err
-		}
-		// calculate the compounding rewards based on the proportion of outstanding rewards.
+
+		// calculate the compounding rewards and the rewards from slash vetoed based on the proportion
+		// of outstanding rewards.
 		stakerCompoundingRewards := feedistributiontypes.NewCompoundingRewards()
+		stakerRewardFromSlashVetoed := sdk.NewDecCoins()
+		stakerCompoundingRewardFromSlashVetoed := feedistributiontypes.NewCompoundingRewards()
 		for _, reward := range rewards {
-			compoundingRewardsPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
-			if compoundingRewardsPerAsset != nil {
-				outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
-				if outstandingRewardAmount.IsPositive() {
-					proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
+			outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
+			if outstandingRewardAmount.IsPositive() {
+				proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
+				// calculate the compounding rewards
+				compoundingRewardsPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
+				if compoundingRewardsPerAsset != nil {
 					// calculate the compounding rewards for specific reward asset
 					stakerCompoundingRewardsPerAsset, err := compoundingRewardsPerAsset.MulDecTruncate(proportion)
 					if err != nil {
@@ -397,12 +399,54 @@ func (k Keeper) distributeRewardsToDelegation(
 						Rewards:            stakerCompoundingRewardsPerAsset,
 					})
 				}
+
+				// calculate the outstanding rewards from slash vetoed
+				outstandingRewardsVetoedPerAsset := unclaimedRewards.OutstandingRewardsVetoed.AmountOf(reward.Denom)
+				if outstandingRewardsVetoedPerAsset.IsPositive() {
+					stakerRewardFromSlashVetoed = stakerRewardFromSlashVetoed.Add(
+						sdk.NewDecCoinFromDec(reward.Denom, outstandingRewardsVetoedPerAsset.Mul(proportion)))
+				}
+
+				// calculate the compounding rewards from slash vetoed
+				compoundingRewardsVetoedPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsVetoed).RewardsOf(reward.Denom)
+				if compoundingRewardsVetoedPerAsset != nil {
+					// calculate the compounding rewards from slash vetoed for specific reward asset
+					stakerCompoundingRewardsVetoedPerAsset, err := compoundingRewardsVetoedPerAsset.MulDecTruncate(proportion)
+					if err != nil {
+						return nil, err
+					}
+					// increase the compounding rewards from slash vetoed to staker
+					for _, stakerRewardsPerAVS := range stakerCompoundingRewardsVetoedPerAsset {
+						err = k.IncreaseStakerOutstandingRewards(ctx, stakerID, stakerRewardsPerAVS.AVSAddress, stakerRewardsPerAVS.Rewards)
+						if err != nil {
+							return nil, err
+						}
+						totalCompoundingRewardFromSlashVetoed = totalCompoundingRewardFromSlashVetoed.Add(imuachaintypes.CommonAVSRewardData{
+							AVSAddress: stakerRewardsPerAVS.AVSAddress,
+							Rewards:    stakerRewardsPerAVS.Rewards,
+						})
+					}
+					stakerCompoundingRewardFromSlashVetoed = stakerCompoundingRewardFromSlashVetoed.Add(imuachaintypes.CompoundingRewardsPerAsset{
+						RewardDenomination: reward.Denom,
+						Rewards:            stakerCompoundingRewardsVetoedPerAsset,
+					})
+				}
 			}
 		}
 
+		// move the staking rewards and slash vetoed rewards to the staker.
+		err = k.IncreaseStakerOutstandingRewards(
+			ctx, stakerID,
+			rewardsRawPerAVS.AVSAddress,
+			rewards.Add(stakerRewardFromSlashVetoed...))
+		if err != nil {
+			return nil, err
+		}
 		err = k.UpdateOperatorUnclaimedRewards(ctx, operator, rewardsRawPerAVS.AVSAddress, false, feedistributiontypes.DeltaOperatorUnclaimedRewards{
-			OutstandingRewards:     rewards,
-			RewardsFromCompounding: stakerCompoundingRewards,
+			OutstandingRewards:       rewards,
+			RewardsFromCompounding:   stakerCompoundingRewards,
+			OutstandingRewardsVetoed: stakerRewardFromSlashVetoed,
+			CompoundingRewardsVetoed: stakerCompoundingRewardFromSlashVetoed,
 		})
 		if err != nil {
 			return nil, err
@@ -411,7 +455,12 @@ func (k Keeper) distributeRewardsToDelegation(
 			AVSAddress: rewardsRawPerAVS.AVSAddress,
 			Rewards:    rewards,
 		})
+		totalRewardFromSlashVetoed = totalRewardFromSlashVetoed.Add(imuachaintypes.CommonAVSRewardData{
+			AVSAddress: rewardsRawPerAVS.AVSAddress,
+			Rewards:    stakerRewardFromSlashVetoed,
+		})
 	}
+
 	// decrement reference count of starting period
 	err = k.decrementReferenceCount(ctx, operator, assetID, epochInfo.Identifier, startingInfo.PreviousPeriod)
 	if err != nil {
@@ -424,7 +473,7 @@ func (k Keeper) distributeRewardsToDelegation(
 		return nil, err
 	}
 
-	totalReward = totalReward.Add(totalCompoundingReward...)
+	totalReward = totalReward.Add(totalCompoundingReward...).Add(totalRewardFromSlashVetoed...).Add(totalCompoundingRewardFromSlashVetoed...)
 	return totalReward, nil
 }
 
@@ -637,14 +686,19 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 				// no rewards, skipping it.
 				continue
 			}
-			// calculate the compounding rewards based on the proportion of outstanding rewards.
+
+			// calculate the compounding rewards and the rewards from slash vetoed based on the proportion
+			// of outstanding rewards.
 			stakerCompoundingRewards := feedistributiontypes.NewCompoundingRewards()
+			stakerRewardFromSlashVetoed := sdk.NewDecCoins()
+			stakerCompoundingRewardFromSlashVetoed := feedistributiontypes.NewCompoundingRewards()
 			for _, reward := range rewards {
-				compoundingRewardsPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
-				if compoundingRewardsPerAsset != nil {
-					outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
-					if outstandingRewardAmount.IsPositive() {
-						proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
+				outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
+				if outstandingRewardAmount.IsPositive() {
+					proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
+					// calculate the compounding rewards
+					compoundingRewardsPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
+					if compoundingRewardsPerAsset != nil {
 						// calculate the compounding rewards for specific reward asset
 						stakerCompoundingRewardsPerAsset, err := compoundingRewardsPerAsset.MulDecTruncate(proportion)
 						if err != nil {
@@ -662,6 +716,36 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 							Rewards:            stakerCompoundingRewardsPerAsset,
 						})
 					}
+
+					// calculate the outstanding rewards from slash vetoed
+					outstandingRewardsVetoedPerAsset := unclaimedRewards.OutstandingRewardsVetoed.AmountOf(reward.Denom)
+					if outstandingRewardsVetoedPerAsset.IsPositive() {
+						stakerRewardFromSlashVetoed = stakerRewardFromSlashVetoed.Add(
+							sdk.NewDecCoinFromDec(reward.Denom, outstandingRewardsVetoedPerAsset.Mul(proportion)))
+					}
+
+					// calculate the compounding rewards from slash vetoed
+					compoundingRewardsVetoedPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsVetoed).RewardsOf(reward.Denom)
+					if compoundingRewardsVetoedPerAsset != nil {
+						// calculate the compounding rewards from slash vetoed for specific reward asset
+						stakerCompoundingRewardsVetoedPerAsset, err := compoundingRewardsVetoedPerAsset.MulDecTruncate(proportion)
+						if err != nil {
+							return imuachaintypes.CommonAVSRewards{}, imuachaintypes.CommonAVSRewards{}, err
+						}
+						// increase the compounding rewards from slash vetoed to staker
+						for _, stakerRewardsPerAVS := range stakerCompoundingRewardsVetoedPerAsset {
+							// we don't differentiate the compounding rewards from slash vetoed and from rewards compounding here,
+							// so we add them together to the compounding reward.
+							compoundingReward = compoundingReward.Add(imuachaintypes.CommonAVSRewardData{
+								AVSAddress: stakerRewardsPerAVS.AVSAddress,
+								Rewards:    stakerRewardsPerAVS.Rewards,
+							})
+						}
+						stakerCompoundingRewardFromSlashVetoed = stakerCompoundingRewardFromSlashVetoed.Add(imuachaintypes.CompoundingRewardsPerAsset{
+							RewardDenomination: reward.Denom,
+							Rewards:            stakerCompoundingRewardsVetoedPerAsset,
+						})
+					}
 				}
 			}
 
@@ -670,8 +754,10 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 			// called by the `GetStakerUnclaimedRewards` function.
 			// The updated state will not be committed since this is only a query operation.
 			err = k.UpdateOperatorUnclaimedRewards(cc, operatorAddr, rewardsRawPerAVS.AVSAddress, false, feedistributiontypes.DeltaOperatorUnclaimedRewards{
-				OutstandingRewards:     rewards,
-				RewardsFromCompounding: stakerCompoundingRewards,
+				OutstandingRewards:       rewards,
+				RewardsFromCompounding:   stakerCompoundingRewards,
+				OutstandingRewardsVetoed: stakerRewardFromSlashVetoed,
+				CompoundingRewardsVetoed: stakerCompoundingRewardFromSlashVetoed,
 			})
 			if err != nil {
 				return imuachaintypes.CommonAVSRewards{}, imuachaintypes.CommonAVSRewards{}, err
@@ -679,7 +765,9 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 
 			stakingRewards = stakingRewards.Add(imuachaintypes.CommonAVSRewardData{
 				AVSAddress: rewardsRawPerAVS.AVSAddress,
-				Rewards:    rewards,
+				// we don't differentiate the rewards from slash vetoed and from outstanding rewards here,
+				// so we add them together to the staking rewards.
+				Rewards: rewards.Add(stakerRewardFromSlashVetoed...),
 			})
 		}
 	}

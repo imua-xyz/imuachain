@@ -346,6 +346,24 @@ func (gs GenesisState) ValidateOperatorUnclaimedRewards() error {
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards for operator, err:%s", err)
 		}
+
+		if !info.OperatorUnclaimedRewards.OutstandingRewardsSlashed.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid outstanding rewards slashed for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		err = CompoundingRewards(info.OperatorUnclaimedRewards.CompoundingRewardsSlashed).Validate()
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards slashed for operator, err:%s", err)
+		}
+
+		if !info.OperatorUnclaimedRewards.OutstandingRewardsVetoed.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid outstanding rewards vetoed for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		err = CompoundingRewards(info.OperatorUnclaimedRewards.CompoundingRewardsVetoed).Validate()
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards vetoed for operator, err:%s", err)
+		}
 		return nil
 	}
 	seenFieldValueFunc := func(info KeyAndOperatorUnclaimedRewards) (string, struct{}) {

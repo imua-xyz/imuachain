@@ -500,7 +500,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID string
 	}
 
 	// veto the slashed amounts from operator unclaimed rewards.
-	err = k.distributionKeeper.VetoSlashUnclaimedRewards(ctx, operatorAddr,slashInfo.ExecutionInfo.SlashUnclaimedRewards )
+	err = k.distributionKeeper.VetoSlashUnclaimedRewards(ctx, operatorAddr, slashInfo.ExecutionInfo.SlashUnclaimedRewards)
 	if err != nil {
 		return err
 	}
