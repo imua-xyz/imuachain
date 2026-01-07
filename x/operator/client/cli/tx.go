@@ -47,6 +47,7 @@ func NewTxCmd() *cobra.Command {
 		CmdUpdateRewardCompoundingFlag(),
 		CmdUpdateCommissionRate(),
 		CmdUpdateParams(),
+		CmdVetoSlash(),
 	)
 	return txCmd
 }
@@ -373,6 +374,31 @@ func CmdUpdateParams() *cobra.Command {
 					MinCommissionRate:           minCommissionRate,
 					MinCommissionUpdateInterval: minCommissionUpdateInterval,
 				},
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdVetoSlash returns a CLI command handler for creating a MsgVetoSlash transaction.
+func CmdVetoSlash() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "veto-slash <avs-address> <operator-address> <slash-id> <veto-reason>",
+		Short: "veto a slash event",
+		Args:  cobra.ExactArgs(4),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			msg := &types.MsgVetoSlash{
+				Authority:       clientCtx.GetFromAddress().String(),
+				AvsAddress:      args[0],
+				OperatorAddress: args[1],
+				SlashId:         args[2],
+				VetoReason:      args[3],
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

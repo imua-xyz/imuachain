@@ -20,6 +20,7 @@ var (
 	_ sdk.Msg = &MsgWithdrawDogfoodCommission{}
 	_ sdk.Msg = &MsgClaimAndWithdrawDogfoodReward{}
 	_ sdk.Msg = &MsgUpdateStakerRewardParams{}
+	_ sdk.Msg = &MsgUndelegateReward{}
 )
 
 // ValidateBasic does a sanity check on the provided data.

@@ -25,6 +25,8 @@ const (
 	TypeUpdateRewardCompoundingFlagReq = "update_reward_compounding_flag"
 	// TypeUpdateParamsReq is the type for the UpdateParamsReq message.
 	TypeUpdateParamsReq = "update_params"
+	// TypeVetoSlashReq is the type for the VetoSlashReq message.
+	TypeVetoSlashReq = "veto_slash"
 )
 
 // interface guards
@@ -36,6 +38,8 @@ var (
 	_ sdk.Msg = &UpdateCommissionRateReq{}
 	_ sdk.Msg = &EditOperatorReq{}
 	_ sdk.Msg = &UpdateRewardCompoundingFlagReq{}
+	_ sdk.Msg = &MsgUpdateParams{}
+	_ sdk.Msg = &MsgVetoSlash{}
 )
 
 // GetSigners returns the expected signers for the message.
@@ -300,5 +304,51 @@ func (m *MsgUpdateParams) Type() string {
 
 // GetSignBytes returns the bytes all expected signers must sign over.
 func (m *MsgUpdateParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *MsgVetoSlash) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *MsgVetoSlash) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
+	}
+	if _, err := sdk.AccAddressFromBech32(m.OperatorAddress); err != nil {
+		return errorsmod.Wrap(err, "invalid operator address")
+	}
+	if m.AvsAddress == "" {
+		return errorsmod.Wrap(ErrParameterInvalid, "AVS address is empty")
+	}
+	if !common.IsHexAddress(m.AvsAddress) {
+		return errorsmod.Wrap(
+			ErrParameterInvalid, "AVS address is not a valid hex address or chain id",
+		)
+	}
+	if m.VetoReason == "" {
+		return errorsmod.Wrap(ErrParameterInvalid, "veto reason is empty")
+	}
+	if len(m.VetoReason) > MaxVetoReasonLength {
+		return errorsmod.Wrap(ErrParameterInvalid, "veto reason is too long")
+	}
+	return nil
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *MsgVetoSlash) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *MsgVetoSlash) Type() string {
+	return TypeVetoSlashReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *MsgVetoSlash) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

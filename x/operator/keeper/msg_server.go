@@ -178,3 +178,29 @@ func (msgServer *MsgServerImpl) UpdateParams(
 	)
 	return &types.MsgUpdateParamsResponse{}, nil
 }
+
+// VetoSlash is an implementation of the msg server for the operator module.
+func (msgServer *MsgServerImpl) VetoSlash(
+	goCtx context.Context, req *types.MsgVetoSlash,
+) (*types.MsgVetoSlashResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if utils.IsMainnet(ctx.ChainID()) && msgServer.keeper.authority != req.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf(
+			"invalid authority; expected %s, got %s",
+			msgServer.keeper.authority, req.Authority,
+		)
+	}
+	logger := msgServer.keeper.Logger(ctx)
+	logger.Info(
+		"VetoSlash request",
+		"authority", msgServer.keeper.authority,
+		"operator_address", req.OperatorAddress,
+		"avs_address", req.AvsAddress,
+		"slash_id", req.SlashId,
+		"veto_reason", req.VetoReason,
+	)
+	if err := msgServer.keeper.VetoSlash(ctx, req.AvsAddress, req.OperatorAddress, req.SlashId, req.VetoReason); err != nil {
+		return nil, err
+	}
+	return &types.MsgVetoSlashResponse{}, nil
+}

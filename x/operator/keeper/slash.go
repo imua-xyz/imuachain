@@ -392,7 +392,7 @@ func (k Keeper) Unjail(ctx sdk.Context, consAddr sdk.ConsAddress, chainID string
 }
 
 // VetoSlash vetoes a slash event
-func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID string) error {
+func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoReason string) error {
 	slashInfo, err := k.GetOperatorSlashInfo(ctx, avsAddr, operatorAddr, slashID)
 	if err != nil {
 		return err
@@ -506,6 +506,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID string
 	}
 
 	slashInfo.IsVetoed = true
+	slashInfo.VetoReason = vetoReason
 	err = k.UpdateOperatorSlashInfo(ctx, operatorAddr, avsAddr, slashID, *slashInfo)
 	if err != nil {
 		return err

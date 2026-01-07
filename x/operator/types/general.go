@@ -34,3 +34,5 @@ type ImpactfulAVSInfo struct {
 	AVSAddr                  string
 	OptOutUnbondingRemaining uint64
 }
+
+const MaxVetoReasonLength = 200

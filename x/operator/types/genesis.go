@@ -392,6 +392,13 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 			)
 		}
 
+		if slash.Info.IsVetoed && len(slash.Info.VetoReason) > MaxVetoReasonLength {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateSlashStates: veto reason is too long, it's %d characters, the max length is %d: %+v",
+				len(slash.Info.VetoReason), MaxVetoReasonLength, slash,
+			)
+		}
+
 		// validate the slashing execution information
 		// the actual executed proportion and value might be zero because of the rounding in an extreme case
 		if slash.Info.ExecutionInfo.SlashProportion.IsNil() || slash.Info.ExecutionInfo.SlashProportion.IsNegative() {
