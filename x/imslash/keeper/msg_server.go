@@ -5,13 +5,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/imua-xyz/imuachain/utils"
 	"github.com/imua-xyz/imuachain/x/imslash/types"
 )
 
 func (k Keeper) UpdateParams(ctx context.Context, params *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	if utils.IsMainnet(c.ChainID()) && k.authority != params.Authority {
+	if k.authority != params.Authority {
 		return nil, govtypes.ErrInvalidSigner.Wrapf(
 			"invalid authority; expected %s, got %s",
 			k.authority, params.Authority,

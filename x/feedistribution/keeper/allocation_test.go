@@ -7,10 +7,9 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/testutil"
+	testutilkeeper "github.com/imua-xyz/imuachain/testutil/keeper"
 	"github.com/imua-xyz/imuachain/utils"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
@@ -134,11 +133,9 @@ func (suite *KeeperTestSuite) setAVSEpochRewards(avsList []common.Address, rewar
 func (suite *KeeperTestSuite) updateDogfoodAssetsList(assetIDS []string) {
 	dogfoodParam := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx)
 	dogfoodParam.AssetIDs = assetIDS
-	authAddr := authtypes.NewModuleAddress(govtypes.ModuleName)
-	authAddrString := authAddr.String()
 	_, err := suite.App.StakingKeeper.UpdateParams(suite.Ctx, &dogfoodtypes.MsgUpdateParams{
 		Params:    dogfoodParam,
-		Authority: authAddrString,
+		Authority: testutilkeeper.GetAuthAddrString(),
 	})
 	suite.Require().NoError(err)
 }
