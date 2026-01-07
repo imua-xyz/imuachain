@@ -42,8 +42,10 @@ message GenesisState {
   repeated OperatorKeyRemoval operator_key_removals = 8 [(gogoproto.nullable) = false];
   // operator_asset_usd_value is a list of all operator asset USD values
   repeated OperatorAssetUSDValue operator_asset_usd_values = 9 [(gogoproto.nullable) = false];
+  // staker_slash_share_snapshots is a list of all staker undelegatable shares snapshots
+  repeated StakerSlashShareSnapshot staker_slash_share_snapshots = 10 [(gogoproto.nullable) = false];
   // params is the params of the operator module.
-  Params params = 10 [(gogoproto.nullable) = false];
+  Params params = 11 [(gogoproto.nullable) = false];
 }
 
 // OperatorDetail is helper structure to store the operator information for the genesis state.
@@ -106,6 +108,17 @@ message OperatorSlashState {
   string key = 1;
   // states is the voting power value for the above key
   OperatorSlashInfo info = 2 [(gogoproto.nullable) = false];
+}
+
+// StakerSlashShareSnapshot is helper structure to store the staker undelegatable 
+// shares snapshots for the genesis state.
+// it's corresponding to the kvStore `KeyPrefixSlashStakerShareSnapshot`
+message StakerSlashShareSnapshot{
+  // key is used for storing the staker undelegatable shares snapshot,
+  // which is the combination of the slashID, assetID, and stakerID.
+  string key = 1;
+  // value is the staker undelegatable shares snapshot.
+  StakerUndelegatableSharesSnapshot value = 2 [(gogoproto.nullable) = false];
 }
 
 // PrevConsKey is helper structure to store the previous consensus key

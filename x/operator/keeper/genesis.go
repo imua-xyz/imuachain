@@ -71,6 +71,10 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) []abci.Va
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all operator asset USD values"))
 	}
+	err = k.SetAllSlashStakerShareSnapshot(ctx, state.StakerSlashShareSnapshots)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to set all staker slash share snapshots"))
+	}
 	return []abci.ValidatorUpdate{}
 }
 
@@ -121,6 +125,11 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	res.OperatorAssetUsdValues, err = k.GetAllOperatorAssetUSDValues(ctx)
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all operator asset USD values").Error())
+	}
+
+	res.StakerSlashShareSnapshots, err = k.GetAllSlashStakerShareSnapshot(ctx)
+	if err != nil {
+		panic(errorsmod.Wrap(err, "failed to get all staker slash share snapshots").Error())
 	}
 
 	return &res

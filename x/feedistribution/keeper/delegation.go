@@ -368,15 +368,15 @@ func (k Keeper) distributeRewardsToDelegation(
 
 		// calculate the compounding rewards and the rewards from slash vetoed based on the proportion
 		// of outstanding rewards.
-		stakerCompoundingRewards := feedistributiontypes.NewCompoundingRewards()
+		stakerCompoundingRewards := imuachaintypes.NewCompoundingRewards()
 		stakerRewardFromSlashVetoed := sdk.NewDecCoins()
-		stakerCompoundingRewardFromSlashVetoed := feedistributiontypes.NewCompoundingRewards()
+		stakerCompoundingRewardFromSlashVetoed := imuachaintypes.NewCompoundingRewards()
 		for _, reward := range rewards {
 			outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
 			if outstandingRewardAmount.IsPositive() {
 				proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
 				// calculate the compounding rewards
-				compoundingRewardsPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
+				compoundingRewardsPerAsset := imuachaintypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
 				if compoundingRewardsPerAsset != nil {
 					// calculate the compounding rewards for specific reward asset
 					stakerCompoundingRewardsPerAsset, err := compoundingRewardsPerAsset.MulDecTruncate(proportion)
@@ -408,7 +408,7 @@ func (k Keeper) distributeRewardsToDelegation(
 				}
 
 				// calculate the compounding rewards from slash vetoed
-				compoundingRewardsVetoedPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsVetoed).RewardsOf(reward.Denom)
+				compoundingRewardsVetoedPerAsset := imuachaintypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsVetoed).RewardsOf(reward.Denom)
 				if compoundingRewardsVetoedPerAsset != nil {
 					// calculate the compounding rewards from slash vetoed for specific reward asset
 					stakerCompoundingRewardsVetoedPerAsset, err := compoundingRewardsVetoedPerAsset.MulDecTruncate(proportion)
@@ -689,15 +689,15 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 
 			// calculate the compounding rewards and the rewards from slash vetoed based on the proportion
 			// of outstanding rewards.
-			stakerCompoundingRewards := feedistributiontypes.NewCompoundingRewards()
+			stakerCompoundingRewards := imuachaintypes.NewCompoundingRewards()
 			stakerRewardFromSlashVetoed := sdk.NewDecCoins()
-			stakerCompoundingRewardFromSlashVetoed := feedistributiontypes.NewCompoundingRewards()
+			stakerCompoundingRewardFromSlashVetoed := imuachaintypes.NewCompoundingRewards()
 			for _, reward := range rewards {
 				outstandingRewardAmount := unclaimedRewards.OutstandingRewards.AmountOf(reward.Denom)
 				if outstandingRewardAmount.IsPositive() {
 					proportion := math.LegacyMinDec(reward.Amount.QuoTruncate(outstandingRewardAmount), math.LegacyOneDec())
 					// calculate the compounding rewards
-					compoundingRewardsPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
+					compoundingRewardsPerAsset := imuachaintypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(reward.Denom)
 					if compoundingRewardsPerAsset != nil {
 						// calculate the compounding rewards for specific reward asset
 						stakerCompoundingRewardsPerAsset, err := compoundingRewardsPerAsset.MulDecTruncate(proportion)
@@ -725,7 +725,7 @@ func (k Keeper) GetDelegationUnclaimedRewards(ctx sdk.Context, isCacheCtx bool, 
 					}
 
 					// calculate the compounding rewards from slash vetoed
-					compoundingRewardsVetoedPerAsset := feedistributiontypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsVetoed).RewardsOf(reward.Denom)
+					compoundingRewardsVetoedPerAsset := imuachaintypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsVetoed).RewardsOf(reward.Denom)
 					if compoundingRewardsVetoedPerAsset != nil {
 						// calculate the compounding rewards from slash vetoed for specific reward asset
 						stakerCompoundingRewardsVetoedPerAsset, err := compoundingRewardsVetoedPerAsset.MulDecTruncate(proportion)

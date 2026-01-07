@@ -1549,7 +1549,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 							{
 								AVSAddress:                suite.DogfoodAVSAddr,
 								OutstandingRewardsSlashed: sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedAmountDecFromOutStandingReward)),
-								CompoundingRewardsSlashed: feedistributiontypes.NewCompoundingRewards(imuachaintypes.CompoundingRewardsPerAsset{
+								CompoundingRewardsSlashed: imuachaintypes.NewCompoundingRewards(imuachaintypes.CompoundingRewardsPerAsset{
 									RewardDenomination: utils.BaseDenom,
 									Rewards: imuachaintypes.NewCommonAVSRewards(imuachaintypes.CommonAVSRewardData{
 										AVSAddress: suite.DogfoodAVSAddr,
@@ -1574,7 +1574,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				unclaimedRewardsAfterSlash, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, suite.testOperators[0].String(), suite.DogfoodAVSAddr)
 				suite.Require().NoError(err)
 				outstandingRewardsSlashed := sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedAmountDecFromOutStandingReward))
-				compoundingRewardsSlashed := feedistributiontypes.NewCompoundingRewards(imuachaintypes.CompoundingRewardsPerAsset{
+				compoundingRewardsSlashed := imuachaintypes.NewCompoundingRewards(imuachaintypes.CompoundingRewardsPerAsset{
 					RewardDenomination: utils.BaseDenom,
 					Rewards: imuachaintypes.NewCommonAVSRewards(imuachaintypes.CommonAVSRewardData{
 						AVSAddress: suite.DogfoodAVSAddr,
@@ -1584,7 +1584,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.Require().Equal(feedistributiontypes.OperatorUnclaimedRewards{
 					OutstandingRewards:        operatorUnclaimedRewards.OutstandingRewards.Sub(outstandingRewardsSlashed),
 					OutstandingRewardsSlashed: outstandingRewardsSlashed,
-					RewardsFromCompounding:    feedistributiontypes.CompoundingRewards(operatorUnclaimedRewards.RewardsFromCompounding).Sub(compoundingRewardsSlashed),
+					RewardsFromCompounding:    imuachaintypes.CompoundingRewards(operatorUnclaimedRewards.RewardsFromCompounding).Sub(compoundingRewardsSlashed),
 					CompoundingRewardsSlashed: compoundingRewardsSlashed,
 				}, unclaimedRewardsAfterSlash)
 			},
@@ -1684,6 +1684,12 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 								Amount:         slashAmountFromRewardUndelegation,
 								UndelegationId: 1,
 								RewardAsset:    true,
+								SlashRewardAmountPerAvs: []operatortypes.SlashRewardAmountPerAVS{
+									{
+										AVSAddress: suite.DogfoodAVSAddr,
+										Amount:     slashAmountFromRewardUndelegation,
+									},
+								},
 							},
 						},
 						UndelegationFilterHeight: infractionHeight,

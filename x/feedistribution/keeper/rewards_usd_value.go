@@ -90,7 +90,7 @@ func (k *Keeper) calcOperatorRewardsUSDValue(
 		}
 
 		// handle the rewards earned by compounding
-		compoundingRewards := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(outstandingReward.Denom)
+		compoundingRewards := imuachaintypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(outstandingReward.Denom)
 		compoundingUSDValue := sdkmath.LegacyZeroDec()
 		for _, rewardsPerAsset := range compoundingRewards {
 			for _, reward := range rewardsPerAsset.Rewards {
@@ -226,11 +226,11 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 		slashFromUnclaimedRewards := operatortypes.SlashFromUnclaimedRewards{
 			AVSAddress:                rewardSourceAVS,
 			OutstandingRewardsSlashed: sdk.NewDecCoins(),
-			CompoundingRewardsSlashed: feedistributiontypes.NewCompoundingRewards(),
+			CompoundingRewardsSlashed: imuachaintypes.NewCompoundingRewards(),
 		}
 
 		outstandingRewardsSlashedTotal := sdk.NewDecCoins()
-		compoundingRewardsSlashedTotal := feedistributiontypes.NewCompoundingRewards()
+		compoundingRewardsSlashedTotal := imuachaintypes.NewCompoundingRewards()
 		hasSlashedRewards := false
 		// iterate over the outstanding rewards
 		for _, outstandingReward := range unclaimedRewards.OutstandingRewards {
@@ -251,7 +251,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 					}
 				}
 			}
-			compoundingRewards := feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(outstandingReward.Denom)
+			compoundingRewards := imuachaintypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).RewardsOf(outstandingReward.Denom)
 			// slash from the rewards earned by compounding
 			for _, rewardsPerAsset := range compoundingRewards {
 				for _, reward := range rewardsPerAsset.Rewards {
@@ -271,7 +271,7 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 								}),
 						}
 						compoundingRewardsSlashedTotal = compoundingRewardsSlashedTotal.Add(newCompoundingRewardsSlashed)
-						slashFromUnclaimedRewards.CompoundingRewardsSlashed = feedistributiontypes.CompoundingRewards(slashFromUnclaimedRewards.CompoundingRewardsSlashed).Add(newCompoundingRewardsSlashed)
+						slashFromUnclaimedRewards.CompoundingRewardsSlashed = imuachaintypes.CompoundingRewards(slashFromUnclaimedRewards.CompoundingRewardsSlashed).Add(newCompoundingRewardsSlashed)
 						if !hasSlashedRewards {
 							hasSlashedRewards = true
 						}
@@ -284,10 +284,10 @@ func (k *Keeper) SlashOperatorUnclaimedRewards(
 			result = append(result, slashFromUnclaimedRewards)
 
 			unclaimedRewards.OutstandingRewardsSlashed = unclaimedRewards.OutstandingRewardsSlashed.Add(outstandingRewardsSlashedTotal...)
-			unclaimedRewards.CompoundingRewardsSlashed = feedistributiontypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsSlashed).Add(compoundingRewardsSlashedTotal...)
+			unclaimedRewards.CompoundingRewardsSlashed = imuachaintypes.CompoundingRewards(unclaimedRewards.CompoundingRewardsSlashed).Add(compoundingRewardsSlashedTotal...)
 
 			unclaimedRewards.OutstandingRewards = unclaimedRewards.OutstandingRewards.Sub(outstandingRewardsSlashedTotal)
-			unclaimedRewards.RewardsFromCompounding = feedistributiontypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).Sub(compoundingRewardsSlashedTotal)
+			unclaimedRewards.RewardsFromCompounding = imuachaintypes.CompoundingRewards(unclaimedRewards.RewardsFromCompounding).Sub(compoundingRewardsSlashedTotal)
 			return false, true, nil
 		}
 		return false, false, nil
@@ -308,14 +308,14 @@ func (k Keeper) VetoSlashUnclaimedRewards(ctx sdk.Context, operatorAddr string, 
 		}
 
 		operatorUnclaimedRewards.OutstandingRewardsVetoed = operatorUnclaimedRewards.OutstandingRewardsVetoed.Add(slashFromUnclaimedReward.OutstandingRewardsSlashed...)
-		operatorUnclaimedRewards.CompoundingRewardsVetoed = feedistributiontypes.CompoundingRewards(operatorUnclaimedRewards.CompoundingRewardsVetoed).Add(slashFromUnclaimedReward.CompoundingRewardsSlashed...)
+		operatorUnclaimedRewards.CompoundingRewardsVetoed = imuachaintypes.CompoundingRewards(operatorUnclaimedRewards.CompoundingRewardsVetoed).Add(slashFromUnclaimedReward.CompoundingRewardsSlashed...)
 
 		var negative bool
 		operatorUnclaimedRewards.OutstandingRewardsSlashed, negative = operatorUnclaimedRewards.OutstandingRewardsSlashed.SafeSub(slashFromUnclaimedReward.OutstandingRewardsSlashed)
 		if negative {
 			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to veto slashed outstanding rewards,operator:%s,avsAddr:%s", operatorAddr, slashFromUnclaimedReward.AVSAddress)
 		}
-		operatorUnclaimedRewards.CompoundingRewardsSlashed, negative = feedistributiontypes.CompoundingRewards(operatorUnclaimedRewards.CompoundingRewardsSlashed).SafeSub(slashFromUnclaimedReward.CompoundingRewardsSlashed)
+		operatorUnclaimedRewards.CompoundingRewardsSlashed, negative = imuachaintypes.CompoundingRewards(operatorUnclaimedRewards.CompoundingRewardsSlashed).SafeSub(slashFromUnclaimedReward.CompoundingRewardsSlashed)
 		if negative {
 			return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to veto slashed compounding rewards,operator:%s,avsAddr:%s", operatorAddr, slashFromUnclaimedReward.AVSAddress)
 		}

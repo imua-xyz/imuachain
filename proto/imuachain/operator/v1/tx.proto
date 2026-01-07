@@ -183,7 +183,7 @@ enum SlashType {
 // SlashFromUndelegation to record the breakdown of slashed amounts from each reward source AVS.
 message SlashRewardAmountPerAVS {
   // avs_address is the AVS address the rewards come from.
-  string avs_address = 1;
+  string avs_address = 1 [(gogoproto.customname) = "AVSAddress"];
   // amount is the slashed undelegation amount from specific AVS.
   string amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",

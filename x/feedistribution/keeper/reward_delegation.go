@@ -377,7 +377,7 @@ func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.
 			return nil, feedistributiontypes.ErrFailedToCompleteRewardsUndelegation.Wrap(err.Error())
 		}
 		slashRewardAmountPerAVSList = append(slashRewardAmountPerAVSList, operatorstypes.SlashRewardAmountPerAVS{
-			AvsAddress: undelegationPerAVS.AvsAddress,
+			AVSAddress: undelegationPerAVS.AvsAddress,
 			Amount:     actualSlashAmount,
 		})
 	}
@@ -386,11 +386,11 @@ func (k Keeper) SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.
 
 func (k Keeper) VetoSlashRewardUndelegation(ctx sdk.Context, stakerID, assetID string, slashRewardAmountPerAVSList []operatorstypes.SlashRewardAmountPerAVS) error {
 	for _, slashRewardAmountPerAVS := range slashRewardAmountPerAVSList {
-		stakerClaimedRewards, err := k.GetStakerClaimedRewards(ctx, stakerID, slashRewardAmountPerAVS.AvsAddress)
+		stakerClaimedRewards, err := k.GetStakerClaimedRewards(ctx, stakerID, slashRewardAmountPerAVS.AVSAddress)
 		if err != nil {
 			return err
 		}
-		rewardAsset, err := k.GetAVSRewardAsset(ctx, slashRewardAmountPerAVS.AvsAddress, assetID)
+		rewardAsset, err := k.GetAVSRewardAsset(ctx, slashRewardAmountPerAVS.AVSAddress, assetID)
 		if err != nil {
 			return err
 		}
@@ -400,7 +400,7 @@ func (k Keeper) VetoSlashRewardUndelegation(ctx sdk.Context, stakerID, assetID s
 		stakerClaimedRewards.WithdrawableRewards = stakerClaimedRewards.WithdrawableRewards.Add(
 			sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination,
 				feedistributiontypes.ScaleIntByDecimals(slashRewardAmountPerAVS.Amount, rewardAsset.RewardAssetInfo.DenominationExponent)))
-		err = k.SetStakerClaimedRewards(ctx, stakerID, slashRewardAmountPerAVS.AvsAddress, stakerClaimedRewards)
+		err = k.SetStakerClaimedRewards(ctx, stakerID, slashRewardAmountPerAVS.AVSAddress, stakerClaimedRewards)
 		if err != nil {
 			return err
 		}

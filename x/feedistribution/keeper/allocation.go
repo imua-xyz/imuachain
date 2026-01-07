@@ -259,7 +259,7 @@ func (k Keeper) CalculateRewardsForCompounding(ctx sdk.Context, operator, reward
 			targetAVS = avs
 			avsRewards = append(avsRewards, types.CompoundingRewardsWithAVS{
 				AVS:                targetAVS,
-				CompoundingRewards: types.NewCompoundingRewards(),
+				CompoundingRewards: imuachaintypes.NewCompoundingRewards(),
 			})
 		}
 		// calculate the compounding rewards for specific reward asset

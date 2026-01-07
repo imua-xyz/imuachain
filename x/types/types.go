@@ -9,7 +9,8 @@ import (
 )
 
 type (
-	CommonAVSRewards []CommonAVSRewardData
+	CommonAVSRewards   []CommonAVSRewardData
+	CompoundingRewards []CompoundingRewardsPerAsset
 )
 
 func (cr CommonAVSRewardData) IsZeroRewards() bool {
@@ -152,6 +153,7 @@ func (crs CommonAVSRewards) Add(avsRewards ...CommonAVSRewardData) CommonAVSRewa
 // other set is returned. Otherwise, the CommonAVSRewards are compared in order of their
 // avs address and addition only occurs when the address match, otherwise
 // the CommonAVSRewards is simply added to the sum assuming it's not zero.
+// nolint: dupl
 func (crs CommonAVSRewards) safeAdd(avsRewardsB CommonAVSRewards) CommonAVSRewards {
 	sum := ([]CommonAVSRewardData)(nil)
 	indexA, indexB := 0, 0
@@ -311,4 +313,203 @@ func (cra CompoundingRewardsPerAsset) Add(compoundingRewardB CompoundingRewardsP
 		RewardDenomination: cra.RewardDenomination,
 		Rewards:            CommonAVSRewards(cra.Rewards).Add(compoundingRewardB.Rewards...),
 	}
+}
+
+// Sorting
+var _ sort.Interface = CompoundingRewards{}
+
+// Len implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Len() int { return len(cmr) }
+
+// Less implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Less(i, j int) bool {
+	return cmr[i].RewardDenomination < cmr[j].RewardDenomination
+}
+
+// Swap implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Swap(i, j int) { cmr[i], cmr[j] = cmr[j], cmr[i] }
+
+// Sort is a helper function to sort the set of CompoundingRewards in-place.
+func (cmr CompoundingRewards) Sort() CompoundingRewards {
+	sort.Sort(cmr)
+	return cmr
+}
+
+// NewCompoundingRewards constructs a new CompoundingRewardsPerAsset set.
+// The provided CompoundingRewardsPerAsset will be sanitized by removing
+// zero rewards and sorting the CompoundingRewardsPerAsset set. An empty
+// CompoundingRewards will be returned if the CompoundingRewardsPerAsset
+// set is not valid.
+func NewCompoundingRewards(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
+	newAVSRewards := sanitizeCompoundingRewards(compoundingRewards)
+	if err := newAVSRewards.Validate(); err != nil {
+		return CompoundingRewards{}
+	}
+
+	return newAVSRewards
+}
+
+func sanitizeCompoundingRewards(compoundingRewards []CompoundingRewardsPerAsset) CompoundingRewards {
+	// remove zeroes
+	newCompoundingRewards := removeZeroCompoundingRewards(compoundingRewards)
+	if len(newCompoundingRewards) == 0 {
+		return CompoundingRewards{}
+	}
+
+	return newCompoundingRewards.Sort()
+}
+
+func removeZeroCompoundingRewards(compoundingRewards CompoundingRewards) CompoundingRewards {
+	result := make([]CompoundingRewardsPerAsset, 0, len(compoundingRewards))
+
+	for _, compoundingReward := range compoundingRewards {
+		if !compoundingReward.IsZeroRewards() {
+			result = append(result, compoundingReward)
+		}
+	}
+
+	return result
+}
+
+// Validate checks that the CompoundingRewards are sorted, have positive rewards, with a unique
+// symbol (i.e no duplicates). Otherwise, it returns an error.
+func (cmr CompoundingRewards) Validate() error {
+	switch len(cmr) {
+	case 0:
+		return nil
+
+	case 1:
+		if !cmr[0].IsPositive() {
+			return fmt.Errorf("rewardsPerAsset amount is not positive,rewardDenomination:%s", cmr[0].RewardDenomination)
+		}
+		return nil
+	default:
+		// check single compounding reward case
+		if err := (CompoundingRewards{cmr[0]}).Validate(); err != nil {
+			return err
+		}
+
+		lowRewardDenomination := cmr[0].RewardDenomination
+		for _, rewardsPerAsset := range cmr[1:] {
+			if rewardsPerAsset.RewardDenomination <= lowRewardDenomination {
+				return fmt.Errorf("rewardDenomination %s is not sorted", rewardsPerAsset.RewardDenomination)
+			}
+			if !rewardsPerAsset.IsPositive() {
+				return fmt.Errorf("rewardDenomination %s amount is not positive", rewardsPerAsset.RewardDenomination)
+			}
+
+			// we compare each rewardsPerAsset against the last avs address
+			lowRewardDenomination = rewardsPerAsset.RewardDenomination
+		}
+
+		return nil
+	}
+}
+
+func (cmr CompoundingRewards) RewardsOf(symbol string) CommonAVSRewards {
+	for _, assetRewards := range cmr {
+		if symbol == assetRewards.RewardDenomination {
+			return assetRewards.Rewards
+		}
+	}
+	return nil
+}
+
+func (cmr CompoundingRewards) Add(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
+	return cmr.safeAdd(compoundingRewards)
+}
+
+// safeAdd will perform addition of two CompoundingRewards sets. If both CompoundingRewards sets are
+// empty, then an empty set is returned. If only a single set is empty, the
+// other set is returned. Otherwise, the CompoundingRewards are compared in order of their
+// symbols and addition only occurs when the symbol match, otherwise
+// the CompoundingRewards is simply added to the sum assuming it's not zero.
+// nolint: dupl
+func (cmr CompoundingRewards) safeAdd(compoundingRewardsB CompoundingRewards) CompoundingRewards {
+	sum := ([]CompoundingRewardsPerAsset)(nil)
+	indexA, indexB := 0, 0
+	lenA, lenB := len(cmr), len(compoundingRewardsB)
+
+	for {
+		if indexA == lenA {
+			if indexB == lenB {
+				// return nil coins if both sets are empty
+				return sum
+			}
+
+			// return set B (excluding zero rewards) if set A is empty
+			return append(sum, removeZeroCompoundingRewards(compoundingRewardsB[indexB:])...)
+		} else if indexB == lenB {
+			// return set A (excluding zero rewards) if set B is empty
+			return append(sum, removeZeroCompoundingRewards(cmr[indexA:])...)
+		}
+
+		compoundingRewardA, compoundingRewardB := cmr[indexA], compoundingRewardsB[indexB]
+
+		switch strings.Compare(compoundingRewardA.RewardDenomination, compoundingRewardB.RewardDenomination) {
+		case -1: // coin A rewardDenomination < coin B rewardDenomination
+			if !compoundingRewardA.IsZeroRewards() {
+				sum = append(sum, compoundingRewardA)
+			}
+
+			indexA++
+
+		case 0: // coin A rewardDenomination = coin B rewardDenomination
+			res := compoundingRewardA.Add(compoundingRewardB)
+			if !res.IsZeroRewards() {
+				sum = append(sum, res)
+			}
+
+			indexA++
+			indexB++
+
+		case 1: // coin A rewardDenomination > coin B rewardDenomination
+			if !compoundingRewardB.IsZeroRewards() {
+				sum = append(sum, compoundingRewardB)
+			}
+
+			indexB++
+		}
+	}
+}
+
+// IsAnyNegative returns true if there is at least one coin of the compounding rewards whose amount
+// is negative; returns false otherwise. It returns false if the CompoundingRewards set
+// is empty too.
+func (cmr CompoundingRewards) IsAnyNegative() bool {
+	for _, avsReward := range cmr {
+		if CommonAVSRewards(avsReward.Rewards).IsAnyNegative() {
+			return true
+		}
+	}
+	return false
+}
+
+// negative returns a set of CompoundingRewardsPerAsset with all rewards amount negative.
+func (cmr CompoundingRewards) negative() CompoundingRewards {
+	res := make([]CompoundingRewardsPerAsset, 0, len(cmr))
+	for _, compoundingReward := range cmr {
+		res = append(res, CompoundingRewardsPerAsset{
+			RewardDenomination: compoundingReward.RewardDenomination,
+			Rewards:            CommonAVSRewards(compoundingReward.Rewards).Negative(),
+		})
+	}
+	return res
+}
+
+// Sub subtracts a set of CompoundingRewards from another (adds the inverse).
+func (cmr CompoundingRewards) Sub(compoundingRewardsB CompoundingRewards) CompoundingRewards {
+	diff, hasNeg := cmr.SafeSub(compoundingRewardsB)
+	if hasNeg {
+		panic("negative compounding rewards")
+	}
+
+	return diff
+}
+
+// SafeSub performs the same arithmetic as Sub but returns a boolean if any
+// negative avs rewards amount was returned.
+func (cmr CompoundingRewards) SafeSub(avsRewardsB CompoundingRewards) (CompoundingRewards, bool) {
+	diff := cmr.safeAdd(avsRewardsB.negative())
+	return diff, diff.IsAnyNegative()
 }

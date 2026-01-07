@@ -11,6 +11,7 @@ import (
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/utils"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
+	imuachaintypes "github.com/imua-xyz/imuachain/x/types"
 )
 
 func NewGenesisState(
@@ -405,6 +406,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 				slash,
 			)
 		}
+
 		// validate the slashing record regarding undelegation
 		SlashFromUndelegationVal := func(_ int, slashFromUndelegation SlashFromUndelegation) error {
 			if slashFromUndelegation.Amount.IsNil() || slashFromUndelegation.Amount.LTE(sdkmath.ZeroInt()) {
@@ -423,6 +425,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 		if err != nil {
 			return err
 		}
+
 		// validate the slashing record regarding assets pool
 		SlashFromAssetsPoolVal := func(_ int, slashFromAssetsPool SlashFromAssetPool) error {
 			// when the data is exported, no check for 0 value is added, that is, even 0 values are exported.
@@ -445,6 +448,28 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 			return slashFromAssetsPool.AssetID, struct{}{}
 		}
 		_, err = utils.CommonValidation(slash.Info.ExecutionInfo.SlashAssetsPool, SlashFromAssetsPooLSeenFunc, SlashFromAssetsPoolVal)
+		if err != nil {
+			return err
+		}
+
+		// validate the slashing record regarding unclaimed rewards
+		SlashFromUnclaimedRewardsVal := func(_ int, slashFromUnclaimedRewards SlashFromUnclaimedRewards) error {
+			if slashFromUnclaimedRewards.OutstandingRewardsSlashed.IsValid() {
+				return ErrInvalidGenesisData.Wrapf(
+					"ValidateSlashStates: invalid outstanding rewards slashed for the unclaimed rewards, it's nil or negative: %+v",
+					slash,
+				)
+			}
+			err := imuachaintypes.CompoundingRewards(slashFromUnclaimedRewards.CompoundingRewardsSlashed).Validate()
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		SlashFromUnclaimedRewardsSeenFunc := func(slashFromUnclaimedRewards SlashFromUnclaimedRewards) (string, struct{}) {
+			return slashFromUnclaimedRewards.AVSAddress, struct{}{}
+		}
+		_, err = utils.CommonValidation(slash.Info.ExecutionInfo.SlashUnclaimedRewards, SlashFromUnclaimedRewardsSeenFunc, SlashFromUnclaimedRewardsVal)
 		if err != nil {
 			return err
 		}
@@ -526,11 +551,9 @@ func (gs GenesisState) ValidateOperatorKeyRemovals(operators map[string]struct{}
 }
 
 func (gs GenesisState) ValidateOperatorAssetUSDValues(operators map[string]struct{}) error {
-	// TODO: The asset USD values might be empty during the testnet upgrade from V8 to V9.
-	// So this check is temporarily disabled. It will be enabled after the upgrade.
-	/*	if len(gs.OperatorUSDValues) != 0 && len(gs.OperatorAssetUsdValues) == 0 {
+	if len(gs.OperatorUSDValues) != 0 && len(gs.OperatorAssetUsdValues) == 0 {
 		return ErrInvalidGenesisData.Wrap("ValidateOperatorAssetUSDValues: the USD value of the operator's asset can't be empty.")
-	}*/
+	}
 	validationFunc := func(_ int, usdValue OperatorAssetUSDValue) error {
 		stringList, err := utils.ParseJoinedKeyWithCount([]byte(usdValue.Key), 3)
 		if err != nil {
@@ -561,6 +584,42 @@ func (gs GenesisState) ValidateOperatorAssetUSDValues(operators map[string]struc
 		return usdValue.Key, struct{}{}
 	}
 	_, err := utils.CommonValidation(gs.OperatorAssetUsdValues, seenFieldValueFunc, validationFunc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gs GenesisState) ValidateStakerSlashShareSnapshots() error {
+	validationFunc := func(_ int, snapshot StakerSlashShareSnapshot) error {
+		if snapshot.Value.StakingUndelegatableShare.IsNil() || snapshot.Value.StakingUndelegatableShare.LTE(sdkmath.LegacyZeroDec()) {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateStakerSlashShareSnapshots: invalid staking undelegatable share, it's nil, zero, or negative: %+v",
+				snapshot,
+			)
+		}
+		stakerUndelegatableSharePerAVSVal := func(_ int, stakerUndelegatableSharePerAVS StakerUndelegatableSharePerAVS) error {
+			if stakerUndelegatableSharePerAVS.RewardUndelegatableShare.IsNil() || stakerUndelegatableSharePerAVS.RewardUndelegatableShare.LTE(sdkmath.LegacyZeroDec()) {
+				return ErrInvalidGenesisData.Wrapf(
+					"ValidateStakerSlashShareSnapshots: invalid reward undelegatable share for the AVS, it's nil, zero, or negative: %+v",
+					stakerUndelegatableSharePerAVS,
+				)
+			}
+			return nil
+		}
+		seenFieldValueFunc := func(stakerUndelegatableSharePerAVS StakerUndelegatableSharePerAVS) (string, struct{}) {
+			return stakerUndelegatableSharePerAVS.AVSAddress, struct{}{}
+		}
+		_, err := utils.CommonValidation(snapshot.Value.RewardUndelegatableShareBreakdown, seenFieldValueFunc, stakerUndelegatableSharePerAVSVal)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	seenFieldValueFunc := func(snapshot StakerSlashShareSnapshot) (string, struct{}) {
+		return snapshot.Key, struct{}{}
+	}
+	_, err := utils.CommonValidation(gs.StakerSlashShareSnapshots, seenFieldValueFunc, validationFunc)
 	if err != nil {
 		return err
 	}
@@ -607,6 +666,10 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 	err = gs.ValidateOperatorAssetUSDValues(operators)
+	if err != nil {
+		return err
+	}
+	err = gs.ValidateStakerSlashShareSnapshots()
 	if err != nil {
 		return err
 	}

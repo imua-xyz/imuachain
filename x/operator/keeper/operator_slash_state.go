@@ -150,6 +150,30 @@ func (k *Keeper) IterateSlashStakerShareSnapshot(
 	return nil
 }
 
+func (k *Keeper) SetAllSlashStakerShareSnapshot(ctx sdk.Context, stakerSlashShareSnapshots []operatortypes.StakerSlashShareSnapshot) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
+	for i := range stakerSlashShareSnapshots {
+		snapshot := stakerSlashShareSnapshots[i]
+		bz := k.cdc.MustMarshal(&snapshot)
+		store.Set([]byte(snapshot.Key), bz)
+	}
+	return nil
+}
+
+func (k *Keeper) GetAllSlashStakerShareSnapshot(ctx sdk.Context) ([]operatortypes.StakerSlashShareSnapshot, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
+	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	defer iterator.Close()
+	ret := make([]operatortypes.StakerSlashShareSnapshot, 0)
+
+	for ; iterator.Valid(); iterator.Next() {
+		var snapshot operatortypes.StakerSlashShareSnapshot
+		k.cdc.MustUnmarshal(iterator.Value(), &snapshot)
+		ret = append(ret, snapshot)
+	}
+	return ret, nil
+}
+
 func (k *Keeper) SetAllSlashStates(ctx sdk.Context, slashStates []operatortypes.OperatorSlashState) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorSlashInfo)
 	for i := range slashStates {

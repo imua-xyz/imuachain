@@ -249,11 +249,11 @@ func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAdd
 	// set the initialized value
 	rewards := feedistributiontypes.OperatorUnclaimedRewards{
 		OutstandingRewards:        make([]sdk.DecCoin, 0),
-		RewardsFromCompounding:    feedistributiontypes.NewCompoundingRewards(),
+		RewardsFromCompounding:    imuachaintypes.NewCompoundingRewards(),
 		OutstandingRewardsSlashed: make([]sdk.DecCoin, 0),
-		CompoundingRewardsSlashed: feedistributiontypes.NewCompoundingRewards(),
+		CompoundingRewardsSlashed: imuachaintypes.NewCompoundingRewards(),
 		OutstandingRewardsVetoed:  make([]sdk.DecCoin, 0),
-		CompoundingRewardsVetoed:  feedistributiontypes.NewCompoundingRewards(),
+		CompoundingRewardsVetoed:  imuachaintypes.NewCompoundingRewards(),
 	}
 	var err error
 	if k.HasOperatorUnclaimedRewards(ctx, operator, avsAddr) {
@@ -268,19 +268,19 @@ func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAdd
 			rewards.OutstandingRewards = rewards.OutstandingRewards.Add(deltaRewards.OutstandingRewards...)
 		}
 		if len(deltaRewards.RewardsFromCompounding) > 0 {
-			rewards.RewardsFromCompounding = feedistributiontypes.CompoundingRewards(rewards.RewardsFromCompounding).Add(deltaRewards.RewardsFromCompounding...)
+			rewards.RewardsFromCompounding = imuachaintypes.CompoundingRewards(rewards.RewardsFromCompounding).Add(deltaRewards.RewardsFromCompounding...)
 		}
 		if len(deltaRewards.OutstandingRewardsSlashed) > 0 {
 			rewards.OutstandingRewardsSlashed = rewards.OutstandingRewardsSlashed.Add(deltaRewards.OutstandingRewardsSlashed...)
 		}
 		if len(deltaRewards.CompoundingRewardsSlashed) > 0 {
-			rewards.CompoundingRewardsSlashed = feedistributiontypes.CompoundingRewards(rewards.CompoundingRewardsSlashed).Add(deltaRewards.CompoundingRewardsSlashed...)
+			rewards.CompoundingRewardsSlashed = imuachaintypes.CompoundingRewards(rewards.CompoundingRewardsSlashed).Add(deltaRewards.CompoundingRewardsSlashed...)
 		}
 		if len(deltaRewards.OutstandingRewardsVetoed) > 0 {
 			rewards.OutstandingRewardsVetoed = rewards.OutstandingRewardsVetoed.Add(deltaRewards.OutstandingRewardsVetoed...)
 		}
 		if len(deltaRewards.CompoundingRewardsVetoed) > 0 {
-			rewards.CompoundingRewardsVetoed = feedistributiontypes.CompoundingRewards(rewards.CompoundingRewardsVetoed).Add(deltaRewards.CompoundingRewardsVetoed...)
+			rewards.CompoundingRewardsVetoed = imuachaintypes.CompoundingRewards(rewards.CompoundingRewardsVetoed).Add(deltaRewards.CompoundingRewardsVetoed...)
 		}
 	} else {
 		var negative bool
@@ -291,7 +291,7 @@ func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAdd
 			}
 		}
 		if len(deltaRewards.RewardsFromCompounding) > 0 {
-			rewards.RewardsFromCompounding, negative = feedistributiontypes.CompoundingRewards(rewards.RewardsFromCompounding).SafeSub(deltaRewards.RewardsFromCompounding)
+			rewards.RewardsFromCompounding, negative = imuachaintypes.CompoundingRewards(rewards.RewardsFromCompounding).SafeSub(deltaRewards.RewardsFromCompounding)
 			if negative {
 				return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update operator rewards from compounding,operator:%s,avsAddr:%s", operator, avsAddr)
 			}
@@ -303,7 +303,7 @@ func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAdd
 			}
 		}
 		if len(deltaRewards.CompoundingRewardsSlashed) > 0 {
-			rewards.CompoundingRewardsSlashed, negative = feedistributiontypes.CompoundingRewards(rewards.CompoundingRewardsSlashed).SafeSub(deltaRewards.CompoundingRewardsSlashed)
+			rewards.CompoundingRewardsSlashed, negative = imuachaintypes.CompoundingRewards(rewards.CompoundingRewardsSlashed).SafeSub(deltaRewards.CompoundingRewardsSlashed)
 			if negative {
 				return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update slashed operator rewards from compounding,operator:%s,avsAddr:%s", operator, avsAddr)
 			}
@@ -315,7 +315,7 @@ func (k Keeper) UpdateOperatorUnclaimedRewards(ctx sdk.Context, operator, avsAdd
 			}
 		}
 		if len(deltaRewards.CompoundingRewardsVetoed) > 0 {
-			rewards.CompoundingRewardsVetoed, negative = feedistributiontypes.CompoundingRewards(rewards.CompoundingRewardsVetoed).SafeSub(deltaRewards.CompoundingRewardsVetoed)
+			rewards.CompoundingRewardsVetoed, negative = imuachaintypes.CompoundingRewards(rewards.CompoundingRewardsVetoed).SafeSub(deltaRewards.CompoundingRewardsVetoed)
 			if negative {
 				return feedistributiontypes.ErrNegativeCoinAmount.Wrapf("failed to update vetoed operator rewards from compounding,operator:%s,avsAddr:%s", operator, avsAddr)
 			}

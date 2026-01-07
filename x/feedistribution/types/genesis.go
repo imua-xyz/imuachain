@@ -342,7 +342,7 @@ func (gs GenesisState) ValidateOperatorUnclaimedRewards() error {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid outstanding rewards for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
-		err = CompoundingRewards(info.OperatorUnclaimedRewards.RewardsFromCompounding).Validate()
+		err = imuachaintypes.CompoundingRewards(info.OperatorUnclaimedRewards.RewardsFromCompounding).Validate()
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards for operator, err:%s", err)
 		}
@@ -351,7 +351,7 @@ func (gs GenesisState) ValidateOperatorUnclaimedRewards() error {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid outstanding rewards slashed for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
-		err = CompoundingRewards(info.OperatorUnclaimedRewards.CompoundingRewardsSlashed).Validate()
+		err = imuachaintypes.CompoundingRewards(info.OperatorUnclaimedRewards.CompoundingRewardsSlashed).Validate()
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards slashed for operator, err:%s", err)
 		}
@@ -360,7 +360,7 @@ func (gs GenesisState) ValidateOperatorUnclaimedRewards() error {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid outstanding rewards vetoed for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
-		err = CompoundingRewards(info.OperatorUnclaimedRewards.CompoundingRewardsVetoed).Validate()
+		err = imuachaintypes.CompoundingRewards(info.OperatorUnclaimedRewards.CompoundingRewardsVetoed).Validate()
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards vetoed for operator, err:%s", err)
 		}
@@ -577,6 +577,36 @@ func (gs GenesisState) ValidateOperatorSlashEvents() error {
 				ErrInvalidGenesisData,
 				"ValidateOperatorSlashEvents: nil or invalid slash fraction,key:%s,fraction:%v", info.Key, info.OperatorSlashEvent.Fraction,
 			)
+		}
+		if len(info.OperatorSlashEvent.SlashedOutstandingRewardsAssets) != 0 {
+			// check the reward asset lists for all AVS
+			seenFieldValueFunc := func(avsRewardAssetsList AVSRewardAssetsList) (string, struct{}) {
+				return avsRewardAssetsList.AVSAddress, struct{}{}
+			}
+			validationFunc := func(_ int, avsRewardAssetsList AVSRewardAssetsList) error {
+				if len(avsRewardAssetsList.AssetIDs) == 0 {
+					return ErrInvalidGenesisData.Wrapf("ValidateOperatorSlashEvents: invalid reward asset lists for AVS, AVSAddress:%s", avsRewardAssetsList.AVSAddress)
+				}
+				// check the assetID lists for the specific AVS
+				seenFieldValueFunc := func(assetID string) (string, struct{}) {
+					return assetID, struct{}{}
+				}
+				validationFunc := func(_ int, assetID string) error {
+					if _, _, err := assetstypes.ValidateID(assetID, true, false); err != nil {
+						return ErrInvalidGenesisData.Wrapf("ValidateOperatorSlashEvents: invalid assetID, AVSAddress:%s,assetID:%s", avsRewardAssetsList.AVSAddress, assetID)
+					}
+					return nil
+				}
+				_, err = utils.CommonValidation(avsRewardAssetsList.AssetIDs, seenFieldValueFunc, validationFunc)
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+			_, err = utils.CommonValidation(info.OperatorSlashEvent.SlashedOutstandingRewardsAssets, seenFieldValueFunc, validationFunc)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	}
