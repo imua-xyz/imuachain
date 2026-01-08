@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	testutilkeeper "github.com/imua-xyz/imuachain/testutil/keeper"
 	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	testdata "github.com/imua-xyz/imuachain/x/oracle/keeper/testdata"
@@ -72,7 +71,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			Expect(p.Chains[2].Name).Should(BeEquivalentTo("Bitcoin"))
 		})
 		It("add chain with duplicated name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddChains[1]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(authAddr, inputAddChains[1]))
 			Expect(err).Should(MatchError(types.ErrInvalidParams.Wrap("invalid source to add, duplicated")))
 		})
 	})
