@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"time"
 
 	distr "github.com/imua-xyz/imuachain/x/feedistribution"
 	distrkeeper "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
@@ -159,6 +160,10 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 
+	"github.com/cosmos/cosmos-sdk/x/group"
+	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
+	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
+
 	staking "github.com/imua-xyz/imuachain/x/dogfood"
 	stakingkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	stakingtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
@@ -228,6 +233,7 @@ var (
 		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		bank.AppModuleBasic{},
 		capability.AppModuleBasic{},
+		groupmodule.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		immint.AppModuleBasic{},
 		gov.NewAppModuleBasic(
@@ -313,6 +319,7 @@ type ImuachainApp struct {
 	// keepers
 	AccountKeeper    authkeeper.AccountKeeper
 	BankKeeper       bankkeeper.Keeper
+	GroupKeeper      groupkeeper.Keeper
 	CapabilityKeeper *capabilitykeeper.Keeper
 	StakingKeeper    stakingkeeper.Keeper
 	SlashingKeeper   slashingkeeper.Keeper
@@ -415,6 +422,7 @@ func NewImuachainApp(
 		// SDK keys
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
 		slashingtypes.StoreKey,
+		group.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey, consensusparamtypes.StoreKey,
 		feegrant.StoreKey, authzkeeper.StoreKey, crisistypes.StoreKey,
@@ -463,9 +471,10 @@ func NewImuachainApp(
 		appCodec, cdc, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey],
 	)
 
-	// get the address of the authority, which is the governance module.
-	// as the authority, the governance module can modify parameters in the modules that support
-	// such modifications.
+	// get the address of the authority, which is any arbitrary address.
+	// for example, it may be the address of the governance module or
+	// a group policy address.
+	// the authority can modify parameters in the modules that support such modifications.
 	var authAddr sdk.AccAddress
 	if authAddrString != "" {
 		authAddr = sdk.MustAccAddressFromBech32(authAddrString)
@@ -490,6 +499,19 @@ func NewImuachainApp(
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper,
 		app.BlockedAddrs(), authAddrString,
+	)
+
+	app.GroupKeeper = groupkeeper.NewKeeper(
+		keys[group.StoreKey],
+		appCodec,
+		app.MsgServiceRouter(),
+		app.AccountKeeper,
+		group.Config{
+			// pruning period for non-executed proposals
+			MaxExecutionPeriod: 24 * 7 * time.Hour,
+			// storage cap
+			MaxMetadataLen: 255,
+		},
 	)
 
 	// the crisis keeper is used to halt the chain in case of an invariant failure. typically,
@@ -853,6 +875,10 @@ func NewImuachainApp(
 			authsims.RandomGenesisAccounts,
 			app.GetSubspace(authtypes.ModuleName),
 		),
+		groupmodule.NewAppModule(
+			appCodec, app.GroupKeeper, app.AccountKeeper,
+			app.BankKeeper, app.interfaceRegistry,
+		),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(
 			appCodec, app.BankKeeper, app.AccountKeeper,
@@ -955,6 +981,7 @@ func NewImuachainApp(
 		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
+		group.ModuleName, // location irrelevant since end blocker only
 	)
 
 	app.mm.SetOrderEndBlockers(
@@ -964,6 +991,7 @@ func NewImuachainApp(
 		stakingtypes.ModuleName,    // uses the USD value recorded in operator to calculate vote power
 		delegationTypes.ModuleName, // process the undelegations matured by dogfood
 		govtypes.ModuleName,        // after staking keeper to ensure new vote powers
+		group.ModuleName,           // garbage collection, not super relevant
 		oracleTypes.ModuleName,     // prepares for next round with new vote powers from staking keeper
 		evmtypes.ModuleName,        // can be anywhere
 		feegrant.ModuleName,        // can be anywhere
@@ -999,6 +1027,8 @@ func NewImuachainApp(
 		authtypes.ModuleName,
 		// their balances
 		banktypes.ModuleName,
+		// group
+		group.ModuleName,
 		// gas paid by other accounts
 		feegrant.ModuleName,
 		// permissions to execute txs on behalf of other accounts

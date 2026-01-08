@@ -39,6 +39,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/cosmos/cosmos-sdk/x/group"
+	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
 
 	"github.com/evmos/evmos/v16/encoding"
 	"github.com/evmos/evmos/v16/ethereum/eip712"
@@ -293,13 +295,25 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	chainID := getChainID(appOpts, home)
 
+	// The default authority is the group policy with ID 1.
+	cred, err := types.NewModuleCredential(
+		group.ModuleName,
+		[]byte{groupkeeper.GroupPolicyTablePrefix},
+		sdk.Uint64ToBigEndian(1),
+	)
+	if err != nil {
+		// safe to panic during initialization
+		// an error is returned when any of the derivation keys are empty
+		// our call above ensures they are not; this is more for future devs.
+		panic(fmt.Sprintf("failed to create module credential: %s", err))
+	}
 	imuaApp := app.NewImuachainApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(sdkserver.FlagInvCheckPeriod)),
 		a.encCfg,
 		appOpts,
-		"",
+		sdk.AccAddress(cred.Address().Bytes()).String(),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(sdkserver.FlagMinGasPrices))),
 		baseapp.SetHaltHeight(cast.ToUint64(appOpts.Get(sdkserver.FlagHaltHeight))),
