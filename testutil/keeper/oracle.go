@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -14,8 +13,7 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/group"
-	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/imua-xyz/imuachain/cmd/config"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper"
@@ -27,20 +25,6 @@ import (
 	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	"github.com/stretchr/testify/require"
 )
-
-func GetAuthAddrString() string {
-	cred, err := authtypes.NewModuleCredential(
-		group.ModuleName,
-		[]byte{groupkeeper.GroupPolicyTablePrefix},
-		sdk.Uint64ToBigEndian(1),
-	)
-	if err != nil {
-		panic(fmt.Sprintf("failed to create module credential: %s", err))
-	}
-	authAddr := sdk.AccAddress(cred.Address().Bytes())
-	authAddrString := authAddr.String()
-	return authAddrString
-}
 
 func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	// force to initialize config at the start of each test
@@ -75,7 +59,7 @@ func OracleKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		dogfoodkeeper.Keeper{},
 		delegationkeeper.Keeper{},
 		assetskeeper.Keeper{},
-		GetAuthAddrString(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		slashingkeeper.Keeper{},
 	)
 
