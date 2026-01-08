@@ -84,7 +84,6 @@ func PrepareEIP712CosmosTx(
 	if err != nil {
 		return nil, err
 	}
-	// nolint: staticcheck
 	fee := legacytx.NewStdFee(txArgs.Gas, txArgs.Fees)
 
 	msgs := txArgs.Msgs
