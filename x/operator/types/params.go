@@ -15,18 +15,26 @@ const (
 	DefaultMinCommissionUpdateInterval = 24 * time.Hour
 )
 
-// DefaultMinCommissionRate is the default minimum commission rate.
-// It is set to 5% by default.
-var DefaultMinCommissionRate = sdk.NewDecWithPrec(5, 2)
+var (
+	// DefaultMinCommissionRate is the default minimum commission rate.
+	// It is set to 5% by default.
+	DefaultMinCommissionRate = sdk.NewDecWithPrec(5, 2)
+
+	// DefaultMaxSlashProportion is the default maximum slash proportion when executing the slash event.
+	// It is set to 100% by default.
+	DefaultMaxSlashProportion = sdk.OneDec()
+)
 
 // NewParams creates a new Params instance.
 func NewParams(
 	minCommissionUpdateInterval time.Duration,
 	minCommissionRate sdk.Dec,
+	maxSlashProportion sdk.Dec,
 ) Params {
 	return Params{
 		MinCommissionUpdateInterval: minCommissionUpdateInterval,
 		MinCommissionRate:           minCommissionRate,
+		MaxSlashProportion:          maxSlashProportion,
 	}
 }
 
@@ -35,6 +43,7 @@ func DefaultParams() Params {
 	return NewParams(
 		DefaultMinCommissionUpdateInterval,
 		DefaultMinCommissionRate,
+		DefaultMaxSlashProportion,
 	)
 }
 
@@ -47,6 +56,16 @@ func (p Params) Validate() error {
 	// 0 rate is allowed to permit operators with no commission
 	if err := ValidateNonNegativeDec(p.MinCommissionRate); err != nil {
 		return fmt.Errorf("min commission rate: %w", err)
+	}
+	if p.MinCommissionRate.GT(sdk.OneDec()) {
+		return fmt.Errorf("min commission rate must be less than or equal to 1")
+	}
+
+	if err := ValidateNonNegativeDec(p.MaxSlashProportion); err != nil {
+		return fmt.Errorf("max slash proportion: %w", err)
+	}
+	if p.MaxSlashProportion.GT(sdk.OneDec()) {
+		return fmt.Errorf("max slash proportion must be less than or equal to 1")
 	}
 	return nil
 }

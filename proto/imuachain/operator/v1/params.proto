@@ -24,4 +24,14 @@ message Params {
     (amino.dont_omitempty) = true,
     (gogoproto.nullable) = false
   ];
+  // The maximum slash proportion when executing the slash event.
+  // We don't care about the input slash proportion because the actual slash proportion
+  // will be recalculated based on the historical voting power and current assets state.
+  // This parameter caps the recalculated slash proportion during execution.
+  string max_slash_proportion = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (amino.dont_omitempty) = true,
+    (gogoproto.nullable) = false
+  ];
 }

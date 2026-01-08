@@ -93,7 +93,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	}
 	// calculate the new slash proportion
 	newSlashProportion := slashUSDValue.Quo(stakingInfo.StakingAndWaitUnbonding)
-	newSlashProportion = sdkmath.LegacyMinDec(sdkmath.LegacyNewDec(1), newSlashProportion)
+	newSlashProportion = sdkmath.LegacyMinDec(k.GetParams(ctx).MaxSlashProportion, newSlashProportion)
 
 	executionInfo := &types.SlashExecutionInfo{
 		SlashProportion:          newSlashProportion,

@@ -352,9 +352,9 @@ func CmdUpdateCommissionRate() *cobra.Command {
 // CmdUpdateParams returns a CLI command handler for creating a MsgUpdateParams transaction.
 func CmdUpdateParams() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-params <min-commission-rate> <min-commission-update-interval>",
+		Use:   "update-params <min-commission-rate> <min-commission-update-interval> <max-slash-proportion>",
 		Short: "update the parameters of the operator module",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -368,11 +368,16 @@ func CmdUpdateParams() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			maxSlashProportion, err := sdk.NewDecFromStr(args[2])
+			if err != nil {
+				return err
+			}
 			msg := &types.MsgUpdateParams{
 				Authority: clientCtx.GetFromAddress().String(),
 				Params: types.Params{
 					MinCommissionRate:           minCommissionRate,
 					MinCommissionUpdateInterval: minCommissionUpdateInterval,
+					MaxSlashProportion:          maxSlashProportion,
 				},
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)

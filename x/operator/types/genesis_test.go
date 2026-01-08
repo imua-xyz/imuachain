@@ -343,6 +343,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				Params: types.NewParams(
 					types.DefaultMinCommissionUpdateInterval*-1,
 					types.DefaultMinCommissionRate,
+					types.DefaultMaxSlashProportion,
 				),
 			},
 			expPass:        false,
@@ -376,6 +377,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				Params: types.NewParams(
 					types.DefaultMinCommissionUpdateInterval,
 					types.DefaultMinCommissionRate.Neg(),
+					types.DefaultMaxSlashProportion,
 				),
 			},
 			expPass:        false,
@@ -409,6 +411,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				Params: types.NewParams(
 					types.DefaultMinCommissionUpdateInterval,
 					sdk.Dec{},
+					types.DefaultMaxSlashProportion,
 				),
 			},
 			expPass:        false,
@@ -442,6 +445,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				Params: types.NewParams(
 					types.DefaultMinCommissionUpdateInterval,
 					types.DefaultMinCommissionRate,
+					types.DefaultMaxSlashProportion,
 				),
 			},
 			expPass:        false,
@@ -475,6 +479,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				Params: types.NewParams(
 					types.DefaultMinCommissionUpdateInterval,
 					types.DefaultMinCommissionRate,
+					types.DefaultMaxSlashProportion,
 				),
 			},
 			expPass:        false,
@@ -508,6 +513,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				Params: types.NewParams(
 					types.DefaultMinCommissionUpdateInterval,
 					types.DefaultMinCommissionRate,
+					types.DefaultMaxSlashProportion,
 				),
 			},
 			expPass:        false,
@@ -541,6 +547,7 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				Params: types.NewParams(
 					types.DefaultMinCommissionUpdateInterval,
 					types.DefaultMinCommissionRate,
+					types.DefaultMaxSlashProportion,
 				),
 			},
 			expPass:        false,

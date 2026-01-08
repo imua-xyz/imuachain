@@ -8,6 +8,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 
 	sdkmath "cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/imua-xyz/imuachain/x/operator/keeper"
 	"github.com/imua-xyz/imuachain/x/operator/types"
@@ -122,4 +123,25 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	undelegations, err = suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, suite.stakerID, suite.assetID)
 	suite.NoError(err)
 	suite.Equal(0, len(undelegations))
+}
+
+func (suite *OperatorTestSuite) TestMaxSlashProportion() {
+	testMaxSlashProportion, err := sdk.NewDecFromStr("0.005")
+	suite.Require().NoError(err)
+	params := suite.App.OperatorKeeper.GetParams(suite.Ctx)
+	params.MaxSlashProportion = testMaxSlashProportion
+	suite.App.OperatorKeeper.SetParams(suite.Ctx, params)
+
+	slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+	slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
+	infractionHeight := suite.Ctx.BlockHeight()
+	power := suite.Powers[0]
+	suite.NextBlock()
+	suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], infractionHeight, power, slashFactor, slashType)
+
+	slashID := keeper.GetSlashIDForDogfood(slashType, infractionHeight)
+	slashInfo, err := suite.App.OperatorKeeper.GetOperatorSlashInfo(suite.Ctx, suite.DogfoodAVSAddr, suite.Operators[0].String(), slashID)
+	suite.Require().NoError(err)
+	suite.Require().Equal(slashFactor, slashInfo.SlashProportion)
+	suite.Require().Equal(testMaxSlashProportion, slashInfo.ExecutionInfo.SlashProportion)
 }
