@@ -286,6 +286,7 @@ replace (
 	// use Cosmos-SDK fork
 	// (1) to enable Ledger functionality
 	// (2) to backport `Copy` feature to state for reverting precompiles
+	// (3) to backport fix for x/group GHSA-47ww-ff84-4jrg
 	// TODO cut a release (after adding security backports) instead of pointing to a commit hash
 	github.com/cosmos/cosmos-sdk => github.com/imua-xyz/cosmos-sdk v0.47.5-evmos.2.0.20260108150910-1bdc24a87d9e
 	// fix cosmos-sdk error

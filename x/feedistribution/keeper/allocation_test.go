@@ -7,9 +7,10 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/testutil"
-	testutilkeeper "github.com/imua-xyz/imuachain/testutil/keeper"
 	"github.com/imua-xyz/imuachain/utils"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
@@ -135,7 +136,7 @@ func (suite *KeeperTestSuite) updateDogfoodAssetsList(assetIDS []string) {
 	dogfoodParam.AssetIDs = assetIDS
 	_, err := suite.App.StakingKeeper.UpdateParams(suite.Ctx, &dogfoodtypes.MsgUpdateParams{
 		Params:    dogfoodParam,
-		Authority: testutilkeeper.GetAuthAddrString(),
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	})
 	suite.Require().NoError(err)
 }

@@ -112,7 +112,7 @@ type BaseTestSuite struct {
 	Balances []banktypes.Balance
 
 	SetAuthority SetAuthority
-	GroupKeys []cryptotypes.PrivKey
+	GroupKeys    []cryptotypes.PrivKey
 }
 
 var EpochsForTest = []string{
@@ -623,7 +623,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			GroupId: 1,
 			Member: &group.Member{
 				Address: sdk.AccAddress(key.PubKey().Address().Bytes()).String(),
-				Weight: "1",
+				Weight:  "1",
 			},
 		})
 	}
@@ -631,7 +631,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	decisionPolicy := &group.ThresholdDecisionPolicy{
 		Threshold: "2", // requires 2 out of 3 members
 		Windows: &group.DecisionPolicyWindows{
-			VotingPeriod:       time.Hour * 24,    // 1 day voting period
+			VotingPeriod:       time.Hour * 24,   // 1 day voting period
 			MinExecutionPeriod: time.Duration(0), // no delay
 		},
 	}

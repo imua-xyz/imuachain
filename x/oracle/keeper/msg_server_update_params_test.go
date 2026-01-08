@@ -6,6 +6,8 @@ import (
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	testutilkeeper "github.com/imua-xyz/imuachain/testutil/keeper"
 	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
@@ -14,6 +16,8 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
+
+var authAddr = authtypes.NewModuleAddress(govtypes.ModuleName).String()
 
 var _ = Describe("MsgUpdateParams", Ordered, func() {
 	var defaultParams types.Params
@@ -61,7 +65,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			`{"chains":[{"name":"Ethereum", "desc":"-"}]}`,
 		}
 		It("add chain with new name", func() {
-			msg := types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddChains[0])
+			msg := types.NewMsgUpdateParams(authAddr, inputAddChains[0])
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), msg)
 			Expect(err).Should(BeNil())
 			p := ks.k.GetParams(ks.ctx)
@@ -79,17 +83,17 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			`{"sources":[{"name":"Chainlink", "desc":"-", "valid":true}]}`,
 		}
 		It("add valid source with new name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddSources[0]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(authAddr, inputAddSources[0]))
 			Expect(err).Should(BeNil())
 			p := ks.k.GetParams(ks.ctx)
 			Expect(p.Sources[2].Name).Should(BeEquivalentTo("CoinGecko"))
 		})
 		It("add invalid source with new name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddSources[1]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(authAddr, inputAddSources[1]))
 			Expect(err).Should(MatchError(types.ErrInvalidParams.Wrap("invalid source to add, new source should be valid")))
 		})
 		It("add source with duplicated name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddSources[2]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(authAddr, inputAddSources[2]))
 			Expect(err).Should(MatchError(types.ErrInvalidParams.Wrap("invalid source to add, duplicated")))
 		})
 	})
@@ -140,7 +144,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 					p.TokenFeeders[1].StartBaseBlock = startBasedBlocks[i]
 					ks.k.SetParams(ks.ctx, p)
 				}
-				_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), input))
+				_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(authAddr, input))
 				if errs[i] == nil {
 					Expect(err).Should(BeNil())
 				} else {
@@ -157,7 +161,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 	Context("update maxSizePrices", func() {
 		It("update maxSizePrices", func() {
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), &types.MsgUpdateParams{
-				Authority: testutilkeeper.GetAuthAddrString(),
+				Authority: authAddr,
 				Params: types.Params{
 					MaxSizePrices: 120,
 				},
@@ -176,7 +180,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			ks.k.SetParams(ks.ctx, p)
 			p.TokenFeeders[1].StartBaseBlock = 5
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), &types.MsgUpdateParams{
-				Authority: testutilkeeper.GetAuthAddrString(),
+				Authority: authAddr,
 				Params: types.Params{
 					TokenFeeders: []*types.TokenFeeder{
 						{
@@ -192,7 +196,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 		})
 		It("Add AssetID for Token", func() {
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), &types.MsgUpdateParams{
-				Authority: testutilkeeper.GetAuthAddrString(),
+				Authority: authAddr,
 				Params: types.Params{
 					Tokens: []*types.Token{
 						{

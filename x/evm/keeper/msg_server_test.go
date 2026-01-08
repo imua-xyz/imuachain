@@ -274,7 +274,6 @@ func (suite *MsgServerTestSuite) extractCallContractResponse(res abci.ResponseDe
 	return &ethResFromMsg
 }
 
-
 type MsgServerTestSuiteWithGroupPolicy struct {
 	MsgServerTestSuite
 }
@@ -350,9 +349,9 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 	groupMember1Addr := sdk.AccAddress(groupMember1.PubKey().Address().Bytes())
 	baseMsg := &imuachainevmtypes.MsgCallContract{
 		Authority: policyAddr.String(),
-		To: "",
-		Data: testdata.GroupDeployeeContract.Bin,
-		GasLimit: 1_000_000,
+		To:        "",
+		Data:      testdata.GroupDeployeeContract.Bin,
+		GasLimit:  1_000_000,
 	}
 	anyMsg, err := codectypes.NewAnyWithValue(baseMsg)
 	if err != nil {
@@ -360,11 +359,11 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 	}
 	proposal := &group.MsgSubmitProposal{
 		GroupPolicyAddress: policyAddr.String(),
-		Proposers: []string{groupMember1Addr.String()},
-		Metadata: "Deploy GroupDeployee contract",
-		Title: "Deploy GroupDeployee contract",
-		Summary: "Deploy GroupDeployee contract",
-		Messages: []*codectypes.Any{anyMsg},
+		Proposers:          []string{groupMember1Addr.String()},
+		Metadata:           "Deploy GroupDeployee contract",
+		Title:              "Deploy GroupDeployee contract",
+		Summary:            "Deploy GroupDeployee contract",
+		Messages:           []*codectypes.Any{anyMsg},
 	}
 	res, err := testutil.DeliverTx(suite.Ctx, suite.App, groupMember1, nil, proposal)
 	suite.Require().NoError(err)
@@ -379,8 +378,8 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 		groupMemberAddr := sdk.AccAddress(groupMember.PubKey().Address().Bytes())
 		vote := &group.MsgVote{
 			ProposalId: proposalId,
-			Voter: groupMemberAddr.String(),
-			Option: group.VOTE_OPTION_YES,
+			Voter:      groupMemberAddr.String(),
+			Option:     group.VOTE_OPTION_YES,
 		}
 		res, err = testutil.DeliverTx(suite.Ctx, suite.App, groupMember, nil, vote)
 		suite.Require().NoError(err)
@@ -389,7 +388,7 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 	// now we need to execute the proposal
 	execute := &group.MsgExec{
 		ProposalId: proposalId,
-		Executor: groupMember1Addr.String(),
+		Executor:   groupMember1Addr.String(),
 	}
 	res, err = testutil.DeliverTx(suite.Ctx, suite.App, groupMember1, nil, execute)
 	suite.Require().NoError(err)
@@ -409,9 +408,9 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 	callData := suite.encodeCall("setValue", big.NewInt(42))
 	msg := &imuachainevmtypes.MsgCallContract{
 		Authority: policyAddr.String(),
-		To: contractAddr.Hex(),
-		Data: callData,
-		GasLimit: 1_000_000,
+		To:        contractAddr.Hex(),
+		Data:      callData,
+		GasLimit:  1_000_000,
 	}
 	anyMsg, err = codectypes.NewAnyWithValue(msg)
 	if err != nil {
@@ -419,11 +418,11 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 	}
 	proposal = &group.MsgSubmitProposal{
 		GroupPolicyAddress: policyAddr.String(),
-		Proposers: []string{groupMember1Addr.String()},
-		Metadata: "Call setValue function with group policy",
-		Title: "Call setValue function with group policy",
-		Summary: "Call setValue function with group policy",
-		Messages: []*codectypes.Any{anyMsg},
+		Proposers:          []string{groupMember1Addr.String()},
+		Metadata:           "Call setValue function with group policy",
+		Title:              "Call setValue function with group policy",
+		Summary:            "Call setValue function with group policy",
+		Messages:           []*codectypes.Any{anyMsg},
 	}
 	res, err = testutil.DeliverTx(suite.Ctx, suite.App, groupMember1, nil, proposal)
 	suite.Require().NoError(err)
@@ -437,8 +436,8 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 		groupMemberAddr := sdk.AccAddress(groupMember.PubKey().Address().Bytes())
 		vote := &group.MsgVote{
 			ProposalId: proposalId,
-			Voter: groupMemberAddr.String(),
-			Option: group.VOTE_OPTION_YES,
+			Voter:      groupMemberAddr.String(),
+			Option:     group.VOTE_OPTION_YES,
 		}
 		res, err = testutil.DeliverTx(suite.Ctx, suite.App, groupMember, nil, vote)
 		suite.Require().NoError(err)
@@ -447,7 +446,7 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 	// now we need to execute the proposal
 	execute = &group.MsgExec{
 		ProposalId: proposalId,
-		Executor: groupMember1Addr.String(),
+		Executor:   groupMember1Addr.String(),
 	}
 	res, err = testutil.DeliverTx(suite.Ctx, suite.App, groupMember1, nil, execute)
 	suite.Require().NoError(err)
@@ -472,5 +471,4 @@ func (suite *MsgServerTestSuiteWithGroupPolicy) TestCallContract() {
 		).Bytes(),
 	)
 	suite.Require().Equal(deployerAddr, owner)
-	
 }
