@@ -186,17 +186,13 @@ func (k *Keeper) CallContract(
 
 	// use the same logic as k.EthereumTx(); do not cache the context
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	nonce := k.GetNonce(ctx, common.BytesToAddress(k.authority.Bytes()))
-	if nonce > 0 {
-		// nonce is already incremented by the AnteHandler when execution reaches here.
-		// to get the nonce of this transaction, we need to decrement it.
-		nonce--
-	} else {
-		// a value of 0 is not possible since it is already incremented.
-		return nil, errorsmod.Wrapf(
-			errortypes.ErrInvalidRequest, "nonce is 0",
-		)
-	}
+	sender := common.BytesToAddress(k.authority.Bytes())
+	// Get the current nonce and use it directly. We don't rely on the ante handler
+	// to increment the nonce because this message may be executed via group proposals
+	// where the ante handler increments the executor's nonce, not the authority's.
+	// For contract creation, ApplyMessage handles nonce increment via stateDB.
+	// For regular calls, we increment the nonce after execution.
+	nonce := k.GetNonce(ctx, sender)
 
 	// since our message has gas fee cap and gas tip cap, we use dynamic fee tx type
 	txType := uint8(ethtypes.DynamicFeeTxType)
@@ -241,7 +237,6 @@ func (k *Keeper) CallContract(
 		)
 	}
 	txIndex := k.GetTxIndexTransient(ctx)
-	sender := common.BytesToAddress(k.authority.Bytes())
 	value := big.NewInt(0)
 	if req.Amount != nil {
 		// internally this takes care of req.Amount.IsNil()
@@ -265,6 +260,16 @@ func (k *Keeper) CallContract(
 	response, retErr = k.ApplyMessage(ctx, msg, types.NewNoOpTracer(), true)
 	if retErr != nil {
 		return nil, retErr
+	}
+	// For regular calls (not contract creation), increment the nonce manually.
+	// Contract creation already handles nonce increment in ApplyMessage via stateDB.
+	// In Ethereum, nonce is always incremented even if the transaction reverts.
+	if to != nil {
+		acct := k.GetAccountOrEmpty(ctx, sender)
+		acct.Nonce = nonce + 1
+		if err := k.SetAccount(ctx, sender, acct); err != nil {
+			return nil, errorsmod.Wrap(err, "failed to increment nonce")
+		}
 	}
 	retErr = k.postProcessResponse(
 		ctx, labels, response,

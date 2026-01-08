@@ -37,10 +37,13 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmtypes "github.com/cometbft/cometbft/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/cosmos/cosmos-sdk/x/group"
+	groupkeeper "github.com/cosmos/cosmos-sdk/x/group/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -52,6 +55,26 @@ import (
 	operatorkeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
+
+const (
+	SetAuthorityTypeDefault = iota
+	SetAuthorityTypeGenAddress
+	SetAuthorityTypeGroupPolicyAddress
+)
+
+type SetAuthority int
+
+func (s SetAuthority) String() string {
+	switch s {
+	case SetAuthorityTypeDefault:
+		return "default"
+	case SetAuthorityTypeGenAddress:
+		return "gen_address"
+	case SetAuthorityTypeGroupPolicyAddress:
+		return "group_policy_address"
+	}
+	return "unknown"
+}
 
 type BaseTestSuite struct {
 	suite.Suite
@@ -88,7 +111,8 @@ type BaseTestSuite struct {
 	// tests may use this to allocate a genesis balance
 	Balances []banktypes.Balance
 
-	SetAuthority bool
+	SetAuthority SetAuthority
+	GroupKeys []cryptotypes.PrivKey
 }
 
 var EpochsForTest = []string{
@@ -166,9 +190,21 @@ func (suite *BaseTestSuite) SetupTest() {
 // SetupWithGenesisValSet initializes a new ImuachainApp with a validator set and genesis accounts
 // that also act as delegators.
 func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) {
+	cred, err := authtypes.NewModuleCredential(
+		group.ModuleName,
+		[]byte{groupkeeper.GroupPolicyTablePrefix},
+		sdk.Uint64ToBigEndian(1),
+	)
+	if err != nil {
+		panic(fmt.Sprintf("failed to create module credential: %s", err))
+	}
 	authAddr := ""
-	if suite.SetAuthority {
+	if suite.SetAuthority == SetAuthorityTypeGenAddress {
 		authAddr = sdk.AccAddress(suite.Address.Bytes()).String()
+	} else if suite.SetAuthority == SetAuthorityTypeGroupPolicyAddress {
+		authAddr = sdk.AccAddress(cred.Address().Bytes()).String()
+	} else if suite.SetAuthority != SetAuthorityTypeDefault {
+		panic(fmt.Sprintf("unknown set authority type: %s", suite.SetAuthority.String()))
 	}
 	pruneOpts := pruningtypes.NewPruningOptionsFromString(pruningtypes.PruningOptionDefault)
 	appI, genesisState := imuaapp.SetupTestingApp(utils.DefaultChainID, authAddr, &pruneOpts, false)()
@@ -578,6 +614,55 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		},
 	}
 	genesisState[distributiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(distributionGenesis)
+
+	groupMembers := []*group.GroupMember{}
+	for i := 0; i < 3; i++ {
+		_, key := testutiltx.NewAccAddressAndKey()
+		suite.GroupKeys = append(suite.GroupKeys, key)
+		groupMembers = append(groupMembers, &group.GroupMember{
+			GroupId: 1,
+			Member: &group.Member{
+				Address: sdk.AccAddress(key.PubKey().Address().Bytes()).String(),
+				Weight: "1",
+			},
+		})
+	}
+	// Create a threshold decision policy for the group
+	decisionPolicy := &group.ThresholdDecisionPolicy{
+		Threshold: "2", // requires 2 out of 3 members
+		Windows: &group.DecisionPolicyWindows{
+			VotingPeriod:       time.Hour * 24,    // 1 day voting period
+			MinExecutionPeriod: time.Duration(0), // no delay
+		},
+	}
+	decisionPolicyAny, err := codectypes.NewAnyWithValue(decisionPolicy)
+	suite.Require().NoError(err)
+
+	groupGenesis := &group.GenesisState{
+		GroupSeq:       1,
+		GroupPolicySeq: 1,
+		Groups: []*group.GroupInfo{
+			{
+				Id:          1,
+				Admin:       sdk.AccAddress(cred.Address().Bytes()).String(),
+				Metadata:    "Genesis Admin Group",
+				Version:     1,
+				TotalWeight: "3",
+			},
+		},
+		GroupMembers: groupMembers,
+		GroupPolicies: []*group.GroupPolicyInfo{
+			{
+				Address:        sdk.AccAddress(cred.Address().Bytes()).String(),
+				GroupId:        1,
+				Admin:          sdk.AccAddress(cred.Address().Bytes()).String(),
+				Metadata:       "Genesis Group Policy",
+				Version:        1,
+				DecisionPolicy: decisionPolicyAny,
+			},
+		},
+	}
+	genesisState[group.ModuleName] = app.AppCodec().MustMarshalJSON(groupGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 	suite.Require().NoError(err)

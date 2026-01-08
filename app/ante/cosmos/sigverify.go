@@ -439,8 +439,28 @@ func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 		return ctx, sdkerrors.ErrTxDecode.Wrap("invalid transaction type, expected SigVerifiableTx")
 	}
 
-	// increment sequence of all signers
+	// Build a set of addresses that should skip sequence increment.
+	// MsgCallContract manages its own nonce in the message handler, so we skip
+	// incrementing here. This allows MsgCallContract to work both when sent
+	// directly (where ante handler would normally increment) and when executed
+	// via group proposals (where ante handler increments the executor's sequence,
+	// not the authority's).
+	skipIncrement := make(map[string]struct{})
+	for _, msg := range tx.GetMsgs() {
+		if callContract, ok := msg.(interface{ Type() string }); ok {
+			if callContract.Type() == "call_contract" {
+				for _, signer := range msg.GetSigners() {
+					skipIncrement[signer.String()] = struct{}{}
+				}
+			}
+		}
+	}
+
+	// increment sequence of all signers (except those in skipIncrement)
 	for _, addr := range sigTx.GetSigners() {
+		if _, skip := skipIncrement[addr.String()]; skip {
+			continue
+		}
 		acc := isd.ak.GetAccount(ctx, addr)
 		if err := acc.SetSequence(acc.GetSequence() + 1); err != nil {
 			panic(err)
