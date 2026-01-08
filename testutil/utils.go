@@ -199,11 +199,13 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		panic(fmt.Sprintf("failed to create module credential: %s", err))
 	}
 	authAddr := ""
-	if suite.SetAuthority == SetAuthorityTypeGenAddress {
+	switch suite.SetAuthority {
+	case SetAuthorityTypeGenAddress:
 		authAddr = sdk.AccAddress(suite.Address.Bytes()).String()
-	} else if suite.SetAuthority == SetAuthorityTypeGroupPolicyAddress {
+	case SetAuthorityTypeGroupPolicyAddress:
 		authAddr = sdk.AccAddress(cred.Address().Bytes()).String()
-	} else if suite.SetAuthority != SetAuthorityTypeDefault {
+	case SetAuthorityTypeDefault:
+	default:
 		panic(fmt.Sprintf("unknown set authority type: %s", suite.SetAuthority.String()))
 	}
 	pruneOpts := pruningtypes.NewPruningOptionsFromString(pruningtypes.PruningOptionDefault)
