@@ -97,4 +97,9 @@ var (
 		ModuleName, 20,
 		"the joined key can't be parsed",
 	)
+
+	ErrForbiddenGatewayAddress = errorsmod.Register(
+		ModuleName, 21,
+		"the gateway address is in the forbidden list",
+	)
 )

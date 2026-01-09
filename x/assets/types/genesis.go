@@ -314,5 +314,5 @@ func (gs GenesisState) Validate() error {
 	if err != nil {
 		return err
 	}
-	return gs.Params.Validate()
+	return gs.Params.ValidateBasic()
 }

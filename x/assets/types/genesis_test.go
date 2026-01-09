@@ -23,7 +23,7 @@ func TestGenesisTestSuite(t *testing.T) {
 
 func (suite *GenesisTestSuite) TestValidateGenesis() {
 	params := types.DefaultParams()
-	params.Gateways = []string{"0x0000000000000000000000000000000000000001", "0x0000000000000000000000000000000000000002"}
+	params.Gateways = []string{"0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD", "0x1234567890123456789012345678901234567890"}
 	newGen := types.NewGenesis(
 		params, nil,
 		nil, nil, nil,

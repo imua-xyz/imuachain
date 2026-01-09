@@ -39,6 +39,12 @@ type KeyValue struct {
 	Value codec.ProtoMarshaler
 }
 
+// KeyValueT is a generic version of KeyValue for type-safe operations
+type KeyValueT[T codec.ProtoMarshaler] struct {
+	Key   []byte
+	Value T
+}
+
 // KVStore is a wrapper around the cosmos-sdk KVStore to provide more safety regarding key management and better ease-of-use
 type KVStore struct {
 	sdk.KVStore
