@@ -109,9 +109,9 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	startBaseBlock := uint64(ctx.BlockHeight() + startAfterBlocks)
 	if len(p.TokenFeeders) > 1 {
 		offset := GetStartBaseBlock(startBaseBlock+1, uint64(p.MaxNonce), intervalInt, p.TokenFeeders[1:])
-		if offset > 1 {
-			startBaseBlock += offset - 1
-		}
+		// GetStartBaseBlock returns an offset relative to `firstQuotingHeight = startBaseBlock + 1`.
+		//   newStartBaseBlock = startBaseBlock + offset => newStartBaseBlock + 1 = (startBaseBlock + 1) + offset
+		startBaseBlock += offset
 	}
 	// set a tokenFeeder for the new token
 	p.TokenFeeders = append(p.TokenFeeders, &types.TokenFeeder{

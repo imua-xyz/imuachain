@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/stretchr/testify/require"
@@ -294,4 +295,60 @@ func TestGetStartBaseBlockDetailed(t *testing.T) {
 	// The new window should not overlap with any existing windows
 	require.True(t, firstQuotingBlock > 5, "First quoting block should be after the conflicting range")
 	require.Equal(t, uint64(1), offset, "Expected offset 1 for this scenario")
+}
+
+func TestRegisterNewTokenAndSetTokenFeeder_StartBaseBlock_NoOverlap(t *testing.T) {
+	k, ctx := keepertest.OracleKeeper(t)
+	ctx = ctx.WithBlockHeight(10)
+
+	// Configure one existing running feeder whose quoting window occupies {21,22,23} when StartBaseBlock=20 and MaxNonce=3.
+	p := k.GetParams(ctx)
+	p.MaxNonce = 3
+	p.TokenFeeders = []*types.TokenFeeder{
+		{}, // index 0 reserved
+		{
+			TokenID:        1,
+			RuleID:         1,
+			StartRoundID:   1,
+			StartBaseBlock: 20,
+			Interval:       30,
+			EndBlock:       0,
+		},
+	}
+	k.SetParams(ctx, p)
+
+	// Add a new token at height=10. Default startAfterBlocks=10 => initial startBaseBlock=20 (first quoting height=21),
+	// which conflicts with the existing feeder. The new feeder should be shifted so that:
+	// - new StartBaseBlock == 23
+	// - first quoting block == 24 (no overlap with {21,22,23})
+	oInfo := &types.OracleInfo{
+		AssetID: "0xdeadbeef_0x9ce1",
+	}
+	oInfo.Chain.Name = "Ethereum"
+	oInfo.Chain.Desc = "-"
+	oInfo.Token.Name = "TEST_TOKEN_1"
+	oInfo.Token.Decimal = "18"
+	oInfo.Token.Contract = "0x"
+	oInfo.Token.AssetID = oInfo.AssetID
+	// Keep interval empty to use defaultInterval=30 in keeper.
+	oInfo.Feeder.Interval = ""
+
+	err := k.RegisterNewTokenAndSetTokenFeeder(ctx, oInfo)
+	require.NoError(t, err)
+
+	p2 := k.GetParams(ctx)
+	require.GreaterOrEqual(t, len(p2.TokenFeeders), 3)
+	newTF := p2.TokenFeeders[len(p2.TokenFeeders)-1]
+	require.NotNil(t, newTF)
+	require.EqualValues(t, 23, newTF.StartBaseBlock)
+
+	// Sanity: the first quoting block is startBaseBlock+1
+	require.EqualValues(t, uint64(24), newTF.StartBaseBlock+1)
+
+	// Ensure the chosen quoting window does not overlap the existing one.
+	existingWindow := map[uint64]struct{}{21: {}, 22: {}, 23: {}}
+	for h := newTF.StartBaseBlock + 1; h <= newTF.StartBaseBlock+uint64(p2.MaxNonce); h++ {
+		_, overlap := existingWindow[h]
+		require.False(t, overlap, "unexpected quoting window overlap at height %d", h)
+	}
 }
