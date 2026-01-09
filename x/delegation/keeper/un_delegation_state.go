@@ -150,7 +150,7 @@ func (k *Keeper) IterateUndelegationsByOperator(
 	iterator := sdk.KVStorePrefixIterator(store, operatorAccAddress)
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[*types.UndelegationRecord], 0)
 	for ; iterator.Valid(); iterator.Next() {
 		if heightFilter != nil {
 			keyFields, err := types.ParseUndelegationRecordKey(iterator.Key())
@@ -169,7 +169,7 @@ func (k *Keeper) IterateUndelegationsByOperator(
 		}
 
 		if isUpdate {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[*types.UndelegationRecord]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &undelegation,
 			})

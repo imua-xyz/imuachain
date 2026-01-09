@@ -286,7 +286,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[*operatortypes.OperatorOptedUSDValue], 0)
 	updatedOperators := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		keys, err := assetstype.ParseJoinedKey(iterator.Key())
@@ -300,7 +300,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 			return err
 		}
 		if isUpdate {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[*operatortypes.OperatorOptedUSDValue]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &optedUSDValues,
 			})
@@ -311,7 +311,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	for i, updatedKeyValue := range updatedKeyValues {
 		bz := k.cdc.MustMarshal(updatedKeyValue.Value)
 		store.Set(updatedKeyValue.Key, bz)
-		optedUSDValues := updatedKeyValue.Value.(*operatortypes.OperatorOptedUSDValue)
+		optedUSDValues := updatedKeyValue.Value
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				operatortypes.EventTypeUpdateOperatorUSDValue,
