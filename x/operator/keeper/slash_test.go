@@ -10,6 +10,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/x/operator/keeper"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -144,4 +145,95 @@ func (suite *OperatorTestSuite) TestMaxSlashProportion() {
 	suite.Require().NoError(err)
 	suite.Require().Equal(slashFactor, slashInfo.SlashProportion)
 	suite.Require().Equal(testMaxSlashProportion, slashInfo.ExecutionInfo.SlashProportion)
+}
+
+func (suite *OperatorTestSuite) TestVetoSlash() {
+	testGenesisStakerIndex := 0
+	// prepare a pending undelegation for slashing veto
+	undelegationAmount := suite.Powers[testGenesisStakerIndex] / 2
+	undelegationAmountBigInt := sdkmath.NewIntWithDecimal(undelegationAmount, int(suite.Assets[testGenesisStakerIndex].Decimals))
+	suite.Delegation(false, suite.ClientChains[0].LayerZeroChainID, common.Address(suite.Operators[testGenesisStakerIndex]), common.HexToAddress(suite.Assets[0].Address), suite.Operators[testGenesisStakerIndex], undelegationAmountBigInt)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	suite.NextBlock()
+	power := suite.Powers[testGenesisStakerIndex]
+	slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+	slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
+	suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], infractionHeight, power, slashFactor, slashType)
+
+	// check the states after the slash
+	undelegations, err := suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, suite.StakerIDs[testGenesisStakerIndex], suite.AssetIDs[0])
+	suite.Require().NoError(err)
+	suite.Require().Equal(1, len(undelegations))
+	slashedAmountFromUndelegation := slashFactor.MulInt(undelegationAmountBigInt).TruncateInt()
+	actualCompletedAmount := undelegationAmountBigInt.Sub(slashedAmountFromUndelegation)
+	suite.Require().Equal(actualCompletedAmount, undelegations[0].Undelegation.ActualCompletedAmount)
+
+	assetsInfo, err := suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, suite.Operators[testGenesisStakerIndex], suite.AssetIDs[0])
+	suite.Require().NoError(err)
+	assetPoolAmountAfterUndelegation := sdkmath.NewIntWithDecimal(suite.Powers[testGenesisStakerIndex]-undelegationAmount, int(suite.Assets[testGenesisStakerIndex].Decimals))
+	slashedAmountFromAssetsPool := slashFactor.MulInt(assetPoolAmountAfterUndelegation).TruncateInt()
+	expectedAssetsPoolAmount := assetPoolAmountAfterUndelegation.Sub(slashedAmountFromAssetsPool)
+	suite.Require().Equal(expectedAssetsPoolAmount, assetsInfo.TotalAmount)
+	suite.Require().Equal(sdk.NewDecFromInt(assetPoolAmountAfterUndelegation), assetsInfo.TotalShare)
+
+	stakerAssetInfo, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, suite.StakerIDs[testGenesisStakerIndex], suite.AssetIDs[0])
+	suite.Require().NoError(err)
+	suite.Require().Equal(sdkmath.ZeroInt(), stakerAssetInfo.WithdrawableAmount)
+
+	// check the slash staker share snapshot
+	slashStakerShareSnapshots, err := suite.App.OperatorKeeper.GetAllSlashStakerShareSnapshot(suite.Ctx)
+	suite.Require().NoError(err)
+	suite.Require().Equal(1, len(slashStakerShareSnapshots))
+	slashID := keeper.GetSlashIDForDogfood(slashType, infractionHeight)
+	suite.Require().Equal(string(utils.GetJoinedStoreKey(slashID, suite.AssetIDs[0], suite.StakerIDs[testGenesisStakerIndex])), slashStakerShareSnapshots[0].Key)
+	expectedStakingUndelegatableShare := sdk.NewDecFromInt(sdkmath.NewIntWithDecimal(suite.Powers[testGenesisStakerIndex]-undelegationAmount, int(suite.Assets[0].Decimals)))
+	suite.Require().Equal(expectedStakingUndelegatableShare, slashStakerShareSnapshots[0].Value.StakingUndelegatableShare)
+	suite.Require().Equal(0, len(slashStakerShareSnapshots[0].Value.RewardUndelegatableShareBreakdown))
+
+	slashInfo, err := suite.App.OperatorKeeper.GetOperatorSlashInfo(suite.Ctx, suite.DogfoodAVSAddr, suite.Operators[testGenesisStakerIndex].String(), slashID)
+	suite.Require().NoError(err)
+	suite.Require().Equal(1, len(slashInfo.ExecutionInfo.SlashUndelegations))
+	suite.Require().Equal(types.SlashFromUndelegation{
+		StakerID:       suite.StakerIDs[testGenesisStakerIndex],
+		AssetID:        suite.AssetIDs[0],
+		Amount:         slashedAmountFromUndelegation,
+		UndelegationId: 0,
+	}, slashInfo.ExecutionInfo.SlashUndelegations[0])
+	suite.Require().Equal(1, len(slashInfo.ExecutionInfo.SlashAssetsPool))
+	suite.Require().Equal(types.SlashFromAssetPool{
+		AssetID:            suite.AssetIDs[0],
+		TotalAmount:        slashedAmountFromAssetsPool,
+		SnapshotTotalShare: sdk.NewDecFromInt(assetPoolAmountAfterUndelegation),
+	}, slashInfo.ExecutionInfo.SlashAssetsPool[0])
+
+	// check the slash execution info
+	// advance some blocks to test the slash veto
+	for i := 0; i < 10; i++ {
+		suite.NextBlock()
+	}
+
+	// veto the slash
+	vetoReason := "test veto reason"
+	err = suite.App.OperatorKeeper.VetoSlash(suite.Ctx, suite.DogfoodAVSAddr, suite.Operators[testGenesisStakerIndex].String(), slashID, vetoReason)
+	suite.Require().NoError(err)
+
+	// check the slash veto
+	// the slash veto won't return the fund to the pending undelegation, but will return it to the staker's withdrawable amount directly. So the actual completed amount should still remain slashed.
+	undelegations, err = suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, suite.StakerIDs[testGenesisStakerIndex], suite.AssetIDs[0])
+	suite.Require().NoError(err)
+	suite.Require().Equal(1, len(undelegations))
+	suite.Require().Equal(actualCompletedAmount, undelegations[0].Undelegation.ActualCompletedAmount)
+	// check if the vetoed fund is returned to the staker's withdrawable amount directly.
+	staker, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(suite.Ctx, suite.StakerIDs[testGenesisStakerIndex], suite.AssetIDs[0])
+	suite.Require().NoError(err)
+	// both the vetoed funds from the undelegation and from the asset pool are returned to the staker's withdrawable amount directly.
+	suite.Require().Equal(slashedAmountFromAssetsPool.Add(slashedAmountFromUndelegation), staker.WithdrawableAmount)
+
+	// the operator's asset pool should not be affected by the slash veto because the vetoed funds are 
+	// returned to the staker's withdrawable amount directly.
+	assetsInfo, err = suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, suite.Operators[testGenesisStakerIndex], suite.AssetIDs[0])
+	suite.Require().NoError(err)
+	suite.Require().Equal(expectedAssetsPoolAmount, assetsInfo.TotalAmount)
+	suite.Require().Equal(sdk.NewDecFromInt(assetPoolAmountAfterUndelegation), assetsInfo.TotalShare)
 }

@@ -197,7 +197,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 					AssetID: assetID,
 					Info: assetstypes.StakerAssetInfo{
 						TotalDepositAmount:        depositAmount,
-						WithdrawableAmount:        depositAmount,
+						WithdrawableAmount:        sdk.ZeroInt(),
 						PendingUndelegationAmount: sdk.ZeroInt(),
 					},
 				},
@@ -210,7 +210,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 					AssetID: assetID,
 					Info: assetstypes.StakerAssetInfo{
 						TotalDepositAmount:        depositAmount2,
-						WithdrawableAmount:        depositAmount2,
+						WithdrawableAmount:        sdk.ZeroInt(),
 						PendingUndelegationAmount: sdk.ZeroInt(),
 					},
 				},

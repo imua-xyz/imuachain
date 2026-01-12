@@ -169,7 +169,6 @@ func (k Keeper) UpdateStakerAssetState(
 	// store the updated state
 	bz := k.cdc.MustMarshal(&assetState)
 	store.Set(key, bz)
-
 	// emit event with new amount.
 	// the indexer can pick this up and update the staker's asset state
 	// without needing to know the prior state. it can also use the

@@ -25,10 +25,6 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 	if err != nil {
 		return assetstype.ErrInvalidOperatorAddr
 	}
-	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
-	if store.Has(slashInfoKey) {
-		return operatortypes.ErrSlashInfoExist.Wrapf("slashInfoKey:%s", slashInfoKey)
-	}
 	// check the validation of slash info
 	slashContract, err := k.avsKeeper.GetAVSSlashContract(ctx, avsAddr)
 	if err != nil {
@@ -47,6 +43,7 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 
 	// save single operator delegation state
 	bz := k.cdc.MustMarshal(&slashInfo)
+	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
 	store.Set(slashInfoKey, bz)
 	// TODO: add an event for the slash info
 	return nil
@@ -154,7 +151,7 @@ func (k *Keeper) SetAllSlashStakerShareSnapshot(ctx sdk.Context, stakerSlashShar
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
 	for i := range stakerSlashShareSnapshots {
 		snapshot := stakerSlashShareSnapshots[i]
-		bz := k.cdc.MustMarshal(&snapshot)
+		bz := k.cdc.MustMarshal(&snapshot.Value)
 		store.Set([]byte(snapshot.Key), bz)
 	}
 	return nil
@@ -167,9 +164,12 @@ func (k *Keeper) GetAllSlashStakerShareSnapshot(ctx sdk.Context) ([]operatortype
 	ret := make([]operatortypes.StakerSlashShareSnapshot, 0)
 
 	for ; iterator.Valid(); iterator.Next() {
-		var snapshot operatortypes.StakerSlashShareSnapshot
+		var snapshot operatortypes.StakerUndelegatableSharesSnapshot
 		k.cdc.MustUnmarshal(iterator.Value(), &snapshot)
-		ret = append(ret, snapshot)
+		ret = append(ret, operatortypes.StakerSlashShareSnapshot{
+			Key: string(iterator.Key()),
+			Value: snapshot,
+		})
 	}
 	return ret, nil
 }
