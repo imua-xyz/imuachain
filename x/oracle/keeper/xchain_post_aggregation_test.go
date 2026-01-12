@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 
 	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
@@ -21,8 +22,8 @@ func TestUpdateXChainMsgs_Basic(t *testing.T) {
 		SrcChainID: 123,
 		BatchSeq:   1,
 		Messages: []keeper.RawDataXChainMsg{
-			{ID: "tx1:0", Type: "evm", PayloadB64: ""},
-			{ID: "tx1:0", Type: "evm", PayloadB64: ""}, // duplicate in same batch
+			{ID: "tx1:0", Nonce: 1, Type: "evm", PayloadB64: ""},
+			{ID: "tx1:0", Nonce: 1, Type: "evm", PayloadB64: ""}, // duplicate in same batch
 		},
 	}
 	raw, err := json.Marshal(batch)
@@ -34,11 +35,24 @@ func TestUpdateXChainMsgs_Basic(t *testing.T) {
 	lastSeq, found := k.GetXChainLastSeq(ctx, 123)
 	require.True(t, found)
 	require.EqualValues(t, 1, lastSeq)
-	require.True(t, k.HasXChainMsgProcessed(ctx, 123, "tx1:0"))
+	require.False(t, k.HasXChainMsgProcessed(ctx, 123, "tx1:0"))
 
 	// replay same batch should be idempotent
 	err = keeper.UpdateXChainMsgs(ctx, rootHash, raw, 99, 7, k)
 	require.NoError(t, err)
+
+	// Execute queued delivery (budgeted EndBlock consumer).
+	k.ProcessXChainQueue(ctx, 123)
+	require.True(t, k.HasXChainMsgProcessed(ctx, 123, "tx1:0"))
+	execSeq, found := k.GetXChainLastExecutedSeq(ctx, 123)
+	require.True(t, found)
+	require.EqualValues(t, 1, execSeq)
+
+	// Queue should be empty after processing.
+	require.False(t, k.HasXChainQueue(ctx, 123))
+	head, tail := k.GetXChainQueueHeadTail(ctx, 123)
+	require.EqualValues(t, 0, head)
+	require.EqualValues(t, 0, tail)
 }
 
 func TestUpdateXChainMsgs_SeqGap(t *testing.T) {
@@ -49,7 +63,7 @@ func TestUpdateXChainMsgs_SeqGap(t *testing.T) {
 	batch1 := keeper.RawDataXChainBatch{
 		SrcChainID: 1,
 		BatchSeq:   1,
-		Messages:   []keeper.RawDataXChainMsg{{ID: "a", Type: "evm"}},
+		Messages:   []keeper.RawDataXChainMsg{{ID: "a", Nonce: 1, Type: "evm"}},
 	}
 	raw1, _ := json.Marshal(batch1)
 	require.NoError(t, keeper.UpdateXChainMsgs(ctx, rootHash, raw1, 1, 1, k))
@@ -58,9 +72,42 @@ func TestUpdateXChainMsgs_SeqGap(t *testing.T) {
 	batch3 := keeper.RawDataXChainBatch{
 		SrcChainID: 1,
 		BatchSeq:   3,
-		Messages:   []keeper.RawDataXChainMsg{{ID: "b", Type: "evm"}},
+		Messages:   []keeper.RawDataXChainMsg{{ID: "b", Nonce: 3, Type: "evm"}},
 	}
 	raw3, _ := json.Marshal(batch3)
 	err := keeper.UpdateXChainMsgs(ctx, rootHash, raw3, 1, 2, k)
 	require.Error(t, err)
+}
+
+func TestUpdateXChainMsgs_BudgetedDelivery(t *testing.T) {
+	k, ctx := keepertest.OracleKeeper(t)
+
+	rootHash := make([]byte, 32)
+
+	msgs := make([]keeper.RawDataXChainMsg, 0, 60)
+	for i := 0; i < 60; i++ {
+		msgs = append(msgs, keeper.RawDataXChainMsg{ID: "m" + strconv.Itoa(i), Nonce: uint64(i + 1), Type: "evm"})
+	}
+	batch := keeper.RawDataXChainBatch{SrcChainID: 9, BatchSeq: 1, Messages: msgs}
+	raw, err := json.Marshal(batch)
+	require.NoError(t, err)
+
+	require.NoError(t, keeper.UpdateXChainMsgs(ctx, rootHash, raw, 1, 1, k))
+
+	// One pass should not finish 60 messages if the budget is < 60.
+	k.ProcessXChainQueue(ctx, 9)
+
+	// At least the first one should be processed, but not all.
+	require.True(t, k.HasXChainMsgProcessed(ctx, 9, msgs[0].ID))
+	execSeq, found := k.GetXChainLastExecutedSeq(ctx, 9)
+	require.False(t, found)
+	require.EqualValues(t, 0, execSeq)
+
+	// Drain fully.
+	for i := 0; i < 10; i++ {
+		k.ProcessXChainQueue(ctx, 9)
+	}
+	execSeq, found = k.GetXChainLastExecutedSeq(ctx, 9)
+	require.True(t, found)
+	require.EqualValues(t, 1, execSeq)
 }

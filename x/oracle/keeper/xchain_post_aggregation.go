@@ -23,9 +23,12 @@ type RawDataXChainBatch struct {
 type RawDataXChainMsg struct {
 	// ID must be globally unique for replay protection (txHash:logIndex).
 	ID string `json:"id"`
+	// Nonce is the LayerZero nonce on the source chain (lzNonce).
+	// It is used by the gateway to maintain its inbound nonce tracking.
+	Nonce uint64 `json:"nonce"`
 	// Type is an application-level discriminator (e.g. "evm").
 	Type string `json:"type"`
-	// PayloadB64 carries the message bytes. The handler only validates base64; execution is out of scope.
+	// PayloadB64 carries the LZ message bytes (act + args). The handler only validates base64.
 	PayloadB64 string `json:"payload_b64"`
 }
 
@@ -33,10 +36,10 @@ var _ common.PostAggregationHandler = UpdateXChainMsgs
 
 // UpdateXChainMsgs is a post-aggregation handler for oracle 2-phases "cross-chain message batch" feeders.
 //
-// Semantics (minimal bootstrap version):
-// - Enforces strict batch sequencing per srcChainID (batch_seq must equal last_seq+1).
-// - Provides replay protection per message ID (idempotent).
-// - Does NOT execute message payloads yet; it only records processed IDs and emits an event.
+// Semantics (Version 1):
+// - Enforces strict batch sequencing per srcChainID (batch_seq must equal lastAcceptedSeq+1).
+// - Validates message IDs and payload encoding.
+// - Enqueues the batch for budgeted EndBlock delivery (gateway delivery is executed later).
 //
 // NOTE: postHandler errors are only logged (they do not revert the block).
 func UpdateXChainMsgs(
@@ -75,9 +78,9 @@ func UpdateXChainMsgs(
 		return fmt.Errorf("xchain batch seq mismatch: srcChainID:%d expected:%d got:%d", batch.SrcChainID, expected, batch.BatchSeq)
 	}
 
-	// Mark unique message IDs as processed (idempotent).
+	// Validate and de-duplicate message IDs (stable: first occurrence wins).
 	unique := make(map[string]struct{}, len(batch.Messages))
-	processedNew := 0
+	msgs := make([]RawDataXChainMsg, 0, len(batch.Messages))
 	for _, m := range batch.Messages {
 		if m.ID == "" {
 			return errors.New("invalid xchain message: empty id")
@@ -87,21 +90,25 @@ func UpdateXChainMsgs(
 		}
 		unique[m.ID] = struct{}{}
 
-		// Validate payload encoding (for now we don't execute it).
+		// Validate payload encoding (execution happens later in EndBlock queue consumer).
 		if m.PayloadB64 != "" {
 			if _, err := base64.StdEncoding.DecodeString(m.PayloadB64); err != nil {
 				return fmt.Errorf("invalid xchain message payload_b64 for id:%s: %w", m.ID, err)
 			}
 		}
-
-		if k.HasXChainMsgProcessed(ctx, batch.SrcChainID, m.ID) {
-			continue
-		}
-		k.SetXChainMsgProcessed(ctx, batch.SrcChainID, m.ID)
-		processedNew++
+		msgs = append(msgs, m)
 	}
 
+	batch.Messages = msgs
 	k.SetXChainLastSeq(ctx, batch.SrcChainID, batch.BatchSeq)
+
+	if err := k.enqueueXChainBatch(ctx, batch.SrcChainID, xchainQueuedBatch{
+		RootHashB64: base64.StdEncoding.EncodeToString(rootHash),
+		Batch:       batch,
+		NextIndex:   0,
+	}); err != nil {
+		return fmt.Errorf("failed to enqueue xchain batch: %w", err)
+	}
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeCreatePrice,
@@ -109,7 +116,7 @@ func UpdateXChainMsgs(
 		sdk.NewAttribute(types.AttributeKeyRoundID, strconv.FormatUint(roundID, 10)),
 		sdk.NewAttribute(types.AttributeKeyXChainSrcChainID, strconv.FormatUint(batch.SrcChainID, 10)),
 		sdk.NewAttribute(types.AttributeKeyXChainBatchSeq, strconv.FormatUint(batch.BatchSeq, 10)),
-		sdk.NewAttribute(types.AttributeKeyXChainMsgCount, strconv.Itoa(processedNew)),
+		sdk.NewAttribute(types.AttributeKeyXChainMsgCount, strconv.Itoa(len(batch.Messages))),
 		sdk.NewAttribute(types.AttributeKeyXChainRootHash, base64.StdEncoding.EncodeToString(rootHash)),
 	))
 
