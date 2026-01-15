@@ -22,7 +22,7 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
 		return errorsmod.Wrap(err, "invalid from address")
 	}
-	if err := m.Params.Validate(); err != nil {
+	if err := m.Params.ValidateBasic(); err != nil {
 		return errorsmod.Wrap(err, "invalid params")
 	}
 	return nil
