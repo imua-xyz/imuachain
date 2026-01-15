@@ -40,6 +40,7 @@ func NewKeeper(
 	slashKeeper operatortypes.SlashKeeper,
 	epochsKeeper operatortypes.EpochsKeeper,
 	distributionKeeper operatortypes.DistributionKeeper,
+	bankKeeper operatortypes.BankKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -53,6 +54,7 @@ func NewKeeper(
 		slashKeeper:        slashKeeper,
 		epochsKeeper:       epochsKeeper,
 		distributionKeeper: distributionKeeper,
+		bankKeeper:         bankKeeper,
 		authority:          authority,
 	}
 }

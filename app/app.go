@@ -696,6 +696,7 @@ func NewImuachainApp(
 		delegationTypes.VirtualSlashKeeper{},
 		app.EpochsKeeper,
 		&app.DistrKeeper, // intentionally a pointer, since not yet initialized.
+		app.BankKeeper,
 		authAddrString,
 	)
 	// the fee distribution keeper is used to allocate reward to imualidators on epoch-basis,

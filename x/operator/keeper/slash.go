@@ -392,6 +392,12 @@ func (k Keeper) Unjail(ctx sdk.Context, consAddr sdk.ConsAddress, chainID string
 }
 
 // VetoSlash vetoes a slash event
+// The vetoed fund slashed from the pending undelegations will be returned to the withdrawable amount
+// of the related stakers instead of returning to the actual completed amount. The reason is that the
+// slashed undelegation might have been completed when vetoing slash.
+// As for the vetoed fund from operator asset pool, the reason that we don't return it to the asset pool
+// is that it might return the slashed fund to an unslashed delegation. So we also return it to the
+// withdrawable amount of the related stakers.
 func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoReason string) error {
 	slashInfo, err := k.GetOperatorSlashInfo(ctx, avsAddr, operatorAddr, slashID)
 	if err != nil {

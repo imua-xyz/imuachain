@@ -1596,7 +1596,8 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 			runFn: func() {
 				// run one epoch to activate the operator and delegations
 				// and run another epoch to earn the rewards and update the voting power at the end of epoch
-				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, 2)
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, 2) // current epoch is 3
+
 				// enable the automatic redelegation for the test staker
 				stakerID, _ := assetstype.GetStakerIDAndAssetID(assetstype.ImuachainLzID, suite.testOperators[0], nil)
 				err := suite.App.DistrKeeper.SetStakerRewardParams(suite.Ctx, stakerID, feedistributiontypes.StakerRewardParams{
@@ -1612,7 +1613,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				delegationAmountBigInt := feedistributiontypes.UnscaleDecToInt(math.LegacyNewDec(testutil.DefaultDelegateAmount), suite.Assets[1].Decimals)
 				suite.Delegation(false, assetstype.ImuachainLzID, common.Address(suite.testOperators[0]), common.HexToAddress(assetstype.ImuachainAssetAddr), suite.testOperators[0], delegationAmountBigInt)
 				// run an epoch to trigger reward distribution for this undelegation.
-				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier) // current epoch is 4
 
 				// undelegate rewards
 				delegation, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetstype.ImuachainAssetID, suite.testOperators[0].String())
@@ -1702,6 +1703,213 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.Require().NoError(err)
 				suite.Require().Equal(sdk.NewDecCoins(sdk.NewDecCoin(utils.BaseDenom, undelegateRewardAmount)), stakerClaimedRewards.PendingUndelegationRewards)
 				suite.Require().Equal(sdk.NewDecCoins(sdk.NewDecCoin(utils.BaseDenom, slashAmountFromRewardUndelegation)), stakerClaimedRewards.PendingSlashedRewards)
+			},
+		},
+		{
+			name:    "pass - test the slash veto for redelegated rewards",
+			expPass: true,
+			runFn: func() {
+				// run one epoch to activate the operator and delegations
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, 1) // current epoch is 2
+				// set the infraction height during epoch 2
+				infractionHeight := suite.Ctx.BlockHeight()
+				operatorInitialPower := sdk.NewDec(testutil.DefaultDelegateAmount * int64(len(s.testStakers)))
+				// enable the automatic redelegation for the test staker
+				stakerID, _ := assetstype.GetStakerIDAndAssetID(assetstype.ImuachainLzID, suite.testOperators[0], nil)
+				err := suite.App.DistrKeeper.SetStakerRewardParams(suite.Ctx, stakerID, feedistributiontypes.StakerRewardParams{
+					RedelegateReward:       true,
+					RedelegateOperatorAddr: suite.testOperators[0].String(),
+				})
+				suite.Require().NoError(err)
+
+				// trigger the reward redelegation automatically through new delegation.
+				suite.Delegation(true, assetstype.ImuachainLzID, common.Address(suite.testOperators[0]), common.HexToAddress(assetstype.ImuachainAssetAddr), suite.testOperators[0], math.NewInt(testutil.DefaultDelegateAmount))
+				// run an epoch to trigger reward distribution and redelegation automatically.
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier) // current epoch is 3
+
+				// get the staker's claimed rewards before slashing for the next test check
+				delegationInfoBeforeSlash, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetstype.ImuachainAssetID, suite.testOperators[0].String())
+				suite.Require().NoError(err)
+
+				// slash the operator at the end of epoch 3
+				slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+				slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
+				// the voting power during epoch 2 should be the same as the operator initial power.
+				// becasue it's calculated at the end of epoch 1
+				infractionPower := operatorInitialPower.TruncateInt64()
+				suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.testOperators[0], infractionHeight, infractionPower, slashFactor, slashType)
+				slashID := operatorkeeper.GetSlashIDForDogfood(slashType, infractionHeight)
+				slashInfo, err := suite.App.OperatorKeeper.GetOperatorSlashInfo(suite.Ctx, suite.DogfoodAVSAddr, suite.testOperators[0].String(), slashID)
+				suite.Require().NoError(err)
+				suite.Require().False(slashInfo.IsVetoed, "the slash should not be vetoed")
+				suite.Require().Equal(1, len(slashInfo.ExecutionInfo.SlashAssetsPool))
+				suite.Require().Equal(assetstype.ImuachainAssetID, slashInfo.ExecutionInfo.SlashAssetsPool[0].AssetID)
+
+				// check the slash staker share snapshot
+				slashStakerShareSnapshot, err := suite.App.OperatorKeeper.GetSlashStakerShareSnapshot(suite.Ctx, slashID, assetstype.ImuachainAssetID, stakerID)
+				suite.Require().NoError(err)
+				suite.Require().Equal(operatortypes.StakerUndelegatableSharesSnapshot{
+					StakingUndelegatableShare: delegationInfoBeforeSlash.UndelegatableShare,
+					RewardUndelegatableShareBreakdown: []operatortypes.StakerUndelegatableSharePerAVS{
+						{
+							AVSAddress:               suite.DogfoodAVSAddr,
+							RewardUndelegatableShare: delegationInfoBeforeSlash.RewardUndelegatableShare,
+						},
+					},
+				}, slashStakerShareSnapshot)
+
+				// the withdrawable rewards should be zero before slash veto
+				stakerClaimedRewardsBeforeSlashVeto, err := suite.App.DistrKeeper.GetStakerClaimedRewards(suite.Ctx, stakerID, suite.DogfoodAVSAddr)
+				suite.Require().NoError(err)
+				suite.Require().Equal(sdk.DecCoins(nil), stakerClaimedRewardsBeforeSlashVeto.WithdrawableRewards)
+
+				// veto the slash
+				suite.App.OperatorKeeper.VetoSlash(suite.Ctx, suite.DogfoodAVSAddr, suite.testOperators[0].String(), slashID, "veto slash test")
+
+				// check the claimed rewards of the related staker
+				slashedRewardFromDelegation, err := delegationkeeper.TokensFromShares(delegationInfoBeforeSlash.RewardUndelegatableShare, slashInfo.ExecutionInfo.SlashAssetsPool[0].SnapshotTotalShare, slashInfo.ExecutionInfo.SlashAssetsPool[0].TotalAmount)
+				suite.Require().NoError(err)
+				avsRewardInfo, err := suite.App.DistrKeeper.GetAVSRewardAsset(suite.Ctx, suite.DogfoodAVSAddr, assetstype.ImuachainAssetID)
+				suite.Require().NoError(err)
+				slashedRewardDecFromDelegation := feedistributiontypes.ScaleIntByDecimals(slashedRewardFromDelegation, avsRewardInfo.RewardAssetInfo.DenominationExponent)
+
+				stakerClaimedRewardsAfterSlashVeto, err := suite.App.DistrKeeper.GetStakerClaimedRewards(suite.Ctx, stakerID, suite.DogfoodAVSAddr)
+				suite.Require().NoError(err)
+				suite.Require().Equal(stakerClaimedRewardsBeforeSlashVeto.DelegationRewardsShares, stakerClaimedRewardsAfterSlashVeto.DelegationRewardsShares)
+				// check whether the reward from slash veto is returned to the withdrawable rewards
+				suite.Require().Equal(sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedRewardDecFromDelegation)), stakerClaimedRewardsAfterSlashVeto.WithdrawableRewards)
+			},
+		},
+		{
+			name:    "pass - test the slash veto for pending undelegation rewards",
+			expPass: true,
+			runFn: func() {
+				// run one epoch to activate the operator and delegations
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, 1) // current epoch is 2
+				// set the infraction height during epoch 2
+				infractionHeight := suite.Ctx.BlockHeight()
+				operatorInitialPower := sdk.NewDec(testutil.DefaultDelegateAmount * int64(len(s.testStakers)))
+				// enable the automatic redelegation for the test staker
+				stakerID, _ := assetstype.GetStakerIDAndAssetID(assetstype.ImuachainLzID, suite.testOperators[0], nil)
+				err := suite.App.DistrKeeper.SetStakerRewardParams(suite.Ctx, stakerID, feedistributiontypes.StakerRewardParams{
+					RedelegateReward:       true,
+					RedelegateOperatorAddr: suite.testOperators[0].String(),
+				})
+				suite.Require().NoError(err)
+
+				// trigger the reward redelegation automatically through new delegation.
+				suite.Delegation(true, assetstype.ImuachainLzID, common.Address(suite.testOperators[0]), common.HexToAddress(assetstype.ImuachainAssetAddr), suite.testOperators[0], math.NewInt(testutil.DefaultDelegateAmount))
+				// run an epoch to trigger reward distribution and redelegation automatically.
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier) // current epoch is 3
+
+				// undelegate the rewards to test the slash veto for pending undelegation rewards
+				delegationInfo, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetstype.ImuachainAssetID, suite.testOperators[0].String())
+				suite.Require().NoError(err)
+				operatorAssetInfo, err := suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, suite.testOperators[0], assetstype.ImuachainAssetID)
+				undelegatableRewardAmount, err := delegationkeeper.TokensFromShares(delegationInfo.RewardUndelegatableShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
+				suite.Require().NoError(err)
+				err = suite.App.DistrKeeper.UndelegateClaimedRewards(suite.Ctx, stakerID, assetstype.ImuachainAssetID, suite.testOperators[0], false, undelegatableRewardAmount)
+				suite.Require().NoError(err)
+
+				// slash the operator after the reward undelegation
+				slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+				slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
+				infractionPower := operatorInitialPower.TruncateInt64()
+				suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.testOperators[0], infractionHeight, infractionPower, slashFactor, slashType)
+				slashID := operatorkeeper.GetSlashIDForDogfood(slashType, infractionHeight)
+				slashInfo, err := suite.App.OperatorKeeper.GetOperatorSlashInfo(suite.Ctx, suite.DogfoodAVSAddr, suite.testOperators[0].String(), slashID)
+				suite.Require().NoError(err)
+				suite.Require().Equal(1, len(slashInfo.ExecutionInfo.SlashUndelegations))
+				slashedAmountFromUndelegation := slashInfo.ExecutionInfo.SlashProportion.MulInt(undelegatableRewardAmount).TruncateInt()
+				expectedSlashFromUndelegation := operatortypes.SlashFromUndelegation{
+					StakerID:       stakerID,
+					AssetID:        assetstype.ImuachainAssetID,
+					Amount:         slashedAmountFromUndelegation,
+					UndelegationId: 0,
+					RewardAsset:    true,
+					SlashRewardAmountPerAvs: []operatortypes.SlashRewardAmountPerAVS{
+						{
+							AVSAddress: suite.DogfoodAVSAddr,
+							Amount:     slashedAmountFromUndelegation,
+						},
+					},
+				}
+				suite.Require().Equal(expectedSlashFromUndelegation, slashInfo.ExecutionInfo.SlashUndelegations[0])
+				avsRewardInfo, err := suite.App.DistrKeeper.GetAVSRewardAsset(suite.Ctx, suite.DogfoodAVSAddr, assetstype.ImuachainAssetID)
+				suite.Require().NoError(err)
+				slashedRewardDecFromDelegation := feedistributiontypes.ScaleIntByDecimals(slashedAmountFromUndelegation, avsRewardInfo.RewardAssetInfo.DenominationExponent)
+				slashedDecCoins := sdk.NewDecCoins(sdk.NewDecCoinFromDec(utils.BaseDenom, slashedRewardDecFromDelegation))
+				stakerClaimedRewardsBeforeSlashVeto, err := suite.App.DistrKeeper.GetStakerClaimedRewards(suite.Ctx, stakerID, suite.DogfoodAVSAddr)
+				suite.Require().NoError(err)
+				suite.Require().Equal(slashedDecCoins, stakerClaimedRewardsBeforeSlashVeto.PendingSlashedRewards)
+				suite.Require().Equal(sdk.DecCoins(nil), stakerClaimedRewardsBeforeSlashVeto.WithdrawableRewards)
+
+				// veto the slash
+				suite.App.OperatorKeeper.VetoSlash(suite.Ctx, suite.DogfoodAVSAddr, suite.testOperators[0].String(), slashID, "veto slash test")
+
+				// check the claimed rewards of the related staker
+				stakerClaimedRewards, err := suite.App.DistrKeeper.GetStakerClaimedRewards(suite.Ctx, stakerID, suite.DogfoodAVSAddr)
+				suite.Require().NoError(err)
+				// the pending slashed rewards remain unchanged after the slash veto, and the vetoed fund
+				// will be returned to the withdrawable amount.
+				suite.Require().Equal(slashedDecCoins, stakerClaimedRewards.PendingSlashedRewards)
+				suite.Require().Equal(slashedDecCoins, stakerClaimedRewards.WithdrawableRewards)
+			},
+		},
+		{
+			name:    "pass - test the slash veto for operator unclaimed rewards",
+			expPass: true,
+			runFn: func() {
+				// run one epoch to activate the operator and delegations
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, 1) // current epoch is 2
+				// set the infraction height during epoch 2
+				infractionHeight := suite.Ctx.BlockHeight()
+				operatorInitialPower := sdk.NewDec(testutil.DefaultDelegateAmount * int64(len(s.testStakers)))
+				// advance two epochs to earn the rewards from staking assetsand rewards compounding
+				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, 2) // current epoch is 4
+
+				// slash the operator at the end of epoch 4
+				slashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+				slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
+				infractionPower := operatorInitialPower.TruncateInt64()
+				suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.testOperators[0], infractionHeight, infractionPower, slashFactor, slashType)
+				slashID := operatorkeeper.GetSlashIDForDogfood(slashType, infractionHeight)
+				slashInfo, err := suite.App.OperatorKeeper.GetOperatorSlashInfo(suite.Ctx, suite.DogfoodAVSAddr, suite.testOperators[0].String(), slashID)
+				suite.Require().NoError(err)
+
+				stakerID, _ := assetstype.GetStakerIDAndAssetID(assetstype.ImuachainLzID, suite.testOperators[0], nil)
+				unclaimedStakingRewardsBeforeVeto, unclaimedCompoundingRewardsBeforeVeto, err := suite.App.DistrKeeper.GetStakerUnclaimedRewards(suite.Ctx, stakerID)
+				suite.Require().NoError(err)
+				stakerTotalRewardsBeforeVeto := unclaimedStakingRewardsBeforeVeto.Add(unclaimedCompoundingRewardsBeforeVeto...)
+
+				operatorUnclaimedRewardsBeforeVeto, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, suite.testOperators[0].String(), suite.DogfoodAVSAddr)
+				vetoedRewardProportion := unclaimedStakingRewardsBeforeVeto.RewardsOf(suite.DogfoodAVSAddr).AmountOf(utils.BaseDenom).QuoTruncate(operatorUnclaimedRewardsBeforeVeto.OutstandingRewards.AmountOf(utils.BaseDenom))
+
+				// veto the slash
+				suite.App.OperatorKeeper.VetoSlash(suite.Ctx, suite.DogfoodAVSAddr, suite.testOperators[0].String(), slashID, "veto slash test")
+
+				// check the claimed rewards of the related staker
+				operatorUnclaimedRewards, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, suite.testOperators[0].String(), suite.DogfoodAVSAddr)
+				suite.Require().NoError(err)
+				suite.Require().Equal(slashInfo.ExecutionInfo.SlashUnclaimedRewards[0].OutstandingRewardsSlashed, operatorUnclaimedRewards.OutstandingRewardsVetoed)
+				suite.Require().Equal(slashInfo.ExecutionInfo.SlashUnclaimedRewards[0].CompoundingRewardsSlashed, operatorUnclaimedRewards.CompoundingRewardsVetoed)
+
+				// trigger the claim of the unclaimed rewards through a new delegation.
+				suite.Delegation(true, assetstype.ImuachainLzID, common.Address(suite.testOperators[0]), common.HexToAddress(assetstype.ImuachainAssetAddr), suite.testOperators[0], math.NewInt(testutil.DefaultDelegateAmount))
+				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier) // current epoch is 5
+
+				// check the claimed rewards of the related staker
+				stakerClaimedRewards, err := suite.App.DistrKeeper.GetStakerClaimedRewards(suite.Ctx, stakerID, suite.DogfoodAVSAddr)
+				suite.Require().NoError(err)
+
+				outstandingRewardsVetoed := slashInfo.ExecutionInfo.SlashUnclaimedRewards[0].OutstandingRewardsSlashed.AmountOf(utils.BaseDenom).MulTruncate(vetoedRewardProportion)
+
+				compoundingRewardsVetoed := slashInfo.ExecutionInfo.SlashUnclaimedRewards[0].CompoundingRewardsSlashed[0].Rewards[0].Rewards.AmountOf(utils.BaseDenom).MulTruncate(vetoedRewardProportion)
+
+				expectedStakerTotalRewards := stakerTotalRewardsBeforeVeto.RewardsOf(suite.DogfoodAVSAddr).Add(sdk.NewDecCoinFromDec(utils.BaseDenom, outstandingRewardsVetoed)).Add(sdk.NewDecCoinFromDec(utils.BaseDenom, compoundingRewardsVetoed))
+
+				suite.Require().Equal(expectedStakerTotalRewards, stakerClaimedRewards.OutstandingRewards)
+				suite.Require().Equal(sdk.DecCoins(nil), stakerClaimedRewards.WithdrawableRewards)
 			},
 		},
 	}
@@ -1828,9 +2036,12 @@ func (suite *KeeperTestSuite) TestGetStakerUnclaimedRewards() {
 				suite.RunToEpochEndN(dogfoodtypes.DefaultEpochIdentifier, phase1Epochs)
 
 				// 2. Trigger Claim via delegation (Half Amount)
-				delegationAmount := math.NewIntWithDecimal(suite.Powers[0]/2, int(suite.Assets[0].Decimals))
-
-				suite.Delegation(true, suite.testClientChainID, common.Address(testOperator), assetAddr, testOperator, delegationAmount)
+				delegationAmount := int64(suite.Powers[0] / 2)
+				suite.DepositAndDelegateToOperators(
+					false, suite.testClientChainID,
+					assetAddr, suite.Assets[0].Decimals,
+					[]common.Address{common.Address(testOperator)},
+					[]sdk.AccAddress{testOperator}, delegationAmount, delegationAmount)
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
 
 				// Optional: Internal assertion to ensure starting state is clean (defensive testing)

@@ -305,12 +305,17 @@ message StakerClaimedRewards {
   // or from instant unbonding. This field ensures accurate calculation
   // of the current staker’s rewards in an AVS by excluding the effect of slashed
   // pending undelegations.
+  // this field won't be decreased when vetoing slash because the slashed fund will
+  // be returned to the withdrawable amount. The reason that don't return the vetoed fund to
+  // this field is that the pending reward undelegation might have been completed when vetoing slash.
   repeated cosmos.base.v1beta1.DecCoin pending_slashed_rewards = 6 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
   // withdrawable_rewards are rewards that can be withdrawn from completed undelegations.
+  // the vetoed fund slashed from the pending undelegations will be returned to the withdrawable
+  // amount.
   repeated cosmos.base.v1beta1.DecCoin withdrawable_rewards = 7 [
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.DecCoins",
     (gogoproto.nullable) = false,

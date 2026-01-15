@@ -801,8 +801,13 @@ type StakerClaimedRewards struct {
 	// or from instant unbonding. This field ensures accurate calculation
 	// of the current staker’s rewards in an AVS by excluding the effect of slashed
 	// pending undelegations.
+	// this field won't be decreased when vetoing slash because the slashed fund will
+	// be returned to the withdrawable amount. The reason that don't return the vetoed fund to
+	// this field is that the pending reward undelegation might have been completed when vetoing slash.
 	PendingSlashedRewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,6,rep,name=pending_slashed_rewards,json=pendingSlashedRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"pending_slashed_rewards"`
 	// withdrawable_rewards are rewards that can be withdrawn from completed undelegations.
+	// the vetoed fund slashed from the pending undelegations will be returned to the withdrawable
+	// amount.
 	WithdrawableRewards github_com_cosmos_cosmos_sdk_types.DecCoins `protobuf:"bytes,7,rep,name=withdrawable_rewards,json=withdrawableRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.DecCoins" json:"withdrawable_rewards"`
 }
 

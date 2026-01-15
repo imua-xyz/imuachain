@@ -147,6 +147,18 @@ func (k *Keeper) IterateSlashStakerShareSnapshot(
 	return nil
 }
 
+func (k *Keeper) GetSlashStakerShareSnapshot(ctx sdk.Context, slashID, assetID, stakerID string) (operatortypes.StakerUndelegatableSharesSnapshot, error) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
+	snapshotKey := utils.GetJoinedStoreKey(slashID, assetID, stakerID)
+	value := store.Get(snapshotKey)
+	if value == nil {
+		return operatortypes.StakerUndelegatableSharesSnapshot{}, operatortypes.ErrNoKeyInTheStore.Wrapf("GetSlashStakerShareSnapshot: key is %s", snapshotKey)
+	}
+	var snapshot operatortypes.StakerUndelegatableSharesSnapshot
+	k.cdc.MustUnmarshal(value, &snapshot)
+	return snapshot, nil
+}
+
 func (k *Keeper) SetAllSlashStakerShareSnapshot(ctx sdk.Context, stakerSlashShareSnapshots []operatortypes.StakerSlashShareSnapshot) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
 	for i := range stakerSlashShareSnapshots {
@@ -167,7 +179,7 @@ func (k *Keeper) GetAllSlashStakerShareSnapshot(ctx sdk.Context) ([]operatortype
 		var snapshot operatortypes.StakerUndelegatableSharesSnapshot
 		k.cdc.MustUnmarshal(iterator.Value(), &snapshot)
 		ret = append(ret, operatortypes.StakerSlashShareSnapshot{
-			Key: string(iterator.Key()),
+			Key:   string(iterator.Key()),
 			Value: snapshot,
 		})
 	}

@@ -218,6 +218,9 @@ func (suite *OperatorTestSuite) TestVetoSlash() {
 	err = suite.App.OperatorKeeper.VetoSlash(suite.Ctx, suite.DogfoodAVSAddr, suite.Operators[testGenesisStakerIndex].String(), slashID, vetoReason)
 	suite.Require().NoError(err)
 
+	slashInfo, err = suite.App.OperatorKeeper.GetOperatorSlashInfo(suite.Ctx, suite.DogfoodAVSAddr, suite.Operators[testGenesisStakerIndex].String(), slashID)
+	suite.Require().NoError(err)
+	suite.Require().True(slashInfo.IsVetoed, "the slash should be vetoed")
 	// check the slash veto
 	// the slash veto won't return the fund to the pending undelegation, but will return it to the staker's withdrawable amount directly. So the actual completed amount should still remain slashed.
 	undelegations, err = suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, suite.StakerIDs[testGenesisStakerIndex], suite.AssetIDs[0])
@@ -230,8 +233,8 @@ func (suite *OperatorTestSuite) TestVetoSlash() {
 	// both the vetoed funds from the undelegation and from the asset pool are returned to the staker's withdrawable amount directly.
 	suite.Require().Equal(slashedAmountFromAssetsPool.Add(slashedAmountFromUndelegation), staker.WithdrawableAmount)
 
-	// the operator's asset pool should not be affected by the slash veto because the vetoed funds are 
-	// returned to the staker's withdrawable amount directly.
+	// the operator's asset pool should not be affected by the slash veto because the vetoed funds are
+	// returned to the related staker's withdrawable amount directly.
 	assetsInfo, err = suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, suite.Operators[testGenesisStakerIndex], suite.AssetIDs[0])
 	suite.Require().NoError(err)
 	suite.Require().Equal(expectedAssetsPoolAmount, assetsInfo.TotalAmount)
