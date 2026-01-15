@@ -3,6 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -775,7 +778,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 
 	updatedKeyValues := make([]utils.KeyValueT[T], 0)
 	for ; iterator.Valid(); iterator.Next() {
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), keyNumber)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), keyNumber)
 		if err != nil {
 			return err
 		}
@@ -804,6 +807,8 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 		store.Set(updateKeyValue.Key, cdc.MustMarshal(updateKeyValue.Value))
 	}
 	return nil
+}
+
 // IncreaseStakerOutstandingRewards : increase the outstanding avs rewards for the staker.
 func (k Keeper) IncreaseStakerOutstandingRewards(ctx sdk.Context, stakerID, avsAddr string, deltaRewards sdk.DecCoins) error {
 	if len(deltaRewards) == 0 {
