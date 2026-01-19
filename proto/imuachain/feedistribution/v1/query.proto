@@ -326,7 +326,7 @@ message QueryOperatorCurrentRewardsResponse{
 }
 
 // OperatorAVSRequest is a generic request that includes both operator and AVS addresses.
-// used for QueryOperatorOutstandingRewards and QueryOperatorAccumulatedCommission
+// used for OperatorUnclaimedRewards and OperatorCommission
 message OperatorAVSRequest {
   // operator address
   string operator = 1;

@@ -69,7 +69,7 @@ IReward constant REWARD_CONTRACT = IReward(
 /// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
 /// @param assetAddress The reward asset Address
 /// @param stakerAddress The address of the staker withdrawing the reward
-/// @param operatorAddr The operator's bench32 address that wants to unDelegate from
+/// @param operatorAddr The operator's bech32 address that wants to unDelegate from
 /// @param opAmount The Undelegation amount
 /// @param instantUnbond Whether to unbond immediately
     struct UndelegateRewardParams {

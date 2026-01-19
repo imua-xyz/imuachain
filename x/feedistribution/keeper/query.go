@@ -473,6 +473,8 @@ func (k Keeper) StakerAllRewards(
 	if err != nil {
 		return nil, err
 	}
+	// The rewards don't need to be normalized here because MergeStakerRewards converts DecCoins to RewardInfo
+	// (which uses Int amounts) via DecCoinsToRewardInfos, which handles the conversion appropriately.
 	stakerAllRewards, err := k.MergeStakerRewards(c, claimedRewards, stakingRewards, compoundingRewards)
 	if err != nil {
 		return nil, err

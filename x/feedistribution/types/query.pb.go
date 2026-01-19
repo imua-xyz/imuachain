@@ -1429,7 +1429,7 @@ func (m *QueryOperatorCurrentRewardsResponse) GetOperatorCurrentRewards() *Opera
 }
 
 // OperatorAVSRequest is a generic request that includes both operator and AVS addresses.
-// used for QueryOperatorOutstandingRewards and QueryOperatorAccumulatedCommission
+// used for OperatorUnclaimedRewards and OperatorCommission
 type OperatorAVSRequest struct {
 	// operator address
 	Operator string `protobuf:"bytes,1,opt,name=operator,proto3" json:"operator,omitempty"`
