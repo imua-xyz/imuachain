@@ -38,7 +38,7 @@ func (k Keeper) AVSRewardAsset(ctx context.Context, req *types.QueryAVSRewardAss
 	return &types.QueryAVSRewardAssetResponse{AvsRewardAsset: assetInfo}, nil
 }
 
-// AVSRewardAssetBySymbol queries the specific AVS reward asset by the symbol.
+// AVSRewardAssetByDenom queries the specific AVS reward asset by the denomination.
 func (k Keeper) AVSRewardAssetByDenom(ctx context.Context, req *types.QueryAVSRewardAssetByDenomRequest) (*types.QueryAVSRewardAssetByDenomResponse, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
