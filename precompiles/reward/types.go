@@ -68,7 +68,7 @@ type UndelegateRewardArgs struct {
 	RewardAssetChainLzID uint32   `abi:"rewardAssetChainLzID"`
 	AssetAddress         []byte   `abi:"assetAddress"`
 	StakerAddress        []byte   `abi:"stakerAddress"`
-	OperatorAddr         []byte   `abi:"operatorAddr"`
+	OperatorAddr         string   `abi:"operatorAddr"`
 	OpAmount             *big.Int `abi:"opAmount"`
 	InstantUnbond        bool     `abi:"instantUnbond"`
 }

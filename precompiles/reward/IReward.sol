@@ -77,7 +77,7 @@ IReward constant REWARD_CONTRACT = IReward(
         uint32 rewardAssetChainLzID;
         bytes assetAddress;
         bytes stakerAddress;
-        bytes operatorAddr;
+        string operatorAddr;
         uint256 opAmount;
         bool instantUnbond;
     }
@@ -87,9 +87,15 @@ IReward constant REWARD_CONTRACT = IReward(
 /// @param token The address of the token on the home chain
 /// @param decimals The number of decimals of the token
 /// @param name The name of the token
-/// @param symbol The symbol of the token, used as its denomination in the Cosmos SDK
+/// @param symbol The symbol of the token, like "USDT". This field has the same usage as when registering staking assets.
 /// @param metaData The arbitrary metadata of the token
-/// @param denomination Used in the `DecCoins` of Cosmos SDK
+/// @param denomination The denomination used in reward records (e.g., "uUSDT", "USDT").
+/// This value specifies the unit in which rewards are expressed.
+/// Different reward assets used by the same AVS must not share the same reward denomination,
+/// because it is used as part of the composite key together with the AVS address in the keystore.
+/// If an AVS needs to register the same token from different chains as reward assets,
+/// it should include the chain information in the denomination when registering
+/// (e.g., "ETHUSDT", "SOLUSDT").
 /// @param denominationExponent Defines how the reward denomination scales relative to the token's smallest unit
     struct RegisterRewardTokenParams {
         uint32 clientChainID;

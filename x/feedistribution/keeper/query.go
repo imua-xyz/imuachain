@@ -399,6 +399,14 @@ func (k Keeper) DelegationUnclaimedRewards(ctx context.Context, req *types.Query
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid stakerID,err:%v", err)
 	}
+	_, _, err = assetstype.ValidateID(req.AssetId, false, false)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid assetID,err:%v", err)
+	}
+	_, err = sdk.AccAddressFromBech32(req.Operator)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
+	}
 	stakingRewards, compoundingRewards, err := k.GetDelegationUnclaimedRewards(c, true, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.Operator)
 	if err != nil {
 		return nil, err

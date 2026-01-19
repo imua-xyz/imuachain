@@ -272,9 +272,9 @@ func (p Precompile) UndelegateReward(
 	if len(undelegateRewardArgs.OperatorAddr) != assetstype.ImuachainOperatorAddrLength {
 		return nil, fmt.Errorf(imuacmn.ErrInputOperatorAddrLength, len(undelegateRewardArgs.OperatorAddr), assetstype.ImuachainOperatorAddrLength)
 	}
-	operatorAccAddr, err := sdk.AccAddressFromBech32(string(undelegateRewardArgs.OperatorAddr))
+	operatorAccAddr, err := sdk.AccAddressFromBech32(undelegateRewardArgs.OperatorAddr)
 	if err != nil {
-		return nil, fmt.Errorf("error occurred when parse acc address from Bech32,the addr is:%s, error:%s", string(undelegateRewardArgs.OperatorAddr), err.Error())
+		return nil, fmt.Errorf("error occurred when parse acc address from Bech32,the addr is:%s, error:%s", undelegateRewardArgs.OperatorAddr, err.Error())
 	}
 	err = p.distributionKeeper.UndelegateClaimedRewards(ctx, stakerID, rewardAssetID, operatorAccAddr, undelegateRewardArgs.InstantUnbond, sdkmath.NewIntFromBigInt(undelegateRewardArgs.OpAmount))
 	if err != nil {

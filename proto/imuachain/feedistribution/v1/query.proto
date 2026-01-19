@@ -121,6 +121,7 @@ service Query {
   }
   // StakerRewardParams queries the reward parameters of the staker.
   rpc StakerRewardParams(QueryStakerRewardParamsRequest) returns (QueryStakerRewardParamsResponse){
+    option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/staker_reward_params/{staker_id}";
   }
 }
@@ -420,9 +421,11 @@ message QueryDelegationUnclaimedRewardsRequest {
 // QueryDelegationUnclaimedRewardsResponse is the response to obtain the unclaimed rewards
 // for specific delegation.
 message QueryDelegationUnclaimedRewardsResponse {
-  // rewards is the unclaimed rewards from staking assets for all AVSs
+  // rewards is the unclaimed rewards from staking assets for specific delegation
+  // the rewards might come from multiple AVSs.
   repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
-  // compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs
+  // compounding_rewards is the unclaimed rewards from rewards compounding for specific delegation
+  // the compounding rewards might come from multiple AVSs. 
   repeated CommonAVSRewardData compounding_rewards = 2 [(gogoproto.nullable) = false];
 }
 

@@ -1,610 +1,649 @@
 [
   {
-    "type": "function",
+    "inputs":
+    [
+      {
+        "internalType": "uint32",
+        "name": "clientChainLzID",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "stakerAddress",
+        "type": "bytes"
+      }
+    ],
     "name": "claimReward",
-    "inputs": [
+    "outputs":
+    [
       {
-        "name": "clientChainLzID",
-        "type": "uint32",
-        "internalType": "uint32"
-      },
-      {
-        "name": "stakerAddress",
-        "type": "bytes",
-        "internalType": "bytes"
-      }
-    ],
-    "outputs": [
-      {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "fundAVSReward",
-    "inputs": [
+    "inputs":
+    [
       {
+        "internalType": "uint32",
         "name": "rewardAssetChainLzID",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint32"
       },
       {
+        "internalType": "address",
         "name": "avsAddress",
-        "type": "address",
-        "internalType": "address"
+        "type": "address"
       },
       {
+        "internalType": "bytes",
         "name": "assetAddress",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes"
       },
       {
+        "internalType": "uint256",
         "name": "opAmount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
-    "outputs": [
+    "name": "fundAVSReward",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
+    "inputs":
+    [
+      {
+        "internalType": "uint32",
+        "name": "clientChainID",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "token",
+        "type": "bytes"
+      }
+    ],
     "name": "isRegisteredRewardToken",
-    "inputs": [
+    "outputs":
+    [
       {
-        "name": "clientChainID",
-        "type": "uint32",
-        "internalType": "uint32"
-      },
-      {
-        "name": "token",
-        "type": "bytes",
-        "internalType": "bytes"
-      }
-    ],
-    "outputs": [
-      {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       },
       {
+        "internalType": "bool",
         "name": "isRegistered",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "view"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "registerRewardToken",
-    "inputs": [
+    "inputs":
+    [
       {
-        "name": "params",
-        "type": "tuple",
-        "internalType": "struct RegisterRewardTokenParams",
-        "components": [
+        "components":
+        [
           {
+            "internalType": "uint32",
             "name": "clientChainID",
-            "type": "uint32",
-            "internalType": "uint32"
+            "type": "uint32"
           },
           {
+            "internalType": "bytes",
             "name": "token",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "bytes"
           },
           {
+            "internalType": "uint8",
             "name": "decimals",
-            "type": "uint8",
-            "internalType": "uint8"
+            "type": "uint8"
           },
           {
+            "internalType": "string",
             "name": "name",
-            "type": "string",
-            "internalType": "string"
+            "type": "string"
           },
           {
+            "internalType": "string",
             "name": "symbol",
-            "type": "string",
-            "internalType": "string"
+            "type": "string"
           },
           {
+            "internalType": "string",
             "name": "metaData",
-            "type": "string",
-            "internalType": "string"
+            "type": "string"
           },
           {
+            "internalType": "string",
             "name": "denomination",
-            "type": "string",
-            "internalType": "string"
+            "type": "string"
           },
           {
+            "internalType": "uint8",
             "name": "denominationExponent",
-            "type": "uint8",
-            "internalType": "uint8"
+            "type": "uint8"
           }
-        ]
+        ],
+        "internalType": "struct RegisterRewardTokenParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
-    "outputs": [
+    "name": "registerRewardToken",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "setAVSEpochReward",
-    "inputs": [
+    "inputs":
+    [
       {
-        "name": "epochRewards",
-        "type": "tuple[]",
-        "internalType": "struct RewardCoin[]",
-        "components": [
+        "components":
+        [
           {
+            "internalType": "string",
             "name": "denomination",
-            "type": "string",
-            "internalType": "string"
+            "type": "string"
           },
           {
+            "internalType": "uint256",
             "name": "amount",
-            "type": "uint256",
-            "internalType": "uint256"
+            "type": "uint256"
           }
-        ]
+        ],
+        "internalType": "struct RewardCoin[]",
+        "name": "epochRewards",
+        "type": "tuple[]"
       }
     ],
-    "outputs": [
+    "name": "setAVSEpochReward",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "setAVSRewardDistribution",
-    "inputs": [
+    "inputs":
+    [
       {
-        "name": "rewardDistribution",
-        "type": "tuple",
-        "internalType": "struct AVSRewardDistributionInfo",
-        "components": [
+        "components":
+        [
           {
-            "name": "rewardCoins",
-            "type": "tuple[]",
-            "internalType": "struct RewardCoin[]",
-            "components": [
+            "components":
+            [
               {
+                "internalType": "string",
                 "name": "denomination",
-                "type": "string",
-                "internalType": "string"
+                "type": "string"
               },
               {
+                "internalType": "uint256",
                 "name": "amount",
-                "type": "uint256",
-                "internalType": "uint256"
+                "type": "uint256"
               }
-            ]
+            ],
+            "internalType": "struct RewardCoin[]",
+            "name": "rewardCoins",
+            "type": "tuple[]"
           },
           {
-            "name": "operatorRewardProportions",
-            "type": "tuple[]",
-            "internalType": "struct OperatorRewardProportion[]",
-            "components": [
+            "components":
+            [
               {
+                "internalType": "string",
                 "name": "operator",
-                "type": "string",
-                "internalType": "string"
+                "type": "string"
               },
               {
+                "internalType": "uint256",
                 "name": "numerator",
-                "type": "uint256",
-                "internalType": "uint256"
+                "type": "uint256"
               },
               {
+                "internalType": "uint256",
                 "name": "denominator",
-                "type": "uint256",
-                "internalType": "uint256"
+                "type": "uint256"
               }
-            ]
+            ],
+            "internalType": "struct OperatorRewardProportion[]",
+            "name": "operatorRewardProportions",
+            "type": "tuple[]"
           }
-        ]
+        ],
+        "internalType": "struct AVSRewardDistributionInfo",
+        "name": "rewardDistribution",
+        "type": "tuple"
       }
     ],
-    "outputs": [
+    "name": "setAVSRewardDistribution",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "setAVSRewardParams",
-    "inputs": [
+    "inputs":
+    [
       {
+        "internalType": "bool",
         "name": "isCustomRewardInflation",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       },
       {
+        "internalType": "bool",
         "name": "isCustomOperatorRatio",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "outputs": [
+    "name": "setAVSRewardParams",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "setOperatorRewardProportions",
-    "inputs": [
+    "inputs":
+    [
       {
-        "name": "operatorRewardProportions",
-        "type": "tuple[]",
-        "internalType": "struct OperatorRewardProportion[]",
-        "components": [
+        "components":
+        [
           {
+            "internalType": "string",
             "name": "operator",
-            "type": "string",
-            "internalType": "string"
+            "type": "string"
           },
           {
+            "internalType": "uint256",
             "name": "numerator",
-            "type": "uint256",
-            "internalType": "uint256"
+            "type": "uint256"
           },
           {
+            "internalType": "uint256",
             "name": "denominator",
-            "type": "uint256",
-            "internalType": "uint256"
+            "type": "uint256"
           }
-        ]
+        ],
+        "internalType": "struct OperatorRewardProportion[]",
+        "name": "operatorRewardProportions",
+        "type": "tuple[]"
       }
     ],
-    "outputs": [
+    "name": "setOperatorRewardProportions",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "setStakerRewardParams",
-    "inputs": [
+    "inputs":
+    [
       {
+        "internalType": "uint32",
         "name": "clientChainLzID",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint32"
       },
       {
+        "internalType": "bytes",
         "name": "stakerAddress",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes"
       },
       {
+        "internalType": "bool",
         "name": "redelegateReward",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       },
       {
+        "internalType": "string",
         "name": "redelegateOperator",
-        "type": "string",
-        "internalType": "string"
+        "type": "string"
       }
     ],
-    "outputs": [
+    "name": "setStakerRewardParams",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "undelegateReward",
-    "inputs": [
+    "inputs":
+    [
       {
-        "name": "params",
-        "type": "tuple",
-        "internalType": "struct UndelegateRewardParams",
-        "components": [
+        "components":
+        [
           {
+            "internalType": "uint32",
             "name": "clientChainLzID",
-            "type": "uint32",
-            "internalType": "uint32"
+            "type": "uint32"
           },
           {
+            "internalType": "uint32",
             "name": "rewardAssetChainLzID",
-            "type": "uint32",
-            "internalType": "uint32"
+            "type": "uint32"
           },
           {
+            "internalType": "bytes",
             "name": "assetAddress",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "bytes"
           },
           {
+            "internalType": "bytes",
             "name": "stakerAddress",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "bytes"
           },
           {
+            "internalType": "string",
             "name": "operatorAddr",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "string"
           },
           {
+            "internalType": "uint256",
             "name": "opAmount",
-            "type": "uint256",
-            "internalType": "uint256"
+            "type": "uint256"
           },
           {
+            "internalType": "bool",
             "name": "instantUnbond",
-            "type": "bool",
-            "internalType": "bool"
+            "type": "bool"
           }
-        ]
+        ],
+        "internalType": "struct UndelegateRewardParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
-    "outputs": [
+    "name": "undelegateReward",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "updateRewardToken",
-    "inputs": [
+    "inputs":
+    [
       {
+        "internalType": "uint32",
         "name": "clientChainID",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint32"
       },
       {
+        "internalType": "bytes",
         "name": "token",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes"
       },
       {
+        "internalType": "string",
         "name": "metaData",
-        "type": "string",
-        "internalType": "string"
+        "type": "string"
       }
     ],
-    "outputs": [
+    "name": "updateRewardToken",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "withdrawCommission",
-    "inputs": [
+    "inputs":
+    [
       {
+        "internalType": "uint32",
         "name": "rewardAssetChainLzID",
-        "type": "uint32",
-        "internalType": "uint32"
+        "type": "uint32"
       },
       {
+        "internalType": "bytes",
         "name": "assetAddress",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes"
       },
       {
+        "internalType": "bytes",
         "name": "operatorAddress",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes"
       },
       {
+        "internalType": "uint256",
         "name": "opAmount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
-    "outputs": [
+    "name": "withdrawCommission",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       },
       {
+        "internalType": "uint256",
         "name": "actualWithdrawAmount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "withdrawIMUATokenCommission",
-    "inputs": [
+    "inputs":
+    [
       {
+        "internalType": "bytes",
         "name": "operatorAddress",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes"
       },
       {
+        "internalType": "bytes",
         "name": "receiptAddress",
-        "type": "bytes",
-        "internalType": "bytes"
+        "type": "bytes"
       },
       {
+        "internalType": "uint256",
         "name": "opAmount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
-    "outputs": [
+    "name": "withdrawIMUATokenCommission",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       },
       {
+        "internalType": "uint256",
         "name": "actualWithdrawAmount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       },
       {
+        "internalType": "uint256",
         "name": "withdrawAmountFromDogfood",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "withdrawIMUATokenReward",
-    "inputs": [
+    "inputs":
+    [
       {
-        "name": "params",
-        "type": "tuple",
-        "internalType": "struct WithdrawIMUATokenRewardParams",
-        "components": [
+        "components":
+        [
           {
+            "internalType": "bool",
             "name": "doClaim",
-            "type": "bool",
-            "internalType": "bool"
+            "type": "bool"
           },
           {
+            "internalType": "uint32",
             "name": "clientChainLzID",
-            "type": "uint32",
-            "internalType": "uint32"
+            "type": "uint32"
           },
           {
+            "internalType": "bytes",
             "name": "stakerAddress",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "bytes"
           },
           {
+            "internalType": "bytes",
             "name": "receiptAddress",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "bytes"
           },
           {
+            "internalType": "uint256",
             "name": "opAmount",
-            "type": "uint256",
-            "internalType": "uint256"
+            "type": "uint256"
           }
-        ]
+        ],
+        "internalType": "struct WithdrawIMUATokenRewardParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
-    "outputs": [
+    "name": "withdrawIMUATokenReward",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       },
       {
+        "internalType": "uint256",
         "name": "actualWithdrawAmount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       },
       {
+        "internalType": "uint256",
         "name": "withdrawAmountFromDogfood",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
-    "type": "function",
-    "name": "withdrawReward",
-    "inputs": [
+    "inputs":
+    [
       {
-        "name": "params",
-        "type": "tuple",
-        "internalType": "struct WithdrawRewardParams",
-        "components": [
+        "components":
+        [
           {
+            "internalType": "bool",
             "name": "doClaim",
-            "type": "bool",
-            "internalType": "bool"
+            "type": "bool"
           },
           {
+            "internalType": "uint32",
             "name": "clientChainLzID",
-            "type": "uint32",
-            "internalType": "uint32"
+            "type": "uint32"
           },
           {
+            "internalType": "uint32",
             "name": "rewardAssetChainLzID",
-            "type": "uint32",
-            "internalType": "uint32"
+            "type": "uint32"
           },
           {
+            "internalType": "bytes",
             "name": "assetAddress",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "bytes"
           },
           {
+            "internalType": "bytes",
             "name": "stakerAddress",
-            "type": "bytes",
-            "internalType": "bytes"
+            "type": "bytes"
           },
           {
+            "internalType": "uint256",
             "name": "opAmount",
-            "type": "uint256",
-            "internalType": "uint256"
+            "type": "uint256"
           }
-        ]
+        ],
+        "internalType": "struct WithdrawRewardParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
-    "outputs": [
+    "name": "withdrawReward",
+    "outputs":
+    [
       {
+        "internalType": "bool",
         "name": "success",
-        "type": "bool",
-        "internalType": "bool"
+        "type": "bool"
       },
       {
+        "internalType": "uint256",
         "name": "actualWithdrawAmount",
-        "type": "uint256",
-        "internalType": "uint256"
+        "type": "uint256"
       }
     ],
-    "stateMutability": "nonpayable"
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]

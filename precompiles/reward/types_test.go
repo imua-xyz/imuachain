@@ -82,7 +82,7 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 					RewardAssetChainLzID: 1,
 					AssetAddress:         paddingClientChainAddress(common.HexToAddress("0x1234567890123456789012345678901234567890").Bytes(), 32),
 					StakerAddress:        paddingClientChainAddress(common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd").Bytes(), 32),
-					OperatorAddr:         operatorAddr,
+					OperatorAddr:         string(operatorAddr),
 					OpAmount:             big.NewInt(3000),
 					InstantUnbond:        false,
 				}
@@ -102,7 +102,7 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 					args.InstantUnbond == false &&
 					bytes.Equal(args.AssetAddress, paddingClientChainAddress(common.HexToAddress("0x1234567890123456789012345678901234567890").Bytes(), 32)) &&
 					bytes.Equal(args.StakerAddress, paddingClientChainAddress(common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd").Bytes(), 32)) &&
-					bytes.Equal(args.OperatorAddr, operatorAddr)
+					args.OperatorAddr == string(operatorAddr)
 			},
 		},
 		{

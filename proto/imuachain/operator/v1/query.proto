@@ -91,7 +91,7 @@ message AVSRewardsUSDValues{
 // QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS.
 message QueryRewardsUSDValueResponse {
   // avs_rewards_usd_values are the rewards USD values from all AVSs.
-  repeated AVSRewardsUSDValues avs_rewards_usd_values = 2 [(gogoproto.nullable) = false];
+  repeated AVSRewardsUSDValues avs_rewards_usd_values = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryAVSUSDValueRequest is the request to obtain the USD value for AVS.
