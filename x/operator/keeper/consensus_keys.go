@@ -733,7 +733,6 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 			TotalUSDValue: currentAssetTotalUSD,
 		}
 		delegatorTokens = append(delegatorTokens, info)
-
 		return nil
 	}
 
@@ -741,8 +740,17 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		ctx.Logger().Error("IterateAssetsForOperator error", "err", err)
 		return types.Validator{}, false
 	}
-	val.VotingPower = ret.Staking
-	val.DelegatorShares = ret.Staking.Sub(ret.SelfStaking).TruncateInt()
+	// We use the voting power calculated and stored at the end of the previous epoch directly.
+	// We don't need to calculate the real-time voting power here.
+	// Additionally, this voting power will include the USD value of the compounding rewards.
+	// Only for the detailed delegation info, we need to iterate the assets and calculate
+	// the real-time USD value of the delegation.
+	optedUSDValues, err := k.GetOperatorOptedUSDValue(ctx, avsAddrStr, operatorAddr.String())
+	if err != nil {
+		return types.Validator{}, false
+	}
+	val.VotingPower = optedUSDValues.TotalUSDValue
+	val.DelegatorShares = optedUSDValues.TotalUSDValue.Sub(optedUSDValues.SelfUSDValue).TruncateInt()
 	val.DelegatorTokens = delegatorTokens
 
 	return val, true

@@ -268,7 +268,14 @@ func (p Precompile) UndelegateReward(
 	if err != nil {
 		return nil, err
 	}
-	operatorAccAddr := sdk.AccAddress(undelegateRewardArgs.OperatorAddr)
+	// the input operator address is cosmos accAddress type,so we need to check the length and decode it through Bench32
+	if len(undelegateRewardArgs.OperatorAddr) != assetstype.ImuachainOperatorAddrLength {
+		return nil, fmt.Errorf(imuacmn.ErrInputOperatorAddrLength, len(undelegateRewardArgs.OperatorAddr), assetstype.ImuachainOperatorAddrLength)
+	}
+	operatorAccAddr, err := sdk.AccAddressFromBech32(string(undelegateRewardArgs.OperatorAddr))
+	if err != nil {
+		return nil, fmt.Errorf("error occurred when parse acc address from Bech32,the addr is:%s, error:%s", string(undelegateRewardArgs.OperatorAddr), err.Error())
+	}
 	err = p.distributionKeeper.UndelegateClaimedRewards(ctx, stakerID, rewardAssetID, operatorAccAddr, undelegateRewardArgs.InstantUnbond, sdkmath.NewIntFromBigInt(undelegateRewardArgs.OpAmount))
 	if err != nil {
 		return nil, err
@@ -297,6 +304,7 @@ func (p Precompile) WithdrawCommission(
 	if withdrawCommissionArgs.OpAmount == nil || withdrawCommissionArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawCommission: invalid withdraw amount:%v", withdrawCommissionArgs.OpAmount)
 	}
+	// the input operator address is EVM address type
 	if len(withdrawCommissionArgs.OperatorAddress) != common.AddressLength {
 		return nil, fmt.Errorf("invalid operator EVM address, length:%d,expectedLength:%d ",
 			len(withdrawCommissionArgs.OperatorAddress), common.AddressLength)
@@ -341,6 +349,7 @@ func (p Precompile) WithdrawIMUATokenCommission(
 		return nil, fmt.Errorf("WithdrawIMUATokenCommission: invalid withdraw amount:%v",
 			withdrawIMUATokenCommissionArgs.OpAmount)
 	}
+	// the input operator address is EVM address type
 	if len(withdrawIMUATokenCommissionArgs.OperatorAddress) != common.AddressLength {
 		return nil, fmt.Errorf("invalid operator EVM address, length:%d,expectedLength:%d ",
 			len(withdrawIMUATokenCommissionArgs.OperatorAddress), common.AddressLength)

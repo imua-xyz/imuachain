@@ -39,7 +39,7 @@ func (k Keeper) AVSRewardAsset(ctx context.Context, req *types.QueryAVSRewardAss
 }
 
 // AVSRewardAssetBySymbol queries the specific AVS reward asset by the symbol.
-func (k Keeper) AVSRewardAssetBySymbol(ctx context.Context, req *types.QueryAVSRewardAssetBySymbolRequest) (*types.QueryAVSRewardAssetBySymbolResponse, error) {
+func (k Keeper) AVSRewardAssetByDenom(ctx context.Context, req *types.QueryAVSRewardAssetByDenomRequest) (*types.QueryAVSRewardAssetByDenomResponse, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
@@ -47,15 +47,15 @@ func (k Keeper) AVSRewardAssetBySymbol(ctx context.Context, req *types.QueryAVSR
 	if !common.IsHexAddress(req.Avs) {
 		return nil, status.Errorf(codes.InvalidArgument, "avs should be an EVM address,AVS:%s", req.Avs)
 	}
-	err := types.ValidateRewardAssetDenomination(req.Symbol)
+	err := types.ValidateRewardAssetDenomination(req.Denomination)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "symbol should be a valid denomination,symbol:%s,err:%s", req.Symbol, err)
+		return nil, status.Errorf(codes.InvalidArgument, "denomination should be a valid denomination,denomination:%s,err:%s", req.Denomination, err)
 	}
-	_, assetInfo, err := k.GetAVSRewardAssetByDenomination(c, strings.ToLower(req.Avs), req.Symbol)
+	_, assetInfo, err := k.GetAVSRewardAssetByDenomination(c, strings.ToLower(req.Avs), req.Denomination)
 	if err != nil {
 		return nil, err
 	}
-	return &types.QueryAVSRewardAssetBySymbolResponse{AvsRewardAsset: assetInfo}, nil
+	return &types.QueryAVSRewardAssetByDenomResponse{AvsRewardAsset: assetInfo}, nil
 }
 
 // RewardAssetsByAVS queries all reward assets for an AVS.

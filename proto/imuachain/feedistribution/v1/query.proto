@@ -23,10 +23,10 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/reward_asset/{avs}/{asset_id}";
   }
-  // AVSRewardAssetBySymbol queries the AVS reward asset by the symbol.
-  rpc AVSRewardAssetBySymbol(QueryAVSRewardAssetBySymbolRequest) returns (QueryAVSRewardAssetBySymbolResponse) {
+  // AVSRewardAssetByDenom queries the AVS reward asset by the denomination.
+  rpc AVSRewardAssetByDenom(QueryAVSRewardAssetByDenomRequest) returns (QueryAVSRewardAssetByDenomResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_asset_by_symbol/{avs}/{symbol}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_asset_by_denom/{avs}/{denomination}";
   }
   // RewardAssetsByAVS queries all reward assets for an AVS.
   rpc RewardAssetsByAVS(AVSRequest) returns (QueryRewardAssetsByAVSResponse) {
@@ -151,16 +151,16 @@ message QueryAVSRewardAssetResponse{
   AVSRewardAsset avs_reward_asset = 1;
 }
 
-// QueryAVSRewardAssetBySymbolRequest is the request to obtain the specific reward asset for an AVS and symbol.
-message QueryAVSRewardAssetBySymbolRequest {
+// QueryAVSRewardAssetByDenomRequest is the request to obtain the specific reward asset for an AVS and denomination.
+message QueryAVSRewardAssetByDenomRequest {
   // avs address
   string avs = 1;
-  // symbol is reward asset symbol
-  string symbol = 2;
+  // denomination is reward asset denomination
+  string denomination = 2;
 }
 
-// QueryAVSRewardAssetBySymbolResponse is the response to obtain the specific reward asset for an AVS and symbol.
-message QueryAVSRewardAssetBySymbolResponse{
+// QueryAVSRewardAssetByDenomResponse is the response to obtain the specific reward asset for an AVS and denomination.
+message QueryAVSRewardAssetByDenomResponse{
   // avs_reward_asset is the reward asset returned for the input avs
   AVSRewardAsset avs_reward_asset = 1;
 }

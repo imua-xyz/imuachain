@@ -265,7 +265,7 @@ func (k *Keeper) GetDelegationInfo(ctx sdk.Context, stakerID, assetID string) (*
 	ret.DelegationInfos = make([]*delegationtype.DelegationInfoAndOperator, 0)
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// calculate the maximum undelegatable amount
-		stakingAssetAmount, _, err := k.UndelegatableAmount(ctx, assetID, keys.OperatorAddr, amounts)
+		stakingAssetAmount, rewardAssetAmount, err := k.UndelegatableAmount(ctx, assetID, keys.OperatorAddr, amounts)
 		if err != nil {
 			return false, err
 		}
@@ -273,8 +273,9 @@ func (k *Keeper) GetDelegationInfo(ctx sdk.Context, stakerID, assetID string) (*
 			&delegationtype.DelegationInfoAndOperator{
 				Operator: keys.OperatorAddr,
 				DelegationInfo: &delegationtype.SingleDelegationInfo{
-					DelegationAmounts:      amounts,
-					MaxUndelegatableAmount: stakingAssetAmount,
+					DelegationAmounts:            amounts,
+					MaxUndelegatableAmount:       stakingAssetAmount,
+					MaxUndelegatableRewardAmount: rewardAssetAmount,
 				},
 			},
 		)

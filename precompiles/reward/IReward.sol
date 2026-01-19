@@ -69,7 +69,7 @@ IReward constant REWARD_CONTRACT = IReward(
 /// @param rewardAssetChainLzID The LzID of the chain the reward asset originates from
 /// @param assetAddress The reward asset Address
 /// @param stakerAddress The address of the staker withdrawing the reward
-/// @param operatorAddr The operator address that wants to unDelegate from
+/// @param operatorAddr The operator's bench32 address that wants to unDelegate from
 /// @param opAmount The Undelegation amount
 /// @param instantUnbond Whether to unbond immediately
     struct UndelegateRewardParams {
@@ -168,7 +168,9 @@ interface IReward {
     /// Note that this address cannot be a module account.
     /// @param rewardAssetChainLzID The LzID of the chain the commission asset originates from
     /// @param assetAddress The commission asset Address
-    /// @param operatorAddress The address of the operator withdrawing the commission.
+    /// @param operatorAddress The address of the operator withdrawing the commission. The address should 
+    /// be of EVM address type, because this interface is provided to gateway, and the gateway will use the 
+    /// signer address of the EVM transaction as the input operator address.
     /// @param opAmount The commission amount to withdraw, set it to 0 to withdraw all commissions.
     function withdrawCommission(
         uint32 rewardAssetChainLzID,
@@ -180,7 +182,9 @@ interface IReward {
     /// @dev Withdraws commissions in IMUA tokens earned from the dogfood AVS or from other AVSs that also
     /// distribute IMUA as rewards. The detailed logic is similar to `withdrawIMUATokenReward`.
     /// Note that this address cannot be a module account.
-    /// @param operatorAddress The address of the operator withdrawing the commission.
+    /// @param operatorAddress The address of the operator withdrawing the commission. The address should 
+    /// be of EVM address type, because this interface is provided to gateway, and the gateway will use the 
+    /// signer address of the EVM transaction as the input operator address.
     /// @param receiptAddress The address to receive the IMUA reward. It can be same as the operator address
     /// The recipient and operator addresses should be of EVM address type
     /// @param opAmount The commission amount to withdraw, set it to 0 to withdraw all commissions.

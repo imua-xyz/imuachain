@@ -179,12 +179,12 @@ func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr
 	var ret operatortypes.OperatorOptedUSDValue
 	var key []byte
 	if operatorAddr == "" {
-		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrParameterInvalid, "GetOperatorActiveUSDValue the operatorAddr is empty")
+		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrParameterInvalid, "GetOperatorOptedUSDValue the operatorAddr is empty")
 	}
 	key = utils.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	value := store.Get(key)
 	if value == nil {
-		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorActiveUSDValue: key is %s", key))
+		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorOptedUSDValue: key is %s", key))
 	}
 	k.cdc.MustUnmarshal(value, &ret)
 
@@ -922,7 +922,7 @@ func (k *Keeper) SetOperatorRewardUSDValue(
 func (k *Keeper) GetRewardsUSDValues(ctx sdk.Context, avs, operator string) ([]operatortypes.AVSRewardsUSDValues, error) {
 	ret := make([]operatortypes.AVSRewardsUSDValues, 0)
 	rewardSourceAVS := ""
-	opFunc := func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error) {
+	opFunc := func(avs, denomination string, usdValue *operatortypes.DecValueField) (bool, bool, error) {
 		if rewardSourceAVS == "" || rewardSourceAVS != avs {
 			rewardSourceAVS = avs
 			ret = append(ret, operatortypes.AVSRewardsUSDValues{
@@ -932,8 +932,8 @@ func (k *Keeper) GetRewardsUSDValues(ctx sdk.Context, avs, operator string) ([]o
 		}
 		length := len(ret)
 		ret[length-1].RewardsUsdValues = append(ret[length-1].RewardsUsdValues, operatortypes.RewardUSDValue{
-			Symbol:   symbol,
-			UsdValue: usdValue.Amount,
+			Denomination: denomination,
+			UsdValue:     usdValue.Amount,
 		})
 		return false, false, nil
 	}

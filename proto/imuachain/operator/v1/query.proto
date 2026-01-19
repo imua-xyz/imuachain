@@ -70,10 +70,10 @@ message QueryRewardsUSDValueRequest {
   OperatorAVSAddress operator_and_avs = 1 [(gogoproto.embed) = true];
 }
 
-// RewardUSDValue includes the symbol and USD value of specific reward asset
+// RewardUSDValue includes the denomination and USD value of specific reward asset
 message RewardUSDValue {
-  // symbol of the reward asset.
-  string symbol = 1;
+  // denomination of the reward asset.
+  string denomination = 1;
   // usd_value is the USD value of specific reward asset
   string usd_value = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
