@@ -151,7 +151,7 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixOperatorAssetInfos)
 	iterator := sdk.KVStorePrefixIterator(store, []byte(operator))
 	defer iterator.Close()
-	updateKeyValues := make([]utils.KeyValue, 0)
+	updateKeyValues := make([]utils.KeyValueT[*assetstype.OperatorAssetInfo], 0)
 	updateAssetIDs := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts assetstype.OperatorAssetInfo
@@ -172,7 +172,7 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 		}
 		if isUpdate {
 			// collect key values to update
-			updateKeyValues = append(updateKeyValues, utils.KeyValue{
+			updateKeyValues = append(updateKeyValues, utils.KeyValueT[*assetstype.OperatorAssetInfo]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &amounts,
 			})
@@ -185,7 +185,7 @@ func (k Keeper) IterateAssetsForOperator(ctx sdk.Context, isUpdate bool, operato
 		// store the updated state
 		bz := k.cdc.MustMarshal(updateKeyValue.Value)
 		store.Set(updateKeyValue.Key, bz)
-		amounts := updateKeyValue.Value.(*assetstype.OperatorAssetInfo)
+		amounts := updateKeyValue.Value
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				assetstype.EventTypeUpdatedOperatorAsset,

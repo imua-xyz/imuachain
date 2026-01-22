@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
-	"github.com/imua-xyz/imuachain/utils"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -134,7 +133,7 @@ func (msgServer *MsgServerImpl) UpdateParams(
 	goCtx context.Context, req *types.MsgUpdateParams,
 ) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if utils.IsMainnet(ctx.ChainID()) && msgServer.keeper.authority != req.Authority {
+	if msgServer.keeper.authority != req.Authority {
 		return nil, govtypes.ErrInvalidSigner.Wrapf(
 			"invalid authority; expected %s, got %s",
 			msgServer.keeper.authority, req.Authority,

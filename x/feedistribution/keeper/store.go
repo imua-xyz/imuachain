@@ -65,7 +65,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[*feedistributiontypes.DelegationChangeInfo], 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var DelegationChangeInfo feedistributiontypes.DelegationChangeInfo
 		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
@@ -81,7 +81,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 			break
 		}
 		if isUpdate {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[*feedistributiontypes.DelegationChangeInfo]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &DelegationChangeInfo,
 			})
@@ -439,7 +439,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[*feedistributiontypes.OperatorHistoricalRewards], 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var operatorHistoricalReward feedistributiontypes.OperatorHistoricalRewards
 		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 4)
@@ -459,7 +459,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 			break
 		}
 		if isUpdate {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[*feedistributiontypes.OperatorHistoricalRewards]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &operatorHistoricalReward,
 			})
@@ -692,7 +692,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[T], 0)
 	for ; iterator.Valid(); iterator.Next() {
 		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), keyNumber)
 		if err != nil {
@@ -713,7 +713,7 @@ func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
 		}
 
 		if isUpdate && isChanged {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[T]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: value,
 			})

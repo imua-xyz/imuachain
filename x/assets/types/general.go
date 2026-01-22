@@ -152,23 +152,20 @@ func UpdateAssetValue(valueToUpdate *math.Int, changeValue *math.Int) error {
 		)
 	}
 
-	if !changeValue.IsNil() {
-		if changeValue.IsNegative() {
-			if valueToUpdate.LT(changeValue.Neg()) {
-				return errorsmod.Wrap(
-					ErrSubAmountIsMoreThanOrigin,
-					fmt.Sprintf(
-						"valueToUpdate:%s,changeValue:%s",
-						*valueToUpdate,
-						*changeValue,
-					),
-				)
-			}
-		}
-		if !changeValue.IsZero() {
-			*valueToUpdate = valueToUpdate.Add(*changeValue)
-		}
+	if changeValue.IsNil() || changeValue.IsZero() {
+		return nil
 	}
+	if changeValue.IsNegative() && valueToUpdate.LT(changeValue.Neg()) {
+		return errorsmod.Wrap(
+			ErrSubAmountIsMoreThanOrigin,
+			fmt.Sprintf(
+				"valueToUpdate:%s,changeValue:%s",
+				*valueToUpdate,
+				*changeValue,
+			),
+		)
+	}
+	*valueToUpdate = valueToUpdate.Add(*changeValue)
 	return nil
 }
 
@@ -183,23 +180,16 @@ func UpdateAssetDecValue(valueToUpdate *math.LegacyDec, changeValue *math.Legacy
 		)
 	}
 
-	if !changeValue.IsNil() {
-		if changeValue.IsNegative() {
-			if valueToUpdate.LT(changeValue.Neg()) {
-				return errorsmod.Wrap(
-					ErrSubAmountIsMoreThanOrigin,
-					fmt.Sprintf(
-						"valueToUpdate:%s,changeValue:%s",
-						*valueToUpdate,
-						*changeValue,
-					),
-				)
-			}
-		}
-		if !changeValue.IsZero() {
-			*valueToUpdate = valueToUpdate.Add(*changeValue)
-		}
+	if changeValue.IsNil() || changeValue.IsZero() {
+		return nil
 	}
+	if changeValue.IsNegative() && valueToUpdate.LT(changeValue.Neg()) {
+		return errorsmod.Wrap(
+			ErrSubAmountIsMoreThanOrigin,
+			fmt.Sprintf("valueToUpdate:%s,changeValue:%s", *valueToUpdate, *changeValue),
+		)
+	}
+	*valueToUpdate = valueToUpdate.Add(*changeValue)
 	return nil
 }
 
@@ -207,9 +197,13 @@ func UpdateAssetDecValue(valueToUpdate *math.LegacyDec, changeValue *math.Legacy
 // to represent the address of native restaking asset. It's okay because we can distinguish
 // which client chain's native asset it is through the clientChainID in the assetID.
 func GenerateNSTAddr(clientChainAddrLength uint32) []byte {
+	if clientChainAddrLength == 0 {
+		return []byte{}
+	}
 	address := make([]byte, clientChainAddrLength)
-	for i := range address {
-		address[i] = FillCharForRestakingAssetAddr
+	address[0] = FillCharForRestakingAssetAddr
+	for i := 1; i < int(clientChainAddrLength); i *= 2 {
+		copy(address[i:], address[:i])
 	}
 	return address
 }
