@@ -22489,7 +22489,8 @@
                             },
                             "title": "asset_ids represents the list of reward asset ids"
                           }
-                        }
+                        },
+                        "title": "AVSRewardAssetsList is a list of reward assets for an AVS"
                       },
                       "description": "slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have\nbeen slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
                     }
@@ -22632,7 +22633,8 @@
                                   },
                                   "title": "asset_ids represents the list of reward asset ids"
                                 }
-                              }
+                              },
+                              "title": "AVSRewardAssetsList is a list of reward assets for an AVS"
                             },
                             "description": "slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have\nbeen slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
                           }
@@ -48689,7 +48691,8 @@
           },
           "title": "asset_ids represents the list of reward asset ids"
         }
-      }
+      },
+      "title": "AVSRewardAssetsList is a list of reward assets for an AVS"
     },
     "imuachain.feedistribution.v1.AVSRewardDistribution": {
       "type": "object",
@@ -49039,7 +49042,8 @@
                 },
                 "title": "asset_ids represents the list of reward asset ids"
               }
-            }
+            },
+            "title": "AVSRewardAssetsList is a list of reward assets for an AVS"
           },
           "description": "slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have\nbeen slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
         }
@@ -49088,7 +49092,8 @@
                     },
                     "title": "asset_ids represents the list of reward asset ids"
                   }
-                }
+                },
+                "title": "AVSRewardAssetsList is a list of reward assets for an AVS"
               },
               "description": "slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have\nbeen slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
             }
@@ -49892,7 +49897,8 @@
                     },
                     "title": "asset_ids represents the list of reward asset ids"
                   }
-                }
+                },
+                "title": "AVSRewardAssetsList is a list of reward assets for an AVS"
               },
               "description": "slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have\nbeen slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
             }
@@ -49949,7 +49955,8 @@
                           },
                           "title": "asset_ids represents the list of reward asset ids"
                         }
-                      }
+                      },
+                      "title": "AVSRewardAssetsList is a list of reward assets for an AVS"
                     },
                     "description": "slashed_outstanding_rewards_assets records the list of outstanding rewards assets that have\nbeen slashed. It is used to calculate stakers' rewards, taking into account slashing that occurs\ndue to reward compounding."
                   }
