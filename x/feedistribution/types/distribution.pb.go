@@ -948,6 +948,7 @@ func (m *StakerRewardParams) GetRedelegateOperatorAddr() string {
 	return ""
 }
 
+// AVSRewardAssetsList is a list of reward assets for an AVS
 type AVSRewardAssetsList struct {
 	// avs_address is the AVS address
 	AVSAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
