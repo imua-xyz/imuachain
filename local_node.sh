@@ -117,6 +117,63 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	echo "the local operator address is $LOCAL_ADDRESS_IM"
 	echo "the dogfood AVS address is $AVS_ADDRESS"
 
+	DEV0_ADDR=$(imuad keys show "${KEYS[0]}" -a --keyring-backend "$KEYRING" --home "$HOMEDIR")
+	DEV1_ADDR=$(imuad keys show "${KEYS[1]}" -a --keyring-backend "$KEYRING" --home "$HOMEDIR")
+
+	POLICY_ADDR="im1afk9zr2hn2jsac63h4hm60vl9z3e5u69gndzf7c99cqge3vzwjzswhsj4w"
+
+	jq --arg local "$LOCAL_ADDRESS_IM" \
+		--arg dev0 "$DEV0_ADDR" \
+		--arg dev1 "$DEV1_ADDR" \
+		--arg policy "$POLICY_ADDR" \
+		'.app_state["group"]["groups"] = [
+        {
+            "id": "1",
+            "admin": $policy,
+            "metadata": "Genesis Admin Group",
+            "version": "1",
+            "total_weight": "3",
+            "created_at": "0001-01-01T00:00:00Z"
+        }
+    ] |
+    .app_state["group"]["group_members"] = [
+        {
+            "group_id": "1",
+            "member": { "address": $dev0, "weight": "1", "metadata": "dev0", "added_at": "0001-01-01T00:00:00Z" }
+        },
+        {
+            "group_id": "1",
+            "member": { "address": $dev1, "weight": "1", "metadata": "dev1", "added_at": "0001-01-01T00:00:00Z" }
+        },
+        {
+            "group_id": "1",
+            "member": { "address": $local, "weight": "1", "metadata": "local_funded_account", "added_at": "0001-01-01T00:00:00Z" }
+        }
+    ] |
+    .app_state["group"]["group_policies"] = [
+        {
+            "address": $policy,
+            "group_id": "1",
+            "admin": $policy,
+            "metadata": "Admin Policy",
+            "version": "1",
+            "decision_policy": {
+                "@type": "/cosmos.group.v1.ThresholdDecisionPolicy",
+                "threshold": "2",
+                "windows": {
+                    "voting_period": "1800s",
+                    "min_execution_period": "0s"
+                }
+            },
+            "created_at": "0001-01-01T00:00:00Z"
+        }
+    ] |
+    .app_state["group"]["group_seq"] = "1" |
+    .app_state["group"]["group_policy_seq"] = "1"' \
+		"$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
+	echo "x/group populated with Policy Address: $POLICY_ADDR"
+
 	# Change parameter token denominations to hua
 	jq '.app_state["crisis"]["constant_fee"]["denom"]="hua"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="hua"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"

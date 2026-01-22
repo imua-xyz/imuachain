@@ -21516,10 +21516,10 @@
         ]
       }
     },
-    "/imuachain/feedistribution/v1/avs_reward_asset_by_symbol/{avs}/{symbol}": {
+    "/imuachain/feedistribution/v1/avs_reward_asset_by_denom/{avs}/{denomination}": {
       "get": {
-        "summary": "AVSRewardAssetBySymbol queries the AVS reward asset by the symbol.",
-        "operationId": "AVSRewardAssetBySymbol",
+        "summary": "AVSRewardAssetByDenom queries the AVS reward asset by the denomination.",
+        "operationId": "AVSRewardAssetByDenom",
         "responses": {
           "200": {
             "description": "A successful response.",
@@ -21603,7 +21603,7 @@
                   }
                 }
               },
-              "description": "QueryAVSRewardAssetBySymbolResponse is the response to obtain the specific reward asset for an AVS and symbol."
+              "description": "QueryAVSRewardAssetByDenomResponse is the response to obtain the specific reward asset for an AVS and denomination."
             }
           },
           "default": {
@@ -21649,8 +21649,8 @@
             "type": "string"
           },
           {
-            "name": "symbol",
-            "description": "symbol is reward asset symbol",
+            "name": "denomination",
+            "description": "denomination is reward asset denomination",
             "in": "path",
             "required": true,
             "type": "string"
@@ -22108,7 +22108,7 @@
                     },
                     "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
                   },
-                  "title": "rewards is the unclaimed rewards from staking assets for all AVSs"
+                  "description": "rewards is the unclaimed rewards from staking assets for specific delegation\nthe rewards might come from multiple AVSs."
                 },
                 "compounding_rewards": {
                   "type": "array",
@@ -22138,7 +22138,7 @@
                     },
                     "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
                   },
-                  "title": "compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs"
+                  "description": "compounding_rewards is the unclaimed rewards from rewards compounding for specific delegation\nthe compounding rewards might come from multiple AVSs."
                 }
               },
               "description": "QueryDelegationUnclaimedRewardsResponse is the response to obtain the unclaimed rewards\nfor specific delegation."
@@ -24379,6 +24379,10 @@
                           "max_undelegatable_amount": {
                             "type": "string",
                             "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+                          },
+                          "max_undelegatable_reward_amount": {
+                            "type": "string",
+                            "title": "max_undelegatable_reward_amount is the maximum reward amount that can be undelegated"
                           }
                         }
                       }
@@ -24723,6 +24727,10 @@
                     "max_undelegatable_amount": {
                       "type": "string",
                       "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+                    },
+                    "max_undelegatable_reward_amount": {
+                      "type": "string",
+                      "title": "max_undelegatable_reward_amount is the maximum reward amount that can be undelegated"
                     }
                   }
                 }
@@ -27505,16 +27513,16 @@
                         "items": {
                           "type": "object",
                           "properties": {
-                            "symbol": {
+                            "denomination": {
                               "type": "string",
-                              "description": "symbol of the reward asset."
+                              "description": "denomination of the reward asset."
                             },
                             "usd_value": {
                               "type": "string",
                               "title": "usd_value is the USD value of specific reward asset"
                             }
                           },
-                          "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+                          "title": "RewardUSDValue includes the denomination and USD value of specific reward asset"
                         },
                         "description": "rewards_usd_values are the USD values of all reward assets."
                       }
@@ -49314,7 +49322,7 @@
       },
       "description": "QueryAVSCommunityPoolResponse is the response to obtain the community fee pool for an AVS."
     },
-    "imuachain.feedistribution.v1.QueryAVSRewardAssetBySymbolResponse": {
+    "imuachain.feedistribution.v1.QueryAVSRewardAssetByDenomResponse": {
       "type": "object",
       "properties": {
         "avs_reward_asset": {
@@ -49394,7 +49402,7 @@
           }
         }
       },
-      "description": "QueryAVSRewardAssetBySymbolResponse is the response to obtain the specific reward asset for an AVS and symbol."
+      "description": "QueryAVSRewardAssetByDenomResponse is the response to obtain the specific reward asset for an AVS and denomination."
     },
     "imuachain.feedistribution.v1.QueryAVSRewardAssetResponse": {
       "type": "object",
@@ -49676,7 +49684,7 @@
             },
             "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
           },
-          "title": "rewards is the unclaimed rewards from staking assets for all AVSs"
+          "description": "rewards is the unclaimed rewards from staking assets for specific delegation\nthe rewards might come from multiple AVSs."
         },
         "compounding_rewards": {
           "type": "array",
@@ -49706,7 +49714,7 @@
             },
             "description": "CommonAVSRewardData is a common struct used to record the current rewards and cumulative\nreward ratios of a specified AVS for the operator."
           },
-          "title": "compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs"
+          "description": "compounding_rewards is the unclaimed rewards from rewards compounding for specific delegation\nthe compounding rewards might come from multiple AVSs."
         }
       },
       "description": "QueryDelegationUnclaimedRewardsResponse is the response to obtain the unclaimed rewards\nfor specific delegation."
@@ -51542,6 +51550,10 @@
             "max_undelegatable_amount": {
               "type": "string",
               "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+            },
+            "max_undelegatable_reward_amount": {
+              "type": "string",
+              "title": "max_undelegatable_reward_amount is the maximum reward amount that can be undelegated"
             }
           }
         }
@@ -51642,6 +51654,10 @@
                   "max_undelegatable_amount": {
                     "type": "string",
                     "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+                  },
+                  "max_undelegatable_reward_amount": {
+                    "type": "string",
+                    "title": "max_undelegatable_reward_amount is the maximum reward amount that can be undelegated"
                   }
                 }
               }
@@ -51699,6 +51715,10 @@
         "max_undelegatable_amount": {
           "type": "string",
           "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+        },
+        "max_undelegatable_reward_amount": {
+          "type": "string",
+          "title": "max_undelegatable_reward_amount is the maximum reward amount that can be undelegated"
         }
       },
       "title": "SingleDelegationInfo includes the share, amount and pending undelegation amount"
@@ -51736,6 +51756,10 @@
             "max_undelegatable_amount": {
               "type": "string",
               "title": "max_undelegatable_amount is the maximum amount that can be undelegated"
+            },
+            "max_undelegatable_reward_amount": {
+              "type": "string",
+              "title": "max_undelegatable_reward_amount is the maximum reward amount that can be undelegated"
             }
           }
         }
@@ -52720,16 +52744,16 @@
           "items": {
             "type": "object",
             "properties": {
-              "symbol": {
+              "denomination": {
                 "type": "string",
-                "description": "symbol of the reward asset."
+                "description": "denomination of the reward asset."
               },
               "usd_value": {
                 "type": "string",
                 "title": "usd_value is the USD value of specific reward asset"
               }
             },
-            "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+            "title": "RewardUSDValue includes the denomination and USD value of specific reward asset"
           },
           "description": "rewards_usd_values are the USD values of all reward assets."
         }
@@ -54042,16 +54066,16 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "symbol": {
+                    "denomination": {
                       "type": "string",
-                      "description": "symbol of the reward asset."
+                      "description": "denomination of the reward asset."
                     },
                     "usd_value": {
                       "type": "string",
                       "title": "usd_value is the USD value of specific reward asset"
                     }
                   },
-                  "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+                  "title": "RewardUSDValue includes the denomination and USD value of specific reward asset"
                 },
                 "description": "rewards_usd_values are the USD values of all reward assets."
               }
@@ -54365,16 +54389,16 @@
     "imuachain.operator.v1.RewardUSDValue": {
       "type": "object",
       "properties": {
-        "symbol": {
+        "denomination": {
           "type": "string",
-          "description": "symbol of the reward asset."
+          "description": "denomination of the reward asset."
         },
         "usd_value": {
           "type": "string",
           "title": "usd_value is the USD value of specific reward asset"
         }
       },
-      "title": "RewardUSDValue includes the symbol and USD value of specific reward asset"
+      "title": "RewardUSDValue includes the denomination and USD value of specific reward asset"
     },
     "imuachain.operator.v1.SlashExecutionInfo": {
       "type": "object",

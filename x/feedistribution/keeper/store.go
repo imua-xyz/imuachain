@@ -3,6 +3,9 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/codec"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -62,7 +65,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[*feedistributiontypes.DelegationChangeInfo], 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var DelegationChangeInfo feedistributiontypes.DelegationChangeInfo
 		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 3)
@@ -78,7 +81,7 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 			break
 		}
 		if isUpdate {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[*feedistributiontypes.DelegationChangeInfo]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &DelegationChangeInfo,
 			})
@@ -512,7 +515,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[*feedistributiontypes.OperatorHistoricalRewards], 0)
 	for ; iterator.Valid(); iterator.Next() {
 		var operatorHistoricalReward feedistributiontypes.OperatorHistoricalRewards
 		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 4)
@@ -532,7 +535,7 @@ func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool
 			break
 		}
 		if isUpdate {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[*feedistributiontypes.OperatorHistoricalRewards]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &operatorHistoricalReward,
 			})
@@ -795,6 +798,54 @@ func (k Keeper) UpdateStakerClaimedRewards(ctx sdk.Context, stakerID, avsAddr st
 	err = k.SetStakerClaimedRewards(ctx, stakerID, avsAddr, rewards)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func GenericIterateStoreWithUpdate[T codec.ProtoMarshaler](
+	ctx sdk.Context,
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
+	keyPrefix []byte,
+	iteratePrefix []byte,
+	isUpdate bool,
+	keyNumber int,
+	unmarshal func([]byte) (T, error),
+	opFunc func(keys []string, value T) (bool, bool, error),
+) error {
+	store := prefix.NewStore(ctx.KVStore(storeKey), keyPrefix)
+	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
+	defer iterator.Close()
+
+	updatedKeyValues := make([]utils.KeyValueT[T], 0)
+	for ; iterator.Valid(); iterator.Next() {
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), keyNumber)
+		if err != nil {
+			return err
+		}
+
+		value, err := unmarshal(iterator.Value())
+		if err != nil {
+			return err
+		}
+
+		isBreak, isChanged, err := opFunc(keys, value)
+		if err != nil {
+			return err
+		}
+		if isBreak {
+			break
+		}
+
+		if isUpdate && isChanged {
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[T]{
+				Key:   append([]byte(nil), iterator.Key()...),
+				Value: value,
+			})
+		}
+	}
+	for _, updateKeyValue := range updatedKeyValues {
+		store.Set(updateKeyValue.Key, cdc.MustMarshal(updateKeyValue.Value))
 	}
 	return nil
 }

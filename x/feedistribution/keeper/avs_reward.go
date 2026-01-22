@@ -283,20 +283,6 @@ func getOverlap(start, end, epochStart, epochEnd uint64) uint64 {
 	return e - s + 1
 }
 
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b uint64) uint64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // CalcJailedBlocksInEpoch calculates the number of jailed blocks within a given epoch.
 // It traverses the jailToggleHeights slice in reverse to skip toggle events that are completely before the epoch.
 func CalcJailedBlocksInEpoch(jailToggleHeights []uint64, epochStart, epochEnd uint64, jailed bool) (uint64, error) {

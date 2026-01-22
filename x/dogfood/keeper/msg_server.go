@@ -32,7 +32,7 @@ func (k Keeper) UpdateParams(
 	ctx context.Context, msg *types.MsgUpdateParams,
 ) (*types.MsgUpdateParamsResponse, error) {
 	c := sdk.UnwrapSDKContext(ctx)
-	if utils.IsMainnet(c.ChainID()) && k.authority != msg.Authority {
+	if k.authority != msg.Authority {
 		return nil, govtypes.ErrInvalidSigner.Wrapf(
 			"invalid authority; expected %s, got %s",
 			k.authority, msg.Authority,

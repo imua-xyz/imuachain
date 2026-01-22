@@ -179,12 +179,12 @@ func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr
 	var ret operatortypes.OperatorOptedUSDValue
 	var key []byte
 	if operatorAddr == "" {
-		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrParameterInvalid, "GetOperatorActiveUSDValue the operatorAddr is empty")
+		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrParameterInvalid, "GetOperatorOptedUSDValue the operatorAddr is empty")
 	}
 	key = utils.GetJoinedStoreKey(strings.ToLower(avsAddr), operatorAddr)
 	value := store.Get(key)
 	if value == nil {
-		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorActiveUSDValue: key is %s", key))
+		return operatortypes.OperatorOptedUSDValue{}, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOperatorOptedUSDValue: key is %s", key))
 	}
 	k.cdc.MustUnmarshal(value, &ret)
 
@@ -294,7 +294,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
 
-	updatedKeyValues := make([]utils.KeyValue, 0)
+	updatedKeyValues := make([]utils.KeyValueT[*operatortypes.OperatorOptedUSDValue], 0)
 	updatedOperators := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
 		keys := utils.ParseJoinedKey(iterator.Key())
@@ -305,7 +305,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 			return err
 		}
 		if isUpdate {
-			updatedKeyValues = append(updatedKeyValues, utils.KeyValue{
+			updatedKeyValues = append(updatedKeyValues, utils.KeyValueT[*operatortypes.OperatorOptedUSDValue]{
 				Key:   append([]byte(nil), iterator.Key()...),
 				Value: &optedUSDValues,
 			})
@@ -316,7 +316,7 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	for i, updatedKeyValue := range updatedKeyValues {
 		bz := k.cdc.MustMarshal(updatedKeyValue.Value)
 		store.Set(updatedKeyValue.Key, bz)
-		optedUSDValues := updatedKeyValue.Value.(*operatortypes.OperatorOptedUSDValue)
+		optedUSDValues := updatedKeyValue.Value
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				operatortypes.EventTypeUpdateOperatorUSDValue,
@@ -922,7 +922,7 @@ func (k *Keeper) SetOperatorRewardUSDValue(
 func (k *Keeper) GetRewardsUSDValues(ctx sdk.Context, avs, operator string) ([]operatortypes.AVSRewardsUSDValues, error) {
 	ret := make([]operatortypes.AVSRewardsUSDValues, 0)
 	rewardSourceAVS := ""
-	opFunc := func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error) {
+	opFunc := func(avs, denomination string, usdValue *operatortypes.DecValueField) (bool, bool, error) {
 		if rewardSourceAVS == "" || rewardSourceAVS != avs {
 			rewardSourceAVS = avs
 			ret = append(ret, operatortypes.AVSRewardsUSDValues{
@@ -932,8 +932,8 @@ func (k *Keeper) GetRewardsUSDValues(ctx sdk.Context, avs, operator string) ([]o
 		}
 		length := len(ret)
 		ret[length-1].RewardsUsdValues = append(ret[length-1].RewardsUsdValues, operatortypes.RewardUSDValue{
-			Symbol:   symbol,
-			UsdValue: usdValue.Amount,
+			Denomination: denomination,
+			UsdValue:     usdValue.Amount,
 		})
 		return false, false, nil
 	}

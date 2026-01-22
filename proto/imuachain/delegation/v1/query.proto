@@ -76,6 +76,12 @@ message SingleDelegationInfo {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // max_undelegatable_reward_amount is the maximum reward amount that can be undelegated
+  string max_undelegatable_reward_amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // DelegationInfoAndOperator includes the SingleDelegationInfo and operator address

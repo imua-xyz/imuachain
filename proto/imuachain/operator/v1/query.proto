@@ -70,10 +70,10 @@ message QueryRewardsUSDValueRequest {
   OperatorAVSAddress operator_and_avs = 1 [(gogoproto.embed) = true];
 }
 
-// RewardUSDValue includes the symbol and USD value of specific reward asset
+// RewardUSDValue includes the denomination and USD value of specific reward asset
 message RewardUSDValue {
-  // symbol of the reward asset.
-  string symbol = 1;
+  // denomination of the reward asset.
+  string denomination = 1;
   // usd_value is the USD value of specific reward asset
   string usd_value = 2 [
     (cosmos_proto.scalar) = "cosmos.Dec",
@@ -81,6 +81,7 @@ message RewardUSDValue {
     (gogoproto.nullable) = false
   ];
 }
+
 // AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS
 message AVSRewardsUSDValues{
   // avs_address is the address of the reward source AVS
@@ -88,10 +89,11 @@ message AVSRewardsUSDValues{
   // rewards_usd_values are the USD values of all reward assets.
   repeated RewardUSDValue rewards_usd_values = 2 [(gogoproto.nullable) = false];
 }
+
 // QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS.
 message QueryRewardsUSDValueResponse {
   // avs_rewards_usd_values are the rewards USD values from all AVSs.
-  repeated AVSRewardsUSDValues avs_rewards_usd_values = 2 [(gogoproto.nullable) = false];
+  repeated AVSRewardsUSDValues avs_rewards_usd_values = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryAVSUSDValueRequest is the request to obtain the USD value for AVS.

@@ -1104,8 +1104,8 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 						AvsAddress: suite.DogfoodAVSAddr,
 						RewardsUsdValues: []operatortypes.RewardUSDValue{
 							{
-								Symbol:   utils.BaseDenom,
-								UsdValue: expectedRewardsUSDValueDec,
+								Denomination: utils.BaseDenom,
+								UsdValue:     expectedRewardsUSDValueDec,
 							},
 						},
 					},
@@ -1183,8 +1183,8 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 						AvsAddress: suite.DogfoodAVSAddr,
 						RewardsUsdValues: []operatortypes.RewardUSDValue{
 							{
-								Symbol:   utils.BaseDenom,
-								UsdValue: expectedRewardsUSDValueDec,
+								Denomination: utils.BaseDenom,
+								UsdValue:     expectedRewardsUSDValueDec,
 							},
 						},
 					},

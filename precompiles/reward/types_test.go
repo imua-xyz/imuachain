@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/precompiles/reward"
+	"bytes"
 )
 
 // TestWrapperStructsDecoding tests that all wrapper structs correctly decode struct-based parameters
@@ -39,7 +40,9 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 				return args.DoClaim == true &&
 					args.ClientChainLzID == 1 &&
 					args.RewardAssetChainLzID == 1 &&
-					args.OpAmount.Cmp(big.NewInt(1000)) == 0
+					args.OpAmount.Cmp(big.NewInt(1000)) == 0 &&
+					bytes.Equal(args.AssetAddress, paddingClientChainAddress(common.HexToAddress("0x1234567890123456789012345678901234567890").Bytes(), 32)) &&
+					bytes.Equal(args.StakerAddress, paddingClientChainAddress(common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd").Bytes(), 32))
 			},
 		},
 		{
@@ -63,7 +66,9 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 				args := wrapper.Params
 				return args.DoClaim == true &&
 					args.ClientChainLzID == 1 &&
-					args.OpAmount.Cmp(big.NewInt(2000)) == 0
+					args.OpAmount.Cmp(big.NewInt(2000)) == 0 &&
+					bytes.Equal(args.StakerAddress, paddingClientChainAddress(common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd").Bytes(), 32)) &&
+					bytes.Equal(args.ReceiptAddress, common.HexToAddress("0x1111111111111111111111111111111111111111").Bytes())
 			},
 		},
 		{
@@ -77,7 +82,7 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 					RewardAssetChainLzID: 1,
 					AssetAddress:         paddingClientChainAddress(common.HexToAddress("0x1234567890123456789012345678901234567890").Bytes(), 32),
 					StakerAddress:        paddingClientChainAddress(common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd").Bytes(), 32),
-					OperatorAddr:         operatorAddr,
+					OperatorAddr:         string(operatorAddr),
 					OpAmount:             big.NewInt(3000),
 					InstantUnbond:        false,
 				}
@@ -89,10 +94,15 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 					return false
 				}
 				args := wrapper.Params
+				operatorAddr := make([]byte, 32)
+				copy(operatorAddr, []byte("operator1234567890123456789012345"))
 				return args.ClientChainLzID == 1 &&
 					args.RewardAssetChainLzID == 1 &&
 					args.OpAmount.Cmp(big.NewInt(3000)) == 0 &&
-					args.InstantUnbond == false
+					args.InstantUnbond == false &&
+					bytes.Equal(args.AssetAddress, paddingClientChainAddress(common.HexToAddress("0x1234567890123456789012345678901234567890").Bytes(), 32)) &&
+					bytes.Equal(args.StakerAddress, paddingClientChainAddress(common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcd").Bytes(), 32)) &&
+					args.OperatorAddr == string(operatorAddr)
 			},
 		},
 		{
@@ -121,7 +131,10 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 					args.Decimals == 18 &&
 					args.Name == "TestToken" &&
 					args.Symbol == "TEST" &&
-					args.Denomination == "test"
+					args.Denomination == "test" &&
+					bytes.Equal(args.Token, paddingClientChainAddress(common.HexToAddress("0x1234567890123456789012345678901234567890").Bytes(), 32)) &&
+					args.MetaData == "Test metadata" && 
+					args.DenominationExponent == 0
 			},
 		},
 		{
