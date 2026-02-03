@@ -152,6 +152,15 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 			// the expected amount has been withdrawn, return from the current iteration and set the flag
 			// to update the state related to outstanding rewards. This check can prevent withdrawing more
 			// rewards than the expected amount from the subsequent withdrawable rewards.
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					feedistributiontypes.EventTypeWithdrawRewardFromAVS,
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avs),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subOutstandingRewards.String()),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endOutstandingRewards.String()),
+				),
+			)
 			return false, true, nil
 		}
 
