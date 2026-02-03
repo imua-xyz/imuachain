@@ -71,6 +71,13 @@ if [ -z "$BOOTSTRAP" ]; then
 	exit 1
 fi
 
+# darwin means sed
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	SED_CMD="sed -i ''"
+else
+	SED_CMD="sed -i"
+fi
+
 # used to exit on first error (any non-zero exit code)
 set -e
 
@@ -267,8 +274,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["delegation"]["delegation_states"][0]["states"]["wait_undelegation_amount"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["associations"][0]["staker_id"]="'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["associations"][0]["operator"]="'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["delegation"]["stakers_by_operator"][0]["key"]="'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["delegation"]["stakers_by_operator"][0]["stakers"][0]="'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["delegation"]["stakers_by_operator"][0]="'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# x/dogfood
 	# for easy testing, use an epoch of 1 minute and 5 epochs until unbonded.
@@ -437,74 +443,37 @@ EOF
 	echo "$oracle_env_solana_content" >"$ORACLE_ENV_SOLANA"
 
 	if [[ $1 == "pending" ]]; then
-		if [[ "$OSTYPE" == "darwin"* ]]; then
-			sed -i '' 's/timeout_propose = "3s"/timeout_propose = "30s"/g' "$CONFIG"
-			sed -i '' 's/timeout_propose_delta = "500ms"/timeout_propose_delta = "5s"/g' "$CONFIG"
-			sed -i '' 's/timeout_prevote = "1s"/timeout_prevote = "10s"/g' "$CONFIG"
-			sed -i '' 's/timeout_prevote_delta = "500ms"/timeout_prevote_delta = "5s"/g' "$CONFIG"
-			sed -i '' 's/timeout_precommit = "1s"/timeout_precommit = "10s"/g' "$CONFIG"
-			sed -i '' 's/timeout_precommit_delta = "500ms"/timeout_precommit_delta = "5s"/g' "$CONFIG"
-			sed -i '' 's/timeout_commit = "5s"/timeout_commit = "150s"/g' "$CONFIG"
-			sed -i '' 's/timeout_broadcast_tx_commit = "10s"/timeout_broadcast_tx_commit = "150s"/g' "$CONFIG"
-		else
-			sed -i 's/timeout_propose = "3s"/timeout_propose = "30s"/g' "$CONFIG"
-			sed -i 's/timeout_propose_delta = "500ms"/timeout_propose_delta = "5s"/g' "$CONFIG"
-			sed -i 's/timeout_prevote = "1s"/timeout_prevote = "10s"/g' "$CONFIG"
-			sed -i 's/timeout_prevote_delta = "500ms"/timeout_prevote_delta = "5s"/g' "$CONFIG"
-			sed -i 's/timeout_precommit = "1s"/timeout_precommit = "10s"/g' "$CONFIG"
-			sed -i 's/timeout_precommit_delta = "500ms"/timeout_precommit_delta = "5s"/g' "$CONFIG"
-			sed -i 's/timeout_commit = "5s"/timeout_commit = "150s"/g' "$CONFIG"
-			sed -i 's/timeout_broadcast_tx_commit = "10s"/timeout_broadcast_tx_commit = "150s"/g' "$CONFIG"
-		fi
+		$SED_CMD 's/timeout_propose = "3s"/timeout_propose = "30s"/g' "$CONFIG"
+		$SED_CMD 's/timeout_propose_delta = "500ms"/timeout_propose_delta = "5s"/g' "$CONFIG"
+		$SED_CMD 's/timeout_prevote = "1s"/timeout_prevote = "10s"/g' "$CONFIG"
+		$SED_CMD 's/timeout_prevote_delta = "500ms"/timeout_prevote_delta = "5s"/g' "$CONFIG"
+		$SED_CMD 's/timeout_precommit = "1s"/timeout_precommit = "10s"/g' "$CONFIG"
+		$SED_CMD 's/timeout_precommit_delta = "500ms"/timeout_precommit_delta = "5s"/g' "$CONFIG"
+		$SED_CMD 's/timeout_commit = "5s"/timeout_commit = "150s"/g' "$CONFIG"
+		$SED_CMD 's/timeout_broadcast_tx_commit = "10s"/timeout_broadcast_tx_commit = "150s"/g' "$CONFIG"
 	fi
 
 	# remove evmos seeds for localnet
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i '' 's/seeds = "[^"]*"/seeds = ""/' "$CONFIG"
-	else
-		sed -i 's/seeds = "[^"]*"/seeds = ""/' "$CONFIG"
-	fi
+	$SED_CMD 's/seeds = "[^"]*"/seeds = ""/' "$CONFIG"
 
 	# enable prometheus metrics
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i '' 's/prometheus = false/prometheus = true/' "$CONFIG"
-		sed -i '' 's/prometheus-retention-time = 0/prometheus-retention-time  = 1000000000000/g' "$APP_TOML"
-		sed -i '' 's/enabled = false/enabled = true/g' "$APP_TOML"
-		sed -i '' 's/enable = false/enable = true/g' "$APP_TOML"
-	else
-		sed -i 's/prometheus = false/prometheus = true/' "$CONFIG"
-		sed -i 's/prometheus-retention-time  = "0"/prometheus-retention-time  = "1000000000000"/g' "$APP_TOML"
-		sed -i 's/enabled = false/enabled = true/g' "$APP_TOML"
-	fi
+	$SED_CMD 's/prometheus = false/prometheus = true/' "$CONFIG"
+	$SED_CMD 's/prometheus-retention-time = 0/prometheus-retention-time  = 1000000000000/g' "$APP_TOML"
+	$SED_CMD 's/enabled = false/enabled = true/g' "$APP_TOML"
+	$SED_CMD 's/enable = false/enable = true/g' "$APP_TOML"
 
 	# Change proposal periods to pass within a reasonable time for local testing
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i.bak '' 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$HOMEDIR"/config/genesis.json
-		sed -i.bak '' 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$HOMEDIR"/config/genesis.json
-	else
-		sed -i.bak 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$HOMEDIR"/config/genesis.json
-		sed -i.bak 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$HOMEDIR"/config/genesis.json
-	fi
+	$SED_CMD 's/"max_deposit_period": "172800s"/"max_deposit_period": "30s"/g' "$HOMEDIR"/config/genesis.json
+	$SED_CMD 's/"voting_period": "172800s"/"voting_period": "30s"/g' "$HOMEDIR"/config/genesis.json
 
 	# set custom pruning settings for localnet
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i.bak '' 's/pruning = "default"/pruning = "nothing"/g' "$APP_TOML"
-	else
-		sed -i.bak 's/pruning = "default"/pruning = "nothing"/g' "$APP_TOML"
-	fi
+	$SED_CMD 's/pruning = "default"/pruning = "nothing"/g' "$APP_TOML"
 
 	# make sure the localhost IP is 0.0.0.0
-	if [[ "$OSTYPE" == "darwin"* ]]; then
-		sed -i.bak '' 's/127.0.0.1/0.0.0.0/g' "$CONFIG"
-		sed -i.bak '' 's/localhost/0.0.0.0/g' "$CONFIG"
-		sed -i.bak '' 's/localhost/0.0.0.0/g' "$APP_TOML"
-		sed -i.bak '' 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
-	else
-		sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$CONFIG"
-		sed -i.bak 's/localhost/0.0.0.0/g' "$CONFIG"
-		sed -i.bak 's/localhost/0.0.0.0/g' "$APP_TOML"
-		sed -i.bak 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
-	fi
+	$SED_CMD 's/127.0.0.1/0.0.0.0/g' "$CONFIG"
+	$SED_CMD 's/localhost/0.0.0.0/g' "$CONFIG"
+	$SED_CMD 's/localhost/0.0.0.0/g' "$APP_TOML"
+	$SED_CMD 's/127.0.0.1/0.0.0.0/g' "$APP_TOML"
 
 	# Allocate genesis accounts (cosmos formatted addresses)
 	for KEY in "${KEYS[@]}"; do

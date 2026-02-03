@@ -474,12 +474,10 @@ func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount 
 					WaitUndelegationAmount: sdkmath.ZeroInt(),
 				},
 			})
-			DefaultGenStateDelegation.StakersByOperator = append(DefaultGenStateDelegation.StakersByOperator, delegationtypes.StakersByOperator{
-				Key: operator.String() + "/" + assetID,
-				Stakers: []string{
-					stakerID,
-				},
-			})
+			DefaultGenStateDelegation.StakersByOperator = append(
+				DefaultGenStateDelegation.StakersByOperator,
+				string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
+			)
 		}
 	}
 	return DefaultGenStateDelegation, nil
