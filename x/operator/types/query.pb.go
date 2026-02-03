@@ -385,9 +385,9 @@ func (m *QueryOperatorAssetUSDValueRequest) GetAssetId() string {
 	return ""
 }
 
-// QueryRewardsUSDValueRequest is the request to obtain the rewards USD value for specific operator and avs.
+// QueryRewardsUSDValueRequest is the request to obtain the rewards USD values for specific operator and receiving AVS.
 type QueryRewardsUSDValueRequest struct {
-	// operator_and_avs is the operator and AVS address
+	// operator_and_avs is the operator and receiving AVS address
 	*OperatorAVSAddress `protobuf:"bytes,1,opt,name=operator_and_avs,json=operatorAndAvs,proto3,embedded=operator_and_avs" json:"operator_and_avs,omitempty"`
 }
 
@@ -472,7 +472,7 @@ func (m *RewardUSDValue) GetDenomination() string {
 	return ""
 }
 
-// AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS
+// AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source
 type AVSRewardsUSDValues struct {
 	// avs_address is the address of the reward source AVS
 	AvsAddress string `protobuf:"bytes,1,opt,name=avs_address,json=avsAddress,proto3" json:"avs_address,omitempty"`
@@ -527,9 +527,10 @@ func (m *AVSRewardsUSDValues) GetRewardsUsdValues() []RewardUSDValue {
 	return nil
 }
 
-// QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS.
+// QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and receiving AVS.
 type QueryRewardsUSDValueResponse struct {
-	// avs_rewards_usd_values are the rewards USD values from all AVSs.
+	// avs_rewards_usd_values are the rewards USD values from all AVS reward sources
+	// for the specified operator at the receiving AVS.
 	AvsRewardsUsdValues []AVSRewardsUSDValues `protobuf:"bytes,1,rep,name=avs_rewards_usd_values,json=avsRewardsUsdValues,proto3" json:"avs_rewards_usd_values"`
 }
 

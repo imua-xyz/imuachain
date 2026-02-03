@@ -27368,12 +27368,12 @@
                         "description": "rewards_usd_values are the USD values of all reward assets."
                       }
                     },
-                    "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+                    "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source"
                   },
-                  "description": "avs_rewards_usd_values are the rewards USD values from all AVSs."
+                  "description": "avs_rewards_usd_values are the rewards USD values from all AVS reward sources\nfor the specified operator at the receiving AVS."
                 }
               },
-              "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS."
+              "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and receiving AVS."
             }
           },
           "default": {
@@ -52409,7 +52409,7 @@
           "description": "rewards_usd_values are the USD values of all reward assets."
         }
       },
-      "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+      "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source"
     },
     "imuachain.operator.v1.ClientChainEarningAddrInfo": {
       "type": "object",
@@ -53519,12 +53519,12 @@
                 "description": "rewards_usd_values are the USD values of all reward assets."
               }
             },
-            "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+            "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source"
           },
-          "description": "avs_rewards_usd_values are the rewards USD values from all AVSs."
+          "description": "avs_rewards_usd_values are the rewards USD values from all AVS reward sources\nfor the specified operator at the receiving AVS."
         }
       },
-      "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS."
+      "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and receiving AVS."
     },
     "imuachain.operator.v1.QueryValidatorResponse": {
       "type": "object",

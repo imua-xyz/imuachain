@@ -1,11 +1,11 @@
 package reward_test
 
 import (
+	"bytes"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/precompiles/reward"
-	"bytes"
 )
 
 // TestWrapperStructsDecoding tests that all wrapper structs correctly decode struct-based parameters
@@ -133,7 +133,7 @@ func (s *RewardPrecompileTestSuite) TestWrapperStructsDecoding() {
 					args.Symbol == "TEST" &&
 					args.Denomination == "test" &&
 					bytes.Equal(args.Token, paddingClientChainAddress(common.HexToAddress("0x1234567890123456789012345678901234567890").Bytes(), 32)) &&
-					args.MetaData == "Test metadata" && 
+					args.MetaData == "Test metadata" &&
 					args.DenominationExponent == 0
 			},
 		},
