@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/imua-xyz/imuachain/precompiles/assets"
 	avsprecompile "github.com/imua-xyz/imuachain/precompiles/avs"
@@ -310,14 +311,12 @@ func (m *Manager) OperatorsCheck(opFuncIfCheckFail func(operator *Operator) erro
 func (m *Manager) RegisterOperators() error {
 	opFuncIfCheckFail := func(operator *Operator) error {
 		// register operator
-		metaInfo := fmt.Sprintf("the meta info of %s", operator.Name)
 		msg := &operatortypes.RegisterOperatorReq{
 			FromAddress: operator.Address,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr:     operator.Address,
-				ApproveAddr:      operator.Address,
-				OperatorMetaInfo: metaInfo,
-				Commission:       DefaultOperatorCommission,
+				OperatorAddr: operator.Address,
+				Description:  stakingtypes.NewDescription(operator.Name, "", "", "", ""),
+				Commission:   DefaultOperatorCommission,
 			},
 		}
 		clientCtx := m.NodeClientCtx[DefaultNodeIndex]

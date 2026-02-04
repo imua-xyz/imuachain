@@ -375,7 +375,7 @@ func getTestImuachainGenesis(
 	power := int64(300)
 	depositAmount := sdk.TokensFromConsensusPower(power, evmostypes.PowerReduction)
 	depositsByStaker := []assetstypes.DepositsByStaker{}
-	operatorInfos := []operatortypes.OperatorDetail{}
+	operatorInfos := []operatortypes.OperatorInfo{}
 	delegationStates := []delegationtypes.DelegationStates{}
 	associations := []delegationtypes.StakerToOperator{}
 	stakersByOperator := []string{}
@@ -400,16 +400,11 @@ func getTestImuachainGenesis(
 				},
 			},
 		})
-		operatorInfos = append(operatorInfos, operatortypes.OperatorDetail{
-			OperatorAddress: operator.String(),
-			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator.String(),
-				OperatorMetaInfo: "operator1",
-				ApproveAddr:      operator.String(),
-				Commission: stakingtypes.NewCommission(
-					sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec(),
-				),
-			},
+
+		operatorInfos = append(operatorInfos, operatortypes.OperatorInfo{
+			OperatorAddr: operator.String(),
+			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		})
 		singleStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operator.String())
 		delegationStates = append(delegationStates, delegationtypes.DelegationStates{

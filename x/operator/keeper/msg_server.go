@@ -22,7 +22,7 @@ var _ types.MsgServer = &MsgServerImpl{}
 // RegisterOperator is an implementation of the msg server for the operator module.
 func (msgServer *MsgServerImpl) RegisterOperator(goCtx context.Context, req *types.RegisterOperatorReq) (*types.RegisterOperatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := msgServer.keeper.RegisterOperator(ctx, req.FromAddress, req.Info); err != nil {
+	if err := msgServer.keeper.RegisterOperator(ctx, req.Info); err != nil {
 		return nil, err
 	}
 	return &types.RegisterOperatorResponse{}, nil
@@ -122,7 +122,7 @@ func (msgServer *MsgServerImpl) EditOperator(
 	if err != nil {
 		return nil, err
 	}
-	if err := msgServer.keeper.EditOperator(ctx, accAddr, req.OperatorMetaInfo); err != nil {
+	if err := msgServer.keeper.EditOperator(ctx, accAddr, req.Description); err != nil {
 		return nil, err
 	}
 	return &types.EditOperatorResponse{}, nil

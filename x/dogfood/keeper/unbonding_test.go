@@ -21,9 +21,8 @@ func (suite *KeeperTestSuite) TestUndelegations() {
 	registerReq := &operatortypes.RegisterOperatorReq{
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr:     operatorAddressString,
-			ApproveAddr:      operatorAddressString,
-			OperatorMetaInfo: operatorAddressString,
+			OperatorAddr: operatorAddressString,
+			Description:  stakingtypes.NewDescription(operatorAddressString, "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -166,9 +165,8 @@ func (suite *KeeperTestSuite) TestUndelegationEdgeCases() {
 	registerReq := &operatortypes.RegisterOperatorReq{
 		FromAddress: operatorAddressString,
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr:     operatorAddressString,
-			ApproveAddr:      operatorAddressString,
-			OperatorMetaInfo: operatorAddressString,
+			OperatorAddr: operatorAddressString,
+			Description:  stakingtypes.NewDescription(operatorAddressString, "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),

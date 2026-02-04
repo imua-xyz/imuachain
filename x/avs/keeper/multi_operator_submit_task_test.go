@@ -29,10 +29,9 @@ func (suite *AVSTestSuite) prepareOperators() {
 		registerReq := &operatorTypes.RegisterOperatorReq{
 			FromAddress: opAccAddr.String(),
 			Info: &operatorTypes.OperatorInfo{
-				EarningsAddr: opAccAddr.String(),
-				ApproveAddr:  opAccAddr.String(),
+				OperatorAddr: opAccAddr.String(),
 				// avoid name conflict with other tests
-				OperatorMetaInfo: fmt.Sprintf("operator%d", i+10),
+				Description: stakingtypes.NewDescription(fmt.Sprintf("operator%d", i+10), "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          sdk.ZeroDec(),

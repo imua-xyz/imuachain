@@ -35,7 +35,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // QueryOperatorInfoReq is the request to obtain the operator information.
 type GetOperatorInfoReq struct {
-	// operator_addr is the operator address,its type should be a sdk.AccAddress
+	// operator_addr is the operator address, its type should be a sdk.AccAddress
 	OperatorAddr string `protobuf:"bytes,1,opt,name=operator_addr,json=operatorAddr,proto3" json:"operator_addr,omitempty"`
 }
 
