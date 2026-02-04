@@ -3,7 +3,6 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
@@ -221,11 +220,12 @@ func (m *EditOperatorReq) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Address); err != nil {
 		return errorsmod.Wrap(err, "invalid from address")
 	}
-	if m.OperatorMetaInfo == "" {
-		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is empty")
+	if m.Description.Moniker == "" {
+		return errorsmod.Wrap(ErrParameterInvalid, "operator moniker is empty")
 	}
-	if len(m.OperatorMetaInfo) > stakingtypes.MaxMonikerLength {
-		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is too long")
+	_, err := m.Description.EnsureLength()
+	if err != nil {
+		return err
 	}
 	return nil
 }

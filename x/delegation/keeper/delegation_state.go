@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	"slices"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -13,9 +12,11 @@ import (
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
+var sentinelValue = []byte{1}
+
 func (k Keeper) AllDelegationStates(ctx sdk.Context) (delegationStates []delegationtype.DelegationStates, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	ret := make([]delegationtype.DelegationStates, 0)
@@ -269,19 +270,8 @@ func (k *Keeper) GetDelegationInfo(ctx sdk.Context, stakerID, assetID string) (*
 
 func (k *Keeper) AppendStakerForOperator(ctx sdk.Context, operator, assetID, stakerID string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	Key := assetstype.GetJoinedStoreKey(operator, assetID)
-	stakers := delegationtype.StakerList{}
-	value := store.Get(Key)
-	if value != nil {
-		k.cdc.MustUnmarshal(value, &stakers)
-	}
-	// prefer slices over sdk.SliceContains because we also need to use slices.Index
-	if slices.Contains(stakers.Stakers, stakerID) {
-		return nil
-	}
-	stakers.Stakers = append(stakers.Stakers, stakerID)
-	bz := k.cdc.MustMarshal(&stakers)
-	store.Set(Key, bz)
+	key := assetstype.GetJoinedStoreKey(operator, assetID, stakerID)
+	store.Set(key, sentinelValue)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			delegationtype.EventTypeStakerAppended,
@@ -295,19 +285,11 @@ func (k *Keeper) AppendStakerForOperator(ctx sdk.Context, operator, assetID, sta
 
 func (k *Keeper) DeleteStakerForOperator(ctx sdk.Context, operator, assetID, stakerID string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	Key := assetstype.GetJoinedStoreKey(operator, assetID)
-	stakers := delegationtype.StakerList{}
-	if !store.Has(Key) {
+	key := assetstype.GetJoinedStoreKey(operator, assetID, stakerID)
+	if !store.Has(key) {
 		return delegationtype.ErrNoKeyInTheStore
 	}
-	value := store.Get(Key)
-	k.cdc.MustUnmarshal(value, &stakers)
-	index := slices.Index(stakers.Stakers, stakerID)
-	if index == -1 {
-		// make no change if the staker is not found
-		return nil
-	}
-	stakers.Stakers = append(stakers.Stakers[:index], stakers.Stakers[index+1:]...)
+	store.Delete(key)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			delegationtype.EventTypeStakerRemoved,
@@ -316,15 +298,21 @@ func (k *Keeper) DeleteStakerForOperator(ctx sdk.Context, operator, assetID, sta
 			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
 		),
 	)
-	bz := k.cdc.MustMarshal(&stakers)
-	store.Set(Key, bz)
 	return nil
 }
 
 func (k *Keeper) DeleteStakersListForOperator(ctx sdk.Context, operator, assetID string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	Key := assetstype.GetJoinedStoreKey(operator, assetID)
-	if !store.Has(Key) {
+	key := assetstype.GetJoinedStoreKey(operator, assetID)
+	// iterate over all stakers and delete them
+	deleted := false
+	iterator := sdk.KVStorePrefixIterator(store, key)
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+		deleted = true
+	}
+	if !deleted {
 		return delegationtype.ErrNoKeyInTheStore
 	}
 	ctx.EventManager().EmitEvent(
@@ -334,52 +322,54 @@ func (k *Keeper) DeleteStakersListForOperator(ctx sdk.Context, operator, assetID
 			sdk.NewAttribute(delegationtype.AttributeKeyOperatorAddr, operator),
 		),
 	)
-
-	store.Delete(Key)
 	return nil
 }
 
 func (k Keeper) HasStakerList(ctx sdk.Context, operator, assetID string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	Key := assetstype.GetJoinedStoreKey(operator, assetID)
-	return store.Has(Key)
+	key := assetstype.GetJoinedStoreKey(operator, assetID)
+	iterator := sdk.KVStorePrefixIterator(store, key)
+	defer iterator.Close()
+	return iterator.Valid()
 }
 
-func (k Keeper) GetStakersByOperator(ctx sdk.Context, operator, assetID string) (delegationtype.StakerList, error) {
+func (k Keeper) GetStakersByOperator(
+	ctx sdk.Context, operator, assetID string,
+) (stakerList delegationtype.StakerList, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	Key := assetstype.GetJoinedStoreKey(operator, assetID)
-	value := store.Get(Key)
-	if value == nil {
-		return delegationtype.StakerList{}, delegationtype.ErrNoKeyInTheStore.Wrap("error occurs in GetStakersByOperator")
+	key := assetstype.GetJoinedStoreKey(operator, assetID)
+	iterator := sdk.KVStorePrefixIterator(store, key)
+	defer iterator.Close()
+	for ; iterator.Valid(); iterator.Next() {
+		// parse the key to get the staker ID. this is done using the function
+		// and not using the `+1:` approach in case the delimiter changes in
+		// the future.
+		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
+		if err != nil {
+			return delegationtype.StakerList{}, err
+		}
+		stakerList.Stakers = append(stakerList.Stakers, keys[2])
 	}
-	stakerList := delegationtype.StakerList{}
-	k.cdc.MustUnmarshal(value, &stakerList)
+	// we do not return an error if the staker list is empty
 	return stakerList, nil
 }
 
-func (k Keeper) AllStakerList(ctx sdk.Context) (stakerList []delegationtype.StakersByOperator, err error) {
+func (k Keeper) AllStakerList(ctx sdk.Context) (keyList []string, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
-	ret := make([]delegationtype.StakersByOperator, 0)
+	ret := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		var stakers delegationtype.StakerList
-		k.cdc.MustUnmarshal(iterator.Value(), &stakers)
-		ret = append(ret, delegationtype.StakersByOperator{
-			Key:     string(iterator.Key()),
-			Stakers: stakers.Stakers,
-		})
+		ret = append(ret, string(iterator.Key()))
 	}
 	return ret, nil
 }
 
-func (k Keeper) SetAllStakerList(ctx sdk.Context, stakersByOperator []delegationtype.StakersByOperator) error {
+func (k Keeper) SetAllStakerList(ctx sdk.Context, keyList []string) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixStakersByOperator)
-	for i := range stakersByOperator {
-		singleElement := stakersByOperator[i]
-		bz := k.cdc.MustMarshal(&delegationtype.StakerList{Stakers: singleElement.Stakers})
-		store.Set([]byte(singleElement.Key), bz)
+	for i := range keyList {
+		store.Set([]byte(keyList[i]), sentinelValue)
 	}
 	// only used at genesis, so no events
 	return nil
@@ -488,7 +478,7 @@ func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]strin
 		return nil, delegationtype.ErrOperatorAddrIsNotAccAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	// assuming we support 5 client chains and each chain has only one stakerID
@@ -507,7 +497,7 @@ func (k *Keeper) GetAssociatedStakers(ctx sdk.Context, operator string) ([]strin
 
 func (k *Keeper) GetAllAssociations(ctx sdk.Context) ([]delegationtype.StakerToOperator, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixAssociatedOperatorByStaker)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{})
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 
 	ret := make([]delegationtype.StakerToOperator, 0)

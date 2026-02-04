@@ -365,18 +365,14 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 	totalStakingAmount := stakingAmount.Mul(sdkmath.NewInt(int64(n)))
 	for i, operatorAccAddress := range operatorAccAddresses {
 		// operators
-		DefaultGenStateOperator.Operators = append(DefaultGenStateOperator.Operators, operatortypes.OperatorDetail{
-			OperatorAddress: operatorAccAddress.String(),
-			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operatorAccAddress.String(),
-				ApproveAddr:      operatorAccAddress.String(),
-				OperatorMetaInfo: fmt.Sprintf("operator_%d", i),
-				Commission: stakingtypes.Commission{
-					CommissionRates: stakingtypes.CommissionRates{
-						Rate:          commissionRate,
-						MaxRate:       commissionRate.Mul(sdkmath.LegacyNewDec(2)),
-						MaxChangeRate: sdkmath.LegacyNewDecWithPrec(1, 1),
-					},
+		DefaultGenStateOperator.Operators = append(DefaultGenStateOperator.Operators, operatortypes.OperatorInfo{
+			OperatorAddr: operatorAccAddress.String(),
+			Description:  stakingtypes.NewDescription(fmt.Sprintf("operator_%d", i), "", "", "", ""),
+			Commission: stakingtypes.Commission{
+				CommissionRates: stakingtypes.CommissionRates{
+					Rate:          commissionRate,
+					MaxRate:       commissionRate.Mul(sdkmath.LegacyNewDec(2)),
+					MaxChangeRate: sdkmath.LegacyNewDecWithPrec(1, 1),
 				},
 			},
 		})
@@ -474,12 +470,10 @@ func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount 
 					WaitUndelegationAmount: sdkmath.ZeroInt(),
 				},
 			})
-			DefaultGenStateDelegation.StakersByOperator = append(DefaultGenStateDelegation.StakersByOperator, delegationtypes.StakersByOperator{
-				Key: operator.String() + "/" + assetID,
-				Stakers: []string{
-					stakerID,
-				},
-			})
+			DefaultGenStateDelegation.StakersByOperator = append(
+				DefaultGenStateDelegation.StakersByOperator,
+				string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
+			)
 		}
 	}
 	return DefaultGenStateDelegation, nil

@@ -368,24 +368,16 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	genesisState[oracletypes.ModuleName] = app.AppCodec().MustMarshalJSON(oracleGenesis)
 
 	// x/operator registration
-	operatorInfos := []operatortypes.OperatorDetail{
+	operatorInfos := []operatortypes.OperatorInfo{
 		{
-			OperatorAddress: operator1.String(),
-			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator1.String(),
-				OperatorMetaInfo: "operator1",
-				ApproveAddr:      operator1.String(),
-				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-			},
+			OperatorAddr: operator1.String(),
+			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		},
 		{
-			OperatorAddress: operator2.String(),
-			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator2.String(),
-				OperatorMetaInfo: "operator2",
-				ApproveAddr:      operator2.String(),
-				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-			},
+			OperatorAddr: operator2.String(),
+			Description:  stakingtypes.NewDescription("operator2", "", "", "", ""),
+			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		},
 	}
 	// generate validator private/public key
@@ -502,19 +494,9 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			StakerId: stakerID2,
 		},
 	}
-	stakersByOperator := []delegationtypes.StakersByOperator{
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID)),
-			Stakers: []string{
-				stakerID1,
-			},
-		},
-		{
-			Key: string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID)),
-			Stakers: []string{
-				stakerID2,
-			},
-		},
+	stakersByOperator := []string{
+		string(assetstypes.GetJoinedStoreKey(operator1.String(), assetID, stakerID1)),
+		string(assetstypes.GetJoinedStoreKey(operator2.String(), assetID, stakerID2)),
 	}
 	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = app.AppCodec().MustMarshalJSON(delegationGenesis)
@@ -733,12 +715,10 @@ func (suite *BaseTestSuite) DebugPrintObject(object interface{}) {
 func (suite *BaseTestSuite) RegisterOperator(operator string, commission stakingtypes.Commission) {
 	// register operator
 	registerReq := &operatortypes.RegisterOperatorReq{
-		FromAddress: operator,
 		Info: &operatortypes.OperatorInfo{
-			EarningsAddr:     operator,
-			ApproveAddr:      operator,
-			OperatorMetaInfo: operator,
-			Commission:       commission,
+			OperatorAddr: operator,
+			Description:  stakingtypes.NewDescription(operator, "", "", "", ""),
+			Commission:   commission,
 		},
 	}
 	_, err := suite.OperatorMsgServer.RegisterOperator(suite.Ctx, registerReq)

@@ -375,10 +375,10 @@ func getTestImuachainGenesis(
 	power := int64(300)
 	depositAmount := sdk.TokensFromConsensusPower(power, evmostypes.PowerReduction)
 	depositsByStaker := []assetstypes.DepositsByStaker{}
-	operatorInfos := []operatortypes.OperatorDetail{}
+	operatorInfos := []operatortypes.OperatorInfo{}
 	delegationStates := []delegationtypes.DelegationStates{}
 	associations := []delegationtypes.StakerToOperator{}
-	stakersByOperator := []delegationtypes.StakersByOperator{}
+	stakersByOperator := []string{}
 	validators := []dogfoodtypes.GenesisValidator{}
 	for i := range operatorAddrs {
 		operator := operatorAddrs[i]
@@ -400,16 +400,11 @@ func getTestImuachainGenesis(
 				},
 			},
 		})
-		operatorInfos = append(operatorInfos, operatortypes.OperatorDetail{
-			OperatorAddress: operator.String(),
-			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator.String(),
-				OperatorMetaInfo: "operator1",
-				ApproveAddr:      operator.String(),
-				Commission: stakingtypes.NewCommission(
-					sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec(),
-				),
-			},
+
+		operatorInfos = append(operatorInfos, operatortypes.OperatorInfo{
+			OperatorAddr: operator.String(),
+			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		})
 		singleStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operator.String())
 		delegationStates = append(delegationStates, delegationtypes.DelegationStates{
@@ -424,12 +419,9 @@ func getTestImuachainGenesis(
 			Operator: operator.String(),
 			StakerId: stakerID,
 		})
-		stakersByOperator = append(stakersByOperator, delegationtypes.StakersByOperator{
-			Key: string(assetstypes.GetJoinedStoreKey(operator.String(), assetID)),
-			Stakers: []string{
-				stakerID,
-			},
-		})
+		stakersByOperator = append(
+			stakersByOperator, string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
+		)
 		validators = append(validators, dogfoodtypes.GenesisValidator{
 			PublicKey: pubKeyHex,
 			Power:     power,
