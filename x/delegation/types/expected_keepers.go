@@ -34,6 +34,11 @@ type DelegationHooks interface {
 	// chains for that operator. and we need the identifier to hold it until confirmed by subscriber
 	AfterUndelegationStarted(ctx sdk.Context, stakerID, assetID string, addr sdk.AccAddress, recordKey []byte,
 		preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo) error
+	// AfterNSTDelegationSlashed : `UpdateNSTBalance` may reduce the delegation share
+	// of a specific staker and asset, which should trigger the reward distribution
+	// process in the fee distribution module.
+	AfterNSTDelegationSlashed(ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
+		preDelegatedAmount sdkmath.Int, prevAssetState assetstype.OperatorAssetInfo) error
 }
 
 type OperatorKeeper interface {

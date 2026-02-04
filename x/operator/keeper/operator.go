@@ -5,7 +5,6 @@ import (
 	"math"
 	"math/bits"
 	"strings"
-	"time"
 
 	"github.com/imua-xyz/imuachain/utils"
 
@@ -23,15 +22,10 @@ import (
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-// SetOperatorInfo is used to store the operator's information on the chain.
+// RegisterOperator is used to store the operator's information on the chain.
 // There is no current way implemented to delete an operator's registration or edit it.
-// TODO: implement operator edit function, which should allow editing:
-// approve address?
-// name (meta info)
-// commission, subject to limits and once within 24 hours.
-// client chain earnings addresses (maybe append only?)
 func (k *Keeper) RegisterOperator(
-	ctx sdk.Context, addr string, info *operatortypes.OperatorInfo,
+	ctx sdk.Context, info *operatortypes.OperatorInfo,
 ) (err error) {
 	if info == nil {
 		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator info is nil")
@@ -39,20 +33,13 @@ func (k *Keeper) RegisterOperator(
 	if err := info.ValidateBasic(); err != nil {
 		return errorsmod.Wrap(err, "SetOperatorInfo: operator info is invalid")
 	}
-	if info.Commission.UpdateTime.Equal(time.Time{}) {
+	if info.Commission.UpdateTime.Equal(operatortypes.DefaultCommissionUpdateTime) {
 		info.Commission.UpdateTime = ctx.BlockTime()
 	}
 	// #nosec G703 // already validated in `ValidateBasic`
-	opAccAddr, err := sdk.AccAddressFromBech32(addr)
+	opAccAddr, err := sdk.AccAddressFromBech32(info.OperatorAddr)
 	if err != nil {
 		return errorsmod.Wrap(err, "SetOperatorInfo: error occurred when parse acc address from Bech32")
-	}
-	// already checked that addr is valid, so only check match below
-	if addr != info.EarningsAddr {
-		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator address does not match earnings address")
-	}
-	if addr != info.ApproveAddr {
-		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "SetOperatorInfo: operator address does not match approve address")
 	}
 	// if already registered, this request should go to EditOperator.
 	if k.IsOperator(ctx, opAccAddr) {
@@ -62,12 +49,12 @@ func (k *Keeper) RegisterOperator(
 		)
 	}
 	// check if the operator name already exists
-	if has, err := k.HasOperatorName(ctx, info.OperatorMetaInfo); err != nil {
+	if has, err := k.HasOperatorName(ctx, info.Description.Moniker); err != nil {
 		return errorsmod.Wrap(err, "SetOperatorInfo: error occurred when checking operator name")
 	} else if has {
 		return errorsmod.Wrap(
 			operatortypes.ErrOperatorNameAlreadyExists,
-			fmt.Sprintf("SetOperatorInfo: operator name already exists, name: %s", info.OperatorMetaInfo),
+			fmt.Sprintf("SetOperatorInfo: operator name already exists, name: %s", info.Description.Moniker),
 		)
 	}
 	// check if the client chain earning addresses are valid
@@ -94,7 +81,11 @@ func (k *Keeper) RegisterOperator(
 		sdk.NewEvent(
 			operatortypes.EventTypeRegisterOperator,
 			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
-			sdk.NewAttribute(operatortypes.AttributeKeyMetaInfo, info.OperatorMetaInfo),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorMoniker, info.Description.Moniker),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorIdentity, info.Description.Identity),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorWebsite, info.Description.Website),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorSecurityContact, info.Description.SecurityContact),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorDetails, info.Description.Details),
 			sdk.NewAttribute(stakingtypes.AttributeKeyCommissionRate, info.Commission.Rate.String()),
 			sdk.NewAttribute(operatortypes.AttributeKeyMaxCommissionRate, info.Commission.MaxRate.String()),
 			sdk.NewAttribute(operatortypes.AttributeKeyMaxChangeRate, info.Commission.MaxChangeRate.String()),
@@ -106,24 +97,32 @@ func (k *Keeper) RegisterOperator(
 	return nil
 }
 
-// EditOperator edits an operator's meta info.
+// EditOperator edits an operator's description info.
 func (k *Keeper) EditOperator(
-	ctx sdk.Context, opAccAddr sdk.AccAddress, metaInfo string,
+	ctx sdk.Context, opAccAddr sdk.AccAddress, description stakingtypes.Description,
 ) error {
+	if description == (stakingtypes.Description{}) {
+		return errorsmod.Wrap(operatortypes.ErrParameterInvalid, "empty description")
+	}
 	info, err := k.OperatorInfo(ctx, opAccAddr.String())
 	if err != nil {
 		return err
 	}
 	// this prevents resetting to the same name as well
-	if has, err := k.HasOperatorName(ctx, metaInfo); err != nil {
+	if has, err := k.HasOperatorName(ctx, description.Moniker); err != nil {
 		return err
 	} else if has {
 		return errorsmod.Wrap(
 			operatortypes.ErrOperatorNameAlreadyExists,
-			fmt.Sprintf("EditOperator: operator name already exists, name: %s", metaInfo),
+			fmt.Sprintf("EditOperator: operator name already exists, name: %s", description.Moniker),
 		)
 	}
-	info.OperatorMetaInfo = metaInfo
+	// replace all editable fields (clients should autofill existing values)
+	finalDescription, err := info.Description.UpdateDescription(description)
+	if err != nil {
+		return err
+	}
+	info.Description = finalDescription
 	if err := info.ValidateBasic(); err != nil {
 		return err
 	}
@@ -132,7 +131,11 @@ func (k *Keeper) EditOperator(
 		sdk.NewEvent(
 			operatortypes.EventTypeEditOperator,
 			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
-			sdk.NewAttribute(operatortypes.AttributeKeyMetaInfo, metaInfo),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorMoniker, info.Description.Moniker),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorIdentity, info.Description.Identity),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorWebsite, info.Description.Website),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorSecurityContact, info.Description.SecurityContact),
+			sdk.NewAttribute(operatortypes.AttributeKeyOperatorDetails, info.Description.Details),
 		),
 	)
 	return nil
@@ -176,7 +179,7 @@ func (k *Keeper) setOperatorInfo(
 func (k *Keeper) HasOperatorName(ctx sdk.Context, name string) (bool, error) {
 	res := false
 	opFunc := func(_ sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
-		if operatorInfo.OperatorMetaInfo == name {
+		if operatorInfo.Description.Moniker == name {
 			res = true
 			// stop, no error
 			return true, nil
@@ -209,6 +212,9 @@ func (k *Keeper) OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes
 
 // IterateOperators return the list of all operators' detailed information
 func (k *Keeper) IterateOperators(ctx sdk.Context, opFunc func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error)) error {
+	if opFunc == nil {
+		return operatortypes.ErrParameterInvalid.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorInfo)
 	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
@@ -229,13 +235,10 @@ func (k *Keeper) IterateOperators(ctx sdk.Context, opFunc func(operatorAddr sdk.
 }
 
 // AllOperators return the list of all operators' detailed information
-func (k *Keeper) AllOperators(ctx sdk.Context) []operatortypes.OperatorDetail {
-	ret := make([]operatortypes.OperatorDetail, 0)
-	opFunc := func(operatorAddr sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
-		ret = append(ret, operatortypes.OperatorDetail{
-			OperatorAddress: operatorAddr.String(),
-			OperatorInfo:    *operatorInfo,
-		})
+func (k *Keeper) AllOperators(ctx sdk.Context) []operatortypes.OperatorInfo {
+	ret := make([]operatortypes.OperatorInfo, 0)
+	opFunc := func(_ sdk.AccAddress, operatorInfo *operatortypes.OperatorInfo) (bool, error) {
+		ret = append(ret, *operatorInfo)
 		return false, nil
 	}
 	err := k.IterateOperators(ctx, opFunc)
@@ -393,6 +396,9 @@ func (k *Keeper) IsOptedInAndNotJailed(ctx sdk.Context, operatorAddr, avsAddr st
 }
 
 func (k *Keeper) IterateOptInfo(ctx sdk.Context, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error)) error {
+	if opFunc == nil {
+		return operatortypes.ErrParameterInvalid.Wrapf("opFunc callback is nil")
+	}
 	// get all opted-in info
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)

@@ -1,6 +1,7 @@
 syntax = "proto3";
 package imuachain.delegation.v1;
 
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "cosmos/query/v1/query.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
@@ -19,11 +20,9 @@ message DelegationInfoReq {
   string asset_id = 2;
 }
 
-// StakerList is a list to save a batch of stakers
+// StakerList is a list to return a batch of stakers.
 message StakerList {
-  // stakers is a list of stakers. the caller is responsible for ensuring
-  // uniqueness of the stakers, since dumping this into a map could lead
-  // to non-deterministic behavior.
+  // stakers is a list of stakers.
   repeated string stakers = 1;
 }
 
@@ -195,14 +194,16 @@ message QueryDelegatedStakersByOperatorReq {
   string operator = 1;
   // asset_id is the asset id.
   string asset_id = 2;
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
 // QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq
 message QueryDelegatedStakersByOperatorResponse {
-  // count is the number of stakers
-  uint64 count = 1;
   // stakers is the returned stakers associated to the specified operator
-  repeated string stakers = 2;
+  repeated string stakers = 1;
+  // pagination defines the pagination for the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.

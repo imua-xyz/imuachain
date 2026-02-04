@@ -33,8 +33,7 @@ func (k *Keeper) EndBlock(
 	if len(records) == 0 {
 		return []abci.ValidatorUpdate{}
 	}
-	for i := range records {
-		record := records[i] // avoid implicit memory aliasing
+	for _, record := range records {
 		cc, writeCache := originalCtx.CacheContext()
 		// we can use `Must` here because we stored this record ourselves.
 		operatorAccAddress := sdk.MustAccAddressFromBech32(record.OperatorAddr)

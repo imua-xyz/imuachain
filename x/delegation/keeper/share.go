@@ -114,6 +114,10 @@ func (k Keeper) ValidateUndelegationAmount(
 		return share, err
 	}
 
+	if share.IsZero() {
+		return share, delegationtypes.ErrInsufficientShares.Wrap("both the total amount and the share are zero, so there isn’t any asset that can be undelegated.")
+	}
+
 	var undelegatableShare sdkmath.LegacyDec
 	if rewardAsset {
 		undelegatableShare = delegationInfo.RewardUndelegatableShare
@@ -202,10 +206,7 @@ func (k Keeper) RemoveShareFromOperator(
 		TotalShare:  share.Neg(),
 	}
 	// Check if the staker belongs to the delegated operator. Decrease the operator's share if yes.
-	getOperator, err := k.GetAssociatedOperator(ctx, stakerID)
-	if err != nil {
-		return token, err
-	}
+	getOperator := k.GetAssociatedOperator(ctx, stakerID)
 	if getOperator != "" && getOperator == operator.String() {
 		delta.OperatorShare = share.Neg()
 	}

@@ -119,7 +119,7 @@ func (m *GenesisState) GetOperatorAssets() []AssetsByOperator {
 // AssetsByOperator is a struct to be used in the genesis state.
 // It is used to store the operator and its assets state.
 type AssetsByOperator struct {
-	// operator is the address of the operator,its type should be a sdk.AccAddress
+	// operator is the address of the operator, its type should be a sdk.AccAddress
 	Operator string `protobuf:"bytes,1,opt,name=operator,proto3" json:"operator,omitempty"`
 	// assets_state is the list of assets state, indexed by the asset id.
 	// The struct is the `OperatorAssetInfo`

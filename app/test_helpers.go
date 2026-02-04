@@ -240,17 +240,14 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 	)
 	genesisState[assetstypes.ModuleName] = app.AppCodec().MustMarshalJSON(assetsGenesis)
 	// operator registration
-	operatorInfos := []operatortypes.OperatorDetail{
+	operatorInfos := []operatortypes.OperatorInfo{
 		{
-			OperatorAddress: operator.String(),
-			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator.String(),
-				OperatorMetaInfo: "operator1",
-				ApproveAddr:      operator.String(),
-				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-			},
+			OperatorAddr: operator.String(),
+			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		},
 	}
+
 	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams())
 	genesisState[operatortypes.ModuleName] = app.AppCodec().MustMarshalJSON(operatorGenesis)
 	// x/delegation
@@ -270,13 +267,8 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 			StakerId: stakerID,
 		},
 	}
-	stakersByOperator := []delegationtypes.StakersByOperator{
-		{
-			Key: string(utils.GetJoinedStoreKey(operator.String(), assetID)),
-			Stakers: []string{
-				stakerID,
-			},
-		},
+	stakersByOperator := []string{
+		string(utils.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
 	}
 	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = app.AppCodec().MustMarshalJSON(delegationGenesis)

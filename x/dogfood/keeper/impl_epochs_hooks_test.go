@@ -24,9 +24,8 @@ func (suite *KeeperTestSuite) TestSameEpochOperations() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddressString,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr:     operatorAddressString,
-				ApproveAddr:      operatorAddressString,
-				OperatorMetaInfo: operatorAddressString,
+				OperatorAddr: operatorAddressString,
+				Description:  stakingtypes.NewDescription(operatorAddressString, "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          sdk.ZeroDec(),
@@ -212,9 +211,8 @@ func (suite *KeeperTestSuite) TestDifferentEpochOperations() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddressString,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr:     operatorAddressString,
-				ApproveAddr:      operatorAddressString,
-				OperatorMetaInfo: operatorAddressString,
+				OperatorAddr: operatorAddressString,
+				Description:  stakingtypes.NewDescription(operatorAddressString, "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          sdk.ZeroDec(),

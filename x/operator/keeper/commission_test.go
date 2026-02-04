@@ -25,13 +25,7 @@ func TestCommissionTestSuite(t *testing.T) {
 func (suite *CommissionTestSuite) TestCommissionRateTimeBound() {
 	suite.DoSetupTest()
 	// register operator
-	suite.RegisterOperator(suite.AccAddress.String(), stakingtypes.Commission{
-		CommissionRates: stakingtypes.CommissionRates{
-			Rate:          sdk.ZeroDec(),
-			MaxRate:       sdk.OneDec(),
-			MaxChangeRate: sdk.OneDec(),
-		},
-	}, true)
+	suite.RegisterOperator(suite.AccAddress.String(),stakingtypes.NewCommission(sdk.ZeroDec(), sdk.OneDec(), sdk.OneDec()), true)
 	suite.Commit()
 	// change to 6% immediately
 	targetCommissionRate := sdk.NewDecWithPrec(6, 2)

@@ -17,7 +17,10 @@ const (
 
 // DefaultMinCommissionRate is the default minimum commission rate.
 // It is set to 5% by default.
-var DefaultMinCommissionRate = sdk.NewDecWithPrec(5, 2)
+var (
+	DefaultMinCommissionRate    = sdk.NewDecWithPrec(5, 2)
+	DefaultCommissionUpdateTime = time.Unix(0, 0).UTC()
+)
 
 // NewParams creates a new Params instance.
 func NewParams(

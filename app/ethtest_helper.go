@@ -199,15 +199,11 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 	genesisState[oracletypes.ModuleName] = codec.MustMarshalJSON(oracleGenesis)
 
 	// operator registration
-	operatorInfos := []operatortypes.OperatorDetail{
+	operatorInfos := []operatortypes.OperatorInfo{
 		{
-			OperatorAddress: operator.String(),
-			OperatorInfo: operatortypes.OperatorInfo{
-				EarningsAddr:     operator.String(),
-				ApproveAddr:      operator.String(),
-				OperatorMetaInfo: "operator1",
-				Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-			},
+			OperatorAddr: operator.String(),
+			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		},
 	}
 	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams())
@@ -229,13 +225,8 @@ func genesisStateWithValSet(codec codec.Codec, genesisState simapp.GenesisState,
 			StakerId: stakerID,
 		},
 	}
-	stakersByOperator := []delegationtypes.StakersByOperator{
-		{
-			Key: string(utils.GetJoinedStoreKey(operator.String(), assetID)),
-			Stakers: []string{
-				stakerID,
-			},
-		},
+	stakersByOperator := []string{
+		string(utils.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
 	}
 	delegationGenesis := delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil)
 	genesisState[delegationtypes.ModuleName] = codec.MustMarshalJSON(delegationGenesis)

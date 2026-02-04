@@ -42,13 +42,8 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			},
 		},
 	}
-	stakersByOperator := []types.StakersByOperator{
-		{
-			Key: string(utils.GetJoinedStoreKey(operatorAddress.String(), assetID)),
-			Stakers: []string{
-				stakerID,
-			},
-		},
+	stakersByOperator := []string{
+		string(utils.GetJoinedStoreKey(operatorAddress.String(), assetID, stakerID)),
 	}
 	testCases := []struct {
 		name       string

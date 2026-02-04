@@ -60,6 +60,9 @@ func (k *Keeper) IterateStakeChangedDelegations(ctx sdk.Context, isUpdate bool, 
 	opFunc func(epochIdentifier, operator, assetID string, delegationChangeInfo *feedistributiontypes.DelegationChangeInfo,
 	) (bool, error),
 ) error {
+	if opFunc == nil {
+		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixStakeChangeDelegations)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
@@ -470,6 +473,9 @@ func (k Keeper) HasOperatorHistoricalRewards(ctx sdk.Context, operator, assetID,
 func (k *Keeper) IterateOperatorHistoricalRewards(ctx sdk.Context, isUpdate bool, iteratePrefix []byte,
 	opFunc func(operator, assetID, epochIdentifier string, period uint64, operatorHistoricalReward *feedistributiontypes.OperatorHistoricalRewards) (bool, error),
 ) error {
+	if opFunc == nil {
+		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorHistoricalRewards)
 	iterator := sdk.KVStorePrefixIterator(store, iteratePrefix)
 	defer iterator.Close()
@@ -608,6 +614,9 @@ func (k Keeper) IterateOperatorSlashEventsBetween(ctx sdk.Context, operator, ass
 	startingEpochNumber uint64, endingEpochNumber uint64,
 	handler func(epochNumber, blockHeight uint64, event feedistributiontypes.OperatorSlashEvent) (stop bool, err error),
 ) error {
+	if handler == nil {
+		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("handler callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixOperatorSlashEvent)
 	epochNumberHexStr := hexutil.Encode(sdk.Uint64ToBigEndian(startingEpochNumber))
 	startKey := utils.GetJoinedStoreKey(operator, assetID, epochIdentifier, epochNumberHexStr)
@@ -831,6 +840,9 @@ func (k Keeper) IterateStakerClaimedRewards(
 	isUpdate bool,
 	opFunc func(avs string, rewards *feedistributiontypes.StakerClaimedRewards) (isBreak, isChanged bool, err error),
 ) error {
+	if opFunc == nil {
+		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.StakerClaimedRewards](
 		ctx,
 		k.cdc,
@@ -856,6 +868,9 @@ func (k Keeper) IterateStakerClaimedRewards(
 func (k Keeper) IterateOperatorCommissions(ctx sdk.Context, operator string, isUpdate bool,
 	opFunc func(avs string, commissions *feedistributiontypes.OperatorCommission) (bool, bool, error),
 ) error {
+	if opFunc == nil {
+		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorCommission](
 		ctx,
 		k.cdc,

@@ -21,20 +21,19 @@ import (
 )
 
 // GetAVSSupportedAssets returns a map of assets supported by the AVS. The avsAddr supplied must be hex.
-func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]string, map[string]interface{}, error) {
+func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]string, map[string]struct{}, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
 		return nil, nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSSupportedAssets: key is %s", avsAddr))
 	}
 	assetIDList := avsInfo.Info.AssetIDs
-	ret := make(map[string]interface{})
+	ret := make(map[string]struct{})
 
 	for _, assetID := range assetIDList {
-		_, err = k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
-		if err != nil {
-			return nil, nil, errorsmod.Wrap(err, fmt.Sprintf("[GetAVSSupportedAssets] GetStakingAssetInfo: key is %s", assetID))
+		if !k.assetsKeeper.IsStakingAsset(ctx, assetID) {
+			return nil,nil, errorsmod.Wrap(err, fmt.Sprintf("[GetAVSSupportedAssets] assetID:%s isn't staking asset", assetID))
 		}
-		ret[assetID] = nil
+		ret[assetID] = struct{}{}
 	}
 
 	return assetIDList, ret, nil
