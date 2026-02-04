@@ -69,7 +69,7 @@ func (suite *EditOperatorTestSuite) TestEditOperator() {
 	editReq.Description.Moniker = ""
 	err = editReq.ValidateBasic()
 	suite.Require().ErrorAs(err, &operatortypes.ErrParameterInvalid)
-	suite.Require().Contains(err.Error(), "empty description")
+	suite.Require().Contains(err.Error(), "moniker is empty")
 }
 
 func (suite *EditOperatorTestSuite) TestRegisterOperator() {
