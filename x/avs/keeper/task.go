@@ -36,7 +36,7 @@ func (k *Keeper) GetTaskInfo(ctx sdk.Context, taskID, taskContractAddress string
 	infoKey := utils.GetJoinedStoreKey(strings.ToLower(taskContractAddress), taskID)
 	value := store.Get(infoKey)
 	if value == nil {
-		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
+		return nil, errorsmod.Wrapf(types.ErrNoKeyInTheStore,
 			"GetTaskInfo: key not found for task ID %s at contract address %s", taskID, taskContractAddress)
 	}
 

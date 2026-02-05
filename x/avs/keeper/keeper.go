@@ -583,7 +583,7 @@ func (k Keeper) SubmitTaskResult(ctx sdk.Context, addr string, info *types.TaskR
 				types.ErrResAlreadyExists,
 				"SetTaskResultInfo: task result is already exists, "+
 					"OperatorAddress: %s (TaskContractAddress: %s),(Task ID: %d)",
-					info.OperatorAddress, info.TaskContractAddress, info.TaskId,
+				info.OperatorAddress, info.TaskContractAddress, info.TaskId,
 			)
 		}
 		// check parameters

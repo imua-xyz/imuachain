@@ -26798,7 +26798,7 @@
                                     "undelegation_id": {
                                       "type": "string",
                                       "format": "uint64",
-                                      "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                                      "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                                     },
                                     "reward_asset": {
                                       "type": "boolean",
@@ -52870,7 +52870,7 @@
                   "undelegation_id": {
                     "type": "string",
                     "format": "uint64",
-                    "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                    "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                   },
                   "reward_asset": {
                     "type": "boolean",
@@ -53016,7 +53016,7 @@
                       "undelegation_id": {
                         "type": "string",
                         "format": "uint64",
-                        "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                        "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                       },
                       "reward_asset": {
                         "type": "boolean",
@@ -53502,7 +53502,7 @@
                             "undelegation_id": {
                               "type": "string",
                               "format": "uint64",
-                              "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                              "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                             },
                             "reward_asset": {
                               "type": "boolean",
@@ -54078,7 +54078,7 @@
               "undelegation_id": {
                 "type": "string",
                 "format": "uint64",
-                "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
               },
               "reward_asset": {
                 "type": "boolean",
@@ -54198,7 +54198,7 @@
         "undelegation_id": {
           "type": "string",
           "format": "uint64",
-          "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+          "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
         },
         "reward_asset": {
           "type": "boolean",
