@@ -2,7 +2,6 @@ package keeper
 
 import (
 	sdkmath "cosmossdk.io/math"
-
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,5 +42,12 @@ func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 	// calculate the correct unbonding duration, even for opt-out cases;
 	// therefore, the dogfood module doesn't need to manage the completion of undelegations.
 	// todo: remove the whole hook file and the related code in the future?
+	return nil
+}
+
+// AfterNSTDelegationSlashed is called after a NST delegation is slashed.
+func (wrapper DelegationHooksWrapper) AfterNSTDelegationSlashed(
+	_ sdk.Context, _, _ string, _ sdk.AccAddress, _ sdkmath.Int, _ assetstype.OperatorAssetInfo,
+) error {
 	return nil
 }

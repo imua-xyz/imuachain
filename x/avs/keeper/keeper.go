@@ -426,6 +426,9 @@ func (k Keeper) DeleteAVSInfo(ctx sdk.Context, addr string) error {
 
 // IterateAVSInfo iterate through avs
 func (k Keeper) IterateAVSInfo(ctx sdk.Context, fn func(index int64, avsInfo types.AVSInfo) (stop bool)) {
+	if fn == nil {
+		return
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSInfo)
 
 	iterator := sdk.KVStorePrefixIterator(store, nil)

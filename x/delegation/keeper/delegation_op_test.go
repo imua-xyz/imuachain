@@ -52,7 +52,6 @@ func (suite *DelegationTestSuite) prepareDeposit(depositAmount sdkmath.Int) *ass
 func (suite *DelegationTestSuite) prepareDelegation(delegationAmount sdkmath.Int, operator sdk.AccAddress) *delegationtype.DelegationOrUndelegationParams {
 	delegationEvent := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   suite.clientChainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   suite.assetAddr.Bytes(),
 		OperatorAddress: operator,
 		StakerAddress:   suite.Address[:],
@@ -62,9 +61,8 @@ func (suite *DelegationTestSuite) prepareDelegation(delegationAmount sdkmath.Int
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: operator.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr:     operator.String(),
-			ApproveAddr:      operator.String(),
-			OperatorMetaInfo: operator.String(),
+			OperatorAddr: operator.String(),
+			Description:  stakingtypes.NewDescription(operator.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -114,7 +112,6 @@ func (suite *DelegationTestSuite) prepareOptingInDogfood(assetID string) (sdkmat
 func (suite *DelegationTestSuite) prepareDelegationNativeToken() *delegationtype.DelegationOrUndelegationParams {
 	delegationEvent := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   assetstypes.ImuachainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   common.HexToAddress(assetstypes.ImuachainAssetAddr).Bytes(),
 		OperatorAddress: suite.opAccAddr,
 		StakerAddress:   suite.accAddr[:],
@@ -133,7 +130,6 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	suite.NoError(err)
 	delegationParams := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   suite.clientChainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   suite.assetAddr.Bytes(),
 		OperatorAddress: opAccAddr,
 		StakerAddress:   suite.Address[:],
@@ -146,9 +142,8 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr:     opAccAddr.String(),
-			ApproveAddr:      opAccAddr.String(),
-			OperatorMetaInfo: opAccAddr.String(),
+			OperatorAddr: opAccAddr.String(),
+			Description:  stakingtypes.NewDescription(opAccAddr.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -197,7 +192,6 @@ func (suite *DelegationTestSuite) TestDelegateTo() {
 	// delegate imua-native-token
 	delegationParams = &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   assetstypes.ImuachainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   common.HexToAddress(assetstypes.ImuachainAssetAddr).Bytes(),
 		OperatorAddress: opAccAddr,
 		StakerAddress:   suite.accAddr[:],
@@ -244,9 +238,8 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 	registerReq := &operatortype.RegisterOperatorReq{
 		FromAddress: opAccAddr.String(),
 		Info: &operatortype.OperatorInfo{
-			EarningsAddr:     opAccAddr.String(),
-			ApproveAddr:      opAccAddr.String(),
-			OperatorMetaInfo: opAccAddr.String(),
+			OperatorAddr: opAccAddr.String(),
+			Description:  stakingtypes.NewDescription(opAccAddr.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -266,7 +259,6 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 	suite.NoError(err)
 	delegationParams := &delegationtype.DelegationOrUndelegationParams{
 		ClientChainID:   types.ImuachainLzID,
-		Action:          types.DelegateTo,
 		AssetsAddress:   common.HexToAddress(types.ImuachainAssetAddr).Bytes(),
 		OperatorAddress: opAccAddr,
 		StakerAddress:   opAccAddr,
@@ -276,8 +268,7 @@ func (suite *DelegationTestSuite) TestAutoAssociate() {
 	err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 	suite.NoError(err)
 	stakerID, assetID := types.GetStakerIDAndAssetID(delegationParams.ClientChainID, delegationParams.StakerAddress, delegationParams.AssetsAddress)
-	operator, err := suite.App.DelegationKeeper.GetAssociatedOperator(suite.Ctx, stakerID)
-	suite.NoError(err)
+	operator := suite.App.DelegationKeeper.GetAssociatedOperator(suite.Ctx, stakerID)
 	suite.Equal(opAccAddr.String(), operator)
 
 	// check state

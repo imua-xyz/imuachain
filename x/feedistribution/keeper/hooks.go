@@ -89,6 +89,14 @@ func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
 }
 
+// AfterNSTDelegationSlashed is called after a NST delegation is slashed.
+func (wrapper DelegationHooksWrapper) AfterNSTDelegationSlashed(
+	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
+	preDelegatedAmount math.Int, prevAssetState assetstype.OperatorAssetInfo,
+) error {
+	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
+}
+
 // OperatorHooksWrapper is the wrapper structure that implements the operator hooks for the
 // distribution keeper.
 type OperatorHooksWrapper struct {

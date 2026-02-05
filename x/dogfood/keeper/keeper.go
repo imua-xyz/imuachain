@@ -154,7 +154,7 @@ func (k *Keeper) GetStakersByOperator(ctx sdk.Context, operator, assetID string)
 	return k.delegationKeeper.GetStakersByOperator(ctx, operator, assetID)
 }
 
-func (k Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]interface{}, error) {
+func (k Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]struct{}, error) {
 	return k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
 }
 

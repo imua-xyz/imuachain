@@ -41,9 +41,8 @@ func (suite *AVSManagerPrecompileSuite) prepareOperator(address string) {
 	registerReq := &operatorTypes.RegisterOperatorReq{
 		FromAddress: suite.operatorAddress.String(),
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr:     suite.operatorAddress.String(),
-			ApproveAddr:      suite.operatorAddress.String(),
-			OperatorMetaInfo: suite.operatorAddress.String(),
+			OperatorAddr: suite.operatorAddress.String(),
+			Description:  stakingtypes.NewDescription(suite.operatorAddress.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          rate,

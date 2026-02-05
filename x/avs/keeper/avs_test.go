@@ -190,9 +190,8 @@ func (suite *AVSTestSuite) TestUpdateAVSInfoWithOperator_Register() {
 	registerReq := &operatorTypes.RegisterOperatorReq{
 		FromAddress: operatorAddress.String(),
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr:     operatorAddress.String(),
-			ApproveAddr:      operatorAddress.String(),
-			OperatorMetaInfo: operatorAddress.String(),
+			OperatorAddr: operatorAddress.String(),
+			Description:  stakingtypes.NewDescription(operatorAddress.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),

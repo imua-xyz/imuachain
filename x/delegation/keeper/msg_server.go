@@ -100,7 +100,6 @@ func newDelegationOrUndelegationParams(
 		operatorAddr := sdk.MustAccAddressFromBech32(kv.Key)
 		inputParams := types.NewDelegationOrUndelegationParams(
 			clientChainLzID,
-			assetstypes.DelegateTo,
 			common.HexToAddress(assetAddrStr).Bytes(),
 			operatorAddr,
 			stakerAddr,
