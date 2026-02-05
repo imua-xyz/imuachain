@@ -358,15 +358,15 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	// x/operator registration
 	operatorInfos := []operatortypes.OperatorInfo{
 		{
-			OperatorAddr: operator1.String(),
-			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
-			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+			OperatorAddr:           operator1.String(),
+			Description:            stakingtypes.NewDescription("operator1", "", "", "", ""),
+			Commission:             stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			DisableCompoundRewards: true,
 		},
 		{
-			OperatorAddr: operator2.String(),
-			Description:  stakingtypes.NewDescription("operator2", "", "", "", ""),
-			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+			OperatorAddr:           operator2.String(),
+			Description:            stakingtypes.NewDescription("operator2", "", "", "", ""),
+			Commission:             stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 			DisableCompoundRewards: true,
 		},
 	}
@@ -702,9 +702,9 @@ func (suite *BaseTestSuite) RegisterOperator(operator string, commission staking
 	// register operator
 	registerReq := &operatortypes.RegisterOperatorReq{
 		Info: &operatortypes.OperatorInfo{
-			OperatorAddr: operator,
-			Description:  stakingtypes.NewDescription(operator, "", "", "", ""),
-			Commission:   commission,
+			OperatorAddr:           operator,
+			Description:            stakingtypes.NewDescription(operator, "", "", "", ""),
+			Commission:             commission,
 			DisableCompoundRewards: disableCompoundRewards,
 		},
 	}

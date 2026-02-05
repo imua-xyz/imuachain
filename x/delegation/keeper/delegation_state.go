@@ -370,7 +370,7 @@ func (k Keeper) GetStakersByOperator(
 		// parse the key to get the staker ID. this is done using the function
 		// and not using the `+1:` approach in case the delimiter changes in
 		// the future.
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 3)
 		if err != nil {
 			return delegationtype.StakerList{}, err
 		}
@@ -447,7 +447,7 @@ func (k Keeper) DelegationStateByOperatorAssets(ctx sdk.Context, operatorAddr st
 	for ; iterator.Valid(); iterator.Next() {
 		var amounts delegationtype.DelegationAmounts
 		k.cdc.MustUnmarshal(iterator.Value(), &amounts)
-		keys, err := utils.ParseJoinedStoreKey(iterator.Key(), 3)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 3)
 		if err != nil {
 			return nil, err
 		}

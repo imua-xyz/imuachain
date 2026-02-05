@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	FlagClientChainData = "client-chain-data"
+	FlagClientChainData           = "client-chain-data"
 	FlagDisableRewardsCompounding = "disable-rewards-compounding"
 )
 

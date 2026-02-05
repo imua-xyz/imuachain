@@ -160,10 +160,10 @@ type EpochsKeeper interface {
 type DistributionKeeper interface {
 	GetAVSRewardAssetIDByDenomination(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
 	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) error
-	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]interface{}) (sdkmath.LegacyDec, error)
-	OperatorTotalRewardsUSDValue(ctx sdk.Context, operator string) (map[string]map[string]interface{}, sdkmath.LegacyDec, error)
+	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]struct{}) (sdkmath.LegacyDec, error)
+	OperatorTotalRewardsUSDValue(ctx sdk.Context, operator string) (map[string]map[string]struct{}, sdkmath.LegacyDec, error)
 	SlashOperatorUnclaimedRewards(
 		ctx sdk.Context, operator string,
-		slashSources map[string]map[string]interface{},
+		slashSources map[string]map[string]struct{},
 		slashProportion sdkmath.LegacyDec) ([]SlashFromUnclaimedRewards, error)
 }

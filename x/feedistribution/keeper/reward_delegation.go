@@ -70,7 +70,6 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 						}
 						// redelegate the reward
 						share, preDelegatedAmount, err := k.delegationKeeper.DelegateTo(cc, &delegationtype.DelegationOrUndelegationParams{
-							Action:          assetstype.DelegateTo,
 							OperatorAddress: operatorAccAddr,
 							OpAmount:        rewardAmount,
 							RewardAsset:     true,
@@ -278,7 +277,6 @@ func (k Keeper) UndelegateClaimedRewards(
 	}
 
 	err := k.delegationKeeper.UndelegateFrom(ctx, &delegationtype.DelegationOrUndelegationParams{
-		Action:          assetstype.UndelegateFrom,
 		OperatorAddress: operatorAccAddr,
 		OpAmount:        amount,
 		// The txID in the undelegation key is unnecessary after introducing a unique undelegation ID.

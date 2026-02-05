@@ -31,7 +31,7 @@ func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]strin
 
 	for _, assetID := range assetIDList {
 		if !k.assetsKeeper.IsStakingAsset(ctx, assetID) {
-			return nil,nil, errorsmod.Wrap(err, fmt.Sprintf("[GetAVSSupportedAssets] assetID:%s isn't staking asset", assetID))
+			return nil, nil, errorsmod.Wrap(err, fmt.Sprintf("[GetAVSSupportedAssets] assetID:%s isn't staking asset", assetID))
 		}
 		ret[assetID] = struct{}{}
 	}

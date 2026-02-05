@@ -18,7 +18,7 @@ import (
 // it will return the reward assetID if the calculated USD value is positive.
 func (k *Keeper) calculateRewardUSDValue(
 	ctx sdk.Context, avs,
-	symbol string, supportedAssets map[string]interface{},
+	symbol string, supportedAssets map[string]struct{},
 	assetPrices map[string]oracletype.Price, amount sdk.Dec,
 ) (string, sdkmath.LegacyDec, error) {
 	if !amount.IsPositive() {
@@ -70,11 +70,11 @@ func (k *Keeper) calcOperatorRewardsUSDValue(
 	ctx sdk.Context,
 	rewardSourceAVS string,
 	unclaimedRewards feedistributiontypes.OperatorUnclaimedRewards,
-	supportedAssets map[string]interface{},
+	supportedAssets map[string]struct{},
 	assetPrices map[string]oracletype.Price,
 	handler func(denom string, usdValue sdkmath.LegacyDec) error,
-) (map[string]interface{}, sdkmath.LegacyDec, error) {
-	usdValuedAssets := make(map[string]interface{})
+) (map[string]struct{}, sdkmath.LegacyDec, error) {
+	usdValuedAssets := make(map[string]struct{})
 	totalUSDValue := sdkmath.LegacyZeroDec()
 	// iterate over the outstanding rewards
 	for _, outstandingReward := range unclaimedRewards.OutstandingRewards {
@@ -86,7 +86,7 @@ func (k *Keeper) calcOperatorRewardsUSDValue(
 		if outstandingUSDValue.IsPositive() {
 			_, exist := usdValuedAssets[assetID]
 			if !exist {
-				usdValuedAssets[assetID] = nil
+				usdValuedAssets[assetID] = struct{}{}
 			}
 		}
 
@@ -102,7 +102,7 @@ func (k *Keeper) calcOperatorRewardsUSDValue(
 				if usdValuePerAsset.IsPositive() {
 					_, exist := usdValuedAssets[compoundingAssetID]
 					if !exist {
-						usdValuedAssets[compoundingAssetID] = nil
+						usdValuedAssets[compoundingAssetID] = struct{}{}
 					}
 					compoundingUSDValue.AddMut(usdValuePerAsset)
 				}
@@ -130,7 +130,7 @@ func (k *Keeper) calcOperatorRewardsUSDValue(
 func (k *Keeper) UpdateAllRewardsUSDForOperator(
 	ctx sdk.Context,
 	receivingAVS, operator string,
-	supportedAssets map[string]interface{},
+	supportedAssets map[string]struct{},
 ) (sdkmath.LegacyDec, error) {
 	assetPrices := make(map[string]oracletype.Price, 0)
 	validRewardUSDs := make(map[string]interface{}, 0)
@@ -179,8 +179,8 @@ func (k *Keeper) UpdateAllRewardsUSDForOperator(
 // It returns the USD value and the detailed source mapping: AVS -> assetID -> nil.
 func (k *Keeper) OperatorTotalRewardsUSDValue(
 	ctx sdk.Context, operator string,
-) (map[string]map[string]interface{}, sdkmath.LegacyDec, error) {
-	usdValueSources := make(map[string]map[string]interface{}, 0)
+) (map[string]map[string]struct{}, sdkmath.LegacyDec, error) {
+	usdValueSources := make(map[string]map[string]struct{}, 0)
 	assetPrices := make(map[string]oracletype.Price, 0)
 	totalUSDValue := sdk.ZeroDec()
 
@@ -251,7 +251,7 @@ func convertSlashStates(
 
 func (k *Keeper) SlashOperatorUnclaimedRewards(
 	ctx sdk.Context, operator string,
-	slashSources map[string]map[string]interface{},
+	slashSources map[string]map[string]struct{},
 	slashProportion sdkmath.LegacyDec,
 ) ([]operatortypes.SlashFromUnclaimedRewards, error) {
 	if slashProportion.IsNil() || slashProportion.IsZero() {

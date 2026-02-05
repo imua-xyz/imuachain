@@ -296,12 +296,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["delegation"]["associations"][0]["staker_id"]="'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["associations"][0]["operator"]="'"$LOCAL_ADDRESS_IM"'"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["delegation"]["stakers_by_operator"][0]="'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	# todo: to be fixed after addressing conflict
-	jq '.app_state["delegation"]["stakers_by_operator"][0]["key"]="'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["delegation"]["stakers_by_operator"][0]["stakers"][0]="'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["delegation"]["stakers_by_operator"][0]["stakers"][1]="0xdc77c5b9d061ae2f7b35a6c8854b8f5bbea98eef_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["delegation"]["stakers_by_operator"][1]["key"]="'"$LOCAL_ADDRESS_IM"'/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["delegation"]["stakers_by_operator"][1]["stakers"][0]="'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["delegation"]["stakers_by_operator"][1]="'"$LOCAL_ADDRESS_IM"'/0xdac17f958d2ee523a2206206994597c13d831ec7_0x65/0xdc77c5b9d061ae2f7b35a6c8854b8f5bbea98eef_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["delegation"]["stakers_by_operator"][2]="'"$LOCAL_ADDRESS_IM"'/0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee_0x65/'"$LOCAL_ADDRESS_HEX"'_0x65"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# x/dogfood
 	# for easy testing, use an epoch of 1 minute and 5 epochs until unbonded.

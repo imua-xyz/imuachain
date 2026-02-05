@@ -473,7 +473,7 @@ func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount 
 			})
 			DefaultGenStateDelegation.StakersByOperator = append(
 				DefaultGenStateDelegation.StakersByOperator,
-				string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
+				string(utils.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
 			)
 		}
 	}
