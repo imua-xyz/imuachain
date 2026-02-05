@@ -1442,7 +1442,7 @@ var xxx_messageInfo_EditOperatorResponse proto.InternalMessageInfo
 type UpdateRewardCompoundingFlagReq struct {
 	// address is the operator address
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	// disable_compound_rewards is a flag to indicate whether disable the reward compounding
+	// disable_compound_rewards is a flag to indicate whether to disable the reward compounding
 	DisableCompoundRewards bool `protobuf:"varint,2,opt,name=disable_compound_rewards,json=disableCompoundRewards,proto3" json:"disable_compound_rewards,omitempty"`
 }
 

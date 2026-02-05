@@ -366,7 +366,7 @@ message UpdateRewardCompoundingFlagReq {
 
   // address is the operator address
   string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  // disable_compound_rewards is a flag to indicate whether disable the reward compounding
+  // disable_compound_rewards is a flag to indicate whether to disable the reward compounding
   bool disable_compound_rewards = 2;
 }
 
