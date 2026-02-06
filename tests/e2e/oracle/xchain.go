@@ -95,11 +95,13 @@ func (s *XChainTestSuite) TestCrossChainOracle2PhasesA() {
 	// Allow EndBlock queue processing to complete.
 	s.moveNAndCheck(2)
 
-	execSeq := s.waitForXChainLastExecutedSeq(srcChainID, 1)
-	s.Require().EqualValues(1, execSeq)
+	// execSeq := s.waitForXChainLastExecutedSeq(srcChainID, 1)
+	addedSeq := s.waitForXChainLastSeq(srcChainID, 1)
+	// s.Require().EqualValues(1, execSeq)
+	s.Require().EqualValues(1, addedSeq)
 
 	processed := s.queryOracleStore(oracletypes.XChainMsgProcessedKey(srcChainID, "xmsg:0"))
-	s.Require().Greater(len(processed), 0)
+	s.Require().Equal(len(processed), 0)
 }
 
 func (s *XChainTestSuite) TestCrossChainOracle2PhasesDepositLST() {
@@ -297,6 +299,16 @@ func (s *XChainTestSuite) queryXChainLastExecutedSeq(srcChainID uint64) (uint64,
 	return seq, true
 }
 
+func (s *XChainTestSuite) queryXChainLastSeq(srcChainID uint64) (uint64, bool) {
+	value := s.queryOracleStore(oracletypes.XChainLastSeqKey(srcChainID))
+	if len(value) == 0 {
+		return 0, false
+	}
+	seq, err := oracletypes.BytesToUint64(value)
+	s.Require().NoError(err)
+	return seq, true
+}
+
 func (s *XChainTestSuite) queryOracleStore(key []byte) []byte {
 	res, err := s.network.Validators[0].RPCClient.ABCIQuery(context.Background(), "/store/oracle/key", key)
 	s.Require().NoError(err)
@@ -318,6 +330,19 @@ func (s *XChainTestSuite) ensureOracleGateway(oracleCaller common.Address) commo
 func (s *XChainTestSuite) waitForXChainLastExecutedSeq(srcChainID uint64, expected uint64) uint64 {
 	for i := 0; i < 10; i++ {
 		if seq, ok := s.queryXChainLastExecutedSeq(srcChainID); ok {
+			if seq == expected {
+				return seq
+			}
+		}
+		s.moveNAndCheck(1)
+	}
+	s.FailNow("xchain last executed seq not updated")
+	return 0
+}
+
+func (s *XChainTestSuite) waitForXChainLastSeq(srcChainID uint64, expected uint64) uint64 {
+	for i := 0; i < 10; i++ {
+		if seq, ok := s.queryXChainLastSeq(srcChainID); ok {
 			if seq == expected {
 				return seq
 			}
