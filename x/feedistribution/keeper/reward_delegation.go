@@ -19,6 +19,7 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 	// using operator and assetID as map keys.
 	delegationChangeInfos := make(map[string]map[string]feedistributiontypes.DelegationChangeInfo, 0)
 	cc, writeFunc := ctx.CacheContext()
+	// TODO: Consider adjusting the implementation to prevent a failed staker from affecting the redelegation of others.
 	// iterate to handle all staker rewards
 	for _, staker := range stakerList {
 		// check whether the staker wants to redelegate the rewards.
@@ -257,7 +258,7 @@ func (k Keeper) UndelegateClaimedRewards(
 					},
 				})
 			rewards.PendingUndelegationRewards = rewards.PendingUndelegationRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(amountFromCurAVS, rewardAsset.RewardAssetInfo.DenominationExponent)))
-			if instantSlashRatio.IsPositive() {
+			if !instantSlashRatio.IsNil() && instantSlashRatio.IsPositive() {
 				slashedAmount := undelegationAmountPerAVS.Amount.Sub(undelegationAmountPerAVS.ActualCompletedAmount)
 				rewards.PendingSlashedRewards = rewards.PendingSlashedRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(slashedAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 			}
