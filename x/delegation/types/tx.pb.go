@@ -288,7 +288,8 @@ type UndelegationAmountPerAVS struct {
 	// amount is the undelegated amount from specific AVS.
 	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
 	// actual_completed_amount is the actual amount of the asset that has been
-	// undelegated so far. it may be lower than the amount in the case of slashing.
+	// undelegated so far. This value is provisional and may decrease if a slashing event
+	// occurs before completion. So it may be lower than the amount in the case of slashing.
 	ActualCompletedAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,3,opt,name=actual_completed_amount,json=actualCompletedAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"actual_completed_amount"`
 }
 
@@ -355,7 +356,8 @@ type UndelegationRecord struct {
 	// amount is the amount of the asset to be undelegated.
 	Amount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,9,opt,name=amount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"amount"`
 	// actual_completed_amount is the actual amount of the asset that has been
-	// undelegated so far. it may be lower than the amount in the case of slashing.
+	// undelegated so far. This value is provisional and may decrease if a slashing event
+	// occurs before completion. So it may be lower than the amount in the case of slashing.
 	ActualCompletedAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,10,opt,name=actual_completed_amount,json=actualCompletedAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"actual_completed_amount"`
 	// instant_unbonding indicates whether it's an instant unbonding
 	InstantUnbonding bool `protobuf:"varint,11,opt,name=instant_unbonding,json=instantUnbonding,proto3" json:"instant_unbonding,omitempty"`
