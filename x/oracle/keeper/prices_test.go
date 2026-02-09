@@ -50,8 +50,8 @@ func TestPricesGet(t *testing.T) {
 func TestPricesGetMultiAssets(t *testing.T) {
 	keeper, ctx := keepertest.OracleKeeper(t)
 	keeper.SetPrices(ctx, testdata.P1)
-	assets := make(map[string]interface{})
-	assets["0x0b34c4d876cd569129cf56bafabb3f9e97a4ff42_0x9ce1"] = new(interface{})
+	assets := make(map[string]struct{})
+	assets["0x0b34c4d876cd569129cf56bafabb3f9e97a4ff42_0x9ce1"] = struct{}{}
 	prices, err := keeper.GetMultipleAssetsPrices(ctx, assets)
 	expectedPrices := make(map[string]types.Price)
 	v, _ := sdkmath.NewIntFromString(testdata.PTR5.Price)
@@ -63,7 +63,7 @@ func TestPricesGetMultiAssets(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expectedPrices, prices)
 
-	assets["unexistsAsset"] = new(interface{})
+	assets["unexistsAsset"] = struct{}{}
 	_, err = keeper.GetMultipleAssetsPrices(ctx, assets)
 	// require.ErrorIs(t, err, types.ErrGetPriceAssetNotFound.Wrapf("assetID does not exist in oracle %s", "unexistsAsset"))
 	require.ErrorIs(t, err, types.ErrGetPriceRoundNotFound.Wrapf("no valid price for assetIDs=%s", "unexistsAsset"))

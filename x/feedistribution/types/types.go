@@ -5,23 +5,32 @@ import (
 	"sort"
 	"strings"
 
+	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
+
 	sdkmath "cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
-	DeltaAVSRewardAssetState AVSRewardAssetState
-)
+	DeltaAVSRewardAssetState      AVSRewardAssetState
+	DeltaOperatorUnclaimedRewards OperatorUnclaimedRewards
+	DeltaStakerClaimedRewards     StakerClaimedRewards
+	OperatorRewardProportions     []OperatorRewardProportion
 
-type OperatorRewardProportions []OperatorRewardProportion
-
-type (
 	CommonAVSRewards           []CommonAVSRewardData
 	EpochRewardsAndProportions struct {
 		Rewards                   sdk.DecCoins
 		OperatorRewardProportions []OperatorRewardProportion
 	}
+
+	CompoundingRewards        []CompoundingRewardsPerAsset
+	CompoundingRewardsWithAVS struct {
+		AVS                string
+		CompoundingRewards CompoundingRewards
+	}
+
+	RewardsDelegationShares []RewardsDelegationShare
 )
 
 // String implements the Stringer interface for OperatorRewardProportions. It returns a
@@ -54,13 +63,13 @@ func ParseOperatorRewardProportions(s string) ([]OperatorRewardProportion, error
 	result := make([]OperatorRewardProportion, 0, len(parts))
 
 	for _, part := range parts {
-		pair := strings.SplitN(part, ":", 2)
-		if len(pair) != 2 {
+		addr, propStr, ok := strings.Cut(part, ":")
+		if !ok {
 			return nil, fmt.Errorf("invalid format for operator proportion: %q", part)
 		}
 
-		addr := strings.TrimSpace(pair[0])
-		propStr := strings.TrimSpace(pair[1])
+		addr = strings.TrimSpace(addr)
+		propStr = strings.TrimSpace(propStr)
 
 		prop, err := sdk.NewDecFromStr(propStr)
 		if err != nil {
@@ -224,7 +233,7 @@ func (crs CommonAVSRewards) Validate() error {
 
 	case 1:
 		if !crs[0].IsPositive() {
-			return fmt.Errorf("avsReward %s amount is not positive", crs[0])
+			return fmt.Errorf("avsReward amount is not positive,avs:%s,rewards:%s", crs[0].AVSAddress, crs[0].Rewards)
 		}
 		return nil
 	default:
@@ -233,15 +242,9 @@ func (crs CommonAVSRewards) Validate() error {
 			return err
 		}
 
-		lowAVSAddr := crs[0].AVSAddress
-		seenAVSAddr := make(map[string]bool)
-		seenAVSAddr[lowAVSAddr] = true
-
+		lowAVS := crs[0].AVSAddress
 		for _, avsReward := range crs[1:] {
-			if seenAVSAddr[avsReward.AVSAddress] {
-				return fmt.Errorf("duplicate avs address %s", avsReward.AVSAddress)
-			}
-			if avsReward.AVSAddress <= lowAVSAddr {
+			if avsReward.AVSAddress <= lowAVS {
 				return fmt.Errorf("avs address %s is not sorted", avsReward.AVSAddress)
 			}
 			if !avsReward.IsPositive() {
@@ -249,8 +252,7 @@ func (crs CommonAVSRewards) Validate() error {
 			}
 
 			// we compare each avsReward against the last avs address
-			lowAVSAddr = avsReward.AVSAddress
-			seenAVSAddr[avsReward.AVSAddress] = true
+			lowAVS = avsReward.AVSAddress
 		}
 
 		return nil
@@ -273,6 +275,7 @@ func (crs CommonAVSRewards) Add(avsRewards ...CommonAVSRewardData) CommonAVSRewa
 // other set is returned. Otherwise, the CommonAVSRewards are compared in order of their
 // avs address and addition only occurs when the address match, otherwise
 // the CommonAVSRewards is simply added to the sum assuming it's not zero.
+// nolint:dupl
 func (crs CommonAVSRewards) safeAdd(avsRewardsB CommonAVSRewards) CommonAVSRewards {
 	sum := ([]CommonAVSRewardData)(nil)
 	indexA, indexB := 0, 0
@@ -302,7 +305,7 @@ func (crs CommonAVSRewards) safeAdd(avsRewardsB CommonAVSRewards) CommonAVSRewar
 
 			indexA++
 
-		case 0: // avs reward A address == avs reward B address
+		case 0: // avs A address == avs B address
 			res := avsRewardA.Add(avsRewardB)
 			if !res.IsZeroRewards() {
 				sum = append(sum, res)
@@ -311,7 +314,7 @@ func (crs CommonAVSRewards) safeAdd(avsRewardsB CommonAVSRewards) CommonAVSRewar
 			indexA++
 			indexB++
 
-		case 1: // coin A denom > coin B denom
+		case 1: // avs A address > avs B address
 			if !avsRewardB.IsZeroRewards() {
 				sum = append(sum, avsRewardB)
 			}
@@ -343,6 +346,15 @@ func (crs CommonAVSRewards) IsAnyNegative() bool {
 		}
 	}
 	return false
+}
+
+func (crs CommonAVSRewards) IsZeroRewards() bool {
+	for _, rewardPerAVS := range crs {
+		if !rewardPerAVS.IsZeroRewards() {
+			return false
+		}
+	}
+	return true
 }
 
 // Sub subtracts a set of CommonAVSRewards from another (adds the inverse).
@@ -379,20 +391,19 @@ func (crs CommonAVSRewards) CalculateRewardRatio(totalDelegatedAmount sdk.Dec) (
 	return ret, nil
 }
 
-// CalculateRewards calculates the rewards, the receiver of this function should be the rewards ratio.
-func (crs CommonAVSRewards) CalculateRewards(delegatedAmount sdk.Dec) (CommonAVSRewards, error) {
-	if delegatedAmount.IsNegative() {
-		return nil, ErrInvalidInputParameter.Wrapf("CalculateRewards, the delegated amount is negative, value:%s", delegatedAmount)
+func (crs CommonAVSRewards) MulDecTruncate(multiplier sdk.Dec) (CommonAVSRewards, error) {
+	if multiplier.IsNegative() {
+		return nil, ErrInvalidInputParameter.Wrapf("MulDecTruncate, the multiplier is negative, value:%s", multiplier)
 	}
 	ret := make([]CommonAVSRewardData, 0)
-	if delegatedAmount.IsZero() {
+	if multiplier.IsZero() {
 		return ret, nil
 	}
-	for _, avsRewardRatio := range crs {
+	for _, avsReward := range crs {
 		// note: necessary to truncate so we don't allow withdrawing more rewards than owed
-		rewards := avsRewardRatio.Rewards.MulDecTruncate(delegatedAmount)
+		rewards := avsReward.Rewards.MulDecTruncate(multiplier)
 		ret = append(ret, CommonAVSRewardData{
-			AVSAddress: avsRewardRatio.AVSAddress,
+			AVSAddress: avsReward.AVSAddress,
 			Rewards:    rewards,
 		})
 	}
@@ -406,6 +417,497 @@ func (crs CommonAVSRewards) RewardsOf(avsAddr string) sdk.DecCoins {
 		}
 	}
 	return nil
+}
+
+func (cra CompoundingRewardsPerAsset) IsZeroRewards() bool {
+	return CommonAVSRewards(cra.Rewards).IsZeroRewards()
+}
+
+func (cra CompoundingRewardsPerAsset) IsPositive() bool {
+	return !cra.IsZeroRewards() && !CommonAVSRewards(cra.Rewards).IsAnyNegative()
+}
+
+func (cra CompoundingRewardsPerAsset) Add(compoundingRewardB CompoundingRewardsPerAsset) CompoundingRewardsPerAsset {
+	if cra.RewardDenomination != compoundingRewardB.RewardDenomination {
+		return cra
+	}
+	return CompoundingRewardsPerAsset{
+		RewardDenomination: cra.RewardDenomination,
+		Rewards:            CommonAVSRewards(cra.Rewards).Add(compoundingRewardB.Rewards...),
+	}
+}
+
+// Sorting
+var _ sort.Interface = CompoundingRewards{}
+
+// Len implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Len() int { return len(cmr) }
+
+// Less implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Less(i, j int) bool {
+	return cmr[i].RewardDenomination < cmr[j].RewardDenomination
+}
+
+// Swap implements sort.Interface for CompoundingRewards
+func (cmr CompoundingRewards) Swap(i, j int) { cmr[i], cmr[j] = cmr[j], cmr[i] }
+
+// Sort is a helper function to sort the set of CompoundingRewards in-place.
+func (cmr CompoundingRewards) Sort() CompoundingRewards {
+	sort.Sort(cmr)
+	return cmr
+}
+
+// NewCompoundingRewards constructs a new CompoundingRewardsPerAsset set.
+// The provided CompoundingRewardsPerAsset will be sanitized by removing
+// zero rewards and sorting the CompoundingRewardsPerAsset set. An empty
+// CompoundingRewards will be returned if the CompoundingRewardsPerAsset
+// set is not valid.
+func NewCompoundingRewards(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
+	newAVSRewards := sanitizeCompoundingRewards(compoundingRewards)
+	if err := newAVSRewards.Validate(); err != nil {
+		return CompoundingRewards{}
+	}
+
+	return newAVSRewards
+}
+
+func sanitizeCompoundingRewards(compoundingRewards []CompoundingRewardsPerAsset) CompoundingRewards {
+	// remove zeroes
+	newCompoundingRewards := removeZeroCompoundingRewards(compoundingRewards)
+	if len(newCompoundingRewards) == 0 {
+		return CompoundingRewards{}
+	}
+
+	return newCompoundingRewards.Sort()
+}
+
+func removeZeroCompoundingRewards(compoundingRewards CompoundingRewards) CompoundingRewards {
+	result := make([]CompoundingRewardsPerAsset, 0, len(compoundingRewards))
+
+	for _, compoundingReward := range compoundingRewards {
+		if !compoundingReward.IsZeroRewards() {
+			result = append(result, compoundingReward)
+		}
+	}
+
+	return result
+}
+
+// Validate checks that the CompoundingRewards are sorted, have positive rewards, with a unique
+// symbol (i.e no duplicates). Otherwise, it returns an error.
+func (cmr CompoundingRewards) Validate() error {
+	switch len(cmr) {
+	case 0:
+		return nil
+
+	case 1:
+		if !cmr[0].IsPositive() {
+			return fmt.Errorf("rewardsPerAsset amount is not positive,rewardDenomination:%s", cmr[0].RewardDenomination)
+		}
+		return nil
+	default:
+		// check single compounding reward case
+		if err := (CompoundingRewards{cmr[0]}).Validate(); err != nil {
+			return err
+		}
+
+		lowRewardDenomination := cmr[0].RewardDenomination
+		for _, rewardsPerAsset := range cmr[1:] {
+			if rewardsPerAsset.RewardDenomination <= lowRewardDenomination {
+				return fmt.Errorf("rewardDenomination %s is not sorted", rewardsPerAsset.RewardDenomination)
+			}
+			if !rewardsPerAsset.IsPositive() {
+				return fmt.Errorf("rewardDenomination %s amount is not positive", rewardsPerAsset.RewardDenomination)
+			}
+
+			// we compare each rewardsPerAsset against the last avs address
+			lowRewardDenomination = rewardsPerAsset.RewardDenomination
+		}
+
+		return nil
+	}
+}
+
+func (cmr CompoundingRewards) RewardsOf(symbol string) CommonAVSRewards {
+	for _, assetRewards := range cmr {
+		if symbol == assetRewards.RewardDenomination {
+			return assetRewards.Rewards
+		}
+	}
+	return nil
+}
+
+func (cmr CompoundingRewards) Add(compoundingRewards ...CompoundingRewardsPerAsset) CompoundingRewards {
+	return cmr.safeAdd(compoundingRewards)
+}
+
+// safeAdd will perform addition of two CompoundingRewards sets. If both CompoundingRewards sets are
+// empty, then an empty set is returned. If only a single set is empty, the
+// other set is returned. Otherwise, the CompoundingRewards are compared in order of their
+// symbols and addition only occurs when the symbol match, otherwise
+// the CompoundingRewards is simply added to the sum assuming it's not zero.
+// nolint:dupl
+func (cmr CompoundingRewards) safeAdd(compoundingRewardsB CompoundingRewards) CompoundingRewards {
+	sum := ([]CompoundingRewardsPerAsset)(nil)
+	indexA, indexB := 0, 0
+	lenA, lenB := len(cmr), len(compoundingRewardsB)
+
+	for {
+		if indexA == lenA {
+			if indexB == lenB {
+				// return nil coins if both sets are empty
+				return sum
+			}
+
+			// return set B (excluding zero rewards) if set A is empty
+			return append(sum, removeZeroCompoundingRewards(compoundingRewardsB[indexB:])...)
+		} else if indexB == lenB {
+			// return set A (excluding zero rewards) if set B is empty
+			return append(sum, removeZeroCompoundingRewards(cmr[indexA:])...)
+		}
+
+		compoundingRewardA, compoundingRewardB := cmr[indexA], compoundingRewardsB[indexB]
+
+		switch strings.Compare(compoundingRewardA.RewardDenomination, compoundingRewardB.RewardDenomination) {
+		case -1: // coin A rewardDenomination < coin B rewardDenomination
+			if !compoundingRewardA.IsZeroRewards() {
+				sum = append(sum, compoundingRewardA)
+			}
+
+			indexA++
+
+		case 0: // coin A rewardDenomination = coin B rewardDenomination
+			res := compoundingRewardA.Add(compoundingRewardB)
+			if !res.IsZeroRewards() {
+				sum = append(sum, res)
+			}
+
+			indexA++
+			indexB++
+
+		case 1: // coin A rewardDenomination > coin B rewardDenomination
+			if !compoundingRewardB.IsZeroRewards() {
+				sum = append(sum, compoundingRewardB)
+			}
+
+			indexB++
+		}
+	}
+}
+
+// IsAnyNegative returns true if there is at least one coin of the compounding rewards whose amount
+// is negative; returns false otherwise. It returns false if the CompoundingRewards set
+// is empty too.
+func (cmr CompoundingRewards) IsAnyNegative() bool {
+	for _, avsReward := range cmr {
+		if CommonAVSRewards(avsReward.Rewards).IsAnyNegative() {
+			return true
+		}
+	}
+	return false
+}
+
+// negative returns a set of CompoundingRewardsPerAsset with all rewards amount negative.
+func (cmr CompoundingRewards) negative() CompoundingRewards {
+	res := make([]CompoundingRewardsPerAsset, 0, len(cmr))
+	for _, compoundingReward := range cmr {
+		res = append(res, CompoundingRewardsPerAsset{
+			RewardDenomination: compoundingReward.RewardDenomination,
+			Rewards:            CommonAVSRewards(compoundingReward.Rewards).negative(),
+		})
+	}
+	return res
+}
+
+// Sub subtracts a set of CompoundingRewards from another (adds the inverse).
+func (cmr CompoundingRewards) Sub(compoundingRewardsB CompoundingRewards) CompoundingRewards {
+	diff, hasNeg := cmr.SafeSub(compoundingRewardsB)
+	if hasNeg {
+		panic("negative compounding rewards")
+	}
+
+	return diff
+}
+
+// SafeSub performs the same arithmetic as Sub but returns a boolean if any
+// negative avs rewards amount was returned.
+func (cmr CompoundingRewards) SafeSub(avsRewardsB CompoundingRewards) (CompoundingRewards, bool) {
+	diff := cmr.safeAdd(avsRewardsB.negative())
+	return diff, diff.IsAnyNegative()
+}
+
+func (rd RewardsDelegationShare) IsZeroShares() bool {
+	if len(rd.Shares) == 0 {
+		return true
+	}
+	return rd.Shares.IsZero()
+}
+
+func (rd RewardsDelegationShare) IsPositive() bool {
+	return !rd.IsZeroShares() && rd.Shares.IsAllPositive()
+}
+
+func (rd RewardsDelegationShare) Add(delegationShareB RewardsDelegationShare) RewardsDelegationShare {
+	if rd.OperatorAddr != delegationShareB.OperatorAddr {
+		return rd
+	}
+	return RewardsDelegationShare{
+		OperatorAddr: rd.OperatorAddr,
+		Shares:       rd.Shares.Add(delegationShareB.Shares...),
+	}
+}
+
+// Sorting
+
+var _ sort.Interface = RewardsDelegationShares{}
+
+// Len implements sort.Interface for CommonAVSRewards
+func (rds RewardsDelegationShares) Len() int { return len(rds) }
+
+// Less implements sort.Interface for CommonAVSRewards
+func (rds RewardsDelegationShares) Less(i, j int) bool {
+	return rds[i].OperatorAddr < rds[j].OperatorAddr
+}
+
+// Swap implements sort.Interface for CommonAVSRewards
+func (rds RewardsDelegationShares) Swap(i, j int) { rds[i], rds[j] = rds[j], rds[i] }
+
+// Sort is a helper function to sort the set of CommonAVSRewards in-place.
+func (rds RewardsDelegationShares) Sort() RewardsDelegationShares {
+	sort.Sort(rds)
+	return rds
+}
+
+// NewRewardsDelegationShares constructs a new RewardsDelegationShare set.
+// The provided RewardsDelegationShare will be sanitized by removing
+// zero rewards and sorting the RewardsDelegationShare set. A panic will occur if the
+// RewardsDelegationShare set is not valid.
+func NewRewardsDelegationShares(delegationShares ...RewardsDelegationShare) RewardsDelegationShares {
+	newRewardDelegationShares := sanitizeRewardsDelegationShares(delegationShares)
+	if err := newRewardDelegationShares.Validate(); err != nil {
+		panic(fmt.Errorf("invalid reward delegation shares set %s: %w", newRewardDelegationShares, err))
+	}
+
+	return newRewardDelegationShares
+}
+
+func sanitizeRewardsDelegationShares(delegationShares []RewardsDelegationShare) RewardsDelegationShares {
+	// remove zeroes
+	newDelegationShares := removeZeroRewardsDelegationShare(delegationShares)
+	if len(newDelegationShares) == 0 {
+		return RewardsDelegationShares{}
+	}
+
+	return newDelegationShares.Sort()
+}
+
+func removeZeroRewardsDelegationShare(delegationShares RewardsDelegationShares) RewardsDelegationShares {
+	result := make([]RewardsDelegationShare, 0, len(delegationShares))
+
+	for _, delegationShare := range delegationShares {
+		if !delegationShare.IsZeroShares() {
+			result = append(result, delegationShare)
+		}
+	}
+
+	return result
+}
+
+// Validate checks that the RewardsDelegationShares are sorted, have positive shares, with a unique
+// operator address (i.e no duplicates). Otherwise, it returns an error.
+// we don't validate the operator address here, because the input operator addresses are always valid when
+// handling reward distribution.
+func (rds RewardsDelegationShares) Validate() error {
+	switch len(rds) {
+	case 0:
+		return nil
+
+	case 1:
+		if !rds[0].IsPositive() {
+			return fmt.Errorf("reward delegation shares is not positive,operator:%s,shares:%s", rds[0].OperatorAddr, rds[0].Shares)
+		}
+		return nil
+	default:
+		// check single delegationShares case
+		if err := (RewardsDelegationShares{rds[0]}).Validate(); err != nil {
+			return err
+		}
+
+		lowOperator := rds[0].OperatorAddr
+		for _, delegationShares := range rds[1:] {
+			if delegationShares.OperatorAddr <= lowOperator {
+				return fmt.Errorf("operator address %s is not sorted", delegationShares.OperatorAddr)
+			}
+			if !delegationShares.IsPositive() {
+				return fmt.Errorf("reward delegation shares %s amount is not positive", delegationShares.OperatorAddr)
+			}
+
+			// we compare each delegationShares against the last operator address
+			lowOperator = delegationShares.OperatorAddr
+		}
+
+		return nil
+	}
+}
+
+// Add adds two sets of RewardsDelegationShare.
+//
+// NOTE: Add operates under the invariant that RewardsDelegationShare are sorted by
+// avsAddr.
+//
+// CONTRACT: Add will never return RewardsDelegationShares where one RewardsDelegationShare has a non-positive
+// rewards. In otherwords, IsValid will always return true.
+func (rds RewardsDelegationShares) Add(delegationShares ...RewardsDelegationShare) RewardsDelegationShares {
+	return rds.safeAdd(delegationShares)
+}
+
+// safeAdd will perform addition of two RewardsDelegationShares sets. If both RewardsDelegationShares sets are
+// empty, then an empty set is returned. If only a single set is empty, the
+// other set is returned. Otherwise, the RewardsDelegationShares are compared in order of their
+// operator address and addition only occurs when the address match, otherwise
+// the RewardsDelegationShares is simply added to the sum assuming it's not zero.
+// nolint:dupl
+func (rds RewardsDelegationShares) safeAdd(delegationSharesB RewardsDelegationShares) RewardsDelegationShares {
+	sum := ([]RewardsDelegationShare)(nil)
+	indexA, indexB := 0, 0
+	lenA, lenB := len(rds), len(delegationSharesB)
+
+	for {
+		if indexA == lenA {
+			if indexB == lenB {
+				// return nil coins if both sets are empty
+				return sum
+			}
+
+			// return set B (excluding zero shares) if set A is empty
+			return append(sum, removeZeroRewardsDelegationShare(delegationSharesB[indexB:])...)
+		} else if indexB == lenB {
+			// return set A (excluding zero shares) if set B is empty
+			return append(sum, removeZeroRewardsDelegationShare(rds[indexA:])...)
+		}
+
+		delegationShareA, delegationShareB := rds[indexA], delegationSharesB[indexB]
+
+		switch strings.Compare(delegationShareA.OperatorAddr, delegationShareB.OperatorAddr) {
+		case -1: // operator A address < operator B address
+			if !delegationShareA.IsZeroShares() {
+				sum = append(sum, delegationShareA)
+			}
+
+			indexA++
+
+		case 0: // operator A address == operator B address
+			res := delegationShareA.Add(delegationShareB)
+			if !res.IsZeroShares() {
+				sum = append(sum, res)
+			}
+
+			indexA++
+			indexB++
+
+		case 1: // operator A address > operator B address
+			if !delegationShareB.IsZeroShares() {
+				sum = append(sum, delegationShareB)
+			}
+
+			indexB++
+		}
+	}
+}
+
+// negative returns a set of RewardsDelegationShare with all rewards delegation shares negative.
+func (rds RewardsDelegationShares) negative() RewardsDelegationShares {
+	res := make([]RewardsDelegationShare, 0, len(rds))
+	for _, delegationShare := range rds {
+		res = append(res, RewardsDelegationShare{
+			OperatorAddr: delegationShare.OperatorAddr,
+			Shares:       negativeDecCoins(delegationShare.Shares),
+		})
+	}
+	return res
+}
+
+// IsAnyNegative returns true if there is at least one coin of the delegation share whose amount
+// is negative; returns false otherwise. It returns false if the RewardsDelegationShares set
+// is empty too.
+func (rds RewardsDelegationShares) IsAnyNegative() bool {
+	for _, avsReward := range rds {
+		if avsReward.Shares.IsAnyNegative() {
+			return true
+		}
+	}
+	return false
+}
+
+func (rds RewardsDelegationShares) IsZeroShares() bool {
+	for _, sharePerOperator := range rds {
+		if !sharePerOperator.IsZeroShares() {
+			return false
+		}
+	}
+	return true
+}
+
+// Sub subtracts a set of RewardsDelegationShares from another (adds the inverse).
+func (rds RewardsDelegationShares) Sub(delegationSharesB RewardsDelegationShares) RewardsDelegationShares {
+	diff, hasNeg := rds.SafeSub(delegationSharesB)
+	if hasNeg {
+		panic("negative rewards delegation shares")
+	}
+
+	return diff
+}
+
+// SafeSub performs the same arithmetic as Sub but returns a boolean if any
+// negative delegation shares were returned.
+func (rds RewardsDelegationShares) SafeSub(delegationSharesB RewardsDelegationShares) (RewardsDelegationShares, bool) {
+	diff := rds.safeAdd(delegationSharesB.negative())
+	return diff, diff.IsAnyNegative()
+}
+
+func (rds RewardsDelegationShares) DelegationSharesOf(operator string) sdk.DecCoins {
+	for _, delegationShares := range rds {
+		if operator == delegationShares.OperatorAddr {
+			return delegationShares.Shares
+		}
+	}
+	return nil
+}
+
+func (srp StakerRewardParams) Validate() error {
+	if srp.RedelegateReward {
+		_, err := sdk.AccAddressFromBech32(srp.RedelegateOperatorAddr)
+		if err != nil {
+			return fmt.Errorf("invalid redelegated operator address:%s,err:%s", srp.RedelegateOperatorAddr, err)
+		}
+	}
+	return nil
+}
+
+func DefaultStakerClaimedRewards() StakerClaimedRewards {
+	return StakerClaimedRewards{
+		OutstandingRewards:         sdk.NewDecCoins(),
+		WithdrawnRewards:           sdk.NewDecCoins(),
+		HistoricalTotalRewards:     sdk.NewDecCoins(),
+		DelegationRewardsShares:    NewRewardsDelegationShares(),
+		PendingUndelegationRewards: sdk.NewDecCoins(),
+		PendingSlashedRewards:      sdk.NewDecCoins(),
+		WithdrawableRewards:        sdk.NewDecCoins(),
+	}
+}
+
+func UpdateDecCoins(valueToUpdate sdk.DecCoins, deltaValue sdk.DecCoins) (sdk.DecCoins, error) {
+	if len(deltaValue) == 0 {
+		return valueToUpdate, nil
+	}
+	sum := valueToUpdate.Add(deltaValue...)
+	if sum.IsAnyNegative() {
+		return valueToUpdate, fmt.Errorf(
+			"decCoins have negative values after the update, valueToUpdate:%s, deltaValue:%s",
+			valueToUpdate, deltaValue,
+		)
+	}
+	return sum, nil
 }
 
 func ScaleIntByDecimals(amount sdkmath.Int, decimals uint32) sdk.Dec {
@@ -439,4 +941,15 @@ func TruncateSDKDec(dec sdk.Dec, decimal uint32) sdk.Dec {
 
 	// Divide back by the multiplier to restore the decimal point at the correct position
 	return sdk.NewDecFromInt(truncated).QuoInt(multiplier)
+}
+
+// ValidateRewardAssetDenomination is the default validation function for the denomination of reward asset.
+func ValidateRewardAssetDenomination(denomination string) error {
+	// check if it contains the combined delimiter `/`, because denomination might be used in
+	// a combined key.
+	if strings.IndexByte(denomination, oracletypes.DelimiterForCombinedKey) >= 0 {
+		return fmt.Errorf("invalid denomination %q: contains combined delimiter %q",
+			denomination, string(oracletypes.DelimiterForCombinedKey))
+	}
+	return sdk.ValidateDenom(denomination)
 }

@@ -9,7 +9,6 @@ import (
 
 type DelegationOrUndelegationParams struct {
 	ClientChainID   uint64
-	Action          assetstype.CrossChainOpType
 	AssetsAddress   []byte
 	OperatorAddress sdk.AccAddress
 	StakerAddress   []byte
@@ -19,11 +18,17 @@ type DelegationOrUndelegationParams struct {
 
 	// indicator for instant unbonding, default is false.
 	InstantUnbonding bool
+	// indicates whether it's a delegation/undelegation regarding reward.
+	RewardAsset           bool
+	RewardAssetID         string
+	RewardStakerID        string
+	ReduceDelegationShare func(ctx sdk.Context, stakerID, assetID string,
+		operatorAccAddr sdk.AccAddress, instantSlashRatio sdk.Dec, amount sdkmath.Int, preOperatorAssetState assetstype.OperatorAssetInfo) ([]UndelegationAmountPerAVS, sdkmath.Int, error)
+	RewardUndelegations []UndelegationAmountPerAVS
 }
 
 func NewDelegationOrUndelegationParams(
 	clientChainID uint64,
-	action assetstype.CrossChainOpType,
 	assetsAddress []byte,
 	operatorAddress sdk.AccAddress,
 	stakerAddress []byte,
@@ -33,7 +38,6 @@ func NewDelegationOrUndelegationParams(
 ) *DelegationOrUndelegationParams {
 	return &DelegationOrUndelegationParams{
 		ClientChainID:    clientChainID,
-		Action:           action,
 		AssetsAddress:    assetsAddress,
 		OperatorAddress:  operatorAddress,
 		StakerAddress:    stakerAddress,

@@ -59,6 +59,27 @@ message MsgDelegation {
   DelegationIncOrDecInfo base_info = 2;
 }
 
+// UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.
+// We need to track the source AVS of the rewards when handling reward undelegations.
+message UndelegationAmountPerAVS {
+  // avs_address is the AVS address the rewards come from.
+  string avs_address = 1;
+  // amount is the undelegated amount from specific AVS.
+  string amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // actual_completed_amount is the actual amount of the asset that has been
+  // undelegated so far. This value is provisional and may decrease if a slashing event
+  // occurs before completion. So it may be lower than the amount in the case of slashing.
+  string actual_completed_amount = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
 // UndelegationRecord is the undelegation record, keyed by a RecordKey.
 message UndelegationRecord {
   // staker_id is the staker id.
@@ -86,7 +107,8 @@ message UndelegationRecord {
     (gogoproto.nullable) = false
   ];
   // actual_completed_amount is the actual amount of the asset that has been
-  // undelegated so far. it may be lower than the amount in the case of slashing.
+  // undelegated so far. This value is provisional and may decrease if a slashing event
+  // occurs before completion. So it may be lower than the amount in the case of slashing.
   string actual_completed_amount = 10 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
@@ -102,6 +124,11 @@ message UndelegationRecord {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // reward_asset indicates whether the undelegation is for rewards
+  bool reward_asset = 14;
+  // reward_undelegations represents reward undelegation amounts from different AVSs.
+  // This field is only populated when `reward_asset` is true.
+  repeated UndelegationAmountPerAVS reward_undelegations = 15 [(gogoproto.nullable) = false];
 }
 
 // UndelegationRecordKeyList is the list of undelegation records.

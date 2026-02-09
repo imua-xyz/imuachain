@@ -18,7 +18,7 @@ func NewGenesis(
 	params Params,
 	associations []StakerToOperator,
 	delegationStates []DelegationStates,
-	stakersByOperator []StakersByOperator,
+	stakersByOperator []string,
 	undelegations []UndelegationAndHoldCount,
 ) *GenesisState {
 	return &GenesisState{
@@ -108,7 +108,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 		}
 
 		// check that there is no nil value provided.
-		if info.States.UndelegatableShare.IsNil() || info.States.WaitUndelegationAmount.IsNil() {
+		if info.States.UndelegatableShare.IsNil() || info.States.PendingUndelegationAmount.IsNil() {
 			return ErrInvalidGenesisData.Wrapf(
 				"ValidateDelegationStates: nil delegation state for %s: %+v",
 				info.Key, info,
@@ -116,7 +116,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 		}
 
 		// check for negative values.
-		if info.States.UndelegatableShare.IsNegative() || info.States.WaitUndelegationAmount.IsNegative() {
+		if info.States.UndelegatableShare.IsNegative() || info.States.PendingUndelegationAmount.IsNegative() {
 			return ErrInvalidGenesisData.Wrapf(
 				"ValidateDelegationStates: negative delegation state  for %s: %+v",
 				info.Key, info,
@@ -136,9 +136,9 @@ func (gs GenesisState) ValidateDelegationStates() error {
 }
 
 func (gs GenesisState) ValidateStakerList() error {
-	validationFunc := func(_ int, stakersByOperator StakersByOperator) error {
-		// validate the key
-		stringList, err := assetstypes.ParseJoinedStoreKey([]byte(stakersByOperator.Key), 2)
+	validationFunc := func(_ int, stakersByOperator string) error {
+		// validate the key - each Key contains operator + asset id + staker id
+		stringList, err := utils.ParseJoinedKeyWithCount([]byte(stakersByOperator), 3)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateStakerList: %s", err.Error())
 		}
@@ -156,31 +156,27 @@ func (gs GenesisState) ValidateStakerList() error {
 				stringList[1],
 			)
 		}
-		// validate the staker list
-		stakerValidationFunc := func(_ int, stakerID string) error {
-			_, stakerClientChainID, err := assetstypes.ValidateID(stakerID, true, false)
-			if err != nil {
-				return ErrInvalidGenesisData.Wrapf(
-					"ValidateStakerList: invalid stakerID: %s",
-					stakerID,
-				)
-			}
-			if stakerClientChainID != assetClientChainID {
-				return ErrInvalidGenesisData.Wrapf("ValidateStakerList: the client chain layerZero IDs of the staker and asset are different, key:%s stakerID:%s", stakersByOperator.Key, stakerID)
-			}
-			return nil
-		}
-		seenStakerFunc := func(stakerID string) (string, struct{}) {
-			return stakerID, struct{}{}
-		}
-		_, err = utils.CommonValidation(stakersByOperator.Stakers, seenStakerFunc, stakerValidationFunc)
+		// validate the staker ID (extracted from the key)
+		stakerID := stringList[2]
+		_, stakerClientChainID, err := assetstypes.ValidateID(stakerID, true, false)
 		if err != nil {
-			return err
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateStakerList: invalid stakerID: %s",
+				stakerID,
+			)
+		}
+		if stakerClientChainID != assetClientChainID {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerList: the client chain layerZero IDs of the staker and asset are different, key:%s stakerID:%s", stakersByOperator, stakerID)
 		}
 		return nil
 	}
-	seenFieldValueFunc := func(info StakersByOperator) (string, struct{}) {
-		return info.Key, struct{}{}
+	seenFieldValueFunc := func(info string) (string, struct{}) {
+		// given an operator o, asset ID a, staker s, the key is o/a/s
+		// the following are possible:
+		// o1/a1/s1, o1/a1/s2, o1/a2/s1, o1/a2/s2, o2/a1/s1, o2/a1/s1
+		// thus, the only invalid form would be repitition of the overall
+		// o1/a1/s1 combination.
+		return info, struct{}{}
 	}
 	_, err := utils.CommonValidation(gs.StakersByOperator, seenFieldValueFunc, validationFunc)
 	if err != nil {

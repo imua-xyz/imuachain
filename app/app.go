@@ -580,10 +580,11 @@ func NewImuachainApp(
 		keys[delegationTypes.StoreKey], appCodec, authAddrString,
 		app.AssetsKeeper,
 		delegationTypes.VirtualSlashKeeper{},
-		&app.OperatorKeeper,
+		&app.OperatorKeeper, // intentionally a pointer, since not yet initialized.
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.EpochsKeeper,
+		&app.DistrKeeper, // intentionally a pointer, since not yet initialized.
 	)
 
 	// the dogfood module is the first AVS. it receives slashing calls from either x/slashing
@@ -722,12 +723,13 @@ func NewImuachainApp(
 	app.OperatorKeeper = operatorKeeper.NewKeeper(
 		keys[operatorTypes.StoreKey], appCodec,
 		app.AssetsKeeper,
-		&app.DelegationKeeper, // intentionally a pointer, since not yet initialized.
+		&app.DelegationKeeper,
 		&app.OracleKeeper,
 		&app.AVSManagerKeeper,
 		&app.StakingKeeper,
 		delegationTypes.VirtualSlashKeeper{},
 		app.EpochsKeeper,
+		&app.DistrKeeper, // intentionally a pointer, since not yet initialized.
 		authAddrString,
 	)
 	// the fee distribution keeper is used to allocate reward to imualidators on epoch-basis,
@@ -746,6 +748,8 @@ func NewImuachainApp(
 		&app.AVSManagerKeeper,
 		app.AssetsKeeper,
 		&app.DelegationKeeper,
+		delegationTypes.VirtualSlashKeeper{},
+		&app.OracleKeeper,
 	)
 
 	app.Erc20Keeper = erc20keeper.NewKeeper(

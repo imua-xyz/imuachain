@@ -145,6 +145,9 @@ func (k *Keeper) IterateUndelegationsByOperator(
 	ctx sdk.Context, operator string, heightFilter *uint64, isUpdate bool,
 	opFunc func(undelegation *types.UndelegationRecord) error,
 ) error {
+	if opFunc == nil {
+		return types.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixUndelegationInfo)
 	operatorAccAddress := sdk.MustAccAddressFromBech32(operator)
 	iterator := sdk.KVStorePrefixIterator(store, operatorAccAddress)
@@ -240,6 +243,9 @@ func (k *Keeper) IterateUndelegationsByStakerAndAsset(
 	ctx sdk.Context, stakerID, assetID string, isUpdate bool,
 	opFunc func(undelegationKey []byte, undelegation *types.UndelegationRecord) (bool, error),
 ) error {
+	if opFunc == nil {
+		return types.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixStakerUndelegationInfo)
 	iterator := sdk.KVStorePrefixIterator(store, types.IteratorPrefixForStakerAsset(stakerID, assetID))
 	defer iterator.Close()
@@ -324,6 +330,25 @@ func (k *Keeper) GetCompletableUndelegations(ctx sdk.Context, applyLimit bool) (
 	return records, nil
 }
 
+// IncrementUndelegationHoldCount increments the hold count for the undelegation record key.
+func (k Keeper) IncrementUndelegationHoldCount(ctx sdk.Context, recordKey []byte) error {
+	prev := k.GetUndelegationHoldCount(ctx, recordKey)
+	if prev == math.MaxUint64 {
+		return types.ErrCannotIncHoldCount
+	}
+	now := prev + 1
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.GetUndelegationOnHoldKey(recordKey), sdk.Uint64ToBigEndian(now))
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeUndelegationHoldCountChanged,
+			sdk.NewAttribute(types.AttributeKeyRecordID, hexutil.Encode(recordKey)),
+			sdk.NewAttribute(types.AttributeKeyHoldCount, fmt.Sprintf("%d", now)),
+		),
+	)
+	return nil
+}
+
 // IteratePendingUndelegations : This function iterates through all undelegations.
 // If the `isCompletable` flag is true, it retrieves all completable undelegations,
 // including the undelegations that are expired and not held.
@@ -335,6 +360,9 @@ func (k *Keeper) IteratePendingUndelegations(
 	ctx sdk.Context, isCompletable bool, epochIdentifier string, currentEpoch int64,
 	opFunc func(recordKey []byte, undelegationRecord *types.UndelegationRecord) (bool, error),
 ) error {
+	if opFunc == nil {
+		return types.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	pendingUndelegationStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixPendingUndelegations)
 	undelegationStore := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixUndelegationInfo)
 
@@ -390,25 +418,6 @@ func (k *Keeper) IteratePendingUndelegations(
 			break
 		}
 	}
-	return nil
-}
-
-// IncrementUndelegationHoldCount increments the hold count for the undelegation record key.
-func (k Keeper) IncrementUndelegationHoldCount(ctx sdk.Context, recordKey []byte) error {
-	prev := k.GetUndelegationHoldCount(ctx, recordKey)
-	if prev == math.MaxUint64 {
-		return types.ErrCannotIncHoldCount
-	}
-	now := prev + 1
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetUndelegationOnHoldKey(recordKey), sdk.Uint64ToBigEndian(now))
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			types.EventTypeUndelegationHoldCountChanged,
-			sdk.NewAttribute(types.AttributeKeyRecordID, hexutil.Encode(recordKey)),
-			sdk.NewAttribute(types.AttributeKeyHoldCount, fmt.Sprintf("%d", now)),
-		),
-	)
 	return nil
 }
 

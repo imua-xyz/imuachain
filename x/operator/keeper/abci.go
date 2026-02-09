@@ -13,7 +13,7 @@ import (
 // the end of epoch.
 func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier string, epochNumber int64, isForSlash bool) error {
 	// get assets supported by the AVS
-	avsAssetsList, err := k.avsKeeper.GetAVSAssetsList(ctx, avsAddr)
+	avsAssetsList, avsAssetsMap, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddr)
 	if err != nil {
 		return err
 	}
@@ -55,11 +55,16 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		if err != nil {
 			return err
 		}
+		// calculate and store the USD value from compounding rewards
+		rewardsUSDValue, err := k.distributionKeeper.UpdateAllRewardsUSDForOperator(ctx, avsAddr, operator, avsAssetsMap)
+		if err != nil {
+			return err
+		}
 		optedUSDValues.SelfUSDValue = stakingInfo.SelfStaking
-		optedUSDValues.TotalUSDValue = stakingInfo.Staking
+		optedUSDValues.TotalUSDValue = stakingInfo.Staking.Add(rewardsUSDValue)
 		// check if self USD value is more than the minimum self delegation.
 		if stakingInfo.SelfStaking.GTE(minimumSelfDelegation) {
-			optedUSDValues.ActiveUSDValue = stakingInfo.Staking
+			optedUSDValues.ActiveUSDValue = optedUSDValues.TotalUSDValue
 			avsVotingPower = avsVotingPower.Add(optedUSDValues.TotalUSDValue)
 		}
 

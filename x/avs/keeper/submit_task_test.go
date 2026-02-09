@@ -29,9 +29,8 @@ func (suite *AVSTestSuite) prepareOperator() {
 	registerReq := &operatorTypes.RegisterOperatorReq{
 		FromAddress: suite.operatorAddr.String(),
 		Info: &operatorTypes.OperatorInfo{
-			EarningsAddr:     suite.operatorAddr.String(),
-			ApproveAddr:      suite.operatorAddr.String(),
-			OperatorMetaInfo: suite.operatorAddr.String(),
+			OperatorAddr: suite.operatorAddr.String(),
+			Description:  stakingtypes.NewDescription(suite.operatorAddr.String(), "", "", "", ""),
 			Commission: stakingtypes.Commission{
 				CommissionRates: stakingtypes.CommissionRates{
 					Rate:          sdk.ZeroDec(),
@@ -78,7 +77,7 @@ func (suite *AVSTestSuite) prepareDelegation(isDelegation bool, assetAddr common
 	}
 	var err error
 	if isDelegation {
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
 	} else {
 		err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, param)
 	}

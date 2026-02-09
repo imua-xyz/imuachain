@@ -30,11 +30,11 @@ func init() {
 const (
 	prefixParams byte = iota + 1
 	prefixAVSRewardAssets
-	prefixAVSRewardAssetBySymbol
+	prefixAVSRewardAssetByDenomination
 	prefixAVSRewardParam
 	prefixFeePools
 	prefixAVSRewardDistribution
-	prefixOperatorOutstandingRewards
+	prefixOperatorUnclaimedRewards
 	prefixDelegatorWithdrawAddr
 	prefixStakeChangeDelegations
 	prefixDelegationStartingInfo
@@ -43,6 +43,7 @@ const (
 	prefixOperatorCommission
 	prefixOperatorSlashEvent
 	prefixStakerClaimedRewards
+	prefixStakerRewardParams
 )
 
 var (
@@ -54,12 +55,10 @@ var (
 	// The reward assets should be registered by the AVS.
 	KeyPrefixAVSRewardAssets = []byte{prefixAVSRewardAssets}
 
-	// KeyPrefixAVSRewardAssetBySymbol :
-	// avsAddr + '/' + symbol -> assetID
-	// It's used to query the reward asset by its symbol, since the symbol is used as the denomination.
-	// Therefore, we don't allow an AVS to use the same reward token from different chains,
-	// as they would have the same symbol.
-	KeyPrefixAVSRewardAssetBySymbol = []byte{prefixAVSRewardAssetBySymbol}
+	// KeyPrefixAVSRewardAssetByDenomination :
+	// avsAddr + '/' + denomination -> assetID
+	// It's used to query the reward asset by its denomination.
+	KeyPrefixAVSRewardAssetByDenomination = []byte{prefixAVSRewardAssetByDenomination}
 
 	// KeyPrefixAVSRewardParam :
 	// avsAddr -> types.AVSRewardParam
@@ -78,10 +77,10 @@ var (
 	// AVSs in the current epoch.
 	KeyPrefixAVSRewardDistribution = []byte{prefixAVSRewardDistribution}
 
-	// KeyPrefixOperatorOutstandingRewards :
-	// operator + '/' + AVSAddr -> OperatorOutstandingRewards
-	// key for outstanding rewards, it will track multiple outstanding rewards from different AVSs
-	KeyPrefixOperatorOutstandingRewards = []byte{prefixOperatorOutstandingRewards}
+	// KeyPrefixOperatorUnclaimedRewards :
+	// operator + '/' + AVSAddr -> OperatorUnclaimedRewards
+	// key for unclaimed rewards, it will track multiple unclaimed rewards from different AVSs
+	KeyPrefixOperatorUnclaimedRewards = []byte{prefixOperatorUnclaimedRewards}
 
 	// KeyPrefixStakeChangeDelegations :
 	// epochIdentifier + '/' + operatorAddr + '/' + assetID -> DelegationChangeInfo
@@ -159,4 +158,7 @@ var (
 	// shared. This part will be decided when we actually use it in the future, and the issue only needs to be
 	// addressed when distributing Imua rewards to stakers with address incompatibility on the chain.
 	KeyPrefixDelegatorWithdrawAddr = []byte{prefixDelegatorWithdrawAddr}
+
+	// KeyPrefixStakerRewardParams stakerID -> StakerRewardParams
+	KeyPrefixStakerRewardParams = []byte{prefixStakerRewardParams}
 )

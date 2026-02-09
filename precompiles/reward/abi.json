@@ -96,34 +96,52 @@
     "inputs":
     [
       {
-        "internalType": "uint32",
-        "name": "clientChainID",
-        "type": "uint32"
-      },
-      {
-        "internalType": "bytes",
-        "name": "token",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint8",
-        "name": "decimals",
-        "type": "uint8"
-      },
-      {
-        "internalType": "string",
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "symbol",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "metaData",
-        "type": "string"
+        "components":
+        [
+          {
+            "internalType": "uint32",
+            "name": "clientChainID",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "token",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint8",
+            "name": "decimals",
+            "type": "uint8"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "metaData",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "denomination",
+            "type": "string"
+          },
+          {
+            "internalType": "uint8",
+            "name": "denominationExponent",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct RegisterRewardTokenParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
     "name": "registerRewardToken",
@@ -146,7 +164,7 @@
         [
           {
             "internalType": "string",
-            "name": "symbol",
+            "name": "denomination",
             "type": "string"
           },
           {
@@ -183,7 +201,7 @@
             [
               {
                 "internalType": "string",
-                "name": "symbol",
+                "name": "denomination",
                 "type": "string"
               },
               {
@@ -291,6 +309,101 @@
       }
     ],
     "name": "setOperatorRewardProportions",
+    "outputs":
+    [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "uint32",
+        "name": "clientChainLzID",
+        "type": "uint32"
+      },
+      {
+        "internalType": "bytes",
+        "name": "stakerAddress",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bool",
+        "name": "redelegateReward",
+        "type": "bool"
+      },
+      {
+        "internalType": "string",
+        "name": "redelegateOperator",
+        "type": "string"
+      }
+    ],
+    "name": "setStakerRewardParams",
+    "outputs":
+    [
+      {
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "components":
+        [
+          {
+            "internalType": "uint32",
+            "name": "clientChainLzID",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "rewardAssetChainLzID",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "assetAddress",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "stakerAddress",
+            "type": "bytes"
+          },
+          {
+            "internalType": "string",
+            "name": "operatorAddr",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "opAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "instantUnbond",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct UndelegateRewardParams",
+        "name": "params",
+        "type": "tuple"
+      }
+    ],
+    "name": "undelegateReward",
     "outputs":
     [
       {
@@ -419,29 +532,37 @@
     "inputs":
     [
       {
-        "internalType": "bool",
-        "name": "doClaim",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint32",
-        "name": "clientChainLzID",
-        "type": "uint32"
-      },
-      {
-        "internalType": "bytes",
-        "name": "stakerAddress",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bytes",
-        "name": "receiptAddress",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "opAmount",
-        "type": "uint256"
+        "components":
+        [
+          {
+            "internalType": "bool",
+            "name": "doClaim",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint32",
+            "name": "clientChainLzID",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "stakerAddress",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "receiptAddress",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "opAmount",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct WithdrawIMUATokenRewardParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
     "name": "withdrawIMUATokenReward",
@@ -470,34 +591,42 @@
     "inputs":
     [
       {
-        "internalType": "bool",
-        "name": "doClaim",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint32",
-        "name": "clientChainLzID",
-        "type": "uint32"
-      },
-      {
-        "internalType": "uint32",
-        "name": "rewardAssetChainLzID",
-        "type": "uint32"
-      },
-      {
-        "internalType": "bytes",
-        "name": "assetAddress",
-        "type": "bytes"
-      },
-      {
-        "internalType": "bytes",
-        "name": "stakerAddress",
-        "type": "bytes"
-      },
-      {
-        "internalType": "uint256",
-        "name": "opAmount",
-        "type": "uint256"
+        "components":
+        [
+          {
+            "internalType": "bool",
+            "name": "doClaim",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint32",
+            "name": "clientChainLzID",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "rewardAssetChainLzID",
+            "type": "uint32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "assetAddress",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "stakerAddress",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "opAmount",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct WithdrawRewardParams",
+        "name": "params",
+        "type": "tuple"
       }
     ],
     "name": "withdrawReward",

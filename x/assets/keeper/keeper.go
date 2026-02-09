@@ -46,18 +46,6 @@ func NewKeeper(
 	}
 }
 
-// GetAllOperatorAssetOptedInMiddleWare This function should be implemented in the operator opt-in module
-func (k Keeper) GetAllOperatorAssetOptedInMiddleWare(sdk.Address) (optedInInfos map[string][]sdk.Address, err error) {
-	// TODO implement me
-	panic("implement me")
-}
-
-// SetOperatorAssetOptedInMiddleWare This function should be implemented in the operator opt-in module
-func (k Keeper) SetOperatorAssetOptedInMiddleWare(sdk.Address, map[string]sdk.Address) (middleWares []sdk.Address, err error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 // IAssets interface will be implemented by assets keeper
 type IAssets interface {
 	SetClientChainInfo(ctx sdk.Context, info *assetstype.ClientChainInfo) (bool, error)
@@ -74,7 +62,7 @@ type IAssets interface {
 		ctx sdk.Context, stakerID string, assetID string, changeAmount assetstype.DeltaStakerSingleAsset,
 	) (*assetstype.StakerAssetInfo, error)
 
-	GetOperatorAssetInfos(ctx sdk.Context, operatorAddr string, assetsFilter map[string]interface{}) (assetsInfo []assetstype.AssetByID, err error)
+	GetOperatorAssetInfos(ctx sdk.Context, operatorAddr string, assetsFilter map[string]struct{}) (assetsInfo []assetstype.AssetByID, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
 	UpdateOperatorAssetState(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string, changeAmount assetstype.DeltaOperatorSingleAsset) (stateBeforeUpdate assetstype.OperatorAssetInfo, err error)
 	PerformDepositOrWithdraw(ctx sdk.Context, params *DepositWithdrawParams) (finalDepositAmount sdkmath.Int, err error)

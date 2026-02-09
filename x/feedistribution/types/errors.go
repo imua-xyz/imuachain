@@ -92,8 +92,22 @@ var (
 		ModuleName, 18,
 		"the input client command arguments are invalid",
 	)
-	ErrFailedToSplitRewards = errorsmod.Register(
+	ErrFailedToRedelegateRewards = errorsmod.Register(
 		ModuleName, 19,
-		"failed to split the rewards to multiple assets",
+		"failed to redelegate rewards",
+	)
+
+	ErrFailedToUndelegateRewards = errorsmod.Register(
+		ModuleName, 20,
+		"failed to undelegate rewards",
+	)
+
+	ErrFailedToCompleteRewardsUndelegation = errorsmod.Register(
+		ModuleName, 21,
+		"failed to complete rewards undelegation",
+	)
+	ErrFailedToSlashUnclaimedRewards = errorsmod.Register(
+		ModuleName, 22,
+		"failed to slash unclaimed rewards",
 	)
 )

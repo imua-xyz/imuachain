@@ -12,10 +12,11 @@ const (
 	AttributeKeyOperatorTotalReward    = "operator_total_reward"
 	AttributeKeyOperatorCommission     = "operator_commission"
 	// EventTypeWithdrawRewards : withdraw the reward for a staker
-	EventTypeWithdrawRewards             = "withdraw_rewards"
-	EventTypeWithdrawRewardFromAVS       = "withdraw_reward_from_avs"
-	AttributeKeyWithdrawDecCoinsFromAVS  = "withdraw_dec_coins_from_avs"
-	AttributeKeyStakerOutstandingRewards = "staker_outstanding_rewards"
+	EventTypeWithdrawRewards              = "withdraw_rewards"
+	EventTypeWithdrawRewardFromAVS        = "withdraw_reward_from_avs"
+	AttributeKeyWithdrawDecCoinsFromAVS   = "withdraw_dec_coins_from_avs"
+	AttributeKeyStakerOutstandingRewards  = "staker_outstanding_rewards"
+	AttributeKeyStakerWithdrawableRewards = "staker_withdrawable_rewards"
 
 	// EventTypeWithdrawCommission :  withdraw the commission for an operator
 	EventTypeWithdrawCommission           = "withdraw_commission"
@@ -34,7 +35,9 @@ const (
 	AttributeKeyRewardAllocationTotal = "reward_allocation_total"
 
 	// EventTypeNewAVSRewardAsset : new avs reward asset
-	EventTypeNewAVSRewardAsset = "avs_reward_asset_added"
+	EventTypeNewAVSRewardAsset       = "avs_reward_asset_added"
+	AttributeKeyDenomination         = "reward_denomination"
+	AttributeKeyDenominationExponent = "reward_denomination_exponent"
 
 	// EventTypeUpdatedRewardAssetMetaInfo : reward asset meta info update
 	EventTypeUpdatedRewardAssetMetaInfo = "reward_asset_meta_info_updated"
@@ -56,7 +59,7 @@ const (
 )
 
 func (p *AVSRewardParam) ToEventString() string {
-	return fmt.Sprintf("%s:%v,%s:%v",
+	return fmt.Sprintf("%s:%t,%s:%t",
 		AttributeKeyCustomRewardInflation, p.CustomRewardInflation,
 		AttributeKeyCustomOperatorRatio, p.CustomOperatorRatio,
 	)

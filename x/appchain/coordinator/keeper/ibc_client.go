@@ -14,7 +14,6 @@ import (
 	"github.com/imua-xyz/imuachain/utils"
 	commontypes "github.com/imua-xyz/imuachain/x/appchain/common/types"
 	"github.com/imua-xyz/imuachain/x/appchain/coordinator/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 // CreateClientForSubscriberInCachedCtx is a wrapper function around CreateClientForSubscriber.
@@ -131,7 +130,7 @@ func (k Keeper) MakeSubscriberGenesis(
 	params := k.GetParams(ctx)
 	chainID := req.ChainID
 	k.Logger(ctx).Info("Creating genesis state for subscriber chain", "chainID", chainID)
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(chainID)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(chainID)
 	coordinatorUnbondingPeriod := k.stakingKeeper.UnbondingTime(ctx)
 	// client state
 	clientState := params.TemplateClient

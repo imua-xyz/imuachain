@@ -9,6 +9,7 @@ import (
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/imua-xyz/imuachain/utils"
 	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
@@ -108,7 +109,7 @@ func (k Keeper) UpdateParams(
 	k.SetParams(c, nextParams)
 
 	// update the related info in the AVS module
-	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(c, avstypes.ChainIDWithoutRevision(c.ChainID()))
+	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(c, utils.ChainIDWithoutRevision(c.ChainID()))
 	if !isAVS {
 		return nil, errors.Wrapf(types.ErrNotAVSByChainID, "chainID:%s avsAddr:%s", c.ChainID(), avsAddr)
 	}

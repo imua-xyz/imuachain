@@ -3,6 +3,8 @@ package keeper
 import (
 	"sort"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +14,6 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 )
 
 // interface guards
@@ -74,7 +75,7 @@ func (k Keeper) ValidatorByConsAddr(
 	// a call to Validator(ctx, addr) in the slashing module, which is implemented in this file.
 	// after that call, the ConsPubKey is fetched, which is also set by the below call.
 	val, found := k.operatorKeeper.ValidatorByConsAddrForChainID(
-		ctx, addr, avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, addr, utils.ChainIDWithoutRevision(ctx.ChainID()),
 	)
 	if !found {
 		return nil
@@ -104,7 +105,7 @@ func (k Keeper) SlashWithInfractionReason(
 	slashFactor sdk.Dec, infraction stakingtypes.Infraction,
 ) math.Int {
 	found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-		ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), addr,
+		ctx, utils.ChainIDWithoutRevision(ctx.ChainID()), addr,
 	)
 	if !found {
 		// TODO(mm): already slashed and removed from the set?
@@ -122,7 +123,7 @@ func (k Keeper) SlashWithInfractionReason(
 // It delegates the call to the operator module. Alternatively, this may be handled
 // by the slashing module depending upon the design decisions.
 func (k Keeper) Jail(ctx sdk.Context, addr sdk.ConsAddress) {
-	k.operatorKeeper.Jail(ctx, addr, avstypes.ChainIDWithoutRevision(ctx.ChainID()))
+	k.operatorKeeper.Jail(ctx, addr, utils.ChainIDWithoutRevision(ctx.ChainID()))
 	// TODO(mm)
 	// once the operator module jails someone, a hook should be triggered
 	// and the validator removed from the set. same for unjailing.
@@ -133,7 +134,7 @@ func (k Keeper) Jail(ctx sdk.Context, addr sdk.ConsAddress) {
 // operator to do so. TODO(mm): We need to use the SDK's slashing module to allow for downtime
 // slashing but somehow we need to prevent its Unjail function from being called by anyone.
 func (k Keeper) Unjail(ctx sdk.Context, addr sdk.ConsAddress) {
-	k.operatorKeeper.Unjail(ctx, addr, avstypes.ChainIDWithoutRevision(ctx.ChainID()))
+	k.operatorKeeper.Unjail(ctx, addr, utils.ChainIDWithoutRevision(ctx.ChainID()))
 }
 
 // Delegation is an implementation of the staking interface expected by the SDK's slashing
@@ -147,7 +148,7 @@ func (k Keeper) Delegation(
 	// This interface is only used for unjail to retrieve the self delegation value,
 	// so the delegator and validator are the same.
 	operator := delegator
-	avsAddr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(ctx.ChainID()))
+	avsAddr := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(ctx.ChainID()))
 	operatorUSDValues, err := k.operatorKeeper.GetOrCalculateOperatorUSDValues(ctx, operator, avsAddr)
 	if err != nil {
 		k.Logger(ctx).Error("Delegation: failed to get or calculate the operator USD values", "operator", operator.String(), "chainID", ctx.ChainID(), "error", err)
@@ -178,7 +179,7 @@ func (k Keeper) GetAllValidators(sdk.Context) (validators []stakingtypes.Validat
 // slashing module. It is called by the slashing module to record validator signatures
 // for downtime tracking. We delegate the call to the operator keeper.
 func (k Keeper) IsValidatorJailed(ctx sdk.Context, addr sdk.ConsAddress) bool {
-	return k.operatorKeeper.IsOperatorJailedForChainID(ctx, addr, avstypes.ChainIDWithoutRevision(ctx.ChainID()))
+	return k.operatorKeeper.IsOperatorJailedForChainID(ctx, addr, utils.ChainIDWithoutRevision(ctx.ChainID()))
 }
 
 // ApplyAndReturnValidatorSetUpdates is an implementation of the staking interface expected
@@ -208,7 +209,7 @@ func (k Keeper) IterateBondedValidatorsByPower(
 			continue
 		}
 		val, found := k.operatorKeeper.ValidatorByConsAddrForChainID(
-			ctx, sdk.GetConsAddress(pk), avstypes.ChainIDWithoutRevision(ctx.ChainID()),
+			ctx, sdk.GetConsAddress(pk), utils.ChainIDWithoutRevision(ctx.ChainID()),
 		)
 		if !found {
 			ctx.Logger().Error("Operator address not found; skipping", "consAddress", sdk.GetConsAddress(pk), "i", i)

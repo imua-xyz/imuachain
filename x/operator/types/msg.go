@@ -3,7 +3,6 @@ package types
 import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
@@ -21,6 +20,8 @@ const (
 	TypeUpdateCommissionRateReq = "update_commission_rate"
 	// TypeEditOperatorReq is the type for the EditOperatorReq message.
 	TypeEditOperatorReq = "edit_operator"
+	// TypeUpdateRewardCompoundingFlagReq is the type for the UpdateRewardCompoundingFlagReq message.
+	TypeUpdateRewardCompoundingFlagReq = "update_reward_compounding_flag"
 	// TypeUpdateParamsReq is the type for the UpdateParamsReq message.
 	TypeUpdateParamsReq = "update_params"
 )
@@ -33,6 +34,7 @@ var (
 	_ sdk.Msg = &SetConsKeyReq{}
 	_ sdk.Msg = &UpdateCommissionRateReq{}
 	_ sdk.Msg = &EditOperatorReq{}
+	_ sdk.Msg = &UpdateRewardCompoundingFlagReq{}
 )
 
 // GetSigners returns the expected signers for the message.
@@ -189,6 +191,9 @@ func (m *UpdateCommissionRateReq) ValidateBasic() error {
 	if !m.CommissionRate.IsPositive() {
 		return errorsmod.Wrap(ErrParameterInvalid, "commission rate is not positive")
 	}
+	if m.CommissionRate.GT(sdk.OneDec()) {
+		return errorsmod.Wrap(ErrParameterInvalid, "commission rate exceeds 100%")
+	}
 	return nil
 }
 
@@ -218,11 +223,12 @@ func (m *EditOperatorReq) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Address); err != nil {
 		return errorsmod.Wrap(err, "invalid from address")
 	}
-	if m.OperatorMetaInfo == "" {
-		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is empty")
+	if m.Description.Moniker == "" {
+		return errorsmod.Wrap(ErrParameterInvalid, "operator moniker is empty")
 	}
-	if len(m.OperatorMetaInfo) > stakingtypes.MaxMonikerLength {
-		return errorsmod.Wrap(ErrParameterInvalid, "operator meta info is too long")
+	_, err := m.Description.EnsureLength()
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -239,6 +245,35 @@ func (m *EditOperatorReq) Type() string {
 
 // GetSignBytes returns the bytes all expected signers must sign over.
 func (m *EditOperatorReq) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *UpdateRewardCompoundingFlagReq) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Address)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *UpdateRewardCompoundingFlagReq) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Address); err != nil {
+		return errorsmod.Wrap(err, "invalid from address")
+	}
+	return nil
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *UpdateRewardCompoundingFlagReq) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *UpdateRewardCompoundingFlagReq) Type() string {
+	return TypeUpdateRewardCompoundingFlagReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *UpdateRewardCompoundingFlagReq) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 

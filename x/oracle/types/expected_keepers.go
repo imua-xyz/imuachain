@@ -26,7 +26,7 @@ type DelegationKeeper interface {
 }
 
 type AssetsKeeper interface {
-	GetAssetsDecimal(ctx sdk.Context, assets map[string]interface{}) (decimals map[string]uint32, err error)
+	GetAssetsDecimal(ctx sdk.Context, assets map[string]struct{}) (decimals map[string]uint32, err error)
 }
 
 type SlashingKeeper interface {

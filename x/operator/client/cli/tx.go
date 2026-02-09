@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	FlagMetaInfo        = "meta-info"
-	FlagClientChainData = "client-chain-data"
+	FlagClientChainData           = "client-chain-data"
+	FlagDisableRewardsCompounding = "disable-rewards-compounding"
 )
 
 // NewTxCmd returns a root CLI command handler for deposit commands
@@ -43,10 +43,27 @@ func NewTxCmd() *cobra.Command {
 		// operator vs dogfood vs appchain coordinator
 		CmdSetConsKey(),
 		CmdEditOperator(),
+		CmdUpdateRewardCompoundingFlag(),
 		CmdUpdateCommissionRate(),
 		CmdUpdateParams(),
 	)
 	return txCmd
+}
+
+func flagSetDescriptionCreate(fs *flag.FlagSet) {
+	fs.String(stakingcli.FlagMoniker, "", "The operator's name")
+	fs.String(stakingcli.FlagIdentity, "", "The optional identity signature (ex. UPort or Keybase)")
+	fs.String(stakingcli.FlagWebsite, "", "The operator's (optional) website")
+	fs.String(stakingcli.FlagSecurityContact, "", "The operator's (optional) security contact email")
+	fs.String(stakingcli.FlagDetails, "", "The operator's (optional) details")
+}
+
+func flagSetDescriptionEdit(fs *flag.FlagSet) {
+	fs.String(stakingcli.FlagEditMoniker, stakingtypes.DoNotModifyDesc, "The operator's name")
+	fs.String(stakingcli.FlagIdentity, stakingtypes.DoNotModifyDesc, "The (optional) identity signature (ex. UPort or Keybase)")
+	fs.String(stakingcli.FlagWebsite, stakingtypes.DoNotModifyDesc, "The operator's (optional) website")
+	fs.String(stakingcli.FlagSecurityContact, stakingtypes.DoNotModifyDesc, "The operator's (optional) security contact email")
+	fs.String(stakingcli.FlagDetails, stakingtypes.DoNotModifyDesc, "The operator's (optional) details")
 }
 
 // CmdRegisterOperator returns a CLI command handler for creating a RegisterOperatorReq
@@ -77,20 +94,19 @@ func CmdRegisterOperator() *cobra.Command {
 	}
 
 	f := cmd.Flags()
-	// OperatorMetaInfo is the name of the operator.
-	f.String(
-		FlagMetaInfo, "", "The operator's meta info (like name)",
-	)
 	// clientChainLzID:ClientChainEarningsAddr
 	f.StringArray(
 		FlagClientChainData, []string{}, "The client chain's address to receive earnings; "+
 			"can be supplied multiple times. "+
 			"Format: <client-chain-id>:<client-chain-earnings-addr>",
 	)
+	flagSetDescriptionCreate(f)
+	f.Bool(FlagDisableRewardsCompounding, false, "indicate whether to disable the compounding of unclaimed rewards")
 	f.AddFlagSet(stakingcli.FlagSetCommissionCreate())
 
 	// required flags
-	_ = cmd.MarkFlagRequired(FlagMetaInfo) // name of the operator
+	// name of the operator
+	_ = cmd.MarkFlagRequired(stakingcli.FlagMoniker)
 
 	// transaction level flags from the SDK
 	flags.AddTxFlagsToCmd(cmd)
@@ -101,16 +117,22 @@ func newBuildRegisterOperatorMsg(
 	clientCtx client.Context, fs *flag.FlagSet,
 ) (*types.RegisterOperatorReq, error) {
 	sender := clientCtx.GetFromAddress()
-	metaInfo, _ := fs.GetString(FlagMetaInfo)
-	if strings.TrimSpace(metaInfo) == "" {
-		return nil, errorsmod.Wrap(types.ErrCliCmdInputArg, "meta info must be provided")
-	}
+	moniker, _ := fs.GetString(stakingcli.FlagMoniker)
+	identity, _ := fs.GetString(stakingcli.FlagIdentity)
+	website, _ := fs.GetString(stakingcli.FlagWebsite)
+	security, _ := fs.GetString(stakingcli.FlagSecurityContact)
+	details, _ := fs.GetString(stakingcli.FlagDetails)
+	description := stakingtypes.NewDescription(
+		moniker,
+		identity,
+		website,
+		security,
+		details,
+	)
 	msg := &types.RegisterOperatorReq{
-		FromAddress: sender.String(),
 		Info: &types.OperatorInfo{
-			EarningsAddr:     sender.String(),
-			ApproveAddr:      sender.String(),
-			OperatorMetaInfo: metaInfo,
+			OperatorAddr: sender.String(),
+			Description:  description,
 		},
 	}
 	clientChainEarningAddress := &types.ClientChainEarningAddrList{}
@@ -150,6 +172,9 @@ func newBuildRegisterOperatorMsg(
 		return nil, err
 	}
 	msg.Info.Commission = commission
+
+	disableRewardsCompounding, _ := fs.GetBool(FlagDisableRewardsCompounding)
+	msg.Info.DisableCompoundRewards = disableRewardsCompounding
 	return msg, nil
 }
 
@@ -257,25 +282,52 @@ func CmdSetConsKey() *cobra.Command {
 // CmdEditOperator returns a CLI command handler for creating a EditOperatorReq transaction.
 func CmdEditOperator() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit-operator <operator-address> <meta-info>",
-		Short: "edit the meta info of an operator",
-		Args:  cobra.ExactArgs(2),
+		Use:   "edit-operator",
+		Short: "edit the description info of an operator",
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			moniker, _ := cmd.Flags().GetString(stakingcli.FlagEditMoniker)
+			identity, _ := cmd.Flags().GetString(stakingcli.FlagIdentity)
+			website, _ := cmd.Flags().GetString(stakingcli.FlagWebsite)
+			security, _ := cmd.Flags().GetString(stakingcli.FlagSecurityContact)
+			details, _ := cmd.Flags().GetString(stakingcli.FlagDetails)
+			description := stakingtypes.NewDescription(moniker, identity, website, security, details)
+			msg := &types.EditOperatorReq{
+				Address:     clientCtx.GetFromAddress().String(),
+				Description: description,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	f := cmd.Flags()
+	flagSetDescriptionEdit(f)
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdUpdateRewardCompoundingFlag returns a CLI command handler for creating a UpdateRewardCompoundingFlagReq transaction.
+func CmdUpdateRewardCompoundingFlag() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-reward-compounding-flag <disable-rewards-compounding>",
+		Short: "update the reward compounding flag of an operator",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
-			// validate the meta info in CLI to save tx
-			metaInfo := args[1]
-			if len(metaInfo) > stakingtypes.MaxMonikerLength {
-				return errorsmod.Wrap(types.ErrCliCmdInputArg, "meta info is too long")
+			disableRewardsCompounding, err := strconv.ParseBool(args[0])
+			if err != nil {
+				return err
 			}
-			if metaInfo == "" {
-				return errorsmod.Wrap(types.ErrCliCmdInputArg, "meta info is empty")
-			}
-			msg := &types.EditOperatorReq{
-				Address:          clientCtx.GetFromAddress().String(),
-				OperatorMetaInfo: metaInfo,
+			msg := &types.UpdateRewardCompoundingFlagReq{
+				Address:                clientCtx.GetFromAddress().String(),
+				DisableCompoundRewards: disableRewardsCompounding,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

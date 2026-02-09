@@ -67,13 +67,11 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(
 				// Find signed operators
 				if res.BlsSignature != nil && res.TaskResponseHash != "" || res.TaskResponse != nil {
 					signedOperatorList = append(signedOperatorList, res.OperatorAddress)
-					power, err := wrapper.keeper.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, res.OperatorAddress)
-					activePower := sdkmath.LegacyZeroDec()
-					if err != nil || power.ActiveUSDValue.IsNegative() {
+					activePower, err := wrapper.keeper.operatorKeeper.GetOperatorActiveUSDValue(ctx, avsAddr, res.OperatorAddress)
+					if err != nil || activePower.IsNil() || activePower.IsNegative() {
 						// Log the error and and use 0 as the active power for this operator
 						ctx.Logger().Error("Failed to get optedUSDValue for operator, skip this one", "operator", res.OperatorAddress, "avsAddr", avsAddr, "error", err)
-					} else {
-						activePower = power.ActiveUSDValue
+						activePower = sdkmath.LegacyZeroDec()
 					}
 					operatorSelfPower := &types.OperatorActivePowerInfo{
 						OperatorAddress: res.OperatorAddress,

@@ -61,7 +61,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 	// deposit params for test
 	imuaLzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	usdtAddress := common.FromHex("0xdAC17F958D2ee523a2206206994597C13D831ec7")
-	opAccAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
+	opAddr := "im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj"
 	clientChainLzID := 101
 	delegationAmount := big.NewInt(50)
 	depositAmount := big.NewInt(100)
@@ -84,11 +84,10 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 	maxChangeRate, _ := sdk.NewDecFromStr("0.05")
 	registerOperator := func() {
 		registerReq := &operatortypes.RegisterOperatorReq{
-			FromAddress: opAccAddr,
+			FromAddress: opAddr,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr:     opAccAddr,
-				ApproveAddr:      opAccAddr,
-				OperatorMetaInfo: opAccAddr,
+				OperatorAddr: opAddr,
+				Description:  stakingtypes.NewDescription(opAddr, "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          rate,
@@ -108,7 +107,7 @@ func (s *DelegationPrecompileSuite) TestRunDelegate() {
 			uint32(clientChainLzID),
 			assetAddr,
 			paddingClientChainAddress(s.Address.Bytes(), types.GeneralClientChainAddrLength),
-			[]byte(opAccAddr),
+			[]byte(opAddr),
 			delegationAmount,
 		)
 		s.Require().NoError(err, "failed to pack input")
@@ -314,7 +313,6 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		// deposit asset for delegation test
 		delegateToParams := &delegationtype.DelegationOrUndelegationParams{
 			ClientChainID: 101,
-			Action:        types.DelegateTo,
 			StakerAddress: staker,
 			AssetsAddress: usdtAddress,
 			OpAmount:      delegateAmount,
@@ -322,7 +320,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		opAccAddr, err := sdk.AccAddressFromBech32(operatorAddr)
 		s.Require().NoError(err)
 		delegateToParams.OperatorAddress = opAccAddr
-		err = s.App.DelegationKeeper.DelegateTo(s.Ctx, delegateToParams)
+		_, _, err = s.App.DelegationKeeper.DelegateTo(s.Ctx, delegateToParams)
 		s.Require().NoError(err)
 	}
 	rate, _ := sdk.NewDecFromStr("0.1")
@@ -332,9 +330,8 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		registerReq := &operatortypes.RegisterOperatorReq{
 			FromAddress: operatorAddr,
 			Info: &operatortypes.OperatorInfo{
-				EarningsAddr:     operatorAddr,
-				ApproveAddr:      operatorAddr,
-				OperatorMetaInfo: operatorAddr,
+				OperatorAddr: operatorAddr,
+				Description:  stakingtypes.NewDescription(operatorAddr, "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          rate,

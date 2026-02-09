@@ -134,14 +134,14 @@ func (p Precompile) GetOperatorOptedUSDValue(
 		return nil, fmt.Errorf(imuacmn.ErrContractInputParamOrType, 1, "common.Address", operatorAddress)
 	}
 	var accAddress sdk.AccAddress = operatorAddress[:]
-	amount, err := p.avsKeeper.GetOperatorKeeper().GetOperatorOptedUSDValue(ctx, strings.ToLower(avsAddress.String()), accAddress.String())
+	activeUSDValue, err := p.avsKeeper.GetOperatorKeeper().GetOperatorActiveUSDValue(ctx, strings.ToLower(avsAddress.String()), accAddress.String())
 	if err != nil {
 		if errors.Is(err, avstype.ErrNoKeyInTheStore) {
 			return method.Outputs.Pack(common.Big0)
 		}
 		return nil, err
 	}
-	return method.Outputs.Pack(amount.ActiveUSDValue.BigInt())
+	return method.Outputs.Pack(activeUSDValue.BigInt())
 }
 
 func (p Precompile) GetAVSEpochIdentifier(

@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/utils"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -48,7 +48,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	// 3. X epochs later, the reverse lookup of old cons addr + chain id -> operator addr
 	// should be cleared.
 	consAddr := oldKey.ToConsAddr()
-	if chainID == avstypes.ChainIDWithoutRevision(ctx.ChainID()) {
+	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 		// is the oldKey already active? if not, we should not do anything.
 		// this can happen if we opt in with a key, then replace it with another key
 		// during the same epoch.
@@ -80,7 +80,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 	// keys from the chain.
 	// 2. X epochs later, the removal is marked complete in the operator module.
 	consAddr := key.ToConsAddr()
-	if chainID == avstypes.ChainIDWithoutRevision(ctx.ChainID()) {
+	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 		_, found := h.keeper.GetImuachainValidator(ctx, consAddr)
 		if found {
 			h.keeper.SetOptOutInformation(ctx, operator)
@@ -94,7 +94,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 
 func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, _ sdk.Dec, affectedAVSList []string,
-	_ []operatortypes.SlashFromAssetsPool,
+	_ []operatortypes.SlashAssetAmount, _ []operatortypes.SlashFromUnclaimedRewards,
 ) {
 	h.afterStakingOrJailChange(ctx, operator, false, affectedAVSList)
 }
@@ -106,8 +106,8 @@ func (h OperatorHooksWrapper) AfterJail(
 }
 
 func (h OperatorHooksWrapper) afterStakingOrJailChange(ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string) {
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	for _, avs := range affectedAVSList {
 		if avs == dogfoodAVSAddr {
 			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)

@@ -3,6 +3,8 @@ package keeper_test
 import (
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	types2 "github.com/imua-xyz/imuachain/x/dogfood/types"
@@ -14,8 +16,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
-	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 )
 
 const (
@@ -38,7 +38,7 @@ func (suite *OperatorTestSuite) TestCalculateUSDValue() {
 	suite.prepare()
 	price, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 	suite.NoError(err)
-	usdValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
+	usdValue := utils.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
 	expectedValue := sdkmath.LegacyNewDecFromBigInt(suite.delegationAmount.BigInt()).QuoInt(sdkmath.NewIntWithDecimal(1, int(suite.assetDecimal)))
 	suite.Equal(expectedValue, usdValue)
 	suite.Equal(int64(0), usdValue.TruncateInt64())
@@ -52,13 +52,13 @@ func (suite *OperatorTestSuite) TestCalculatedUSDValueOverflow() {
 	priceDecimal := uint8(assetstype.MaxDecimal)
 	amount := MaxAssetTotalSupply
 	assetDecimal := uint32(assetstype.MaxDecimal)
-	usdValue := operatorKeeper.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
+	usdValue := utils.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
 	expectedValue := sdkmath.LegacyNewDecFromBigInt(sdkmath.NewIntWithDecimal(1, 2*MaxDecForTotalSupply-2*assetstype.MaxDecimal).BigInt())
 	suite.Equal(expectedValue, usdValue)
 
 	priceDecimal = uint8(0)
 	assetDecimal = uint32(0)
-	usdValue = operatorKeeper.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
+	usdValue = utils.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
 	expectedValue = sdkmath.LegacyNewDecFromBigInt(sdkmath.NewIntWithDecimal(1, 2*MaxDecForTotalSupply).BigInt())
 	suite.Equal(expectedValue, usdValue)
 
@@ -66,7 +66,7 @@ func (suite *OperatorTestSuite) TestCalculatedUSDValueOverflow() {
 	priceDecimal = uint8(assetstype.MaxDecimal)
 	amount = sdkmath.NewInt(1)
 	assetDecimal = uint32(assetstype.MaxDecimal)
-	usdValue = operatorKeeper.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
+	usdValue = utils.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
 	expectedValue = sdkmath.LegacyZeroDec()
 	suite.Equal(expectedValue.String(), usdValue.String())
 
@@ -74,7 +74,7 @@ func (suite *OperatorTestSuite) TestCalculatedUSDValueOverflow() {
 	priceDecimal = uint8(0)
 	amount = sdkmath.NewInt(1)
 	assetDecimal = uint32(assetstype.MaxDecimal)
-	usdValue = operatorKeeper.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
+	usdValue = utils.CalculateUSDValue(amount, price, assetDecimal, priceDecimal)
 	expectedValue = sdkmath.LegacyNewDecFromBigIntWithPrec(amount.BigInt(), sdkmath.LegacyPrecision)
 	suite.Equal(expectedValue, usdValue)
 	float64Value, err := usdValue.Float64()
@@ -108,7 +108,7 @@ func (suite *OperatorTestSuite) TestAVSUSDValue() {
 	suite.NoError(err)
 	usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 	suite.NoError(err)
-	usdtValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
+	usdtValue := utils.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
 	// deposit and delegate another asset to the operator
 	suite.NoError(err)
 	suite.prepareDeposit(suite.Address, usdcAddr, sdkmath.NewInt(1e8))
@@ -118,7 +118,7 @@ func (suite *OperatorTestSuite) TestAVSUSDValue() {
 	suite.prepareDelegation(true, suite.Address, usdcAddr, suite.operatorAddr, delegatedAmount)
 
 	// updating the new voting power
-	usdcValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
+	usdcValue := utils.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
 	expectedUSDvalue := usdcValue.Add(usdtValue)
 	suite.CommitAfter(time.Hour*1 + time.Nanosecond)
 	suite.CommitAfter(time.Hour*1 + time.Nanosecond)
@@ -135,9 +135,8 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	initialPowers := suite.Powers
 	addPower := 1
 	addUSDValue := sdkmath.LegacyNewDec(1)
-
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
-	avsAddress := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()))
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	avsAddress := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(suite.Ctx.ChainID()))
 	// CommitAfter causes the epoch hook to be triggered, and results in writing
 	// of the AVS usd value to the store.
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
@@ -201,7 +200,7 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 		pubKey, err := validator.ConsPubKey()
 		suite.Require().NoError(err)
 		found, accAddress := suite.App.OperatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-			suite.Ctx, avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID()), sdk.GetConsAddress(pubKey),
+			suite.Ctx, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), sdk.GetConsAddress(pubKey),
 		)
 		suite.Require().True(found)
 
@@ -219,7 +218,7 @@ func (suite *OperatorTestSuite) TestVotingPowerForDogFood() {
 	slashType := stakingtypes.Infraction_INFRACTION_DOWNTIME
 	slashBlockHeight := suite.Ctx.BlockHeight()
 	suite.App.OperatorKeeper.SlashWithInfractionReason(suite.Ctx, suite.Operators[0], slashBlockHeight, slashOperatorPower, slashFactor, slashType)
-	suite.App.OperatorKeeper.Jail(suite.Ctx, slashOperatorConsAddr, suite.Ctx.ChainID())
+	suite.App.OperatorKeeper.Jail(suite.Ctx, slashOperatorConsAddr, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()))
 
 	suite.CommitAfter(time.Hour*24 + time.Nanosecond)
 	suite.App.StakingKeeper.EndBlock(suite.Ctx)

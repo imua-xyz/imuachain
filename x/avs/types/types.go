@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
-	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -44,8 +42,6 @@ var (
 	ChainIDCode = hexutil.MustDecode("0x608060405234801561001057600080fd5b5060c78061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c806301ffc9a714602d575b600080fd5b604e60383660046062565b6001600160e01b0319166301ffc9a760e01b1490565b604051901515815260200160405180910390f35b600060208284031215607357600080fd5b81356001600160e01b031981168114608a57600080fd5b939250505056fea2646970667358221220b872b230d6a37b4ce12f24d5127759bc0451696f0186fabee8c3e9abe32c462c64736f6c63430008180033")
 	// ChainIDCodeHash is the hash of the ChainIDCode.
 	ChainIDCodeHash = crypto.Keccak256Hash(ChainIDCode)
-	// ChainIDPrefix is pre-pended to the chainID, and the combination hashed to generate the AVS address.
-	ChainIDPrefix = []byte("chain-id-prefix")
 )
 
 const (
@@ -96,30 +92,6 @@ var (
 		{Type: taskResponseType, Name: "TaskResponse"},
 	}
 )
-
-// ChainIDWithoutRevision returns the chainID without the revision number.
-// For example, "imuachaintestnet_233-1" returns "imuachaintestnet_233".
-func ChainIDWithoutRevision(chainID string) string {
-	if !ibcclienttypes.IsRevisionFormat(chainID) {
-		return chainID
-	}
-	splitStr := strings.Split(chainID, "-")
-	return splitStr[0]
-}
-
-// GenerateAVSAddress generates a hex AVS address based on the chainID.
-// It returns a hex address as a string.
-func GenerateAVSAddress(chainID string) string {
-	avsAddress := common.BytesToAddress(
-		crypto.Keccak256(
-			append(
-				ChainIDPrefix,
-				[]byte(chainID)...,
-			),
-		),
-	)
-	return strings.ToLower(avsAddress.String())
-}
 
 type TaskResponse struct {
 	TaskID    uint64
