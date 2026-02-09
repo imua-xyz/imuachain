@@ -50,7 +50,7 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 	// redelegate the claimed rewards of all related stakers and AVSs
 	err = wrapper.keeper.BatchRedelegateClaimedRewards(ctx, epochIdentifier, avsList, stakersList)
 	if err != nil {
-		ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		ctx.Logger().Error("failed to batch redelegate claimed rewards by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 		// The delegation change information still needs to be deleted
 		// even if redelegating the claimed rewards fails. Do not return here.
 	}
@@ -93,6 +93,14 @@ func (wrapper DelegationHooksWrapper) AfterDelegation(
 // AfterUndelegationStarted is called after an undelegation is started.
 func (wrapper DelegationHooksWrapper) AfterUndelegationStarted(
 	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress, _ []byte,
+	preDelegatedAmount math.Int, prevAssetState assetstype.OperatorAssetInfo,
+) error {
+	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)
+}
+
+// AfterNSTDelegationSlashed is called after a NST delegation is slashed.
+func (wrapper DelegationHooksWrapper) AfterNSTDelegationSlashed(
+	ctx sdk.Context, stakerID, assetID string, operator sdk.AccAddress,
 	preDelegatedAmount math.Int, prevAssetState assetstype.OperatorAssetInfo,
 ) error {
 	return wrapper.keeper.MarkChangedDelegations(ctx, stakerID, assetID, operator, preDelegatedAmount, prevAssetState)

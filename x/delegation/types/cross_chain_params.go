@@ -9,7 +9,6 @@ import (
 
 type DelegationOrUndelegationParams struct {
 	ClientChainID   uint64
-	Action          assetstype.CrossChainOpType
 	AssetsAddress   []byte
 	OperatorAddress sdk.AccAddress
 	StakerAddress   []byte
@@ -30,7 +29,6 @@ type DelegationOrUndelegationParams struct {
 
 func NewDelegationOrUndelegationParams(
 	clientChainID uint64,
-	action assetstype.CrossChainOpType,
 	assetsAddress []byte,
 	operatorAddress sdk.AccAddress,
 	stakerAddress []byte,
@@ -40,7 +38,6 @@ func NewDelegationOrUndelegationParams(
 ) *DelegationOrUndelegationParams {
 	return &DelegationOrUndelegationParams{
 		ClientChainID:    clientChainID,
-		Action:           action,
 		AssetsAddress:    assetsAddress,
 		OperatorAddress:  operatorAddress,
 		StakerAddress:    stakerAddress,

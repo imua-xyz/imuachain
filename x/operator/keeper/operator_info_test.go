@@ -17,9 +17,8 @@ import (
 
 func (suite *OperatorTestSuite) TestOperatorInfo() {
 	info := &operatortype.OperatorInfo{
-		EarningsAddr:     suite.AccAddress.String(),
-		ApproveAddr:      suite.AccAddress.String(),
-		OperatorMetaInfo: "test operator",
+		OperatorAddr: suite.AccAddress.String(),
+		Description:  stakingtypes.NewDescription("test operator", "", "", "", ""),
 		ClientChainEarningsAddr: &operatortype.ClientChainEarningAddrList{
 			EarningInfoList: []*operatortype.ClientChainEarningAddrInfo{
 				{defaultClientChainID, "0x1f9840a85d5af5bf1d1762f925bdaddc4201f984"},
@@ -28,7 +27,7 @@ func (suite *OperatorTestSuite) TestOperatorInfo() {
 		Commission: stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
 	}
 	suite.Equal(delegationtypes.AccAddressLength, len(suite.AccAddress))
-	err := suite.App.OperatorKeeper.RegisterOperator(suite.Ctx, suite.AccAddress.String(), info)
+	err := suite.App.OperatorKeeper.RegisterOperator(suite.Ctx, info)
 	suite.NoError(err)
 
 	getOperatorInfo, err := suite.App.OperatorKeeper.QueryOperatorInfo(suite.Ctx, &operatortype.GetOperatorInfoReq{OperatorAddr: suite.AccAddress.String()})
@@ -38,20 +37,16 @@ func (suite *OperatorTestSuite) TestOperatorInfo() {
 
 func (suite *OperatorTestSuite) TestAllOperators() {
 	suite.prepare()
-	operatorDetail := operatortype.OperatorDetail{
-		OperatorAddress: suite.AccAddress.String(),
-		OperatorInfo: operatortype.OperatorInfo{
-			EarningsAddr:     suite.AccAddress.String(),
-			ApproveAddr:      suite.AccAddress.String(),
-			OperatorMetaInfo: "testOperator",
-			Commission:       stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
-		},
+	operatorInfo := operatortype.OperatorInfo{
+		OperatorAddr: suite.AccAddress.String(),
+		Description:  stakingtypes.NewDescription("testOperator", "", "", "", ""),
+		Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 	}
-	err := suite.App.OperatorKeeper.RegisterOperator(suite.Ctx, suite.AccAddress.String(), &operatorDetail.OperatorInfo)
+	err := suite.App.OperatorKeeper.RegisterOperator(suite.Ctx, &operatorInfo)
 	suite.NoError(err)
 
 	getOperators := suite.App.OperatorKeeper.AllOperators(suite.Ctx)
-	suite.Contains(getOperators, operatorDetail)
+	suite.Contains(getOperators, operatorInfo)
 }
 
 func (suite *OperatorTestSuite) TestGetUnbondingExpiration() {

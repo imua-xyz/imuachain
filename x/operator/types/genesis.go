@@ -15,7 +15,7 @@ import (
 )
 
 func NewGenesisState(
-	operators []OperatorDetail,
+	operators []OperatorInfo,
 	operatorConsKeys []OperatorConsKeyRecord,
 	optStates []OptedState,
 	operatorUSDValues []OperatorUSDValue,
@@ -59,45 +59,28 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 	operatorNames := make(map[string]struct{}, len(gs.Operators))
 	for _, op := range gs.Operators {
 		// check for duplicate address
-		address := op.OperatorAddress
+		address := op.OperatorAddr
 		if _, found := operators[address]; found {
 			return nil, ErrInvalidGenesisData.Wrapf(
 				"ValidateOperators: duplicate operator address %s", address,
 			)
 		}
 		// check for duplicate operator name
-		if _, found := operatorNames[op.OperatorInfo.OperatorMetaInfo]; found {
+		if _, found := operatorNames[op.Description.Moniker]; found {
 			return nil, ErrInvalidGenesisData.Wrapf(
-				"ValidateOperators: duplicate operator name %s", op.OperatorInfo.OperatorMetaInfo,
+				"ValidateOperators: duplicate operator name %s", op.Description.Moniker,
 			)
 		}
-		operatorNames[op.OperatorInfo.OperatorMetaInfo] = struct{}{}
-		// check for valid address
-		_, err := sdk.AccAddressFromBech32(address)
-		if err != nil {
-			return nil, ErrInvalidGenesisData.Wrapf(
-				"ValidateOperators: invalid bech32 address %s: %s", address, err,
-			)
-		}
-		if op.OperatorInfo.EarningsAddr != address {
-			return nil, ErrInvalidGenesisData.Wrapf(
-				"operator address %s has earnings address %s", address, op.OperatorInfo.EarningsAddr,
-			)
-		}
-		if op.OperatorInfo.ApproveAddr != address {
-			return nil, ErrInvalidGenesisData.Wrapf(
-				"operator address %s has approve address %s", address, op.OperatorInfo.ApproveAddr,
-			)
-		}
-		if err := op.OperatorInfo.ValidateBasic(); err != nil {
+		operatorNames[op.Description.Moniker] = struct{}{}
+		if err := op.ValidateBasic(); err != nil {
 			return nil, ErrInvalidGenesisData.Wrapf(
 				"ValidateOperators: invalid operator info for operator %s: %s", address, err,
 			)
 		}
 		operators[address] = struct{}{}
-		if op.OperatorInfo.ClientChainEarningsAddr != nil {
-			lzIDs := make(map[uint64]struct{}, len(op.OperatorInfo.ClientChainEarningsAddr.EarningInfoList))
-			for _, info := range op.OperatorInfo.ClientChainEarningsAddr.EarningInfoList {
+		if op.ClientChainEarningsAddr != nil {
+			lzIDs := make(map[uint64]struct{}, len(op.ClientChainEarningsAddr.EarningInfoList))
+			for _, info := range op.ClientChainEarningsAddr.EarningInfoList {
 				lzID := info.LzClientChainID
 				if _, found := lzIDs[lzID]; found {
 					return nil, ErrInvalidGenesisData.Wrapf(
@@ -114,22 +97,22 @@ func (gs GenesisState) ValidateOperators() (map[string]struct{}, error) {
 				}
 			}
 		}
-		if op.OperatorInfo.Commission.CommissionRates.Rate.IsNil() ||
-			op.OperatorInfo.Commission.CommissionRates.MaxRate.IsNil() ||
-			op.OperatorInfo.Commission.CommissionRates.MaxChangeRate.IsNil() {
+		if op.Commission.CommissionRates.Rate.IsNil() ||
+			op.Commission.CommissionRates.MaxRate.IsNil() ||
+			op.Commission.CommissionRates.MaxChangeRate.IsNil() {
 			return nil, ErrInvalidGenesisData.Wrapf(
 				"ValidateOperators: missing commission for operator %s", address,
 			)
 		}
-		if err := op.OperatorInfo.Commission.Validate(); err != nil {
+		if err := op.Commission.Validate(); err != nil {
 			return nil, ErrInvalidGenesisData.Wrapf(
 				"ValidateOperators: invalid commission for operator %s: %s", address, err,
 			)
 		}
-		if op.OperatorInfo.Commission.CommissionRates.Rate.LT(minCommissionRate) {
+		if op.Commission.CommissionRates.Rate.LT(minCommissionRate) {
 			return nil, ErrInvalidGenesisData.Wrapf(
 				"ValidateOperators: commission rate for operator %s is less than the minimum commission rate: %s < %s",
-				address, op.OperatorInfo.Commission.CommissionRates.Rate.String(), minCommissionRate.String(),
+				address, op.Commission.CommissionRates.Rate.String(), minCommissionRate.String(),
 			)
 		}
 	}

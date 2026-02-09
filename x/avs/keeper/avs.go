@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
 	"slices"
 	"strconv"
@@ -21,20 +20,19 @@ import (
 )
 
 // GetAVSSupportedAssets returns a map of assets supported by the AVS. The avsAddr supplied must be hex.
-func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]string, map[string]interface{}, error) {
+func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]string, map[string]struct{}, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return nil, nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSSupportedAssets: key is %s", avsAddr))
+		return nil, nil, errorsmod.Wrapf(err, "GetAVSSupportedAssets: key is %s", avsAddr)
 	}
 	assetIDList := avsInfo.Info.AssetIDs
-	ret := make(map[string]interface{})
+	ret := make(map[string]struct{})
 
 	for _, assetID := range assetIDList {
-		_, err = k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
-		if err != nil {
-			return nil, nil, errorsmod.Wrap(err, fmt.Sprintf("[GetAVSSupportedAssets] GetStakingAssetInfo: key is %s", assetID))
+		if !k.assetsKeeper.IsStakingAsset(ctx, assetID) {
+			return nil, nil, errorsmod.Wrapf(types.ErrInvalidAssetID, "[GetAVSSupportedAssets] assetID:%s isn't staking asset", assetID)
 		}
-		ret[assetID] = nil
+		ret[assetID] = struct{}{}
 	}
 
 	return assetIDList, ret, nil
@@ -43,11 +41,11 @@ func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]strin
 // GetAVSAssetsList returns a list of assets supported by the AVS. The avsAddr supplied must be hex.
 func (k *Keeper) GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error) {
 	if !common.IsHexAddress(avsAddr) {
-		return nil, errorsmod.Wrap(types.ErrInvalidAddr, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+		return nil, errorsmod.Wrapf(types.ErrInvalidAddr, "GetAVSAssetsList: key is %s", avsAddr)
 	}
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+		return nil, errorsmod.Wrapf(err, "GetAVSAssetsList: key is %s", avsAddr)
 	}
 	return avsInfo.Info.AssetIDs, nil
 }
@@ -57,7 +55,7 @@ func (k *Keeper) GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, er
 func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return "", errorsmod.Wrap(err, fmt.Sprintf("GetAVSSlashContract: key is %s", avsAddr))
+		return "", errorsmod.Wrapf(err, "GetAVSSlashContract: key is %s", avsAddr)
 	}
 	if avsInfo.Info.SlashAddress == (common.Address{}).String() {
 		return "", nil
@@ -70,7 +68,7 @@ func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, e
 func (k *Keeper) GetAVSMinimumSelfDelegation(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, fmt.Sprintf("GetAVSMinimumSelfDelegation: key is %s", avsAddr))
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(err, "GetAVSMinimumSelfDelegation: key is %s", avsAddr)
 	}
 	// #nosec G115
 	return sdkmath.LegacyNewDec(int64(avsInfo.Info.MinSelfDelegation)), nil
@@ -81,7 +79,7 @@ func (k *Keeper) GetAVSMinimumSelfDelegation(ctx sdk.Context, avsAddr string) (s
 func (k *Keeper) GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return 0, errorsmod.Wrap(err, fmt.Sprintf("GetAVSUnbondingDuration: key is %s", avsAddr))
+		return 0, errorsmod.Wrapf(err, "GetAVSUnbondingDuration: key is %s", avsAddr)
 	}
 	return avsInfo.Info.AvsUnbondingPeriod, nil
 }
@@ -269,7 +267,7 @@ func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error
 func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddress string) (bool, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return false, errorsmod.Wrap(err, fmt.Sprintf("IsWhitelisted: key is %s", avsAddr))
+		return false, errorsmod.Wrapf(err, "IsWhitelisted: key is %s", avsAddr)
 	}
 	_, err = sdk.AccAddressFromBech32(operatorAddress)
 	if err != nil {
@@ -284,7 +282,7 @@ func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddress string)
 		return true, nil
 	}
 	if !slices.Contains(avsInfo.Info.WhitelistAddresses, operatorAddress) {
-		return false, errorsmod.Wrap(err, fmt.Sprintf("operator %s not in whitelist", operatorAddress))
+		return false, errorsmod.Wrapf(err, "operator %s not in whitelist", operatorAddress)
 	}
 	return true, nil
 }

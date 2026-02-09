@@ -21698,7 +21698,7 @@
                         "properties": {
                           "operator_addr": {
                             "type": "string",
-                            "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                            "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                           },
                           "reward_proportion": {
                             "type": "string",
@@ -24261,17 +24261,28 @@
             "schema": {
               "type": "object",
               "properties": {
-                "count": {
-                  "type": "string",
-                  "format": "uint64",
-                  "title": "count is the number of stakers"
-                },
                 "stakers": {
                   "type": "array",
                   "items": {
                     "type": "string"
                   },
                   "title": "stakers is the returned stakers associated to the specified operator"
+                },
+                "pagination": {
+                  "description": "pagination defines the pagination for the response.",
+                  "type": "object",
+                  "properties": {
+                    "next_key": {
+                      "type": "string",
+                      "format": "byte",
+                      "description": "next_key is the key to be passed to PageRequest.key to\nquery the next page most efficiently. It will be empty if\nthere are no more results."
+                    },
+                    "total": {
+                      "type": "string",
+                      "format": "uint64",
+                      "title": "total is total number of results available if PageRequest.count_total\nwas set, its value is undefined otherwise"
+                    }
+                  }
                 }
               },
               "title": "QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq"
@@ -24325,6 +24336,44 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "pagination.key",
+            "description": "key is a value returned in PageResponse.next_key to begin\nquerying the next page most efficiently. Only one of offset or key\nshould be set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "pagination.offset",
+            "description": "offset is a numeric offset that can be used when key is unavailable.\nIt is less efficient than using key. Only one of offset or key should\nbe set.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.limit",
+            "description": "limit is the total number of results to be returned in the result page.\nIf left empty it will default to a value to be set by each app.",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "pagination.count_total",
+            "description": "count_total is set to true  to indicate that the result set should include\na count of the total number of items available for pagination in UIs.\ncount_total is only respected when offset is used. It is ignored when key\nis set.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "pagination.reverse",
+            "description": "reverse is set to true if results are to be returned in the descending order.\n\nSince: cosmos-sdk 0.43",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [
@@ -24576,7 +24625,7 @@
                           },
                           "actual_completed_amount": {
                             "type": "string",
-                            "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                            "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
                           },
                           "instant_unbonding": {
                             "type": "boolean",
@@ -24609,7 +24658,7 @@
                                 },
                                 "actual_completed_amount": {
                                   "type": "string",
-                                  "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                                  "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
                                 }
                               },
                               "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
@@ -24944,7 +24993,7 @@
                           },
                           "actual_completed_amount": {
                             "type": "string",
-                            "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                            "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
                           },
                           "instant_unbonding": {
                             "type": "boolean",
@@ -24977,7 +25026,7 @@
                                 },
                                 "actual_completed_amount": {
                                   "type": "string",
-                                  "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                                  "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
                                 }
                               },
                               "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
@@ -25481,7 +25530,7 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "description": "task_address is the task contract address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -25554,7 +25603,7 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "description": "task_address is the task contract address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -25667,7 +25716,7 @@
         "parameters": [
           {
             "name": "task_address",
-            "description": "task_address is the task contract address,its type should be a sdk.AccAddress",
+            "description": "task_address is the task contract address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -25681,7 +25730,7 @@
           },
           {
             "name": "operator_address",
-            "description": "operator_address is the operator address,its type should be a sdk.AccAddress",
+            "description": "operator_address is the operator address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -26139,7 +26188,7 @@
                               "properties": {
                                 "operator_addr": {
                                   "type": "string",
-                                  "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                                  "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                                 },
                                 "voting_power": {
                                   "type": "string",
@@ -26613,17 +26662,35 @@
             "schema": {
               "type": "object",
               "properties": {
-                "earnings_addr": {
+                "operator_addr": {
                   "type": "string",
-                  "description": "earnings_addr is the earnings address."
+                  "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                 },
-                "approve_addr": {
-                  "type": "string",
-                  "description": "approve_addr is the approve address."
-                },
-                "operator_meta_info": {
-                  "type": "string",
-                  "description": "operator_meta_info is the operator meta info."
+                "description": {
+                  "description": "description defines the description terms for the operator.",
+                  "type": "object",
+                  "properties": {
+                    "moniker": {
+                      "type": "string",
+                      "description": "moniker defines a human-readable name for the validator."
+                    },
+                    "identity": {
+                      "type": "string",
+                      "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+                    },
+                    "website": {
+                      "type": "string",
+                      "description": "website defines an optional website link."
+                    },
+                    "security_contact": {
+                      "type": "string",
+                      "description": "security_contact defines an optional email for security contact."
+                    },
+                    "details": {
+                      "type": "string",
+                      "description": "details define other optional details."
+                    }
+                  }
                 },
                 "client_chain_earnings_addr": {
                   "description": "client_chain_earning_addr_list is the client chain earning address list.",
@@ -26727,7 +26794,7 @@
         "parameters": [
           {
             "name": "operator_addr",
-            "description": "operator_addr is the operator address,its type should be a sdk.AccAddress",
+            "description": "operator_addr is the operator address, its type should be a sdk.AccAddress",
             "in": "path",
             "required": true,
             "type": "string"
@@ -26820,7 +26887,7 @@
                                     "undelegation_id": {
                                       "type": "string",
                                       "format": "uint64",
-                                      "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                                      "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                                     },
                                     "reward_asset": {
                                       "type": "boolean",
@@ -27529,12 +27596,12 @@
                         "description": "rewards_usd_values are the USD values of all reward assets."
                       }
                     },
-                    "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+                    "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source"
                   },
-                  "description": "avs_rewards_usd_values are the rewards USD values from all AVSs."
+                  "description": "avs_rewards_usd_values are the rewards USD values from all AVS reward sources\nfor the specified operator at the receiving AVS."
                 }
               },
-              "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS."
+              "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and receiving AVS."
             }
           },
           "default": {
@@ -27625,7 +27692,7 @@
                         "properties": {
                           "operator_addr": {
                             "type": "string",
-                            "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                            "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                           },
                           "voting_power": {
                             "type": "string",
@@ -27799,17 +27866,35 @@
                   "description": "validator defines the validator info.",
                   "type": "object",
                   "properties": {
-                    "operator_earnings_addr": {
+                    "operator_addr": {
                       "type": "string",
-                      "description": "earnoperator_earnings_addrings_addr is the earnings address."
+                      "description": "operator_addr is the operator address."
                     },
-                    "operator_approve_addr": {
-                      "type": "string",
-                      "description": "operator_approve_addr is the approve address."
-                    },
-                    "operator_meta_info": {
-                      "type": "string",
-                      "description": "operator_meta_info is the operator meta info."
+                    "description": {
+                      "description": "description defines the description terms for the operator.",
+                      "type": "object",
+                      "properties": {
+                        "moniker": {
+                          "type": "string",
+                          "description": "moniker defines a human-readable name for the validator."
+                        },
+                        "identity": {
+                          "type": "string",
+                          "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+                        },
+                        "website": {
+                          "type": "string",
+                          "description": "website defines an optional website link."
+                        },
+                        "security_contact": {
+                          "type": "string",
+                          "description": "security_contact defines an optional email for security contact."
+                        },
+                        "details": {
+                          "type": "string",
+                          "description": "details define other optional details."
+                        }
+                      }
                     },
                     "cons_address": {
                       "type": "string",
@@ -28006,17 +28091,35 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "operator_earnings_addr": {
+                      "operator_addr": {
                         "type": "string",
-                        "description": "earnoperator_earnings_addrings_addr is the earnings address."
+                        "description": "operator_addr is the operator address."
                       },
-                      "operator_approve_addr": {
-                        "type": "string",
-                        "description": "operator_approve_addr is the approve address."
-                      },
-                      "operator_meta_info": {
-                        "type": "string",
-                        "description": "operator_meta_info is the operator meta info."
+                      "description": {
+                        "description": "description defines the description terms for the operator.",
+                        "type": "object",
+                        "properties": {
+                          "moniker": {
+                            "type": "string",
+                            "description": "moniker defines a human-readable name for the validator."
+                          },
+                          "identity": {
+                            "type": "string",
+                            "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+                          },
+                          "website": {
+                            "type": "string",
+                            "description": "website defines an optional website link."
+                          },
+                          "security_contact": {
+                            "type": "string",
+                            "description": "security_contact defines an optional email for security contact."
+                          },
+                          "details": {
+                            "type": "string",
+                            "description": "details define other optional details."
+                          }
+                        }
                       },
                       "cons_address": {
                         "type": "string",
@@ -48720,7 +48823,7 @@
             "properties": {
               "operator_addr": {
                 "type": "string",
-                "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
               },
               "reward_proportion": {
                 "type": "string",
@@ -49005,7 +49108,7 @@
       "properties": {
         "operator_addr": {
           "type": "string",
-          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
         },
         "reward_proportion": {
           "type": "string",
@@ -49521,7 +49624,7 @@
                 "properties": {
                   "operator_addr": {
                     "type": "string",
-                    "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                    "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                   },
                   "reward_proportion": {
                     "type": "string",
@@ -51604,17 +51707,28 @@
     "imuachain.delegation.v1.QueryDelegatedStakersByOperatorResponse": {
       "type": "object",
       "properties": {
-        "count": {
-          "type": "string",
-          "format": "uint64",
-          "title": "count is the number of stakers"
-        },
         "stakers": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "title": "stakers is the returned stakers associated to the specified operator"
+        },
+        "pagination": {
+          "description": "pagination defines the pagination for the response.",
+          "type": "object",
+          "properties": {
+            "next_key": {
+              "type": "string",
+              "format": "byte",
+              "description": "next_key is the key to be passed to PageRequest.key to\nquery the next page most efficiently. It will be empty if\nthere are no more results."
+            },
+            "total": {
+              "type": "string",
+              "format": "uint64",
+              "title": "total is total number of results available if PageRequest.count_total\nwas set, its value is undefined otherwise"
+            }
+          }
         }
       },
       "title": "QueryDelegatedStakersByOperatorResponse is the response to QueryDelegatedStakersByOperatorReq"
@@ -51786,7 +51900,7 @@
         },
         "actual_completed_amount": {
           "type": "string",
-          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
         }
       },
       "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
@@ -51839,7 +51953,7 @@
             },
             "actual_completed_amount": {
               "type": "string",
-              "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+              "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
             },
             "instant_unbonding": {
               "type": "boolean",
@@ -51872,7 +51986,7 @@
                   },
                   "actual_completed_amount": {
                     "type": "string",
-                    "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                    "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
                   }
                 },
                 "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
@@ -51945,7 +52059,7 @@
         },
         "actual_completed_amount": {
           "type": "string",
-          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
         },
         "instant_unbonding": {
           "type": "boolean",
@@ -51978,7 +52092,7 @@
               },
               "actual_completed_amount": {
                 "type": "string",
-                "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
               }
             },
             "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
@@ -52041,7 +52155,7 @@
                   },
                   "actual_completed_amount": {
                     "type": "string",
-                    "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                    "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
                   },
                   "instant_unbonding": {
                     "type": "boolean",
@@ -52074,7 +52188,7 @@
                         },
                         "actual_completed_amount": {
                           "type": "string",
-                          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. it may be lower than the amount in the case of slashing."
+                          "description": "actual_completed_amount is the actual amount of the asset that has been\nundelegated so far. This value is provisional and may decrease if a slashing event\noccurs before completion. So it may be lower than the amount in the case of slashing."
                         }
                       },
                       "description": "UndelegationAmountPerAVS represents the undelegation amount for a specific AVS.\nWe need to track the source AVS of the rewards when handling reward undelegations."
@@ -52739,6 +52853,32 @@
       },
       "description": "CommissionRates defines the initial commission rates to be used for creating\na validator."
     },
+    "cosmos.staking.v1beta1.Description": {
+      "type": "object",
+      "properties": {
+        "moniker": {
+          "type": "string",
+          "description": "moniker defines a human-readable name for the validator."
+        },
+        "identity": {
+          "type": "string",
+          "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+        },
+        "website": {
+          "type": "string",
+          "description": "website defines an optional website link."
+        },
+        "security_contact": {
+          "type": "string",
+          "description": "security_contact defines an optional email for security contact."
+        },
+        "details": {
+          "type": "string",
+          "description": "details define other optional details."
+        }
+      },
+      "description": "Description defines a validator description."
+    },
     "imuachain.operator.v1.AVSRewardsUSDValues": {
       "type": "object",
       "properties": {
@@ -52765,7 +52905,7 @@
           "description": "rewards_usd_values are the USD values of all reward assets."
         }
       },
-      "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+      "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source"
     },
     "imuachain.operator.v1.ClientChainEarningAddrInfo": {
       "type": "object",
@@ -52915,17 +53055,35 @@
     "imuachain.operator.v1.OperatorInfo": {
       "type": "object",
       "properties": {
-        "earnings_addr": {
+        "operator_addr": {
           "type": "string",
-          "description": "earnings_addr is the earnings address."
+          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
         },
-        "approve_addr": {
-          "type": "string",
-          "description": "approve_addr is the approve address."
-        },
-        "operator_meta_info": {
-          "type": "string",
-          "description": "operator_meta_info is the operator meta info."
+        "description": {
+          "description": "description defines the description terms for the operator.",
+          "type": "object",
+          "properties": {
+            "moniker": {
+              "type": "string",
+              "description": "moniker defines a human-readable name for the validator."
+            },
+            "identity": {
+              "type": "string",
+              "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+            },
+            "website": {
+              "type": "string",
+              "description": "website defines an optional website link."
+            },
+            "security_contact": {
+              "type": "string",
+              "description": "security_contact defines an optional email for security contact."
+            },
+            "details": {
+              "type": "string",
+              "description": "details define other optional details."
+            }
+          }
         },
         "client_chain_earnings_addr": {
           "description": "client_chain_earning_addr_list is the client chain earning address list.",
@@ -53068,7 +53226,7 @@
                   "undelegation_id": {
                     "type": "string",
                     "format": "uint64",
-                    "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                    "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                   },
                   "reward_asset": {
                     "type": "boolean",
@@ -53282,7 +53440,7 @@
                       "undelegation_id": {
                         "type": "string",
                         "format": "uint64",
-                        "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                        "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                       },
                       "reward_asset": {
                         "type": "boolean",
@@ -53434,7 +53592,7 @@
       "properties": {
         "operator_addr": {
           "type": "string",
-          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
         },
         "voting_power": {
           "type": "string",
@@ -53675,7 +53833,7 @@
                       "properties": {
                         "operator_addr": {
                           "type": "string",
-                          "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                          "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                         },
                         "voting_power": {
                           "type": "string",
@@ -53840,7 +53998,7 @@
                             "undelegation_id": {
                               "type": "string",
                               "format": "uint64",
-                              "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                              "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
                             },
                             "reward_asset": {
                               "type": "boolean",
@@ -54087,12 +54245,12 @@
                 "description": "rewards_usd_values are the USD values of all reward assets."
               }
             },
-            "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS"
+            "title": "AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source"
           },
-          "description": "avs_rewards_usd_values are the rewards USD values from all AVSs."
+          "description": "avs_rewards_usd_values are the rewards USD values from all AVS reward sources\nfor the specified operator at the receiving AVS."
         }
       },
-      "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and AVS."
+      "description": "QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and receiving AVS."
     },
     "imuachain.operator.v1.QueryValidatorResponse": {
       "type": "object",
@@ -54101,17 +54259,35 @@
           "description": "validator defines the validator info.",
           "type": "object",
           "properties": {
-            "operator_earnings_addr": {
+            "operator_addr": {
               "type": "string",
-              "description": "earnoperator_earnings_addrings_addr is the earnings address."
+              "description": "operator_addr is the operator address."
             },
-            "operator_approve_addr": {
-              "type": "string",
-              "description": "operator_approve_addr is the approve address."
-            },
-            "operator_meta_info": {
-              "type": "string",
-              "description": "operator_meta_info is the operator meta info."
+            "description": {
+              "description": "description defines the description terms for the operator.",
+              "type": "object",
+              "properties": {
+                "moniker": {
+                  "type": "string",
+                  "description": "moniker defines a human-readable name for the validator."
+                },
+                "identity": {
+                  "type": "string",
+                  "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+                },
+                "website": {
+                  "type": "string",
+                  "description": "website defines an optional website link."
+                },
+                "security_contact": {
+                  "type": "string",
+                  "description": "security_contact defines an optional email for security contact."
+                },
+                "details": {
+                  "type": "string",
+                  "description": "details define other optional details."
+                }
+              }
             },
             "cons_address": {
               "type": "string",
@@ -54242,17 +54418,35 @@
           "items": {
             "type": "object",
             "properties": {
-              "operator_earnings_addr": {
+              "operator_addr": {
                 "type": "string",
-                "description": "earnoperator_earnings_addrings_addr is the earnings address."
+                "description": "operator_addr is the operator address."
               },
-              "operator_approve_addr": {
-                "type": "string",
-                "description": "operator_approve_addr is the approve address."
-              },
-              "operator_meta_info": {
-                "type": "string",
-                "description": "operator_meta_info is the operator meta info."
+              "description": {
+                "description": "description defines the description terms for the operator.",
+                "type": "object",
+                "properties": {
+                  "moniker": {
+                    "type": "string",
+                    "description": "moniker defines a human-readable name for the validator."
+                  },
+                  "identity": {
+                    "type": "string",
+                    "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+                  },
+                  "website": {
+                    "type": "string",
+                    "description": "website defines an optional website link."
+                  },
+                  "security_contact": {
+                    "type": "string",
+                    "description": "security_contact defines an optional email for security contact."
+                  },
+                  "details": {
+                    "type": "string",
+                    "description": "details define other optional details."
+                  }
+                }
               },
               "cons_address": {
                 "type": "string",
@@ -54438,7 +54632,7 @@
               "undelegation_id": {
                 "type": "string",
                 "format": "uint64",
-                "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+                "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
               },
               "reward_asset": {
                 "type": "boolean",
@@ -54682,7 +54876,7 @@
         "undelegation_id": {
           "type": "string",
           "format": "uint64",
-          "description": "undelegation_Id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
+          "description": "undelegation_id is a globally incrementing number used to identify an undelegation.\nIt will be included in the key when storing the undelegation."
         },
         "reward_asset": {
           "type": "boolean",
@@ -54737,17 +54931,35 @@
     "imuachain.operator.v1.Validator": {
       "type": "object",
       "properties": {
-        "operator_earnings_addr": {
+        "operator_addr": {
           "type": "string",
-          "description": "earnoperator_earnings_addrings_addr is the earnings address."
+          "description": "operator_addr is the operator address."
         },
-        "operator_approve_addr": {
-          "type": "string",
-          "description": "operator_approve_addr is the approve address."
-        },
-        "operator_meta_info": {
-          "type": "string",
-          "description": "operator_meta_info is the operator meta info."
+        "description": {
+          "description": "description defines the description terms for the operator.",
+          "type": "object",
+          "properties": {
+            "moniker": {
+              "type": "string",
+              "description": "moniker defines a human-readable name for the validator."
+            },
+            "identity": {
+              "type": "string",
+              "description": "identity defines an optional identity signature (ex. UPort or Keybase)."
+            },
+            "website": {
+              "type": "string",
+              "description": "website defines an optional website link."
+            },
+            "security_contact": {
+              "type": "string",
+              "description": "security_contact defines an optional email for security contact."
+            },
+            "details": {
+              "type": "string",
+              "description": "details define other optional details."
+            }
+          }
         },
         "cons_address": {
           "type": "string",
@@ -54881,7 +55093,7 @@
             "properties": {
               "operator_addr": {
                 "type": "string",
-                "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
               },
               "voting_power": {
                 "type": "string",
@@ -54932,7 +55144,7 @@
                 "properties": {
                   "operator_addr": {
                     "type": "string",
-                    "title": "operator_addr is the operator address,its type should be a sdk.AccAddress"
+                    "title": "operator_addr is the operator address, its type should be a sdk.AccAddress"
                   },
                   "voting_power": {
                     "type": "string",

@@ -36,8 +36,8 @@ func (k *Keeper) GetTaskInfo(ctx sdk.Context, taskID, taskContractAddress string
 	infoKey := utils.GetJoinedStoreKey(strings.ToLower(taskContractAddress), taskID)
 	value := store.Get(infoKey)
 	if value == nil {
-		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetTaskInfo: key not found for task ID %s at contract address %s", taskID, taskContractAddress))
+		return nil, errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetTaskInfo: key not found for task ID %s at contract address %s", taskID, taskContractAddress)
 	}
 
 	ret := types.TaskInfo{}
@@ -83,8 +83,8 @@ func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, operatorAddress, avsAddress 
 	infoKey := utils.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avsAddress))
 	isExist := store.Has(infoKey)
 	if !isExist {
-		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetOperatorPubKey: public key not found for address %s", opAccAddr))
+		return nil, errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetOperatorPubKey: public key not found for address %s", opAccAddr)
 	}
 	value := store.Get(infoKey)
 	ret := types.BlsPubKeyInfo{}
@@ -141,6 +141,9 @@ func (k *Keeper) IsExistPubKeyForAVS(ctx sdk.Context, operator, avs string) bool
 
 // IterateTaskAVSInfo iterate through task
 func (k Keeper) IterateTaskAVSInfo(ctx sdk.Context, fn func(index int64, taskInfo types.TaskInfo) (stop bool)) {
+	if fn == nil {
+		return
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSTaskInfo)
 
 	iterator := sdk.KVStorePrefixIterator(store, nil)
@@ -234,8 +237,8 @@ func (k *Keeper) GetTaskResultInfo(ctx sdk.Context, operatorAddress, taskContrac
 		strconv.FormatUint(taskID, 10))
 	value := store.Get(infoKey)
 	if value == nil {
-		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetTaskResultInfo: key is %s", infoKey))
+		return nil, errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetTaskResultInfo: key is %s", infoKey)
 	}
 
 	ret := types.TaskResultInfo{}
@@ -318,8 +321,8 @@ func (k *Keeper) GetTaskChallengedInfo(ctx sdk.Context, taskContractAddress stri
 		strconv.FormatUint(taskID, 10))
 	value := store.Get(infoKey)
 	if value == nil {
-		return "", errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetTaskChallengedInfo: key is %s", infoKey))
+		return "", errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetTaskChallengedInfo: key is %s", infoKey)
 	}
 
 	return common.Bytes2Hex(value), nil

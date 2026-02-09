@@ -33,6 +33,9 @@ func (k *Keeper) GetVotingPowerSnapshot(ctx sdk.Context, key []byte) (*types.Vot
 }
 
 func (k *Keeper) IterateVotingPowerSnapshot(ctx sdk.Context, avsAddr string, opFunc func(height int64, snapshot *types.VotingPowerSnapshot) error) error {
+	if opFunc == nil {
+		return types.ErrParameterInvalid.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixVotingPowerSnapshot)
 	iterator := sdk.KVStorePrefixIterator(store, common.HexToAddress(avsAddr).Bytes())
 	defer iterator.Close()

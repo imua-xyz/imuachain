@@ -18,15 +18,12 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) []abci.Va
 	// set the operators
 	for i := range state.Operators {
 		op := state.Operators[i] // avoid implicit memory aliasing
-		if op.OperatorInfo.EarningsAddr == "" {
-			op.OperatorInfo.EarningsAddr = op.OperatorAddress
-		}
 		// remember that Cosmos will 100% set the block time regardless of
 		// genesis or chain restart or whatever
-		if op.OperatorInfo.Commission.UpdateTime.After(ctx.BlockTime()) {
+		if op.Commission.UpdateTime.After(ctx.BlockTime()) {
 			panic(errorsmod.Wrap(stakingtypes.ErrCommissionUpdateTime, "commission update time is in the future"))
 		}
-		if err := k.RegisterOperator(ctx, op.OperatorAddress, &op.OperatorInfo); err != nil {
+		if err := k.RegisterOperator(ctx, &op); err != nil {
 			panic(errorsmod.Wrap(err, "failed to set operator info"))
 		}
 	}

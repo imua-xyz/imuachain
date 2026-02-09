@@ -92,7 +92,7 @@ func (m *AVSRewardParam) GetCustomOperatorRatio() bool {
 
 // OperatorRewardProportion is the reward proportion of an operator for one epoch
 type OperatorRewardProportion struct {
-	// operator_addr is the operator address,its type should be a sdk.AccAddress
+	// operator_addr is the operator address, its type should be a sdk.AccAddress
 	OperatorAddr string `protobuf:"bytes,1,opt,name=operator_addr,json=operatorAddr,proto3" json:"operator_addr,omitempty"`
 	// reward_proportion is the reward proportion of this operator
 	RewardProportion github_com_cosmos_cosmos_sdk_types.Dec `protobuf:"bytes,2,opt,name=reward_proportion,json=rewardProportion,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"reward_proportion"`

@@ -290,6 +290,9 @@ func (k *Keeper) GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.Legacy
 // do some external operations.
 // `isUpdate` is a flag to indicate whether the change of the state should be set to the store.
 func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string, isUpdate bool, opFunc func(operator string, optedUSDValues *operatortypes.OperatorOptedUSDValue) error) error {
+	if opFunc == nil {
+		return operatortypes.ErrParameterInvalid.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForOperator)
 	iterator := sdk.KVStorePrefixIterator(store, operatortypes.IterateOperatorsForAVSPrefix(strings.ToLower(avsAddr)))
 	defer iterator.Close()
@@ -297,10 +300,13 @@ func (k *Keeper) IterateOperatorUSDValuesForAVS(ctx sdk.Context, avsAddr string,
 	updatedKeyValues := make([]utils.KeyValueT[*operatortypes.OperatorOptedUSDValue], 0)
 	updatedOperators := make([]string, 0)
 	for ; iterator.Valid(); iterator.Next() {
-		keys := utils.ParseJoinedKey(iterator.Key())
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
+		if err != nil {
+			return err
+		}
 		var optedUSDValues operatortypes.OperatorOptedUSDValue
 		k.cdc.MustUnmarshal(iterator.Value(), &optedUSDValues)
-		err := opFunc(keys[1], &optedUSDValues)
+		err = opFunc(keys[1], &optedUSDValues)
 		if err != nil {
 			return err
 		}
@@ -407,6 +413,9 @@ func (k *Keeper) SetAllAVSUSDValues(ctx sdk.Context, usdValues []operatortypes.A
 func (k *Keeper) IterateAVSUSDValues(ctx sdk.Context,
 	opFunc func(avsAddr string, avsUSDValue *operatortypes.DecValueField) error,
 ) error {
+	if opFunc == nil {
+		return operatortypes.ErrParameterInvalid.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixUSDValueForAVS)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
@@ -460,7 +469,7 @@ func (k *Keeper) CalculateRealTimeOperatorUSDValue(
 	ctx sdk.Context,
 	isForSlash bool,
 	operator string,
-	assetsFilter map[string]interface{},
+	assetsFilter map[string]struct{},
 	decimals map[string]uint32,
 	prices map[string]oracletype.Price,
 ) (operatortypes.OperatorStakingInfo, error) {

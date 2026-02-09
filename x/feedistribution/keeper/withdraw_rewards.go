@@ -123,6 +123,8 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 	opFunc := func(avs string, rewards *feedistributiontypes.StakerClaimedRewards) (bool, bool, error) {
 		if !isWithdrawAllReward && !withdrawAmountPerAVS.IsPositive() {
 			// the expected amount has been withdrawn, stop the iteration.
+			// the state doesn't need to be updated because there was no change
+			// during this iteration.
 			return true, false, nil
 		}
 
@@ -144,6 +146,22 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 			if !amountFromDogfood.IsNil() {
 				withdrawAmountFromDogfood = withdrawAmountFromDogfood.Add(amountFromDogfood)
 			}
+		}
+
+		if !isWithdrawAllReward && !withdrawAmountPerAVS.IsPositive() {
+			// the expected amount has been withdrawn, return from the current iteration and set the flag
+			// to update the state related to outstanding rewards. This check can prevent withdrawing more
+			// rewards than the expected amount from the subsequent withdrawable rewards.
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					feedistributiontypes.EventTypeWithdrawRewardFromAVS,
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avs),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subOutstandingRewards.String()),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endOutstandingRewards.String()),
+				),
+			)
+			return false, true, nil
 		}
 
 		// withdraw from withdrawable rewards

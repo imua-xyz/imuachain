@@ -110,11 +110,7 @@ func (k *Keeper) delegateTo(
 		TotalShare:  share,
 	}
 	// Check if the staker belongs to the delegated operator. Increase the operator's share if yes.
-	operator, err := k.GetAssociatedOperator(ctx, stakerID)
-	if err != nil {
-		return sdkmath.LegacyDec{}, sdkmath.Int{}, err
-	}
-	if operator == params.OperatorAddress.String() {
+	if k.GetAssociatedOperator(ctx, stakerID) == params.OperatorAddress.String() {
 		deltaOperatorAsset.OperatorShare = share
 	}
 
@@ -250,12 +246,9 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 			return delegationtype.ErrInvalidInputParameter.Wrap("ReduceDelegationShare function is required for reward undelegation")
 		}
 		// decrease the reward delegation share if it's an reward undelegation
-		undelegationAmounts, totalCompletedAmount, err := params.ReduceDelegationShare(ctx, params.RewardStakerID, params.RewardAssetID, params.OperatorAddress, instantSlashRatio, params.OpAmount, *prevAssetState)
+		undelegationAmounts, _, err := params.ReduceDelegationShare(ctx, params.RewardStakerID, params.RewardAssetID, params.OperatorAddress, instantSlashRatio, params.OpAmount, *prevAssetState)
 		if err != nil {
 			return err
-		}
-		if instantSlashRatio.IsPositive() {
-			r.ActualCompletedAmount = totalCompletedAmount
 		}
 		r.RewardUndelegations = undelegationAmounts
 	}
@@ -340,14 +333,11 @@ func (k *Keeper) AssociateOperatorWithStaker(
 	}
 
 	stakerID, _ := assetstype.GetStakerIDAndAssetID(clientChainID, stakerAddress, nil)
-	associatedOperator, err := k.GetAssociatedOperator(ctx, stakerID)
-	if err != nil {
-		return err
-	}
-	if associatedOperator != "" {
+	if k.GetAssociatedOperator(ctx, stakerID) != "" {
 		return delegationtype.ErrOperatorAlreadyAssociated
 	}
 
+	var err error
 	opFunc := func(keys *delegationtype.SingleDelegationInfoReq, amounts *delegationtype.DelegationAmounts) (bool, error) {
 		// increase the share of new marked operator
 		if keys.OperatorAddr == operatorAddress.String() {
@@ -383,10 +373,7 @@ func (k *Keeper) DissociateOperatorFromStaker(
 	stakerAddress []byte,
 ) error {
 	stakerID, _ := assetstype.GetStakerIDAndAssetID(clientChainID, stakerAddress, nil)
-	associatedOperator, err := k.GetAssociatedOperator(ctx, stakerID)
-	if err != nil {
-		return err
-	}
+	associatedOperator := k.GetAssociatedOperator(ctx, stakerID)
 	if associatedOperator == "" {
 		return delegationtype.ErrNoAssociatedOperatorByStaker
 	}

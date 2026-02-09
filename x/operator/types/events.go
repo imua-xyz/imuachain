@@ -4,12 +4,16 @@ package types
 
 // x/operator events
 const (
-	EventTypeRegisterOperator        = "register_operator"
-	AttributeKeyOperator             = "operator"
-	AttributeKeyMetaInfo             = "meta_info"
-	AttributeKeyMaxCommissionRate    = "max_commission_rate"
-	AttributeKeyMaxChangeRate        = "max_change_rate"
-	AttributeKeyCommissionUpdateTime = "commission_update_time"
+	EventTypeRegisterOperator           = "register_operator"
+	AttributeKeyOperator                = "operator"
+	AttributeKeyOperatorMoniker         = "operator_moniker"
+	AttributeKeyOperatorIdentity        = "operator_identity"
+	AttributeKeyOperatorWebsite         = "operator_website"
+	AttributeKeyOperatorSecurityContact = "operator_security_contact"
+	AttributeKeyOperatorDetails         = "operator_details"
+	AttributeKeyMaxCommissionRate       = "max_commission_rate"
+	AttributeKeyMaxChangeRate           = "max_change_rate"
+	AttributeKeyCommissionUpdateTime    = "commission_update_time"
 
 	EventTypeOptIn            = "opt_in"
 	AttributeKeyAVSAddr       = "avs_addr"

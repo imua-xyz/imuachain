@@ -27,7 +27,7 @@ message AVSRewardParam {
 
 // OperatorRewardProportion is the reward proportion of an operator for one epoch
 message OperatorRewardProportion {
-  // operator_addr is the operator address,its type should be a sdk.AccAddress
+  // operator_addr is the operator address, its type should be a sdk.AccAddress
   string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // reward_proportion is the reward proportion of this operator
   string reward_proportion = 2 [

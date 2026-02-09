@@ -12,7 +12,7 @@ option go_package = "github.com/imua-xyz/imuachain/x/operator/types";
 message GenesisState {
   // there are no params for this module.
   // operators is a list of the registered operators.
-  repeated OperatorDetail operators = 1 [(gogoproto.nullable) = false];
+  repeated OperatorInfo operators = 1 [(gogoproto.nullable) = false];
 
   // add other information for exporting / importing.
   // Although it is not necessary for the bootstrapped genesis, it is
@@ -46,16 +46,6 @@ message GenesisState {
   repeated StakerSlashShareSnapshot staker_slash_share_snapshots = 10 [(gogoproto.nullable) = false];
   // params is the params of the operator module.
   Params params = 11 [(gogoproto.nullable) = false];
-}
-
-// OperatorDetail is helper structure to store the operator information for the genesis state.
-// it's corresponding to the kvStore `KeyPrefixOperatorInfo`
-message OperatorDetail {
-  // operator_address is the address of the operator as the bech32
-  // encoded version of sdk.AccAddress.
-  string operator_address = 1;
-  // operator_info is the detail information for the above operator
-  OperatorInfo operator_info = 2 [(gogoproto.nullable) = false];
 }
 
 // OptedStates is helper structure to store the opted state for the genesis state.

@@ -20,6 +20,8 @@ var (
 	// It is set to 5% by default.
 	DefaultMinCommissionRate = sdk.NewDecWithPrec(5, 2)
 
+	DefaultCommissionUpdateTime = time.Unix(0, 0).UTC()
+
 	// DefaultMaxSlashProportion is the default maximum slash proportion when executing the slash event.
 	// It is set to 100% by default.
 	DefaultMaxSlashProportion = sdk.OneDec()

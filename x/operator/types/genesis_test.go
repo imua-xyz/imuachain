@@ -56,53 +56,45 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis state due to non bech32 operator address",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: "invalid",
+						OperatorAddr: "invalid",
 					},
 				},
 				Params: params,
 			},
 			expPass:        false,
-			expErrContains: "invalid bech32 address",
+			expErrContains: "error occurred when parse acc address from Bech32",
 		},
 		{
 			name: "invalid genesis state due to duplicate operator address",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							ClientChainEarningsAddr: &types.ClientChainEarningAddrList{
-								EarningInfoList: []*types.ClientChainEarningAddrInfo{
-									{
-										LzClientChainID:        1,
-										ClientChainEarningAddr: utiltx.GenerateAddress().String(),
-									},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						ClientChainEarningsAddr: &types.ClientChainEarningAddrList{
+							EarningInfoList: []*types.ClientChainEarningAddrInfo{
+								{
+									LzClientChainID:        1,
+									ClientChainEarningAddr: utiltx.GenerateAddress().String(),
 								},
 							},
-							Commission: commission,
 						},
+						Commission: commission,
 					},
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator2",
-							ClientChainEarningsAddr: &types.ClientChainEarningAddrList{
-								EarningInfoList: []*types.ClientChainEarningAddrInfo{
-									{
-										LzClientChainID:        1,
-										ClientChainEarningAddr: utiltx.GenerateAddress().String(),
-									},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator2", "", "", "", ""),
+						ClientChainEarningsAddr: &types.ClientChainEarningAddrList{
+							EarningInfoList: []*types.ClientChainEarningAddrInfo{
+								{
+									LzClientChainID:        1,
+									ClientChainEarningAddr: utiltx.GenerateAddress().String(),
 								},
 							},
-							Commission: commission,
 						},
+						Commission: commission,
 					},
 				},
 				Params: params,
@@ -113,27 +105,23 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis state due to duplicate lz chain id",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							ClientChainEarningsAddr: &types.ClientChainEarningAddrList{
-								EarningInfoList: []*types.ClientChainEarningAddrInfo{
-									{
-										LzClientChainID:        1,
-										ClientChainEarningAddr: utiltx.GenerateAddress().String(),
-									},
-									{
-										LzClientChainID:        1,
-										ClientChainEarningAddr: utiltx.GenerateAddress().String(),
-									},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						ClientChainEarningsAddr: &types.ClientChainEarningAddrList{
+							EarningInfoList: []*types.ClientChainEarningAddrInfo{
+								{
+									LzClientChainID:        1,
+									ClientChainEarningAddr: utiltx.GenerateAddress().String(),
+								},
+								{
+									LzClientChainID:        1,
+									ClientChainEarningAddr: utiltx.GenerateAddress().String(),
 								},
 							},
-							Commission: commission,
 						},
+						Commission: commission,
 					},
 				},
 				Params: params,
@@ -144,15 +132,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis state due to invalid cons key operator address",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -168,15 +152,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis state due to unregistered operator in cons key",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -192,24 +172,16 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis state due to duplicate operator in cons key",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 					{
-						OperatorAddress: accAddress2.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress2.String(),
-							ApproveAddr:      accAddress2.String(),
-							OperatorMetaInfo: "operator2",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress2.String(),
+						Description:  stakingtypes.NewDescription("operator2", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -240,15 +212,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis state due to invalid cons key",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -270,24 +238,16 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis state due to duplicate cons key for the same chain id",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 					{
-						OperatorAddress: accAddress2.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress2.String(),
-							ApproveAddr:      accAddress2.String(),
-							OperatorMetaInfo: "operator2",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress2.String(),
+						Description:  stakingtypes.NewDescription("operator2", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -318,15 +278,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis due to negative duration",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -352,15 +308,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis due to negative rate",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -386,15 +338,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis due to nil rate",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -420,15 +368,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis due to nil operator name",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -449,20 +393,16 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				),
 			},
 			expPass:        false,
-			expErrContains: "operator meta info is empty",
+			expErrContains: "operator moniker is empty",
 		},
 		{
 			name: "invalid genesis due to large operator name",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: strings.Repeat("a", stakingtypes.MaxMonikerLength+1),
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription(strings.Repeat("a", stakingtypes.MaxMonikerLength+1), "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -483,20 +423,16 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				),
 			},
 			expPass:        false,
-			expErrContains: "info length exceeds",
+			expErrContains: "invalid moniker length",
 		},
 		{
 			name: "invalid genesis due to nil commission",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       stakingtypes.NewCommission(sdk.Dec{}, sdk.Dec{}, sdk.Dec{}),
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   stakingtypes.NewCommission(sdk.Dec{}, sdk.Dec{}, sdk.Dec{}),
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -522,15 +458,11 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis due to invalid commission",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       stakingtypes.NewCommission(sdk.OneDec(), sdk.ZeroDec(), sdk.OneDec()),
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   stakingtypes.NewCommission(sdk.OneDec(), sdk.ZeroDec(), sdk.OneDec()),
 					},
 				},
 				OperatorRecords: []types.OperatorConsKeyRecord{
@@ -556,24 +488,16 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 		{
 			name: "invalid genesis due to duplicate operator name",
 			genState: &types.GenesisState{
-				Operators: []types.OperatorDetail{
+				Operators: []types.OperatorInfo{
 					{
-						OperatorAddress: accAddress1.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress1.String(),
-							ApproveAddr:      accAddress1.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 					{
-						OperatorAddress: accAddress2.String(),
-						OperatorInfo: types.OperatorInfo{
-							EarningsAddr:     accAddress2.String(),
-							ApproveAddr:      accAddress2.String(),
-							OperatorMetaInfo: "operator1",
-							Commission:       commission,
-						},
+						OperatorAddr: accAddress2.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
 					},
 				},
 				Params: params,

@@ -20,6 +20,7 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 	// using operator and assetID as map keys.
 	delegationChangeInfos := make(map[string]map[string]feedistributiontypes.DelegationChangeInfo, 0)
 	cc, writeFunc := ctx.CacheContext()
+	// TODO: Consider adjusting the implementation to prevent a failed staker from affecting the redelegation of others.
 	// iterate to handle all staker rewards
 	for _, staker := range stakerList {
 		// check whether the staker wants to redelegate the rewards.
@@ -34,7 +35,6 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 			continue
 		}
 		// check if the operator has been slashed or frozen
-		// skip the check if not genesis (or chain restart)
 		operatorAccAddr, err := sdk.AccAddressFromBech32(stakerRewardParams.RedelegateOperatorAddr)
 		if err != nil {
 			return feedistributiontypes.ErrFailedToRedelegateRewards.Wrapf("invalid operator address:%s", err)
@@ -71,7 +71,6 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 						}
 						// redelegate the reward
 						share, preDelegatedAmount, err := k.delegationKeeper.DelegateTo(cc, &delegationtype.DelegationOrUndelegationParams{
-							Action:          assetstype.DelegateTo,
 							OperatorAddress: operatorAccAddr,
 							OpAmount:        rewardAmount,
 							RewardAsset:     true,
@@ -260,7 +259,7 @@ func (k Keeper) UndelegateClaimedRewards(
 					},
 				})
 			rewards.PendingUndelegationRewards = rewards.PendingUndelegationRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(amountFromCurAVS, rewardAsset.RewardAssetInfo.DenominationExponent)))
-			if instantSlashRatio.IsPositive() {
+			if !instantSlashRatio.IsNil() && instantSlashRatio.IsPositive() {
 				slashedAmount := undelegationAmountPerAVS.Amount.Sub(undelegationAmountPerAVS.ActualCompletedAmount)
 				rewards.PendingSlashedRewards = rewards.PendingSlashedRewards.Add(sdk.NewDecCoinFromDec(rewardAsset.RewardAssetInfo.RewardDenomination, feedistributiontypes.ScaleIntByDecimals(slashedAmount, rewardAsset.RewardAssetInfo.DenominationExponent)))
 			}
@@ -279,7 +278,6 @@ func (k Keeper) UndelegateClaimedRewards(
 	}
 
 	err := k.delegationKeeper.UndelegateFrom(ctx, &delegationtype.DelegationOrUndelegationParams{
-		Action:          assetstype.UndelegateFrom,
 		OperatorAddress: operatorAccAddr,
 		OpAmount:        amount,
 		// The txID in the undelegation key is unnecessary after introducing a unique undelegation ID.
