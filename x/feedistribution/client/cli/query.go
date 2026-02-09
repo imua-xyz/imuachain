@@ -40,13 +40,15 @@ func GetQueryCmd(_ string) *cobra.Command {
 		CmdQueryOperatorCurrentRewards(),
 		CmdQueryOperatorHistoricalRewards(),
 		CmdQueryAllOperatorHistoricalRewards(),
-		CmdQueryOperatorOutstandingRewards(),
+		CmdQueryOperatorUnclaimedRewards(),
 		CmdQueryOperatorSlashEvent(),
 		CmdQueryOperatorSlashEvents(),
 		CmdQueryStakerClaimedRewards(),
 		CmdQueryStakeChangeDelegations(),
 		CmdQueryDelegationStartingInfo(),
+		CmdQueryDelegationUnclaimedRewards(),
 		CmdQueryStakerUnclaimedRewards(),
+		CmdQueryStakerRewardParams(),
 	)
 	return cmd
 }
@@ -312,13 +314,13 @@ func CmdQueryAVSRewardDistribution() *cobra.Command {
 	)
 }
 
-func CmdQueryOperatorOutstandingRewards() *cobra.Command {
+func CmdQueryOperatorUnclaimedRewards() *cobra.Command {
 	return newOperatorAVSCmd(
-		"operator-outstanding-rewards [operator] [avsAddr]",
-		"get the outstanding rewards for the operator",
-		"get the outstanding rewards for the operator",
+		"operator-unclaimed-rewards [operator] [avsAddr]",
+		"get the unclaimed rewards for the operator",
+		"get the unclaimed rewards for the operator",
 		func(q types.QueryClient, ctx context.Context, req *types.OperatorAVSRequest) (proto.Message, error) {
-			return q.OperatorOutstandingRewards(ctx, req)
+			return q.OperatorUnclaimedRewards(ctx, req)
 		},
 	)
 }
@@ -384,10 +386,10 @@ func CmdQueryDelegationStartingInfo() *cobra.Command {
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, _, err := assetstypes.ValidateID(args[0], false, false); err != nil {
-				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(fmt.Sprintf("invalid stakerID:%s,err:%s", args[0], err))
 			}
 			if _, _, err := assetstypes.ValidateID(args[1], false, false); err != nil {
-				return types.ErrInvalidCliCmdArg.Wrap(err.Error())
+				return types.ErrInvalidCliCmdArg.Wrap(fmt.Sprintf("invalid assetID:%s,err:%s", args[1], err))
 			}
 			_, err := sdk.AccAddressFromBech32(args[2])
 			if err != nil {
@@ -406,6 +408,46 @@ func CmdQueryDelegationStartingInfo() *cobra.Command {
 				EpochIdentifier: args[3],
 			}
 			res, err := queryClient.DelegationStartingInfo(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdQueryDelegationUnclaimedRewards() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delegation-unclaimed-rewards [stakerID] [assetID] [operator]",
+		Short: "get the unclaimed rewards for a delegation",
+		Long:  "get the unclaimed rewards for a delegation",
+		Args:  cobra.ExactArgs(3),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if _, _, err := assetstypes.ValidateID(args[0], false, false); err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, fmt.Sprintf("invalid stakerID:%s,err:%s", args[0], err))
+			}
+			if _, _, err := assetstypes.ValidateID(args[1], false, false); err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, fmt.Sprintf("invalid assetID:%s,err:%s", args[1], err))
+			}
+			_, err := sdk.AccAddressFromBech32(args[2])
+			if err != nil {
+				return types.ErrInvalidCliCmdArg.Wrapf("invalid operator address,err:%s", err.Error())
+			}
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			req := &types.QueryDelegationUnclaimedRewardsRequest{
+				StakerId: args[0],
+				AssetId:  args[1],
+				Operator: args[2],
+			}
+			res, err := queryClient.DelegationUnclaimedRewards(context.Background(), req)
 			if err != nil {
 				return err
 			}
@@ -523,6 +565,7 @@ func CmdQueryOperatorCommission() *cobra.Command {
 	)
 }
 
+//nolint:dupl
 func CmdQueryStakerUnclaimedRewards() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "staker-unclaimed-rewards [stakerID]",
@@ -540,9 +583,41 @@ func CmdQueryStakerUnclaimedRewards() *cobra.Command {
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 			req := &types.QueryStakerUnclaimedRewardsRequest{
-				StakerId: args[0], // the RPC is case-insensitive with respect to AVSAddr.
+				StakerId: args[0],
 			}
 			res, err := queryClient.StakerUnclaimedRewards(context.Background(), req)
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+//nolint:dupl
+func CmdQueryStakerRewardParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "staker-reward-params [stakerID]",
+		Short: "get the reward parameters for a staker",
+		Long:  "get the reward parameters for a staker",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if _, _, err := assetstypes.ValidateID(args[0], false, false); err != nil {
+				return errorsmod.Wrap(types.ErrInvalidCliCmdArg, err.Error())
+			}
+
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			req := &types.QueryStakerRewardParamsRequest{
+				StakerId: args[0],
+			}
+			res, err := queryClient.StakerRewardParams(context.Background(), req)
 			if err != nil {
 				return err
 			}

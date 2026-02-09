@@ -5,14 +5,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	utils "github.com/imua-xyz/imuachain/utils"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
 func (ms msgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if utils.IsMainnet(ctx.ChainID()) && ms.Keeper.authority != msg.Authority {
+	if ms.Keeper.authority != msg.Authority {
 		return nil, govtypes.ErrInvalidSigner.Wrapf(
 			"invalid authority; expected %s, got %s",
 			ms.Keeper.authority, msg.Authority,

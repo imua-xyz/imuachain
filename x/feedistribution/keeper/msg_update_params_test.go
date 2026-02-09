@@ -52,13 +52,12 @@ func TestMsgUpdateParams(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := ms.UpdateParams(wctx, tc.input)
-			require.NoError(t, err)
-			// if tc.expErr {
-			// 	require.Error(t, err)
-			// 	require.Contains(t, err.Error(), tc.expErrMsg)
-			// } else {
-			// 	require.NoError(t, err)
-			// }
+			if tc.expErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expErrMsg)
+			} else {
+				require.NoError(t, err)
+			}
 		})
 	}
 }

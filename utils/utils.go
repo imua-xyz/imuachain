@@ -3,8 +3,12 @@ package utils
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
@@ -37,6 +41,44 @@ const (
 	// DelimiterForID Delimiter used for constructing the stakerID and assetID.
 	DelimiterForID = "_"
 )
+
+const (
+	FlagInstantUnbonding = "instant-unbonding"
+)
+
+// ChainIDPrefix is pre-pended to the chainID, and the combination hashed to generate the AVS address.
+var (
+	ChainIDPrefix                = []byte("chain-id-prefix")
+	DelimiterForCombinedKeyBytes = []byte(DelimiterForCombinedKey)
+)
+
+func GetJoinedStoreKey(keys ...string) []byte {
+	return []byte(strings.Join(keys, DelimiterForCombinedKey))
+}
+
+func GetJoinedStoreKeyForPrefix(keys ...string) []byte {
+	return append(GetJoinedStoreKey(keys...), DelimiterForCombinedKeyBytes...)
+}
+
+func ParseJoinedKey(key []byte) []string {
+	return strings.Split(string(key), DelimiterForCombinedKey)
+}
+
+func IsJoinedStoreKey(key string) bool {
+	return strings.Contains(key, DelimiterForCombinedKey)
+}
+
+func ParseJoinedKeyWithCount(key []byte, number int) (keys []string, err error) {
+	stringList := ParseJoinedKey(key)
+	if len(stringList) != number {
+		return nil, fmt.Errorf(
+			"the joined key can't be parsed,expected length:%d,actual length:%d,the stringList is:%v",
+			number,
+			len(stringList),
+			stringList)
+	}
+	return stringList, nil
+}
 
 // IsMainnet returns true if the chain-id has the Evmos mainnet EIP155 chain prefix.
 func IsMainnet(chainID string) bool {
@@ -237,4 +279,32 @@ func BigEndianToUint32(bz []byte) uint32 {
 	}
 
 	return binary.BigEndian.Uint32(bz)
+}
+
+// ChainIDWithoutRevision returns the chainID without the revision number.
+// For example, "imuachaintestnet_233-1" returns "imuachaintestnet_233".
+func ChainIDWithoutRevision(chainID string) string {
+	if !ibcclienttypes.IsRevisionFormat(chainID) {
+		return chainID
+	}
+	// only strip the final "-<revision>" suffix
+	idx := strings.LastIndex(chainID, "-")
+	if idx == -1 {
+		return chainID
+	}
+	return chainID[:idx]
+}
+
+// GenerateAVSAddress generates a hex AVS address based on the chainID.
+// It returns a hex address as a string.
+func GenerateAVSAddress(chainID string) string {
+	avsAddress := common.BytesToAddress(
+		crypto.Keccak256(
+			append(
+				ChainIDPrefix,
+				[]byte(chainID)...,
+			),
+		),
+	)
+	return strings.ToLower(avsAddress.String())
 }

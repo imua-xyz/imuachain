@@ -3,6 +3,8 @@ package keeper
 import (
 	"strconv"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
 	"cosmossdk.io/math"
@@ -11,7 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/types/keys"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -55,19 +56,19 @@ func (k Keeper) SetAVSRewardDistribution(ctx sdk.Context, avsAddr string, distri
 	}
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
-	for _, operator := range distribution.OperatorRewardProportions {
+	for _, operatorProportion := range distribution.OperatorRewardProportions {
 		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
-		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.OperatorAddr, avsAddr) {
-			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
+		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operatorProportion.OperatorAddr, avsAddr) {
+			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operatorProportion.OperatorAddr)
 		}
 		// check if the operator has active USD value
-		optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operator.OperatorAddr)
+		optedUSDValue, err := k.operatorKeeper.GetOperatorOptedUSDValue(ctx, avsAddr, operatorProportion.OperatorAddr)
 		if err != nil {
 			return err
 		}
 		if !optedUSDValue.ActiveUSDValue.IsPositive() {
-			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s,ActiveUSDValue:%s", operator, optedUSDValue.ActiveUSDValue)
+			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s,ActiveUSDValue:%s", operatorProportion.OperatorAddr, optedUSDValue.ActiveUSDValue)
 		}
 	}
 
@@ -145,11 +146,11 @@ func (k Keeper) SetAVSRewardProportionsExclusive(ctx sdk.Context, avsAddr string
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), feedistributiontypes.KeyPrefixAVSRewardDistribution)
 	// Check if the operator has opted into the AVS or just opted out
 	// of it before the end of the current epoch.
-	for _, operator := range rewardProportions {
+	for _, operatorProportion := range rewardProportions {
 		// We don't check if the operator is jailed here because there might
 		// still be partial rewards for jailed operators.
-		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operator.String(), avsAddr) {
-			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operator)
+		if k.operatorKeeper.IsOptedOutAndEffective(ctx, operatorProportion.OperatorAddr, avsAddr) {
+			return feedistributiontypes.ErrInvalidRewardDistribution.Wrapf("invalid operator for reward distribution, operator:%s", operatorProportion.OperatorAddr)
 		}
 	}
 	rewardDistribution := feedistributiontypes.AVSRewardDistribution{}
@@ -239,12 +240,12 @@ func (k Keeper) EpochRewardFnForDogfood() AVSEpochRewardFn {
 			return nil, err
 		}
 
-		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-		dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+		chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+		dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 		// fund the reward pool of dogfood AVS
 		validRewards := make(sdk.DecCoins, 0)
 		for _, singleReward := range feesCollected {
-			assetID, _, err := k.GetAVSRewardAssetBySymbol(ctx, dogfoodAVSAddr, singleReward.Denom)
+			assetID, _, err := k.GetAVSRewardAssetByDenomination(ctx, dogfoodAVSAddr, singleReward.Denom)
 			if err != nil {
 				ctx.Logger().Error("can't get the dogfood reward asset by the denomination", "denomination", singleReward.Denom)
 				// An invalid reward shouldn't affect valid rewards.
@@ -280,20 +281,6 @@ func getOverlap(start, end, epochStart, epochEnd uint64) uint64 {
 	s := max(start, epochStart)
 	e := min(end, epochEnd)
 	return e - s + 1
-}
-
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b uint64) uint64 {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 // CalcJailedBlocksInEpoch calculates the number of jailed blocks within a given epoch.
@@ -394,7 +381,6 @@ func (k Keeper) CommonRewardProportion(
 	operatorVotingPowersAfterJail := make([]operatortypes.OperatorVotingPower, 0)
 	totalPowerAfterJail := totalVotingPower
 	isHandleJail := false
-
 	if !totalVotingPower.IsPositive() {
 		// return null reward proportions, because the rewards should be allocated to
 		// the community pool.
@@ -482,7 +468,7 @@ func (k Keeper) RewardProportionsFnForDogfood() OperatorRewardProportionsFn {
 				}
 				wrappedKey = keys.NewWrappedConsKeyFromSdkKey(consensusKey)
 				found, accAddress = k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-					ctx, avstypes.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
+					ctx, utils.ChainIDWithoutRevision(ctx.ChainID()), wrappedKey.ToConsAddr(),
 				)
 				if !found {
 					ctx.Logger().Error("Operator address not found; skipping", "consAddress", wrappedKey.ToConsAddr(), "i", i)
@@ -559,8 +545,8 @@ func (k Keeper) AVSRewardAndProportionsByParam(ctx sdk.Context, avsAddr string) 
 	var operatorRewardProportionsFn OperatorRewardProportionsFn
 	var isDogfood bool
 	// check if the avs is dogfood
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	if dogfoodAVSAddr == avsAddr {
 		isDogfood = true
 		avsEpochRewardFn = k.EpochRewardFnForDogfood()

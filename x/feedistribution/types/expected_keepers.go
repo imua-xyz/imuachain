@@ -6,7 +6,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
+	oracletype "github.com/imua-xyz/imuachain/x/oracle/types"
 
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
@@ -58,6 +60,13 @@ type OperatorKeeper interface {
 	GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error)
 	HasOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) bool
 	GetOperatorAssetUSDValue(ctx sdk.Context, epochIdentifier, operator, assetID string) (sdkmath.LegacyDec, error)
+	IterateOperatorRewardsUSDValue(ctx sdk.Context, receivingAVS, operator string, isUpdate bool,
+		opFunc func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error),
+	) error
+	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
+	SetOperatorRewardUSDValue(ctx sdk.Context, receivingAVS, rewardSourceAVS, operator, symbol string, amount sdkmath.LegacyDec) error
+	RemoveAllStaleOperatorRewardUSDs(ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{}) error
+	IsCompoundRewardsDisabled(ctx sdk.Context, addr string) (bool, error)
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.
@@ -72,13 +81,34 @@ type AVSKeeper interface {
 type AssetsKeeper interface {
 	GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *assetstype.StakingAssetInfo, err error)
 	GetOperatorSpecifiedAssetInfo(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) (info *assetstype.OperatorAssetInfo, err error)
+	IsStakingAsset(ctx sdk.Context, assetID string) bool
+	IsOperatorAssetExist(ctx sdk.Context, operatorAddr sdk.AccAddress, assetID string) bool
 }
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.
 type DelegationKeeper interface {
-	GetDelegationInfoWithAmount(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, error)
+	GetDelegationInfoWithAmounts(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, sdkmath.Int, sdkmath.Int, error)
 	IterateDelegationsForStaker(ctx sdk.Context, stakerID string, opFunc delegationtype.DelegationOpFunc) error
 	GetStakersByOperator(ctx sdk.Context, operator, assetID string) (delegationtype.StakerList, error)
+	DelegateTo(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) (sdkmath.LegacyDec, sdkmath.Int, error)
+	UndelegateFrom(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) error
+}
+
+type SlashKeeper interface {
+	IsOperatorFrozen(ctx sdk.Context, opAddr sdk.AccAddress) bool
+}
+
+type StakingKeeper interface {
+	GetLastTotalPower(ctx sdk.Context) sdkmath.Int
+	GetAllImuachainValidators(
+		ctx sdk.Context,
+	) (validators []dogfoodtypes.ImuachainValidator)
+}
+
+type OracleKeeper interface {
+	// GetSpecifiedAssetsPrice is a function to retrieve the asset price according to the
+	// assetID.
+	GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (oracletype.Price, error)
 }
 
 // ParamSubspace defines the expected Subspace interface for parameters.

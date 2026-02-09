@@ -124,7 +124,7 @@ func (k Keeper) GetStakingAssetInfo(ctx sdk.Context, assetID string) (info *asse
 }
 
 // GetAssetsDecimal returns the decimal of all the provided assets.
-func (k Keeper) GetAssetsDecimal(ctx sdk.Context, assets map[string]interface{}) (decimals map[string]uint32, err error) {
+func (k Keeper) GetAssetsDecimal(ctx sdk.Context, assets map[string]struct{}) (decimals map[string]uint32, err error) {
 	if assets == nil {
 		return nil, assetstype.ErrInputPointerIsNil.Wrap("assets is nil")
 	}

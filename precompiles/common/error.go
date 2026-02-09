@@ -15,7 +15,9 @@ const (
 
 	ErrInvalidNameLength = "nil name or too long for chain or token,value:%s,actualLength:%d,max:%d"
 
-	ErrInvalidDecimal = "decimal is too big,decimal:%d,max:%d"
+	ErrInvalidDecimal              = "decimal is too big,decimal:%d,max:%d"
+	ErrAssetBasicInfoMismatch      = "mismatch basic info, name:%s,symbol:%s,decimal:%d"
+	ErrInvalidDenominationExponent = "reward denomination exponent is too big,denominationExponent:%d,max:%d"
 
 	ErrInvalidEVMAddr = "the address is an invalid EVM address, addr:%s"
 

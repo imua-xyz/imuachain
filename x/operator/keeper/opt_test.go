@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
@@ -12,7 +14,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -28,7 +29,7 @@ type StateForCheck struct {
 func (suite *OperatorTestSuite) prepareOperator() {
 	suite.operatorAddr = testutiltx.GenerateAddress().Bytes()
 	// register operator
-	suite.RegisterOperator(suite.operatorAddr.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()))
+	suite.RegisterOperator(suite.operatorAddr.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()), true)
 }
 
 func (suite *OperatorTestSuite) prepareDeposit(stakerAddr, assetAddr common.Address, amount sdkmath.Int) {
@@ -91,7 +92,7 @@ func (suite *OperatorTestSuite) TestOptIn() {
 	// check if the related state is correct
 	price, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 	suite.NoError(err)
-	usdValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
+	usdValue := utils.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
 	expectedState := &StateForCheck{
 		OptedInfo: &operatorTypes.OptedInfo{
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),

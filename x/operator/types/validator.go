@@ -20,15 +20,14 @@ func NewValidator(operator sdk.AccAddress, pubKey cryptotypes.PubKey) (Validator
 	}
 
 	return Validator{
-		OperatorEarningsAddr: operator.String(),
-		OperatorApproveAddr:  operator.String(),
-		ConsensusPubkey:      pkAny,
-		Jailed:               false,
-		Status:               stakingtypes.Bonded,
-		VotingPower:          math.LegacyZeroDec(),
-		DelegatorShares:      math.ZeroInt(),
-		Commission:           stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
-		DelegatorTokens:      []DelegatorInfo{},
+		OperatorAddr:    operator.String(),
+		ConsensusPubkey: pkAny,
+		Jailed:          false,
+		Status:          stakingtypes.Bonded,
+		VotingPower:     math.LegacyZeroDec(),
+		DelegatorShares: math.ZeroInt(),
+		Commission:      stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec()),
+		DelegatorTokens: []DelegatorInfo{},
 	}, nil
 }
 

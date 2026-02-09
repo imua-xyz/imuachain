@@ -3,8 +3,8 @@ package keeper
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/imua-xyz/imuachain/utils"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
 )
 
@@ -16,21 +16,20 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 			"generalWithdrawFromAVS, the withdraw amount is nil or negative, amount:%s", withdrawAmount)
 	}
 	// check and calculate the actual amount withdrawable for an AVS
-	rewardAssetInfo, err := k.GetAVSRewardAssetInfo(ctx, avs, assetID)
+	rewardAssetInfo, err := k.GetAVSRewardAsset(ctx, avs, assetID)
 	if err != nil {
 		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, err
 	}
-	rewardDecimalAmount := rewards.AmountOf(rewardAssetInfo.AssetBasicInfo.Symbol)
+	rewardDecimalAmount := rewards.AmountOf(rewardAssetInfo.RewardAssetInfo.RewardDenomination)
 	if rewardDecimalAmount.IsZero() {
 		// do nothing if there isn't this asset in the input rewards
 		return sdkmath.ZeroInt(), sdkmath.ZeroInt(), rewards, sdk.DecCoins{}, nil
 	}
 
-	decimalFactor := sdkmath.NewIntWithDecimal(1, int(rewardAssetInfo.AssetBasicInfo.Decimals)) // #nosec G115
 	// withdraw all rewards if the input amount is 0
 	withdrawAmountPerAVSDec := rewardDecimalAmount
 	if !withdrawAmount.IsZero() {
-		withdrawAmountPerAVSDec = sdk.NewDecFromInt(withdrawAmount).QuoInt(decimalFactor)
+		withdrawAmountPerAVSDec = feedistributiontypes.ScaleIntByDecimals(withdrawAmount, rewardAssetInfo.RewardAssetInfo.DenominationExponent)
 	}
 
 	if withdrawAmountPerAVSDec.LT(sdkmath.LegacyZeroDec()) {
@@ -52,15 +51,15 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 	}
 	// decrease the withdrawing amount from the outstanding reward
 	subReward := sdk.DecCoins{
-		sdk.NewDecCoinFromDec(rewardAssetInfo.AssetBasicInfo.Symbol, actualWithdrawAmountDec),
+		sdk.NewDecCoinFromDec(rewardAssetInfo.RewardAssetInfo.RewardDenomination, actualWithdrawAmountDec),
 	}
 	rewardsAfterSub, hasNegative := rewards.SafeSub(subReward)
 	if hasNegative {
-		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, feedistributiontypes.ErrNegativeCoinAmount.Wrapf("WithdrawStakerRewards: avs:%s, assetID:%s,symbol:%s", avs, assetID, rewardAssetInfo.AssetBasicInfo.Symbol)
+		return sdkmath.Int{}, sdkmath.Int{}, rewards, nil, feedistributiontypes.ErrNegativeCoinAmount.Wrapf("WithdrawStakerRewards: avs:%s, assetID:%s,denomination:%s", avs, assetID, rewardAssetInfo.RewardAssetInfo.RewardDenomination)
 	}
 
-	// use TruncateInt to ensure the vault has enough fund
-	actualWithdrawAmountInt := actualWithdrawAmountDec.MulInt(decimalFactor).TruncateInt()
+	// TruncateInt in `UnscaleDecToInt` to ensure the vault has enough fund
+	actualWithdrawAmountInt := feedistributiontypes.UnscaleDecToInt(actualWithdrawAmountDec, rewardAssetInfo.RewardAssetInfo.DenominationExponent)
 	// update the state of AVS reward asset.
 	err = k.UpdateAVSRewardAssetState(ctx, avs, assetID, &feedistributiontypes.DeltaAVSRewardAssetState{
 		RewardPoolBalance: actualWithdrawAmountDec.Neg(),
@@ -71,8 +70,8 @@ func (k Keeper) generalWithdrawFromAVS(ctx sdk.Context, avs, assetID string, wit
 
 	// send the rewards token for dogfood AVS
 	// check if the avs is dogfood
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	var withdrawAmountFromDogfood sdkmath.Int
 	if dogfoodAVSAddr == avs {
 		withdrawAmountFromDogfood = actualWithdrawAmountInt
@@ -118,43 +117,80 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 		isWithdrawAllReward = true
 	}
 
-	withdrawAmountPerAVS := amount
+	withdrawAmountPerAVS := sdkmath.NewIntFromBigInt(amount.BigInt())
 	actualTotalWithdrawAmount := sdkmath.ZeroInt()
 	withdrawAmountFromDogfood := sdkmath.ZeroInt()
 	opFunc := func(avs string, rewards *feedistributiontypes.StakerClaimedRewards) (bool, bool, error) {
 		if !isWithdrawAllReward && !withdrawAmountPerAVS.IsPositive() {
 			// the expected amount has been withdrawn, stop the iteration.
+			// the state doesn't need to be updated because there was no change
+			// during this iteration.
 			return true, false, nil
 		}
 
 		var err error
-		actualWithdrawAmountInt, amountFromDogfood, endRewards, subRewards, err := k.generalWithdrawFromAVS(
+		// withdraw from outstanding rewards
+		actualWithdrawAmountInt, amountFromDogfood, endOutstandingRewards, subOutstandingRewards, err := k.generalWithdrawFromAVS(
 			ctx, avs, assetID, withdrawAmountPerAVS, imuaReceiptAddr, rewards.OutstandingRewards)
 		if err != nil {
-			return false, false, err
-		} else if len(subRewards) == 0 {
-			// withdraw nothing from this AVS, continue iterating the other AVSs
-			return false, false, nil
-		}
-		actualTotalWithdrawAmount = actualTotalWithdrawAmount.Add(actualWithdrawAmountInt)
-		if !isWithdrawAllReward {
-			withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
+			return true, false, err
+		} else if len(subOutstandingRewards) != 0 {
+			actualTotalWithdrawAmount = actualTotalWithdrawAmount.Add(actualWithdrawAmountInt)
+			if !isWithdrawAllReward {
+				withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
+			}
+
+			// Update the input rewards; they will be saved to the KV store if the withdrawal is successful.
+			rewards.OutstandingRewards = endOutstandingRewards
+			rewards.WithdrawnRewards = rewards.WithdrawnRewards.Add(subOutstandingRewards...)
+			if !amountFromDogfood.IsNil() {
+				withdrawAmountFromDogfood = withdrawAmountFromDogfood.Add(amountFromDogfood)
+			}
 		}
 
-		// Update the input rewards; they will be saved to the KV store if the withdrawal is successful.
-		rewards.OutstandingRewards = endRewards
-		rewards.WithdrawnRewards = rewards.WithdrawnRewards.Add(subRewards...)
-		if !amountFromDogfood.IsNil() {
-			withdrawAmountFromDogfood = amountFromDogfood
+		if !isWithdrawAllReward && !withdrawAmountPerAVS.IsPositive() {
+			// the expected amount has been withdrawn, return from the current iteration and set the flag
+			// to update the state related to outstanding rewards. This check can prevent withdrawing more
+			// rewards than the expected amount from the subsequent withdrawable rewards.
+			ctx.EventManager().EmitEvent(
+				sdk.NewEvent(
+					feedistributiontypes.EventTypeWithdrawRewardFromAVS,
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avs),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subOutstandingRewards.String()),
+					sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endOutstandingRewards.String()),
+				),
+			)
+			return false, true, nil
 		}
 
+		// withdraw from withdrawable rewards
+		actualWithdrawAmountInt, amountFromDogfood, endWithdrawableRewards, subWithdrawableRewards, err := k.generalWithdrawFromAVS(
+			ctx, avs, assetID, withdrawAmountPerAVS, imuaReceiptAddr, rewards.WithdrawableRewards)
+		if err != nil {
+			return true, false, err
+		} else if len(subWithdrawableRewards) != 0 {
+			actualTotalWithdrawAmount = actualTotalWithdrawAmount.Add(actualWithdrawAmountInt)
+			if !isWithdrawAllReward {
+				withdrawAmountPerAVS = withdrawAmountPerAVS.Sub(actualWithdrawAmountInt)
+			}
+
+			// Update the input rewards; they will be saved to the KV store if the withdrawal is successful.
+			rewards.WithdrawableRewards = endWithdrawableRewards
+			rewards.WithdrawnRewards = rewards.WithdrawnRewards.Add(subWithdrawableRewards...)
+			if !amountFromDogfood.IsNil() {
+				withdrawAmountFromDogfood = withdrawAmountFromDogfood.Add(amountFromDogfood)
+			}
+		}
+		totalSubRewards := subOutstandingRewards.Add(subWithdrawableRewards...)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				feedistributiontypes.EventTypeWithdrawRewardFromAVS,
 				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
 				sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, avs),
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subRewards.String()),
-				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endRewards.String()),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, totalSubRewards.String()),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endOutstandingRewards.String()),
+				sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerWithdrawableRewards, endWithdrawableRewards.String()),
 			),
 		)
 		return false, true, nil
@@ -180,33 +216,62 @@ func (k Keeper) WithdrawStakerRewards(ctx sdk.Context, stakerID, assetID string,
 func (k Keeper) WithdrawRewardFromDogfood(ctx sdk.Context, stakerID string,
 	amount sdkmath.Int, imuaReceiptAddr sdk.AccAddress,
 ) (sdk.Coins, error) {
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	if amount.IsNil() || amount.IsNegative() {
+		return nil, feedistributiontypes.ErrInvalidInputParameter.Wrapf(
+			"WithdrawRewardFromDogfood, the withdraw amount is nil or negative, amount:%s", amount)
+	}
+	// withdraw all rewards if the input amount is 0.
+	isWithdrawAllReward := false
+	if amount.IsZero() {
+		isWithdrawAllReward = true
+	}
+
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	stakerClaimedRewards, err := k.GetStakerClaimedRewards(ctx, stakerID, dogfoodAVSAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, endRewards, subRewardDecCoins, err := k.generalWithdrawFromAVS(
-		ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID, amount, imuaReceiptAddr, stakerClaimedRewards.OutstandingRewards)
+	expectedWithdrawalAmount := sdkmath.NewIntFromBigInt(amount.BigInt())
+	// withdraw from outstanding rewards
+	actualWithdrawAmountInt, _, endOutstandingRewards, subOutstandingRewards, err := k.generalWithdrawFromAVS(
+		ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID, expectedWithdrawalAmount, imuaReceiptAddr, stakerClaimedRewards.OutstandingRewards)
 	if err != nil {
 		return nil, err
 	}
-	stakerClaimedRewards.OutstandingRewards = endRewards
-	stakerClaimedRewards.WithdrawnRewards = stakerClaimedRewards.WithdrawnRewards.Add(subRewardDecCoins...)
+	stakerClaimedRewards.OutstandingRewards = endOutstandingRewards
+	stakerClaimedRewards.WithdrawnRewards = stakerClaimedRewards.WithdrawnRewards.Add(subOutstandingRewards...)
+
+	totalSubRewards := sdk.NewDecCoins(subOutstandingRewards...)
+	if isWithdrawAllReward || (!isWithdrawAllReward && actualWithdrawAmountInt.LT(expectedWithdrawalAmount)) {
+		if !isWithdrawAllReward {
+			expectedWithdrawalAmount = expectedWithdrawalAmount.Sub(actualWithdrawAmountInt)
+		}
+		// withdraw from withdrawable rewards
+		_, _, endWithdrawableRewards, subWithdrawableRewards, err := k.generalWithdrawFromAVS(
+			ctx, dogfoodAVSAddr, assetstype.ImuachainAssetID, expectedWithdrawalAmount, imuaReceiptAddr, stakerClaimedRewards.WithdrawableRewards)
+		if err != nil {
+			return nil, err
+		}
+		stakerClaimedRewards.WithdrawableRewards = endWithdrawableRewards
+		stakerClaimedRewards.WithdrawnRewards = stakerClaimedRewards.WithdrawnRewards.Add(subWithdrawableRewards...)
+		totalSubRewards = totalSubRewards.Add(subWithdrawableRewards...)
+	}
 	err = k.SetStakerClaimedRewards(ctx, stakerID, dogfoodAVSAddr, stakerClaimedRewards)
 	if err != nil {
 		return nil, err
 	}
 
-	subRewardCoins, _ := subRewardDecCoins.TruncateDecimal()
+	subRewardCoins, _ := totalSubRewards.TruncateDecimal()
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeWithdrawRewardFromAVS,
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerID, stakerID),
 			sdk.NewAttribute(feedistributiontypes.AttributeKeyAvsAddress, dogfoodAVSAddr),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, subRewardDecCoins.String()),
-			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endRewards.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyWithdrawDecCoinsFromAVS, totalSubRewards.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerOutstandingRewards, endOutstandingRewards.String()),
+			sdk.NewAttribute(feedistributiontypes.AttributeKeyStakerWithdrawableRewards, stakerClaimedRewards.WithdrawableRewards.String()),
 		),
 	)
 
@@ -255,11 +320,6 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 		if !amountFromDogfood.IsNil() {
 			withdrawAmountFromDogfood = amountFromDogfood
 		}
-		// decrease the commission from the operator outstanding rewards.
-		err = k.UpdateOperatorOutstandingRewards(ctx, operator.String(), avs, false, subCommissions)
-		if err != nil {
-			return false, false, err
-		}
 
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -294,8 +354,8 @@ func (k Keeper) WithdrawOperatorCommission(ctx sdk.Context, assetID string,
 // So it can be provided through a cosmos transaction.
 func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccAddress) (sdk.Coins, error) {
 	// check if the avs is dogfood
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	operatorCommission, err := k.GetOperatorCommission(ctx, operator.String(), dogfoodAVSAddr)
 	if err != nil {
 		return nil, err
@@ -316,12 +376,6 @@ func (k Keeper) WithdrawCommissionFromDogfood(ctx sdk.Context, operator sdk.AccA
 		return nil, err
 	}
 
-	// decrease the commission from the operator outstanding rewards.
-	err = k.UpdateOperatorOutstandingRewards(ctx, operator.String(), dogfoodAVSAddr,
-		false, subCommissions)
-	if err != nil {
-		return nil, err
-	}
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			feedistributiontypes.EventTypeWithdrawCommissionFromAVS,

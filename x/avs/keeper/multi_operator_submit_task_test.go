@@ -29,10 +29,9 @@ func (suite *AVSTestSuite) prepareOperators() {
 		registerReq := &operatorTypes.RegisterOperatorReq{
 			FromAddress: opAccAddr.String(),
 			Info: &operatorTypes.OperatorInfo{
-				EarningsAddr: opAccAddr.String(),
-				ApproveAddr:  opAccAddr.String(),
+				OperatorAddr: opAccAddr.String(),
 				// avoid name conflict with other tests
-				OperatorMetaInfo: fmt.Sprintf("operator%d", i+10),
+				Description: stakingtypes.NewDescription(fmt.Sprintf("operator%d", i+10), "", "", "", ""),
 				Commission: stakingtypes.Commission{
 					CommissionRates: stakingtypes.CommissionRates{
 						Rate:          sdk.ZeroDec(),
@@ -89,7 +88,7 @@ func (suite *AVSTestSuite) prepareMulDelegation(operatorAddress sdk.AccAddress, 
 		TxHash:          common.HexToHash("0x24c4a315d757249c12a7a1d7b6fb96261d49deee26f06a3e1787d008b445c3ac"),
 	}
 
-	err := suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
+	_, _, err := suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
 	suite.NoError(err)
 }
 

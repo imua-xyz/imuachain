@@ -15,6 +15,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"golang.org/x/sync/errgroup"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -27,7 +29,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/imua-xyz/imuachain/precompiles/assets"
 	"github.com/imua-xyz/imuachain/precompiles/delegation"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -132,7 +133,7 @@ func NewManager(ctx context.Context, homePath string, config *TestToolConfig) (*
 		db:                 db,
 		FaucetSK:           sk,
 		KeyRing:            KeyRing,
-		DogfoodAddr:        avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(config.ChainID)),
+		DogfoodAddr:        utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(config.ChainID)),
 		NodeEVMHTTPClients: make([]*ethclient.Client, config.ChainValidatorNumber),
 		NodeEVMWSClients:   make([]*ethclient.Client, config.ChainValidatorNumber),
 		NodeClientCtx:      make([]client.Context, config.ChainValidatorNumber),

@@ -61,6 +61,9 @@ func (k Keeper) GetClientChainInfoByIndex(ctx sdk.Context, index uint64) (info *
 // IterateAllClientChains iterates all client chains, and the `opFunc` will be called for
 // each client chain.
 func (k Keeper) IterateAllClientChains(ctx sdk.Context, opFunc func(clientChain *assetstype.ClientChainInfo) error) error {
+	if opFunc == nil {
+		return assetstype.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
+	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), assetstype.KeyPrefixClientChainInfo)
 	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()

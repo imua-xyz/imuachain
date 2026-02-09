@@ -6,6 +6,7 @@ import (
 	. "github.com/agiledragon/gomonkey/v2"
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	testutilkeeper "github.com/imua-xyz/imuachain/testutil/keeper"
 	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	testdata "github.com/imua-xyz/imuachain/x/oracle/keeper/testdata"
@@ -60,14 +61,14 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			`{"chains":[{"name":"Ethereum", "desc":"-"}]}`,
 		}
 		It("add chain with new name", func() {
-			msg := types.NewMsgUpdateParams("", inputAddChains[0])
+			msg := types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddChains[0])
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), msg)
 			Expect(err).Should(BeNil())
 			p := ks.k.GetParams(ks.ctx)
 			Expect(p.Chains[2].Name).Should(BeEquivalentTo("Bitcoin"))
 		})
 		It("add chain with duplicated name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams("", inputAddChains[1]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddChains[1]))
 			Expect(err).Should(MatchError(types.ErrInvalidParams.Wrap("invalid source to add, duplicated")))
 		})
 	})
@@ -78,17 +79,17 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			`{"sources":[{"name":"Chainlink", "desc":"-", "valid":true}]}`,
 		}
 		It("add valid source with new name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams("", inputAddSources[0]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddSources[0]))
 			Expect(err).Should(BeNil())
 			p := ks.k.GetParams(ks.ctx)
 			Expect(p.Sources[2].Name).Should(BeEquivalentTo("CoinGecko"))
 		})
 		It("add invalid source with new name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams("", inputAddSources[1]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddSources[1]))
 			Expect(err).Should(MatchError(types.ErrInvalidParams.Wrap("invalid source to add, new source should be valid")))
 		})
 		It("add source with duplicated name", func() {
-			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams("", inputAddSources[2]))
+			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), inputAddSources[2]))
 			Expect(err).Should(MatchError(types.ErrInvalidParams.Wrap("invalid source to add, duplicated")))
 		})
 	})
@@ -139,7 +140,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 					p.TokenFeeders[1].StartBaseBlock = startBasedBlocks[i]
 					ks.k.SetParams(ks.ctx, p)
 				}
-				_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams("", input))
+				_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), types.NewMsgUpdateParams(testutilkeeper.GetAuthAddrString(), input))
 				if errs[i] == nil {
 					Expect(err).Should(BeNil())
 				} else {
@@ -156,6 +157,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 	Context("update maxSizePrices", func() {
 		It("update maxSizePrices", func() {
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), &types.MsgUpdateParams{
+				Authority: testutilkeeper.GetAuthAddrString(),
 				Params: types.Params{
 					MaxSizePrices: 120,
 				},
@@ -174,6 +176,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 			ks.k.SetParams(ks.ctx, p)
 			p.TokenFeeders[1].StartBaseBlock = 5
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), &types.MsgUpdateParams{
+				Authority: testutilkeeper.GetAuthAddrString(),
 				Params: types.Params{
 					TokenFeeders: []*types.TokenFeeder{
 						{
@@ -189,6 +192,7 @@ var _ = Describe("MsgUpdateParams", Ordered, func() {
 		})
 		It("Add AssetID for Token", func() {
 			_, err := ks.ms.UpdateParams(ks.ctx.WithChainID(chainIDtest), &types.MsgUpdateParams{
+				Authority: testutilkeeper.GetAuthAddrString(),
 				Params: types.Params{
 					Tokens: []*types.Token{
 						{

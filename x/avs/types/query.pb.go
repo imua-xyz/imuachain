@@ -216,7 +216,7 @@ func (m *QueryAVSAddressByChainIDResponse) GetAVSAddress() string {
 
 // QueryAVSTaskInfoReq is the request to obtain the task information.
 type QueryAVSTaskInfoReq struct {
-	// task_address is the task contract address,its type should be a sdk.AccAddress
+	// task_address is the task contract address, its type should be a sdk.AccAddress
 	TaskAddress string `protobuf:"bytes,1,opt,name=task_address,json=taskAddress,proto3" json:"task_address,omitempty"`
 	// task_id is the task identifier
 	TaskId string `protobuf:"bytes,2,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
@@ -271,11 +271,11 @@ func (m *QueryAVSTaskInfoReq) GetTaskId() string {
 
 // QuerySubmitTaskResultReq is the request to obtain the task information.
 type QuerySubmitTaskResultReq struct {
-	// task_address is the task contract address,its type should be a sdk.AccAddress
+	// task_address is the task contract address, its type should be a sdk.AccAddress
 	TaskAddress string `protobuf:"bytes,1,opt,name=task_address,json=taskAddress,proto3" json:"task_address,omitempty"`
 	// task_id is the task identifier
 	TaskId string `protobuf:"bytes,2,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
-	// operator_address is the operator address,its type should be a sdk.AccAddress
+	// operator_address is the operator address, its type should be a sdk.AccAddress
 	OperatorAddress string `protobuf:"bytes,3,opt,name=operator_address,json=operatorAddress,proto3" json:"operator_address,omitempty"`
 }
 
@@ -335,7 +335,7 @@ func (m *QuerySubmitTaskResultReq) GetOperatorAddress() string {
 
 // QueryChallengeInfoReq is the request to obtain the task information.
 type QueryChallengeInfoReq struct {
-	// task_address is the task contract address,its type should be a sdk.AccAddress
+	// task_address is the task contract address, its type should be a sdk.AccAddress
 	TaskAddress string `protobuf:"bytes,1,opt,name=task_address,json=taskAddress,proto3" json:"task_address,omitempty"`
 	// task_id is the task identifier
 	TaskId string `protobuf:"bytes,2,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`

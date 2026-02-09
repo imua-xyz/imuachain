@@ -16,16 +16,16 @@ type Keeper struct {
 	storeKey storetypes.StoreKey
 	cdc      codec.BinaryCodec
 	// other keepers
-	assetsKeeper     operatortypes.AssetsKeeper
-	delegationKeeper operatortypes.DelegationKeeper
-	oracleKeeper     operatortypes.OracleKeeper
-	avsKeeper        operatortypes.AVSKeeper
-	stakingKeeper    operatortypes.StakingKeeper
-	hooks            operatortypes.OperatorHooks // set separately via call to SetHooks
-	slashKeeper      operatortypes.SlashKeeper   // for jailing and unjailing check TODO(mm)
-	epochsKeeper     operatortypes.EpochsKeeper
-
-	authority string
+	assetsKeeper       operatortypes.AssetsKeeper
+	delegationKeeper   operatortypes.DelegationKeeper
+	oracleKeeper       operatortypes.OracleKeeper
+	avsKeeper          operatortypes.AVSKeeper
+	stakingKeeper      operatortypes.StakingKeeper
+	hooks              operatortypes.OperatorHooks // set separately via call to SetHooks
+	slashKeeper        operatortypes.SlashKeeper   // for jailing and unjailing check TODO(mm)
+	epochsKeeper       operatortypes.EpochsKeeper
+	distributionKeeper operatortypes.DistributionKeeper
+	authority          string
 }
 
 func NewKeeper(
@@ -38,19 +38,21 @@ func NewKeeper(
 	stakingKeeper operatortypes.StakingKeeper,
 	slashKeeper operatortypes.SlashKeeper,
 	epochsKeeper operatortypes.EpochsKeeper,
+	distributionKeeper operatortypes.DistributionKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		storeKey:         storeKey,
-		cdc:              cdc,
-		assetsKeeper:     assetsKeeper,
-		delegationKeeper: delegationKeeper,
-		oracleKeeper:     oracleKeeper,
-		avsKeeper:        avsKeeper,
-		stakingKeeper:    stakingKeeper,
-		slashKeeper:      slashKeeper,
-		epochsKeeper:     epochsKeeper,
-		authority:        authority,
+		storeKey:           storeKey,
+		cdc:                cdc,
+		assetsKeeper:       assetsKeeper,
+		delegationKeeper:   delegationKeeper,
+		oracleKeeper:       oracleKeeper,
+		avsKeeper:          avsKeeper,
+		stakingKeeper:      stakingKeeper,
+		slashKeeper:        slashKeeper,
+		epochsKeeper:       epochsKeeper,
+		distributionKeeper: distributionKeeper,
+		authority:          authority,
 	}
 }
 

@@ -95,7 +95,7 @@ func (k Keeper) UpdateNSTBalance(
 		// whom the related staker has already delegated
 		if pendingSlashAmount.IsPositive() {
 			// calculate the slash proportion
-			totalDelegatedAmount, err := k.TotalDelegatedAmountForStakerAsset(ctx, stakerID, assetID)
+			totalDelegatedAmount, err := k.TotalDelegatedAmountForStakingAsset(ctx, stakerID, assetID)
 			if err != nil {
 				return err
 			}
@@ -109,14 +109,35 @@ func (k Keeper) UpdateNSTBalance(
 					if err != nil {
 						return true, err
 					}
+
+					// get the previous operator asset state before update
+					prevAssetState, err := k.assetsKeeper.GetOperatorSpecifiedAssetInfo(ctx, opAccAddr, assetID)
+					if err != nil {
+						return true, err
+					}
+					preDelegationState, err := k.GetSingleDelegationInfo(ctx, stakerID, assetID, keys.OperatorAddr)
+					if err != nil {
+						return true, err
+					}
+					// calculate the previous delegation amount
+					preDelegatedAmount, err := TokensFromShares(preDelegationState.UndelegatableShare,
+						prevAssetState.TotalShare, prevAssetState.TotalAmount)
+					if err != nil {
+						return true, err
+					}
+
 					slashShare := delegationAmount.UndelegatableShare.Mul(slashProportion)
-					actualSlashAmount, err := k.RemoveShare(ctx, false, opAccAddr, stakerID, assetID, slashShare)
+					actualSlashAmount, err := k.RemoveShare(ctx, false, false, opAccAddr, stakerID, assetID, slashShare)
 					if err != nil {
 						return true, err
 					}
 					_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, types.DeltaStakerSingleAsset{
 						TotalDepositAmount: actualSlashAmount.Neg(),
 					})
+					if err != nil {
+						return true, err
+					}
+					err = k.Hooks().AfterNSTDelegationSlashed(ctx, stakerID, assetID, opAccAddr, preDelegatedAmount, *prevAssetState)
 					if err != nil {
 						return true, err
 					}

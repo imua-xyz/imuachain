@@ -6,10 +6,10 @@ import (
 	"sort"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/imua-xyz/imuachain/testutil"
-
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -46,7 +46,7 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 		stakers[i] = ethAddr
 		operators[i] = ethAddr.Bytes()
 		// register operator
-		suite.RegisterOperator(operators[i].String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()))
+		suite.RegisterOperator(operators[i].String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()), true)
 		// associate the stakers with operators
 		err := suite.App.DelegationKeeper.AssociateOperatorWithStaker(suite.Ctx, suite.clientChainLzID, operators[i], stakers[i].Bytes())
 		suite.NoError(err)
@@ -58,8 +58,8 @@ func (suite *OperatorTestSuite) prepareForSnapshotTesting(operatorNumber int) te
 		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, operators[i], suite.avsAddr)
 		suite.NoError(err)
 		// opt in the dogfood AVS
-		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
-		dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+		chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
+		dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 		pubKey := testutiltx.GenerateConsensusKey()
 		suite.Require().NotNil(pubKey)
 		err = suite.App.OperatorKeeper.OptInWithConsKey(suite.Ctx, operators[i], dogfoodAVSAddr, pubKey)
@@ -265,8 +265,8 @@ func (suite *OperatorTestSuite) TestSnapshotWithSlash() {
 func (suite *OperatorTestSuite) TestGenesisSnapshot() {
 	suite.prepareForSnapshotTesting(operatorNumber)
 	firstBlockHeight := suite.Ctx.BlockHeight()
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	for i := int64(0); i < testutil.TestBlockNumberPerEpoch; i++ {
 		height, snapshot, err := suite.App.OperatorKeeper.LoadVotingPowerSnapshot(suite.Ctx, dogfoodAVSAddr, firstBlockHeight)
 		suite.NoError(err)

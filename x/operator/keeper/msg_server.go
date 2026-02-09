@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
-	"github.com/imua-xyz/imuachain/utils"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -23,7 +22,7 @@ var _ types.MsgServer = &MsgServerImpl{}
 // RegisterOperator is an implementation of the msg server for the operator module.
 func (msgServer *MsgServerImpl) RegisterOperator(goCtx context.Context, req *types.RegisterOperatorReq) (*types.RegisterOperatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := msgServer.keeper.RegisterOperator(ctx, req.FromAddress, req.Info); err != nil {
+	if err := msgServer.keeper.RegisterOperator(ctx, req.Info); err != nil {
 		return nil, err
 	}
 	return &types.RegisterOperatorResponse{}, nil
@@ -123,10 +122,25 @@ func (msgServer *MsgServerImpl) EditOperator(
 	if err != nil {
 		return nil, err
 	}
-	if err := msgServer.keeper.EditOperator(ctx, accAddr, req.OperatorMetaInfo); err != nil {
+	if err := msgServer.keeper.EditOperator(ctx, accAddr, req.Description); err != nil {
 		return nil, err
 	}
 	return &types.EditOperatorResponse{}, nil
+}
+
+// UpdateRewardCompoundingFlag is an implementation of the msg server for the operator module.
+func (msgServer *MsgServerImpl) UpdateRewardCompoundingFlag(
+	goCtx context.Context, req *types.UpdateRewardCompoundingFlagReq,
+) (*types.UpdateRewardCompoundingFlagResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	accAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+	if err := msgServer.keeper.UpdateRewardCompoundingFlag(ctx, accAddr, req.DisableCompoundRewards); err != nil {
+		return nil, err
+	}
+	return &types.UpdateRewardCompoundingFlagResponse{}, nil
 }
 
 // UpdateParams is an implementation of the msg server for the operator module.
@@ -134,7 +148,7 @@ func (msgServer *MsgServerImpl) UpdateParams(
 	goCtx context.Context, req *types.MsgUpdateParams,
 ) (*types.MsgUpdateParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if utils.IsMainnet(ctx.ChainID()) && msgServer.keeper.authority != req.Authority {
+	if msgServer.keeper.authority != req.Authority {
 		return nil, govtypes.ErrInvalidSigner.Wrapf(
 			"invalid authority; expected %s, got %s",
 			msgServer.keeper.authority, req.Authority,

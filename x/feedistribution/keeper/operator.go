@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,7 +19,7 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 	// the period in the historical rewards starts from 0
 	err := k.SetOperatorHistoricalRewards(ctx, operator, assetID, epochIdentifier, 0,
 		feedistributiontypes.OperatorHistoricalRewards{
-			CumulativeRewardRatios: make([]feedistributiontypes.CommonAVSRewardData, 0),
+			CumulativeRewardRatios: feedistributiontypes.NewCommonAVSRewards(),
 			// set the reference count to 1 because it will be referenced by the current reward.
 			ReferenceCount: 1,
 		})
@@ -27,7 +29,7 @@ func (k Keeper) initializeOperatorPeriod(ctx sdk.Context, operator, assetID, epo
 	// initialize the current rewards
 	err = k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier,
 		feedistributiontypes.OperatorCurrentRewards{
-			Rewards: make([]feedistributiontypes.CommonAVSRewardData, 0),
+			Rewards: feedistributiontypes.NewCommonAVSRewards(),
 			// the period in current rewards starts from 1.
 			Period: 1,
 		})
@@ -134,7 +136,7 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 			}
 		}
 		// currentRewardRatio reward ratio should be null
-		currentRewardRatio = make([]feedistributiontypes.CommonAVSRewardData, 0)
+		currentRewardRatio = feedistributiontypes.NewCommonAVSRewards()
 	} else {
 		currentRewardRatio, err = feedistributiontypes.CommonAVSRewards(currentRewards.Rewards).CalculateRewardRatio(preDelegationAmount)
 		if err != nil {
@@ -168,7 +170,7 @@ func (k Keeper) IncrementOperatorPeriod(ctx sdk.Context, operator, assetID, epoc
 	// set currentRewards for the operator, incrementing period by 1
 	err = k.SetOperatorCurrentRewards(ctx, operator, assetID, epochIdentifier,
 		feedistributiontypes.OperatorCurrentRewards{
-			Rewards: make([]feedistributiontypes.CommonAVSRewardData, 0),
+			Rewards: feedistributiontypes.NewCommonAVSRewards(),
 			Period:  currentRewards.Period + 1,
 		})
 	if err != nil {
@@ -228,7 +230,10 @@ func (k Keeper) RedirectOperatorRewardsToCommunityPool(ctx sdk.Context, operator
 				return err
 			}
 			// update the outstanding rewards for the operator
-			err = k.UpdateOperatorOutstandingRewards(ctx, operator, avsReward.AVSAddress, false, avsReward.Rewards)
+			err = k.UpdateOperatorUnclaimedRewards(ctx, operator, avsReward.AVSAddress, false,
+				feedistributiontypes.DeltaOperatorUnclaimedRewards{
+					OutstandingRewards: avsReward.Rewards,
+				})
 			if err != nil {
 				return err
 			}
@@ -274,12 +279,28 @@ func (k Keeper) getDelegatedAmountAtPreEpochEnd(ctx sdk.Context, operator, asset
 // It increases the period and reference count, then stores the slash event
 // for future reward calculations.
 func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec,
-	slashAssetsPool []operatortypes.SlashFromAssetsPool,
+	slashAssetsPool []operatortypes.SlashAssetAmount, slashUnclaimedRewards []operatortypes.SlashFromUnclaimedRewards,
 ) error {
 	if slashProportion.GT(math.LegacyOneDec()) || slashProportion.IsNegative() {
 		return feedistributiontypes.ErrInvalidInputParameter.Wrapf(
 			"HandleOperatorSlashEvent: fraction must be >=0 and <=1, current fraction: %s", slashProportion)
 	}
+	// get the slashed rewards asssets list from the input map `slashUnclaimedRewards`
+	assetIDSet := make(map[string]struct{})
+	// collect assetIDs
+	for _, s := range slashUnclaimedRewards {
+		for _, sa := range s.SlashAssets {
+			assetIDSet[sa.AssetID] = struct{}{}
+		}
+	}
+	// convert map keys to slice
+	slashedRewardAssets := make([]string, 0, len(assetIDSet))
+	for id := range assetIDSet {
+		slashedRewardAssets = append(slashedRewardAssets, id)
+	}
+	// sort for deterministic order
+	sort.Strings(slashedRewardAssets)
+
 	// the slash event will influence all epochs
 	allEpochIdentifiers := k.avsKeeper.GetEpochsUsedByAllAVSs(ctx)
 	for _, slashAsset := range slashAssetsPool {
@@ -338,8 +359,9 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 			}
 			err = k.SetOperatorSlashEvent(ctx, operator.String(), slashAsset.AssetID, epochInfo.Identifier, uint64(epochInfo.CurrentEpoch), uint64(ctx.BlockHeight()),
 				feedistributiontypes.OperatorSlashEvent{
-					OperatorPeriod: endingPeriod,
-					Fraction:       slashProportion,
+					OperatorPeriod:      endingPeriod,
+					Fraction:            slashProportion,
+					SlashedRewardAssets: slashedRewardAssets,
 				})
 			if err != nil {
 				return err

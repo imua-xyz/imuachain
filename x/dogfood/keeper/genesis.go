@@ -3,6 +3,8 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +39,7 @@ func (k Keeper) InitGenesis(
 	var err error
 	// the avs module will remove the revision by itself, but we do it here anyway because we need it
 	// to look up operator registration status after this - which is keyed by chainID without revision.
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
 	if exists, avsAddr, err = k.avsKeeper.RegisterAVSWithChainID(ctx, &avstypes.AVSRegisterOrDeregisterParams{
 		AvsName:           chainIDWithoutRevision,
 		AssetIDs:          genState.Params.AssetIDs,

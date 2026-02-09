@@ -18,13 +18,14 @@ type Keeper struct {
 	authority string
 
 	// other keepers
-	accountKeeper  delegationtype.AccountKeeper
-	assetsKeeper   delegationtype.AssetsKeeper
-	slashKeeper    delegationtype.SlashKeeper
-	operatorKeeper delegationtype.OperatorKeeper
-	bankKeeper     delegationtype.BankKeeper
-	epochsKeeper   delegationtype.EpochsKeeper
-	hooks          delegationtype.DelegationHooks
+	accountKeeper      delegationtype.AccountKeeper
+	assetsKeeper       delegationtype.AssetsKeeper
+	slashKeeper        delegationtype.SlashKeeper
+	operatorKeeper     delegationtype.OperatorKeeper
+	bankKeeper         delegationtype.BankKeeper
+	epochsKeeper       delegationtype.EpochsKeeper
+	distributionKeeper delegationtype.DistributionKeeper
+	hooks              delegationtype.DelegationHooks
 }
 
 // NewKeeper creates a new Keeper instance
@@ -38,17 +39,19 @@ func NewKeeper(
 	accountKeeper delegationtype.AccountKeeper,
 	bankKeeper delegationtype.BankKeeper,
 	epochsKeeper delegationtype.EpochsKeeper,
+	distributionKeeper delegationtype.DistributionKeeper,
 ) Keeper {
 	return Keeper{
-		storeKey:       storeKey,
-		cdc:            cdc,
-		authority:      authority,
-		assetsKeeper:   assetsKeeper,
-		slashKeeper:    slashKeeper,
-		operatorKeeper: operatorKeeper,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
-		epochsKeeper:   epochsKeeper,
+		storeKey:           storeKey,
+		cdc:                cdc,
+		authority:          authority,
+		assetsKeeper:       assetsKeeper,
+		slashKeeper:        slashKeeper,
+		operatorKeeper:     operatorKeeper,
+		accountKeeper:      accountKeeper,
+		bankKeeper:         bankKeeper,
+		epochsKeeper:       epochsKeeper,
+		distributionKeeper: distributionKeeper,
 	}
 }
 

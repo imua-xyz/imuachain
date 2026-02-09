@@ -3,6 +3,8 @@ package types
 import (
 	fmt "fmt"
 
+	"github.com/imua-xyz/imuachain/x/feedistribution/types"
+
 	"github.com/cometbft/cometbft/libs/log"
 
 	"cosmossdk.io/math"
@@ -80,7 +82,7 @@ func ValidateMintDenom(i interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	return sdk.ValidateDenom(v)
+	return types.ValidateRewardAssetDenomination(v)
 }
 
 func ValidateEpochReward(i interface{}) error {
@@ -116,7 +118,7 @@ func (p Params) Copy() Params {
 func (p Params) OverrideIfRequired(prevParams Params, logger log.Logger) Params {
 	// copy to avoid mutating the original
 	overParams := p.Copy()
-	if err := sdk.ValidateDenom(p.MintDenom); err != nil {
+	if err := types.ValidateRewardAssetDenomination(p.MintDenom); err != nil {
 		logger.Info(
 			"OverrideIfRequired",
 			"overriding MintDenom with value", prevParams.MintDenom,

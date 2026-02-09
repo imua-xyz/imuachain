@@ -100,6 +100,10 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		precompileCommonFunc = p.WithdrawReward
 	case MethodWithdrawIMUATokenReward:
 		precompileCommonFunc = p.WithdrawIMUATokenReward
+	case MethodSetStakerRewardParams:
+		precompileCommonFunc = p.SetStakerRewardParams
+	case MethodUndelegateReward:
+		precompileCommonFunc = p.UndelegateReward
 	case MethodWithdrawCommission:
 		precompileCommonFunc = p.WithdrawCommission
 	case MethodWithdrawIMUATokenCommission:
@@ -157,12 +161,12 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 func (Precompile) IsTransaction(methodName string) bool {
 	switch methodName {
 	case MethodClaimReward, MethodWithdrawReward,
-		MethodWithdrawIMUATokenReward, MethodWithdrawCommission,
-		MethodWithdrawIMUATokenCommission,
+		MethodWithdrawIMUATokenReward, MethodSetStakerRewardParams,
+		MethodWithdrawCommission, MethodWithdrawIMUATokenCommission,
 		MethodRegisterRewardToken, MethodUpdateRewardToken,
 		MethodSetAVSRewardDistribution, MethodSetAVSEpochReward,
 		MethodSetOperatorRewardProportions, MethodSetAVSRewardParams,
-		MethodFundAVSReward:
+		MethodFundAVSReward, MethodUndelegateReward:
 		return true
 	case MethodIsRegisteredRewardToken:
 		return false

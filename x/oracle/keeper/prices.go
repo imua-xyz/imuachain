@@ -105,7 +105,7 @@ func (k Keeper) GetSpecifiedAssetsPrice(ctx sdk.Context, assetID string) (types.
 }
 
 // return TWAP(time weighted average price)s for assets
-func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]any) (prices map[string]types.Price, err error) {
+func (k Keeper) GetMultipleAssetsPrices(ctx sdk.Context, assets map[string]struct{}) (prices map[string]types.Price, err error) {
 	// get params from cache if exists
 	p := k.GetParamsFromCache()
 	prices = make(map[string]types.Price)

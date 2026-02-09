@@ -3,7 +3,7 @@ package keeper
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
+	"github.com/imua-xyz/imuachain/utils"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -48,7 +48,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	// 3. X epochs later, the reverse lookup of old cons addr + chain id -> operator addr
 	// should be cleared.
 	consAddr := oldKey.ToConsAddr()
-	if chainID == avstypes.ChainIDWithoutRevision(ctx.ChainID()) {
+	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 		// The reverse lookup (consensus address -> operator address) must be maintained
 		// during the unbonding period to allow slashing of validators who misbehaved while
 		// they were active, even after they've been removed from the active validator set.
@@ -70,7 +70,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 	// this is because GetActiveOperatorsForChainID filters operators who are removing their
 	// keys from the chain.
 	// 2. X epochs later, the removal is marked complete in the operator module.
-	if chainID == avstypes.ChainIDWithoutRevision(ctx.ChainID()) {
+	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 		// see AfterOperatorKeyReplaced for the reasoning behind scheduling the opt out,
 		// even if the operator may not be in the active validator set.
 		h.keeper.ScheduleOperatorOptOut(ctx, operator)
@@ -79,23 +79,10 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 
 func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, _ sdk.Dec, affectedAVSList []string,
-	_ []operatortypes.SlashFromAssetsPool,
 ) {
 	h.afterStakingOrJailChange(ctx, operator, false, affectedAVSList)
 }
 
-func (h OperatorHooksWrapper) AfterJail(
-	ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string,
-) {
-	h.afterStakingOrJailChange(ctx, operator, isUnjail, affectedAVSList)
-}
-
-func (h OperatorHooksWrapper) afterStakingOrJailChange(ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string) {
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
-	dogfoodAVSAddr := avstypes.GenerateAVSAddress(chainIDWithoutRevision)
-	for _, avs := range affectedAVSList {
-		if avs == dogfoodAVSAddr {
-			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)
 			if !found || err != nil {
 				ctx.Logger().Error("AfterSlash the consensus key isn't found by the chainIDWithoutRevision and operator address", "operatorAddr", operator, "chainIDWithoutRevision", chainIDWithoutRevision, "err", err)
 				return
