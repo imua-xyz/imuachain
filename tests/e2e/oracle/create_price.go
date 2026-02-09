@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/imua-xyz/imuachain/testutil/network"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 	"google.golang.org/grpc/codes"
@@ -433,8 +434,8 @@ func (s *E2ETestSuite) testSlashing() {
 	s.Require().NoError(err)
 	// validator3 is jailed
 	s.Require().True(resSigningInfo.ValSigningInfo.JailedUntil.After(time.Now()))
-	chainID := avstypes.ChainIDWithoutRevision(s.network.Config.ChainID)
-	avsAddr := avstypes.GenerateAVSAddress(chainID)
+	chainID := utils.ChainIDWithoutRevision(s.network.Config.ChainID)
+	avsAddr := utils.GenerateAVSAddress(chainID)
 	resOperator, err := s.network.QueryOperator().QueryOptInfo(context.Background(), &operatortypes.QueryOptInfoRequest{OperatorAVSAddress: &operatortypes.OperatorAVSAddress{OperatorAddr: s.network.Validators[3].Address.String(), AvsAddress: avsAddr}})
 	s.Require().NoError(err)
 	s.Require().True(resOperator.Jailed)

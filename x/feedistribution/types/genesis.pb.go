@@ -28,30 +28,32 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type GenesisState struct {
 	// params defines all the parameters of the module.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-	// all_avs_reward_assets is the rewards assets for all AVSs.
+	// all_avs_reward_assets are the rewards assets for all AVSs.
 	AllAvsRewardAssets []AVSAddrAndRewardAssets `protobuf:"bytes,2,rep,name=all_avs_reward_assets,json=allAvsRewardAssets,proto3" json:"all_avs_reward_assets"`
-	// all_avs_reward_params is the rewards parameters for all AVSs.
+	// all_avs_reward_params are the rewards parameters for all AVSs.
 	AllAvsRewardParams []AVSAddrAndRewardParam `protobuf:"bytes,3,rep,name=all_avs_reward_params,json=allAvsRewardParams,proto3" json:"all_avs_reward_params"`
-	// all_avs_fee_pools is the fee pools for all AVSs.
+	// all_avs_fee_pools are the fee pools for all AVSs.
 	AllAvsFeePools []AVSAddrAndFeePool `protobuf:"bytes,4,rep,name=all_avs_fee_pools,json=allAvsFeePools,proto3" json:"all_avs_fee_pools"`
-	// all_avs_reward_distributions is the reward distributions for all AVSs.
+	// all_avs_reward_distributions are the reward distributions for all AVSs.
 	AllAvsRewardDistributions []AVSAddrAndRewardDistribution `protobuf:"bytes,5,rep,name=all_avs_reward_distributions,json=allAvsRewardDistributions,proto3" json:"all_avs_reward_distributions"`
-	// all_operator_outstanding_rewards is the outstanding rewards for all operators.
-	AllOperatorOutstandingRewards []KeyAndOperatorOutstandingRewards `protobuf:"bytes,6,rep,name=all_operator_outstanding_rewards,json=allOperatorOutstandingRewards,proto3" json:"all_operator_outstanding_rewards"`
-	// all_delegation_change_infos is the delegation changes for all epochs and operators.
+	// all_operator_unclaimed_rewards are the unclaimed rewards for all operators.
+	AllOperatorUnclaimedRewards []KeyAndOperatorUnclaimedRewards `protobuf:"bytes,6,rep,name=all_operator_unclaimed_rewards,json=allOperatorUnclaimedRewards,proto3" json:"all_operator_unclaimed_rewards"`
+	// all_delegation_change_infos are the delegation changes for all epochs and operators.
 	AllDelegationChangeInfos []KeyAndDelegationChangeInfo `protobuf:"bytes,7,rep,name=all_delegation_change_infos,json=allDelegationChangeInfos,proto3" json:"all_delegation_change_infos"`
-	// all_delegation_change_infos is the delegation starting information for all epochs.
+	// all_delegation_change_infos are the delegation starting information for all epochs.
 	AllDelegationStartingInfos []KeyAndDelegationStartingInfo `protobuf:"bytes,8,rep,name=all_delegation_starting_infos,json=allDelegationStartingInfos,proto3" json:"all_delegation_starting_infos"`
-	// all_operator_historical_rewards is the operator historical rewards information for all periods.
+	// all_operator_historical_rewards are the operator historical rewards information for all periods.
 	AllOperatorHistoricalRewards []KeyAndOperatorHistoricalRewards `protobuf:"bytes,9,rep,name=all_operator_historical_rewards,json=allOperatorHistoricalRewards,proto3" json:"all_operator_historical_rewards"`
-	// all_operator_current_rewards is the operator current rewards information for all epochs.
+	// all_operator_current_rewards are the operator current rewards information for all epochs.
 	AllOperatorCurrentRewards []KeyAndOperatorCurrentRewards `protobuf:"bytes,10,rep,name=all_operator_current_rewards,json=allOperatorCurrentRewards,proto3" json:"all_operator_current_rewards"`
-	// all_operator_commission is the commissions for all operators.
+	// all_operator_commission are the commissions for all operators.
 	AllOperatorCommission []KeyAndOperatorCommission `protobuf:"bytes,11,rep,name=all_operator_commission,json=allOperatorCommission,proto3" json:"all_operator_commission"`
-	// all_operator_slash_events is the slash events for all operators.
+	// all_operator_slash_events are the slash events for all operators.
 	AllOperatorSlashEvents []KeyAndOperatorSlashEvent `protobuf:"bytes,12,rep,name=all_operator_slash_events,json=allOperatorSlashEvents,proto3" json:"all_operator_slash_events"`
-	// all_staker_claimed_rewards is the claimed rewards for all stakers.
+	// all_staker_claimed_rewards are the claimed rewards for all stakers.
 	AllStakerClaimedRewards []KeyAndStakerClaimedRewards `protobuf:"bytes,13,rep,name=all_staker_claimed_rewards,json=allStakerClaimedRewards,proto3" json:"all_staker_claimed_rewards"`
+	// all_staker_reward_params are the reward parameters for all stakers.
+	AllStakerRewardParams []KeyAndStakerRewardParams `protobuf:"bytes,14,rep,name=all_staker_reward_params,json=allStakerRewardParams,proto3" json:"all_staker_reward_params"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -122,9 +124,9 @@ func (m *GenesisState) GetAllAvsRewardDistributions() []AVSAddrAndRewardDistribu
 	return nil
 }
 
-func (m *GenesisState) GetAllOperatorOutstandingRewards() []KeyAndOperatorOutstandingRewards {
+func (m *GenesisState) GetAllOperatorUnclaimedRewards() []KeyAndOperatorUnclaimedRewards {
 	if m != nil {
-		return m.AllOperatorOutstandingRewards
+		return m.AllOperatorUnclaimedRewards
 	}
 	return nil
 }
@@ -174,6 +176,13 @@ func (m *GenesisState) GetAllOperatorSlashEvents() []KeyAndOperatorSlashEvent {
 func (m *GenesisState) GetAllStakerClaimedRewards() []KeyAndStakerClaimedRewards {
 	if m != nil {
 		return m.AllStakerClaimedRewards
+	}
+	return nil
+}
+
+func (m *GenesisState) GetAllStakerRewardParams() []KeyAndStakerRewardParams {
+	if m != nil {
+		return m.AllStakerRewardParams
 	}
 	return nil
 }
@@ -402,28 +411,28 @@ func (m *AVSAddrAndRewardDistribution) GetAvsRewardDistribution() AVSRewardDistr
 	return AVSRewardDistribution{}
 }
 
-// KeyAndOperatorOutstandingRewards is a struct used in the genesis state.
-// It stores the outstanding rewards for a specific operator and AVS.
+// KeyAndOperatorUnclaimedRewards is a struct used in the genesis state.
+// It stores the unclaimed rewards for a specific operator and AVS.
 // The key, which is a combination of the operator and AVS, is included within it.
-type KeyAndOperatorOutstandingRewards struct {
-	// key is is a combination of the operator and AVS
+type KeyAndOperatorUnclaimedRewards struct {
+	// key is a combination of the operator and AVS
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// operator_outstanding_rewards represents the outstanding rewards for the operator.
-	OperatorOutstandingRewards OperatorOutstandingRewards `protobuf:"bytes,2,opt,name=operator_outstanding_rewards,json=operatorOutstandingRewards,proto3" json:"operator_outstanding_rewards"`
+	// operator_unclaimed_rewards represents the unclaimed rewards for the operator.
+	OperatorUnclaimedRewards OperatorUnclaimedRewards `protobuf:"bytes,2,opt,name=operator_unclaimed_rewards,json=operatorUnclaimedRewards,proto3" json:"operator_unclaimed_rewards"`
 }
 
-func (m *KeyAndOperatorOutstandingRewards) Reset()         { *m = KeyAndOperatorOutstandingRewards{} }
-func (m *KeyAndOperatorOutstandingRewards) String() string { return proto.CompactTextString(m) }
-func (*KeyAndOperatorOutstandingRewards) ProtoMessage()    {}
-func (*KeyAndOperatorOutstandingRewards) Descriptor() ([]byte, []int) {
+func (m *KeyAndOperatorUnclaimedRewards) Reset()         { *m = KeyAndOperatorUnclaimedRewards{} }
+func (m *KeyAndOperatorUnclaimedRewards) String() string { return proto.CompactTextString(m) }
+func (*KeyAndOperatorUnclaimedRewards) ProtoMessage()    {}
+func (*KeyAndOperatorUnclaimedRewards) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4003733fa9af7a23, []int{5}
 }
-func (m *KeyAndOperatorOutstandingRewards) XXX_Unmarshal(b []byte) error {
+func (m *KeyAndOperatorUnclaimedRewards) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *KeyAndOperatorOutstandingRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *KeyAndOperatorUnclaimedRewards) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_KeyAndOperatorOutstandingRewards.Marshal(b, m, deterministic)
+		return xxx_messageInfo_KeyAndOperatorUnclaimedRewards.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -433,37 +442,37 @@ func (m *KeyAndOperatorOutstandingRewards) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *KeyAndOperatorOutstandingRewards) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_KeyAndOperatorOutstandingRewards.Merge(m, src)
+func (m *KeyAndOperatorUnclaimedRewards) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyAndOperatorUnclaimedRewards.Merge(m, src)
 }
-func (m *KeyAndOperatorOutstandingRewards) XXX_Size() int {
+func (m *KeyAndOperatorUnclaimedRewards) XXX_Size() int {
 	return m.Size()
 }
-func (m *KeyAndOperatorOutstandingRewards) XXX_DiscardUnknown() {
-	xxx_messageInfo_KeyAndOperatorOutstandingRewards.DiscardUnknown(m)
+func (m *KeyAndOperatorUnclaimedRewards) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeyAndOperatorUnclaimedRewards.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_KeyAndOperatorOutstandingRewards proto.InternalMessageInfo
+var xxx_messageInfo_KeyAndOperatorUnclaimedRewards proto.InternalMessageInfo
 
-func (m *KeyAndOperatorOutstandingRewards) GetKey() string {
+func (m *KeyAndOperatorUnclaimedRewards) GetKey() string {
 	if m != nil {
 		return m.Key
 	}
 	return ""
 }
 
-func (m *KeyAndOperatorOutstandingRewards) GetOperatorOutstandingRewards() OperatorOutstandingRewards {
+func (m *KeyAndOperatorUnclaimedRewards) GetOperatorUnclaimedRewards() OperatorUnclaimedRewards {
 	if m != nil {
-		return m.OperatorOutstandingRewards
+		return m.OperatorUnclaimedRewards
 	}
-	return OperatorOutstandingRewards{}
+	return OperatorUnclaimedRewards{}
 }
 
 // KeyAndDelegationChangeInfo is a struct used in the genesis state.
 // It stores the delegation changes for the current epoch.
 // The key, which is a combination of the epochIdentifier, operator and assetID, is included within it.
 type KeyAndDelegationChangeInfo struct {
-	// key is is a combination of the epochIdentifier, operator and assetID
+	// key is a combination of the epochIdentifier, operator and assetID
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// delegation_change_info represents the delegation changes for the current epoch.
 	DelegationChangeInfo DelegationChangeInfo `protobuf:"bytes,2,opt,name=delegation_change_info,json=delegationChangeInfo,proto3" json:"delegation_change_info"`
@@ -520,7 +529,7 @@ func (m *KeyAndDelegationChangeInfo) GetDelegationChangeInfo() DelegationChangeI
 // It stores the delegation starting information for multiple epochs.
 // The key, which is a combination of the delegation key and the epochIdentifier, is included within it.
 type KeyAndDelegationStartingInfo struct {
-	// key is is a combination of the delegation key and epoch identifier.
+	// key is a combination of the delegation key and epoch identifier.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// delegation_starting_info represents the starting information for the delegation.
 	DelegationStartingInfo DelegationStartingInfo `protobuf:"bytes,2,opt,name=delegation_starting_info,json=delegationStartingInfo,proto3" json:"delegation_starting_info"`
@@ -577,7 +586,7 @@ func (m *KeyAndDelegationStartingInfo) GetDelegationStartingInfo() DelegationSta
 // It stores the operator historical rewards information for multiple periods.
 // The key, which is a combination of the operator,assetID,epochIdentifier and period, is included within it.
 type KeyAndOperatorHistoricalRewards struct {
-	// key is is a combination of the operator,assetID,epochIdentifier and period.
+	// key is a combination of the operator,assetID,epochIdentifier and period.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_historical_rewards represents the historical rewards for the operator.
 	OperatorHistoricalRewards OperatorHistoricalRewards `protobuf:"bytes,2,opt,name=operator_historical_rewards,json=operatorHistoricalRewards,proto3" json:"operator_historical_rewards"`
@@ -634,7 +643,7 @@ func (m *KeyAndOperatorHistoricalRewards) GetOperatorHistoricalRewards() Operato
 // It stores the operator current rewards information for multiple epochs.
 // The key, which is a combination of the operator,assetID and epochIdentifier, is included within it.
 type KeyAndOperatorCurrentRewards struct {
-	// key is is a combination of the operator,assetID and epochIdentifier.
+	// key is a combination of the operator,assetID and epochIdentifier.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_current_rewards represents the current rewards for the operator.
 	OperatorCurrentRewards OperatorCurrentRewards `protobuf:"bytes,2,opt,name=operator_current_rewards,json=operatorCurrentRewards,proto3" json:"operator_current_rewards"`
@@ -689,9 +698,9 @@ func (m *KeyAndOperatorCurrentRewards) GetOperatorCurrentRewards() OperatorCurre
 
 // KeyAndOperatorCommission is a struct used in the genesis state.
 // It stores the operator commission for the operator.
-// The key, which is a combination of the operator and avs, is included within it.
+// The key, which is a combination of the operator and AVS, is included within it.
 type KeyAndOperatorCommission struct {
-	// key is is a combination of the operator and avs.
+	// key is a combination of the operator and AVS.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_commission represents the commission for the operator.
 	OperatorCommission OperatorCommission `protobuf:"bytes,2,opt,name=operator_commission,json=operatorCommission,proto3" json:"operator_commission"`
@@ -748,7 +757,7 @@ func (m *KeyAndOperatorCommission) GetOperatorCommission() OperatorCommission {
 // It stores the slash event for the operator.
 // The key, which is a combination of the operator,assetID,epochIdentifier,epochNumber and blockHeight, is included within it.
 type KeyAndOperatorSlashEvent struct {
-	// key is is a combination of the operator,assetID,epochIdentifier and epochNumber.
+	// key is a combination of the operator,assetID,epochIdentifier and epochNumber.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// operator_slash_event represents the slash event for the operator.
 	OperatorSlashEvent OperatorSlashEvent `protobuf:"bytes,2,opt,name=operator_slash_event,json=operatorSlashEvent,proto3" json:"operator_slash_event"`
@@ -805,7 +814,7 @@ func (m *KeyAndOperatorSlashEvent) GetOperatorSlashEvent() OperatorSlashEvent {
 // It stores the claimed rewards for the staker.
 // The key, which is a combination of the stakerID and avsAddr, is included within it.
 type KeyAndStakerClaimedRewards struct {
-	// key is is a combination of the stakerID and avsAddr.
+	// key is a combination of the stakerID and avsAddr.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
 	// staker_claimed_rewards represents the claimed rewards for the staker.
 	StakerClaimedRewards StakerClaimedRewards `protobuf:"bytes,2,opt,name=staker_claimed_rewards,json=stakerClaimedRewards,proto3" json:"staker_claimed_rewards"`
@@ -858,13 +867,70 @@ func (m *KeyAndStakerClaimedRewards) GetStakerClaimedRewards() StakerClaimedRewa
 	return StakerClaimedRewards{}
 }
 
+// KeyAndStakerRewardParams is a struct used in the genesis state.
+// It stores the claimed rewards for the staker.
+// The key, which is the stakerID.
+type KeyAndStakerRewardParams struct {
+	// key is the stakerID.
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// staker_reward_params represents the reward params for the staker.
+	StakerRewardParams StakerRewardParams `protobuf:"bytes,2,opt,name=staker_reward_params,json=stakerRewardParams,proto3" json:"staker_reward_params"`
+}
+
+func (m *KeyAndStakerRewardParams) Reset()         { *m = KeyAndStakerRewardParams{} }
+func (m *KeyAndStakerRewardParams) String() string { return proto.CompactTextString(m) }
+func (*KeyAndStakerRewardParams) ProtoMessage()    {}
+func (*KeyAndStakerRewardParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4003733fa9af7a23, []int{13}
+}
+func (m *KeyAndStakerRewardParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *KeyAndStakerRewardParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_KeyAndStakerRewardParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *KeyAndStakerRewardParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_KeyAndStakerRewardParams.Merge(m, src)
+}
+func (m *KeyAndStakerRewardParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *KeyAndStakerRewardParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_KeyAndStakerRewardParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_KeyAndStakerRewardParams proto.InternalMessageInfo
+
+func (m *KeyAndStakerRewardParams) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+func (m *KeyAndStakerRewardParams) GetStakerRewardParams() StakerRewardParams {
+	if m != nil {
+		return m.StakerRewardParams
+	}
+	return StakerRewardParams{}
+}
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "imuachain.feedistribution.v1.GenesisState")
 	proto.RegisterType((*AVSAddrAndRewardAssets)(nil), "imuachain.feedistribution.v1.AVSAddrAndRewardAssets")
 	proto.RegisterType((*AVSAddrAndRewardParam)(nil), "imuachain.feedistribution.v1.AVSAddrAndRewardParam")
 	proto.RegisterType((*AVSAddrAndFeePool)(nil), "imuachain.feedistribution.v1.AVSAddrAndFeePool")
 	proto.RegisterType((*AVSAddrAndRewardDistribution)(nil), "imuachain.feedistribution.v1.AVSAddrAndRewardDistribution")
-	proto.RegisterType((*KeyAndOperatorOutstandingRewards)(nil), "imuachain.feedistribution.v1.KeyAndOperatorOutstandingRewards")
+	proto.RegisterType((*KeyAndOperatorUnclaimedRewards)(nil), "imuachain.feedistribution.v1.KeyAndOperatorUnclaimedRewards")
 	proto.RegisterType((*KeyAndDelegationChangeInfo)(nil), "imuachain.feedistribution.v1.KeyAndDelegationChangeInfo")
 	proto.RegisterType((*KeyAndDelegationStartingInfo)(nil), "imuachain.feedistribution.v1.KeyAndDelegationStartingInfo")
 	proto.RegisterType((*KeyAndOperatorHistoricalRewards)(nil), "imuachain.feedistribution.v1.KeyAndOperatorHistoricalRewards")
@@ -872,6 +938,7 @@ func init() {
 	proto.RegisterType((*KeyAndOperatorCommission)(nil), "imuachain.feedistribution.v1.KeyAndOperatorCommission")
 	proto.RegisterType((*KeyAndOperatorSlashEvent)(nil), "imuachain.feedistribution.v1.KeyAndOperatorSlashEvent")
 	proto.RegisterType((*KeyAndStakerClaimedRewards)(nil), "imuachain.feedistribution.v1.KeyAndStakerClaimedRewards")
+	proto.RegisterType((*KeyAndStakerRewardParams)(nil), "imuachain.feedistribution.v1.KeyAndStakerRewardParams")
 }
 
 func init() {
@@ -879,70 +946,71 @@ func init() {
 }
 
 var fileDescriptor_4003733fa9af7a23 = []byte{
-	// 998 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x97, 0x4d, 0x6f, 0x1b, 0x45,
-	0x18, 0xc7, 0x33, 0x4d, 0x09, 0xe4, 0x49, 0x28, 0xcd, 0x90, 0xa4, 0x1b, 0xd7, 0x75, 0xa2, 0x15,
-	0x48, 0xa5, 0x02, 0x9b, 0x26, 0xe5, 0x45, 0x48, 0x20, 0xb9, 0x29, 0x14, 0x84, 0x50, 0xaa, 0x58,
-	0xe2, 0x80, 0x10, 0xcb, 0xc4, 0x3b, 0x59, 0xaf, 0xb2, 0xbb, 0x63, 0x76, 0xc6, 0x6e, 0x0d, 0xaa,
-	0x04, 0xe2, 0x80, 0x54, 0x09, 0x89, 0x0b, 0x1c, 0xb9, 0x20, 0x21, 0x0e, 0x1c, 0x10, 0x17, 0xbe,
-	0x42, 0x8f, 0x3d, 0x72, 0x42, 0x28, 0x39, 0xf0, 0x35, 0xd0, 0xce, 0x4e, 0xd6, 0xb3, 0xf6, 0xec,
-	0x7a, 0x7d, 0xb1, 0x56, 0x7e, 0x5e, 0xfe, 0xbf, 0x79, 0x66, 0x76, 0xfe, 0x5a, 0xb8, 0xe1, 0x87,
-	0x03, 0xd2, 0xed, 0x11, 0x3f, 0x6a, 0x1d, 0x53, 0xea, 0xfa, 0x5c, 0xc4, 0xfe, 0xd1, 0x40, 0xf8,
-	0x2c, 0x6a, 0x0d, 0x6f, 0xb6, 0x3c, 0x1a, 0x51, 0xee, 0xf3, 0x66, 0x3f, 0x66, 0x82, 0xe1, 0x7a,
-	0x96, 0xdb, 0x9c, 0xc8, 0x6d, 0x0e, 0x6f, 0xd6, 0xd6, 0x48, 0xe8, 0x47, 0xac, 0x25, 0x7f, 0xd3,
-	0x82, 0xda, 0xba, 0xc7, 0x3c, 0x26, 0x1f, 0x5b, 0xc9, 0x93, 0xfa, 0xb7, 0x55, 0x2a, 0x99, 0x6b,
-	0x9b, 0x16, 0xbc, 0x54, 0x5a, 0xd0, 0x27, 0x31, 0x09, 0x15, 0xa2, 0xfd, 0xfb, 0x2a, 0xac, 0xde,
-	0x4d, 0xa1, 0x3b, 0x82, 0x08, 0x8a, 0xef, 0xc2, 0x52, 0x9a, 0x60, 0xa1, 0x1d, 0x74, 0x7d, 0x65,
-	0xf7, 0x85, 0x66, 0xd9, 0x22, 0x9a, 0xf7, 0x64, 0xee, 0xed, 0xe5, 0xc7, 0xff, 0x6c, 0x2f, 0xfc,
-	0xf6, 0xdf, 0x1f, 0x37, 0xd0, 0xa1, 0x2a, 0xc7, 0x21, 0x6c, 0x90, 0x20, 0x70, 0xc8, 0x90, 0x3b,
-	0x31, 0xbd, 0x4f, 0x62, 0xd7, 0x21, 0x9c, 0x53, 0xc1, 0xad, 0x0b, 0x3b, 0x8b, 0xd7, 0x57, 0x76,
-	0x6f, 0x95, 0xf7, 0x6d, 0x7f, 0xdc, 0x69, 0xbb, 0x6e, 0xdc, 0x8e, 0xdc, 0x43, 0x59, 0xdc, 0x96,
-	0xb5, 0xb7, 0x2f, 0x26, 0x3a, 0x87, 0x98, 0x04, 0x41, 0x7b, 0xc8, 0xf5, 0x08, 0x0e, 0xa6, 0xe4,
-	0xd4, 0x32, 0x16, 0xa5, 0xdc, 0xde, 0x7c, 0x72, 0x72, 0x59, 0x26, 0xb5, 0x74, 0xbd, 0xf8, 0x73,
-	0x58, 0x3b, 0x57, 0x3b, 0xa6, 0xd4, 0xe9, 0x33, 0x16, 0x70, 0xeb, 0xa2, 0x54, 0x6a, 0x55, 0x55,
-	0x7a, 0x8f, 0xd2, 0x7b, 0x8c, 0x05, 0x4a, 0xe5, 0x52, 0xaa, 0xa2, 0xfe, 0xe4, 0xf8, 0x1b, 0x04,
-	0xf5, 0x89, 0x05, 0xe9, 0xad, 0xb8, 0xf5, 0x94, 0x54, 0x7b, 0x6b, 0xbe, 0x75, 0xdd, 0xd1, 0xe2,
-	0x4a, 0x78, 0x4b, 0x5f, 0x9e, 0x1e, 0xe7, 0xf8, 0x7b, 0x04, 0x3b, 0x09, 0x03, 0xeb, 0xd3, 0x98,
-	0x08, 0x16, 0x3b, 0x6c, 0x20, 0xb8, 0x20, 0x91, 0xeb, 0x47, 0x9e, 0x82, 0xe2, 0xd6, 0x92, 0xe4,
-	0x78, 0xa7, 0x9c, 0xe3, 0x43, 0x3a, 0x6a, 0x47, 0xee, 0x81, 0xea, 0x73, 0x30, 0x6e, 0x93, 0xca,
-	0x9e, 0x6f, 0xec, 0x35, 0x12, 0x04, 0xc5, 0x49, 0xf8, 0x21, 0x5c, 0x4d, 0x70, 0x5c, 0x1a, 0x50,
-	0x8f, 0x24, 0xad, 0x9d, 0x6e, 0x8f, 0x44, 0x1e, 0x75, 0xfc, 0xe8, 0x98, 0x71, 0xeb, 0x69, 0x49,
-	0xf2, 0x66, 0x15, 0x92, 0x3b, 0x59, 0x8b, 0x7d, 0xd9, 0xe1, 0x83, 0xe8, 0x98, 0x29, 0x06, 0x8b,
-	0x04, 0x81, 0x29, 0xcc, 0xf1, 0xb7, 0x08, 0xae, 0x4d, 0xe8, 0x73, 0x41, 0x62, 0x91, 0x4c, 0x23,
-	0x25, 0x78, 0xa6, 0xca, 0x9e, 0x4c, 0x12, 0x74, 0x54, 0x0f, 0x8d, 0xa1, 0x96, 0x63, 0xd0, 0x13,
-	0x38, 0x7e, 0x84, 0x60, 0x3b, 0xb7, 0x29, 0x3d, 0x9f, 0x0b, 0x16, 0xfb, 0x5d, 0x12, 0x64, 0x7b,
-	0xb2, 0x2c, 0x39, 0xde, 0x9e, 0x67, 0x4f, 0xde, 0xcf, 0xba, 0xe4, 0xb7, 0xa4, 0xae, 0x6d, 0xc9,
-	0x54, 0x4e, 0x76, 0x4a, 0x33, 0x98, 0xee, 0x20, 0x8e, 0x69, 0x24, 0x32, 0x12, 0xa8, 0x3e, 0x91,
-	0x73, 0x95, 0xfd, 0xb4, 0x45, 0x1e, 0x63, 0x4b, 0xc3, 0xc8, 0x27, 0x60, 0x01, 0x57, 0xf2, 0x08,
-	0x2c, 0x0c, 0x7d, 0xce, 0x7d, 0x16, 0x59, 0x2b, 0x52, 0xfd, 0xf5, 0xb9, 0xd4, 0xb3, 0x6a, 0xa5,
-	0xbc, 0xa1, 0x2b, 0x67, 0x41, 0x7c, 0x1f, 0xb6, 0x72, 0xaa, 0x3c, 0x20, 0xbc, 0xe7, 0xd0, 0x21,
-	0x8d, 0x04, 0xb7, 0x56, 0xe7, 0xd7, 0xed, 0x24, 0xf5, 0xef, 0x26, 0xe5, 0x4a, 0x77, 0x53, 0xd3,
-	0x1d, 0x07, 0x39, 0xfe, 0x0a, 0x92, 0xd3, 0x91, 0x9c, 0xbc, 0x13, 0x1a, 0x3b, 0xdd, 0x80, 0xf8,
-	0x21, 0x75, 0xb3, 0x79, 0x3f, 0x5b, 0xfd, 0x1d, 0xe8, 0xc8, 0x0e, 0xfb, 0x69, 0x83, 0xfc, 0xb4,
-	0x93, 0x81, 0x9a, 0xc2, 0xf6, 0x23, 0x04, 0x9b, 0xe6, 0xab, 0x19, 0x5f, 0x86, 0x45, 0x32, 0x4c,
-	0x5d, 0x63, 0xf9, 0x30, 0x79, 0xc4, 0x9f, 0xc1, 0x5a, 0xd1, 0xed, 0xff, 0xf2, 0xcc, 0x6b, 0x4b,
-	0xeb, 0xad, 0xa0, 0x9e, 0x23, 0xf9, 0x2b, 0xdf, 0xfe, 0x0e, 0xc1, 0x86, 0xf1, 0xe2, 0x36, 0xb0,
-	0x7c, 0x0a, 0x97, 0x27, 0xad, 0xc1, 0xba, 0x20, 0x0d, 0xae, 0x2a, 0x8a, 0x6e, 0x09, 0x97, 0x48,
-	0xce, 0x0f, 0x6c, 0x01, 0x6b, 0x53, 0xf7, 0xba, 0x01, 0xe2, 0x23, 0x58, 0xd5, 0x1d, 0x43, 0x01,
-	0xbc, 0x58, 0x0e, 0x90, 0xb7, 0x09, 0x20, 0x99, 0x47, 0xd8, 0xbf, 0x20, 0xa8, 0x97, 0x5d, 0xf0,
-	0x06, 0x82, 0x2f, 0xe0, 0x4a, 0x81, 0xa1, 0x28, 0x98, 0xbd, 0x8a, 0xd3, 0x30, 0x18, 0xc9, 0x06,
-	0x31, 0xb9, 0x88, 0xfd, 0x17, 0x82, 0x9d, 0x59, 0xd7, 0x7f, 0x42, 0x7a, 0x42, 0x47, 0xe7, 0xa4,
-	0x27, 0x74, 0x84, 0xbf, 0x46, 0x50, 0x2f, 0xf5, 0x9d, 0x94, 0x77, 0xc6, 0x49, 0x9f, 0xe9, 0x38,
-	0x35, 0x56, 0x98, 0x61, 0xff, 0x8c, 0xa0, 0x56, 0x6c, 0x17, 0x06, 0xe6, 0x08, 0x36, 0xcd, 0xde,
-	0xa4, 0x60, 0x77, 0xcb, 0x61, 0x4b, 0x4c, 0x69, 0xdd, 0x35, 0xc4, 0xec, 0x5f, 0x11, 0xd4, 0xcb,
-	0xdc, 0xc4, 0x80, 0x28, 0xc0, 0x2a, 0xb2, 0x2f, 0x05, 0x79, 0xab, 0x2a, 0xa4, 0xc1, 0xb7, 0xb4,
-	0xe5, 0xeb, 0x51, 0xfb, 0x4f, 0x04, 0xdb, 0x33, 0xec, 0xc6, 0xc0, 0xfa, 0x10, 0xae, 0x96, 0x99,
-	0x5c, 0x8a, 0xfb, 0x46, 0xb5, 0x03, 0x50, 0x64, 0x6f, 0x5b, 0xac, 0x28, 0x41, 0x9b, 0x6e, 0x81,
-	0xf1, 0x18, 0xa7, 0x5b, 0xe8, 0x84, 0x95, 0xa6, 0x5b, 0xea, 0x81, 0x9b, 0xcc, 0x18, 0xb5, 0x7f,
-	0x44, 0x60, 0x15, 0x99, 0x98, 0x01, 0xd2, 0x83, 0xe7, 0x4d, 0x5e, 0x99, 0xf2, 0xbd, 0x5a, 0x91,
-	0x6f, 0xd2, 0x25, 0x31, 0x9b, 0x8a, 0xd8, 0x3f, 0x4d, 0x71, 0x8d, 0x7d, 0xcc, 0xc0, 0xd5, 0x83,
-	0x75, 0x93, 0x9b, 0xce, 0x07, 0x36, 0x65, 0xa3, 0x19, 0xd8, 0x38, 0xa2, 0xbd, 0xd8, 0x26, 0x93,
-	0x33, 0xbf, 0xd8, 0x05, 0x7e, 0x5b, 0xe9, 0xc5, 0x2e, 0x71, 0xda, 0x75, 0x6e, 0x8a, 0x1d, 0x3c,
-	0x3e, 0x6d, 0xa0, 0x27, 0xa7, 0x0d, 0xf4, 0xef, 0x69, 0x03, 0xfd, 0x70, 0xd6, 0x58, 0x78, 0x72,
-	0xd6, 0x58, 0xf8, 0xfb, 0xac, 0xb1, 0xf0, 0xc9, 0x6b, 0x9e, 0x2f, 0x7a, 0x83, 0xa3, 0x66, 0x97,
-	0x85, 0xf2, 0xb3, 0xf0, 0x95, 0x07, 0xa3, 0x2f, 0xb5, 0xef, 0xc3, 0x07, 0x53, 0x1f, 0x7c, 0x62,
-	0xd4, 0xa7, 0xfc, 0x68, 0x49, 0x7e, 0xed, 0xed, 0xfd, 0x1f, 0x00, 0x00, 0xff, 0xff, 0x6e, 0x9c,
-	0xe3, 0x9b, 0xbe, 0x0e, 0x00, 0x00,
+	// 1020 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x97, 0x4f, 0x6f, 0xdc, 0x44,
+	0x18, 0x87, 0x33, 0x4d, 0x09, 0xe4, 0x4d, 0x1a, 0x9a, 0x21, 0x49, 0x9d, 0xed, 0xb2, 0xa9, 0x2c,
+	0x90, 0x4a, 0x05, 0xbb, 0x34, 0x29, 0x7f, 0x84, 0xe0, 0xb0, 0x4d, 0xa1, 0x20, 0x84, 0x5a, 0x65,
+	0x05, 0x07, 0x84, 0x30, 0x93, 0xf5, 0x64, 0xd7, 0x8a, 0xed, 0x59, 0x3c, 0xb3, 0xdb, 0x6e, 0x51,
+	0x0f, 0x88, 0x43, 0xa5, 0x9e, 0xb8, 0xc0, 0x0d, 0x2e, 0x48, 0x88, 0x13, 0x42, 0x7c, 0x8a, 0x1e,
+	0x7b, 0xe4, 0x84, 0x50, 0x72, 0xe0, 0x6b, 0x54, 0x1e, 0xcf, 0x3a, 0xe3, 0xf5, 0xd8, 0xeb, 0xbd,
+	0x44, 0xab, 0xbc, 0x33, 0xef, 0xef, 0x99, 0x19, 0x8f, 0x1f, 0x19, 0xae, 0x79, 0xc1, 0x90, 0x74,
+	0xfb, 0xc4, 0x0b, 0x5b, 0x47, 0x94, 0xba, 0x1e, 0x17, 0x91, 0x77, 0x38, 0x14, 0x1e, 0x0b, 0x5b,
+	0xa3, 0xeb, 0xad, 0x1e, 0x0d, 0x29, 0xf7, 0x78, 0x73, 0x10, 0x31, 0xc1, 0x70, 0x3d, 0x1d, 0xdb,
+	0x9c, 0x1a, 0xdb, 0x1c, 0x5d, 0xaf, 0xad, 0x93, 0xc0, 0x0b, 0x59, 0x4b, 0xfe, 0x4d, 0x26, 0xd4,
+	0x36, 0x7a, 0xac, 0xc7, 0xe4, 0xcf, 0x56, 0xfc, 0x4b, 0xfd, 0xb7, 0x55, 0x1a, 0x99, 0x69, 0x9b,
+	0x4c, 0x78, 0xad, 0x74, 0xc2, 0x80, 0x44, 0x24, 0x50, 0x88, 0xf6, 0x2f, 0x17, 0x60, 0xf5, 0x76,
+	0x02, 0xdd, 0x11, 0x44, 0x50, 0x7c, 0x1b, 0x96, 0x92, 0x01, 0x16, 0xba, 0x82, 0xae, 0xae, 0xec,
+	0xbe, 0xd2, 0x2c, 0x5b, 0x44, 0xf3, 0xae, 0x1c, 0x7b, 0x73, 0xf9, 0xc9, 0xbf, 0x3b, 0x0b, 0x7f,
+	0xfc, 0xff, 0xd7, 0x35, 0x74, 0xa0, 0xa6, 0xe3, 0x00, 0x36, 0x89, 0xef, 0x3b, 0x64, 0xc4, 0x9d,
+	0x88, 0xde, 0x23, 0x91, 0xeb, 0x10, 0xce, 0xa9, 0xe0, 0xd6, 0xb9, 0x2b, 0x8b, 0x57, 0x57, 0x76,
+	0x6f, 0x94, 0xf7, 0x6d, 0x7f, 0xd1, 0x69, 0xbb, 0x6e, 0xd4, 0x0e, 0xdd, 0x03, 0x39, 0xb9, 0x2d,
+	0xe7, 0xde, 0x3c, 0x1f, 0xe7, 0x1c, 0x60, 0xe2, 0xfb, 0xed, 0x11, 0xd7, 0x2b, 0xd8, 0xcf, 0xc5,
+	0xa9, 0x65, 0x2c, 0xca, 0xb8, 0xbd, 0xf9, 0xe2, 0xe4, 0xb2, 0x4c, 0x69, 0xc9, 0x7a, 0xf1, 0x37,
+	0xb0, 0x3e, 0x49, 0x3b, 0xa2, 0xd4, 0x19, 0x30, 0xe6, 0x73, 0xeb, 0xbc, 0x4c, 0x6a, 0x55, 0x4d,
+	0xfa, 0x88, 0xd2, 0xbb, 0x8c, 0xf9, 0x2a, 0x65, 0x2d, 0x49, 0x51, 0xff, 0xe4, 0xf8, 0x7b, 0x04,
+	0xf5, 0xa9, 0x05, 0xe9, 0xad, 0xb8, 0xf5, 0x9c, 0x4c, 0x7b, 0x6f, 0xbe, 0x75, 0xdd, 0xd2, 0xea,
+	0x2a, 0x78, 0x5b, 0x5f, 0x9e, 0x5e, 0xe7, 0xf8, 0x11, 0x82, 0x46, 0xcc, 0xc0, 0x06, 0x34, 0x22,
+	0x82, 0x45, 0xce, 0x30, 0xec, 0xfa, 0xc4, 0x0b, 0xa8, 0xab, 0x90, 0xb8, 0xb5, 0x24, 0x29, 0xde,
+	0x2f, 0xa7, 0xf8, 0x94, 0x8e, 0xdb, 0xa1, 0x7b, 0x47, 0x75, 0xf9, 0x7c, 0xd2, 0x24, 0x89, 0x9c,
+	0x1c, 0xea, 0x65, 0xe2, 0xfb, 0x45, 0x43, 0xf0, 0x43, 0x88, 0xcb, 0x8e, 0x4b, 0x7d, 0xda, 0x23,
+	0x71, 0x5b, 0xa7, 0xdb, 0x27, 0x61, 0x8f, 0x3a, 0x5e, 0x78, 0xc4, 0xb8, 0xf5, 0xbc, 0xa4, 0x78,
+	0xb7, 0x0a, 0xc5, 0xad, 0xb4, 0xc5, 0xbe, 0xec, 0xf0, 0x49, 0x78, 0xc4, 0x14, 0x81, 0x45, 0x7c,
+	0xdf, 0x54, 0xe6, 0xf8, 0x07, 0x04, 0x2f, 0x4f, 0xe5, 0x73, 0x41, 0x22, 0xe1, 0x85, 0x3d, 0x45,
+	0xf0, 0x42, 0x95, 0xd3, 0x98, 0x26, 0xe8, 0xa8, 0x1e, 0x1a, 0x43, 0x2d, 0xc3, 0xa0, 0x0f, 0xe0,
+	0xf8, 0x31, 0x82, 0x9d, 0xcc, 0x71, 0xf4, 0x3d, 0x2e, 0x58, 0xe4, 0x75, 0x89, 0x9f, 0x9e, 0xc7,
+	0xb2, 0xe4, 0xf8, 0x60, 0x9e, 0xf3, 0xf8, 0x38, 0xed, 0x92, 0x3d, 0x90, 0xba, 0x76, 0x20, 0xb9,
+	0x31, 0xe9, 0xf3, 0x99, 0xc2, 0x74, 0x87, 0x51, 0x44, 0x43, 0x91, 0x92, 0x40, 0xf5, 0x1d, 0x99,
+	0xa4, 0xec, 0x27, 0x2d, 0xb2, 0x18, 0xdb, 0x1a, 0x46, 0x76, 0x00, 0x16, 0x70, 0x29, 0x8b, 0xc0,
+	0x82, 0xc0, 0xe3, 0xdc, 0x63, 0xa1, 0xb5, 0x22, 0xd3, 0xdf, 0x9e, 0x2b, 0x3d, 0x9d, 0xad, 0x92,
+	0x37, 0xf5, 0xe4, 0xb4, 0x88, 0xef, 0xc1, 0x76, 0x26, 0x95, 0xfb, 0x84, 0xf7, 0x1d, 0x3a, 0xa2,
+	0xa1, 0xe0, 0xd6, 0xea, 0xfc, 0xb9, 0x9d, 0x78, 0xfe, 0x87, 0xf1, 0x74, 0x95, 0xbb, 0xa5, 0xe5,
+	0x9e, 0x15, 0x39, 0xfe, 0x0e, 0xe2, 0xa7, 0x23, 0x7e, 0xf2, 0x8e, 0x69, 0xe4, 0x4c, 0xdf, 0xc4,
+	0x0b, 0xd5, 0xef, 0x40, 0x47, 0x76, 0xd8, 0x37, 0xdd, 0xc2, 0x78, 0x43, 0x4d, 0x65, 0x3c, 0x04,
+	0x4b, 0x0b, 0xcf, 0xbe, 0x62, 0xd7, 0xaa, 0x2f, 0x3a, 0xe9, 0xad, 0xbf, 0x4b, 0xb5, 0xcd, 0xce,
+	0x17, 0xed, 0xc7, 0x08, 0xb6, 0xcc, 0x2e, 0xc0, 0x17, 0x61, 0x91, 0x8c, 0x12, 0x4d, 0x2d, 0x1f,
+	0xc4, 0x3f, 0xf1, 0xd7, 0xb0, 0x5e, 0xa4, 0x9b, 0xd7, 0x67, 0xbe, 0x27, 0xb5, 0xde, 0x0a, 0xe9,
+	0x45, 0x92, 0x75, 0x8c, 0xfd, 0x08, 0xc1, 0xa6, 0xd1, 0x14, 0x06, 0x96, 0xaf, 0xe0, 0xe2, 0xb4,
+	0x8b, 0xac, 0x73, 0xd2, 0xa8, 0x55, 0x51, 0x74, 0x07, 0xad, 0x91, 0x8c, 0x80, 0x6c, 0x01, 0xeb,
+	0x39, 0x91, 0x18, 0x20, 0x3e, 0x83, 0x55, 0x5d, 0x51, 0x0a, 0xe0, 0xd5, 0x72, 0x80, 0xac, 0x97,
+	0x80, 0xa4, 0x52, 0xb2, 0x7f, 0x43, 0x50, 0x2f, 0x33, 0x8a, 0x81, 0xe0, 0x5b, 0xb8, 0x54, 0x60,
+	0x30, 0x05, 0xb3, 0x57, 0x71, 0x37, 0x0c, 0xe6, 0xda, 0x24, 0x26, 0x6d, 0xd9, 0x7f, 0x22, 0x68,
+	0x94, 0x1b, 0x27, 0xe6, 0x3c, 0xa6, 0xe3, 0x09, 0xe7, 0x31, 0x1d, 0xe3, 0x07, 0x50, 0x2b, 0xb1,
+	0x5c, 0x82, 0x3a, 0xe3, 0x01, 0x9f, 0xe1, 0x37, 0x8b, 0x15, 0xd4, 0xed, 0x5f, 0x11, 0xd4, 0x8a,
+	0xe5, 0x64, 0x80, 0x0d, 0x61, 0xcb, 0x6c, 0x42, 0x05, 0xba, 0x5b, 0x0e, 0x5a, 0xa2, 0xc0, 0x0d,
+	0xd7, 0x50, 0xb3, 0x7f, 0x47, 0x50, 0x2f, 0x73, 0x97, 0x01, 0x51, 0x80, 0x55, 0x24, 0x4b, 0x05,
+	0x79, 0xa3, 0x2a, 0xa4, 0xc1, 0x92, 0xda, 0xf2, 0xf5, 0xaa, 0xfd, 0x37, 0x82, 0x9d, 0x19, 0x72,
+	0x33, 0xb0, 0x3e, 0x84, 0xcb, 0x65, 0x4a, 0x4d, 0x70, 0xdf, 0xa9, 0x76, 0xf8, 0x45, 0x32, 0xdd,
+	0x66, 0x45, 0x03, 0xb4, 0xdd, 0x2d, 0xd0, 0x9c, 0x71, 0x77, 0x0b, 0xbd, 0x5b, 0x69, 0x77, 0x4b,
+	0x8d, 0xbb, 0xc5, 0x8c, 0x55, 0xfb, 0x27, 0x04, 0x56, 0x91, 0x32, 0x0d, 0x90, 0x3d, 0x78, 0xc9,
+	0x64, 0xe6, 0x84, 0xef, 0xcd, 0x8a, 0x7c, 0xd3, 0x4e, 0xc6, 0x2c, 0x57, 0xb1, 0x7f, 0xce, 0x71,
+	0x9d, 0x59, 0xd3, 0xc0, 0xd5, 0x87, 0x0d, 0x93, 0xbb, 0xe7, 0x03, 0xcb, 0x49, 0x3b, 0x05, 0x3b,
+	0xab, 0x68, 0x17, 0xdb, 0xa8, 0x54, 0xe3, 0xc5, 0x2e, 0xb0, 0x7b, 0xa5, 0x8b, 0x5d, 0xe2, 0xf5,
+	0x0d, 0x6e, 0xa8, 0x69, 0x3b, 0x97, 0x57, 0xaf, 0x79, 0xe7, 0x8c, 0xfe, 0xaf, 0xb4, 0x73, 0x85,
+	0xe6, 0xc7, 0x3c, 0x5f, 0xb9, 0xf3, 0xe4, 0xa4, 0x81, 0x9e, 0x9e, 0x34, 0xd0, 0x7f, 0x27, 0x0d,
+	0xf4, 0xe3, 0x69, 0x63, 0xe1, 0xe9, 0x69, 0x63, 0xe1, 0x9f, 0xd3, 0xc6, 0xc2, 0x97, 0x6f, 0xf5,
+	0x3c, 0xd1, 0x1f, 0x1e, 0x36, 0xbb, 0x2c, 0x90, 0xdf, 0xc5, 0x6f, 0xdc, 0x1f, 0x3f, 0xd0, 0x3e,
+	0x90, 0xef, 0xe7, 0xbe, 0x78, 0xc5, 0x78, 0x40, 0xf9, 0xe1, 0x92, 0xfc, 0xdc, 0xdd, 0x7b, 0x16,
+	0x00, 0x00, 0xff, 0xff, 0xf8, 0x37, 0xd6, 0x02, 0xbf, 0x0f, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -965,6 +1033,20 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.AllStakerRewardParams) > 0 {
+		for iNdEx := len(m.AllStakerRewardParams) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.AllStakerRewardParams[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x72
+		}
+	}
 	if len(m.AllStakerClaimedRewards) > 0 {
 		for iNdEx := len(m.AllStakerClaimedRewards) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -1063,10 +1145,10 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x3a
 		}
 	}
-	if len(m.AllOperatorOutstandingRewards) > 0 {
-		for iNdEx := len(m.AllOperatorOutstandingRewards) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.AllOperatorUnclaimedRewards) > 0 {
+		for iNdEx := len(m.AllOperatorUnclaimedRewards) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.AllOperatorOutstandingRewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.AllOperatorUnclaimedRewards[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1310,7 +1392,7 @@ func (m *AVSAddrAndRewardDistribution) MarshalToSizedBuffer(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *KeyAndOperatorOutstandingRewards) Marshal() (dAtA []byte, err error) {
+func (m *KeyAndOperatorUnclaimedRewards) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1320,18 +1402,18 @@ func (m *KeyAndOperatorOutstandingRewards) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *KeyAndOperatorOutstandingRewards) MarshalTo(dAtA []byte) (int, error) {
+func (m *KeyAndOperatorUnclaimedRewards) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *KeyAndOperatorOutstandingRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *KeyAndOperatorUnclaimedRewards) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
 	{
-		size, err := m.OperatorOutstandingRewards.MarshalToSizedBuffer(dAtA[:i])
+		size, err := m.OperatorUnclaimedRewards.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -1630,6 +1712,46 @@ func (m *KeyAndStakerClaimedRewards) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
+func (m *KeyAndStakerRewardParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *KeyAndStakerRewardParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *KeyAndStakerRewardParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.StakerRewardParams.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintGenesis(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Key) > 0 {
+		i -= len(m.Key)
+		copy(dAtA[i:], m.Key)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.Key)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintGenesis(dAtA []byte, offset int, v uint64) int {
 	offset -= sovGenesis(v)
 	base := offset
@@ -1673,8 +1795,8 @@ func (m *GenesisState) Size() (n int) {
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
-	if len(m.AllOperatorOutstandingRewards) > 0 {
-		for _, e := range m.AllOperatorOutstandingRewards {
+	if len(m.AllOperatorUnclaimedRewards) > 0 {
+		for _, e := range m.AllOperatorUnclaimedRewards {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
@@ -1717,6 +1839,12 @@ func (m *GenesisState) Size() (n int) {
 	}
 	if len(m.AllStakerClaimedRewards) > 0 {
 		for _, e := range m.AllStakerClaimedRewards {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.AllStakerRewardParams) > 0 {
+		for _, e := range m.AllStakerRewardParams {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
@@ -1788,7 +1916,7 @@ func (m *AVSAddrAndRewardDistribution) Size() (n int) {
 	return n
 }
 
-func (m *KeyAndOperatorOutstandingRewards) Size() (n int) {
+func (m *KeyAndOperatorUnclaimedRewards) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1798,7 +1926,7 @@ func (m *KeyAndOperatorOutstandingRewards) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovGenesis(uint64(l))
 	}
-	l = m.OperatorOutstandingRewards.Size()
+	l = m.OperatorUnclaimedRewards.Size()
 	n += 1 + l + sovGenesis(uint64(l))
 	return n
 }
@@ -1904,6 +2032,21 @@ func (m *KeyAndStakerClaimedRewards) Size() (n int) {
 		n += 1 + l + sovGenesis(uint64(l))
 	}
 	l = m.StakerClaimedRewards.Size()
+	n += 1 + l + sovGenesis(uint64(l))
+	return n
+}
+
+func (m *KeyAndStakerRewardParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Key)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	l = m.StakerRewardParams.Size()
 	n += 1 + l + sovGenesis(uint64(l))
 	return n
 }
@@ -2114,7 +2257,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AllOperatorOutstandingRewards", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AllOperatorUnclaimedRewards", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2141,8 +2284,8 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.AllOperatorOutstandingRewards = append(m.AllOperatorOutstandingRewards, KeyAndOperatorOutstandingRewards{})
-			if err := m.AllOperatorOutstandingRewards[len(m.AllOperatorOutstandingRewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.AllOperatorUnclaimedRewards = append(m.AllOperatorUnclaimedRewards, KeyAndOperatorUnclaimedRewards{})
+			if err := m.AllOperatorUnclaimedRewards[len(m.AllOperatorUnclaimedRewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2381,6 +2524,40 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			}
 			m.AllStakerClaimedRewards = append(m.AllStakerClaimedRewards, KeyAndStakerClaimedRewards{})
 			if err := m.AllStakerClaimedRewards[len(m.AllStakerClaimedRewards)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 14:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AllStakerRewardParams", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AllStakerRewardParams = append(m.AllStakerRewardParams, KeyAndStakerRewardParams{})
+			if err := m.AllStakerRewardParams[len(m.AllStakerRewardParams)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2866,7 +3043,7 @@ func (m *AVSAddrAndRewardDistribution) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *KeyAndOperatorOutstandingRewards) Unmarshal(dAtA []byte) error {
+func (m *KeyAndOperatorUnclaimedRewards) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2889,10 +3066,10 @@ func (m *KeyAndOperatorOutstandingRewards) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: KeyAndOperatorOutstandingRewards: wiretype end group for non-group")
+			return fmt.Errorf("proto: KeyAndOperatorUnclaimedRewards: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: KeyAndOperatorOutstandingRewards: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: KeyAndOperatorUnclaimedRewards: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2929,7 +3106,7 @@ func (m *KeyAndOperatorOutstandingRewards) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field OperatorOutstandingRewards", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field OperatorUnclaimedRewards", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2956,7 +3133,7 @@ func (m *KeyAndOperatorOutstandingRewards) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if err := m.OperatorOutstandingRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.OperatorUnclaimedRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3762,6 +3939,121 @@ func (m *KeyAndStakerClaimedRewards) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.StakerClaimedRewards.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *KeyAndStakerRewardParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: KeyAndStakerRewardParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: KeyAndStakerRewardParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Key = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakerRewardParams", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.StakerRewardParams.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

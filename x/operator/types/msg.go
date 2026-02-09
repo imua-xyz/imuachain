@@ -20,6 +20,8 @@ const (
 	TypeUpdateCommissionRateReq = "update_commission_rate"
 	// TypeEditOperatorReq is the type for the EditOperatorReq message.
 	TypeEditOperatorReq = "edit_operator"
+	// TypeUpdateRewardCompoundingFlagReq is the type for the UpdateRewardCompoundingFlagReq message.
+	TypeUpdateRewardCompoundingFlagReq = "update_reward_compounding_flag"
 	// TypeUpdateParamsReq is the type for the UpdateParamsReq message.
 	TypeUpdateParamsReq = "update_params"
 )
@@ -32,6 +34,7 @@ var (
 	_ sdk.Msg = &SetConsKeyReq{}
 	_ sdk.Msg = &UpdateCommissionRateReq{}
 	_ sdk.Msg = &EditOperatorReq{}
+	_ sdk.Msg = &UpdateRewardCompoundingFlagReq{}
 )
 
 // GetSigners returns the expected signers for the message.
@@ -242,6 +245,35 @@ func (m *EditOperatorReq) Type() string {
 
 // GetSignBytes returns the bytes all expected signers must sign over.
 func (m *EditOperatorReq) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *UpdateRewardCompoundingFlagReq) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Address)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *UpdateRewardCompoundingFlagReq) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Address); err != nil {
+		return errorsmod.Wrap(err, "invalid from address")
+	}
+	return nil
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *UpdateRewardCompoundingFlagReq) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *UpdateRewardCompoundingFlagReq) Type() string {
+	return TypeUpdateRewardCompoundingFlagReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *UpdateRewardCompoundingFlagReq) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }
 

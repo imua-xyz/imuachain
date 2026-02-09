@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/utils"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	"github.com/imua-xyz/imuachain/x/dogfood/types"
 )
 
@@ -17,7 +16,7 @@ func (k Keeper) BeginBlock(ctx sdk.Context) {
 	if k.ShouldEmitAvsEvent(ctx) {
 		defer k.ClearEmitAvsEventFlag(ctx)
 		// emit the event
-		chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+		chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
 		_, avsAddress := k.avsKeeper.IsAVSByChainID(ctx, chainIDWithoutRevision)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -36,7 +35,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	}
 	defer k.ClearValidatorSetUpdateFlag(ctx)
 	logger := k.Logger(ctx)
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.

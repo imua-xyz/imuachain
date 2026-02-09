@@ -63,32 +63,6 @@ var (
 	ParamsKey       = []byte("Params")
 )
 
-func GetJoinedStoreKey(keys ...string) []byte {
-	return []byte(strings.Join(keys, utils.DelimiterForCombinedKey))
-}
-
-func GetJoinedStoreKeyForPrefix(keys ...string) []byte {
-	ret := []byte(strings.Join(keys, utils.DelimiterForCombinedKey))
-	ret = append(ret, []byte(utils.DelimiterForCombinedKey)...)
-	return ret
-}
-
-func ParseJoinedStoreKey(key []byte, number int) (keys []string, err error) {
-	stringList := strings.Split(string(key), utils.DelimiterForCombinedKey)
-	if len(stringList) != number {
-		return nil, errorsmod.Wrap(
-			ErrParseJoinedKey,
-			fmt.Sprintf(
-				"expected length:%d,actual length:%d,the stringList is:%v",
-				number,
-				len(stringList),
-				stringList,
-			),
-		)
-	}
-	return stringList, nil
-}
-
 // ParseID parses the key and returns the client address and the ID.
 // It constraints the key to be in the format of "clientAddress_0xid"
 // The 0xid must be in hex.

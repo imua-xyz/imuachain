@@ -95,7 +95,7 @@ func (k Keeper) UpdateNSTBalance(
 		// whom the related staker has already delegated
 		if pendingSlashAmount.IsPositive() {
 			// calculate the slash proportion
-			totalDelegatedAmount, err := k.TotalDelegatedAmountForStakerAsset(ctx, stakerID, assetID)
+			totalDelegatedAmount, err := k.TotalDelegatedAmountForStakingAsset(ctx, stakerID, assetID)
 			if err != nil {
 				return err
 			}
@@ -127,7 +127,7 @@ func (k Keeper) UpdateNSTBalance(
 					}
 
 					slashShare := delegationAmount.UndelegatableShare.Mul(slashProportion)
-					actualSlashAmount, err := k.RemoveShare(ctx, false, opAccAddr, stakerID, assetID, slashShare)
+					actualSlashAmount, err := k.RemoveShare(ctx, false, false, opAccAddr, stakerID, assetID, slashShare)
 					if err != nil {
 						return true, err
 					}

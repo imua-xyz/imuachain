@@ -1,11 +1,12 @@
 package keeper
 
 import (
-	"fmt"
 	"math/big"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/imua-xyz/imuachain/utils"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
@@ -19,32 +20,32 @@ import (
 )
 
 // GetAVSSupportedAssets returns a map of assets supported by the AVS. The avsAddr supplied must be hex.
-func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]struct{}, error) {
+func (k *Keeper) GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]string, map[string]struct{}, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSSupportedAssets: key is %s", avsAddr))
+		return nil, nil, errorsmod.Wrapf(err, "GetAVSSupportedAssets: key is %s", avsAddr)
 	}
 	assetIDList := avsInfo.Info.AssetIDs
 	ret := make(map[string]struct{})
 
 	for _, assetID := range assetIDList {
 		if !k.assetsKeeper.IsStakingAsset(ctx, assetID) {
-			return nil, errorsmod.Wrap(err, fmt.Sprintf("[GetAVSSupportedAssets] assetID:%s isn't staking asset", assetID))
+			return nil, nil, errorsmod.Wrapf(types.ErrInvalidAssetID, "[GetAVSSupportedAssets] assetID:%s isn't staking asset", assetID)
 		}
 		ret[assetID] = struct{}{}
 	}
 
-	return ret, nil
+	return assetIDList, ret, nil
 }
 
 // GetAVSAssetsList returns a list of assets supported by the AVS. The avsAddr supplied must be hex.
 func (k *Keeper) GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error) {
 	if !common.IsHexAddress(avsAddr) {
-		return nil, errorsmod.Wrap(types.ErrInvalidAddr, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+		return nil, errorsmod.Wrapf(types.ErrInvalidAddr, "GetAVSAssetsList: key is %s", avsAddr)
 	}
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return nil, errorsmod.Wrap(err, fmt.Sprintf("GetAVSAssetsList: key is %s", avsAddr))
+		return nil, errorsmod.Wrapf(err, "GetAVSAssetsList: key is %s", avsAddr)
 	}
 	return avsInfo.Info.AssetIDs, nil
 }
@@ -54,7 +55,7 @@ func (k *Keeper) GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, er
 func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return "", errorsmod.Wrap(err, fmt.Sprintf("GetAVSSlashContract: key is %s", avsAddr))
+		return "", errorsmod.Wrapf(err, "GetAVSSlashContract: key is %s", avsAddr)
 	}
 	if avsInfo.Info.SlashAddress == (common.Address{}).String() {
 		return "", nil
@@ -67,7 +68,7 @@ func (k *Keeper) GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, e
 func (k *Keeper) GetAVSMinimumSelfDelegation(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return sdkmath.LegacyZeroDec(), errorsmod.Wrap(err, fmt.Sprintf("GetAVSMinimumSelfDelegation: key is %s", avsAddr))
+		return sdkmath.LegacyZeroDec(), errorsmod.Wrapf(err, "GetAVSMinimumSelfDelegation: key is %s", avsAddr)
 	}
 	// #nosec G115
 	return sdkmath.LegacyNewDec(int64(avsInfo.Info.MinSelfDelegation)), nil
@@ -78,7 +79,7 @@ func (k *Keeper) GetAVSMinimumSelfDelegation(ctx sdk.Context, avsAddr string) (s
 func (k *Keeper) GetAVSUnbondingDuration(ctx sdk.Context, avsAddr string) (uint64, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return 0, errorsmod.Wrap(err, fmt.Sprintf("GetAVSUnbondingDuration: key is %s", avsAddr))
+		return 0, errorsmod.Wrapf(err, "GetAVSUnbondingDuration: key is %s", avsAddr)
 	}
 	return avsInfo.Info.AvsUnbondingPeriod, nil
 }
@@ -171,11 +172,11 @@ func (k Keeper) RegisterAVSWithChainID(
 	// guard against errors
 	ctx, writeFunc := oCtx.CacheContext()
 	// remove the version number and validate
-	params.ChainID = types.ChainIDWithoutRevision(params.ChainID)
+	params.ChainID = utils.ChainIDWithoutRevision(params.ChainID)
 	if len(params.ChainID) == 0 {
 		return false, common.Address{}, errorsmod.Wrap(types.ErrNotNull, "RegisterAVSWithChainID: chainID is null")
 	}
-	avsAddrStr := types.GenerateAVSAddress(params.ChainID)
+	avsAddrStr := utils.GenerateAVSAddress(params.ChainID)
 	avsAddr = common.HexToAddress(avsAddrStr)
 	// check that the AVS is registered
 	if isAVS, _ := k.IsAVS(ctx, avsAddrStr); isAVS {
@@ -266,14 +267,14 @@ func (k *Keeper) GetAllChainIDInfos(ctx sdk.Context) ([]types.ChainIDInfo, error
 func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddress string) (bool, error) {
 	avsInfo, err := k.GetAVSInfo(ctx, avsAddr)
 	if err != nil {
-		return false, errorsmod.Wrap(err, fmt.Sprintf("IsWhitelisted: key is %s", avsAddr))
+		return false, errorsmod.Wrapf(err, "IsWhitelisted: key is %s", avsAddr)
 	}
 	_, err = sdk.AccAddressFromBech32(operatorAddress)
 	if err != nil {
 		return false, errorsmod.Wrap(err, "IsWhitelisted: error occurred when parsing account acc address from Bech32")
 	}
 	// whitelist is disabled for avs of the dogfood type
-	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == types.GenerateAVSAddress(avsInfo.Info.ChainId) {
+	if len(avsInfo.Info.ChainId) != 0 && avsInfo.Info.AvsAddress == utils.GenerateAVSAddress(avsInfo.Info.ChainId) {
 		return true, nil
 	}
 	// Currently avs has no whitelist set and any operator can optin
@@ -281,7 +282,7 @@ func (k *Keeper) IsWhitelisted(ctx sdk.Context, avsAddr, operatorAddress string)
 		return true, nil
 	}
 	if !slices.Contains(avsInfo.Info.WhitelistAddresses, operatorAddress) {
-		return false, errorsmod.Wrap(err, fmt.Sprintf("operator %s not in whitelist", operatorAddress))
+		return false, errorsmod.Wrapf(err, "operator %s not in whitelist", operatorAddress)
 	}
 	return true, nil
 }

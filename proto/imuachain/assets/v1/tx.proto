@@ -5,6 +5,7 @@ import "amino/amino.proto";
 import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
 import "imuachain/assets/v1/params.proto";
 
 option go_package = "github.com/imua-xyz/imuachain/x/assets/types";
@@ -40,8 +41,7 @@ message ClientChainInfo {
   uint32 address_length = 8;
 }
 
-// AssetInfo defines the information for an asset to be used as the staking asset or
-// reward asset.
+// AssetInfo defines the information for an asset to be used as the staking asset.
 message AssetInfo {
   option (gogoproto.equal) = true;
   // name of the asset, like "Tether USD"
@@ -202,11 +202,7 @@ message MsgUpdateParamsResponse {}
 service Msg {
   option (cosmos.msg.v1.service) = true;
   // UpdateParams updates the parameters of the assets module.
-  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
-  // // RegisterClientChain registers the client chain
-  // rpc RegisterClientChain(RegisterClientChainReq) returns (RegisterClientChainResponse) {
-  //   option (google.api.http).post = "/imuachain/assets/v1/tx/RegisterClientChain";
-  // }
-  // RegisterAsset registers the asset on the client chain
-  // rpc RegisterAsset(RegisterAssetReq) returns (RegisterAssetResponse);
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse){
+    option (google.api.http).post = "/imuachain/assets/v1/tx/MsgUpdateParams";
+  }
 }

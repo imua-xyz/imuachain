@@ -3,6 +3,8 @@ package keeper
 import (
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -24,7 +26,7 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 	if err != nil {
 		return assetstype.ErrInvalidOperatorAddr
 	}
-	slashInfoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
+	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
 	if store.Has(slashInfoKey) {
 		return errorsmod.Wrapf(operatortypes.ErrSlashInfoExist, "slashInfoKey:%s", slashInfoKey)
 	}
@@ -56,7 +58,7 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 // Additionally, it might be used when implementing the veto function
 func (k *Keeper) GetOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr, slashID string) (changeState *operatortypes.OperatorSlashInfo, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorSlashInfo)
-	slashInfoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
+	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
 	value := store.Get(slashInfoKey)
 	if value == nil {
 		return nil, errorsmod.Wrapf(operatortypes.ErrNoKeyInTheStore, "GetOperatorSlashInfo: key is %s", slashInfoKey)
@@ -69,7 +71,7 @@ func (k *Keeper) GetOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr, sl
 // AllOperatorSlashInfo return all slash information for the specified operator and AVS
 func (k *Keeper) AllOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr string) (map[string]*operatortypes.OperatorSlashInfo, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorSlashInfo)
-	prefix := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
+	prefix := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
 
 	ret := make(map[string]*operatortypes.OperatorSlashInfo, 0)
 	iterator := sdk.KVStorePrefixIterator(store, prefix)
@@ -77,7 +79,7 @@ func (k *Keeper) AllOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr str
 	for ; iterator.Valid(); iterator.Next() {
 		var slashInfo operatortypes.OperatorSlashInfo
 		k.cdc.MustUnmarshal(iterator.Value(), &slashInfo)
-		keys, err := assetstype.ParseJoinedStoreKey(iterator.Key(), 3)
+		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 3)
 		if err != nil {
 			return nil, err
 		}

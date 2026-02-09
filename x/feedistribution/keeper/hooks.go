@@ -32,7 +32,7 @@ func (wrapper EpochsHooksWrapper) BeforeEpochStart(_ sdk.Context, _ string, _ in
 // AfterEpochEnd mints and allocates coins at the end of each epoch end
 func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier string, epochNumber int64) {
 	// distribute the rewards to operators
-	err := wrapper.keeper.AllocateRewardsByEpoch(ctx, epochIdentifier, epochNumber)
+	avsList, err := wrapper.keeper.AllocateRewardsByEpoch(ctx, epochIdentifier, epochNumber)
 	if err != nil {
 		ctx.Logger().Error("failed to allocate the rewards by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 		// Do not return, as the reward distribution for stakers should not be affected
@@ -41,11 +41,20 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 		// distributed correctly.
 	}
 	// handle delegations whose stake has changed.
-	err = wrapper.keeper.HandleChangedDelegations(ctx, epochIdentifier)
+	stakersList, err := wrapper.keeper.HandleChangedDelegations(ctx, epochIdentifier)
 	if err != nil {
 		ctx.Logger().Error("failed to handle the delegations with changed stakes by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
 		return
 	}
+
+	// redelegate the claimed rewards of all related stakers and AVSs
+	err = wrapper.keeper.BatchRedelegateClaimedRewards(ctx, epochIdentifier, avsList, stakersList)
+	if err != nil {
+		ctx.Logger().Error("failed to batch redelegate claimed rewards by epoch", "err", err, "EpochIdentifier", epochIdentifier, "epochNumber", epochNumber)
+		// The delegation change information still needs to be deleted
+		// even if redelegating the claimed rewards fails. Do not return here.
+	}
+
 	// clear the delegation change information
 	// this function will be called by the epoch hook, so using cache context
 	// to ensure the state atomicity.
@@ -134,10 +143,10 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 // AfterSlash is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, slashProportion sdk.Dec, _ []string,
-	slashAssetsPool []operatortypes.SlashFromAssetsPool,
+	slashAssetsPool []operatortypes.SlashAssetAmount, slashUnclaimedRewards []operatortypes.SlashFromUnclaimedRewards,
 ) {
 	cc, writeFunc := ctx.CacheContext()
-	err := h.keeper.HandleOperatorSlashEvent(cc, operator, slashProportion, slashAssetsPool)
+	err := h.keeper.HandleOperatorSlashEvent(cc, operator, slashProportion, slashAssetsPool, slashUnclaimedRewards)
 	if err != nil {
 		ctx.Logger().Error("AfterSlash: failed to handle the slash event", "err", err,
 			"operator", operator, "slashProportion", slashProportion, "slashAssetsPool", slashAssetsPool)

@@ -93,7 +93,7 @@ func (k Keeper) CalculateShare(ctx sdk.Context, operator sdk.AccAddress, assetID
 // valid based on upon the converted shares. If the amount is valid, the total
 // amount of respective shares is returned, otherwise an error is returned.
 func (k Keeper) ValidateUndelegationAmount(
-	ctx sdk.Context, operator sdk.AccAddress, stakerID, assetID string, amount sdkmath.Int,
+	ctx sdk.Context, rewardAsset bool, operator sdk.AccAddress, stakerID, assetID string, amount sdkmath.Int,
 ) (share sdkmath.LegacyDec, err error) {
 	if !amount.IsPositive() {
 		return share, delegationtypes.ErrAmountIsNotPositive
@@ -118,7 +118,13 @@ func (k Keeper) ValidateUndelegationAmount(
 		return share, delegationtypes.ErrInsufficientShares.Wrap("both the total amount and the share are zero, so there isn’t any asset that can be undelegated.")
 	}
 
-	if share.GT(delegationInfo.UndelegatableShare) {
+	var undelegatableShare sdkmath.LegacyDec
+	if rewardAsset {
+		undelegatableShare = delegationInfo.RewardUndelegatableShare
+	} else {
+		undelegatableShare = delegationInfo.UndelegatableShare
+	}
+	if share.GT(undelegatableShare) {
 		return share, delegationtypes.ErrInsufficientShares
 	}
 
@@ -130,8 +136,8 @@ func (k Keeper) ValidateUndelegationAmount(
 		return share, err
 	}
 
-	if delegationInfo.UndelegatableShare.Sub(share).LT(tolerance) {
-		share = delegationInfo.UndelegatableShare
+	if undelegatableShare.Sub(share).LT(tolerance) {
+		share = undelegatableShare
 	}
 
 	return share, nil
@@ -219,7 +225,7 @@ func (k Keeper) RemoveShareFromOperator(
 // it will be considered a slash operation in imua when the asset amount is reduced
 // by the client chain slash.
 func (k Keeper) RemoveShare(
-	ctx sdk.Context, isUndelegation bool, operator sdk.AccAddress, stakerID, assetID string, share sdkmath.LegacyDec,
+	ctx sdk.Context, isUndelegation, rewardAsset bool, operator sdk.AccAddress, stakerID, assetID string, share sdkmath.LegacyDec,
 ) (removeToken sdkmath.Int, err error) {
 	if !share.IsPositive() {
 		return removeToken, delegationtypes.ErrAmountIsNotPositive
@@ -231,23 +237,28 @@ func (k Keeper) RemoveShare(
 	}
 
 	// update delegation state
-	deltaAmount := &delegationtypes.DeltaDelegationAmounts{
-		UndelegatableShare: share.Neg(),
-	}
-	if isUndelegation {
-		deltaAmount.WaitUndelegationAmount = removeToken
-		// don't update staker asset info for imua-native-token
-		if assetID != assetstype.ImuachainAssetID {
-			// todo: TotalDepositAmount might be influenced by slash and precision loss,
-			// consider removing it, it can be recalculated from the share for RPC query.
-			_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, assetstype.DeltaStakerSingleAsset{
-				PendingUndelegationAmount: removeToken,
-			})
-			if err != nil {
-				return removeToken, err
+	deltaAmount := &delegationtypes.DeltaDelegationAmounts{}
+	if !rewardAsset {
+		deltaAmount.UndelegatableShare = share.Neg()
+		if isUndelegation {
+			deltaAmount.PendingUndelegationAmount = removeToken
+			// don't update staker asset info for imua-native-token
+			if assetID != assetstype.ImuachainAssetID {
+				// todo: TotalDepositAmount might be influenced by slash and precision loss,
+				// consider removing it, it can be recalculated from the share for RPC query.
+				_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, assetID, assetstype.DeltaStakerSingleAsset{
+					PendingUndelegationAmount: removeToken,
+				})
+				if err != nil {
+					return removeToken, err
+				}
 			}
 		}
+	} else {
+		deltaAmount.RewardUndelegatableShare = share.Neg()
+		deltaAmount.RewardPendingUndelegationAmount = removeToken
 	}
+
 	shareIsZero, _, err := k.UpdateDelegationState(ctx, stakerID, assetID, operator.String(), deltaAmount)
 	if err != nil {
 		return removeToken, err

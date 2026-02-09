@@ -20,7 +20,8 @@ import (
 )
 
 const (
-	FlagClientChainData = "client-chain-data"
+	FlagClientChainData           = "client-chain-data"
+	FlagDisableRewardsCompounding = "disable-rewards-compounding"
 )
 
 // NewTxCmd returns a root CLI command handler for deposit commands
@@ -42,6 +43,7 @@ func NewTxCmd() *cobra.Command {
 		// operator vs dogfood vs appchain coordinator
 		CmdSetConsKey(),
 		CmdEditOperator(),
+		CmdUpdateRewardCompoundingFlag(),
 		CmdUpdateCommissionRate(),
 		CmdUpdateParams(),
 	)
@@ -99,6 +101,7 @@ func CmdRegisterOperator() *cobra.Command {
 			"Format: <client-chain-id>:<client-chain-earnings-addr>",
 	)
 	flagSetDescriptionCreate(f)
+	f.Bool(FlagDisableRewardsCompounding, false, "indicate whether to disable the compounding of unclaimed rewards")
 	f.AddFlagSet(stakingcli.FlagSetCommissionCreate())
 
 	// required flags
@@ -169,6 +172,9 @@ func newBuildRegisterOperatorMsg(
 		return nil, err
 	}
 	msg.Info.Commission = commission
+
+	disableRewardsCompounding, _ := fs.GetBool(FlagDisableRewardsCompounding)
+	msg.Info.DisableCompoundRewards = disableRewardsCompounding
 	return msg, nil
 }
 
@@ -300,6 +306,32 @@ func CmdEditOperator() *cobra.Command {
 	f := cmd.Flags()
 	flagSetDescriptionEdit(f)
 
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdUpdateRewardCompoundingFlag returns a CLI command handler for creating a UpdateRewardCompoundingFlagReq transaction.
+func CmdUpdateRewardCompoundingFlag() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-reward-compounding-flag <disable-rewards-compounding>",
+		Short: "update the reward compounding flag of an operator",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			disableRewardsCompounding, err := strconv.ParseBool(args[0])
+			if err != nil {
+				return err
+			}
+			msg := &types.UpdateRewardCompoundingFlagReq{
+				Address:                clientCtx.GetFromAddress().String(),
+				DisableCompoundRewards: disableRewardsCompounding,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }

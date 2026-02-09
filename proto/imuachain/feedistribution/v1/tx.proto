@@ -18,7 +18,9 @@ service Msg {
 
   // UpdateParams defines a (governance) operation for updating the module
   // parameters. The authority defaults to the x/gov module account.
-  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse){
+    option (google.api.http).post = "/imuachain/feedistribution/v1/tx/MsgUpdateParams";
+  }
 
   // WithdrawDogfoodCommission withdraws the IMUA commission from dogfood.
   rpc WithdrawDogfoodCommission(MsgWithdrawDogfoodCommission) returns (MsgWithdrawDogfoodCommissionResponse){
@@ -27,6 +29,16 @@ service Msg {
   // ClaimAndWithdrawDogfoodReward claim and withdraws the IMUA reward from dogfood.
   rpc ClaimAndWithdrawDogfoodReward(MsgClaimAndWithdrawDogfoodReward) returns (MsgClaimAndWithdrawDogfoodRewardResponse){
     option (google.api.http).post = "/imuachain/feedistribution/v1/tx/claim_and_withdraw_dogfood_reward";
+  }
+  // UpdateStakerRewardParams sets or updates reward parameters for a staker on the IMUA chain.
+  // For the stakers on the other client chains, they can set the reward parameters through the
+  // precompile interface.
+  rpc UpdateStakerRewardParams(MsgUpdateStakerRewardParams) returns (MsgUpdateStakerRewardParamsResponse){
+    option (google.api.http).post = "/imuachain/feedistribution/v1/tx/update_staker_reward_params";
+  }
+  // UndelegateReward undelegates the reward of a staker.
+  rpc UndelegateReward(MsgUndelegateReward) returns (MsgUndelegateRewardResponse){
+    option (google.api.http).post = "/imuachain/feedistribution/v1/tx/undelegate_reward";
   }
 }
 
@@ -60,8 +72,8 @@ message MsgWithdrawDogfoodCommission {
 message MsgWithdrawDogfoodCommissionResponse {
   // amount is the withdrawn commission
   repeated cosmos.base.v1beta1.Coin amount = 1 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
@@ -88,8 +100,50 @@ message MsgClaimAndWithdrawDogfoodRewardResponse {
   repeated CommonAVSRewardData claimed_rewards = 1 [(gogoproto.nullable) = false];
   // withdraw_amount is the withdrawn reward
   repeated cosmos.base.v1beta1.Coin withdrawn_amount = 2 [
-    (gogoproto.nullable)     = false,
-    (amino.dont_omitempty)   = true,
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 }
+
+// MsgUpdateStakerRewardParams is used to set or udpate the reward parameters of the staker
+message MsgUpdateStakerRewardParams {
+  option (cosmos.msg.v1.signer) = "from_address";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // from_address is the address of the staker on IMUA chain (sdk.AccAddress).
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // reward_params is the reward parameters to be set
+  StakerRewardParams reward_params = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateStakerRewardParamsResponse defines the response structure for executing a
+// MsgUpdateStakerRewardParams message.
+message MsgUpdateStakerRewardParamsResponse {}
+
+
+// MsgUndelegateReward is the Msg of reward undelegation.
+message MsgUndelegateReward {
+  option (cosmos.msg.v1.signer) = "from_address";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // from_address is the address of the staker on IMUA chain (sdk.AccAddress).
+  string from_address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // asset_id is the identity of the reward asset.
+  string asset_id = 2;
+  // operator_addr is the operator address.
+  string operator_addr = 3 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // amount is the expected undelegation amount.
+  string amount = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // instant unbonding indicator
+  bool instant_unbonding = 5;
+}
+
+// MsgUndelegateRewardResponse is the response to a reward undelegation request.
+message MsgUndelegateRewardResponse {}

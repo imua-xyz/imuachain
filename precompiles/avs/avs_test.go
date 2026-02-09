@@ -11,7 +11,6 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 
 	"github.com/cometbft/cometbft/libs/rand"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -764,19 +763,14 @@ func (suite *AVSManagerPrecompileSuite) TestRunRegTaskInfo() {
 		// opt in
 		err = suite.App.OperatorKeeper.OptIn(suite.Ctx, suite.operatorAddress, suite.avsAddress)
 		suite.NoError(err)
-		usdtPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
-		suite.NoError(err)
-		operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdtPrice.Value, suite.assetDecimal, usdtPrice.Decimal)
+
 		// deposit and delegate another asset to the operator
 		suite.NoError(err)
 		suite.prepareDeposit(usdcAddress, sdkmath.NewInt(1e8))
-		usdcPrice, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
-		suite.NoError(err)
 		delegatedAmount := sdkmath.NewIntWithDecimal(8, 7)
 		suite.prepareDelegation(true, usdcAddress, delegatedAmount)
 
 		// updating the new voting power
-		operatorKeeper.CalculateUSDValue(suite.delegationAmount, usdcPrice.Value, suite.assetDecimal, usdcPrice.Decimal)
 		suite.CommitAfter(time.Hour*3 + time.Nanosecond)
 	}
 	commonMalleate := func() (common.Address, []byte) {

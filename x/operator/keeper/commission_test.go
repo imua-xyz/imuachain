@@ -25,7 +25,7 @@ func TestCommissionTestSuite(t *testing.T) {
 func (suite *CommissionTestSuite) TestCommissionRateTimeBound() {
 	suite.DoSetupTest()
 	// register operator
-	suite.RegisterOperator(suite.AccAddress.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.OneDec(), sdk.OneDec()))
+	suite.RegisterOperator(suite.AccAddress.String(), stakingtypes.NewCommission(sdk.ZeroDec(), sdk.OneDec(), sdk.OneDec()), true)
 	suite.Commit()
 	// change to 6% immediately
 	targetCommissionRate := sdk.NewDecWithPrec(6, 2)
@@ -72,7 +72,7 @@ func (suite *CommissionTestSuite) TestCommissionRateChange() {
 			MaxRate:       sdk.NewDecWithPrec(75, 2),
 			MaxChangeRate: sdk.NewDecWithPrec(5, 2),
 		},
-	})
+	}, true)
 	duration := suite.App.OperatorKeeper.GetMinCommissionUpdateInterval(suite.Ctx)
 	// from 0 we can go to 5% but not higher
 	// let's try 5.1%

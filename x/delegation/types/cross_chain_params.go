@@ -4,6 +4,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
+	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 type DelegationOrUndelegationParams struct {
@@ -17,6 +18,13 @@ type DelegationOrUndelegationParams struct {
 
 	// indicator for instant unbonding, default is false.
 	InstantUnbonding bool
+	// indicates whether it's a delegation/undelegation regarding reward.
+	RewardAsset           bool
+	RewardAssetID         string
+	RewardStakerID        string
+	ReduceDelegationShare func(ctx sdk.Context, stakerID, assetID string,
+		operatorAccAddr sdk.AccAddress, instantSlashRatio sdk.Dec, amount sdkmath.Int, preOperatorAssetState assetstype.OperatorAssetInfo) ([]UndelegationAmountPerAVS, sdkmath.Int, error)
+	RewardUndelegations []UndelegationAmountPerAVS
 }
 
 func NewDelegationOrUndelegationParams(

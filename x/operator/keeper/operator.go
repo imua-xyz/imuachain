@@ -6,6 +6,8 @@ import (
 	"math/bits"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	epochtypes "github.com/imua-xyz/imuachain/x/epochs/types"
 
 	"golang.org/x/xerrors"
@@ -88,6 +90,7 @@ func (k *Keeper) RegisterOperator(
 			sdk.NewAttribute(operatortypes.AttributeKeyMaxCommissionRate, info.Commission.MaxRate.String()),
 			sdk.NewAttribute(operatortypes.AttributeKeyMaxChangeRate, info.Commission.MaxChangeRate.String()),
 			sdk.NewAttribute(operatortypes.AttributeKeyCommissionUpdateTime, sdk.FormatTimeString(info.Commission.UpdateTime)),
+			sdk.NewAttribute(operatortypes.AttributeKeyDisableRewardCompounding, fmt.Sprintf("%t", info.DisableCompoundRewards)),
 			// TODO: add ClientChainEarningsAddr.EarningInfoList to the event
 		),
 	)
@@ -133,6 +136,29 @@ func (k *Keeper) EditOperator(
 			sdk.NewAttribute(operatortypes.AttributeKeyOperatorWebsite, info.Description.Website),
 			sdk.NewAttribute(operatortypes.AttributeKeyOperatorSecurityContact, info.Description.SecurityContact),
 			sdk.NewAttribute(operatortypes.AttributeKeyOperatorDetails, info.Description.Details),
+		),
+	)
+	return nil
+}
+
+// UpdateRewardCompoundingFlag update the reward compounding flag for an operator
+func (k *Keeper) UpdateRewardCompoundingFlag(
+	ctx sdk.Context, opAccAddr sdk.AccAddress, disableCompoundRewards bool,
+) error {
+	info, err := k.OperatorInfo(ctx, opAccAddr.String())
+	if err != nil {
+		return err
+	}
+	if info.DisableCompoundRewards == disableCompoundRewards {
+		return nil
+	}
+	info.DisableCompoundRewards = disableCompoundRewards
+	k.setOperatorInfo(ctx, opAccAddr, info)
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			operatortypes.EventTypeUpdateRewardCompoundingFlag,
+			sdk.NewAttribute(operatortypes.AttributeKeyOperator, opAccAddr.String()),
+			sdk.NewAttribute(operatortypes.AttributeKeyDisableRewardCompounding, fmt.Sprintf("%t", disableCompoundRewards)),
 		),
 	)
 	return nil
@@ -227,13 +253,21 @@ func (k Keeper) IsOperator(ctx sdk.Context, addr sdk.AccAddress) bool {
 	return store.Has(addr)
 }
 
+func (k Keeper) IsCompoundRewardsDisabled(ctx sdk.Context, addr string) (bool, error) {
+	operatorInfo, err := k.OperatorInfo(ctx, addr)
+	if err != nil {
+		return false, err
+	}
+	return operatorInfo.DisableCompoundRewards, nil
+}
+
 func (k *Keeper) HandleOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string, handleFunc func(info *operatortypes.OptedInfo)) error {
 	opAccAddr, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return errorsmod.Wrap(err, "HandleOptedInfo: error occurred when parse acc address from Bech32")
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
-	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
+	infoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
 	// get info from the store
 	value := store.Get(infoKey)
 	if value == nil {
@@ -268,7 +302,7 @@ func (k *Keeper) SetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string, inf
 	if err != nil {
 		return assetstype.ErrInvalidOperatorAddr
 	}
-	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
+	infoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
 
 	bz := k.cdc.MustMarshal(info)
 	store.Set(infoKey, bz)
@@ -281,7 +315,7 @@ func (k *Keeper) GetOptedInfo(ctx sdk.Context, operatorAddr, avsAddr string) (in
 		return nil, errorsmod.Wrap(err, "GetOptedInfo: error occurred when parse acc address from Bech32")
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorOptedAVSInfo)
-	infoKey := assetstype.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
+	infoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr))
 	value := store.Get(infoKey)
 	if value == nil {
 		return nil, errorsmod.Wrap(operatortypes.ErrNoKeyInTheStore, fmt.Sprintf("GetOptedInfo: operator is %s, avs address is %s", opAccAddr, avsAddr))
@@ -391,7 +425,7 @@ func (k *Keeper) GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) 
 	avsList := make([]string, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
-			keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+			keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 			if err != nil {
 				return false, err
 			}
@@ -441,7 +475,7 @@ func (k *Keeper) isUnbondingRelated(ctx sdk.Context, avsAddr string, optedInfo *
 func (k *Keeper) GetUnbondingRelatedAVS(ctx sdk.Context, operatorAddr string) ([]operatortypes.ImpactfulAVSInfo, error) {
 	avsList := make([]operatortypes.ImpactfulAVSInfo, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		avsAddr := keys[1]
 		if err != nil {
 			return false, err
@@ -575,7 +609,7 @@ func (k Keeper) GetImpactfulEpochsAndAVSsForOperator(ctx sdk.Context, operatorAd
 	epochsList := make([]string, 0)
 	avsList := make([]string, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		avsAddr := keys[1]
 		if err != nil {
 			return false, err
@@ -612,7 +646,7 @@ func (k Keeper) GetImpactfulEpochsAndAVSsForOperator(ctx sdk.Context, operatorAd
 func (k Keeper) IsImpactfulEpochForOperator(ctx sdk.Context, epochIdentifier, operatorAddr string) bool {
 	var isImpactfulEpoch bool
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		if err != nil {
 			return false, err
 		}
@@ -675,7 +709,7 @@ func (k *Keeper) GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([
 	operatorList := make([]string, 0)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
 		if optedInfo.OptedOutHeight == operatortypes.DefaultOptedOutHeight {
-			keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+			keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 			if err != nil {
 				return false, err
 			}
@@ -699,7 +733,7 @@ func (k *Keeper) IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool {
 	var err error
 	avsAddr = strings.ToLower(avsAddr)
 	opFunc := func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error) {
-		keys, err := assetstype.ParseJoinedStoreKey(key, 2)
+		keys, err := utils.ParseJoinedKeyWithCount(key, 2)
 		if err != nil {
 			return false, err
 		}

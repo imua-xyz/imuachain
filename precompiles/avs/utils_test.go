@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
@@ -17,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
-	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	operatorTypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -89,7 +90,7 @@ func (suite *AVSManagerPrecompileSuite) prepareDelegation(isDelegation bool, ass
 	}
 	var err error
 	if isDelegation {
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
 	} else {
 		err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, param)
 	}
@@ -158,7 +159,7 @@ func (suite *AVSManagerPrecompileSuite) TestOptIn() {
 	// check if the related state is correct
 	price, err := suite.App.OperatorKeeper.OracleInterface().GetSpecifiedAssetsPrice(suite.Ctx, suite.assetID)
 	suite.NoError(err)
-	usdValue := operatorKeeper.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
+	usdValue := utils.CalculateUSDValue(suite.delegationAmount, price.Value, suite.assetDecimal, price.Decimal)
 	expectedState := &StateForCheck{
 		OptedInfo: &operatorTypes.OptedInfo{
 			OptedInHeight:  uint64(suite.Ctx.BlockHeight()),

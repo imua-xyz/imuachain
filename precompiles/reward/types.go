@@ -19,6 +19,9 @@ type ClaimRewardArgs struct {
 	StakerAddress   []byte `abi:"stakerAddress"`
 }
 
+// WithdrawRewardArgs corresponds to the WithdrawRewardParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
 type WithdrawRewardArgs struct {
 	DoClaim              bool     `abi:"doClaim"`
 	ClientChainLzID      uint32   `abi:"clientChainLzID"`
@@ -28,12 +31,51 @@ type WithdrawRewardArgs struct {
 	OpAmount             *big.Int `abi:"opAmount"`
 }
 
+// WithdrawRewardArgsWrapper wraps WithdrawRewardArgs to match the ABI parameter name.
+// This allows method.Inputs.Copy() to work correctly with single tuple parameters.
+type WithdrawRewardArgsWrapper struct {
+	Params WithdrawRewardArgs `abi:"params"`
+}
+
+// WithdrawIMUATokenRewardArgs corresponds to the WithdrawIMUATokenRewardParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
 type WithdrawIMUATokenRewardArgs struct {
 	DoClaim         bool     `abi:"doClaim"`
 	ClientChainLzID uint32   `abi:"clientChainLzID"`
 	StakerAddress   []byte   `abi:"stakerAddress"`
 	ReceiptAddress  []byte   `abi:"receiptAddress"`
 	OpAmount        *big.Int `abi:"opAmount"`
+}
+
+// WithdrawIMUATokenRewardArgsWrapper wraps WithdrawIMUATokenRewardArgs to match the ABI parameter name.
+type WithdrawIMUATokenRewardArgsWrapper struct {
+	Params WithdrawIMUATokenRewardArgs `abi:"params"`
+}
+
+type SetStakerRewardParamsArgs struct {
+	ClientChainLzID    uint32 `abi:"clientChainLzID"`
+	StakerAddress      []byte `abi:"stakerAddress"`
+	RedelegateReward   bool   `abi:"redelegateReward"`
+	RedelegateOperator string `abi:"redelegateOperator"`
+}
+
+// UndelegateRewardArgs corresponds to the UndelegateRewardParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
+type UndelegateRewardArgs struct {
+	ClientChainLzID      uint32   `abi:"clientChainLzID"`
+	RewardAssetChainLzID uint32   `abi:"rewardAssetChainLzID"`
+	AssetAddress         []byte   `abi:"assetAddress"`
+	StakerAddress        []byte   `abi:"stakerAddress"`
+	OperatorAddr         string   `abi:"operatorAddr"`
+	OpAmount             *big.Int `abi:"opAmount"`
+	InstantUnbond        bool     `abi:"instantUnbond"`
+}
+
+// UndelegateRewardArgsWrapper wraps UndelegateRewardArgs to match the ABI parameter name.
+type UndelegateRewardArgsWrapper struct {
+	Params UndelegateRewardArgs `abi:"params"`
 }
 
 type WithdrawCommissionArgs struct {
@@ -49,13 +91,23 @@ type WithdrawIMUATokenCommissionArgs struct {
 	OpAmount        *big.Int `abi:"opAmount"`
 }
 
+// RegisterRewardTokenArgs corresponds to the RegisterRewardTokenParams struct in Solidity.
+// When Solidity encodes a struct parameter, it encodes it as a tuple, which can be
+// unpacked directly into this Go struct using method.Inputs.Copy().
 type RegisterRewardTokenArgs struct {
-	ClientChainID uint32 `abi:"clientChainID"`
-	Token         []byte `abi:"token"`
-	Decimals      uint8  `abi:"decimals"`
-	Name          string `abi:"name"`
-	Symbol        string `abi:"symbol"`
-	MetaData      string `abi:"metaData"`
+	ClientChainID        uint32 `abi:"clientChainID"`
+	Token                []byte `abi:"token"`
+	Decimals             uint8  `abi:"decimals"`
+	Name                 string `abi:"name"`
+	Symbol               string `abi:"symbol"`
+	MetaData             string `abi:"metaData"`
+	Denomination         string `abi:"denomination"`
+	DenominationExponent uint8  `abi:"denominationExponent"`
+}
+
+// RegisterRewardTokenArgsWrapper wraps RegisterRewardTokenArgs to match the ABI parameter name.
+type RegisterRewardTokenArgsWrapper struct {
+	Params RegisterRewardTokenArgs `abi:"params"`
 }
 
 type UpdateRewardTokenArgs struct {
@@ -65,8 +117,8 @@ type UpdateRewardTokenArgs struct {
 }
 
 type ABIRewardCoin struct {
-	Symbol string   `abi:"symbol"`
-	Amount *big.Int `abi:"amount"`
+	Denomination string   `abi:"denomination"`
+	Amount       *big.Int `abi:"amount"`
 }
 
 type ABIOperatorRewardProportion struct {
@@ -78,6 +130,11 @@ type ABIOperatorRewardProportion struct {
 type AVSRewardDistributionInfoArgs struct {
 	RewardCoins               []ABIRewardCoin               `abi:"rewardCoins"`
 	OperatorRewardProportions []ABIOperatorRewardProportion `abi:"operatorRewardProportions"`
+}
+
+// AVSRewardDistributionInfoArgsWrapper wraps AVSRewardDistributionInfoArgs to match the ABI parameter name.
+type AVSRewardDistributionInfoArgsWrapper struct {
+	RewardDistribution AVSRewardDistributionInfoArgs `abi:"rewardDistribution"`
 }
 
 type SetAVSEpochRewardArgs struct {
@@ -116,22 +173,22 @@ func (ar ABIRewardCoins) ToProtoStruct(ctx sdk.Context, avsAddr string, k feedis
 			return fmt.Errorf("ABIRewardCoins.ToProtoStruct: invalid amount:%v", rewardCoin.Amount)
 		}
 		// get the reward asset decimal
-		_, rewardAssetInfo, err := k.GetAVSRewardAssetBySymbol(ctx, avsAddr, rewardCoin.Symbol)
+		_, rewardAsset, err := k.GetAVSRewardAssetByDenomination(ctx, avsAddr, rewardCoin.Denomination)
 		if err != nil {
 			return err
 		}
-		amountDecimal := feedistributiontypes.ScaleIntByDecimals(sdkmath.NewIntFromBigInt(rewardCoin.Amount), rewardAssetInfo.AssetBasicInfo.Decimals)
+		amountDecimal := feedistributiontypes.ScaleIntByDecimals(sdkmath.NewIntFromBigInt(rewardCoin.Amount), rewardAsset.RewardAssetInfo.DenominationExponent)
 		if amountDecimal.IsNil() || !amountDecimal.IsPositive() {
 			return fmt.Errorf("ABIRewardCoins.ToProtoStruct: invalid amount after converting to devimal:%s", amountDecimal)
 		}
 		ret = append(ret, sdk.DecCoin{
-			Denom:  rewardCoin.Symbol,
+			Denom:  rewardCoin.Denomination,
 			Amount: amountDecimal,
 		})
 		return nil
 	}
 	seenFieldValueFunc := func(rewardCoin ABIRewardCoin) (string, struct{}) {
-		return rewardCoin.Symbol, struct{}{}
+		return rewardCoin.Denomination, struct{}{}
 	}
 	_, err := utils.CommonValidation(ar, seenFieldValueFunc, validationFunc)
 	if err != nil {

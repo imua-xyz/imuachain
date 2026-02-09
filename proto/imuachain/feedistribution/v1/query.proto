@@ -23,10 +23,10 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/reward_asset/{avs}/{asset_id}";
   }
-  // AVSRewardAssetBySymbol queries the AVS reward asset by the symbol.
-  rpc AVSRewardAssetBySymbol(QueryAVSRewardAssetBySymbolRequest) returns (QueryAVSRewardAssetBySymbolResponse) {
+  // AVSRewardAssetByDenom queries the AVS reward asset by the denomination.
+  rpc AVSRewardAssetByDenom(QueryAVSRewardAssetByDenomRequest) returns (QueryAVSRewardAssetByDenomResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_asset_by_symbol/{avs}/{symbol}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_asset_by_denom/{avs}/{denomination}";
   }
   // RewardAssetsByAVS queries all reward assets for an AVS.
   rpc RewardAssetsByAVS(AVSRequest) returns (QueryRewardAssetsByAVSResponse) {
@@ -49,10 +49,10 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/avs_reward_distribution/{avs}";
   }
-  // OperatorOutstandingRewards queries the outstanding rewards for an operator.
-  rpc OperatorOutstandingRewards(OperatorAVSRequest) returns (QueryOperatorOutstandingRewardsResponse) {
+  // OperatorUnclaimedRewards queries the unclaimed rewards for an operator.
+  rpc OperatorUnclaimedRewards(OperatorAVSRequest) returns (QueryOperatorUnclaimedRewardsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_outstanding_rewards/{operator}/{avs}";
+    option (google.api.http).get = "/imuachain/feedistribution/v1/operator_unclaimed_rewards/{operator}/{avs}";
   }
   // StakerClaimedRewards queries the claimed rewards for a staker.
   rpc StakerClaimedRewards(QueryStakerClaimedRewardsRequest) returns (QueryStakerClaimedRewardsResponse) {
@@ -109,10 +109,20 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/unclaimed_rewards/{staker_id}";
   }
+  // DelegationUnclaimedRewards queries the unclaimed rewards for a delegation
+  rpc DelegationUnclaimedRewards (QueryDelegationUnclaimedRewardsRequest) returns (QueryDelegationUnclaimedRewardsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/delegation_unclaimed_rewards/{staker_id}/{asset_id}/{operator}";
+  }
   // StakerAllRewards queries all rewards for a staker including claimed and unclaimed rewards
   rpc StakerAllRewards (QueryStakerAllRewardsRequest) returns (QueryStakerAllRewardsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/feedistribution/v1/all_rewards/{staker_id}";
+  }
+  // StakerRewardParams queries the reward parameters of the staker.
+  rpc StakerRewardParams(QueryStakerRewardParamsRequest) returns (QueryStakerRewardParamsResponse){
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/imuachain/feedistribution/v1/staker_reward_params/{staker_id}";
   }
 }
 
@@ -142,16 +152,16 @@ message QueryAVSRewardAssetResponse{
   AVSRewardAsset avs_reward_asset = 1;
 }
 
-// QueryAVSRewardAssetBySymbolRequest is the request to obtain the specific reward asset for an AVS and symbol.
-message QueryAVSRewardAssetBySymbolRequest {
+// QueryAVSRewardAssetByDenomRequest is the request to obtain the specific reward asset for an AVS and denomination.
+message QueryAVSRewardAssetByDenomRequest {
   // avs address
   string avs = 1;
-  // symbol is reward asset symbol
-  string symbol = 2;
+  // denomination is reward asset denomination
+  string denomination = 2;
 }
 
-// QueryAVSRewardAssetBySymbolResponse is the response to obtain the specific reward asset for an AVS and symbol.
-message QueryAVSRewardAssetBySymbolResponse{
+// QueryAVSRewardAssetByDenomResponse is the response to obtain the specific reward asset for an AVS and denomination.
+message QueryAVSRewardAssetByDenomResponse{
   // avs_reward_asset is the reward asset returned for the input avs
   AVSRewardAsset avs_reward_asset = 1;
 }
@@ -316,7 +326,7 @@ message QueryOperatorCurrentRewardsResponse{
 }
 
 // OperatorAVSRequest is a generic request that includes both operator and AVS addresses.
-// used for QueryOperatorOutstandingRewards and QueryOperatorAccumulatedCommission
+// used for OperatorUnclaimedRewards and OperatorCommission
 message OperatorAVSRequest {
   // operator address
   string operator = 1;
@@ -324,10 +334,10 @@ message OperatorAVSRequest {
   string avs = 2;
 }
 
-// QueryOperatorOutstandingRewardsResponse is the response to obtain the operator outstanding rewards
-message QueryOperatorOutstandingRewardsResponse{
-  // operator_outstanding_rewards is the outstanding rewards returned for an operator
-  OperatorOutstandingRewards operator_outstanding_rewards = 1;
+// QueryOperatorUnclaimedRewardsResponse is the response to obtain the operator unclaimed rewards
+message QueryOperatorUnclaimedRewardsResponse{
+  // operator_unclaimed_rewards is the unclaimed rewards returned for an operator
+  OperatorUnclaimedRewards operator_unclaimed_rewards = 1;
 }
 
 // QueryOperatorCommissionResponse is the response to obtain the operator commission
@@ -391,9 +401,34 @@ message QueryStakerUnclaimedRewardsRequest {
 
 // QueryStakerUnclaimedRewardsResponse is the response to obtain the staker unclaimed rewards.
 message QueryStakerUnclaimedRewardsResponse {
-  // unclaimed rewards for all AVSs
+  // rewards is the unclaimed rewards from staking assets for all AVSs
   repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
+  // compounding_rewards is the unclaimed rewards from rewards compounding for all AVSs
+  repeated CommonAVSRewardData compounding_rewards = 2 [(gogoproto.nullable) = false];
 }
+
+// QueryDelegationUnclaimedRewardsRequest is the request to obtain the unclaimed rewards
+// for specific delegation.
+message QueryDelegationUnclaimedRewardsRequest {
+  // staker id
+  string staker_id = 1;
+  // asset id
+  string asset_id = 2;
+  // operator address
+  string operator = 3;
+}
+
+// QueryDelegationUnclaimedRewardsResponse is the response to obtain the unclaimed rewards
+// for specific delegation.
+message QueryDelegationUnclaimedRewardsResponse {
+  // rewards is the unclaimed rewards from staking assets for specific delegation
+  // the rewards might come from multiple AVSs.
+  repeated CommonAVSRewardData rewards = 1 [(gogoproto.nullable) = false];
+  // compounding_rewards is the unclaimed rewards from rewards compounding for specific delegation
+  // the compounding rewards might come from multiple AVSs. 
+  repeated CommonAVSRewardData compounding_rewards = 2 [(gogoproto.nullable) = false];
+}
+
 
 // QueryStakerAllRewardsRequest is the request to obtain the staker's aggregated rewards
 // (outstanding, withdrawn, unclaimed) across AVSs.
@@ -432,8 +467,23 @@ message StakerRewardsPerAVS {
   // withdrawn_rewards represents rewards that have been withdrawn.
   repeated RewardInfo withdrawn_rewards = 3 [(gogoproto.nullable) = false];
 
+  // historical_total_rewards represents the total historical rewards that have been claimed.
+  repeated RewardInfo historical_total_rewards = 4 [(gogoproto.nullable) = false];
+
+  // delegation_rewards represents rewards that have been re-delegated.
+  repeated RewardInfo delegation_rewards = 5 [(gogoproto.nullable) = false];
+
+  // pending_undelegation_rewards represents the pending undelegation rewards.
+  repeated RewardInfo pending_undelegation_rewards = 6 [(gogoproto.nullable) = false];
+
+  // withdrawable_rewards represents the withdrawable rewards from the completed rewards undelegation.
+  repeated RewardInfo withdrawable_rewards = 7 [(gogoproto.nullable) = false];
+
   // unclaimed_rewards represents rewards that have not yet been accounted or distributed.
-  repeated RewardInfo unclaimed_rewards = 4 [(gogoproto.nullable) = false];
+  repeated RewardInfo unclaimed_rewards = 8 [(gogoproto.nullable) = false];
+
+  // unclaimed_compounding_rewards represents the compounding rewards that have not yet been accounted or distributed.
+  repeated RewardInfo unclaimed_compounding_rewards = 9 [(gogoproto.nullable) = false];
 }
 
 
@@ -441,4 +491,16 @@ message StakerRewardsPerAVS {
 message QueryStakerAllRewardsResponse {
   // rewards is the total rewards for all AVSs
   repeated StakerRewardsPerAVS rewards = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryStakerRewardParamsRequest is the request to obtain the staker reward parameters.
+message QueryStakerRewardParamsRequest {
+  // staker id
+  string staker_id = 1;
+}
+
+// QueryStakerRewardParamsResponse is the response to obtain the staker reward parameters.
+message QueryStakerRewardParamsResponse {
+  // reward_params is the reward parameters.
+  StakerRewardParams reward_params = 1 [(gogoproto.nullable) = false];
 }

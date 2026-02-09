@@ -3,8 +3,6 @@ package types
 import (
 	"strings"
 
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
-
 	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,13 +28,11 @@ const (
 )
 
 var IMUARewardToken = AVSRewardAsset{
-	AssetBasicInfo: assetstypes.AssetInfo{
-		Name:             "Native IM token",
-		Symbol:           utils.BaseDenom,
-		Address:          "0x0000000000000000000000000000000000000000",
-		Decimals:         0,
-		LayerZeroChainID: 0,
-		MetaInfo:         "IMUA native to Imuachain",
+	RewardAssetInfo: AVSRewardAssetInfo{
+		AssetInfo:          assetstypes.IMUAToken.AssetBasicInfo,
+		RewardDenomination: utils.BaseDenom,
+		// denomination exponent should be set to 0 since `utils.BaseDenom` represents the minimum denomination.
+		DenominationExponent: 0,
 	},
 	RewardAssetState: AVSRewardAssetState{
 		RewardPoolBalance:     sdk.ZeroDec(),
@@ -49,7 +45,7 @@ var IMUARewardToken = AVSRewardAsset{
 func DefaultGenesis() *GenesisState {
 	// Use the default chain ID to generate the dogfood address, the current default genesis is used for mainnet.
 	// The AVS address in the genesis file should be updated either manually or via a script when used for testnet.
-	avsAddrStr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(utils.DefaultChainID))
+	avsAddrStr := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(utils.DefaultChainID))
 	return &GenesisState{
 		// this line is used by starport scaffolding # genesis/types/default
 		Params: DefaultParams(),
@@ -93,7 +89,7 @@ func CheckUint64BigEndianHexStr(s string) error {
 }
 
 func CheckJoinedKey(joinedKey string, keyNumber int, keyTypes []KeyTypeForJoinedKey) error {
-	keys, err := assetstypes.ParseJoinedStoreKey([]byte(joinedKey), keyNumber)
+	keys, err := utils.ParseJoinedKeyWithCount([]byte(joinedKey), keyNumber)
 	if err != nil {
 		return xerrors.Errorf("failed to parse the key, err:%s,key:%s", err, joinedKey)
 	}
@@ -153,58 +149,62 @@ func (gs GenesisState) ValidateAVSRewardAssets() error {
 		}
 
 		// check the reward assets list
-		seenFieldValueFunc := func(rewardAssetInfo AVSRewardAsset) (string, struct{}) {
+		seenFieldValueFunc := func(rewardAsset AVSRewardAsset) (string, struct{}) {
 			_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(
-				rewardAssetInfo.AssetBasicInfo.LayerZeroChainID,
-				"", rewardAssetInfo.AssetBasicInfo.Address,
+				rewardAsset.RewardAssetInfo.LayerZeroChainID,
+				"", rewardAsset.RewardAssetInfo.Address,
 			)
 			return assetID, struct{}{}
 		}
-		validationFunc := func(_ int, rewardAssetInfo AVSRewardAsset) error {
-			address := rewardAssetInfo.AssetBasicInfo.Address
+		validationFunc := func(_ int, rewardAsset AVSRewardAsset) error {
+			address := rewardAsset.RewardAssetInfo.Address
 			if strings.ToLower(address) != address {
 				return ErrInvalidGenesisData.Wrapf(
-					"ValidateAVSRewardAssets: contains uppercase characters for reward token %s, address: %s,avsAddr:%s", rewardAssetInfo.AssetBasicInfo.Name, rewardAssetInfo.AssetBasicInfo.Address, info.Avs,
+					"ValidateAVSRewardAssets: contains uppercase characters for reward token %s, address: %s,avsAddr:%s", rewardAsset.RewardAssetInfo.Name, rewardAsset.RewardAssetInfo.Address, info.Avs,
 				)
 			}
 			// check the decimal
-			if rewardAssetInfo.AssetBasicInfo.Decimals > assetstypes.MaxDecimal {
-				return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAssetInfo.AssetBasicInfo.Decimals, assetstypes.MaxDecimal)
+			if rewardAsset.RewardAssetInfo.Decimals > assetstypes.MaxDecimal {
+				return ErrInvalidGenesisData.Wrapf("the decimal is greater than the MaxDecimal,decimal:%v,MaxDecimal:%v", rewardAsset.RewardAssetInfo.Decimals, assetstypes.MaxDecimal)
 			}
-			// check the symbol
-			err := sdk.ValidateDenom(rewardAssetInfo.AssetBasicInfo.Symbol)
+			// check the denomination exponent
+			if rewardAsset.RewardAssetInfo.DenominationExponent > assetstypes.MaxDecimal {
+				return ErrInvalidGenesisData.Wrapf("the denomination exponent is greater than the MaxDecimal,denominationExponent:%v,MaxDecimal:%v", rewardAsset.RewardAssetInfo.DenominationExponent, assetstypes.MaxDecimal)
+			}
+			// check the denomination
+			err := ValidateRewardAssetDenomination(rewardAsset.RewardAssetInfo.RewardDenomination)
 			if err != nil {
-				return ErrInvalidGenesisData.Wrapf("symbol should be a valid denomination,symbol:%s,err:%s", rewardAssetInfo.AssetBasicInfo.Symbol, err)
+				return ErrInvalidGenesisData.Wrapf("invalid denomination:%s,err:%s", rewardAsset.RewardAssetInfo.RewardDenomination, err)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNil() ||
-				rewardAssetInfo.RewardAssetState.RewardPoolBalance.IsNegative() {
+			if rewardAsset.RewardAssetState.RewardPoolBalance.IsNil() ||
+				rewardAsset.RewardAssetState.RewardPoolBalance.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: nil or negative reward pool balance ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardPoolTotal.IsNil() ||
-				rewardAssetInfo.RewardAssetState.RewardPoolTotal.IsNegative() {
+			if rewardAsset.RewardAssetState.RewardPoolTotal.IsNil() ||
+				rewardAsset.RewardAssetState.RewardPoolTotal.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: nil or negative reward pool total amount ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardPoolBalance.GT(rewardAssetInfo.RewardAssetState.RewardPoolTotal) {
+			if rewardAsset.RewardAssetState.RewardPoolBalance.GT(rewardAsset.RewardAssetState.RewardPoolTotal) {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: reward pool balance is great than the reward pool total amount ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
-			if rewardAssetInfo.RewardAssetState.RewardAllocationTotal.IsNil() ||
-				rewardAssetInfo.RewardAssetState.RewardAllocationTotal.IsNegative() {
+			if rewardAsset.RewardAssetState.RewardAllocationTotal.IsNil() ||
+				rewardAsset.RewardAssetState.RewardAllocationTotal.IsNegative() {
 				return errorsmod.Wrapf(
 					ErrInvalidGenesisData,
 					"ValidateAVSRewardAssets: nil or negative reward allocation total amount ,avs:%s,rewardAssetName:%s",
-					info.Avs, rewardAssetInfo.AssetBasicInfo.Name,
+					info.Avs, rewardAsset.RewardAssetInfo.Name,
 				)
 			}
 			return nil
@@ -330,23 +330,27 @@ func (gs GenesisState) ValidateAVSRewardDistributions() error {
 	return nil
 }
 
-func (gs GenesisState) ValidateOperatorOutstandingRewards() error {
-	validationFunc := func(_ int, info KeyAndOperatorOutstandingRewards) error {
+func (gs GenesisState) ValidateOperatorUnclaimedRewards() error {
+	validationFunc := func(_ int, info KeyAndOperatorUnclaimedRewards) error {
 		// check the joined key
 		err := CheckJoinedKey(info.Key, 2, []KeyTypeForJoinedKey{OperatorAddr, AVSAddr})
 		if err != nil {
-			return ErrInvalidGenesisData.Wrapf("ValidateOperatorOutstandingRewards: failed to check the joined key, err:%s", err)
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: failed to check the joined key, err:%s", err)
 		}
-		if !info.OperatorOutstandingRewards.Rewards.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateOperatorOutstandingRewards: invalid outstanding reward for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+		if !info.OperatorUnclaimedRewards.OutstandingRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid outstanding rewards for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
+		}
+		err = CompoundingRewards(info.OperatorUnclaimedRewards.RewardsFromCompounding).Validate()
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateOperatorUnclaimedRewards: invalid compounding rewards for operator, err:%s", err)
 		}
 		return nil
 	}
-	seenFieldValueFunc := func(info KeyAndOperatorOutstandingRewards) (string, struct{}) {
+	seenFieldValueFunc := func(info KeyAndOperatorUnclaimedRewards) (string, struct{}) {
 		return info.Key, struct{}{}
 	}
-	_, err := utils.CommonValidation(gs.AllOperatorOutstandingRewards, seenFieldValueFunc, validationFunc)
+	_, err := utils.CommonValidation(gs.AllOperatorUnclaimedRewards, seenFieldValueFunc, validationFunc)
 	if err != nil {
 		return err
 	}
@@ -567,19 +571,50 @@ func (gs GenesisState) ValidateOperatorSlashEvents() error {
 	return nil
 }
 
-func (gs GenesisState) ValidateClaimedOutstandingRewards() error {
+func (gs GenesisState) ValidateStakerClaimedRewards() error {
 	validationFunc := func(_ int, info KeyAndStakerClaimedRewards) error {
 		// check the joined key
 		err := CheckJoinedKey(info.Key, 2, []KeyTypeForJoinedKey{StakerID, AVSAddr})
 		if err != nil {
-			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: failed to check the joined key, err:%s", err)
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: failed to check the joined key, err:%s", err)
 		}
 		if !info.StakerClaimedRewards.OutstandingRewards.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: invalid outstanding reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid outstanding reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
 		if !info.StakerClaimedRewards.WithdrawnRewards.IsValid() {
-			return ErrInvalidGenesisData.Wrapf("ValidateClaimedOutstandingRewards: invalid withdrawn reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid withdrawn reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		if !info.StakerClaimedRewards.HistoricalTotalRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid historical reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+
+		validationFunc := func(_ int, info RewardsDelegationShare) error {
+			if !info.Shares.IsValid() {
+				return ErrInvalidGenesisData.Wrapf("invalid reward delegation share for operator, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. operator:%s", info.OperatorAddr)
+			}
+			return nil
+		}
+		seenFieldValueFunc := func(info RewardsDelegationShare) (string, struct{}) {
+			return info.OperatorAddr, struct{}{}
+		}
+		_, err = utils.CommonValidation(info.StakerClaimedRewards.DelegationRewardsShares, seenFieldValueFunc, validationFunc)
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: err:%s,key:%s", err, info.Key)
+		}
+
+		if !info.StakerClaimedRewards.PendingUndelegationRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid pending undelegation reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		if !info.StakerClaimedRewards.PendingSlashedRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid pending slashed reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
+				info.Key)
+		}
+		if !info.StakerClaimedRewards.WithdrawableRewards.IsValid() {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerClaimedRewards: invalid withdrawable reward for staker, DecCoins are unsorted, contain negative amounts, or have duplicate reward tokens. key:%s",
 				info.Key)
 		}
 		return nil
@@ -588,6 +623,30 @@ func (gs GenesisState) ValidateClaimedOutstandingRewards() error {
 		return info.Key, struct{}{}
 	}
 	_, err := utils.CommonValidation(gs.AllStakerClaimedRewards, seenFieldValueFunc, validationFunc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gs GenesisState) ValidateStakerRewardParams() error {
+	validationFunc := func(_ int, info KeyAndStakerRewardParams) error {
+		_, _, err := assetstypes.ValidateID(info.Key, true, false)
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerRewardParams: invalid stakerID:%s",
+				info.Key)
+		}
+		err = info.StakerRewardParams.Validate()
+		if err != nil {
+			return ErrInvalidGenesisData.Wrapf("ValidateStakerRewardParams: invalid reward parameters. stakerID:%s",
+				info.Key)
+		}
+		return nil
+	}
+	seenFieldValueFunc := func(info KeyAndStakerRewardParams) (string, struct{}) {
+		return info.Key, struct{}{}
+	}
+	_, err := utils.CommonValidation(gs.AllStakerRewardParams, seenFieldValueFunc, validationFunc)
 	if err != nil {
 		return err
 	}
@@ -617,7 +676,7 @@ func (gs GenesisState) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = gs.ValidateOperatorOutstandingRewards()
+	err = gs.ValidateOperatorUnclaimedRewards()
 	if err != nil {
 		return err
 	}
@@ -645,7 +704,11 @@ func (gs GenesisState) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = gs.ValidateClaimedOutstandingRewards()
+	err = gs.ValidateStakerClaimedRewards()
+	if err != nil {
+		return err
+	}
+	err = gs.ValidateStakerRewardParams()
 	if err != nil {
 		return err
 	}

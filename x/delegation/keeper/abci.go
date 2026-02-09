@@ -41,8 +41,11 @@ func (k *Keeper) EndBlock(
 
 		recordAmountNeg := record.Amount.Neg()
 		// update delegation state
-		deltaAmount := &types.DeltaDelegationAmounts{
-			WaitUndelegationAmount: recordAmountNeg,
+		deltaAmount := &types.DeltaDelegationAmounts{}
+		if record.RewardAsset {
+			deltaAmount.RewardPendingUndelegationAmount = recordAmountNeg
+		} else {
+			deltaAmount.PendingUndelegationAmount = recordAmountNeg
 		}
 		_, _, err = k.UpdateDelegationState(cc, record.StakerId, record.AssetId, record.OperatorAddr, deltaAmount)
 		if err != nil {
@@ -50,45 +53,54 @@ func (k *Keeper) EndBlock(
 			continue
 		}
 
-		// update the staker state
-		if record.AssetId == assetstypes.ImuachainAssetID {
-			stakerAddrHex, _, err := assetstypes.ParseID(record.StakerId)
+		if record.RewardAsset {
+			// handle the state update in distribution.
+			err = k.distributionKeeper.CompleteRewardUndelegation(cc, *record)
 			if err != nil {
-				logger.Error(
-					"failed to parse staker ID",
-					"error", err,
-				)
-				continue
-			}
-			stakerAddrBytes, err := hexutil.Decode(stakerAddrHex)
-			if err != nil {
-				logger.Error(
-					"failed to decode staker address",
-					"error", err,
-				)
-				continue
-			}
-			stakerAddr := sdk.AccAddress(stakerAddrBytes)
-			if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
-				cc, types.DelegatedPoolName, stakerAddr,
-				sdk.NewCoins(
-					sdk.NewCoin(assetstypes.ImuachainAssetDenom, record.ActualCompletedAmount),
-				),
-			); err != nil {
-				logger.Error(
-					"failed to undelegate coins from module to account",
-					"error", err,
-				)
+				logger.Error("Error in CompleteRewardUndelegation during the delegation's EndBlock execution", "error", err)
 				continue
 			}
 		} else {
-			_, err = k.assetsKeeper.UpdateStakerAssetState(cc, record.StakerId, record.AssetId, assetstypes.DeltaStakerSingleAsset{
-				WithdrawableAmount:        record.ActualCompletedAmount,
-				PendingUndelegationAmount: recordAmountNeg,
-			})
-			if err != nil {
-				logger.Error("Error in UpdateStakerAssetState during the delegation's EndBlock execution", "error", err)
-				continue
+			// update the staker state
+			if record.AssetId == assetstypes.ImuachainAssetID {
+				stakerAddrHex, _, err := assetstypes.ParseID(record.StakerId)
+				if err != nil {
+					logger.Error(
+						"failed to parse staker ID",
+						"error", err,
+					)
+					continue
+				}
+				stakerAddrBytes, err := hexutil.Decode(stakerAddrHex)
+				if err != nil {
+					logger.Error(
+						"failed to decode staker address",
+						"error", err,
+					)
+					continue
+				}
+				stakerAddr := sdk.AccAddress(stakerAddrBytes)
+				if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
+					cc, types.DelegatedPoolName, stakerAddr,
+					sdk.NewCoins(
+						sdk.NewCoin(assetstypes.ImuachainAssetDenom, record.ActualCompletedAmount),
+					),
+				); err != nil {
+					logger.Error(
+						"failed to undelegate coins from module to account",
+						"error", err,
+					)
+					continue
+				}
+			} else {
+				_, err = k.assetsKeeper.UpdateStakerAssetState(cc, record.StakerId, record.AssetId, assetstypes.DeltaStakerSingleAsset{
+					WithdrawableAmount:        record.ActualCompletedAmount,
+					PendingUndelegationAmount: recordAmountNeg,
+				})
+				if err != nil {
+					logger.Error("Error in UpdateStakerAssetState during the delegation's EndBlock execution", "error", err)
+					continue
+				}
 			}
 		}
 

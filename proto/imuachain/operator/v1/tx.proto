@@ -123,6 +123,9 @@ message OperatorInfo {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+  // disable_compound_rewards indicates whether compounding for unclaimed rewards is disabled.
+  // By default, rewards are automatically compounded. This flag provides flexibility to disable it.
+  bool disable_compound_rewards = 5;
 }
 
 // OptedInfo is the opted information about operator
@@ -182,18 +185,30 @@ message SlashFromUndelegation {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+  // undelegation_id is a globally incrementing number used to identify an undelegation.
+  // It will be included in the key when storing the undelegation.
+  uint64 undelegation_id = 4;
+  // reward_asset indicates whether the undelegation is for rewards
+  bool reward_asset = 5;
 }
 
-// SlashFromAssetsPool records the slash detail from the operator assets pool
-message SlashFromAssetsPool {
+// SlashAssetAmount records the slash amount of specific assetID
+message SlashAssetAmount {
   // asset_id is the asset id.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
-  // amount is the slashed amount from the assets pool.
+  // amount is the slashed amount.
   string amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
   ];
+}
+// SlashFromUnclaimedRewards records the slash detail from the operator unclaimed rewards
+message SlashFromUnclaimedRewards {
+  // avs is the AVS from which the rewards were earned.
+  string avs = 1 ;
+  // slash_assets represent multiple rewards assets states that are slashed.
+  repeated SlashAssetAmount slash_assets = 2 [(gogoproto.nullable) = false];
 }
 
 // SlashExecutionInfo is the actual execution state for a slash event
@@ -210,14 +225,16 @@ message SlashExecutionInfo {
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable) = false
   ];
-  // SlashUndelegations records all slash info related to the undelegation
+  // slash_undelegations records all slash info related to the undelegation
   repeated SlashFromUndelegation slash_undelegations = 3 [(gogoproto.nullable) = false];
-  // SlashFromAssetsPool records all slash info related to the assets pool
-  repeated SlashFromAssetsPool slash_assets_pool = 4 [(gogoproto.nullable) = false];
+  // slash_assets_pool records all slash info related to the assets pool
+  repeated SlashAssetAmount slash_assets_pool = 4 [(gogoproto.nullable) = false];
   // undelegation_filter_height records the height before which undelegations are not slashed
   int64 undelegation_filter_height = 5;
   // the historical voting power at the time of the slash event.
   int64 historical_voting_power = 6;
+  // slash_unclaimed_rewards records all slash amounts from unclaimed rewards
+  repeated SlashFromUnclaimedRewards slash_unclaimed_rewards = 7 [(gogoproto.nullable) = false];
 }
 
 // OperatorSlashInfo is the slash info of operator
@@ -341,6 +358,21 @@ message EditOperatorReq {
 // EditOperatorResponse is the response to a edit operator request.
 message EditOperatorResponse {}
 
+// UpdateRewardCompoundingFlagReq is the request to update the reward compounding flag for an operator
+message UpdateRewardCompoundingFlagReq {
+  option (cosmos.msg.v1.signer) = "address";
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // address is the operator address
+  string address = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // disable_compound_rewards is a flag to indicate whether to disable the reward compounding
+  bool disable_compound_rewards = 2;
+}
+
+// UpdateRewardCompoundingFlagResponse is the response to update the reward compounding flag
+message UpdateRewardCompoundingFlagResponse {}
+
 // MsgUpdateParams is the Msg/UpdateParams request type for the parameters of
 // this module..
 message MsgUpdateParams {
@@ -396,6 +428,11 @@ service Msg {
   // EditOperator edits an operator.
   rpc EditOperator(EditOperatorReq) returns (EditOperatorResponse) {
     option (google.api.http).post = "/imuachain/operator/v1/tx/edit_operator";
+  }
+
+  // UpdateRewardCompoundingFlag updates the reward compounding flag of an operator
+  rpc UpdateRewardCompoundingFlag(UpdateRewardCompoundingFlagReq) returns (UpdateRewardCompoundingFlagResponse) {
+    option (google.api.http).post = "/imuachain/operator/v1/tx/update_reward_compounding_flag";
   }
 
   // UpdateParams updates the parameters of the module.

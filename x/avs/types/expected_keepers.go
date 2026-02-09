@@ -8,7 +8,6 @@ import (
 	"github.com/evmos/evmos/v16/x/evm/statedb"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
-	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // EpochsKeeper represents the expected keeper interface for the epochs module.
@@ -41,7 +40,7 @@ type OperatorKeeper interface {
 	OptIn(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr string) error
 	OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr string) (err error)
 	GetOptedInOperatorListByAVS(ctx sdk.Context, avsAddr string) ([]string, error)
-	GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error)
+	GetOperatorActiveUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (sdkmath.LegacyDec, error)
 	GetAVSUSDValue(ctx sdk.Context, avsAddr string) (sdkmath.LegacyDec, error)
 	IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool
 	SetAVSAssetsPerEpoch(ctx sdk.Context, avsAddr string, assets []string) error

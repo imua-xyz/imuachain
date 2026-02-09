@@ -7,12 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
-	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 	"github.com/imua-xyz/imuachain/x/avs/types"
 )
 
@@ -21,7 +22,7 @@ func (k Keeper) SetTaskInfo(ctx sdk.Context, task *types.TaskInfo) (err error) {
 		return types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSTaskInfo)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(task.TaskContractAddress), strconv.FormatUint(task.TaskId, 10))
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(task.TaskContractAddress), strconv.FormatUint(task.TaskId, 10))
 	bz := k.cdc.MustMarshal(task)
 	store.Set(infoKey, bz)
 	return nil
@@ -32,11 +33,11 @@ func (k *Keeper) GetTaskInfo(ctx sdk.Context, taskID, taskContractAddress string
 		return nil, types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSTaskInfo)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress), taskID)
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(taskContractAddress), taskID)
 	value := store.Get(infoKey)
 	if value == nil {
-		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetTaskInfo: key not found for task ID %s at contract address %s", taskID, taskContractAddress))
+		return nil, errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetTaskInfo: key not found for task ID %s at contract address %s", taskID, taskContractAddress)
 	}
 
 	ret := types.TaskInfo{}
@@ -55,7 +56,7 @@ func (k Keeper) GetAllTaskInfos(ctx sdk.Context) ([]types.TaskInfo, error) {
 
 func (k *Keeper) IsExistTask(ctx sdk.Context, taskID, taskContractAddress string) bool {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSTaskInfo)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress), taskID)
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(taskContractAddress), taskID)
 
 	return store.Has(infoKey)
 }
@@ -66,7 +67,7 @@ func (k *Keeper) SetOperatorPubKey(ctx sdk.Context, pub *types.BlsPubKeyInfo) (e
 		return types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress.String()), strings.ToLower(pub.AvsAddress))
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(operatorAddress.String()), strings.ToLower(pub.AvsAddress))
 	bz := k.cdc.MustMarshal(pub)
 	store.Set(infoKey, bz)
 	store.Set(pub.PubKey, pub.PubKey)
@@ -79,11 +80,11 @@ func (k *Keeper) GetOperatorPubKey(ctx sdk.Context, operatorAddress, avsAddress 
 		return nil, errorsmod.Wrap(err, "GetOperatorPubKey: error occurred when parsing account address from Bech32: "+operatorAddress)
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avsAddress))
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avsAddress))
 	isExist := store.Has(infoKey)
 	if !isExist {
-		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetOperatorPubKey: public key not found for address %s", opAccAddr))
+		return nil, errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetOperatorPubKey: public key not found for address %s", opAccAddr)
 	}
 	value := store.Get(infoKey)
 	ret := types.BlsPubKeyInfo{}
@@ -133,7 +134,7 @@ func (k *Keeper) IsExistPubKeyForAVS(ctx sdk.Context, operator, avs string) bool
 		return false
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixOperatePub)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avs))
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(opAccAddr.String()), strings.ToLower(avs))
 
 	return store.Has(infoKey)
 }
@@ -213,7 +214,7 @@ func (k *Keeper) SetTaskResultInfo(
 	if !common.IsHexAddress(info.TaskContractAddress) {
 		panic(fmt.Sprintf("invalid task contract address: %s", info.TaskContractAddress))
 	}
-	infoKey := assetstype.GetJoinedStoreKey(info.OperatorAddress, strings.ToLower(info.TaskContractAddress),
+	infoKey := utils.GetJoinedStoreKey(info.OperatorAddress, strings.ToLower(info.TaskContractAddress),
 		strconv.FormatUint(info.TaskId, 10))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskResult)
 	bz := k.cdc.MustMarshal(info)
@@ -221,7 +222,7 @@ func (k *Keeper) SetTaskResultInfo(
 }
 
 func (k *Keeper) IsExistTaskResultInfo(ctx sdk.Context, operatorAddress, taskContractAddress string, taskID uint64) bool {
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskContractAddress),
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskResult)
 	return store.Has(infoKey)
@@ -232,12 +233,12 @@ func (k *Keeper) GetTaskResultInfo(ctx sdk.Context, operatorAddress, taskContrac
 		return nil, types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskResult)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(operatorAddress), strings.ToLower(taskContractAddress),
+	infoKey := utils.GetJoinedStoreKey(operatorAddress, strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	value := store.Get(infoKey)
 	if value == nil {
-		return nil, errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetTaskResultInfo: key is %s", infoKey))
+		return nil, errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetTaskResultInfo: key is %s", infoKey)
 	}
 
 	ret := types.TaskResultInfo{}
@@ -291,7 +292,7 @@ func (k *Keeper) SetTaskChallengedInfo(
 	ctx sdk.Context, taskID uint64, challengeAddr string,
 	taskAddr common.Address,
 ) (err error) {
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskAddr.String()),
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(taskAddr.String()),
 		strconv.FormatUint(taskID, 10))
 
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
@@ -305,7 +306,7 @@ func (k *Keeper) SetTaskChallengedInfo(
 }
 
 func (k *Keeper) IsExistTaskChallengedInfo(ctx sdk.Context, taskContractAddress string, taskID uint64) bool {
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
 	return store.Has(infoKey)
@@ -316,12 +317,12 @@ func (k *Keeper) GetTaskChallengedInfo(ctx sdk.Context, taskContractAddress stri
 		return "", types.ErrInvalidAddr
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixTaskChallengeResult)
-	infoKey := assetstype.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
+	infoKey := utils.GetJoinedStoreKey(strings.ToLower(taskContractAddress),
 		strconv.FormatUint(taskID, 10))
 	value := store.Get(infoKey)
 	if value == nil {
-		return "", errorsmod.Wrap(types.ErrNoKeyInTheStore,
-			fmt.Sprintf("GetTaskChallengedInfo: key is %s", infoKey))
+		return "", errorsmod.Wrapf(types.ErrNoKeyInTheStore,
+			"GetTaskChallengedInfo: key is %s", infoKey)
 	}
 
 	return common.Bytes2Hex(value), nil

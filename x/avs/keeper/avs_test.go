@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"github.com/ethereum/go-ethereum/crypto"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	"github.com/prysmaticlabs/prysm/v4/crypto/bls/blst"
@@ -241,7 +243,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
@@ -259,7 +261,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
@@ -284,7 +286,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
@@ -298,7 +300,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				suite.NoError(err)
 
 				anotherOperatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-				msg = fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), anotherOperatorAddress.String())
+				msg = fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), anotherOperatorAddress.String())
 				hashedMsg = crypto.Keccak256Hash([]byte(msg))
 				sig = privateKey.Sign(hashedMsg.Bytes())
 
@@ -340,7 +342,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
 				anotherOperatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), anotherOperatorAddress.String())
+				msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), anotherOperatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 
@@ -359,7 +361,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 				// generate a different private key
@@ -382,7 +384,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
 				operatorAddress := sdk.AccAddress(utiltx.GenerateAddress().Bytes())
-				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 				return &types.BlsParams{
@@ -415,7 +417,7 @@ func (suite *AVSTestSuite) TestRegisterBLSPublicKey() {
 				operatorAddress := sdk.AccAddress{}
 				privateKey, err := blst.RandKey()
 				suite.NoError(err)
-				msg := fmt.Sprintf(types.BLSMessageToSign, types.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
+				msg := fmt.Sprintf(types.BLSMessageToSign, utils.ChainIDWithoutRevision(suite.Ctx.ChainID()), operatorAddress.String())
 				hashedMsg := crypto.Keccak256Hash([]byte(msg))
 				sig := privateKey.Sign(hashedMsg.Bytes())
 				return &types.BlsParams{

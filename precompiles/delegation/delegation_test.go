@@ -320,7 +320,7 @@ func (s *DelegationPrecompileSuite) TestRunUnDelegate() {
 		opAccAddr, err := sdk.AccAddressFromBech32(operatorAddr)
 		s.Require().NoError(err)
 		delegateToParams.OperatorAddress = opAccAddr
-		err = s.App.DelegationKeeper.DelegateTo(s.Ctx, delegateToParams)
+		_, _, err = s.App.DelegationKeeper.DelegateTo(s.Ctx, delegateToParams)
 		s.Require().NoError(err)
 	}
 	rate, _ := sdk.NewDecFromStr("0.1")

@@ -80,6 +80,8 @@ const (
 	// prefixAVSAssetListPerEpoch is the prefix used to store the AVS asset list per epoch.
 	prefixAVSAssetListPerEpoch
 
+	prefixCompoundingRewardsUSDValues
+
 	// prefixParams is the prefix used to store the params.
 	prefixParams
 )
@@ -146,6 +148,16 @@ var (
 	// This ensures that we obtain the correct asset list at the last voting power update,
 	// which is necessary for reward distribution.
 	KeyPrefixAVSAssetListPerEpoch = []byte{prefixAVSAssetListPerEpoch}
+
+	// KeyPrefixCompoundingRewardsUSDValues key-value:
+	// AVSAddr + '/' + operatorAddr + '/'  + AVSAddr  + '/'  + rewardDenomination -> types.DecValueField
+	// Under this key, all USD values from compounding rewards are stored.
+	// We append `AVSAddr` and `rewardDenomination `as a suffix because an operator can opt into multiple
+	// AVSs earning rewards from each of them. And an AVS can use multiple assets as rewards.
+	// The USD value of every reward assets from each AVS is stored separately, since compounded
+	// rewards must be distributed per AVS reward asset to ensure distribution to the
+	// corresponding stakers.
+	KeyPrefixCompoundingRewardsUSDValues = []byte{prefixCompoundingRewardsUSDValues}
 
 	// KeyPrefixParams key-value:
 	// params -> Params

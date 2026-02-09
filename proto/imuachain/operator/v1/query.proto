@@ -38,7 +38,7 @@ message QueryAllOperatorsResponse {
 message OperatorAVSAddress {
   // operator_addr should be the string type of sdk.AccAddress
   string operator_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  // avs_address is the address of the AVS - either an 0x address or a chainID.
+  // avs_address is the address of the AVS
   string avs_address = 2;
 }
 
@@ -62,6 +62,39 @@ message QueryOperatorAssetUSDValueRequest {
   string operator_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // asset_id is the specific asset to query
   string asset_id = 3;
+}
+
+// QueryRewardsUSDValueRequest is the request to obtain the rewards USD values for specific operator and receiving AVS.
+message QueryRewardsUSDValueRequest {
+  // operator_and_avs is the operator and receiving AVS address
+  OperatorAVSAddress operator_and_avs = 1 [(gogoproto.embed) = true];
+}
+
+// RewardUSDValue includes the denomination and USD value of specific reward asset
+message RewardUSDValue {
+  // denomination of the reward asset.
+  string denomination = 1;
+  // usd_value is the USD value of specific reward asset
+  string usd_value = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// AVSRewardsUSDValues represents the USD values of all reward assets from specific AVS reward source
+message AVSRewardsUSDValues{
+  // avs_address is the address of the reward source AVS
+  string avs_address = 1;
+  // rewards_usd_values are the USD values of all reward assets.
+  repeated RewardUSDValue rewards_usd_values = 2 [(gogoproto.nullable) = false];
+}
+
+// QueryRewardsUSDValueResponse is the response to obtain the rewards USD values for specific operator and receiving AVS.
+message QueryRewardsUSDValueResponse {
+  // avs_rewards_usd_values are the rewards USD values from all AVS reward sources
+  // for the specified operator at the receiving AVS.
+  repeated AVSRewardsUSDValues avs_rewards_usd_values = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryAVSUSDValueRequest is the request to obtain the USD value for AVS.
@@ -327,7 +360,14 @@ service Query {
   // QueryOperatorAssetUSDValue queries the USD value for the operator asset
   rpc QueryOperatorAssetUSDValue(QueryOperatorAssetUSDValueRequest) returns (DecValueField) {
     option (google.api.http).get =
-    "/imuachain/operator/v1/operator_asset_usd_value/{epoch_identifier}/{operator_addr}/{asset_id}";
+        "/imuachain/operator/v1/operator_asset_usd_value/{epoch_identifier}/{operator_addr}/{asset_id}";
+  }
+
+  // QueryRewardsUSDValue queries the USD value of compounding rewards for the specific operator and AVS
+  rpc QueryRewardsUSDValue(QueryRewardsUSDValueRequest) returns (QueryRewardsUSDValueResponse) {
+    option (google.api.http).get =
+    "/imuachain/operator/v1/rewards_usd_value/{operator_and_avs.operator_addr}/"
+        "{operator_and_avs.avs_address}";
   }
 
   // QueryAVSUSDValue queries the USD value for the AVS

@@ -63,6 +63,9 @@ const (
 
 	EventTypeEditOperator = "edit_operator"
 
+	EventTypeUpdateRewardCompoundingFlag = "update_reward_compounding_flag"
+	AttributeKeyDisableRewardCompounding = "disable_reward_compounding"
+
 	EventTypeUpdateParams                   = "update_params"
 	AttributeKeyAuthority                   = "authority"
 	AttributeKeyMinCommissionRate           = "min_commission_rate"

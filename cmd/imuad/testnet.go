@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	imuatestutil "github.com/imua-xyz/imuachain/testutil"
 
 	"cosmossdk.io/math"
@@ -406,12 +408,12 @@ func getTestImuachainGenesis(
 			Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
 			Commission:   stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
 		})
-		singleStateKey := assetstypes.GetJoinedStoreKey(stakerID, assetID, operator.String())
+		singleStateKey := utils.GetJoinedStoreKey(stakerID, assetID, operator.String())
 		delegationStates = append(delegationStates, delegationtypes.DelegationStates{
 			Key: string(singleStateKey),
 			States: delegationtypes.DelegationAmounts{
-				WaitUndelegationAmount: math.NewInt(0),
-				UndelegatableShare:     math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
+				PendingUndelegationAmount: math.NewInt(0),
+				UndelegatableShare:        math.LegacyNewDecFromBigInt(depositAmount.BigInt()),
 			},
 		},
 		)
@@ -420,7 +422,7 @@ func getTestImuachainGenesis(
 			StakerId: stakerID,
 		})
 		stakersByOperator = append(
-			stakersByOperator, string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
+			stakersByOperator, string(utils.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
 		)
 		validators = append(validators, dogfoodtypes.GenesisValidator{
 			PublicKey: pubKeyHex,

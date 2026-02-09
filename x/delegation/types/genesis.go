@@ -108,7 +108,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 		}
 
 		// check that there is no nil value provided.
-		if info.States.UndelegatableShare.IsNil() || info.States.WaitUndelegationAmount.IsNil() {
+		if info.States.UndelegatableShare.IsNil() || info.States.PendingUndelegationAmount.IsNil() {
 			return ErrInvalidGenesisData.Wrapf(
 				"ValidateDelegationStates: nil delegation state for %s: %+v",
 				info.Key, info,
@@ -116,7 +116,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 		}
 
 		// check for negative values.
-		if info.States.UndelegatableShare.IsNegative() || info.States.WaitUndelegationAmount.IsNegative() {
+		if info.States.UndelegatableShare.IsNegative() || info.States.PendingUndelegationAmount.IsNegative() {
 			return ErrInvalidGenesisData.Wrapf(
 				"ValidateDelegationStates: negative delegation state  for %s: %+v",
 				info.Key, info,
@@ -138,7 +138,7 @@ func (gs GenesisState) ValidateDelegationStates() error {
 func (gs GenesisState) ValidateStakerList() error {
 	validationFunc := func(_ int, stakersByOperator string) error {
 		// validate the key - each Key contains operator + asset id + staker id
-		stringList, err := assetstypes.ParseJoinedStoreKey([]byte(stakersByOperator), 3)
+		stringList, err := utils.ParseJoinedKeyWithCount([]byte(stakersByOperator), 3)
 		if err != nil {
 			return ErrInvalidGenesisData.Wrapf("ValidateStakerList: %s", err.Error())
 		}

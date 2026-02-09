@@ -12,9 +12,10 @@ type (
 )
 
 type OperatorStakingInfo struct {
-	Staking                 sdkmath.LegacyDec
-	SelfStaking             sdkmath.LegacyDec
-	StakingAndWaitUnbonding sdkmath.LegacyDec
+	Staking                    sdkmath.LegacyDec
+	SelfStaking                sdkmath.LegacyDec
+	StakingAndWaitUnbonding    sdkmath.LegacyDec
+	CompoundingUSDValueSources map[string]map[string]struct{}
 }
 
 type SlashInputInfo struct {

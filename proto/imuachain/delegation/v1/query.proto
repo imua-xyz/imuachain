@@ -43,8 +43,22 @@ message DelegationAmounts {
     (gogoproto.nullable) = false
   ];
 
-  // wait_undelegation_amount is the amount that is waiting to be unbonded.
-  string wait_undelegation_amount = 2 [
+  // pending_undelegation_amount is the amount that is waiting to be unbonded.
+  string pending_undelegation_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  // reward_undelegatable_share is the undelegatable share of reward.
+  string reward_undelegatable_share = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+
+  // reward_pending_undelegation_amount is the reward amount that is waiting to be unbonded.
+  string reward_pending_undelegation_amount = 4 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false
@@ -57,6 +71,12 @@ message SingleDelegationInfo {
   DelegationAmounts delegation_amounts = 1 ;
   // max_undelegatable_amount is the maximum amount that can be undelegated
   string max_undelegatable_amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
+    (gogoproto.nullable) = false
+  ];
+  // max_undelegatable_reward_amount is the maximum reward amount that can be undelegated
+  string max_undelegatable_reward_amount = 3 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
     (gogoproto.nullable) = false

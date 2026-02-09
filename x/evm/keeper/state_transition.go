@@ -321,7 +321,7 @@ func (k *Keeper) ApplyMessageWithConfig(ctx sdk.Context,
 		return nil, errorsmod.Wrap(types.ErrCallDisabled, "failed to call contract")
 	}
 
-	// set txHash for delegation module
+	// set txHash for undelegation transaction.
 	ctx = ctx.WithValue(delegation.CtxKeyTxHash, txConfig.TxHash)
 
 	stateDB := statedb.New(ctx, k, txConfig)

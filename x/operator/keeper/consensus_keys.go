@@ -521,7 +521,7 @@ func (k *Keeper) SetAllPrevConsKeys(ctx sdk.Context, prevConsKeys []types.PrevCo
 	store := ctx.KVStore(k.storeKey)
 	for i := range prevConsKeys {
 		prevKey := prevConsKeys[i]
-		keys, err := assetstypes.ParseJoinedStoreKey([]byte(prevKey.Key), 2)
+		keys, err := utils.ParseJoinedKeyWithCount([]byte(prevKey.Key), 2)
 		if err != nil {
 			return err
 		}
@@ -553,7 +553,7 @@ func (k *Keeper) GetAllPrevConsKeys(ctx sdk.Context) ([]types.PrevConsKey, error
 		}
 		wrappedConsKey := keytypes.NewWrappedConsKeyFromTmProtoKey(&consKey)
 		ret = append(ret, types.PrevConsKey{
-			Key:          string(assetstypes.GetJoinedStoreKey(chainID, operatorAddr.String())),
+			Key:          string(utils.GetJoinedStoreKey(chainID, operatorAddr.String())),
 			ConsensusKey: wrappedConsKey.ToHex(),
 		})
 	}
@@ -564,7 +564,7 @@ func (k *Keeper) SetAllOperatorKeyRemovals(ctx sdk.Context, operatorKeyRemoval [
 	store := ctx.KVStore(k.storeKey)
 	for i := range operatorKeyRemoval {
 		keyRemoval := operatorKeyRemoval[i]
-		keys, err := assetstypes.ParseJoinedStoreKey([]byte(keyRemoval.Key), 2)
+		keys, err := utils.ParseJoinedKeyWithCount([]byte(keyRemoval.Key), 2)
 		if err != nil {
 			return err
 		}
@@ -591,7 +591,7 @@ func (k *Keeper) GetAllOperatorKeyRemovals(ctx sdk.Context) ([]types.OperatorKey
 		}
 
 		ret = append(ret, types.OperatorKeyRemoval{
-			Key: string(assetstypes.GetJoinedStoreKey(operatorAddr.String(), chainID)),
+			Key: string(utils.GetJoinedStoreKey(operatorAddr.String(), chainID)),
 		})
 	}
 	return ret, nil
@@ -673,7 +673,7 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 	val.ConsAddress = consAddr.String()
 	val.Commission = ops.Commission
 
-	assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddrStr)
+	_, assets, err := k.avsKeeper.GetAVSSupportedAssets(ctx, avsAddrStr)
 	if err != nil {
 		return types.Validator{}, false
 	}
@@ -708,14 +708,14 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		if !ok {
 			return errorsmod.Wrap(types.ErrKeyNotExistInMap, "CalculateRealTimeOperatorUSDValue map: decimals, key: assetID")
 		}
-		currentAssetTotalUSD := CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
+		currentAssetTotalUSD := utils.CalculateUSDValue(state.TotalAmount, price.Value, decimal, price.Decimal)
 		ret.Staking = ret.Staking.Add(currentAssetTotalUSD)
 		// calculate the token amount from the share for the operator
 		selfAmount, err := delegationkeeper.TokensFromShares(state.OperatorShare, state.TotalShare, state.TotalAmount)
 		if err != nil {
 			return err
 		}
-		currentAssetSelfUSD := CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal)
+		currentAssetSelfUSD := utils.CalculateUSDValue(selfAmount, price.Value, decimal, price.Decimal)
 		ret.SelfStaking = ret.SelfStaking.Add(currentAssetSelfUSD)
 		assetInfo, err := k.assetsKeeper.GetStakingAssetInfo(ctx, assetID)
 		if err != nil {
@@ -732,7 +732,6 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 			TotalUSDValue: currentAssetTotalUSD,
 		}
 		delegatorTokens = append(delegatorTokens, info)
-
 		return nil
 	}
 
@@ -740,8 +739,17 @@ func (k Keeper) GetValidatorByConsAddrForChainID(
 		ctx.Logger().Error("IterateAssetsForOperator error", "err", err)
 		return types.Validator{}, false
 	}
-	val.VotingPower = ret.Staking
-	val.DelegatorShares = ret.Staking.Sub(ret.SelfStaking).TruncateInt()
+	// We use the voting power calculated and stored at the end of the previous epoch directly.
+	// We don't need to calculate the real-time voting power here.
+	// Additionally, this voting power will include the USD value of the compounding rewards.
+	// Only for the detailed delegation info, we need to iterate the assets and calculate
+	// the real-time USD value of the delegation.
+	optedUSDValues, err := k.GetOperatorOptedUSDValue(ctx, avsAddrStr, operatorAddr.String())
+	if err != nil {
+		return types.Validator{}, false
+	}
+	val.VotingPower = optedUSDValues.TotalUSDValue
+	val.DelegatorShares = optedUSDValues.TotalUSDValue.Sub(optedUSDValues.SelfUSDValue).TruncateInt()
 	val.DelegatorTokens = delegatorTokens
 
 	return val, true

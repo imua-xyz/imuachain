@@ -71,18 +71,8 @@ type OperatorKeeper interface {
 	GetOperatorConsKeyForChainID(
 		sdk.Context, sdk.AccAddress, string,
 	) (bool, keytypes.WrappedConsKey, error)
-	GetOperatorPrevConsKeyForChainID(
-		sdk.Context, sdk.AccAddress, string,
-	) (bool, keytypes.WrappedConsKey, error)
-	// OptInWithConsKey is used at genesis to opt in with a consensus key
-	OptInWithConsKey(
-		sdk.Context, sdk.AccAddress, string, keytypes.WrappedConsKey,
-	) error
 	// GetOrCalculateOperatorUSDValues is used to get the self staking value for the operator
 	GetOrCalculateOperatorUSDValues(sdk.Context, sdk.AccAddress, string) (operatortypes.OperatorOptedUSDValue, error)
-	GetOptedInAVSForOperator(ctx sdk.Context, operatorAddr string) ([]string, error)
-	CalculateUSDValueForStaker(ctx sdk.Context, stakerID, avsAddr string, operator sdk.AccAddress) (math.LegacyDec, error)
-	OperatorInfo(ctx sdk.Context, addr string) (info *operatortypes.OperatorInfo, err error)
 	InitGenesisVPSnapshot(ctx sdk.Context) error
 }
 
@@ -101,6 +91,5 @@ type AssetsKeeper interface {
 type AVSKeeper interface {
 	RegisterAVSWithChainID(sdk.Context, *avstypes.AVSRegisterOrDeregisterParams) (bool, common.Address, error)
 	IsAVSByChainID(ctx sdk.Context, chainID string) (bool, string)
-	GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]struct{}, error)
 	UpdateAVSInfo(ctx sdk.Context, params *avstypes.AVSRegisterOrDeregisterParams) error
 }

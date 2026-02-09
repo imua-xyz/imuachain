@@ -15,30 +15,32 @@ message GenesisState {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
-  // all_avs_reward_assets is the rewards assets for all AVSs.
+  // all_avs_reward_assets are the rewards assets for all AVSs.
   repeated AVSAddrAndRewardAssets all_avs_reward_assets = 2 [(gogoproto.nullable) = false];
-  // all_avs_reward_params is the rewards parameters for all AVSs.
+  // all_avs_reward_params are the rewards parameters for all AVSs.
   repeated AVSAddrAndRewardParam all_avs_reward_params = 3 [(gogoproto.nullable) = false];
-  // all_avs_fee_pools is the fee pools for all AVSs.
+  // all_avs_fee_pools are the fee pools for all AVSs.
   repeated AVSAddrAndFeePool all_avs_fee_pools = 4 [(gogoproto.nullable) = false];
-  // all_avs_reward_distributions is the reward distributions for all AVSs.
+  // all_avs_reward_distributions are the reward distributions for all AVSs.
   repeated AVSAddrAndRewardDistribution all_avs_reward_distributions = 5 [(gogoproto.nullable) = false];
-  // all_operator_outstanding_rewards is the outstanding rewards for all operators.
-  repeated KeyAndOperatorOutstandingRewards all_operator_outstanding_rewards = 6 [(gogoproto.nullable) = false];
-  // all_delegation_change_infos is the delegation changes for all epochs and operators.
+  // all_operator_unclaimed_rewards are the unclaimed rewards for all operators.
+  repeated KeyAndOperatorUnclaimedRewards all_operator_unclaimed_rewards = 6 [(gogoproto.nullable) = false];
+  // all_delegation_change_infos are the delegation changes for all epochs and operators.
   repeated KeyAndDelegationChangeInfo all_delegation_change_infos = 7 [(gogoproto.nullable) = false];
-  // all_delegation_change_infos is the delegation starting information for all epochs.
+  // all_delegation_change_infos are the delegation starting information for all epochs.
   repeated KeyAndDelegationStartingInfo all_delegation_starting_infos = 8 [(gogoproto.nullable) = false];
-  // all_operator_historical_rewards is the operator historical rewards information for all periods.
+  // all_operator_historical_rewards are the operator historical rewards information for all periods.
   repeated KeyAndOperatorHistoricalRewards all_operator_historical_rewards = 9 [(gogoproto.nullable) = false];
-  // all_operator_current_rewards is the operator current rewards information for all epochs.
+  // all_operator_current_rewards are the operator current rewards information for all epochs.
   repeated KeyAndOperatorCurrentRewards all_operator_current_rewards = 10 [(gogoproto.nullable) = false];
-  // all_operator_commission is the commissions for all operators.
+  // all_operator_commission are the commissions for all operators.
   repeated KeyAndOperatorCommission all_operator_commission = 11 [(gogoproto.nullable) = false];
-  // all_operator_slash_events is the slash events for all operators.
+  // all_operator_slash_events are the slash events for all operators.
   repeated KeyAndOperatorSlashEvent all_operator_slash_events = 12 [(gogoproto.nullable) = false];
-  // all_staker_claimed_rewards is the claimed rewards for all stakers.
+  // all_staker_claimed_rewards are the claimed rewards for all stakers.
   repeated KeyAndStakerClaimedRewards all_staker_claimed_rewards = 13 [(gogoproto.nullable) = false];
+  // all_staker_reward_params are the reward parameters for all stakers.
+  repeated KeyAndStakerRewardParams all_staker_reward_params = 14 [(gogoproto.nullable) = false];
 }
 
 // AVSAddrAndRewardAssets is a struct to be used in the genesis state.
@@ -77,21 +79,21 @@ message AVSAddrAndRewardDistribution {
   AVSRewardDistribution avs_reward_distribution = 2 [(gogoproto.nullable) = false];
 }
 
-// KeyAndOperatorOutstandingRewards is a struct used in the genesis state.
-// It stores the outstanding rewards for a specific operator and AVS.
+// KeyAndOperatorUnclaimedRewards is a struct used in the genesis state.
+// It stores the unclaimed rewards for a specific operator and AVS.
 // The key, which is a combination of the operator and AVS, is included within it.
-message KeyAndOperatorOutstandingRewards {
-  // key is is a combination of the operator and AVS
+message KeyAndOperatorUnclaimedRewards {
+  // key is a combination of the operator and AVS
   string key = 1;
-  // operator_outstanding_rewards represents the outstanding rewards for the operator.
-  OperatorOutstandingRewards operator_outstanding_rewards = 2 [(gogoproto.nullable) = false];
+  // operator_unclaimed_rewards represents the unclaimed rewards for the operator.
+  OperatorUnclaimedRewards operator_unclaimed_rewards = 2 [(gogoproto.nullable) = false];
 }
 
 // KeyAndDelegationChangeInfo is a struct used in the genesis state.
 // It stores the delegation changes for the current epoch.
 // The key, which is a combination of the epochIdentifier, operator and assetID, is included within it.
 message KeyAndDelegationChangeInfo{
-  // key is is a combination of the epochIdentifier, operator and assetID
+  // key is a combination of the epochIdentifier, operator and assetID
   string key = 1;
   // delegation_change_info represents the delegation changes for the current epoch.
   DelegationChangeInfo delegation_change_info = 2 [(gogoproto.nullable) = false];
@@ -101,7 +103,7 @@ message KeyAndDelegationChangeInfo{
 // It stores the delegation starting information for multiple epochs.
 // The key, which is a combination of the delegation key and the epochIdentifier, is included within it.
 message KeyAndDelegationStartingInfo{
-  // key is is a combination of the delegation key and epoch identifier.
+  // key is a combination of the delegation key and epoch identifier.
   string key = 1;
   // delegation_starting_info represents the starting information for the delegation.
   DelegationStartingInfo delegation_starting_info = 2 [(gogoproto.nullable) = false];
@@ -111,7 +113,7 @@ message KeyAndDelegationStartingInfo{
 // It stores the operator historical rewards information for multiple periods.
 // The key, which is a combination of the operator,assetID,epochIdentifier and period, is included within it.
 message KeyAndOperatorHistoricalRewards{
-  // key is is a combination of the operator,assetID,epochIdentifier and period.
+  // key is a combination of the operator,assetID,epochIdentifier and period.
   string key = 1;
   // operator_historical_rewards represents the historical rewards for the operator.
   OperatorHistoricalRewards operator_historical_rewards = 2 [(gogoproto.nullable) = false];
@@ -121,7 +123,7 @@ message KeyAndOperatorHistoricalRewards{
 // It stores the operator current rewards information for multiple epochs.
 // The key, which is a combination of the operator,assetID and epochIdentifier, is included within it.
 message KeyAndOperatorCurrentRewards{
-  // key is is a combination of the operator,assetID and epochIdentifier.
+  // key is a combination of the operator,assetID and epochIdentifier.
   string key = 1;
   // operator_current_rewards represents the current rewards for the operator.
   OperatorCurrentRewards operator_current_rewards = 2 [(gogoproto.nullable) = false];
@@ -129,9 +131,9 @@ message KeyAndOperatorCurrentRewards{
 
 // KeyAndOperatorCommission is a struct used in the genesis state.
 // It stores the operator commission for the operator.
-// The key, which is a combination of the operator and avs, is included within it.
+// The key, which is a combination of the operator and AVS, is included within it.
 message KeyAndOperatorCommission{
-  // key is is a combination of the operator and avs.
+  // key is a combination of the operator and AVS.
   string key = 1;
   // operator_commission represents the commission for the operator.
   OperatorCommission operator_commission = 2 [(gogoproto.nullable) = false];
@@ -141,7 +143,7 @@ message KeyAndOperatorCommission{
 // It stores the slash event for the operator.
 // The key, which is a combination of the operator,assetID,epochIdentifier,epochNumber and blockHeight, is included within it.
 message KeyAndOperatorSlashEvent{
-  // key is is a combination of the operator,assetID,epochIdentifier and epochNumber.
+  // key is a combination of the operator,assetID,epochIdentifier and epochNumber.
   string key = 1;
   // operator_slash_event represents the slash event for the operator.
   OperatorSlashEvent operator_slash_event = 2 [(gogoproto.nullable) = false];
@@ -151,9 +153,19 @@ message KeyAndOperatorSlashEvent{
 // It stores the claimed rewards for the staker.
 // The key, which is a combination of the stakerID and avsAddr, is included within it.
 message KeyAndStakerClaimedRewards{
-  // key is is a combination of the stakerID and avsAddr.
+  // key is a combination of the stakerID and avsAddr.
   string key = 1;
   // staker_claimed_rewards represents the claimed rewards for the staker.
   StakerClaimedRewards staker_claimed_rewards = 2 [(gogoproto.nullable) = false];
+}
+
+// KeyAndStakerRewardParams is a struct used in the genesis state.
+// It stores the claimed rewards for the staker.
+// The key, which is the stakerID.
+message KeyAndStakerRewardParams{
+  // key is the stakerID.
+  string key = 1;
+  // staker_reward_params represents the reward params for the staker.
+  StakerRewardParams staker_reward_params = 2 [(gogoproto.nullable) = false];
 }
 

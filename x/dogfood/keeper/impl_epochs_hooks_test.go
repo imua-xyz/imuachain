@@ -7,9 +7,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	utiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
+	"github.com/imua-xyz/imuachain/utils"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -69,7 +69,7 @@ func (suite *KeeperTestSuite) TestSameEpochOperations() {
 			OperatorAddress: operatorAddress,
 			OpAmount:        amount,
 		}
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 		suite.NoError(err)
 		// self delegate
 		err = suite.App.DelegationKeeper.AssociateOperatorWithStaker(
@@ -80,7 +80,7 @@ func (suite *KeeperTestSuite) TestSameEpochOperations() {
 	// generate keys, and get the AVS address
 	oldKey := utiltx.GenerateConsensusKey()
 	newKey := utiltx.GenerateConsensusKey()
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 	_, avsAddress := suite.App.AVSManagerKeeper.IsAVSByChainID(suite.Ctx, chainIDWithoutRevision)
 
 	// now define the operations
@@ -256,7 +256,7 @@ func (suite *KeeperTestSuite) TestDifferentEpochOperations() {
 			OperatorAddress: operatorAddress,
 			OpAmount:        amount,
 		}
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegationParams)
 		suite.NoError(err)
 		// self delegate
 		err = suite.App.DelegationKeeper.AssociateOperatorWithStaker(
@@ -267,7 +267,7 @@ func (suite *KeeperTestSuite) TestDifferentEpochOperations() {
 	// generate keys, and get the AVS address
 	oldKey := utiltx.GenerateConsensusKey()
 	newKey := utiltx.GenerateConsensusKey()
-	chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 	_, avsAddress := suite.App.AVSManagerKeeper.IsAVSByChainID(suite.Ctx, chainIDWithoutRevision)
 
 	// now define the operations

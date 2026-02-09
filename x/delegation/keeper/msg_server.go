@@ -36,7 +36,7 @@ func (k *Keeper) DelegateAssetToOperator(
 	)
 	cachedCtx, writeFunc := ctx.CacheContext()
 	for _, delegationParams := range delegationParamsList {
-		if err := k.DelegateTo(cachedCtx, delegationParams); err != nil {
+		if _, _, err := k.DelegateTo(cachedCtx, delegationParams); err != nil {
 			logger.Error(
 				"failed to delegate asset",
 				"error", err,

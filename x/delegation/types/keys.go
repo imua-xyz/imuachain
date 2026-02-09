@@ -10,7 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
-	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 )
 
 // constants
@@ -100,7 +99,7 @@ func IteratorPrefixForStakerAsset(stakerID, assetID string) []byte {
 }
 
 func ParseStakerAssetIDAndOperator(key []byte) (keys *SingleDelegationInfoReq, err error) {
-	stringList, err := assetstypes.ParseJoinedStoreKey(key, 3)
+	stringList, err := utils.ParseJoinedKeyWithCount(key, 3)
 	if err != nil {
 		return nil, err
 	}

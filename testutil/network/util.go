@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	sdkmath "cosmossdk.io/math"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/node"
@@ -28,7 +30,6 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
@@ -220,7 +221,7 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	}
 	cfg.GenesisState[assetstypes.ModuleName] = cfg.Codec.MustMarshalJSON(&assetsGenState)
 
-	avsAddrStr := avstypes.GenerateAVSAddress(avstypes.ChainIDWithoutRevision(cfg.ChainID))
+	avsAddrStr := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(cfg.ChainID))
 	operatorGenState, err := NewGenStateOperator(operatorAccAddresses, consPubKeys, commissionRate, cfg.ChainID, []string{avsAddrStr}, cfg.StakingTokens, assetsGenState)
 	if err != nil {
 		return err
@@ -381,7 +382,7 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 			OperatorAddress: operatorAccAddress.String(),
 			Chains: []operatortypes.ChainDetails{
 				{
-					ChainID:      avstypes.ChainIDWithoutRevision(chainID),
+					ChainID:      utils.ChainIDWithoutRevision(chainID),
 					ConsensusKey: consPubKeys[i],
 				},
 			},
@@ -466,13 +467,13 @@ func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount 
 			DefaultGenStateDelegation.DelegationStates = append(DefaultGenStateDelegation.DelegationStates, delegationtypes.DelegationStates{
 				Key: stakerID + "/" + assetID + "/" + operator.String(),
 				States: delegationtypes.DelegationAmounts{
-					UndelegatableShare:     sdkmath.LegacyNewDecFromInt(stakingAmount),
-					WaitUndelegationAmount: sdkmath.ZeroInt(),
+					UndelegatableShare:        sdkmath.LegacyNewDecFromInt(stakingAmount),
+					PendingUndelegationAmount: sdkmath.ZeroInt(),
 				},
 			})
 			DefaultGenStateDelegation.StakersByOperator = append(
 				DefaultGenStateDelegation.StakersByOperator,
-				string(assetstypes.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
+				string(utils.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
 			)
 		}
 	}

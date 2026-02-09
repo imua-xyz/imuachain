@@ -11,7 +11,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/imua-xyz/imuachain/x/operator/types"
 )
@@ -27,9 +26,10 @@ func GetSlashIDForDogfood(infraction stakingtypes.Infraction, infractionHeight i
 }
 
 // SlashFromUndelegation executes the slash from an undelegation, reduce the .ActualCompletedAmount from undelegationRecords
-func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) *types.SlashFromUndelegation {
+func (k *Keeper) SlashFromUndelegation(ctx sdk.Context, undelegation *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) (*types.SlashFromUndelegation, error) {
 	if undelegation.ActualCompletedAmount.IsZero() {
-		return nil
+		// do nothing because there isn't amount to be slashed
+		return nil, nil
 	}
 	slashAmount := slashProportion.MulInt(undelegation.Amount).TruncateInt()
 	// reduce the actual_completed_amount in the record
@@ -40,11 +40,21 @@ func SlashFromUndelegation(undelegation *delegationtype.UndelegationRecord, slas
 		undelegation.ActualCompletedAmount = undelegation.ActualCompletedAmount.Sub(slashAmount)
 	}
 
-	return &types.SlashFromUndelegation{
-		StakerID: undelegation.StakerId,
-		AssetID:  undelegation.AssetId,
-		Amount:   slashAmount,
+	if undelegation.RewardAsset {
+		// handle the reward states if it's a reward asset undelegation
+		err := k.distributionKeeper.SlashRewardUndelegation(ctx, undelegation, slashProportion)
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	return &types.SlashFromUndelegation{
+		StakerID:       undelegation.StakerId,
+		AssetID:        undelegation.AssetId,
+		Amount:         slashAmount,
+		UndelegationId: undelegation.UndelegationId,
+		RewardAsset:    undelegation.RewardAsset,
+	}, nil
 }
 
 func (k *Keeper) CheckSlashParameter(ctx sdk.Context, parameter *types.SlashInputInfo) error {
@@ -86,7 +96,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		SlashProportion:          newSlashProportion,
 		SlashValue:               slashUSDValue,
 		SlashUndelegations:       make([]types.SlashFromUndelegation, 0),
-		SlashAssetsPool:          make([]types.SlashFromAssetsPool, 0),
+		SlashAssetsPool:          make([]types.SlashAssetAmount, 0),
 		UndelegationFilterHeight: snapshotHeight,
 		HistoricalVotingPower:    parameter.Power,
 	}
@@ -94,7 +104,10 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	if parameter.SlashEventHeight < ctx.BlockHeight() {
 		// get the undelegations that are submitted after the slash.
 		opFunc := func(undelegation *delegationtype.UndelegationRecord) error {
-			slashFromUndelegation := SlashFromUndelegation(undelegation, newSlashProportion)
+			slashFromUndelegation, err := k.SlashFromUndelegation(ctx, undelegation, newSlashProportion)
+			if err != nil {
+				return err
+			}
 			if slashFromUndelegation != nil {
 				executionInfo.SlashUndelegations = append(executionInfo.SlashUndelegations, *slashFromUndelegation)
 				ctx.EventManager().EmitEvent(
@@ -123,6 +136,10 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	opFuncToIterateAssets := func(assetID string, state *assetstype.OperatorAssetInfo) error {
 		// iterate over each operator + asset and reduce the total amount by the slash amount
 		slashAmount := newSlashProportion.MulInt(state.TotalAmount).TruncateInt()
+		if !slashAmount.IsPositive() {
+			// do nothing if the slash amount isn't positive.
+			return nil
+		}
 		remainingAmount := state.TotalAmount.Sub(slashAmount)
 		// todo: consider slash all assets if the remaining amount is too small,
 		// which can avoid the unbalance between share and amount
@@ -150,7 +167,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		state.TotalAmount = remainingAmount
 		// TODO: check if pendingUndelegation also zero => delete this item, and this operator should be opted out if
 		// all assets falls to 0 since the miniself is not satisfied then.
-		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashFromAssetsPool{
+		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashAssetAmount{
 			AssetID: assetID,
 			Amount:  slashAmount,
 		})
@@ -168,6 +185,13 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 	if err != nil {
 		return nil, err
 	}
+
+	// slash the compounding rewards
+	slashFromUnclaimedRewards, err := k.distributionKeeper.SlashOperatorUnclaimedRewards(ctx, parameter.Operator.String(), stakingInfo.CompoundingUSDValueSources, newSlashProportion)
+	if err != nil {
+		return nil, err
+	}
+	executionInfo.SlashUnclaimedRewards = slashFromUnclaimedRewards
 	return executionInfo, nil
 }
 
@@ -231,7 +255,7 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 		}
 	}
 	k.hooks.AfterSlash(cc, parameter.Operator, executionInfo.SlashProportion, affectedAVSList,
-		executionInfo.SlashAssetsPool)
+		executionInfo.SlashAssetsPool, executionInfo.SlashUnclaimedRewards)
 
 	// store the slash information
 	height := ctx.BlockHeight()
@@ -264,7 +288,7 @@ func (k Keeper) SlashWithInfractionReason(
 		return sdkmath.ZeroInt()
 	}
 
-	chainID := avstypes.ChainIDWithoutRevision(ctx.ChainID())
+	chainID := utils.ChainIDWithoutRevision(ctx.ChainID())
 	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
 	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)
@@ -286,8 +310,9 @@ func (k Keeper) SlashWithInfractionReason(
 		k.Logger(ctx).Error("error when executing slash", "error", err, "avsAddr", avsAddr)
 		return sdkmath.ZeroInt()
 	}
-	// todo: The returned value should be the amount of burned IMUA if we considering a slash from the reward
-	// Now it doesn't slash from the reward, so just return 0
+	// The returned value should represent the amount of IMUA burned in the Cosmos SDK.
+	// In the IMUA chain implementation, we do not actually burn any slashed assets;
+	// instead, we lock these assets, which better supports the slashing veto mechanism.
 	return sdkmath.ZeroInt()
 }
 

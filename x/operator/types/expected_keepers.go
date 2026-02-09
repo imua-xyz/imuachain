@@ -97,7 +97,7 @@ type AVSKeeper interface {
 	// wish to retrieve. If the caller want to retrieve a historical assets info supported by
 	// Avs, it needs to generate a historical context through calling
 	// `ContextForHistoricalState` implemented in x/assets/types/general.go
-	GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) (map[string]struct{}, error)
+	GetAVSSupportedAssets(ctx sdk.Context, avsAddr string) ([]string, map[string]struct{}, error)
 	GetAVSSlashContract(ctx sdk.Context, avsAddr string) (string, error)
 	// GetChainIDByAVSAddr converts the hex AVS address to the chainID.
 	GetChainIDByAVSAddr(ctx sdk.Context, avsAddr string) (string, bool)
@@ -140,7 +140,7 @@ type OperatorHooks interface {
 	// AfterSlash This hook is called when an operator is slashed
 	AfterSlash(
 		ctx sdk.Context, addr sdk.AccAddress, slashProportion sdk.Dec, affectedAVSList []string,
-		slashAssetsPool []SlashFromAssetsPool,
+		slashAssetsPool []SlashAssetAmount, slashUnclaimedRewards []SlashFromUnclaimedRewards,
 	)
 	// AfterJail This hook is called when an operator is jailed
 	AfterJail(
@@ -154,4 +154,16 @@ type StakingKeeper interface {
 // EpochsKeeper represents the expected keeper interface for the epochs module.
 type EpochsKeeper interface {
 	GetEpochInfo(sdk.Context, string) (epochstypes.EpochInfo, bool)
+}
+
+// DistributionKeeper represents the expected keeper interface for the distribution module.
+type DistributionKeeper interface {
+	GetAVSRewardAssetIDByDenomination(ctx sdk.Context, avsAddr, symbol string) (assetID string, err error)
+	SlashRewardUndelegation(ctx sdk.Context, record *delegationtype.UndelegationRecord, slashProportion sdkmath.LegacyDec) error
+	UpdateAllRewardsUSDForOperator(ctx sdk.Context, receivingAVS, operator string, assetsMap map[string]struct{}) (sdkmath.LegacyDec, error)
+	OperatorTotalRewardsUSDValue(ctx sdk.Context, operator string) (map[string]map[string]struct{}, sdkmath.LegacyDec, error)
+	SlashOperatorUnclaimedRewards(
+		ctx sdk.Context, operator string,
+		slashSources map[string]map[string]struct{},
+		slashProportion sdkmath.LegacyDec) ([]SlashFromUnclaimedRewards, error)
 }

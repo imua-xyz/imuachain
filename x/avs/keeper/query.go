@@ -4,6 +4,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/imua-xyz/imuachain/utils"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -35,7 +37,7 @@ func (k Keeper) QueryAVSAddressByChainID(ctx context.Context, req *types.QueryAV
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	c := sdk.UnwrapSDKContext(ctx)
-	isChainAvs, avsAddr := k.IsAVSByChainID(c, types.ChainIDWithoutRevision(req.Chain))
+	isChainAvs, avsAddr := k.IsAVSByChainID(c, utils.ChainIDWithoutRevision(req.Chain))
 	if !isChainAvs {
 		return nil, types.ErrNotYetRegistered
 	}

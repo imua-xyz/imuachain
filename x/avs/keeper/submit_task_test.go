@@ -77,7 +77,7 @@ func (suite *AVSTestSuite) prepareDelegation(isDelegation bool, assetAddr common
 	}
 	var err error
 	if isDelegation {
-		err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
+		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, param)
 	} else {
 		err = suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, param)
 	}

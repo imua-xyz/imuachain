@@ -64,6 +64,7 @@ func GetQueryCmd() *cobra.Command {
 		GetAllOperatorKeys(),
 		GetAllOperatorConsAddrs(),
 		QueryOperatorUSDValue(),
+		QueryRewardsUSDValues(),
 		QueryOperatorAssetUSDValue(),
 		QueryAVSUSDValue(),
 		QueryOperatorSlashInfo(),
@@ -299,6 +300,33 @@ func QueryOperatorUSDValue() *cobra.Command {
 				return err
 			}
 			res, err := genericQueryParams.queryClient.QueryOperatorUSDValue(context.Background(), &operatortypes.QueryOperatorUSDValueRequest{
+				OperatorAVSAddress: validOperatorAVSAddr,
+			})
+			if err != nil {
+				return err
+			}
+			return genericQueryParams.clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// QueryRewardsUSDValues queries the rewards USD values for the specific operator and AVS
+func QueryRewardsUSDValues() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "rewards-usd-values <operatorAddr> <avsAddr>",
+		Short:   "Get the rewards USD values",
+		Long:    "Get the rewards USD values for the operator and AVS",
+		Example: fmt.Sprintf("%s query operator rewards-usd-values im18cggcpvwspnd5c6ny8wrqxpffj5zmhkl3agtrj 0xaa089ba103f765fcea44808bd3d4073523254c57", version.AppName),
+		Args:    cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			validOperatorAVSAddr, genericQueryParams, err := ValidOperatorAVSAddr(cmd, args[0], args[1])
+			if err != nil {
+				return err
+			}
+			res, err := genericQueryParams.queryClient.QueryRewardsUSDValue(context.Background(), &operatortypes.QueryRewardsUSDValueRequest{
 				OperatorAVSAddress: validOperatorAVSAddr,
 			})
 			if err != nil {

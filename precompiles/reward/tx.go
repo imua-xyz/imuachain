@@ -24,6 +24,7 @@ const (
 	MethodClaimReward                 = "claimReward"
 	MethodWithdrawReward              = "withdrawReward"
 	MethodWithdrawIMUATokenReward     = "withdrawIMUATokenReward"
+	MethodSetStakerRewardParams       = "setStakerRewardParams"
 	MethodWithdrawCommission          = "withdrawCommission"
 	MethodWithdrawIMUATokenCommission = "withdrawIMUATokenCommission"
 
@@ -35,6 +36,7 @@ const (
 	MethodSetOperatorRewardProportions = "setOperatorRewardProportions"
 	MethodSetAVSRewardParams           = "setAVSRewardParams"
 	MethodFundAVSReward                = "fundAVSReward"
+	MethodUndelegateReward             = "undelegateReward"
 )
 
 func addressToID(ctx sdk.Context, assetKeeper assetskeeper.Keeper, chainLzID uint32, address []byte) ([]byte, string, error) {
@@ -57,7 +59,8 @@ func packErrorOutput(method *abi.Method) ([]byte, error) {
 	case MethodClaimReward, MethodRegisterRewardToken,
 		MethodUpdateRewardToken, MethodSetAVSRewardDistribution,
 		MethodSetAVSEpochReward, MethodSetOperatorRewardProportions,
-		MethodSetAVSRewardParams, MethodFundAVSReward:
+		MethodSetAVSRewardParams, MethodFundAVSReward,
+		MethodSetStakerRewardParams, MethodUndelegateReward:
 		return method.Outputs.Pack(false)
 	case MethodWithdrawReward, MethodWithdrawCommission:
 		return method.Outputs.Pack(false, new(big.Int))
@@ -115,10 +118,11 @@ func (p Precompile) WithdrawReward(
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
-	var withdrawRewardArgs WithdrawRewardArgs
-	if err := method.Inputs.Copy(&withdrawRewardArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgs struct: %s", err)
+	var wrapper WithdrawRewardArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgsWrapper struct: %s", err)
 	}
+	withdrawRewardArgs := wrapper.Params
 	if withdrawRewardArgs.OpAmount == nil || withdrawRewardArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawReward: invalid withdraw amount:%v", withdrawRewardArgs.OpAmount)
 	}
@@ -162,10 +166,11 @@ func (p Precompile) WithdrawIMUATokenReward(
 		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
 	}
 
-	var withdrawIMUATokenRewardArgs WithdrawIMUATokenRewardArgs
-	if err := method.Inputs.Copy(&withdrawIMUATokenRewardArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to WithdrawIMUATokenRewardArgs struct: %s", err)
+	var wrapper WithdrawIMUATokenRewardArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to WithdrawIMUATokenRewardArgsWrapper struct: %s", err)
 	}
+	withdrawIMUATokenRewardArgs := wrapper.Params
 	if withdrawIMUATokenRewardArgs.OpAmount == nil || withdrawIMUATokenRewardArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawIMUATokenReward: invalid withdraw amount:%v", withdrawIMUATokenRewardArgs.OpAmount)
 	}
@@ -196,6 +201,88 @@ func (p Precompile) WithdrawIMUATokenReward(
 	return method.Outputs.Pack(true, actualWithdrawAmount.BigInt(), withdrawAmountFromDogfood.BigInt())
 }
 
+func (p Precompile) SetStakerRewardParams(
+	ctx sdk.Context,
+	_ common.Address,
+	contract *vm.Contract,
+	_ vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
+	}
+	var setStakerRewardParamsArgs SetStakerRewardParamsArgs
+	if err := method.Inputs.Copy(&setStakerRewardParamsArgs, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to SetStakerRewardParamsArgs struct: %s", err)
+	}
+	_, stakerID, err := addressToID(ctx, p.assetsKeeper, setStakerRewardParamsArgs.ClientChainLzID,
+		setStakerRewardParamsArgs.StakerAddress)
+	if err != nil {
+		return nil, err
+	}
+	rewardParams := feedistributiontypes.StakerRewardParams{
+		RedelegateReward:       setStakerRewardParamsArgs.RedelegateReward,
+		RedelegateOperatorAddr: setStakerRewardParamsArgs.RedelegateOperator,
+	}
+	err = rewardParams.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("invalid staker reward parameters, stakerID:%s,err:%s", stakerID, err)
+	}
+	err = p.distributionKeeper.SetStakerRewardParams(ctx, stakerID, rewardParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set staker reward parameters, stakerID:%s,err:%s", stakerID, err)
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p Precompile) UndelegateReward(
+	ctx sdk.Context,
+	_ common.Address,
+	contract *vm.Contract,
+	_ vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	// check the invalidation of caller contract,the caller must be Imuachain LzApp contract
+	authorized, err := p.assetsKeeper.IsAuthorizedGateway(ctx, contract.CallerAddress)
+	if err != nil || !authorized {
+		return nil, fmt.Errorf(imuacmn.ErrContractCaller)
+	}
+	var wrapper UndelegateRewardArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to UndelegateRewardArgsWrapper struct: %s", err)
+	}
+	undelegateRewardArgs := wrapper.Params
+	if undelegateRewardArgs.OpAmount == nil || undelegateRewardArgs.OpAmount.Cmp(big.NewInt(0)) <= 0 {
+		return nil, fmt.Errorf("UndelegateReward: invalid undelegation amount:%v", undelegateRewardArgs.OpAmount)
+	}
+	_, stakerID, err := addressToID(ctx, p.assetsKeeper, undelegateRewardArgs.ClientChainLzID, undelegateRewardArgs.StakerAddress)
+	if err != nil {
+		return nil, err
+	}
+	_, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, undelegateRewardArgs.RewardAssetChainLzID, undelegateRewardArgs.AssetAddress)
+	if err != nil {
+		return nil, err
+	}
+	// the input operator address is cosmos accAddress type,so we need to check the length and decode it through Bench32
+	if len(undelegateRewardArgs.OperatorAddr) != assetstype.ImuachainOperatorAddrLength {
+		return nil, fmt.Errorf(imuacmn.ErrInputOperatorAddrLength, len(undelegateRewardArgs.OperatorAddr), assetstype.ImuachainOperatorAddrLength)
+	}
+	operatorAccAddr, err := sdk.AccAddressFromBech32(undelegateRewardArgs.OperatorAddr)
+	if err != nil {
+		return nil, fmt.Errorf("error occurred when parse acc address from Bech32,the addr is:%s, error:%s", undelegateRewardArgs.OperatorAddr, err.Error())
+	}
+	err = p.distributionKeeper.UndelegateClaimedRewards(ctx, stakerID, rewardAssetID, operatorAccAddr, undelegateRewardArgs.InstantUnbond, sdkmath.NewIntFromBigInt(undelegateRewardArgs.OpAmount))
+	if err != nil {
+		return nil, err
+	}
+	return method.Outputs.Pack(true)
+}
+
 func (p Precompile) WithdrawCommission(
 	ctx sdk.Context,
 	_ common.Address,
@@ -212,11 +299,12 @@ func (p Precompile) WithdrawCommission(
 
 	var withdrawCommissionArgs WithdrawCommissionArgs
 	if err := method.Inputs.Copy(&withdrawCommissionArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to WithdrawRewardArgs struct: %s", err)
+		return nil, fmt.Errorf("error while unpacking args to WithdrawCommissionArgs struct: %s", err)
 	}
 	if withdrawCommissionArgs.OpAmount == nil || withdrawCommissionArgs.OpAmount.Cmp(big.NewInt(0)) == -1 {
 		return nil, fmt.Errorf("WithdrawCommission: invalid withdraw amount:%v", withdrawCommissionArgs.OpAmount)
 	}
+	// the input operator address is EVM address type
 	if len(withdrawCommissionArgs.OperatorAddress) != common.AddressLength {
 		return nil, fmt.Errorf("invalid operator EVM address, length:%d,expectedLength:%d ",
 			len(withdrawCommissionArgs.OperatorAddress), common.AddressLength)
@@ -261,6 +349,7 @@ func (p Precompile) WithdrawIMUATokenCommission(
 		return nil, fmt.Errorf("WithdrawIMUATokenCommission: invalid withdraw amount:%v",
 			withdrawIMUATokenCommissionArgs.OpAmount)
 	}
+	// the input operator address is EVM address type
 	if len(withdrawIMUATokenCommissionArgs.OperatorAddress) != common.AddressLength {
 		return nil, fmt.Errorf("invalid operator EVM address, length:%d,expectedLength:%d ",
 			len(withdrawIMUATokenCommissionArgs.OperatorAddress), common.AddressLength)
@@ -292,15 +381,19 @@ func (p Precompile) RegisterRewardToken(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	var registerRewardTokenArgs RegisterRewardTokenArgs
-	if err := method.Inputs.Copy(&registerRewardTokenArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to RegisterRewardTokenArgs struct: %s", err)
+	var wrapper RegisterRewardTokenArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to RegisterRewardTokenArgsWrapper struct: %s", err)
 	}
+	registerRewardTokenArgs := wrapper.Params
 	avsAddr := strings.ToLower(contract.CallerAddress.String())
 	// check the input args
-	rewardAssetAddr, _, err := addressToID(ctx, p.assetsKeeper, registerRewardTokenArgs.ClientChainID, registerRewardTokenArgs.Token)
+	rewardAssetAddr, rewardAssetID, err := addressToID(ctx, p.assetsKeeper, registerRewardTokenArgs.ClientChainID, registerRewardTokenArgs.Token)
 	if err != nil {
 		return nil, err
+	}
+	if registerRewardTokenArgs.DenominationExponent > assetstype.MaxDecimal {
+		return nil, fmt.Errorf(imuacmn.ErrInvalidDenominationExponent, registerRewardTokenArgs.DenominationExponent, assetstype.MaxDecimal)
 	}
 	if registerRewardTokenArgs.Decimals > assetstype.MaxDecimal {
 		return nil, fmt.Errorf(imuacmn.ErrInvalidDecimal, registerRewardTokenArgs.Decimals, assetstype.MaxDecimal)
@@ -312,14 +405,30 @@ func (p Precompile) RegisterRewardToken(
 		return nil, fmt.Errorf(imuacmn.ErrInvalidMetaInfoLength, registerRewardTokenArgs.MetaData,
 			len(registerRewardTokenArgs.MetaData), assetstype.MaxChainTokenMetaInfoLength)
 	}
-	err = p.distributionKeeper.SetAVSRewardAssets(ctx, avsAddr, []assetstype.AssetInfo{
+	if p.assetsKeeper.IsStakingAsset(ctx, rewardAssetID) {
+		stakingAssetInfo, err := p.assetsKeeper.GetStakingAssetInfo(ctx, rewardAssetID)
+		if err != nil {
+			return nil, err
+		}
+
+		if stakingAssetInfo.AssetBasicInfo.Decimals != uint32(registerRewardTokenArgs.Decimals) ||
+			stakingAssetInfo.AssetBasicInfo.Name != registerRewardTokenArgs.Name ||
+			stakingAssetInfo.AssetBasicInfo.Symbol != registerRewardTokenArgs.Symbol {
+			return nil, fmt.Errorf(imuacmn.ErrAssetBasicInfoMismatch, registerRewardTokenArgs.Name, registerRewardTokenArgs.Symbol, registerRewardTokenArgs.Decimals)
+		}
+	}
+	err = p.distributionKeeper.SetAVSRewardAssets(ctx, avsAddr, []feedistributiontypes.AVSRewardAssetInfo{
 		{
-			Name:             registerRewardTokenArgs.Name,
-			Symbol:           registerRewardTokenArgs.Symbol,
-			Address:          hexutil.Encode(rewardAssetAddr),
-			Decimals:         uint32(registerRewardTokenArgs.Decimals),
-			LayerZeroChainID: uint64(registerRewardTokenArgs.ClientChainID),
-			MetaInfo:         registerRewardTokenArgs.MetaData,
+			AssetInfo: assetstype.AssetInfo{
+				Name:             registerRewardTokenArgs.Name,
+				Symbol:           registerRewardTokenArgs.Symbol,
+				Address:          hexutil.Encode(rewardAssetAddr),
+				Decimals:         uint32(registerRewardTokenArgs.Decimals),
+				LayerZeroChainID: uint64(registerRewardTokenArgs.ClientChainID),
+				MetaInfo:         registerRewardTokenArgs.MetaData,
+			},
+			RewardDenomination:   registerRewardTokenArgs.Denomination,
+			DenominationExponent: uint32(registerRewardTokenArgs.DenominationExponent),
 		},
 	})
 	if err != nil {
@@ -365,10 +474,11 @@ func (p Precompile) SetAVSRewardDistribution(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	var rewardDistributionInfoArgs AVSRewardDistributionInfoArgs
-	if err := method.Inputs.Copy(&rewardDistributionInfoArgs, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to AVSRewardDistributionInfoArgs struct: %s", err)
+	var wrapper AVSRewardDistributionInfoArgsWrapper
+	if err := method.Inputs.Copy(&wrapper, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to AVSRewardDistributionInfoArgsWrapper struct: %s", err)
 	}
+	rewardDistributionInfoArgs := wrapper.RewardDistribution
 	avsAddr := strings.ToLower(contract.CallerAddress.String())
 
 	protoRewardCoins, err := ABIRewardCoins(rewardDistributionInfoArgs.RewardCoins).ToProtoStruct(
@@ -495,12 +605,12 @@ func (p Precompile) FundAVSReward(
 		return nil, fmt.Errorf("can't fund the IMUA token for dogfood AVS,rewardAssetID:%s", rewardAssetID)
 	}
 	avsAddr := strings.ToLower(fundAVSRewardArgs.AVSAddress.String())
-	rewardAssetInfo, err := p.distributionKeeper.GetAVSRewardAssetInfo(ctx, avsAddr, rewardAssetID)
+	rewardAssetInfo, err := p.distributionKeeper.GetAVSRewardAsset(ctx, avsAddr, rewardAssetID)
 	if err != nil {
 		return nil, fmt.Errorf("can't find the reward asset for the input avs,rewardAssetID:%s,avs:%s", rewardAssetID, avsAddr)
 	}
 	fundAmountDec := feedistributiontypes.ScaleIntByDecimals(
-		sdkmath.NewIntFromBigInt(fundAVSRewardArgs.OpAmount), rewardAssetInfo.AssetBasicInfo.Decimals)
+		sdkmath.NewIntFromBigInt(fundAVSRewardArgs.OpAmount), rewardAssetInfo.RewardAssetInfo.DenominationExponent)
 	if !fundAmountDec.IsPositive() {
 		return nil, fmt.Errorf("FundAVSReward: invalid fund amount after converting to decimal:%s", fundAmountDec)
 	}

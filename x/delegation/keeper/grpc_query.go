@@ -34,14 +34,14 @@ func (k *Keeper) QuerySingleDelegationInfo(ctx context.Context, req *delegationt
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operator address,err:%v", err)
 	}
-	delegationInfo, delegatedAmount, err := k.GetDelegationInfoWithAmount(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.OperatorAddr)
+	delegationInfo, stakingAssetAmount, _, err := k.GetDelegationInfoWithAmounts(c, strings.ToLower(req.StakerId), strings.ToLower(req.AssetId), req.OperatorAddr)
 	if err != nil {
 		return nil, err
 	}
 	return &delegationtype.SingleDelegationInfoResponse{
 		SingleDelegationInfo: &delegationtype.SingleDelegationInfo{
 			DelegationAmounts:      delegationInfo,
-			MaxUndelegatableAmount: delegatedAmount,
+			MaxUndelegatableAmount: stakingAssetAmount,
 		},
 	}, nil
 }
@@ -165,7 +165,7 @@ func (k Keeper) QueryDelegatedStakersByOperator(ctx context.Context, req *delega
 	}
 	keyPrefix := utils.AppendMany(
 		delegationtype.KeyPrefixStakersByOperator,
-		assetstype.GetJoinedStoreKeyForPrefix(req.Operator, strings.ToLower(req.AssetId)),
+		utils.GetJoinedStoreKeyForPrefix(req.Operator, strings.ToLower(req.AssetId)),
 	)
 	// prefix.NewStore returns keys stripped of the prefix.
 	// sdk.KVStorePrefixIterator returns keys with the prefix.

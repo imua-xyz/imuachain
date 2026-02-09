@@ -128,6 +128,21 @@ func (msgServer *MsgServerImpl) EditOperator(
 	return &types.EditOperatorResponse{}, nil
 }
 
+// UpdateRewardCompoundingFlag is an implementation of the msg server for the operator module.
+func (msgServer *MsgServerImpl) UpdateRewardCompoundingFlag(
+	goCtx context.Context, req *types.UpdateRewardCompoundingFlagReq,
+) (*types.UpdateRewardCompoundingFlagResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	accAddr, err := sdk.AccAddressFromBech32(req.Address)
+	if err != nil {
+		return nil, err
+	}
+	if err := msgServer.keeper.UpdateRewardCompoundingFlag(ctx, accAddr, req.DisableCompoundRewards); err != nil {
+		return nil, err
+	}
+	return &types.UpdateRewardCompoundingFlagResponse{}, nil
+}
+
 // UpdateParams is an implementation of the msg server for the operator module.
 func (msgServer *MsgServerImpl) UpdateParams(
 	goCtx context.Context, req *types.MsgUpdateParams,

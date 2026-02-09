@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"cosmossdk.io/math"
+	"github.com/imua-xyz/imuachain/utils"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
-	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	"github.com/imua-xyz/imuachain/x/feedistribution/keeper"
 	feedistributiontypes "github.com/imua-xyz/imuachain/x/feedistribution/types"
@@ -19,17 +18,22 @@ import (
 func (suite *KeeperTestSuite) registerRewardAssets(avsList []common.Address) {
 	// register reward assets for the test AVSs
 	for i, avs := range avsList {
-		rewardAssets := make([]assetstype.AssetInfo, 0)
+		rewardAssets := make([]feedistributiontypes.AVSRewardAssetInfo, 0)
 		for j := 0; j < RewardAssetNumberPerAVS; j++ {
 			addr, _ := testutiltx.NewAddrKey()
 			assetName := fmt.Sprintf("avs%dRewardAsset%d", i, j)
 			assetSymbol := fmt.Sprintf("avs%dsymbol%d", i, j)
-			rewardAssets = append(rewardAssets, assetstype.AssetInfo{
-				Name:             assetName,
-				Symbol:           assetSymbol,
-				Address:          strings.ToLower(addr.String()),
-				Decimals:         6,
-				LayerZeroChainID: suite.ClientChains[0].LayerZeroChainID,
+			assetDenomination := fmt.Sprintf("avs%ddenomination%d", i, j)
+			rewardAssets = append(rewardAssets, feedistributiontypes.AVSRewardAssetInfo{
+				AssetInfo: assetstype.AssetInfo{
+					Name:             assetName,
+					Symbol:           assetSymbol,
+					Address:          strings.ToLower(addr.String()),
+					Decimals:         6,
+					LayerZeroChainID: suite.ClientChains[0].LayerZeroChainID,
+				},
+				RewardDenomination:   assetDenomination,
+				DenominationExponent: 6,
 			})
 		}
 
@@ -61,7 +65,7 @@ func (suite *KeeperTestSuite) mintDogfoodTestReward() {
 }
 
 func (suite *KeeperTestSuite) TestSetAVSRewardParam() {
-	suite.prepareTestBase(1, 1, 1)
+	suite.prepareTestBase(1, 1, 1, true)
 	suite.setRewardParams(suite.testAVSs)
 
 	// Verify the parameters were set correctly
@@ -109,11 +113,9 @@ func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {
 
 				epochRewards := make(sdk.DecCoins, 0)
 				for _, rewardAsset := range avsRewardAsset.AvsRewardAssets {
-					multiplier := math.NewIntWithDecimal(1, int(rewardAsset.AssetBasicInfo.Decimals)) // 10^decimals
-					rewardAmount := sdk.NewDec(1).MulInt(multiplier)
 					epochRewards = append(epochRewards, sdk.DecCoin{
-						Denom:  rewardAsset.AssetBasicInfo.Symbol,
-						Amount: rewardAmount,
+						Denom:  rewardAsset.RewardAssetInfo.RewardDenomination,
+						Amount: sdk.OneDec(),
 					})
 				}
 				return epochRewards
@@ -137,7 +139,7 @@ func (suite *KeeperTestSuite) TestSetAVSEpochRewardExclusive() {
 		tc := tc
 		s.Run(tc.name, func() {
 			s.SetupTest() // Reset state for each test case
-			s.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+			s.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 
 			rewards := tc.malleate()
 			testAvs := strings.ToLower(suite.testAVSs[0].String())
@@ -175,7 +177,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "fail - the reward parameter hasn't been configured",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				return strings.ToLower(suite.testAVSs[0].String())
 			},
 			isDogfood:   false,
@@ -186,7 +188,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "fail - the reward distribution info hasn't been configured",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -200,7 +202,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "fail - the AVS USD value hasn't been updated because it hasn't run to the end of the epoch.",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -216,7 +218,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "pass - the avs reward distribution should be fetched correctly, but the operator reward proportions should be null because null epoch rewards are configured",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -237,7 +239,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "pass - the AVS reward distribution should be fetched correctly. The reward proportion of each test operator should be 0.5 because there are 2 test operators with the same deposits and delegations.",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// set reward parameter
 				suite.setRewardParams(suite.testAVSs)
 				suite.registerRewardAssets(suite.testAVSs)
@@ -262,7 +264,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 		{
 			name: "pass - the dogfood AVS reward distribution should be fetched correctly.",
 			malleate: func() string {
-				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber)
+				suite.prepareTestBase(testStakerNumber, testOperatorNumber, testAVSNumber, true)
 				// run to the end of epoch
 				suite.RunToEpochEnd(dogfoodtypes.DefaultEpochIdentifier)
 				suite.mintDogfoodTestReward()
@@ -295,7 +297,7 @@ func (suite *KeeperTestSuite) TestAVSRewardDistributionByParam() {
 				// test case: [4,5,6,7,8,9,10] are the block numbers of the current epoch.
 				// The operator is jailed at block 5 and unjailed at block 9,
 				// so the jailed blocks are (5,9] = [6,7,8,9], which makes the total jailed block count 4.
-				chainIDWithoutRevision := avstypes.ChainIDWithoutRevision(suite.Ctx.ChainID())
+				chainIDWithoutRevision := utils.ChainIDWithoutRevision(suite.Ctx.ChainID())
 				found, consensusKey, err := suite.App.OperatorKeeper.GetOperatorConsKeyForChainID(suite.Ctx, suite.Operators[0], chainIDWithoutRevision)
 				suite.NoError(err)
 				suite.True(found)
