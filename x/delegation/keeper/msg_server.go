@@ -37,13 +37,7 @@ func (k *Keeper) DelegateAssetToOperator(
 	// No need for CacheContext here because the transaction execution itself is already wrapped
 	// in a cache context at the BaseApp level. If any message fails, the entire transaction will roll back.
 	for _, delegationParams := range delegationParamsList {
-<<<<<<< HEAD
-		if _, _, err := k.DelegateTo(cachedCtx, delegationParams); err != nil {
-||||||| parent of 680a4af9 (check nil value to avoid panic)
-		if err := k.DelegateTo(cachedCtx, delegationParams); err != nil {
-=======
-		if err := k.DelegateTo(ctx, delegationParams); err != nil {
->>>>>>> 680a4af9 (check nil value to avoid panic)
+		if _, _, err := k.DelegateTo(ctx, delegationParams); err != nil {
 			logger.Error(
 				"failed to delegate asset",
 				"error", err,
