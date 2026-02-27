@@ -387,8 +387,8 @@ func (k Keeper) ResetAccumulatedPrice(ctx sdk.Context, tokenID uint64) {
 		return
 	}
 	accPrice := types.PriceAcc{
-		LastRoundID:  latestPrice.RoundID,
-		StartRoundID: latestPrice.RoundID - 1,
+		StartRoundID: latestPrice.RoundID,
+		LastRoundID:  latestPrice.RoundID - 1,
 		Price:        "0",
 		Decimal:      latestPrice.Decimal,
 	}
