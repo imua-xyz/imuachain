@@ -409,6 +409,9 @@ func (k *Keeper) IteratePendingUndelegations(
 func (k *Keeper) GetUndelegationHoldCount(ctx sdk.Context, recordKey []byte) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	bz := store.Get(types.GetUndelegationOnHoldKey(recordKey))
+	if bz == nil {
+		return 0 // No hold count stored yet
+	}
 	return sdk.BigEndianToUint64(bz)
 }
 
