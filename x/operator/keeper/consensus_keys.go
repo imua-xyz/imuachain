@@ -333,21 +333,30 @@ func (k Keeper) CompleteOperatorKeyRemovalForChainID(
 	if !k.IsOperatorRemovingKeyFromChainID(ctx, opAccAddr, chainID) {
 		return types.ErrOperatorNotRemovingKey
 	}
+	attrs := []sdk.Attribute{
+		sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
+		sdk.NewAttribute(types.AttributeKeyChainID, chainID),
+	}
 	store := ctx.KVStore(k.storeKey)
 	// get previous key to calculate consensus address
-	_, prevKey := k.getOperatorConsKeyForChainID(ctx, opAccAddr, chainID)
-	consAddr := prevKey.ToConsAddr()
+	// if the system is consistent, it will always exist
+	// we still guard against it just in case
+	found, prevKey := k.getOperatorConsKeyForChainID(ctx, opAccAddr, chainID)
+	if found {
+		consAddr := prevKey.ToConsAddr()
+		store.Delete(types.KeyForChainIDAndConsKeyToOperator(chainID, consAddr))
+		attrs = append(attrs,
+			sdk.NewAttribute(types.AttributeKeyConsensusAddress, prevKey.ToConsAddr().String()),
+			sdk.NewAttribute(types.AttributeKeyConsKeyHex, prevKey.ToHex()),
+		)
+	}
 	store.Delete(types.KeyForOperatorAndChainIDToConsKey(opAccAddr, chainID))
 	store.Delete(types.KeyForChainIDAndOperatorToConsKey(chainID, opAccAddr))
-	store.Delete(types.KeyForChainIDAndConsKeyToOperator(chainID, consAddr))
 	store.Delete(types.KeyForOperatorKeyRemovalForChainID(opAccAddr, chainID))
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeEndRemoveConsKey,
-			sdk.NewAttribute(types.AttributeKeyOperator, opAccAddr.String()),
-			sdk.NewAttribute(types.AttributeKeyChainID, chainID),
-			sdk.NewAttribute(types.AttributeKeyConsensusAddress, prevKey.ToConsAddr().String()),
-			sdk.NewAttribute(types.AttributeKeyConsKeyHex, prevKey.ToHex()),
+			attrs...,
 		),
 	)
 	return nil
