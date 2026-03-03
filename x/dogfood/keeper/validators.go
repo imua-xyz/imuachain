@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -23,7 +24,11 @@ import (
 func (k Keeper) UnbondingTime(ctx sdk.Context) time.Duration {
 	params := k.GetDogfoodParams(ctx)
 	// no need to check for found, as the epoch info is validated at genesis.
-	epoch, _ := k.epochsKeeper.GetEpochInfo(ctx, params.EpochIdentifier)
+	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, params.EpochIdentifier)
+	if !found {
+		// as before, this existence is checked at genesis and cannot be altered.
+		panic(fmt.Sprintf("epoch %s not found", params.EpochIdentifier))
+	}
 	durationPerEpoch := epoch.Duration
 	// the extra 1 is added to account for the current epoch. this is,
 	// therefore, the maximum time it takes for unbonding. if the tx
@@ -65,13 +70,13 @@ func (k Keeper) ApplyValidatorChanges(
 				val.Power = change.Power
 				// guard for errors within the hooks.
 				cc, writeFunc := ctx.CacheContext()
-				k.SetImuachainValidator(ctx, val)
+				k.SetImuachainValidator(cc, val)
 				// sdk slashing.AfterValidatorCreated stores the lookup from cons address to
 				// cons pub key. it loads the validator from `valAddr` (operator address)
 				// via stakingkeeeper.Validator(ctx, valAddr)
 				// then it fetches the cons pub key from said validator to generate the lookup
 				found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-					ctx, utils.ChainIDWithoutRevision(ctx.ChainID()), addr,
+					cc, utils.ChainIDWithoutRevision(cc.ChainID()), addr,
 				)
 				if !found {
 					// should never happen

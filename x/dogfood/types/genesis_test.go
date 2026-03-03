@@ -6,10 +6,8 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
-	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 	"github.com/imua-xyz/imuachain/x/dogfood/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -29,14 +27,6 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 	sharedKey := hexutil.Encode(ed25519.GenPrivKey().PubKey().Bytes())
 	operator1 := sdk.AccAddress(testutiltx.GenerateAddress().Bytes())
 	consAddr1 := sdk.ConsAddress(operator1)
-	recordKey := hexutil.Encode(
-		delegationtypes.GetUndelegationRecordKey(
-			1000, // block height
-			1,    // layer zero nonce
-			common.BytesToHash([]byte("tx hash")).Hex(),
-			operator1.String(),
-		),
-	)
 	params := types.DefaultParams()
 	params.AssetIDs = []string{"0x0b34c4d876cd569129cf56bafabb3f9e97a4ff42_0x9ce1"}
 	testCases := []struct {
@@ -70,7 +60,6 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 				params, []types.GenesisValidator{},
 				[]types.EpochToOperatorAddrs{},
 				[]types.EpochToConsensusAddrs{},
-				[]types.EpochToUndelegationRecordKeys{},
 				math.ZeroInt(),
 			),
 			expPass:  false, // 0 voting power isn't permitted
@@ -479,170 +468,6 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			},
 			expPass:  false,
 			expError: "invalid consensus address",
-		},
-		{
-			name: "duplicate epoch in undelegations",
-			genState: &types.GenesisState{
-				Params: params,
-				ValSet: []types.GenesisValidator{
-					{
-						PublicKey: sharedKey,
-						Power:     5,
-					},
-				},
-				LastTotalPower: math.NewInt(5),
-				UndelegationMaturities: []types.EpochToUndelegationRecordKeys{
-					{
-						Epoch: 2,
-						UndelegationRecordKeys: []string{
-							recordKey,
-						},
-					},
-					{
-						Epoch: 2,
-						UndelegationRecordKeys: []string{
-							recordKey,
-						},
-					},
-				},
-			},
-			expPass:  false,
-			expError: "duplicate epoch",
-		},
-		{
-			name: "epoch 1 for undelegations",
-			genState: &types.GenesisState{
-				Params: params,
-				ValSet: []types.GenesisValidator{
-					{
-						PublicKey: sharedKey,
-						Power:     5,
-					},
-				},
-				LastTotalPower: math.NewInt(5),
-				UndelegationMaturities: []types.EpochToUndelegationRecordKeys{
-					{
-						Epoch: 1,
-						UndelegationRecordKeys: []string{
-							recordKey,
-						},
-					},
-				},
-			},
-			expPass:  false,
-			expError: "should be > 1",
-		},
-		{
-			name: "empty record keys for undelegations",
-			genState: &types.GenesisState{
-				Params: params,
-				ValSet: []types.GenesisValidator{
-					{
-						PublicKey: sharedKey,
-						Power:     5,
-					},
-				},
-				LastTotalPower: math.NewInt(5),
-				UndelegationMaturities: []types.EpochToUndelegationRecordKeys{
-					{
-						Epoch: 2,
-					},
-				},
-			},
-			expPass:  false,
-			expError: "empty record keys for epoch",
-		},
-		{
-			name: "duplicate undelegation record keys",
-			genState: &types.GenesisState{
-				Params: params,
-				ValSet: []types.GenesisValidator{
-					{
-						PublicKey: sharedKey,
-						Power:     5,
-					},
-				},
-				LastTotalPower: math.NewInt(5),
-				UndelegationMaturities: []types.EpochToUndelegationRecordKeys{
-					{
-						Epoch: 2,
-						UndelegationRecordKeys: []string{
-							recordKey,
-							recordKey,
-						},
-					},
-				},
-			},
-			expPass:  false,
-			expError: "duplicate record key",
-		},
-		{
-			name: "valid with undelegation record key",
-			genState: &types.GenesisState{
-				Params: params,
-				ValSet: []types.GenesisValidator{
-					{
-						PublicKey: sharedKey,
-						Power:     5,
-					},
-				},
-				LastTotalPower: math.NewInt(5),
-				UndelegationMaturities: []types.EpochToUndelegationRecordKeys{
-					{
-						Epoch: 2,
-						UndelegationRecordKeys: []string{
-							recordKey,
-						},
-					},
-				},
-			},
-			expPass: true,
-		},
-		{
-			name: "undelegation record key: not hex",
-			genState: &types.GenesisState{
-				Params: params,
-				ValSet: []types.GenesisValidator{
-					{
-						PublicKey: sharedKey,
-						Power:     5,
-					},
-				},
-				LastTotalPower: math.NewInt(5),
-				UndelegationMaturities: []types.EpochToUndelegationRecordKeys{
-					{
-						Epoch: 2,
-						UndelegationRecordKeys: []string{
-							"not hex",
-						},
-					},
-				},
-			},
-			expPass:  false,
-			expError: "invalid record key (non hex)",
-		},
-		{
-			name: "undelegation record key: can't parse",
-			genState: &types.GenesisState{
-				Params: params,
-				ValSet: []types.GenesisValidator{
-					{
-						PublicKey: sharedKey,
-						Power:     5,
-					},
-				},
-				LastTotalPower: math.NewInt(5),
-				UndelegationMaturities: []types.EpochToUndelegationRecordKeys{
-					{
-						Epoch: 2,
-						UndelegationRecordKeys: []string{
-							"0x1234",
-						},
-					},
-				},
-			},
-			expPass:  false,
-			expError: "invalid record key (parse)",
 		},
 	}
 

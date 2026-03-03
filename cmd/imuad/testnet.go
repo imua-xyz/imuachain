@@ -453,7 +453,6 @@ func getTestImuachainGenesis(
 			validators,
 			[]dogfoodtypes.EpochToOperatorAddrs{},
 			[]dogfoodtypes.EpochToConsensusAddrs{},
-			[]dogfoodtypes.EpochToUndelegationRecordKeys{},
 			totalPower,
 		)
 }

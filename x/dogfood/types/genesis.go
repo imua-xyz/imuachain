@@ -4,9 +4,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
-	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 )
 
 // NewGenesis creates a new genesis state with the provided parameters and
@@ -16,16 +14,14 @@ func NewGenesis(
 	vals []GenesisValidator,
 	expiries []EpochToOperatorAddrs,
 	consAddrs []EpochToConsensusAddrs,
-	recordKeys []EpochToUndelegationRecordKeys,
 	power math.Int,
 ) *GenesisState {
 	return &GenesisState{
-		Params:                 params,
-		ValSet:                 vals,
-		OptOutExpiries:         expiries,
-		ConsensusAddrsToPrune:  consAddrs,
-		UndelegationMaturities: recordKeys,
-		LastTotalPower:         power,
+		Params:                params,
+		ValSet:                vals,
+		OptOutExpiries:        expiries,
+		ConsensusAddrsToPrune: consAddrs,
+		LastTotalPower:        power,
 	}
 }
 
@@ -36,7 +32,6 @@ func DefaultGenesis() *GenesisState {
 		[]GenesisValidator{},
 		[]EpochToOperatorAddrs{},
 		[]EpochToConsensusAddrs{},
-		[]EpochToUndelegationRecordKeys{},
 		math.ZeroInt(),
 	)
 }
@@ -188,54 +183,6 @@ func (gs GenesisState) Validate() error {
 				)
 			}
 			addrsMap[addr] = struct{}{}
-		}
-	}
-
-	epochs = make(map[int64]struct{}, len(gs.UndelegationMaturities))
-	recordKeysMap := make(map[string]struct{})
-	for _, obj := range gs.UndelegationMaturities {
-		epoch := obj.Epoch
-		if _, ok := epochs[epoch]; ok {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"duplicate epoch %d", epoch,
-			)
-		}
-		if epoch <= 1 {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"epoch %d should be > 1", epoch,
-			)
-		}
-		epochs[epoch] = struct{}{}
-		recordKeys := obj.UndelegationRecordKeys
-		if len(recordKeys) == 0 {
-			return errorsmod.Wrapf(
-				ErrInvalidGenesisData,
-				"empty record keys for epoch %d", epoch,
-			)
-		}
-		for _, recordKey := range recordKeys {
-			if _, ok := recordKeysMap[recordKey]; ok {
-				return errorsmod.Wrapf(
-					ErrInvalidGenesisData,
-					"duplicate record key %s", recordKey,
-				)
-			}
-			if recordBytes, err := hexutil.Decode(recordKey); err != nil {
-				return errorsmod.Wrapf(
-					ErrInvalidGenesisData,
-					"invalid record key (non hex) %s: %s",
-					recordKey, err,
-				)
-			} else if _, err := delegationtypes.ParseUndelegationRecordKey(recordBytes); err != nil {
-				return errorsmod.Wrapf(
-					ErrInvalidGenesisData,
-					"invalid record key (parse) %s: %s",
-					recordKey, err,
-				)
-			}
-			recordKeysMap[recordKey] = struct{}{}
 		}
 	}
 
