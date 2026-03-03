@@ -32,7 +32,7 @@ func (k Keeper) AllUndelegations(ctx sdk.Context) (undelegations []types.Undeleg
 		k.cdc.MustUnmarshal(iterator.Value(), &undelegation)
 		holdCount := k.GetUndelegationHoldCount(ctx, iterator.Key())
 		ret = append(ret, types.UndelegationAndHoldCount{
-			Undelegation: &undelegation,
+			Undelegation: undelegation,
 			HoldCount:    holdCount,
 		})
 	}
@@ -53,7 +53,7 @@ func (k *Keeper) SetUndelegationRecords(ctx sdk.Context, isGenesis bool, records
 	store := ctx.KVStore(k.storeKey)
 
 	for i := range records {
-		undelegation := records[i].Undelegation
+		undelegation := &records[i].Undelegation
 		if undelegation.CompletedEpochIdentifier != epochtypes.NullEpochIdentifier {
 			epochInfo, exist := k.epochsKeeper.GetEpochInfo(ctx, undelegation.CompletedEpochIdentifier)
 			if !exist {
@@ -119,9 +119,9 @@ func (k *Keeper) DeleteUndelegationRecord(ctx sdk.Context, record *types.Undeleg
 }
 
 // GetUndelegationRecords returns the undelegation records for the provided record keys.
-func (k *Keeper) GetUndelegationRecords(ctx sdk.Context, singleRecordKeys [][]byte) (record []*types.UndelegationAndHoldCount, err error) {
+func (k *Keeper) GetUndelegationRecords(ctx sdk.Context, singleRecordKeys [][]byte) (record []types.UndelegationAndHoldCount, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixUndelegationInfo)
-	ret := make([]*types.UndelegationAndHoldCount, 0)
+	ret := make([]types.UndelegationAndHoldCount, 0)
 	for _, singleRecordKey := range singleRecordKeys {
 		value := store.Get(singleRecordKey)
 		if value == nil {
@@ -130,8 +130,8 @@ func (k *Keeper) GetUndelegationRecords(ctx sdk.Context, singleRecordKeys [][]by
 		undelegationRecord := types.UndelegationRecord{}
 		k.cdc.MustUnmarshal(value, &undelegationRecord)
 		holdCount := k.GetUndelegationHoldCount(ctx, singleRecordKey)
-		ret = append(ret, &types.UndelegationAndHoldCount{
-			Undelegation: &undelegationRecord,
+		ret = append(ret, types.UndelegationAndHoldCount{
+			Undelegation: undelegationRecord,
 			HoldCount:    holdCount,
 		})
 	}
@@ -212,7 +212,7 @@ func (k *Keeper) GetUndelegationRecKey(ctx sdk.Context, stakerID, assetID string
 }
 
 // GetStakerUndelegationRecords returns the undelegation records for the provided staker and asset.
-func (k *Keeper) GetStakerUndelegationRecords(ctx sdk.Context, stakerID, assetID string) (records []*types.UndelegationAndHoldCount, err error) {
+func (k *Keeper) GetStakerUndelegationRecords(ctx sdk.Context, stakerID, assetID string) (records []types.UndelegationAndHoldCount, err error) {
 	recordKeys, err := k.GetStakerUndelegationRecKeys(ctx, stakerID, assetID)
 	if err != nil {
 		return nil, err
@@ -276,12 +276,12 @@ func (k *Keeper) IterateUndelegationsByStakerAndAsset(
 
 // GetUnCompletableUndelegations retrieves all pending undelegations(ignoring max_undelegation_completions)
 // This includes unexpired entries as well as expired ones that are currently blocked by other processes.
-func (k *Keeper) GetUnCompletableUndelegations(ctx sdk.Context, epochIdentifier string, epochNumber int64) ([]*types.UndelegationAndHoldCount, error) {
-	records := make([]*types.UndelegationAndHoldCount, 0)
+func (k *Keeper) GetUnCompletableUndelegations(ctx sdk.Context, epochIdentifier string, epochNumber int64) ([]types.UndelegationAndHoldCount, error) {
+	records := make([]types.UndelegationAndHoldCount, 0)
 	expiredUndelegationOpFunc := func(recordKey []byte, record *types.UndelegationRecord) (bool, error) {
 		holdCount := k.GetUndelegationHoldCount(ctx, recordKey)
-		records = append(records, &types.UndelegationAndHoldCount{
-			Undelegation: record,
+		records = append(records, types.UndelegationAndHoldCount{
+			Undelegation: *record,
 			HoldCount:    holdCount,
 		})
 		return false, nil
@@ -316,12 +316,12 @@ func (k *Keeper) GetCompletableUndelegations(ctx sdk.Context, applyLimit bool) (
 	if err != nil {
 		return nil, err
 	}
-	if applyLimit && limit != 0 && uint32(len(records)) >= limit {
-		return records, nil
-	}
 	// iterate all pending undelegations across multiple epochs.
 	allEpochs := k.epochsKeeper.AllEpochInfos(ctx)
 	for _, epochInfo := range allEpochs {
+		if applyLimit && limit != 0 && uint32(len(records)) >= limit {
+			break
+		}
 		err := k.IteratePendingUndelegations(ctx, true, epochInfo.Identifier, epochInfo.CurrentEpoch, expiredUndelegationOpFunc)
 		if err != nil {
 			return nil, err

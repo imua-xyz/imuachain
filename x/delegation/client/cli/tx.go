@@ -36,8 +36,12 @@ func NewTxCmd() *cobra.Command {
 func CmdUpdateParams() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update-params <instant-undelegation-penalty> <max-undelegation-completions>",
-		Short: "update the parameters of the module",
-		Args:  cobra.ExactArgs(2),
+		Short: "update the parameters of the delegation module",
+		Long: `Update module parameters (governance authority only).
+Arguments:
+  - instant-undelegation-penalty: penalty (in basis points) for instant undelegation
+  - max-undelegation-completions: max undelegations completed per block (0 = no limit)`,
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

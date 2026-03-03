@@ -355,11 +355,11 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		CompletedEpochNumber:     epochtypes.NullEpochNumber,
 		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
-	suite.Equal(UndelegationRecord, records[0].Undelegation)
+	suite.Equal(*UndelegationRecord, records[0].Undelegation)
 	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
 	suite.NoError(err)
 	suite.Equal(1, len(waitUndelegationRecords))
-	suite.Equal(UndelegationRecord, waitUndelegationRecords[0].Undelegation)
+	suite.Equal(*UndelegationRecord, waitUndelegationRecords[0].Undelegation)
 
 	// undelegate imua-native-token
 	delegationEvent = suite.prepareDelegationNativeToken()
@@ -415,12 +415,12 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		UndelegationId:           initialUndelegationID + 1,
 		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
-	suite.Equal(UndelegationRecord, records[0].Undelegation)
+	suite.Equal(*UndelegationRecord, records[0].Undelegation)
 
 	waitUndelegationRecords, err = suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
 	suite.NoError(err)
 	suite.Equal(2, len(waitUndelegationRecords))
-	suite.Equal(UndelegationRecord, waitUndelegationRecords[1].Undelegation)
+	suite.Equal(*UndelegationRecord, waitUndelegationRecords[1].Undelegation)
 }
 
 func (suite *DelegationTestSuite) TestCompleteUndelegation() {
@@ -675,7 +675,7 @@ func (suite *DelegationTestSuite) TestInstantUndelegation() {
 	penaltyAmount := delegationEvent.OpAmount.Mul(sdk.NewInt(int64(penalty))).Quo(sdk.NewInt(100))
 	UndelegationRecord.ActualCompletedAmount = delegationEvent.OpAmount.Sub(penaltyAmount)
 	UndelegationRecord.InstantPenaltyAmount = penaltyAmount
-	suite.Equal(UndelegationRecord, records[0].Undelegation)
+	suite.Equal(*UndelegationRecord, records[0].Undelegation)
 
 	// run to the end of current epoch to complete the undelegation
 	suite.RunToEpochEnd(epochtypes.DayEpochID)

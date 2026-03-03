@@ -1,0 +1,19 @@
+---
+description: Git and branching conventions for this project
+alwaysApply: true
+---
+
+# Git Conventions
+
+## Default Base Branch
+- **defaultBaseBranch**: `develop`
+- Use `develop` when the base branch is not specified (e.g. for branch-create, sync-with-base, pr-comment-responder).
+
+## Branch Naming
+- Feature branches: `feature/<description>`
+- Bug fixes: `fix/<description>` or `bugfix/<description>`
+- Hotfixes: `hotfix/<description>`
+
+## PR Targeting
+- Target PRs to `develop`.
+- Rebase on `develop` before submitting.
