@@ -105,7 +105,8 @@ func (h OperatorHooksWrapper) afterStakingOrJailChange(
 			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(
 				ctx, operator, chainIDWithoutRevision,
 			)
-			// ideally, this will not happen - except if the operator is opting out?
+			// this should never happen because a consensus key must be set for this operator
+			// and avs combination for it to show up in the operator + affected AVS list
 			if !found || err != nil {
 				h.keeper.Logger(ctx).Error(
 					"could not find consensus key for operator",
@@ -115,7 +116,9 @@ func (h OperatorHooksWrapper) afterStakingOrJailChange(
 				)
 				return
 			}
-			// if it is an unjail request, we update the validator set at the end of the block.
+			// if it is an unjail request, we update the validator set at the end of the block
+			// TODO: unjailing should be performed only at the epoch end or when there is
+			// another jailing
 			if isUnjail {
 				h.keeper.MarkUpdateValidatorSetFlag(ctx)
 				break

@@ -215,7 +215,7 @@ func (k Keeper) setConsensusAddrsToPrune(
 // first by the epoch and then by the consensus address bytes.
 func (k Keeper) GetAllConsAddrsToPrune(ctx sdk.Context) []types.EpochToConsensusAddrs {
 	store := ctx.KVStore(k.storeKey)
-	iterator := sdk.KVStorePrefixIterator(store, []byte{types.OptOutsToFinishBytePrefix})
+	iterator := sdk.KVStorePrefixIterator(store, []byte{types.ConsensusAddrsToPruneBytePrefix})
 	defer iterator.Close()
 
 	res := []types.EpochToConsensusAddrs{}

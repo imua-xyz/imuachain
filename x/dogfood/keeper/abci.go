@@ -36,6 +36,12 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	defer k.ClearValidatorSetUpdateFlag(ctx)
 	logger := k.Logger(ctx)
 	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	// recall that epoch hooks are called in BeginBlocker and we are in the EndBlocker.
+	// it means that the epoch number reported by the epoch module is correct.
+	epochID := k.GetDogfoodParams(ctx).EpochIdentifier
+	epochInfo, _ := k.epochsKeeper.GetEpochInfo(ctx, epochID)
+	currentEpochNumber := epochInfo.CurrentEpoch
+	nextEpochNumber := currentEpochNumber + 1
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.
@@ -48,6 +54,9 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 		)
 		if err != nil {
 			logger.Error("error completing operator key removal", "error", err)
+			// reschedule it for the next epoch
+			k.AppendOptOutToFinish(ctx, nextEpochNumber, addr)
+			k.SetOperatorOptOutFinishEpoch(ctx, addr, nextEpochNumber)
 		}
 	}
 	k.ClearPendingOptOuts(ctx)
