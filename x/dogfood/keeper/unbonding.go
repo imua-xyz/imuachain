@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -10,9 +12,13 @@ func (k Keeper) GetUnbondingCompletionEpoch(
 	ctx sdk.Context,
 ) int64 {
 	params := k.GetDogfoodParams(ctx)
-	epochInfo, _ := k.epochsKeeper.GetEpochInfo(
+	epochInfo, found := k.epochsKeeper.GetEpochInfo(
 		ctx, params.EpochIdentifier,
 	)
+	if !found {
+		// this existence is checked at genesis and cannot be altered.
+		panic(fmt.Sprintf("epoch %s not found", params.EpochIdentifier))
+	}
 	// if i execute the transaction at epoch 5, the vote power change
 	// goes into effect at the beginning of epoch 6. the information
 	// should be held for 7 epochs, so it should be deleted at the

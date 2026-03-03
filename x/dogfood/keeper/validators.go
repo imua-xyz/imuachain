@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -23,7 +24,11 @@ import (
 func (k Keeper) UnbondingTime(ctx sdk.Context) time.Duration {
 	params := k.GetDogfoodParams(ctx)
 	// no need to check for found, as the epoch info is validated at genesis.
-	epoch, _ := k.epochsKeeper.GetEpochInfo(ctx, params.EpochIdentifier)
+	epoch, found := k.epochsKeeper.GetEpochInfo(ctx, params.EpochIdentifier)
+	if !found {
+		// as before, this existence is checked at genesis and cannot be altered.
+		panic(fmt.Sprintf("epoch %s not found", params.EpochIdentifier))
+	}
 	durationPerEpoch := epoch.Duration
 	// the extra 1 is added to account for the current epoch. this is,
 	// therefore, the maximum time it takes for unbonding. if the tx
