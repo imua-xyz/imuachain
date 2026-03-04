@@ -21,7 +21,6 @@ import (
 	avskeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
 	delegationkeeper "github.com/imua-xyz/imuachain/x/delegation/keeper"
 	distrkeeper "github.com/imua-xyz/imuachain/x/feedistribution/keeper"
-	imuaslashkeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
 	"golang.org/x/exp/maps"
 )
 
@@ -33,7 +32,6 @@ func AvailablePrecompiles(
 	_ channelkeeper.Keeper,
 	delegationKeeper delegationkeeper.Keeper,
 	assetskeeper assetskeeper.Keeper,
-	_ imuaslashkeeper.Keeper,
 	distributionKeeper distrkeeper.Keeper,
 	avsManagerKeeper avskeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {
