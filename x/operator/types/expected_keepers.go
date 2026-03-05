@@ -117,10 +117,6 @@ type AVSKeeper interface {
 	GetAVSAssetsList(ctx sdk.Context, avsAddr string) ([]string, error)
 }
 
-type SlashKeeper interface {
-	IsOperatorFrozen(ctx sdk.Context, addr sdk.AccAddress) bool
-}
-
 type OperatorHooks interface {
 	// AfterOperatorKeySet This hook is called when an operator declares the consensus key for the provided chain.
 	AfterOperatorKeySet(

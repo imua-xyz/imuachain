@@ -59,7 +59,7 @@ func (k *Keeper) setOperatorConsKeyForChainID(
 	genesis bool,
 ) error {
 	// check for slashing
-	if !genesis && k.slashKeeper.IsOperatorFrozen(ctx, opAccAddr) {
+	if !genesis && k.IsOperatorFrozen(ctx, opAccAddr) {
 		return delegationtypes.ErrOperatorIsFrozen
 	}
 	/// in the process of opting out, do not allow key replacement
@@ -463,6 +463,9 @@ func (k Keeper) ValidatorByConsAddrForChainID(
 		ctx.Logger().Error("ValidatorByConsAddrForChainID new validator error", "err", err)
 		return stakingtypes.Validator{}, false
 	}
+	// set this because the default is Unbonded and this module does not know the true status,
+	// which is instead stored in downstream modules.
+	val.Status = stakingtypes.Unspecified
 	val.Jailed = k.IsOperatorJailedForChainID(ctx, consAddr, chainIDWithoutRevision)
 
 	// set the tokens, delegated shares and minimum self delegation for unjail

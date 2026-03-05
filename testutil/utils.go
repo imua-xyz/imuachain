@@ -513,8 +513,8 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	genesisState[dogfoodtypes.ModuleName] = app.AppCodec().MustMarshalJSON(dogfoodGenesis)
 
 	suite.ValSet = tmtypes.NewValidatorSet([]*tmtypes.Validator{
-		tmtypes.NewValidator(pubKey.ToTmKey(), 1),
-		tmtypes.NewValidator(pubKey2.ToTmKey(), 1),
+		tmtypes.NewValidator(pubKey.ToTmKey(), power),
+		tmtypes.NewValidator(pubKey2.ToTmKey(), power2),
 	})
 
 	totalSupply := sdk.NewCoins()
@@ -657,6 +657,14 @@ func (suite *BaseTestSuite) CommitAfter(d time.Duration) {
 }
 
 func (suite *BaseTestSuite) RunToEpochEnd(epochIdentifier string) {
+	suite.runToEpochEnd(epochIdentifier, true)
+}
+
+func (suite *BaseTestSuite) RunToEpochEndNoEndBlocker(epochIdentifier string) {
+	suite.runToEpochEnd(epochIdentifier, false)
+}
+
+func (suite *BaseTestSuite) runToEpochEnd(epochIdentifier string, endBlocker bool) {
 	var epochDuration time.Duration
 	switch epochIdentifier {
 	case epochstypes.MinuteEpochID:
@@ -680,14 +688,22 @@ func (suite *BaseTestSuite) RunToEpochEnd(epochIdentifier string) {
 	}
 	// Run EndBlocker to trigger endBlock execution, which updates voting power in the dogfood module.
 	// Note: the above CommitAfter only executes beginBlock when running to the last block of the target epoch.
-	suite.App.EndBlocker(suite.Ctx, abci.RequestEndBlock{
-		Height: suite.Ctx.BlockHeight(),
-	})
+	if endBlocker {
+		suite.App.EndBlocker(suite.Ctx, abci.RequestEndBlock{
+			Height: suite.Ctx.BlockHeight(),
+		})
+	}
 }
 
 func (suite *BaseTestSuite) RunToEpochEndN(epochIdentifier string, number int) {
 	for i := 0; i < number; i++ {
 		suite.RunToEpochEnd(epochIdentifier)
+	}
+}
+
+func (suite *BaseTestSuite) RunToEpochEndNoEndBlockerN(epochIdentifier string, number int) {
+	for i := 0; i < number; i++ {
+		suite.RunToEpochEndNoEndBlocker(epochIdentifier)
 	}
 }
 

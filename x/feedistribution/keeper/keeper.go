@@ -32,7 +32,6 @@ type (
 		avsKeeper        feedistributiontypes.AVSKeeper
 		assetsKeeper     feedistributiontypes.AssetsKeeper
 		delegationKeeper feedistributiontypes.DelegationKeeper
-		SlashKeeper      feedistributiontypes.SlashKeeper
 		StakingKeeper    feedistributiontypes.StakingKeeper
 		OracleKeeper     feedistributiontypes.OracleKeeper
 
@@ -53,7 +52,6 @@ func NewKeeper(
 	avsKeeper feedistributiontypes.AVSKeeper,
 	assetsKeeper feedistributiontypes.AssetsKeeper,
 	delegationKeeper feedistributiontypes.DelegationKeeper,
-	slashKeeper feedistributiontypes.SlashKeeper,
 	oracleKeeper feedistributiontypes.OracleKeeper,
 ) Keeper {
 	// ensure distribution module account is set
@@ -79,7 +77,6 @@ func NewKeeper(
 		avsKeeper:        avsKeeper,
 		assetsKeeper:     assetsKeeper,
 		delegationKeeper: delegationKeeper,
-		SlashKeeper:      slashKeeper,
 		OracleKeeper:     oracleKeeper,
 	}
 

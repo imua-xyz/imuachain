@@ -68,7 +68,7 @@ func (k *Keeper) OptIn(
 	}
 
 	// do not allow frozen operators to do anything meaningful
-	if k.slashKeeper.IsOperatorFrozen(ctx, operatorAddress) {
+	if k.IsOperatorFrozen(ctx, operatorAddress) {
 		return delegationtypes.ErrOperatorIsFrozen
 	}
 
@@ -145,7 +145,7 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 		return types.ErrNotOptedIn
 	}
 	// do not allow frozen operators to do anything meaningful
-	if k.slashKeeper.IsOperatorFrozen(ctx, operatorAddress) {
+	if k.IsOperatorFrozen(ctx, operatorAddress) {
 		return delegationtypes.ErrOperatorIsFrozen
 	}
 	// check if it is the chain-type AVS

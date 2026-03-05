@@ -20,14 +20,32 @@ func (k *Keeper) OperatorHooks() OperatorHooksWrapper {
 	return OperatorHooksWrapper{k}
 }
 
+// afterValidatorCreated is a helper function to call the hook in a cached context.
+// the hook is primarily handled in the SDK's x/slashing, which simply stores a
+// lookup of consensus address to public key.
+func (h OperatorHooksWrapper) afterValidatorCreated(
+	ctx sdk.Context, accAddress sdk.AccAddress,
+) {
+	cc, writeFunc := ctx.CacheContext()
+	if err := h.keeper.Hooks().AfterValidatorCreated(
+		cc, sdk.ValAddress(accAddress),
+	); err != nil {
+		h.keeper.Logger(ctx).Error("error in AfterValidatorCreated", "error", err)
+	} else {
+		writeFunc()
+	}
+}
+
 // AfterOperatorKeySet is the implementation of the operator hooks.
 // CONTRACT: an operator cannot set their key if they are already in the process of removing it.
 func (h OperatorHooksWrapper) AfterOperatorKeySet(
-	sdk.Context, sdk.AccAddress, string, keytypes.WrappedConsKey,
+	ctx sdk.Context, accAddress sdk.AccAddress, chainID string, wrappedKey keytypes.WrappedConsKey,
 ) {
-	// an operator opting in does not meaningfully affect this module, since
-	// this information will be fetched at the end of the epoch
-	// and the operator's vote power will be calculated then.
+	// we batch vote power changes at the end of the epoch, so nothing to do with those.
+	// we should, however, let the x/slashing module know of this change.
+	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
+		h.afterValidatorCreated(ctx, accAddress)
+	}
 }
 
 // AfterOperatorKeyReplaced is the implementation of the operator hooks.
@@ -36,8 +54,8 @@ func (h OperatorHooksWrapper) AfterOperatorKeySet(
 // CONTRACT: key replacement from newKey to oldKey is not allowed, after a replacement from
 // oldKey to newKey.
 func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
-	ctx sdk.Context, _ sdk.AccAddress, oldKey keytypes.WrappedConsKey,
-	_ keytypes.WrappedConsKey, chainID string,
+	ctx sdk.Context, accAddress sdk.AccAddress, oldKey keytypes.WrappedConsKey,
+	newKey keytypes.WrappedConsKey, chainID string,
 ) {
 	// the impact of key replacement is:
 	// 1. vote power of old key is 0, which happens automatically at epoch end in EndBlock. this
@@ -58,12 +76,20 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 		// pruning for the consensus address at the end of the unbonding completion epoch.
 		unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
 		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, consAddr)
+		oldConsAddr := oldKey.ToConsAddr()
+		newConsAddr := newKey.ToConsAddr()
+
+		// Map standard cosmos hooks (call AfterValidatorCreated to register the new key).
+		// This creates a blank ValidatorSigningInfo internally.
+		h.afterValidatorCreated(ctx, accAddress)
+		// copy from old cons addr to new cons addr
+		h.keeper.CopyValidatorSigningInfo(ctx, oldConsAddr, newConsAddr)
 	}
 }
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
-	ctx sdk.Context, operator sdk.AccAddress, chainID string, _ keytypes.WrappedConsKey,
+	ctx sdk.Context, operator sdk.AccAddress, chainID string, wrappedKey keytypes.WrappedConsKey,
 ) {
 	// the impact of key removal is:
 	// 1. vote power of the operator is 0, which happens automatically at epoch end in EndBlock.

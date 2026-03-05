@@ -64,14 +64,17 @@ func (k Keeper) InitGenesis(
 	}
 	// create the validators
 	out := make([]keytypes.WrappedConsKeyWithPower, 0, len(genState.ValSet))
+	valAddrs := make([]sdk.ValAddress, 0, len(genState.ValSet))
 	for _, val := range genState.ValSet {
 		// we have already checked in gs.Validate() that wrappedKey is not nil
 		wrappedKey := keytypes.NewWrappedConsKeyFromHex(val.PublicKey)
 		// check that an operator exists
-		if found, _ := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+		if found, valAddr := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
 			ctx, chainIDWithoutRevision, wrappedKey.ToConsAddr(),
 		); !found {
 			panic(fmt.Sprintf("operator not found for key %s", val.PublicKey))
+		} else {
+			valAddrs = append(valAddrs, sdk.ValAddress(valAddr.Bytes()))
 		}
 		out = append(out, keytypes.WrappedConsKeyWithPower{
 			Key:   wrappedKey,
@@ -116,6 +119,8 @@ func (k Keeper) InitGenesis(
 	if err != nil {
 		panic(fmt.Sprintf("cant init genesis voting power snapshot,err: %s", err))
 	}
+	// no need for any hooks to be called here for x/slashing's information because
+	// it can call IterateValidators, which we have implemented in impl_sdk.go
 	// ApplyValidatorChanges will sort it internally
 	return k.ApplyValidatorChanges(
 		ctx, out,

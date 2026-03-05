@@ -22,7 +22,6 @@ type Keeper struct {
 	avsKeeper          operatortypes.AVSKeeper
 	stakingKeeper      operatortypes.StakingKeeper
 	hooks              operatortypes.OperatorHooks // set separately via call to SetHooks
-	slashKeeper        operatortypes.SlashKeeper   // for jailing and unjailing check TODO(mm)
 	epochsKeeper       operatortypes.EpochsKeeper
 	distributionKeeper operatortypes.DistributionKeeper
 	authority          string
@@ -36,7 +35,6 @@ func NewKeeper(
 	oracleKeeper operatortypes.OracleKeeper,
 	avsKeeper operatortypes.AVSKeeper,
 	stakingKeeper operatortypes.StakingKeeper,
-	slashKeeper operatortypes.SlashKeeper,
 	epochsKeeper operatortypes.EpochsKeeper,
 	distributionKeeper operatortypes.DistributionKeeper,
 	authority string,
@@ -49,7 +47,6 @@ func NewKeeper(
 		oracleKeeper:       oracleKeeper,
 		avsKeeper:          avsKeeper,
 		stakingKeeper:      stakingKeeper,
-		slashKeeper:        slashKeeper,
 		epochsKeeper:       epochsKeeper,
 		distributionKeeper: distributionKeeper,
 		authority:          authority,

@@ -67,6 +67,7 @@ type OperatorKeeper interface {
 	SetOperatorRewardUSDValue(ctx sdk.Context, receivingAVS, rewardSourceAVS, operator, symbol string, amount sdkmath.LegacyDec) error
 	RemoveAllStaleOperatorRewardUSDs(ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{}) error
 	IsCompoundRewardsDisabled(ctx sdk.Context, addr string) (bool, error)
+	IsOperatorFrozen(ctx sdk.Context, opAddr sdk.AccAddress) bool
 }
 
 // AVSKeeper represents the expected keeper interface for the avs module.
@@ -92,10 +93,6 @@ type DelegationKeeper interface {
 	GetStakersByOperator(ctx sdk.Context, operator, assetID string) (delegationtype.StakerList, error)
 	DelegateTo(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) (sdkmath.LegacyDec, sdkmath.Int, error)
 	UndelegateFrom(ctx sdk.Context, params *delegationtype.DelegationOrUndelegationParams) error
-}
-
-type SlashKeeper interface {
-	IsOperatorFrozen(ctx sdk.Context, opAddr sdk.AccAddress) bool
 }
 
 type StakingKeeper interface {

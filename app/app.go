@@ -572,7 +572,6 @@ func NewImuachainApp(
 	app.DelegationKeeper = delegationKeeper.NewKeeper(
 		keys[delegationTypes.StoreKey], appCodec, authAddrString,
 		app.AssetsKeeper,
-		delegationTypes.VirtualSlashKeeper{},
 		&app.OperatorKeeper, // intentionally a pointer, since not yet initialized.
 		app.AccountKeeper,
 		app.BankKeeper,
@@ -590,6 +589,7 @@ func NewImuachainApp(
 		app.AssetsKeeper,     // assets for vote power
 		// intentionally a pointer since it is not yet initialized
 		&app.AVSManagerKeeper, // used to create the AVS from the chainID
+		&app.SlashingKeeper,   // used to look up tombstone status
 		authAddrString,        // authority to edit params
 	)
 
@@ -715,7 +715,6 @@ func NewImuachainApp(
 		&app.OracleKeeper,
 		&app.AVSManagerKeeper,
 		&app.StakingKeeper,
-		delegationTypes.VirtualSlashKeeper{},
 		app.EpochsKeeper,
 		&app.DistrKeeper, // intentionally a pointer, since not yet initialized.
 		authAddrString,
@@ -736,7 +735,6 @@ func NewImuachainApp(
 		&app.AVSManagerKeeper,
 		app.AssetsKeeper,
 		&app.DelegationKeeper,
-		delegationTypes.VirtualSlashKeeper{},
 		&app.OracleKeeper,
 	)
 
@@ -1037,9 +1035,8 @@ func NewImuachainApp(
 		avsManagerTypes.ModuleName, // before dogfood, since dogfood registers itself as an AVS
 		operatorTypes.ModuleName,   // must be before delegation
 		delegationTypes.ModuleName,
-		stakingtypes.ModuleName, // must be after delegation
-		// must be after staking to `IterateValidators` but it is not implemented anyway
-		slashingtypes.ModuleName,
+		stakingtypes.ModuleName,  // must be after delegation
+		slashingtypes.ModuleName, // must be after staking to `IterateValidators`
 		evidencetypes.ModuleName,
 		govtypes.ModuleName, // can be anywhere after bank
 		erc20types.ModuleName,

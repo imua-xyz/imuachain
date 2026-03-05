@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"bytes"
 	"sort"
+	"time"
 
 	"github.com/imua-xyz/imuachain/utils"
 
@@ -32,15 +34,31 @@ func (k Keeper) GetParams(sdk.Context) stakingtypes.Params {
 }
 
 // IterateValidators is an implementation of the staking interface expected by the SDK's
-// slashing module. The slashing module uses it for two purposes: once at genesis to
-// store a mapping of pub key to cons address (which is done by our operator module),
-// and then during the invariants check to ensure that the total delegated amount
-// matches that of each validator. Ideally, this invariant should be implemented
-// by the delegation and/or deposit module(s) instead.
-func (k Keeper) IterateValidators(sdk.Context,
-	func(index int64, validator stakingtypes.ValidatorI) (stop bool),
+// slashing module. The slashing module uses it at genesis to initialize its own state to save
+// a look up from consensus address to pub key.
+// Elsewhere, this function is used in invariants of the distribution and the SDK's staking
+// modules, which we do not use in app.go.
+func (k Keeper) IterateValidators(
+	ctx sdk.Context,
+	f func(index int64, validator stakingtypes.ValidatorI,
+	) (stop bool),
 ) {
-	// not intentionally implemented, since unused by the importing modules
+	// The SDK iterates over these validators in the operator address order first, so we
+	// determine the order first.
+	validators := make([]stakingtypes.ValidatorI, 0)
+	k.IterateBondedValidatorsByPower(ctx, func(_ int64, v stakingtypes.ValidatorI) bool {
+		validators = append(validators, v)
+		return false
+	})
+	// we are guaranteed to have a unique operator address
+	sort.SliceStable(validators, func(i, j int) bool {
+		return bytes.Compare(validators[i].GetOperator(), validators[j].GetOperator()) < 0
+	})
+	for i, v := range validators {
+		if f(int64(i), v) {
+			break
+		}
+	}
 }
 
 // Validator is an implementation of the staking interface expected by the SDK's
@@ -80,6 +98,7 @@ func (k Keeper) ValidatorByConsAddr(
 	if !found {
 		return nil
 	}
+	// TODO: alter the status of the validator?
 	return val
 }
 
@@ -104,60 +123,166 @@ func (k Keeper) SlashWithInfractionReason(
 	ctx sdk.Context, addr sdk.ConsAddress, infractionHeight, power int64,
 	slashFactor sdk.Dec, infraction stakingtypes.Infraction,
 ) math.Int {
+	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
 	found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-		ctx, utils.ChainIDWithoutRevision(ctx.ChainID()), addr,
+		ctx, chainIDWithoutRevision, addr,
 	)
 	if !found {
 		// TODO(mm): already slashed and removed from the set?
 		return math.NewInt(0)
 	}
-	// TODO(mm): add list of assets to be slashed (and not just all of them).
-	// based on yet to be finalized slashing design.
-	return k.operatorKeeper.SlashWithInfractionReason(
+
+	slashingOldKey := false
+	var currentConsAddr sdk.ConsAddress
+	found, currentKey, err := k.operatorKeeper.GetOperatorConsKeyForChainID(
+		ctx, accAddress, chainIDWithoutRevision,
+	)
+	if err == nil {
+		if found {
+			currentConsAddr = currentKey.ToConsAddr()
+			if !bytes.Equal(currentConsAddr, addr) {
+				// the current key is different from the one being slashed
+				// we should save the post slash status into the new key as well.
+				slashingOldKey = true
+			}
+		}
+	}
+	res := k.operatorKeeper.SlashWithInfractionReason(
 		ctx, accAddress, infractionHeight,
 		power, slashFactor, infraction,
 	)
+	// copy over to new consensus key
+	if slashingOldKey {
+		// copy from old key to new key
+		// the slashing keeper tombstones after calling this function. hence,
+		// copy directly will not succeed. we must do it ourselves.
+		if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN {
+			k.CopyValidatorSigningInfoWithTombstone(ctx, addr, currentConsAddr)
+		} else {
+			k.CopyValidatorSigningInfo(ctx, addr, currentConsAddr)
+		}
+	}
+	if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN {
+		// Permanently freeze the operator globally
+		k.operatorKeeper.FreezeOperator(ctx, accAddress)
+	}
+	return res
+}
+
+// CopyValidatorSigningInfo copies a validator's signing info from old consensus address
+// to new consensus address. It also specifically tombstones the new consensus address.
+func (k Keeper) CopyValidatorSigningInfoWithTombstone(
+	ctx sdk.Context,
+	oldConsAddr sdk.ConsAddress,
+	newConsAddr sdk.ConsAddress,
+) {
+	k.copyValidatorSigningInfo(ctx, oldConsAddr, newConsAddr, true)
+}
+
+// CopyValidatorSigningInfo copies a validator's signing info from old consensus address
+// to new consensus address.
+func (k Keeper) CopyValidatorSigningInfo(
+	ctx sdk.Context,
+	oldConsAddr sdk.ConsAddress,
+	newConsAddr sdk.ConsAddress,
+) {
+	k.copyValidatorSigningInfo(ctx, oldConsAddr, newConsAddr, false)
+}
+
+// copyValidatorSigningInfo copies a validator's signing info from old consensus address
+// to new consensus address. It is the private internal version of functions by the same
+// name. if `markTombstone` is true, it will specifically tombstone the new address.
+func (k Keeper) copyValidatorSigningInfo(
+	ctx sdk.Context,
+	oldConsAddr sdk.ConsAddress,
+	newConsAddr sdk.ConsAddress,
+	markTombstone bool,
+) {
+	info, found := k.slashingKeeper.GetValidatorSigningInfo(
+		ctx, oldConsAddr,
+	)
+	if found {
+		info = slashingtypes.NewValidatorSigningInfo(
+			newConsAddr,
+			info.StartHeight,
+			info.IndexOffset,
+			info.JailedUntil,
+			info.Tombstoned || markTombstone,
+			info.MissedBlocksCounter,
+		)
+	} else {
+		// initialize a default value
+		info = slashingtypes.NewValidatorSigningInfo(
+			newConsAddr,
+			ctx.BlockHeight(),
+			0,
+			time.Unix(0, 0),
+			false || markTombstone,
+			0,
+		)
+	}
+	k.slashingKeeper.SetValidatorSigningInfo(ctx, newConsAddr, info)
 }
 
 // Jail is an implementation of the staking interface expected by the SDK's slashing module.
 // It delegates the call to the operator module. Alternatively, this may be handled
 // by the slashing module depending upon the design decisions.
 func (k Keeper) Jail(ctx sdk.Context, addr sdk.ConsAddress) {
+	// once jailed, the operator module runs a hook, which lets concerned modules,
+	// such as this one, that the operator can be removed from the validator set.
 	k.operatorKeeper.Jail(ctx, addr, utils.ChainIDWithoutRevision(ctx.ChainID()))
-	// TODO(mm)
-	// once the operator module jails someone, a hook should be triggered
-	// and the validator removed from the set. same for unjailing.
 }
 
 // Unjail is an implementation of the staking interface expected by the SDK's slashing module.
 // The function is called by the slashing module only when it receives a request from the
-// operator to do so. TODO(mm): We need to use the SDK's slashing module to allow for downtime
-// slashing but somehow we need to prevent its Unjail function from being called by anyone.
+// operator to do so.
 func (k Keeper) Unjail(ctx sdk.Context, addr sdk.ConsAddress) {
-	k.operatorKeeper.Unjail(ctx, addr, utils.ChainIDWithoutRevision(ctx.ChainID()))
+	chainID := utils.ChainIDWithoutRevision(ctx.ChainID())
+	// Find the operator tied to this consAddr
+	found, accAddr := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(ctx, chainID, addr)
+	if found && k.operatorKeeper.IsOperatorFrozen(ctx, accAddr) {
+		// Operator is permanently frozen, silently ignore the unjail request
+		// or log it. We cannot return an error because the SDK's StakingKeeper interface doesn't allow it.
+		k.Logger(ctx).Info("blocked attempt to unjail a permanently frozen operator", "operator", accAddr)
+		return
+	}
+	k.operatorKeeper.Unjail(ctx, addr, chainID)
 }
 
 // Delegation is an implementation of the staking interface expected by the SDK's slashing
 // module. The slashing module uses it to obtain the delegation information of a validator
 // before unjailing it. If the slashing module's unjail function is never called, this
 // function will never be called either.
-// NOTE: this is not a universal function, it not actually get delegation for {delegator, validator}, but only returns {validator}'s self delegation, only suites for special invoke
+// NOTE: this is not a universal function, it not actually get delegation for
+// {delegator, validator}, but only returns {validator}'s self delegation.
 func (k Keeper) Delegation(
 	ctx sdk.Context, delegator sdk.AccAddress, validator sdk.ValAddress,
 ) stakingtypes.DelegationI {
 	// This interface is only used for unjail to retrieve the self delegation value,
 	// so the delegator and validator are the same.
 	operator := delegator
-	avsAddr := utils.GenerateAVSAddress(utils.ChainIDWithoutRevision(ctx.ChainID()))
-	operatorUSDValues, err := k.operatorKeeper.GetOrCalculateOperatorUSDValues(ctx, operator, avsAddr)
+	avsAddr := utils.GenerateAVSAddress(
+		utils.ChainIDWithoutRevision(ctx.ChainID()),
+	)
+	operatorUSDValues, err := k.operatorKeeper.GetOrCalculateOperatorUSDValues(
+		ctx, operator, avsAddr,
+	)
 	if err != nil {
-		k.Logger(ctx).Error("Delegation: failed to get or calculate the operator USD values", "operator", operator.String(), "chainID", ctx.ChainID(), "error", err)
+		k.Logger(ctx).Error(
+			"Delegation: failed to get or calculate the operator USD values",
+			"operator", operator.String(),
+			"chainID", ctx.ChainID(),
+			"error", err,
+		)
 		return nil
 	}
 	return stakingtypes.Delegation{
 		DelegatorAddress: delegator.String(),
 		ValidatorAddress: validator.String(),
-		Shares:           sdk.TokensFromConsensusPower(operatorUSDValues.SelfUSDValue.TruncateInt64(), sdk.DefaultPowerReduction).ToLegacyDec(),
+		Shares: sdk.TokensFromConsensusPower(
+			operatorUSDValues.SelfUSDValue.TruncateInt64(),
+			sdk.DefaultPowerReduction,
+		).ToLegacyDec(),
 	}
 }
 

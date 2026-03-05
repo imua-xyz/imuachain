@@ -37,7 +37,7 @@ func (k *Keeper) delegateTo(
 
 	// check if the operator has been slashed or frozen
 	// skip the check if not notgenesis (or chain restart)
-	if notGenesis && k.slashKeeper.IsOperatorFrozen(ctx, params.OperatorAddress) {
+	if notGenesis && k.operatorKeeper.IsOperatorFrozen(ctx, params.OperatorAddress) {
 		return sdkmath.LegacyDec{}, sdkmath.Int{}, delegationtype.ErrOperatorIsFrozen
 	}
 

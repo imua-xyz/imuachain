@@ -28,11 +28,11 @@ func (hooks MultiOperatorHooks) AfterOperatorKeyReplaced(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	oldKey keytypes.WrappedConsKey,
-	newAddr keytypes.WrappedConsKey,
+	newKey keytypes.WrappedConsKey,
 	chainID string,
 ) {
 	for _, hook := range hooks {
-		hook.AfterOperatorKeyReplaced(ctx, addr, oldKey, newAddr, chainID)
+		hook.AfterOperatorKeyReplaced(ctx, addr, oldKey, newKey, chainID)
 	}
 }
 

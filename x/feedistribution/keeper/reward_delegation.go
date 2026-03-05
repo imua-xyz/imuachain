@@ -38,7 +38,7 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 		if err != nil {
 			return feedistributiontypes.ErrFailedToRedelegateRewards.Wrapf("invalid operator address:%s", err)
 		}
-		if k.SlashKeeper.IsOperatorFrozen(ctx, operatorAccAddr) {
+		if k.operatorKeeper.IsOperatorFrozen(ctx, operatorAccAddr) {
 			return feedistributiontypes.ErrFailedToRedelegateRewards.Wrap(delegationtype.ErrOperatorIsFrozen.Error())
 		}
 

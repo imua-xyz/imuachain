@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -20,7 +19,6 @@ type Keeper struct {
 	// other keepers
 	accountKeeper      delegationtype.AccountKeeper
 	assetsKeeper       delegationtype.AssetsKeeper
-	slashKeeper        delegationtype.SlashKeeper
 	operatorKeeper     delegationtype.OperatorKeeper
 	bankKeeper         delegationtype.BankKeeper
 	epochsKeeper       delegationtype.EpochsKeeper
@@ -34,7 +32,6 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	authority string,
 	assetsKeeper delegationtype.AssetsKeeper,
-	slashKeeper delegationtype.SlashKeeper,
 	operatorKeeper delegationtype.OperatorKeeper,
 	accountKeeper delegationtype.AccountKeeper,
 	bankKeeper delegationtype.BankKeeper,
@@ -46,7 +43,6 @@ func NewKeeper(
 		cdc:                cdc,
 		authority:          authority,
 		assetsKeeper:       assetsKeeper,
-		slashKeeper:        slashKeeper,
 		operatorKeeper:     operatorKeeper,
 		accountKeeper:      accountKeeper,
 		bankKeeper:         bankKeeper,
@@ -77,16 +73,4 @@ func (k *Keeper) Hooks() delegationtype.DelegationHooks {
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", delegationtype.ModuleName))
-}
-
-// IDelegation interface will be implemented by delegation keeper
-type IDelegation interface {
-	// DelegateAssetToOperator handle the DelegateAssetToOperator txs from msg service
-	DelegateAssetToOperator(ctx context.Context, delegation *delegationtype.MsgDelegation) (*delegationtype.DelegationResponse, error)
-	// UndelegateAssetFromOperator handle the UndelegateAssetFromOperator txs from msg service
-	UndelegateAssetFromOperator(ctx context.Context, delegation *delegationtype.MsgUndelegation) (*delegationtype.UndelegationResponse, error)
-
-	GetSingleDelegationInfo(ctx sdk.Context, stakerID, assetID, operatorAddr string) (*delegationtype.DelegationAmounts, error)
-
-	GetDelegationInfo(ctx sdk.Context, stakerID, assetID string) (*delegationtype.QueryDelegationInfoResponse, error)
 }

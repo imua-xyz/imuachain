@@ -46,62 +46,41 @@ func (k Keeper) UnbondingTime(ctx sdk.Context) time.Duration {
 func (k Keeper) ApplyValidatorChanges(
 	ctx sdk.Context, changes []keytypes.WrappedConsKeyWithPower,
 ) []abci.ValidatorUpdate {
-	ret := []abci.ValidatorUpdate{}
+	// all of the validator changes become updates, so capacity is
+	// exactly that length. we later sort `ret` anyway.
+	ret := make([]abci.ValidatorUpdate, 0, len(changes))
 	logger := k.Logger(ctx)
 	for _, change := range changes {
 		addr := change.Key.ToConsAddr()
 		val, found := k.GetImuachainValidator(ctx, addr)
 		switch found {
+		// same consensus key exists in our store
 		case true:
 			// update or delete an existing validator.
 			// assumption: power can not be negative.
 			if change.Power < 1 {
-				// guard for errors within the hooks.
-				cc, writeFunc := ctx.CacheContext()
-				k.DeleteImuachainValidator(cc, addr)
-				// sdk slashing.AfterValidatorRemoved deletes the lookup from cons address to
-				// cons pub key
-				if err := k.Hooks().AfterValidatorRemoved(cc, addr, nil); err != nil {
-					logger.Error("error in AfterValidatorRemoved", "error", err)
-					continue
-				}
-				writeFunc()
+				k.DeleteImuachainValidator(ctx, addr)
 			} else {
+				// store the updated power
 				val.Power = change.Power
-				// guard for errors within the hooks.
-				cc, writeFunc := ctx.CacheContext()
-				k.SetImuachainValidator(cc, val)
-				// sdk slashing.AfterValidatorCreated stores the lookup from cons address to
-				// cons pub key. it loads the validator from `valAddr` (operator address)
-				// via stakingkeeeper.Validator(ctx, valAddr)
-				// then it fetches the cons pub key from said validator to generate the lookup
-				found, accAddress := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-					cc, utils.ChainIDWithoutRevision(cc.ChainID()), addr,
-				)
-				if !found {
-					// should never happen
-					logger.Error("operator address not found for validator", "cons address", addr)
-					continue
-				}
-				if err := k.Hooks().AfterValidatorCreated(
-					cc, sdk.ValAddress(accAddress),
-				); err != nil {
-					logger.Error("error in AfterValidatorCreated", "error", err)
-					continue
-				}
-				writeFunc()
+				k.SetImuachainValidator(ctx, val)
 			}
+		// the consensus key doesn't exist in our store.
 		case false:
 			if change.Power > 0 {
-				// create a new validator.
-				ocVal, err := types.NewImuachainValidator(addr, change.Power, change.Key.ToSdkKey())
+				// create a new validator to put in our store
+				icVal, err := types.NewImuachainValidator(
+					addr, change.Power, change.Key.ToSdkKey(),
+				)
 				if err != nil {
 					logger.Error("could not create new imua validator", "error", err)
 					continue
 				}
 				// guard for errors within the hooks.
 				cc, writeFunc := ctx.CacheContext()
-				k.SetImuachainValidator(cc, ocVal)
+				k.SetImuachainValidator(cc, icVal)
+				// a validator which was not in the set has been added to the set. in other
+				// words, a validator has now bonded.
 				err = k.Hooks().AfterValidatorBonded(cc, addr, nil)
 				if err != nil {
 					logger.Error("error in AfterValidatorBonded", "error", err)
@@ -117,10 +96,13 @@ func (k Keeper) ApplyValidatorChanges(
 				continue
 			}
 		}
-		ret = append(ret, abci.ValidatorUpdate{
-			PubKey: *change.Key.ToTmProtoKey(),
-			Power:  change.Power,
-		})
+		ret = append(
+			ret,
+			abci.ValidatorUpdate{
+				PubKey: *change.Key.ToTmProtoKey(),
+				Power:  change.Power,
+			},
+		)
 	}
 
 	// sort for determinism
@@ -360,14 +342,15 @@ func (k Keeper) GetValidator(
 	ctx sdk.Context, valAddr sdk.ValAddress,
 ) (stakingtypes.Validator, bool) {
 	accAddr := sdk.AccAddress(valAddr)
+	chainID := utils.ChainIDWithoutRevision(ctx.ChainID())
 	found, wrappedKey, err := k.operatorKeeper.GetOperatorConsKeyForChainID(
-		ctx, accAddr, utils.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, accAddr, chainID,
 	)
 	if !found || err != nil || wrappedKey == nil {
 		return stakingtypes.Validator{}, false
 	}
 	val, found := k.operatorKeeper.ValidatorByConsAddrForChainID(
-		ctx, wrappedKey.ToConsAddr(), utils.ChainIDWithoutRevision(ctx.ChainID()),
+		ctx, wrappedKey.ToConsAddr(), chainID,
 	)
 	if !found {
 		return stakingtypes.Validator{}, false

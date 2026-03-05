@@ -13,6 +13,7 @@ import (
 	"golang.org/x/xerrors"
 
 	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -756,4 +757,22 @@ func (k *Keeper) IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool {
 		return true
 	}
 	return isUnbondingRelatedAVS
+}
+
+// FreezeOperator permanently freezes an operator.
+func (k *Keeper) FreezeOperator(ctx sdk.Context, addr sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(operatortypes.KeyForOperatorFrozen(addr), []byte{1})
+}
+
+// IsOperatorFrozen checks if the operator is permanently frozen.
+func (k *Keeper) IsOperatorFrozen(ctx sdk.Context, addr sdk.AccAddress) bool {
+	store := ctx.KVStore(k.storeKey)
+	return store.Has(operatortypes.KeyForOperatorFrozen(addr))
+}
+
+// OperatorAssetSlashedProportion returns the slashed proportion of an operator's asset.
+func (k *Keeper) OperatorAssetSlashedProportion(ctx sdk.Context, opAddr sdk.AccAddress, assetID string, startHeight, endHeight uint64) sdkmath.LegacyDec {
+	// TODO: implement this
+	return sdkmath.LegacyZeroDec()
 }
