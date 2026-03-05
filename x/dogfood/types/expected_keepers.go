@@ -75,7 +75,7 @@ type OperatorKeeper interface {
 	// GetOrCalculateOperatorUSDValues is used to get the self staking value for the operator
 	GetOrCalculateOperatorUSDValues(sdk.Context, sdk.AccAddress, string) (operatortypes.OperatorOptedUSDValue, error)
 	InitGenesisVPSnapshot(ctx sdk.Context) error
-	FreezeOperator(ctx sdk.Context, addr sdk.AccAddress)
+	FreezeOperator(ctx sdk.Context, addr sdk.AccAddress) error
 	IsOperatorFrozen(ctx sdk.Context, addr sdk.AccAddress) bool
 }
 

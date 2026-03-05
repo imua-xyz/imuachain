@@ -248,7 +248,7 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 		},
 	}
 
-	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams())
+	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams(), nil)
 	genesisState[operatortypes.ModuleName] = app.AppCodec().MustMarshalJSON(operatorGenesis)
 	// x/delegation
 	singleStateKey := utils.GetJoinedStoreKey(stakerID, assetID, operator.String())

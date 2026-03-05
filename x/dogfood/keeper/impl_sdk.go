@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"fmt"
 	"sort"
 	"time"
 
@@ -164,7 +165,16 @@ func (k Keeper) SlashWithInfractionReason(
 	}
 	if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN {
 		// Permanently freeze the operator globally
-		k.operatorKeeper.FreezeOperator(ctx, accAddress)
+		if err := k.operatorKeeper.FreezeOperator(
+			ctx, accAddress,
+		); err != nil {
+			panic(
+				fmt.Sprintf(
+					"Logic error: failed to freeze operator %s: %v",
+					accAddress.String(), err,
+				),
+			)
+		}
 	}
 	return res
 }

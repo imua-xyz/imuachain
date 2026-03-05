@@ -498,6 +498,69 @@ func (suite *GenesisTestSuite) TestValidateGenesis() {
 			expPass:        false,
 			expErrContains: "duplicate operator name",
 		},
+		{
+			name: "invalid genesis due to invalid frozen address",
+			genState: &types.GenesisState{
+				Operators: []types.OperatorInfo{
+					{
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
+					},
+				},
+				Params:          params,
+				FrozenOperators: []string{"invalid"},
+			},
+			expPass:        false,
+			expErrContains: "invalid operator address",
+		},
+		{
+			name: "invalid genesis due to frozen non-operator",
+			genState: &types.GenesisState{
+				Operators: []types.OperatorInfo{
+					{
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
+					},
+				},
+				Params:          params,
+				FrozenOperators: []string{accAddress2.String()},
+			},
+			expPass:        false,
+			expErrContains: "unknown operator",
+		},
+		{
+			name: "invalid genesis due to duplicate frozen operator",
+			genState: &types.GenesisState{
+				Operators: []types.OperatorInfo{
+					{
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
+					},
+				},
+				Params:          params,
+				FrozenOperators: []string{accAddress1.String(), accAddress1.String()},
+			},
+			expPass:        false,
+			expErrContains: "duplicate element",
+		},
+		{
+			name: "valid genesis with frozen operator",
+			genState: &types.GenesisState{
+				Operators: []types.OperatorInfo{
+					{
+						OperatorAddr: accAddress1.String(),
+						Description:  stakingtypes.NewDescription("operator1", "", "", "", ""),
+						Commission:   commission,
+					},
+				},
+				Params:          params,
+				FrozenOperators: []string{accAddress1.String()},
+			},
+			expPass: true,
+		},
 	}
 
 	for _, tc := range testCases {

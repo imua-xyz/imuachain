@@ -24,6 +24,7 @@ func NewGenesisState(
 	operatorKeyRemovals []OperatorKeyRemoval,
 	operatorAssetUSDValues []OperatorAssetUSDValue,
 	params Params,
+	frozenOperators []string,
 ) *GenesisState {
 	return &GenesisState{
 		Operators:              operators,
@@ -36,12 +37,13 @@ func NewGenesisState(
 		OperatorKeyRemovals:    operatorKeyRemovals,
 		OperatorAssetUsdValues: operatorAssetUSDValues,
 		Params:                 params,
+		FrozenOperators:        frozenOperators,
 	}
 }
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
-	return NewGenesisState(nil, nil, nil, nil, nil, nil, nil, nil, nil, DefaultParams())
+	return NewGenesisState(nil, nil, nil, nil, nil, nil, nil, nil, nil, DefaultParams(), nil)
 }
 
 // ValidateOperators rationale for the validation:
@@ -544,6 +546,34 @@ func (gs GenesisState) ValidateOperatorAssetUSDValues(operators map[string]struc
 	return nil
 }
 
+func (gs GenesisState) ValidateFrozenOperators(operators map[string]struct{}) error {
+	seenValueFunc := func(operator string) (string, struct{}) {
+		return operator, struct{}{}
+	}
+	validationFunc := func(_ int, operator string) error {
+		// validate operator address
+		if _, err := sdk.AccAddressFromBech32(operator); err != nil {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateFrozenOperators: invalid operator address, %s",
+				operator,
+			)
+		}
+		// check if the operator is registered
+		if _, ok := operators[operator]; !ok {
+			return ErrInvalidGenesisData.Wrapf(
+				"ValidateFrozenOperators: unknown operator for the frozen operator, %s",
+				operator,
+			)
+		}
+		return nil
+	}
+	_, err := utils.CommonValidation(gs.FrozenOperators, seenValueFunc, validationFunc)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
@@ -584,6 +614,10 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 	err = gs.ValidateOperatorAssetUSDValues(operators)
+	if err != nil {
+		return err
+	}
+	err = gs.ValidateFrozenOperators(operators)
 	if err != nil {
 		return err
 	}
