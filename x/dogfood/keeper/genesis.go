@@ -64,17 +64,14 @@ func (k Keeper) InitGenesis(
 	}
 	// create the validators
 	out := make([]keytypes.WrappedConsKeyWithPower, 0, len(genState.ValSet))
-	valAddrs := make([]sdk.ValAddress, 0, len(genState.ValSet))
 	for _, val := range genState.ValSet {
 		// we have already checked in gs.Validate() that wrappedKey is not nil
 		wrappedKey := keytypes.NewWrappedConsKeyFromHex(val.PublicKey)
 		// check that an operator exists
-		if found, valAddr := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+		if found, _ := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
 			ctx, chainIDWithoutRevision, wrappedKey.ToConsAddr(),
 		); !found {
 			panic(fmt.Sprintf("operator not found for key %s", val.PublicKey))
-		} else {
-			valAddrs = append(valAddrs, sdk.ValAddress(valAddr.Bytes()))
 		}
 		out = append(out, keytypes.WrappedConsKeyWithPower{
 			Key:   wrappedKey,

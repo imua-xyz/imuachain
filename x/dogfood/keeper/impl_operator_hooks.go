@@ -39,7 +39,7 @@ func (h OperatorHooksWrapper) afterValidatorCreated(
 // AfterOperatorKeySet is the implementation of the operator hooks.
 // CONTRACT: an operator cannot set their key if they are already in the process of removing it.
 func (h OperatorHooksWrapper) AfterOperatorKeySet(
-	ctx sdk.Context, accAddress sdk.AccAddress, chainID string, wrappedKey keytypes.WrappedConsKey,
+	ctx sdk.Context, accAddress sdk.AccAddress, chainID string, _ keytypes.WrappedConsKey,
 ) {
 	// we batch vote power changes at the end of the epoch, so nothing to do with those.
 	// we should, however, let the x/slashing module know of this change.
@@ -89,7 +89,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
-	ctx sdk.Context, operator sdk.AccAddress, chainID string, wrappedKey keytypes.WrappedConsKey,
+	ctx sdk.Context, operator sdk.AccAddress, chainID string, _ keytypes.WrappedConsKey,
 ) {
 	// the impact of key removal is:
 	// 1. vote power of the operator is 0, which happens automatically at epoch end in EndBlock.

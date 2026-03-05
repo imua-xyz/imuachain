@@ -13,7 +13,6 @@ import (
 	"golang.org/x/xerrors"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -757,10 +756,4 @@ func (k *Keeper) IsUnbondingRelatedAVS(ctx sdk.Context, avsAddr string) bool {
 		return true
 	}
 	return isUnbondingRelatedAVS
-}
-
-// OperatorAssetSlashedProportion returns the slashed proportion of an operator's asset.
-func (k *Keeper) OperatorAssetSlashedProportion(ctx sdk.Context, opAddr sdk.AccAddress, assetID string, startHeight, endHeight uint64) sdkmath.LegacyDec {
-	// TODO: implement this
-	return sdkmath.LegacyZeroDec()
 }
