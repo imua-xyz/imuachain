@@ -61,30 +61,3 @@ func (k Keeper) ClearPendingConsensusAddrs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 	store.Delete(types.PendingConsensusAddrsKey())
 }
-
-// SetPendingConsAddrUnbondings sets the pending consensus address unbondings to be applied at the end of the block.
-func (k Keeper) SetPendingConsAddrUnbondings(ctx sdk.Context, addrs types.ConsensusAddresses) {
-	store := ctx.KVStore(k.storeKey)
-	bz := k.cdc.MustMarshal(&addrs)
-	store.Set(types.PendingConsAddrUnbondingsKey(), bz)
-}
-
-// GetPendingConsAddrUnbondings returns the pending consensus address unbondings to be applied at the end of the block.
-func (k Keeper) GetPendingConsAddrUnbondings(ctx sdk.Context) types.ConsensusAddresses {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.PendingConsAddrUnbondingsKey())
-	if bz == nil {
-		return types.ConsensusAddresses{}
-	}
-	var addrs types.ConsensusAddresses
-	if err := addrs.Unmarshal(bz); err != nil {
-		return types.ConsensusAddresses{}
-	}
-	return addrs
-}
-
-// ClearPendingConsAddrUnbondings clears the pending consensus address unbondings to be applied at the end of the block.
-func (k Keeper) ClearPendingConsAddrUnbondings(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-	store.Delete(types.PendingConsAddrUnbondingsKey())
-}

@@ -58,16 +58,6 @@ const (
 
 	// EmitAvsEventByte is the single-byte key for the emit AVS event store.
 	EmitAvsEventByte
-
-	// ConsAddrUnbondingBytePrefix is the byte prefix for the key in a key-value pair
-	// which indicates that the consensus address is unbonding.
-	ConsAddrUnbondingBytePrefix
-
-	// ConsAddrsToUnbondBytePrefix is the byte prefix for an epoch with the value
-	// being the list of consensus addresses to unbond at the end of that epoch.
-	ConsAddrsToUnbondBytePrefix
-
-	PendingConsAddrUnbondingsByte
 )
 
 // ImuachainValidatorKey returns the key for the validator store.
@@ -172,27 +162,4 @@ func ParamsKey() []byte {
 // EmitAvsEventKey returns the key for the emit AVS event store.
 func EmitAvsEventKey() []byte {
 	return []byte{EmitAvsEventByte}
-}
-
-// ConsAddrUnbondingKey returns the key for the consensus address unbonding store.
-// It is used to mark a consensus address as unbonding.
-func ConsAddrUnbondingKey(address sdk.ConsAddress) []byte {
-	return append([]byte{ConsAddrUnbondingBytePrefix}, address.Bytes()...)
-}
-
-// ConsAddrsToUnbondKey returns the key for the consensus addresses to unbond store.
-// It is used to store the list of consensus addresses to unbond at the end of an epoch.
-func ConsAddrsToUnbondKey(epoch int64) ([]byte, bool) {
-	uepoch, ok := SafeInt64ToUint64(epoch)
-	if !ok {
-		return nil, false
-	}
-	return append(
-		[]byte{ConsAddrsToUnbondBytePrefix},
-		sdk.Uint64ToBigEndian(uepoch)...,
-	), true
-}
-
-func PendingConsAddrUnbondingsKey() []byte {
-	return []byte{PendingConsAddrUnbondingsByte}
 }

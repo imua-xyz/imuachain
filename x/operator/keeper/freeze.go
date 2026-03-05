@@ -29,11 +29,15 @@ func (k *Keeper) IsOperatorFrozen(ctx sdk.Context, addr sdk.AccAddress) bool {
 func (k Keeper) GetAllFrozenOperators(ctx sdk.Context) []string {
 	store := ctx.KVStore(k.storeKey)
 	ret := []string{}
-	iterator := sdk.KVStorePrefixIterator(store, operatortypes.KeyPrefixOperatorFrozen)
+	prefix := operatortypes.KeyPrefixOperatorFrozen
+	iterator := sdk.KVStorePrefixIterator(
+		store, prefix,
+	)
+	prefixLen := len(prefix)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		// strip the prefix
-		accAddr := sdk.AccAddress(iterator.Key()[1:])
+		accAddr := sdk.AccAddress(iterator.Key()[prefixLen:])
 		ret = append(ret, accAddr.String())
 	}
 	return ret

@@ -702,9 +702,14 @@ func (suite *BaseTestSuite) RunToEpochEndN(epochIdentifier string, number int) {
 }
 
 func (suite *BaseTestSuite) RunToEpochEndNoEndBlockerN(epochIdentifier string, number int) {
-	for i := 0; i < number; i++ {
-		suite.RunToEpochEndNoEndBlocker(epochIdentifier)
+	if number <= 0 {
+		return
 	}
+
+	for i := 0; i < number-1; i++ {
+		suite.RunToEpochEnd(epochIdentifier)
+	}
+	suite.RunToEpochEndNoEndBlocker(epochIdentifier)
 }
 
 func (suite *BaseTestSuite) DebugPrintObject(object interface{}) {
