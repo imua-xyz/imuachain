@@ -168,7 +168,6 @@ func (k *Keeper) DeleteAllOperatorsUSDValueForAVS(ctx sdk.Context, avsAddr strin
 func (k *Keeper) GetOperatorOptedUSDValue(ctx sdk.Context, avsAddr, operatorAddr string) (operatortypes.OperatorOptedUSDValue, error) {
 	// return zero if the operator has opted-out of the AVS effectively
 	if k.IsOptedOutAndEffective(ctx, operatorAddr, avsAddr) {
-		fmt.Println("opted out and effective", operatorAddr)
 		return operatortypes.OperatorOptedUSDValue{
 			SelfUSDValue:   sdkmath.LegacyZeroDec(),
 			TotalUSDValue:  sdkmath.LegacyZeroDec(),
