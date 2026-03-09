@@ -232,6 +232,13 @@ func (k Keeper) copyValidatorSigningInfo(
 		)
 	}
 	k.slashingKeeper.SetValidatorSigningInfo(ctx, newConsAddr, info)
+	// copy the bit array as well
+	k.slashingKeeper.IterateValidatorMissedBlockBitArray(
+		ctx, oldConsAddr, func(height int64, missed bool) (stop bool) {
+			k.slashingKeeper.SetValidatorMissedBlockBitArray(ctx, newConsAddr, height, missed)
+			return false
+		},
+	)
 }
 
 // Jail is an implementation of the staking interface expected by the SDK's slashing module.

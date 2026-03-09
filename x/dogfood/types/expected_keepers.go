@@ -104,4 +104,10 @@ type SlashingKeeper interface {
 	SetValidatorSigningInfo(
 		sdk.Context, sdk.ConsAddress, slashingtypes.ValidatorSigningInfo,
 	)
+	SetValidatorMissedBlockBitArray(
+		sdk.Context, sdk.ConsAddress, int64, bool,
+	)
+	IterateValidatorMissedBlockBitArray(
+		sdk.Context, sdk.ConsAddress, func(int64, bool) bool,
+	)
 }
