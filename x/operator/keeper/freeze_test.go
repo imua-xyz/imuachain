@@ -32,7 +32,7 @@ func (suite *OperatorTestSuite) TestFrozenOperator() {
 		// freeze it again should fail
 		err = suite.App.OperatorKeeper.FreezeOperator(suite.Ctx, addr)
 		suite.Require().Error(err)
-		suite.Require().ErrorIs(err, operatortypes.ErrOperatorAlreadyFrozen)
+		suite.Require().ErrorIs(err, operatortypes.ErrOperatorFrozenStateMismatch)
 		addrs = append(addrs, addr)
 	}
 	sort.SliceStable(
@@ -48,5 +48,16 @@ func (suite *OperatorTestSuite) TestFrozenOperator() {
 			frozenOperators[i],
 		)
 	}
-
+	// defrost it
+	err := suite.App.OperatorKeeper.UnfreezeOperator(suite.Ctx, addrs[0])
+	suite.Require().NoError(err)
+	suite.Require().False(
+		suite.App.OperatorKeeper.IsOperatorFrozen(
+			suite.Ctx, addrs[0],
+		),
+	)
+	// try defrost again
+	err = suite.App.OperatorKeeper.UnfreezeOperator(suite.Ctx, addrs[0])
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, operatortypes.ErrOperatorFrozenStateMismatch)
 }
