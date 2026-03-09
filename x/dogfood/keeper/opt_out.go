@@ -49,9 +49,7 @@ func (k Keeper) GetOptOutsToFinish(
 		return [][]byte{}
 	}
 	var res types.AccountAddresses
-	if err := res.Unmarshal(bz); err != nil {
-		panic(err)
-	}
+	k.cdc.MustUnmarshal(bz, &res)
 	return res.GetList()
 }
 
@@ -62,10 +60,7 @@ func (k Keeper) setOptOutsToFinish(
 ) {
 	store := ctx.KVStore(k.storeKey)
 	key, _ := types.OptOutsToFinishKey(epoch)
-	bz, err := addrs.Marshal()
-	if err != nil {
-		panic(err)
-	}
+	bz := k.cdc.MustMarshal(&addrs)
 	store.Set(key, bz)
 }
 
@@ -176,9 +171,7 @@ func (k Keeper) GetConsensusAddrsToPrune(
 		return [][]byte{}
 	}
 	var res types.ConsensusAddresses
-	if err := res.Unmarshal(bz); err != nil {
-		panic(err)
-	}
+	k.cdc.MustUnmarshal(bz, &res)
 	return res.GetList()
 }
 
@@ -203,10 +196,7 @@ func (k Keeper) setConsensusAddrsToPrune(
 ) {
 	store := ctx.KVStore(k.storeKey)
 	key, _ := types.ConsensusAddrsToPruneKey(epoch)
-	bz, err := addrs.Marshal()
-	if err != nil {
-		panic(err)
-	}
+	bz := k.cdc.MustMarshal(&addrs)
 	store.Set(key, bz)
 }
 
