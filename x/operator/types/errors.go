@@ -151,8 +151,8 @@ var (
 		"no such operator",
 	)
 
-	ErrOperatorAlreadyFrozen = errorsmod.Register(
+	ErrOperatorFrozenStateMismatch = errorsmod.Register(
 		ModuleName, 33,
-		"operator already frozen",
+		"operator frozen state mismatch",
 	)
 )

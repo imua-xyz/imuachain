@@ -24,6 +24,8 @@ const (
 	TypeUpdateRewardCompoundingFlagReq = "update_reward_compounding_flag"
 	// TypeUpdateParamsReq is the type for the UpdateParamsReq message.
 	TypeUpdateParamsReq = "update_params"
+	// TypeUnfreezeOperatorReq is the type for the UnfreezeOperatorReq message
+	TypeUnfreezeOperatorReq = "unfreeze_operator"
 )
 
 // interface guards
@@ -35,6 +37,7 @@ var (
 	_ sdk.Msg = &UpdateCommissionRateReq{}
 	_ sdk.Msg = &EditOperatorReq{}
 	_ sdk.Msg = &UpdateRewardCompoundingFlagReq{}
+	_ sdk.Msg = &UnfreezeOperatorReq{}
 )
 
 // GetSigners returns the expected signers for the message.
@@ -303,5 +306,37 @@ func (m *MsgUpdateParams) Type() string {
 
 // GetSignBytes returns the bytes all expected signers must sign over.
 func (m *MsgUpdateParams) GetSignBytes() []byte {
+	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
+}
+
+// GetSigners returns the expected signers for the message.
+func (m *UnfreezeOperatorReq) GetSigners() []sdk.AccAddress {
+	addr := sdk.MustAccAddressFromBech32(m.Authority)
+	return []sdk.AccAddress{addr}
+}
+
+// ValidateBasic does a sanity check of the provided data
+func (m *UnfreezeOperatorReq) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
+		return errorsmod.Wrap(err, "invalid authority address")
+	}
+	if _, err := sdk.AccAddressFromBech32(m.OperatorAddress); err != nil {
+		return errorsmod.Wrap(err, "invalid operator address")
+	}
+	return nil
+}
+
+// Route returns the transaction route. This must be specified for successful signing.
+func (m *UnfreezeOperatorReq) Route() string {
+	return RouterKey
+}
+
+// Type returns the transaction type.
+func (m *UnfreezeOperatorReq) Type() string {
+	return TypeUnfreezeOperatorReq
+}
+
+// GetSignBytes returns the bytes all expected signers must sign over.
+func (m *UnfreezeOperatorReq) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(m))
 }

@@ -198,3 +198,20 @@ func (msgServer *MsgServerImpl) UpdateParams(
 	)
 	return &types.MsgUpdateParamsResponse{}, nil
 }
+
+func (msgServer *MsgServerImpl) UnfreezeOperator(
+	goCtx context.Context, req *types.UnfreezeOperatorReq,
+) (*types.UnfreezeOperatorResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msgServer.keeper.authority != req.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf(
+			"invalid authority; expected %s, got %s",
+			msgServer.keeper.authority, req.Authority,
+		)
+	}
+	addr := sdk.MustAccAddressFromBech32(req.OperatorAddress)
+	if err := msgServer.keeper.UnfreezeOperator(ctx, addr); err != nil {
+		return nil, err
+	}
+	return &types.UnfreezeOperatorResponse{}, nil
+}
