@@ -65,7 +65,6 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	// EndBlock.
 	// 3. X epochs later, the reverse lookup of old cons addr + chain id -> operator addr
 	// should be cleared.
-	consAddr := oldKey.ToConsAddr()
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 		// The reverse lookup (consensus address -> operator address) must be maintained
 		// during the unbonding period to allow slashing of validators who misbehaved while
@@ -74,16 +73,17 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 		// evidence of misbehavior (e.g., double-signing) from past epochs can be reported
 		// and processed during the unbonding period. Therefore, we always schedule the
 		// pruning for the consensus address at the end of the unbonding completion epoch.
-		unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
-		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, consAddr)
 		oldConsAddr := oldKey.ToConsAddr()
-		newConsAddr := newKey.ToConsAddr()
-
+		unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
+		// nb. whenever such a pruning is complete, we can also tell x/slashing to delete
+		// the mapping from consensus address to consensus public key. this is done via the
+		// AfterValidatorRemoved hook which is called when the pruning is performed.
+		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, oldConsAddr)
 		// Map standard cosmos hooks (call AfterValidatorCreated to register the new key).
 		// This creates a blank ValidatorSigningInfo internally.
 		h.afterValidatorCreated(ctx, accAddress)
 		// copy from old cons addr to new cons addr
-		h.keeper.CopyValidatorSigningInfo(ctx, oldConsAddr, newConsAddr)
+		h.keeper.CopyValidatorSigningInfo(ctx, oldConsAddr, newKey.ToConsAddr())
 	}
 }
 
