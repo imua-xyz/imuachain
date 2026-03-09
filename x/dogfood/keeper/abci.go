@@ -106,6 +106,7 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 				"consensusAddr", sdk.ConsAddress(consensusAddr).String(),
 			)
 			failedConsAddrs = append(failedConsAddrs, consensusAddr)
+			continue
 		}
 		k.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
 			cc, chainIDWithoutRevision, consensusAddr,

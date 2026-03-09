@@ -89,7 +89,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
-	ctx sdk.Context, operator sdk.AccAddress, chainID string, _ keytypes.WrappedConsKey,
+	ctx sdk.Context, operator sdk.AccAddress, chainID string, key keytypes.WrappedConsKey,
 ) {
 	// the impact of key removal is:
 	// 1. vote power of the operator is 0, which happens automatically at epoch end in EndBlock.
@@ -99,7 +99,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 		// see AfterOperatorKeyReplaced for the reasoning behind scheduling the opt out,
 		// even if the operator may not be in the active validator set.
-		h.keeper.ScheduleOperatorOptOut(ctx, operator)
+		h.keeper.ScheduleOperatorOptOut(ctx, operator, key.ToConsAddr())
 	}
 }
 

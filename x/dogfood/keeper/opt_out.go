@@ -10,11 +10,13 @@ import (
 // ScheduleOperatorOptOut schedules the operator opt out
 // at the end of the unbonding completion epoch.
 func (k Keeper) ScheduleOperatorOptOut(
-	ctx sdk.Context, addr sdk.AccAddress,
+	ctx sdk.Context, addr sdk.AccAddress, consAddr sdk.ConsAddress,
 ) {
 	unbondingCompletionEpoch := k.GetUnbondingCompletionEpoch(ctx)
 	k.AppendOptOutToFinish(ctx, unbondingCompletionEpoch, addr)
 	k.SetOperatorOptOutFinishEpoch(ctx, addr, unbondingCompletionEpoch)
+	// once the operator completes their opt out, the key will be pruned.
+	k.AppendConsensusAddrToPrune(ctx, unbondingCompletionEpoch, consAddr)
 }
 
 // AppendOptOutToFinish appends an operator address to the list of operator addresses that have
