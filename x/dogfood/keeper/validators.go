@@ -59,6 +59,11 @@ func (k Keeper) ApplyValidatorChanges(
 			// update or delete an existing validator.
 			// assumption: power can not be negative.
 			if change.Power < 1 {
+				// previously, a validator existed. now, we are setting its power to 0.
+				// that means, we are deleting it. the x/slashing module deletes the
+				// look up from consensus address to pub key when a validator is removed.
+				// we cannot do that here, since the lookup is used when slashing.
+				// we can only do it when the unbonding period has completed.
 				k.DeleteImuachainValidator(ctx, addr)
 			} else {
 				// store the updated power

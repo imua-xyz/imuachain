@@ -54,6 +54,8 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.
+	// as a reminder, this refers solely to the consensus key used in the previous epoch,
+	// which is tracked by x/operator to tell us if it's a new opt-in or a key replacement.
 	k.operatorKeeper.ClearPreviousConsensusKeys(ctx, chainIDWithoutRevision)
 	// let the operator module know that the opt out has finished.
 	optOuts := k.GetPendingOptOuts(ctx)
@@ -91,10 +93,28 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	// to operator address. this information can now be pruned, since the opt out is considered
 	// complete.
 	consensusAddrs := k.GetPendingConsensusAddrs(ctx)
+	failedConsAddrs := []sdk.ConsAddress{}
 	for _, consensusAddr := range consensusAddrs.GetList() {
+		cc, writeFunc := ctx.CacheContext()
+		// tell the slashing module to delete look up from consensus addr to pub key
+		if err := k.Hooks().AfterValidatorRemoved(
+			cc, consensusAddr, nil,
+		); err != nil {
+			logger.Error(
+				"error in AfterValidatorRemoved hook",
+				"err", err,
+				"consensusAddr", sdk.ConsAddress(consensusAddr).String(),
+			)
+			failedConsAddrs = append(failedConsAddrs, consensusAddr)
+		}
 		k.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
-			ctx, chainIDWithoutRevision, consensusAddr,
+			cc, chainIDWithoutRevision, consensusAddr,
 		)
+		writeFunc()
+	}
+	// reschedule these for the next epoch
+	for _, addr := range failedConsAddrs {
+		k.AppendConsensusAddrToPrune(ctx, nextEpochNumber, addr)
 	}
 	k.ClearPendingConsensusAddrs(ctx)
 	// finally, perform the actual operations of vote power changes.
