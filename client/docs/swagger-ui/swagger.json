@@ -18269,63 +18269,6 @@
         ]
       }
     },
-    "/imuachain/imslash/v1/params": {
-      "get": {
-        "summary": "Parameters queries the parameters of the module.",
-        "operationId": "ImSlashParams",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "params": {
-                  "description": "params holds all the parameters of this module.",
-                  "type": "object"
-                }
-              },
-              "description": "QueryParamsResponse is response type for the Query/Params RPC method."
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "error": {
-                  "type": "string"
-                },
-                "code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "details": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "type_url": {
-                        "type": "string"
-                      },
-                      "value": {
-                        "type": "string",
-                        "format": "byte"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Query"
-        ]
-      }
-    },
     "/imuachain/oracle/v1/index_recent_msg": {
       "get": {
         "summary": "Queries a IndexRecentMsg by index.",
@@ -45022,20 +44965,6 @@
         }
       },
       "description": "StakingAssetInfo defines the information for an asset to be used in staking."
-    },
-    "imuachain.imslash.v1.Params": {
-      "type": "object",
-      "description": "Params defines the parameters for the module."
-    },
-    "imuachain.imslash.v1.QueryParamsResponse": {
-      "type": "object",
-      "properties": {
-        "params": {
-          "description": "params holds all the parameters of this module.",
-          "type": "object"
-        }
-      },
-      "description": "QueryParamsResponse is response type for the Query/Params RPC method."
     },
     "imuachain.oracle.v1.Action": {
       "type": "string",
