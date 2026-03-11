@@ -35,16 +35,25 @@ func NewTxCmd() *cobra.Command {
 // is not useful for end users, unless they are the authority.
 func CmdUpdateParams() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-instant-undelegation-params",
-		Short: "update the instant undelegation penalty parameters of the module",
-		Args:  cobra.ExactArgs(1),
+		Use:   "update-params <instant-undelegation-penalty> <max-undelegation-completions>",
+		Short: "update the parameters of the delegation module",
+		Long: `Update module parameters (governance authority only).
+Arguments:
+  - instant-undelegation-penalty: penalty (in basis points) for instant undelegation
+  - max-undelegation-completions: max undelegations completed per block (0 = no limit)`,
+		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 			sender := clientCtx.GetFromAddress()
-			instantPenalty, err := strconv.ParseInt(args[0], 10, 32)
+			instantPenalty, err := strconv.ParseUint(args[0], 10, 32)
+			if err != nil {
+				return err
+			}
+
+			maxUndelegationCompletions, err := strconv.ParseUint(args[1], 10, 32)
 			if err != nil {
 				return err
 			}
@@ -53,6 +62,7 @@ func CmdUpdateParams() *cobra.Command {
 				Authority: sender.String(),
 				Params: delegationtype.Params{
 					InstantUndelegationPenalty: uint32(instantPenalty),
+					MaxUndelegationCompletions: uint32(maxUndelegationCompletions),
 				},
 			}
 

@@ -355,11 +355,11 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		CompletedEpochNumber:     epochtypes.NullEpochNumber,
 		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
-	suite.Equal(UndelegationRecord, records[0].Undelegation)
+	suite.Equal(*UndelegationRecord, records[0].Undelegation)
 	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
 	suite.NoError(err)
 	suite.Equal(1, len(waitUndelegationRecords))
-	suite.Equal(UndelegationRecord, waitUndelegationRecords[0].Undelegation)
+	suite.Equal(*UndelegationRecord, waitUndelegationRecords[0].Undelegation)
 
 	// undelegate imua-native-token
 	delegationEvent = suite.prepareDelegationNativeToken()
@@ -415,12 +415,12 @@ func (suite *DelegationTestSuite) TestUndelegateFrom() {
 		UndelegationId:           initialUndelegationID + 1,
 		InstantPenaltyAmount:     sdkmath.ZeroInt(),
 	}
-	suite.Equal(UndelegationRecord, records[0].Undelegation)
+	suite.Equal(*UndelegationRecord, records[0].Undelegation)
 
 	waitUndelegationRecords, err = suite.App.DelegationKeeper.GetUnCompletableUndelegations(suite.Ctx, epochtypes.NullEpochIdentifier, epochtypes.NullEpochNumber)
 	suite.NoError(err)
 	suite.Equal(2, len(waitUndelegationRecords))
-	suite.Equal(UndelegationRecord, waitUndelegationRecords[1].Undelegation)
+	suite.Equal(*UndelegationRecord, waitUndelegationRecords[1].Undelegation)
 }
 
 func (suite *DelegationTestSuite) TestCompleteUndelegation() {
@@ -492,7 +492,7 @@ func (suite *DelegationTestSuite) TestCompleteUndelegation() {
 	suite.NoError(err)
 	suite.Equal(0, len(records))
 
-	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx)
+	waitUndelegationRecords, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, true)
 	suite.NoError(err)
 	suite.Equal(0, len(waitUndelegationRecords))
 
@@ -560,7 +560,7 @@ func (suite *DelegationTestSuite) TestCompleteUndelegation() {
 	suite.NoError(err)
 	suite.Equal(0, len(records))
 
-	waitUndelegationRecords, err = suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx)
+	waitUndelegationRecords, err = suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, true)
 	suite.NoError(err)
 	suite.Equal(0, len(waitUndelegationRecords))
 }
@@ -621,7 +621,7 @@ func (suite *DelegationTestSuite) TestMultipleUndelegations() {
 	suite.Equal(int64(0), int64(len(undelegationsAndHoldCount)))
 
 	// test the function GetCompletableUndelegations
-	undelegations, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx)
+	undelegations, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, true)
 	suite.NoError(err)
 	suite.Equal(int64(0), int64(len(undelegations)))
 	// run to the matured epoch
@@ -631,7 +631,7 @@ func (suite *DelegationTestSuite) TestMultipleUndelegations() {
 	epochInfo, found = suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochID)
 	suite.Equal(true, found)
 	suite.Equal(epochNumber, epochInfo.CurrentEpoch)
-	undelegations, err = suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx)
+	undelegations, err = suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, true)
 	suite.NoError(err)
 	suite.Equal(undelegationNumber, int64(len(undelegations)))
 }
@@ -675,7 +675,7 @@ func (suite *DelegationTestSuite) TestInstantUndelegation() {
 	penaltyAmount := delegationEvent.OpAmount.Mul(sdk.NewInt(int64(penalty))).Quo(sdk.NewInt(100))
 	UndelegationRecord.ActualCompletedAmount = delegationEvent.OpAmount.Sub(penaltyAmount)
 	UndelegationRecord.InstantPenaltyAmount = penaltyAmount
-	suite.Equal(UndelegationRecord, records[0].Undelegation)
+	suite.Equal(*UndelegationRecord, records[0].Undelegation)
 
 	// run to the end of current epoch to complete the undelegation
 	suite.RunToEpochEnd(epochtypes.DayEpochID)
@@ -688,4 +688,148 @@ func (suite *DelegationTestSuite) TestInstantUndelegation() {
 		PendingUndelegationAmount: sdkmath.ZeroInt(),
 	}
 	suite.Require().Equal(expectedStakerAsset, *stakerAssetInfo)
+}
+
+func (suite *DelegationTestSuite) TestMaxUndelegationCompletions() {
+	var (
+		defaultLimit              uint32
+		defaultUndelegationNumber int64
+		// Returns: total undelegations created, expected remaining count after one EndBlock
+	)
+
+	testcases := []struct {
+		name     string
+		malleate func() (int64, int64)
+	}{
+		{
+			name: "pass - no limit (0), all undelegations processed",
+			malleate: func() (int64, int64) {
+				defaultLimit = 0
+				defaultUndelegationNumber = 20
+				// With limit 0, all 20 should be processed, 0 remaining
+				return defaultUndelegationNumber, 0
+			},
+		},
+		{
+			name: "pass - limit (5) < total (20), only 5 processed",
+			malleate: func() (int64, int64) {
+				defaultLimit = 5
+				defaultUndelegationNumber = 20
+				// With limit 5, only 5 processed, 15 remaining
+				return defaultUndelegationNumber, 15
+			},
+		},
+		{
+			name: "pass - limit (30) > total (20), all processed",
+			malleate: func() (int64, int64) {
+				defaultLimit = 30
+				defaultUndelegationNumber = 20
+				// Limit covers all, 0 remaining
+				return defaultUndelegationNumber, 0
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+			suite.basicPrepare() // Reset state
+
+			// 1. Get configuration from malleate
+			totalUndelegations, expRemaining := tc.malleate()
+
+			// 2. Prepare Assets and Stakers
+			_, assetID := types.GetStakerIDAndAssetID(suite.clientChainLzID, suite.Address[:], suite.assetAddr.Bytes())
+			_, delegationEvent := suite.prepareOptingInDogfood(assetID)
+
+			// 3. set Params
+			suite.App.DelegationKeeper.SetParams(suite.Ctx, delegationtype.Params{
+				InstantUndelegationPenalty: 0, // Default for this test
+				MaxUndelegationCompletions: defaultLimit,
+			})
+
+			// Verify Params are set
+			params := suite.App.DelegationKeeper.GetParams(suite.Ctx)
+			suite.Require().Equal(defaultLimit, params.MaxUndelegationCompletions)
+
+			// 4. Perform Undelegations
+			opAmount := delegationEvent.OpAmount.Quo(sdkmath.NewInt(totalUndelegations))
+			delegationEvent.OpAmount = opAmount
+			for i := int64(0); i < totalUndelegations; i++ {
+				err := suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, delegationEvent)
+				suite.NoError(err)
+			}
+
+			// 5. Move time forward to make undelegations mature
+			epochID := suite.App.StakingKeeper.GetEpochIdentifier(suite.Ctx)
+			epochsUntilUnbonded := suite.App.StakingKeeper.GetEpochsUntilUnbonded(suite.Ctx)
+			epochInfo, found := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochID)
+			suite.Require().True(found)
+
+			// Fast forward to maturity
+			// Note: We stop exactly when they become completable, but before EndBlock processes them
+			targetEpoch := epochInfo.CurrentEpoch + int64(epochsUntilUnbonded)
+			for {
+				epochInfo, _ = suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochID)
+				if epochInfo.CurrentEpoch > targetEpoch {
+					break
+				}
+				suite.CommitAfter(epochInfo.Duration)
+			}
+
+			// 6. Verification BEFORE EndBlock processing
+			// At this stage, returned undelegations should be in the "Completable" queue
+			completable, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, true)
+			suite.NoError(err)
+			suite.Equal(totalUndelegations-expRemaining, int64(len(completable)), "All undelegations should be matured and waiting")
+
+			// 7. Trigger Processing (Simulate EndBlock)
+			suite.App.DelegationKeeper.EndBlock(suite.Ctx, abci.RequestEndBlock{})
+
+			// 8. Verification AFTER EndBlock processing
+			remainingCompletable, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, false)
+			suite.NoError(err)
+			suite.Equal(expRemaining, int64(len(remainingCompletable)),
+				fmt.Sprintf("Expected %d remaining undelegations after block processing with limit %d", expRemaining, defaultLimit))
+
+			// 9. If there are remaining items, verify they are still valid/unprocessed
+			if expRemaining > 0 {
+				// a. Verify strictly that the correct number was removed in the previous step
+				// (Ensure the first batch was processed correctly before entering the loop)
+				processedCount := totalUndelegations - int64(len(remainingCompletable))
+				suite.Equal(int64(defaultLimit), processedCount, "Should have processed exactly the limit amount in the first pass")
+
+				// b. Run additional blocks to complete the remaining completable undelegations
+				// Formula: ceil(expRemaining / limit)
+				blocksNeeded := (expRemaining + int64(defaultLimit) - 1) / int64(defaultLimit)
+
+				for i := int64(0); i < blocksNeeded; i++ {
+					// Trigger the next block processing
+					suite.App.DelegationKeeper.EndBlock(suite.Ctx, abci.RequestEndBlock{})
+
+					// Calculate expected remaining amount after this block execution
+					// We subtract (i+1)*limit because we just ran the block for the (i+1)-th time in this loop
+					expectedCurrentRemaining := expRemaining - (i+1)*int64(defaultLimit)
+
+					// Clamp to 0 (because the last batch might be smaller than the limit)
+					if expectedCurrentRemaining < 0 {
+						expectedCurrentRemaining = 0
+					}
+
+					// Verify the state
+					currentCompletable, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, false)
+					suite.NoError(err)
+					suite.Equal(expectedCurrentRemaining, int64(len(currentCompletable)),
+						fmt.Sprintf("Block iteration %d: Expected %d remaining undelegations after processing limit %d",
+							i, expectedCurrentRemaining, defaultLimit))
+				}
+
+				// c. Final sanity check: ensure everything is cleared
+				finalCompletable, err := suite.App.DelegationKeeper.GetCompletableUndelegations(suite.Ctx, false)
+				suite.NoError(err)
+				suite.Equal(int64(0), int64(len(finalCompletable)), "All undelegations should be processed")
+			}
+		})
+	}
 }

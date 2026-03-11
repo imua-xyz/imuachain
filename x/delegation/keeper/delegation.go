@@ -262,7 +262,7 @@ func (k *Keeper) UndelegateFrom(ctx sdk.Context, params *delegationtype.Delegati
 	// TODO: remove the hold count increment for x/dogfood AVS.
 	err = k.SetUndelegationRecords(ctx, false, []delegationtype.UndelegationAndHoldCount{
 		{
-			Undelegation: &r,
+			Undelegation: r,
 		},
 	})
 	if err != nil {

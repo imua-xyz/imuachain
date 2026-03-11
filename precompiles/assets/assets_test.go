@@ -917,7 +917,7 @@ func (s *AssetsPrecompileSuite) TestGetStakerBalanceByToken() {
 
 				err = s.App.DelegationKeeper.SetUndelegationRecords(s.Ctx, false, []delegationtype.UndelegationAndHoldCount{
 					{
-						Undelegation: &delegationtype.UndelegationRecord{
+						Undelegation: delegationtype.UndelegationRecord{
 							StakerId:                 stakerID,
 							AssetId:                  assetID,
 							OperatorAddr:             s.Operators[0].String(),
