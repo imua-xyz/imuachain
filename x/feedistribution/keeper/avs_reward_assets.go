@@ -90,7 +90,7 @@ func (k Keeper) SetAVSRewardAssets(ctx sdk.Context, avsAddr string, assetsInfo [
 		}
 		// check for denomination duplication
 		if _, ok := denominationMap[assetInfo.RewardDenomination]; ok {
-			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated denomination: %s", assetInfo.Symbol)
+			return types.ErrInvalidRewardAssetParameter.Wrapf("duplicated denomination: %s", assetInfo.RewardDenomination)
 		}
 		denominationMap[assetInfo.RewardDenomination] = nil
 		_, assetID := assetstype.GetStakerIDAndAssetIDFromStr(assetInfo.LayerZeroChainID, "", assetInfo.Address)
@@ -331,7 +331,7 @@ func (k Keeper) IsRegisteredRewardAsset(ctx sdk.Context, assetID string) bool {
 }
 
 // GetAVSListByRewardAssetID returns the list of AVS addresses that have the reward asset.
-func (k Keeper) GetAVSListByRewardAssetID(ctx sdk.Context, assetID string) []string {
+func (k Keeper) GetAVSListByRewardAssetID(ctx sdk.Context, assetID string) ([]string, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefixAVSRewardAssets)
 	iterator := sdk.KVStorePrefixIterator(store, []byte{})
 	defer iterator.Close()
@@ -339,11 +339,11 @@ func (k Keeper) GetAVSListByRewardAssetID(ctx sdk.Context, assetID string) []str
 	for ; iterator.Valid(); iterator.Next() {
 		keys, err := utils.ParseJoinedKeyWithCount(iterator.Key(), 2)
 		if err != nil {
-			return avsList
+			return nil, err
 		}
 		if keys[1] == assetID {
 			avsList = append(avsList, keys[0])
 		}
 	}
-	return avsList
+	return avsList, nil
 }

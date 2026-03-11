@@ -249,7 +249,7 @@ message StakerUndelegatableSharesSnapshot {
 message SlashFromAssetPool {
   // asset_id is the asset id.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
-  // total_amount is the total amount of the slashed asset..
+  // total_amount is the total amount of the slashed asset.
   string total_amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",

@@ -107,7 +107,7 @@ message MsgClaimAndWithdrawDogfoodRewardResponse {
   ];
 }
 
-// MsgUpdateStakerRewardParams is used to set or udpate the reward parameters of the staker
+// MsgUpdateStakerRewardParams is used to set or update the reward parameters of the staker
 message MsgUpdateStakerRewardParams {
   option (cosmos.msg.v1.signer) = "from_address";
   option (gogoproto.equal) = false;

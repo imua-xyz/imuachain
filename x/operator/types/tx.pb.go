@@ -887,7 +887,7 @@ func (m *StakerUndelegatableSharesSnapshot) GetRewardUndelegatableShareBreakdown
 type SlashFromAssetPool struct {
 	// asset_id is the asset id.
 	AssetID string `protobuf:"bytes,1,opt,name=asset_id,json=assetId,proto3" json:"asset_id,omitempty"`
-	// total_amount is the total amount of the slashed asset..
+	// total_amount is the total amount of the slashed asset.
 	TotalAmount github_com_cosmos_cosmos_sdk_types.Int `protobuf:"bytes,2,opt,name=total_amount,json=totalAmount,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"total_amount"`
 	// snapshot_total_share is the total share of the operator asset pool at the time of slash execution.
 	// This snapshot is used for slash veto scenarios to restore the state before the slash was applied.

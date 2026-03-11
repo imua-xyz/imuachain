@@ -92,7 +92,10 @@ func (k *Keeper) StoreSlashStakerShareSnapshot(ctx sdk.Context, operatorAddr, as
 	if err != nil {
 		return err
 	}
-	avsList := k.distributionKeeper.GetAVSListByRewardAssetID(ctx, assetID)
+	avsList, err := k.distributionKeeper.GetAVSListByRewardAssetID(ctx, assetID)
+	if err != nil {
+		return err
+	}
 
 	for _, stakerID := range stakerList.Stakers {
 		// get the staker's delegation share

@@ -133,6 +133,9 @@ func CmdUpdateStakerRewardParams() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			if !redelegateReward && len(args) > 1 {
+				return types.ErrInvalidCliCmdArg.Wrap("unexpected redelegate operator address when redelegateReward=false")
+			}
 			msg := &types.MsgUpdateStakerRewardParams{
 				FromAddress: clientCtx.GetFromAddress().String(),
 				RewardParams: types.StakerRewardParams{

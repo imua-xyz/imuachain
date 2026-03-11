@@ -171,7 +171,7 @@ type DistributionKeeper interface {
 		ctx sdk.Context, operator string,
 		slashSources map[string]map[string]struct{},
 		slashProportion sdkmath.LegacyDec) ([]SlashFromUnclaimedRewards, error)
-	GetAVSListByRewardAssetID(ctx sdk.Context, assetID string) []string
+	GetAVSListByRewardAssetID(ctx sdk.Context, assetID string) ([]string, error)
 	GetRewardUndelegatableShareBreakdown(ctx sdk.Context, stakerID, assetID, operatorAddr string, avsList []string) ([]StakerUndelegatableSharePerAVS, error)
 	VetoSlashRewardFromDelegation(ctx sdk.Context, stakerID, assetID string, avsAddress string, slashedRewardAmount sdkmath.Int) error
 	VetoSlashUnclaimedRewards(ctx sdk.Context, operatorAddr string, slashFromUnclaimedRewards []SlashFromUnclaimedRewards) error

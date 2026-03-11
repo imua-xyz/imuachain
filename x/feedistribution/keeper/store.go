@@ -343,7 +343,7 @@ func (k Keeper) IterateOperatorUnclaimedRewards(
 	isUpdate bool,
 	opFunc func(avs string, rewards *feedistributiontypes.OperatorUnclaimedRewards) (bool, bool, error),
 ) error {
-	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorUnclaimedRewards](
+	return utils.GenericIterateStoreWithUpdate(
 		ctx,
 		k.cdc,
 		k.storeKey,
@@ -884,7 +884,7 @@ func (k Keeper) IterateStakerClaimedRewards(
 	if opFunc == nil {
 		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
 	}
-	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.StakerClaimedRewards](
+	return utils.GenericIterateStoreWithUpdate(
 		ctx,
 		k.cdc,
 		k.storeKey,
@@ -912,7 +912,7 @@ func (k Keeper) IterateOperatorCommissions(ctx sdk.Context, operator string, isU
 	if opFunc == nil {
 		return feedistributiontypes.ErrInvalidInputParameter.Wrapf("opFunc callback is nil")
 	}
-	return utils.GenericIterateStoreWithUpdate[*feedistributiontypes.OperatorCommission](
+	return utils.GenericIterateStoreWithUpdate(
 		ctx,
 		k.cdc,
 		k.storeKey,
@@ -958,7 +958,8 @@ func (k Keeper) GetRewardUndelegatableShareBreakdown(ctx sdk.Context, stakerID, 
 		key := utils.GetJoinedStoreKey(stakerID, avs)
 		b := store.Get(key)
 		if b == nil {
-			return nil, feedistributiontypes.ErrNoKeyInTheStore.Wrapf("GetRewardUndelegatableShareBreakdown, stakerID:%s,avs:%s", stakerID, avs)
+			// staker may legitimately have no rewards for this AVS; skip it
+			continue
 		}
 		rewards := feedistributiontypes.StakerClaimedRewards{}
 		k.cdc.MustUnmarshal(b, &rewards)

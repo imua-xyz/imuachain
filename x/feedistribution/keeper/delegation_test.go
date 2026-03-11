@@ -1342,8 +1342,17 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				stakerRewards, err := suite.App.DistrKeeper.GetStakerClaimedRewards(suite.Ctx, stakerID, suite.DogfoodAVSAddr)
 				suite.Require().NoError(err)
 				suite.Require().Equal(expectedStakerTotalRewards, stakerRewards.HistoricalTotalRewards)
-				suite.Require().True(stakerRewards.OutstandingRewards.IsZero())
 				redelegateAmount := feedistributiontypes.UnscaleDecToInt(expectedStakerTotalRewards[0].Amount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent)
+				redelegateDec := feedistributiontypes.ScaleIntByDecimals(redelegateAmount, feedistributiontypes.IMUARewardToken.RewardAssetInfo.DenominationExponent)
+				remainder := expectedStakerTotalRewards[0].Amount.Sub(redelegateDec)
+				if remainder.IsZero() {
+					suite.Require().True(stakerRewards.OutstandingRewards.IsZero())
+				} else {
+					suite.Require().Equal(
+						sdk.DecCoins{sdk.NewDecCoinFromDec(expectedStakerTotalRewards[0].Denom, remainder)},
+						stakerRewards.OutstandingRewards,
+					)
+				}
 				suite.Require().Equal([]feedistributiontypes.RewardsDelegationShare{
 					{
 						OperatorAddr: suite.testOperators[0].String(),

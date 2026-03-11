@@ -313,7 +313,7 @@ func (m *MsgClaimAndWithdrawDogfoodRewardResponse) GetWithdrawnAmount() github_c
 	return nil
 }
 
-// MsgUpdateStakerRewardParams is used to set or udpate the reward parameters of the staker
+// MsgUpdateStakerRewardParams is used to set or update the reward parameters of the staker
 type MsgUpdateStakerRewardParams struct {
 	// from_address is the address of the staker on IMUA chain (sdk.AccAddress).
 	FromAddress string `protobuf:"bytes,1,opt,name=from_address,json=fromAddress,proto3" json:"from_address,omitempty"`

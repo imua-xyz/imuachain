@@ -444,7 +444,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 
 		// validate the slashing record regarding unclaimed rewards
 		SlashFromUnclaimedRewardsVal := func(_ int, slashFromUnclaimedRewards SlashFromUnclaimedRewards) error {
-			if slashFromUnclaimedRewards.OutstandingRewardsSlashed.IsValid() {
+			if !slashFromUnclaimedRewards.OutstandingRewardsSlashed.IsValid() {
 				return ErrInvalidGenesisData.Wrapf(
 					"ValidateSlashStates: invalid outstanding rewards slashed for the unclaimed rewards, it's nil or negative: %+v",
 					slash,

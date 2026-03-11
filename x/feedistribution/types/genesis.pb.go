@@ -40,7 +40,7 @@ type GenesisState struct {
 	AllOperatorUnclaimedRewards []KeyAndOperatorUnclaimedRewards `protobuf:"bytes,6,rep,name=all_operator_unclaimed_rewards,json=allOperatorUnclaimedRewards,proto3" json:"all_operator_unclaimed_rewards"`
 	// all_delegation_change_infos are the delegation changes for all epochs and operators.
 	AllDelegationChangeInfos []KeyAndDelegationChangeInfo `protobuf:"bytes,7,rep,name=all_delegation_change_infos,json=allDelegationChangeInfos,proto3" json:"all_delegation_change_infos"`
-	// all_delegation_change_infos are the delegation starting information for all epochs.
+	// all_delegation_starting_infos are the delegation starting information for all epochs.
 	AllDelegationStartingInfos []KeyAndDelegationStartingInfo `protobuf:"bytes,8,rep,name=all_delegation_starting_infos,json=allDelegationStartingInfos,proto3" json:"all_delegation_starting_infos"`
 	// all_operator_historical_rewards are the operator historical rewards information for all periods.
 	AllOperatorHistoricalRewards []KeyAndOperatorHistoricalRewards `protobuf:"bytes,9,rep,name=all_operator_historical_rewards,json=allOperatorHistoricalRewards,proto3" json:"all_operator_historical_rewards"`
@@ -868,8 +868,8 @@ func (m *KeyAndStakerClaimedRewards) GetStakerClaimedRewards() StakerClaimedRewa
 }
 
 // KeyAndStakerRewardParams is a struct used in the genesis state.
-// It stores the claimed rewards for the staker.
-// The key, which is the stakerID.
+// It stores the reward parameters for the staker.
+// The key is the stakerID.
 type KeyAndStakerRewardParams struct {
 	// key is the stakerID.
 	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`

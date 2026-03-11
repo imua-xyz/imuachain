@@ -69,6 +69,9 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 						if !rewardAmount.IsPositive() {
 							continue
 						}
+						// redelegateDec is the exact decimal representation of the integer amount
+						// being delegated; any fractional remainder stays in outstanding rewards.
+						redelegateDec := feedistributiontypes.ScaleIntByDecimals(rewardAmount, rewardAsset.RewardAssetInfo.DenominationExponent)
 						// redelegate the reward
 						share, preDelegatedAmount, err := k.delegationKeeper.DelegateTo(cc, &delegationtype.DelegationOrUndelegationParams{
 							OperatorAddress: operatorAccAddr,
@@ -111,7 +114,12 @@ func (k Keeper) BatchRedelegateClaimedRewards(ctx sdk.Context, epochIdentifier s
 							delegationChangeInfos[stakerRewardParams.RedelegateOperatorAddr][assetID] = delegationChanges
 						}
 
-						indicesToRemove = append(indicesToRemove, i)
+						// preserve any fractional remainder instead of dropping it
+						if reward.Amount.GT(redelegateDec) {
+							newOutstandingRewards[i] = sdk.NewDecCoinFromDec(reward.Denom, reward.Amount.Sub(redelegateDec))
+						} else {
+							indicesToRemove = append(indicesToRemove, i)
+						}
 						delegationRewardsShare.Shares = delegationRewardsShare.Shares.Add(sdk.NewDecCoinFromDec(reward.Denom, share))
 					}
 				}
