@@ -527,3 +527,23 @@ func (k *Keeper) QueryParams(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
+
+// QueryOperatorFrozen queries the frozen status of the operator.
+func (k Keeper) QueryOperatorFrozen(
+	goCtx context.Context,
+	req *types.QueryOperatorFrozenReq,
+) (*types.QueryOperatorFrozenResp, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	accAddr, err := sdk.AccAddressFromBech32(
+		strings.ToLower(req.OperatorAccAddr),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryOperatorFrozenResp{
+		Frozen: k.IsOperatorFrozen(ctx, accAddr),
+	}, nil
+}

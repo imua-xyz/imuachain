@@ -45,7 +45,19 @@ func (k Keeper) emitFreezeEvent(
 	)
 }
 
+// IsOperatorFrozenStr is the string version of IsOperatorFrozen.
+// Contract: The operator address must be a valid bech32 address with the
+// correct prefix. If the address is invalid, it returns false.
+func (k Keeper) IsOperatorFrozenStr(ctx sdk.Context, addr string) bool {
+	addrBech32, err := sdk.AccAddressFromBech32(addr)
+	if err != nil {
+		return false
+	}
+	return k.IsOperatorFrozen(ctx, addrBech32)
+}
+
 // IsOperatorFrozen checks if the operator is permanently frozen.
+// Contract: This function does not check for operator registration.
 func (k *Keeper) IsOperatorFrozen(ctx sdk.Context, addr sdk.AccAddress) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(operatortypes.KeyForOperatorFrozen(addr))

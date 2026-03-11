@@ -75,6 +75,7 @@ func GetQueryCmd() *cobra.Command {
 		QueryAllSnapshot(),
 		QuerySpecifiedSnapshot(),
 		QueryParams(),
+		QueryOperatorFrozen(),
 	)
 	return cmd
 }
@@ -666,6 +667,38 @@ func QueryParams() *cobra.Command {
 				return err
 			}
 			return clientCtx.PrintProto(res)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// QueryOperatorFrozen returns the cmd line command to check an operator's
+// frozen status.
+func QueryOperatorFrozen() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "operator-frozen <operator-account-address>",
+		Short: "Check whether an operator is frozen",
+		Long:  "Check whether an operator is frozen given the account address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			val, params, err := ValidOperatorAVSAddr(
+				cmd, args[0], common.BigToAddress(common.Big0).String(),
+			)
+			if err != nil {
+				return err
+			}
+			queryClient := operatortypes.NewQueryClient(params.clientCtx)
+			res, err := queryClient.QueryOperatorFrozen(
+				context.Background(),
+				&operatortypes.QueryOperatorFrozenReq{
+					OperatorAccAddr: val.OperatorAddr,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			return params.clientCtx.PrintProto(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)
