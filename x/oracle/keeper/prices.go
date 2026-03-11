@@ -208,7 +208,10 @@ func (k Keeper) GetAllPrices(ctx sdk.Context) (list []types.Prices) {
 	return list
 }
 
-// AppenPriceTR append a new round of price for specific token, return false if the roundID not match
+// AppenPriceTR appends a new round of price for a specific token and returns false if the roundID does not match.
+// The price round is always stored and the next round ID advanced when the roundID matches, regardless of the
+// value of accumulate. When accumulate is true, this also updates the accumulated price/TWAP state for the token;
+// when accumulate is false, no TWAP/accumulated-price updates are performed.
 func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound, accumulate bool) bool {
 	nextRoundID := k.GetNextRoundID(ctx, tokenID)
 	logger := k.Logger(ctx)
@@ -239,7 +242,10 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	return true
 }
 
-// GrowRoundID Increases roundID with the previous price
+// GrowRoundID increases the roundID using the previously stored price.
+// If accumulate is true, the carried-forward price is appended in a way that
+// updates TWAP/accumulated-price state (via AppendPriceTR); if false, the
+// round is advanced without updating TWAP/accumulated-price state.
 func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64, accumulate bool) (price string, roundID uint64) {
 	storedNextRoundID := k.GetNextRoundID(ctx, tokenID)
 	pTR, _ := k.GetPriceTRLatest(ctx, tokenID)
