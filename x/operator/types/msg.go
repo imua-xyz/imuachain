@@ -332,6 +332,9 @@ func (m *MsgVetoSlash) ValidateBasic() error {
 			ErrParameterInvalid, "AVS address is not a valid hex address or chain id",
 		)
 	}
+	if m.SlashId == "" {
+		return errorsmod.Wrap(ErrParameterInvalid, "slash id is empty")
+	}
 	if m.VetoReason == "" {
 		return errorsmod.Wrap(ErrParameterInvalid, "veto reason is empty")
 	}

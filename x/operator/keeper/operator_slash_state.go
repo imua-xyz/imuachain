@@ -153,6 +153,22 @@ func (k *Keeper) IterateSlashStakerShareSnapshot(
 	return nil
 }
 
+// DeleteSlashStakerShareSnapshot removes all snapshot entries for a given slashID and assetID.
+// It should be called after VetoSlash finishes processing the snapshots so that
+// stale data does not accumulate in the KV store.
+func (k *Keeper) DeleteSlashStakerShareSnapshot(ctx sdk.Context, slashID, assetID string) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
+	iterator := sdk.KVStorePrefixIterator(store, utils.GetJoinedStoreKey(slashID, assetID))
+	keys := make([][]byte, 0)
+	for ; iterator.Valid(); iterator.Next() {
+		keys = append(keys, iterator.Key())
+	}
+	iterator.Close()
+	for _, key := range keys {
+		store.Delete(key)
+	}
+}
+
 func (k *Keeper) GetSlashStakerShareSnapshot(ctx sdk.Context, slashID, assetID, stakerID string) (operatortypes.StakerUndelegatableSharesSnapshot, error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixSlashStakerShareSnapshot)
 	snapshotKey := utils.GetJoinedStoreKey(slashID, assetID, stakerID)

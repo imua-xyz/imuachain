@@ -503,6 +503,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 		if err != nil {
 			return err
 		}
+		k.DeleteSlashStakerShareSnapshot(ctx, slashID, slashFromAssetPool.AssetID)
 	}
 
 	// veto the slashed amounts from operator unclaimed rewards.
