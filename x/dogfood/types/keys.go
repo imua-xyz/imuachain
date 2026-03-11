@@ -21,10 +21,6 @@ const (
 	// ImuachainValidatorBytePrefix is the prefix for the validator store.
 	ImuachainValidatorBytePrefix byte = iota + 1
 
-	// QueuedOperationsByte was the byte used to store the queue of operations.
-	// It is no longer used, but it is retained for backward compatibility.
-	_
-
 	// OptOutsToFinishBytePrefix is the byte used to store the list of operator addresses whose
 	// opt outs are maturing at the provided epoch.
 	OptOutsToFinishBytePrefix
@@ -37,15 +33,6 @@ const (
 	// addresses that can be pruned from the operator module at the provided epoch.
 	ConsensusAddrsToPruneBytePrefix
 
-	// UnbondingReleaseMaturityBytePrefix is the byte prefix to store the list of undelegations
-	// that will mature at the provided epoch.
-	UnbondingReleaseMaturityBytePrefix
-
-	// PendingOperationsByte was the byte used to store the list of operations to be applied at
-	// the end of the current block. It is no longer used, and is retained for backward
-	// compatibility.
-	_
-
 	// PendingOptOutsByte is the byte used to store the list of operator addresses whose opt
 	// outs will be made effective at the end of the current block.
 	PendingOptOutsByte
@@ -54,18 +41,11 @@ const (
 	// pruned at the end of the block.
 	PendingConsensusAddrsByte
 
-	// PendingUndelegationsByte is the byte used to store the list of undelegations that will
-	// mature at the end of the current block.
-	PendingUndelegationsByte
-
 	// ShouldUpdateValidatorSetByte is the byte key for the epoch end store.
 	ShouldUpdateValidatorSetByte
 
 	// HistoricalInfoBytePrefix is the byte prefix for the historical info store.
 	HistoricalInfoBytePrefix
-
-	// UndelegationMaturityEpochByte is the byte key for the undelegation maturity epoch store.
-	UndelegationMaturityEpochByte
 
 	// LastTotalPowerByte is the byte key for the last total power store.
 	LastTotalPowerByte
@@ -117,19 +97,6 @@ func ConsensusAddrsToPruneKey(epoch int64) ([]byte, bool) {
 	), true
 }
 
-// UnbondingReleaseMaturityKey is the key to lookup the list of undelegations that will mature
-// at the provided epoch.
-func UnbondingReleaseMaturityKey(epoch int64) ([]byte, bool) {
-	uepoch, ok := SafeInt64ToUint64(epoch)
-	if !ok {
-		return nil, false
-	}
-	return append(
-		[]byte{UnbondingReleaseMaturityBytePrefix},
-		sdk.Uint64ToBigEndian(uepoch)...,
-	), true
-}
-
 // PendingOptOutsKey returns the key for the pending opt-outs store.
 func PendingOptOutsKey() []byte {
 	return []byte{PendingOptOutsByte}
@@ -141,19 +108,9 @@ func PendingConsensusAddrsKey() []byte {
 	return []byte{PendingConsensusAddrsByte}
 }
 
-// PendingUndelegationsKey returns the key for the pending undelegations store.
-func PendingUndelegationsKey() []byte {
-	return []byte{PendingUndelegationsByte}
-}
-
 // ShouldUpdateValidatorSetByteKey returns the key for the epoch end store.
 func ShouldUpdateValidatorSetByteKey() []byte {
 	return []byte{ShouldUpdateValidatorSetByte}
-}
-
-// UndelegationMaturityEpochKey returns the key for the undelegation maturity epoch store.
-func UndelegationMaturityEpochKey(recordKey []byte) []byte {
-	return append([]byte{UndelegationMaturityEpochByte}, recordKey...)
 }
 
 // SafeInt64ToUint64 is a wrapper function to convert an int64

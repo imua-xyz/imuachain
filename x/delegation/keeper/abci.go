@@ -24,7 +24,7 @@ func (k *Keeper) EndBlock(
 	originalCtx sdk.Context, _ abci.RequestEndBlock,
 ) []abci.ValidatorUpdate {
 	logger := k.Logger(originalCtx)
-	records, err := k.GetCompletableUndelegations(originalCtx)
+	records, err := k.GetCompletableUndelegations(originalCtx, true)
 	if err != nil {
 		// When encountering an error while retrieving pending undelegation, skip the undelegation at the given height without causing the node to stop running.
 		logger.Error("Error in GetCompletableUndelegations during the delegation's EndBlock execution", "error", err)

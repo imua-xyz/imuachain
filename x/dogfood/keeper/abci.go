@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -36,29 +38,53 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	defer k.ClearValidatorSetUpdateFlag(ctx)
 	logger := k.Logger(ctx)
 	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
+	// recall that epoch hooks are called in BeginBlocker and we are in the EndBlocker.
+	// it means that the epoch number reported by the epoch module is correct.
+	epochID := k.GetDogfoodParams(ctx).EpochIdentifier
+	// note: we can ignore the case wherein the epoch is not found or panic.
+	// for complete code level clarity, i chose to panic. currently, we check
+	// the existence of the epoch at genesis, and we do not permit changing the
+	// epoch identifier in the MsgServer. thus, it is guaranteed to exist.
+	epochInfo, found := k.epochsKeeper.GetEpochInfo(ctx, epochID)
+	if !found {
+		panic(fmt.Sprintf("epoch %s not found", epochID))
+	}
+	currentEpochNumber := epochInfo.CurrentEpoch
+	nextEpochNumber := currentEpochNumber + 1
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.
 	k.operatorKeeper.ClearPreviousConsensusKeys(ctx, chainIDWithoutRevision)
-	// clear the hold on the pending undelegations.
-	undelegations := k.GetPendingUndelegations(ctx)
-	for _, undelegation := range undelegations.GetList() {
-		err := k.delegationKeeper.DecrementUndelegationHoldCount(ctx, undelegation)
-		if err != nil {
-			logger.Error("error decrementing undelegation hold count", "error", err)
-		}
-		k.ClearUndelegationMaturityEpoch(ctx, undelegation)
-	}
-	k.ClearPendingUndelegations(ctx)
-	// then, let the operator module know that the opt out has finished.
+	// let the operator module know that the opt out has finished.
 	optOuts := k.GetPendingOptOuts(ctx)
+	failed := []sdk.AccAddress{}
 	for _, addr := range optOuts.GetList() {
+		addrAcc := sdk.AccAddress(addr)
 		err := k.operatorKeeper.CompleteOperatorKeyRemovalForChainID(
-			ctx, addr, chainIDWithoutRevision,
+			ctx, addrAcc, chainIDWithoutRevision,
 		)
 		if err != nil {
-			logger.Error("error completing operator key removal", "error", err)
+			// the errors returned by the function are, as of writing,
+			// 1. ErrOperatorNotExist
+			// 2. ErrUnknownChainID
+			// 3. ErrOperatorNotRemovingKey
+			// none of these errors, in a consistent state machine with
+			// perfect logic, should happen. however, we guard against
+			// them anyway
+			logger.Error(
+				"error completing operator key removal",
+				"error", err,
+				"addr", addrAcc.String(),
+				"rescheduled to end of epoch", fmt.Sprintf("%d", nextEpochNumber),
+				"identifier", epochID,
+			)
+			failed = append(failed, addrAcc)
 		}
+	}
+	// reschedule these for the next epoch
+	for _, addr := range failed {
+		k.AppendOptOutToFinish(ctx, nextEpochNumber, addr)
+		k.SetOperatorOptOutFinishEpoch(ctx, addr, nextEpochNumber)
 	}
 	k.ClearPendingOptOuts(ctx)
 	// for slashing, the operator module is required to store a mapping of chain id + cons addr

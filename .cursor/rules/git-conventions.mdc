@@ -1,0 +1,25 @@
+---
+description: Git and branching conventions for this project
+alwaysApply: true
+---
+
+# Git Conventions
+
+## Default Base Branch
+- **defaultBaseBranch**: `develop`
+- Use `develop` when the base branch is not specified (e.g. for branch-create, sync-with-base, pr-comment-responder).
+
+## Branch Naming
+- Feature branches: `feature/<description>`
+- Bug fixes: `fix/<description>` or `bugfix/<description>`
+- Hotfixes: `hotfix/<description>`
+
+## PR Targeting
+- Target PRs to `develop`.
+- Rebase on `develop` before submitting.
+
+## Pre-Push Checklist (lint/test)
+- **Use judgment based on change scale.** Run `make lint` and `make test` only when:
+  - The agent thinks the changes warrant it (e.g., logic changes, multi-file edits, proto/keeper changes), or
+  - The user explicitly requests it.
+- **Skip** for trivial changes (docs, config-only, typo fixes, single-line) or when the user doesn't require it.

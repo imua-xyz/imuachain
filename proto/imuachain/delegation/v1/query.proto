@@ -153,7 +153,7 @@ message UndelegationsByEpochInfoReq {
 // hold count, which is used to construct the genesis state
 message UndelegationAndHoldCount {
   // undelegation is the single undelegation record
-  UndelegationRecord undelegation = 1;
+  UndelegationRecord undelegation = 1 [(gogoproto.nullable) = false];
   // hold_count represents the number of holds on this undelegation
   uint64 hold_count = 2;
 }
@@ -161,7 +161,7 @@ message UndelegationAndHoldCount {
 // UndelegationRecordList is the response to query undelegations.
 message UndelegationRecordList {
   // undelegations is the returned undelegations with hold count
-  repeated UndelegationAndHoldCount undelegations = 1;
+  repeated UndelegationAndHoldCount undelegations = 1 [(gogoproto.nullable) = false];
 }
 
 // QueryAssociatedOperatorByStakerReq is the request to obtain the associated operator of the specified staker
