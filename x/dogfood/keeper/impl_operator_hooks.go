@@ -34,10 +34,9 @@ func (h OperatorHooksWrapper) afterValidatorCreated(
 	); err != nil {
 		h.keeper.Logger(ctx).Error("error in AfterValidatorCreated", "error", err)
 		return err
-	} else {
-		writeFunc()
-		return nil
 	}
+	writeFunc()
+	return nil
 }
 
 // AfterOperatorKeySet is the implementation of the operator hooks.
