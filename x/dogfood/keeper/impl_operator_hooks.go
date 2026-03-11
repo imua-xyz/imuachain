@@ -25,14 +25,18 @@ func (k *Keeper) OperatorHooks() OperatorHooksWrapper {
 // lookup of consensus address to public key.
 func (h OperatorHooksWrapper) afterValidatorCreated(
 	ctx sdk.Context, accAddress sdk.AccAddress,
-) {
+) error {
 	cc, writeFunc := ctx.CacheContext()
+	// this hook is only used by x/slashing. it never returns an error.
+	// we only guard for it because of the method signature.
 	if err := h.keeper.Hooks().AfterValidatorCreated(
 		cc, sdk.ValAddress(accAddress),
 	); err != nil {
 		h.keeper.Logger(ctx).Error("error in AfterValidatorCreated", "error", err)
+		return err
 	} else {
 		writeFunc()
+		return nil
 	}
 }
 
@@ -44,7 +48,12 @@ func (h OperatorHooksWrapper) AfterOperatorKeySet(
 	// we batch vote power changes at the end of the epoch, so nothing to do with those.
 	// we should, however, let the x/slashing module know of this change.
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
-		h.afterValidatorCreated(ctx, accAddress)
+		if err := h.afterValidatorCreated(ctx, accAddress); err != nil {
+			h.keeper.Logger(ctx).Error(
+				"AfterOperatorKeySet: error in afterValidatorCreated",
+				"error", err,
+			)
+		}
 	}
 }
 
@@ -66,6 +75,15 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	// 3. X epochs later, the reverse lookup of old cons addr + chain id -> operator addr
 	// should be cleared.
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
+		// Map standard cosmos hooks (call AfterValidatorCreated to register the new key).
+		// This creates a blank ValidatorSigningInfo internally.
+		if err := h.afterValidatorCreated(ctx, accAddress); err != nil {
+			h.keeper.Logger(ctx).Error(
+				"AfterOperatorKeyReplaced: error in afterValidatorCreated",
+				"error", err,
+			)
+			return
+		}
 		// The reverse lookup (consensus address -> operator address) must be maintained
 		// during the unbonding period to allow slashing of validators who misbehaved while
 		// they were active, even after they've been removed from the active validator set.
@@ -79,9 +97,6 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 		// the mapping from consensus address to consensus public key. this is done via the
 		// AfterValidatorRemoved hook which is called when the pruning is performed.
 		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, oldConsAddr)
-		// Map standard cosmos hooks (call AfterValidatorCreated to register the new key).
-		// This creates a blank ValidatorSigningInfo internally.
-		h.afterValidatorCreated(ctx, accAddress)
 		// copy from old cons addr to new cons addr
 		h.keeper.CopyValidatorSigningInfo(ctx, oldConsAddr, newKey.ToConsAddr())
 	}

@@ -141,12 +141,24 @@ func (k Keeper) SlashWithInfractionReason(
 	if err == nil {
 		if found {
 			currentConsAddr = currentKey.ToConsAddr()
-			if !bytes.Equal(currentConsAddr, addr) {
-				// the current key is different from the one being slashed
-				// we should save the post slash status into the new key as well.
-				slashingOldKey = true
-			}
+			// the current key is different from the one being slashed
+			// we should save the post slash status into the new key as well.
+			slashingOldKey = !bytes.Equal(currentConsAddr, addr)
 		}
+	} else {
+		// the two errors returned by GetOperatorConsKeyForChainID are
+		// 1. delegationtypes.ErrOperatorNotExist, impossible because an operator address
+		// is returned above by GetOperatorAddressForChainIDAndConsAddr
+		// 2. types.ErrUnknownChainID, also impossible because the chain ID is
+		// already validated above by GetOperatorAddressForChainIDAndConsAddr
+		// both of these can be considered a terrible violation, and thus,
+		// the only way out is to panic.
+		panic(
+			fmt.Sprintf(
+				"Logic error: failed to get operator cons key: %s %s %v",
+				addr.String(), chainIDWithoutRevision, err,
+			),
+		)
 	}
 	res := k.operatorKeeper.SlashWithInfractionReason(
 		ctx, accAddress, infractionHeight,
