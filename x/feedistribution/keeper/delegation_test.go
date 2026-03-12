@@ -1444,6 +1444,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				undelegationRecordKey, err := suite.App.DelegationKeeper.GetUndelegationRecKey(suite.Ctx, stakerID, assetstype.ImuachainAssetID, 1)
 				suite.Require().NoError(err)
 				undelegationRecords, err := suite.App.DelegationKeeper.GetUndelegationRecords(suite.Ctx, [][]byte{undelegationRecordKey})
+				suite.Require().NoError(err)
 				suite.Require().True(undelegationRecords[0].Undelegation.RewardAsset)
 				suite.Require().Equal(undelegateAmount, undelegationRecords[0].Undelegation.Amount)
 				suite.Require().Equal(undelegateAmount, undelegationRecords[0].Undelegation.ActualCompletedAmount)
@@ -1816,6 +1817,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				delegationInfo, err := suite.App.DelegationKeeper.GetSingleDelegationInfo(suite.Ctx, stakerID, assetstype.ImuachainAssetID, suite.testOperators[0].String())
 				suite.Require().NoError(err)
 				operatorAssetInfo, err := suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, suite.testOperators[0], assetstype.ImuachainAssetID)
+				suite.Require().NoError(err)
 				undelegatableRewardAmount, err := delegationkeeper.TokensFromShares(delegationInfo.RewardUndelegatableShare, operatorAssetInfo.TotalShare, operatorAssetInfo.TotalAmount)
 				suite.Require().NoError(err)
 				err = suite.App.DistrKeeper.UndelegateClaimedRewards(suite.Ctx, stakerID, assetstype.ImuachainAssetID, suite.testOperators[0], false, undelegatableRewardAmount)
@@ -1893,6 +1895,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				stakerTotalRewardsBeforeVeto := unclaimedStakingRewardsBeforeVeto.Add(unclaimedCompoundingRewardsBeforeVeto...)
 
 				operatorUnclaimedRewardsBeforeVeto, err := suite.App.DistrKeeper.GetOperatorUnclaimedRewards(suite.Ctx, suite.testOperators[0].String(), suite.DogfoodAVSAddr)
+				suite.Require().NoError(err)
 				vetoedRewardProportion := unclaimedStakingRewardsBeforeVeto.RewardsOf(suite.DogfoodAVSAddr).AmountOf(utils.BaseDenom).QuoTruncate(operatorUnclaimedRewardsBeforeVeto.OutstandingRewards.AmountOf(utils.BaseDenom))
 
 				// veto the slash
