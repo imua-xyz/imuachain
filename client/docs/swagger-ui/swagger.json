@@ -26788,7 +26788,7 @@
                                     },
                                     "total_amount": {
                                       "type": "string",
-                                      "description": "total_amount is the total amount of the slashed asset.."
+                                      "description": "total_amount is the total amount of the slashed asset."
                                     },
                                     "snapshot_total_share": {
                                       "type": "string",
@@ -53112,7 +53112,7 @@
                   },
                   "total_amount": {
                     "type": "string",
-                    "description": "total_amount is the total amount of the slashed asset.."
+                    "description": "total_amount is the total amount of the slashed asset."
                   },
                   "snapshot_total_share": {
                     "type": "string",
@@ -53326,7 +53326,7 @@
                       },
                       "total_amount": {
                         "type": "string",
-                        "description": "total_amount is the total amount of the slashed asset.."
+                        "description": "total_amount is the total amount of the slashed asset."
                       },
                       "snapshot_total_share": {
                         "type": "string",
@@ -53884,7 +53884,7 @@
                             },
                             "total_amount": {
                               "type": "string",
-                              "description": "total_amount is the total amount of the slashed asset.."
+                              "description": "total_amount is the total amount of the slashed asset."
                             },
                             "snapshot_total_share": {
                               "type": "string",
@@ -54518,7 +54518,7 @@
               },
               "total_amount": {
                 "type": "string",
-                "description": "total_amount is the total amount of the slashed asset.."
+                "description": "total_amount is the total amount of the slashed asset."
               },
               "snapshot_total_share": {
                 "type": "string",
@@ -54625,7 +54625,7 @@
         },
         "total_amount": {
           "type": "string",
-          "description": "total_amount is the total amount of the slashed asset.."
+          "description": "total_amount is the total amount of the slashed asset."
         },
         "snapshot_total_share": {
           "type": "string",

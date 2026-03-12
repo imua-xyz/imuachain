@@ -921,7 +921,7 @@ func (k *Keeper) SetOperatorRewardUSDValue(
 		return errorsmod.Wrap(operatortypes.ErrValueIsNilOrZero, fmt.Sprintf("SetOperatorRewardUSDValue the amount is:%v", amount))
 	}
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixCompoundingRewardsUSDValues)
-	key := utils.GetJoinedStoreKey(receivingAVS, operator, rewardSourceAVS, rewardDenomination)
+	key := utils.GetJoinedStoreKey(strings.ToLower(receivingAVS), operator, strings.ToLower(rewardSourceAVS), rewardDenomination)
 	setValue := operatortypes.DecValueField{Amount: amount}
 	bz := k.cdc.MustMarshal(&setValue)
 	store.Set(key, bz)
@@ -957,7 +957,7 @@ func (k *Keeper) RemoveAllStaleOperatorRewardUSDs(
 	ctx sdk.Context, receivingAVS, operator string, keysToKeep map[string]interface{},
 ) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixCompoundingRewardsUSDValues)
-	iterator := sdk.KVStorePrefixIterator(store, utils.GetJoinedStoreKeyForPrefix(receivingAVS, operator))
+	iterator := sdk.KVStorePrefixIterator(store, utils.GetJoinedStoreKeyForPrefix(strings.ToLower(receivingAVS), operator))
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
@@ -976,12 +976,12 @@ func (k *Keeper) IterateOperatorRewardsUSDValue(
 	isUpdate bool,
 	opFunc func(avs, symbol string, usdValue *operatortypes.DecValueField) (bool, bool, error),
 ) error {
-	return utils.GenericIterateStoreWithUpdate[*operatortypes.DecValueField](
+	return utils.GenericIterateStoreWithUpdate(
 		ctx,
 		k.cdc,
 		k.storeKey,
 		operatortypes.KeyPrefixCompoundingRewardsUSDValues,
-		utils.GetJoinedStoreKeyForPrefix(receivingAVS, operator),
+		utils.GetJoinedStoreKeyForPrefix(strings.ToLower(receivingAVS), operator),
 		isUpdate,
 		4,
 		func(bz []byte) (*operatortypes.DecValueField, error) {

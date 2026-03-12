@@ -1442,6 +1442,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.Require().Equal(delegationAmountBigInt.Add(undelegateAmount), operatorAssetStates.PendingUndelegationAmount)
 
 				undelegationRecordKey, err := suite.App.DelegationKeeper.GetUndelegationRecKey(suite.Ctx, stakerID, assetstype.ImuachainAssetID, 1)
+				suite.Require().NoError(err)
 				undelegationRecords, err := suite.App.DelegationKeeper.GetUndelegationRecords(suite.Ctx, [][]byte{undelegationRecordKey})
 				suite.Require().True(undelegationRecords[0].Undelegation.RewardAsset)
 				suite.Require().Equal(undelegateAmount, undelegationRecords[0].Undelegation.Amount)

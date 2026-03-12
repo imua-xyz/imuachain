@@ -150,4 +150,9 @@ var (
 		ModuleName, 32,
 		"failed to store the staker share snapshot",
 	)
+
+	ErrSlashAlreadyVetoed = errorsmod.Register(
+		ModuleName, 33,
+		"the slash has already been vetoed",
+	)
 )

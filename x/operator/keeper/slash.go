@@ -403,6 +403,9 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 	if err != nil {
 		return err
 	}
+	if slashInfo.IsVetoed {
+		return types.ErrSlashAlreadyVetoed.Wrapf("slash already vetoed: %s", slashID)
+	}
 	// veto the slashed amounts from pending undelegations.
 	for _, slashFromUndelegation := range slashInfo.ExecutionInfo.SlashUndelegations {
 		if !slashFromUndelegation.RewardAsset {
