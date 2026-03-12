@@ -2,6 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/utils"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
@@ -97,7 +98,10 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 		// AfterValidatorRemoved hook which is called when the pruning is performed.
 		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, oldConsAddr)
 		// copy from old cons addr to new cons addr
-		h.keeper.CopyValidatorSigningInfo(ctx, oldConsAddr, newKey.ToConsAddr())
+		h.keeper.CopyValidatorSigningInfo(
+			ctx, oldConsAddr, newKey.ToConsAddr(),
+			stakingtypes.Infraction_INFRACTION_UNSPECIFIED,
+		)
 	}
 }
 

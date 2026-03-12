@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -110,4 +112,6 @@ type SlashingKeeper interface {
 	IterateValidatorMissedBlockBitArray(
 		sdk.Context, sdk.ConsAddress, func(int64, bool) bool,
 	)
+	DowntimeJailDuration(sdk.Context) time.Duration
+	ClearValidatorMissedBlockBitArray(sdk.Context, sdk.ConsAddress)
 }

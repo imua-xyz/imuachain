@@ -169,11 +169,9 @@ func (k Keeper) SlashWithInfractionReason(
 		// copy from old key to new key
 		// the slashing keeper tombstones after calling this function. hence,
 		// copy directly will not succeed. we must do it ourselves.
-		if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN {
-			k.CopyValidatorSigningInfoWithTombstone(ctx, addr, currentConsAddr)
-		} else {
-			k.CopyValidatorSigningInfo(ctx, addr, currentConsAddr)
-		}
+		k.CopyValidatorSigningInfo(
+			ctx, addr, currentConsAddr, infraction,
+		)
 	}
 	if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN {
 		// Permanently freeze the operator globally
@@ -192,33 +190,13 @@ func (k Keeper) SlashWithInfractionReason(
 }
 
 // CopyValidatorSigningInfo copies a validator's signing info from old consensus address
-// to new consensus address. It also specifically tombstones the new consensus address.
-func (k Keeper) CopyValidatorSigningInfoWithTombstone(
-	ctx sdk.Context,
-	oldConsAddr sdk.ConsAddress,
-	newConsAddr sdk.ConsAddress,
-) {
-	k.copyValidatorSigningInfo(ctx, oldConsAddr, newConsAddr, true)
-}
-
-// CopyValidatorSigningInfo copies a validator's signing info from old consensus address
-// to new consensus address.
+// to new consensus address. If `markTombstone` is true, the address is tombstoned and
+// jailed forever.
 func (k Keeper) CopyValidatorSigningInfo(
 	ctx sdk.Context,
 	oldConsAddr sdk.ConsAddress,
 	newConsAddr sdk.ConsAddress,
-) {
-	k.copyValidatorSigningInfo(ctx, oldConsAddr, newConsAddr, false)
-}
-
-// copyValidatorSigningInfo copies a validator's signing info from old consensus address
-// to new consensus address. It is the private internal version of functions by the same
-// name. if `markTombstone` is true, it will specifically tombstone the new address.
-func (k Keeper) copyValidatorSigningInfo(
-	ctx sdk.Context,
-	oldConsAddr sdk.ConsAddress,
-	newConsAddr sdk.ConsAddress,
-	markTombstone bool,
+	infraction stakingtypes.Infraction,
 ) {
 	info, found := k.slashingKeeper.GetValidatorSigningInfo(
 		ctx, oldConsAddr,
@@ -229,7 +207,7 @@ func (k Keeper) copyValidatorSigningInfo(
 			info.StartHeight,
 			info.IndexOffset,
 			info.JailedUntil,
-			info.Tombstoned || markTombstone,
+			info.Tombstoned,
 			info.MissedBlocksCounter,
 		)
 	} else {
@@ -239,18 +217,54 @@ func (k Keeper) copyValidatorSigningInfo(
 			ctx.BlockHeight(),
 			0,
 			time.Unix(0, 0),
-			false || markTombstone,
+			false,
 			0,
 		)
 	}
+	switch infraction {
+	case stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN:
+		// permanently block the new key in addition to the old key,
+		// which is done a few lines after by the calling function in
+		// x/slashing
+		info.Tombstoned = true
+		info.JailedUntil = evidencetypes.DoubleSignJailEndTime
+	case stakingtypes.Infraction_INFRACTION_DOWNTIME:
+		// reset so the operator doesn't get slashed immediately upon unjail.
+		// x/slashing does this for the old key a few lines after calling this
+		// function.
+		info.MissedBlocksCounter = 0
+		info.IndexOffset = 0
+		info.JailedUntil = ctx.BlockTime().Add(
+			k.slashingKeeper.DowntimeJailDuration(ctx),
+		)
+	// called by hook, not by SlashWithInfractionReason
+	case stakingtypes.Infraction_INFRACTION_UNSPECIFIED:
+		// the new key carries over the debt of the old key
+		// however, placement does not matter as much for us
+		// this helps reduce the size of the loop from O(window) to
+		// O(MissedBlocksCounter)
+		for i := int64(0); i < info.MissedBlocksCounter; i++ {
+			k.slashingKeeper.SetValidatorMissedBlockBitArray(
+				ctx, newConsAddr, i, true,
+			)
+		}
+		// then, we ask x/slashing to count from offset 0 again,
+		// where it will observe that [0, missedBlocksCounter)
+		// are missed blocks.
+		info.IndexOffset = 0
+		// there are two ways to game this currently, which, cannot
+		// be solved without design changes in x/slashing
+		// 1. a downtime of 4,000 is copied from old key to new key.
+		// old key stops signing, goes to 10,000 and is slashed and
+		// jailed. unjail duration is completed, new key is unjailed.
+		// epoch changes, new key can be active but it has 4,000 missed.
+		// old key, which was jailed, had 0 missed. wrong, even new
+		// key will have 0 missed because of the line above.
+		// 2. a downtime of 4,000 spread across the window is recovered
+		// miraculously within the first 4,000 blocks by being active.
+		// i don't see this as an issue.
+	}
 	k.slashingKeeper.SetValidatorSigningInfo(ctx, newConsAddr, info)
-	// copy the bit array as well
-	k.slashingKeeper.IterateValidatorMissedBlockBitArray(
-		ctx, oldConsAddr, func(height int64, missed bool) (stop bool) {
-			k.slashingKeeper.SetValidatorMissedBlockBitArray(ctx, newConsAddr, height, missed)
-			return false
-		},
-	)
 }
 
 // Jail is an implementation of the staking interface expected by the SDK's slashing module.

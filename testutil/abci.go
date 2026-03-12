@@ -35,6 +35,7 @@ func Commit(ctx sdk.Context, app *app.ImuachainApp, t time.Duration, vs *tmtypes
 // This is useful to keep test settings that could be affected by EndBlockers, e.g.
 // setting a baseFee == 0 and expecting this condition to continue after commit
 func CommitAndCreateNewCtx(ctx sdk.Context, app *app.ImuachainApp, t time.Duration, vs *tmtypes.ValidatorSet, useUncachedCtx bool) (sdk.Context, error) {
+	consensusParams := ctx.ConsensusParams()
 	header, err := commit(ctx, app, t, vs)
 	if err != nil {
 		return ctx, err
@@ -55,6 +56,7 @@ func CommitAndCreateNewCtx(ctx sdk.Context, app *app.ImuachainApp, t time.Durati
 	newCtx = newCtx.WithEventManager(ctx.EventManager())
 	newCtx = newCtx.WithKVGasConfig(ctx.KVGasConfig())
 	newCtx = newCtx.WithTransientKVGasConfig(ctx.TransientKVGasConfig())
+	newCtx = newCtx.WithConsensusParams(consensusParams)
 
 	return newCtx, nil
 }

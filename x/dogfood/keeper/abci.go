@@ -95,22 +95,26 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	consensusAddrs := k.GetPendingConsensusAddrs(ctx)
 	failedConsAddrs := []sdk.ConsAddress{}
 	for _, consensusAddr := range consensusAddrs.GetList() {
+		consAddr := sdk.ConsAddress(consensusAddr)
 		cc, writeFunc := ctx.CacheContext()
 		// tell the slashing module to delete look up from consensus addr to pub key
 		if err := k.Hooks().AfterValidatorRemoved(
-			cc, consensusAddr, nil,
+			cc, consAddr, nil,
 		); err != nil {
 			logger.Error(
 				"error in AfterValidatorRemoved hook",
 				"err", err,
-				"consensusAddr", sdk.ConsAddress(consensusAddr).String(),
+				"consensusAddr", consAddr.String(),
 			)
 			failedConsAddrs = append(failedConsAddrs, consensusAddr)
 			continue
 		}
 		k.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
-			cc, chainIDWithoutRevision, consensusAddr,
+			cc, chainIDWithoutRevision, consAddr,
 		)
+		// clear old signed vs missed blocks
+		// signing info is never cleared since it contains tombstone status
+		k.slashingKeeper.ClearValidatorMissedBlockBitArray(cc, consAddr)
 		writeFunc()
 	}
 	// reschedule these for the next epoch

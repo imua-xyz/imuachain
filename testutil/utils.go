@@ -569,6 +569,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	})
 
 	suite.Ctx = app.BaseApp.NewContext(false, header)
+	suite.Ctx = suite.Ctx.WithConsensusParams(imuaapp.DefaultConsensusParams)
 	suite.App = app
 	suite.OperatorMsgServer = operatorkeeper.NewMsgServerImpl(app.OperatorKeeper)
 

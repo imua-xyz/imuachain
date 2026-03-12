@@ -1,13 +1,14 @@
 package keeper_test
 
 import (
+	"fmt"
+	"slices"
 	"testing"
 	"time"
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/cockroachdb/errors"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
@@ -17,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/imua-xyz/imuachain/testutil"
 	testutiltx "github.com/imua-xyz/imuachain/testutil/tx"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/utils"
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
@@ -29,7 +31,11 @@ var a *KeyChangeEscapeTestSuite
 
 type KeyChangeEscapeTestSuite struct {
 	testutil.BaseTestSuite
-	EpochDuration time.Duration
+	EpochIdentifier        string
+	ChainIDWithoutRevision string
+	AvsAddress             string
+	MinSelfDelegation      sdkmath.Int
+	EpochDuration          time.Duration
 }
 
 func TestKeyChangeEscapeTestSuite(t *testing.T) {
@@ -39,31 +45,30 @@ func TestKeyChangeEscapeTestSuite(t *testing.T) {
 
 func (suite *KeyChangeEscapeTestSuite) SetupTest() {
 	suite.DoSetupTest()
-	epochID := suite.App.StakingKeeper.GetEpochIdentifier(suite.Ctx)
-	epochInfo, _ := suite.App.EpochsKeeper.GetEpochInfo(suite.Ctx, epochID)
+	suite.EpochIdentifier = suite.App.StakingKeeper.GetEpochIdentifier(
+		suite.Ctx,
+	)
+	epochInfo, _ := suite.App.EpochsKeeper.GetEpochInfo(
+		suite.Ctx, suite.EpochIdentifier,
+	)
 	suite.EpochDuration = epochInfo.Duration + time.Nanosecond
+	suite.ChainIDWithoutRevision = utils.ChainIDWithoutRevision(
+		suite.Ctx.ChainID(),
+	)
+	suite.AvsAddress = utils.GenerateAVSAddress(
+		suite.ChainIDWithoutRevision,
+	)
+	suite.MinSelfDelegation = suite.App.StakingKeeper.GetDogfoodParams(
+		suite.Ctx,
+	).MinSelfDelegation
+	// move a few blocks ahead
+	suite.RunBlocks(10)
 }
 
-// what we want to test is a validator who:
-// 1. performs slashable action
-// 2. goes offline to be kicked out of the set
-// 3. changes consensus key (to cause pruning of the old key)
-// 4. is reported against, and correctly slashed.
-// 5. cannot join the validator set (with the new or the old key).
-func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
-	// move a few blocks ahead
-	for i := 0; i < 10; i++ {
-		suite.Commit()
-	}
-	// add a new validator - we use a new one to avoid impacting other tests
-	epochIdentifier := suite.App.StakingKeeper.GetEpochIdentifier(suite.Ctx)
-	chainID := suite.Ctx.ChainID()
-	chainIDWithoutRevision := utils.ChainIDWithoutRevision(chainID)
-	avsAddress := utils.GenerateAVSAddress(chainIDWithoutRevision)
-	operatorAddr, _ := testutiltx.NewAccAddressAndKey()
-	consKey := testutiltx.GenerateConsensusKey()
-	consAddr := consKey.ToConsAddr()
-	// register the operator
+// Registers an operator with the given address
+func (suite *KeyChangeEscapeTestSuite) RegisterOperator(
+	operatorAddr sdk.AccAddress,
+) {
 	{
 		res, err := suite.OperatorMsgServer.RegisterOperator(
 			sdk.WrapSDKContext(suite.Ctx),
@@ -71,7 +76,11 @@ func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
 				FromAddress: operatorAddr.String(),
 				Info: &operatortypes.OperatorInfo{
 					OperatorAddr: operatorAddr.String(),
-					Description:  stakingtypes.NewDescription("operator3", "", "", "", ""),
+					Description: stakingtypes.NewDescription(
+						// unique name
+						fmt.Sprintf("operator%d", time.Now().UnixMilli()),
+						"", "", "", "",
+					),
 					Commission: stakingtypes.NewCommission(
 						sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec(),
 					),
@@ -81,137 +90,389 @@ func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
 		suite.Require().NoError(err)
 		suite.Require().NotNil(res)
 	}
-	// delegate to the operator 3 times the minimum required
-	power := int64(0)
-	{
-		factor := int64(3)
-		requiredUsd := suite.App.StakingKeeper.GetDogfoodParams(
-			suite.Ctx,
-		).MinSelfDelegation
-		requiredUsd = requiredUsd.Mul(sdk.NewInt(factor))
-		usd, err := suite.App.OperatorKeeper.GetOrCalculateOperatorUSDValues(
-			suite.Ctx, operatorAddr, avsAddress,
-		)
-		requiredUsdDec := sdkmath.LegacyNewDecFromInt(requiredUsd)
-		suite.Require().NoError(err)
-		haveUsd := usd.SelfUSDValue
-		if haveUsd.LT(requiredUsdDec) {
-			diff := requiredUsdDec.Sub(haveUsd)
-			usdAmountHuman := diff.TruncateInt64() + 1
-			// rough!
-			power = usdAmountHuman
-			usdAmountDecimals := math.NewIntWithDecimal(usdAmountHuman, int(suite.Assets[0].Decimals))
-			stakerAddr := testutiltx.GenerateAddress()
-			depositParams := &assetskeeper.DepositWithdrawParams{
-				ClientChainLzID: suite.Assets[0].LayerZeroChainID,
-				Action:          assetstypes.DepositLST,
-				AssetsAddress:   common.HexToAddress(suite.Assets[0].Address).Bytes(),
-				StakerAddress:   stakerAddr.Bytes(),
-				OpAmount:        usdAmountDecimals,
-			}
-			postDepositAmount, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(
-				suite.Ctx, depositParams,
-			)
-			suite.Require().NoError(err)
-			suite.Require().Equal(usdAmountDecimals, postDepositAmount)
-			delegateParams := delegationtypes.NewDelegationOrUndelegationParams(
-				depositParams.ClientChainLzID,
-				depositParams.AssetsAddress,
-				operatorAddr,
-				depositParams.StakerAddress,
-				usdAmountDecimals,
-				common.BytesToHash([]byte("test")),
-				false,
-			)
-			_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegateParams)
-			suite.Require().NoError(err)
-			// associate this to be self stake
-			err = suite.App.DelegationKeeper.AssociateOperatorWithStaker(
-				suite.Ctx, depositParams.ClientChainLzID, operatorAddr, stakerAddr.Bytes(),
-			)
-			suite.Require().NoError(err)
-			suite.Commit()
-			suite.RunToEpochEndNoEndBlocker(epochIdentifier)
+}
+
+func (suite *KeyChangeEscapeTestSuite) DepositFromStaker(
+	stakerAddr common.Address,
+	humanReadableUsd int64,
+) {
+	assetID := suite.AssetIDs[0]
+	stakerID, _ := assetstypes.GetStakerIDAndAssetIDFromStr(
+		suite.Assets[0].LayerZeroChainID,
+		stakerAddr.String(),
+		"",
+	)
+	decimalsUsd := math.NewIntWithDecimal(
+		humanReadableUsd, int(suite.Assets[0].Decimals),
+	)
+	openState, err := suite.App.AssetsKeeper.GetStakerSpecifiedAssetInfo(
+		suite.Ctx, stakerID, assetID,
+	)
+	if err != nil {
+		suite.Require().ErrorIs(err, assetstypes.ErrNoStakerAssetKey)
+		openState = &assetstypes.StakerAssetInfo{
+			TotalDepositAmount:        sdkmath.ZeroInt(),
+			WithdrawableAmount:        sdkmath.ZeroInt(),
+			PendingUndelegationAmount: sdkmath.ZeroInt(),
 		}
-		usd, err = suite.App.OperatorKeeper.GetOrCalculateOperatorUSDValues(
-			suite.Ctx, operatorAddr, avsAddress,
-		)
-		suite.Require().NoError(err)
 	}
-	// opt in
-	{
-		res, err := suite.OperatorMsgServer.OptIntoAVS(
-			sdk.WrapSDKContext(suite.Ctx),
-			&operatortypes.OptIntoAVSReq{
-				FromAddress:   operatorAddr.String(),
-				AvsAddress:    avsAddress,
-				PublicKeyJSON: consKey.ToJSON(),
-			},
-		)
-		suite.Require().NoError(err)
-		suite.Require().NotNil(res)
+	depositParams := &assetskeeper.DepositWithdrawParams{
+		ClientChainLzID: suite.Assets[0].LayerZeroChainID,
+		Action:          assetstypes.DepositLST,
+		AssetsAddress:   common.HexToAddress(suite.Assets[0].Address).Bytes(),
+		StakerAddress:   stakerAddr.Bytes(),
+		OpAmount:        decimalsUsd,
 	}
-	// go forward 3 epochs for the validator to activate
-	suite.RunToEpochEndNoEndBlockerN(epochIdentifier, 3)
-	found, _ := suite.App.OperatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
-		suite.Ctx, chainIDWithoutRevision, consAddr,
+	closeState, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(
+		suite.Ctx, depositParams,
 	)
-	suite.Assert().True(found)
+	suite.Require().NoError(err)
+	suite.Require().Equal(openState.TotalDepositAmount.Add(decimalsUsd), closeState)
+}
+
+func (suite *KeyChangeEscapeTestSuite) DelegateToOperator(
+	delegatorAddr common.Address,
+	operatorAddr sdk.AccAddress,
+	humanReadableUsd int64,
+) {
+	decimalsUsd := math.NewIntWithDecimal(
+		humanReadableUsd, int(suite.Assets[0].Decimals),
+	)
+	delegateParams := delegationtypes.NewDelegationOrUndelegationParams(
+		suite.Assets[0].LayerZeroChainID,
+		common.HexToAddress(suite.Assets[0].Address).Bytes(),
+		operatorAddr,
+		delegatorAddr.Bytes(),
+		decimalsUsd,
+		// tx hash
+		common.BytesToHash([]byte("test")),
+		// is instant unbonding, no effect when delegating
+		false,
+	)
+	_, _, err := suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegateParams)
+	suite.Require().NoError(err)
+}
+
+func (suite *KeyChangeEscapeTestSuite) AssociateOperatorWithStaker(
+	stakerAddr common.Address,
+	operatorAddr sdk.AccAddress,
+) {
+	err := suite.App.DelegationKeeper.AssociateOperatorWithStaker(
+		suite.Ctx, suite.Assets[0].LayerZeroChainID,
+		operatorAddr, stakerAddr.Bytes(),
+	)
+	suite.Require().NoError(err)
+}
+
+func (suite *KeyChangeEscapeTestSuite) OptIn(
+	operatorAddr sdk.AccAddress,
+	consKey keytypes.WrappedConsKey,
+) {
+	res, err := suite.OperatorMsgServer.OptIntoAVS(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.OptIntoAVSReq{
+			FromAddress:   operatorAddr.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: consKey.ToJSON(),
+		},
+	)
+	suite.Require().NotNil(res)
+	suite.Require().NoError(err)
+}
+
+func (suite *KeyChangeEscapeTestSuite) OptOut(
+	operatorAddr sdk.AccAddress,
+) {
+	res, err := suite.OperatorMsgServer.OptOutOfAVS(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.OptOutOfAVSReq{
+			FromAddress: operatorAddr.String(),
+			AvsAddress:  suite.AvsAddress,
+		},
+	)
+	suite.Require().NotNil(res)
+	suite.Require().NoError(err)
+}
+
+func (suite *KeyChangeEscapeTestSuite) UndelegateFromOperator(
+	delegatorAddr common.Address,
+	operatorAddr sdk.AccAddress,
+	humanReadableUsd int64,
+) {
+	decimalsUsd := math.NewIntWithDecimal(
+		humanReadableUsd, int(suite.Assets[0].Decimals),
+	)
+	undelegateParams := delegationtypes.NewDelegationOrUndelegationParams(
+		suite.Assets[0].LayerZeroChainID,
+		common.HexToAddress(suite.Assets[0].Address).Bytes(),
+		operatorAddr,
+		delegatorAddr.Bytes(),
+		decimalsUsd,
+		// tx hash
+		common.BytesToHash([]byte("test_undelegate")),
+		// is instant unbonding, no effect when delegating
+		false,
+	)
+	err := suite.App.DelegationKeeper.UndelegateFrom(suite.Ctx, undelegateParams)
+	suite.Require().NoError(err)
+}
+
+func (suite *KeyChangeEscapeTestSuite) CheckOperatorUSDValueExact(
+	operatorAddr sdk.AccAddress,
+	expectedUsdValue sdkmath.LegacyDec,
+) {
+	usd, err := suite.App.OperatorKeeper.GetOrCalculateOperatorUSDValues(
+		suite.Ctx, operatorAddr, suite.AvsAddress,
+	)
+	suite.Require().NoError(err)
+	suite.Require().Equal(expectedUsdValue, usd.SelfUSDValue)
+}
+
+func (suite *KeyChangeEscapeTestSuite) CheckTombstoned(
+	consAddr sdk.ConsAddress,
+	expectedTombstoned bool,
+) {
+	signInfo, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddr)
+	if expectedTombstoned {
+		suite.Require().True(found)
+		suite.Require().True(signInfo.Tombstoned)
+		suite.Require().Equal(signInfo.JailedUntil.UTC(), evidencetypes.DoubleSignJailEndTime.UTC())
+	} else {
+		if found {
+			suite.Require().False(signInfo.Tombstoned)
+		}
+	}
+}
+
+func (suite *KeyChangeEscapeTestSuite) RunBlocks(
+	numBlocks int,
+) {
+	for i := 0; i < numBlocks; i++ {
+		suite.Commit()
+	}
+}
+
+// Adds a validator
+// contract: must not already exist!
+func (suite *KeyChangeEscapeTestSuite) AddValidator(
+	factor int64,
+) (
+	sdk.AccAddress, keytypes.WrappedConsKey, int64,
+) {
+	operatorAddr, _ := testutiltx.NewAccAddressAndKey()
+	consKey := testutiltx.GenerateConsensusKey()
+	stakerAddr := common.Address(operatorAddr.Bytes())
+	suite.RegisterOperator(operatorAddr)
+	humanReadableUsd := suite.MinSelfDelegation.Int64() * factor
+	suite.DepositFromStaker(
+		stakerAddr, humanReadableUsd,
+	)
+	suite.DelegateToOperator(
+		stakerAddr, operatorAddr,
+		suite.MinSelfDelegation.Int64()*factor,
+	)
+	suite.AssociateOperatorWithStaker(
+		stakerAddr, operatorAddr,
+	)
+	suite.OptIn(operatorAddr, consKey)
+	// check power
+	return operatorAddr, consKey, humanReadableUsd
+}
+
+func (suite *KeyChangeEscapeTestSuite) CheckSlashEffect(
+	operatorAddr sdk.AccAddress,
+	slashProportion sdkmath.LegacyDec,
+	startingPower int64,
+) (endingPower int64) {
 	valAddr := sdk.ValAddress(operatorAddr)
-	found, wrappedKey, err := suite.App.OperatorKeeper.GetOperatorConsKeyForChainID(
-		suite.Ctx, operatorAddr, chainIDWithoutRevision,
-	)
-	suite.Assert().True(found)
-	suite.Assert().NoError(err)
-	infractionHeight := suite.Ctx.BlockHeight()
-	// we also need the power of the validator
-	// Tendermint waits for 1 block before applying any changes to the validator set
-	// this delay is accounted for in x/evidence
-	// for example, if you send a validator set update during EndBlock 69
-	// it should have ideally been effective at block 70; however,
-	// it starts at the beginning of block 71.
-	// so if the evidence is for double signing at block 71
-	// we go back to block 70 to get the distribution or infraction height.
-	// example:
-	// total power 1000
-	// at block 69, A unstakes 100 tokens, remaining 900
-	// tendermint still sees 1000
-	// at block 70, B unstakes 50 tokens, remaining 850
-	// tendermint still sees 1000
-	// at block 71, voting power is 900 and double signing happens
-	// so we calculate 70 as the infraction height and punish only B
-	// since A had already unstaked by then
 	validator, found := suite.App.StakingKeeper.GetValidator(
 		suite.Ctx, valAddr,
 	)
-	suite.Assert().True(found)
+	suite.Require().True(found)
+	slashValue := sdkmath.LegacyNewDec(startingPower).Mul(slashProportion)
+	effectiveSlashProportion := sdkmath.LegacyMinDec(
+		sdkmath.LegacyNewDec(1), slashValue.QuoInt64(startingPower),
+	)
+	subtract := effectiveSlashProportion.MulInt64(startingPower)
+	endingPower = sdkmath.LegacyNewDec(startingPower).Sub(subtract).TruncateInt64()
+	delegation := suite.App.StakingKeeper.Delegation(
+		suite.Ctx, operatorAddr, valAddr,
+	)
+	delegationTokens := validator.TokensFromShares(
+		delegation.GetShares(),
+	).TruncateInt()
+	delegationPower := sdk.TokensToConsensusPower(
+		delegationTokens, sdk.DefaultPowerReduction,
+	)
+	suite.Require().Equal(endingPower, delegationPower)
+	return
+}
+
+func (suite *KeyChangeEscapeTestSuite) CheckValidator(
+	expectedAccAddr sdk.AccAddress,
+	expectedConsAddr sdk.ConsAddress,
+	expectedPower int64,
+	expectedSelfDelegationPower int64,
+) {
+	// forward lookup
+	found, key, err := suite.App.OperatorKeeper.GetOperatorConsKeyForChainID(
+		suite.Ctx, expectedAccAddr, suite.ChainIDWithoutRevision,
+	)
+	suite.Require().True(found)
+	suite.Require().NoError(err)
+	suite.Require().Equal(expectedConsAddr, key.ToConsAddr())
+	// reverse lookup
+	found, operatorAddr := suite.App.OperatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+		suite.Ctx, suite.ChainIDWithoutRevision, expectedConsAddr,
+	)
+	suite.Require().True(found)
+	suite.Require().Equal(expectedAccAddr, operatorAddr)
+	// power lookup - use SDK method instead of our own
+	validator, found := suite.App.StakingKeeper.GetValidator(
+		suite.Ctx, sdk.ValAddress(expectedAccAddr),
+	)
+	suite.Require().True(found)
 	tokens := validator.GetTokens()
 	validatorPower := sdk.TokensToConsensusPower(tokens, sdk.DefaultPowerReduction)
-	suite.Require().Equal(
-		power, validatorPower, "power %d, validatorPower %d", power, validatorPower,
+	suite.Require().Equal(expectedPower, validatorPower)
+	// Delegation always returns self delegation (associated)
+	delegation := suite.App.StakingKeeper.Delegation(
+		suite.Ctx, expectedAccAddr, sdk.ValAddress(expectedAccAddr),
 	)
+	delegationTokens := validator.TokensFromShares(
+		delegation.GetShares(),
+	).TruncateInt()
+	delegationPower := sdk.TokensToConsensusPower(
+		delegationTokens, sdk.DefaultPowerReduction,
+	)
+	suite.Require().Equal(expectedSelfDelegationPower, delegationPower)
+}
 
-	// we abstract away the proving and inclusion of the evidence into the canonical chain
-	// by directly calling the relevant x/evidence function. however, for understanding, note
-	// that the detection of the double signing and its inclusion is done by CometBFT, which
-	// validates it and puts it into the abci.RequestBeginBlock.ByzantineValidators for the
-	// state machine to handle. the x/evidence's BeginBlocker handles it.
+func (suite *KeyChangeEscapeTestSuite) SubmitEvidence(
+	consAddr sdk.ConsAddress,
+	infractionHeight int64,
+	blockTime time.Time,
+	power int64,
+) {
 	misbehavior := abci.Misbehavior{
 		Type: abci.MisbehaviorType_DUPLICATE_VOTE,
 		Validator: abci.Validator{
-			Address: wrappedKey.ToConsAddr(),
+			Address: consAddr,
 			Power:   power,
 		},
-		Height:           infractionHeight,
-		Time:             suite.Ctx.BlockTime(),
+		Height: infractionHeight,
+		Time:   blockTime,
+		// not used AFAICT
 		TotalVotingPower: suite.TotalPower,
 	}
 	evidence := evidencetypes.FromABCIEvidence(misbehavior)
 	equivocation := evidence.(*evidencetypes.Equivocation)
-	// we submit the evidence after jailing the validator, but we prepare it at this height
-	submitEvidence := func(e *evidencetypes.Equivocation) {
-		suite.App.EvidenceKeeper.HandleEquivocationEvidence(suite.Ctx, e)
+	suite.App.EvidenceKeeper.HandleEquivocationEvidence(suite.Ctx, equivocation)
+}
+
+func (suite *KeyChangeEscapeTestSuite) CommitWithInfo(
+	validators []abci.Validator,
+	nonSigners []int,
+	t time.Duration,
+) {
+	header := suite.Ctx.BlockHeader()
+	suite.App.EndBlocker(suite.Ctx, abci.RequestEndBlock{Height: header.Height})
+	suite.App.Commit()
+	header.Height++
+	header.Time = header.Time.Add(t)
+	header.AppHash = suite.App.LastCommitID().Hash
+	suite.Ctx = suite.Ctx.WithBlockHeader(header)
+	// in the begin blocker, we must set a validator's signing status
+	votes := make([]abci.VoteInfo, 0, len(validators))
+	for i, validator := range validators {
+		votes = append(
+			votes, abci.VoteInfo{
+				Validator:       validator,
+				SignedLastBlock: !slices.Contains(nonSigners, i),
+			},
+		)
 	}
+	req := abci.RequestBeginBlock{
+		Header: header,
+		LastCommitInfo: abci.CommitInfo{
+			Round: 0,
+			Votes: votes,
+		},
+	}
+	suite.App.BeginBlock(req)
+	newCtx := suite.App.BaseApp.NewContext(false, header)
+	newCtx = newCtx.WithMinGasPrices(suite.Ctx.MinGasPrices())
+	newCtx = newCtx.WithEventManager(suite.Ctx.EventManager())
+	newCtx = newCtx.WithKVGasConfig(suite.Ctx.KVGasConfig())
+	newCtx = newCtx.WithTransientKVGasConfig(suite.Ctx.TransientKVGasConfig())
+	suite.Ctx = newCtx
+}
+
+func (suite *KeyChangeEscapeTestSuite) ChangeKey(
+	addr sdk.AccAddress,
+	expectSuccess bool,
+) keytypes.WrappedConsKey {
+	newKey := testutiltx.GenerateConsensusKey()
+	response, err := suite.OperatorMsgServer.SetConsKey(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.SetConsKeyReq{
+			Address:       addr.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: newKey.ToJSON(),
+		},
+	)
+	if expectSuccess {
+		suite.Require().NoError(err)
+		suite.Require().NotNil(response)
+	} else {
+		suite.Require().Error(err)
+	}
+	return newKey
+}
+
+func (suite *KeyChangeEscapeTestSuite) Unjail(
+	addr sdk.AccAddress, expectSuccess bool,
+) {
+	msgServer := slashingkeeper.NewMsgServerImpl(suite.App.SlashingKeeper)
+	resp, err := msgServer.Unjail(
+		sdk.WrapSDKContext(suite.Ctx),
+		&slashingtypes.MsgUnjail{
+			ValidatorAddr: sdk.ValAddress(addr).String(),
+		},
+	)
+	if expectSuccess {
+		suite.Require().NoError(err)
+		suite.Require().NotNil(resp)
+	} else {
+		suite.Require().Error(err)
+		suite.Require().ErrorIs(err, slashingtypes.ErrValidatorJailed)
+	}
+}
+
+// what we want to test is a validator who:
+// 1. performs a double signing action
+// 2. goes offline to be kicked out of the set
+// 3. changes consensus key (to cause pruning of the old key)
+// 4. is reported against, and correctly slashed.
+// 5. cannot join the validator set (with the new or the old key).
+func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
+	// at genesis + 10 blocks, add a new validator
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	// valAddr := sdk.ValAddress(operatorAddr)
+	consAddr := consKey.ToConsAddr()
+	// wait a few epochs for said validator to activate
+	// during this wait there is no downtime slashing since
+	// LastCommitInfo is empty.
+	suite.RunToEpochEndNoEndBlockerN(
+		suite.EpochIdentifier, 3,
+	)
+	// check that the validator is in the validator set
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+	// save this information for use later
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+	infractionAddr := consAddr
 
 	// original validator set
 	validators := []abci.Validator{}
@@ -219,7 +480,7 @@ func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
 		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
 			suite.Ctx, val.Address.Bytes(),
 		)
-		suite.Assert().True(found)
+		suite.Require().True(found)
 		validators = append(
 			validators, abci.Validator{
 				Address: validator.Address,
@@ -230,65 +491,15 @@ func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
 	// recent validator
 	validators = append(
 		validators, abci.Validator{
-			Address: wrappedKey.ToConsAddr().Bytes(),
+			Address: consAddr.Bytes(),
 			Power:   power,
 		},
 	)
 
 	// 2. take the validator offline
-	commit := func(t time.Duration) {
-		header := suite.Ctx.BlockHeader()
-		suite.App.EndBlocker(suite.Ctx, abci.RequestEndBlock{Height: header.Height})
-		suite.App.Commit()
-		header.Height++
-		header.Time = header.Time.Add(t)
-		header.AppHash = suite.App.LastCommitID().Hash
-		suite.Ctx = suite.Ctx.WithBlockHeader(header)
-		// in the begin blocker, we must set a validator's signing status
-		req := abci.RequestBeginBlock{
-			Header: header,
-			LastCommitInfo: abci.CommitInfo{
-				Round: 0,
-				Votes: []abci.VoteInfo{
-					{
-						Validator:       validators[0],
-						SignedLastBlock: true,
-					},
-					{
-						Validator:       validators[1],
-						SignedLastBlock: true,
-					},
-					{
-						Validator:       validators[2],
-						SignedLastBlock: false,
-					},
-				},
-			},
-		}
-		suite.App.BeginBlock(req)
-		newCtx := suite.App.BaseApp.NewContext(false, header)
-		newCtx = newCtx.WithMinGasPrices(suite.Ctx.MinGasPrices())
-		newCtx = newCtx.WithEventManager(suite.Ctx.EventManager())
-		newCtx = newCtx.WithKVGasConfig(suite.Ctx.KVGasConfig())
-		newCtx = newCtx.WithTransientKVGasConfig(suite.Ctx.TransientKVGasConfig())
-		suite.Ctx = newCtx
-	}
-	// check starting power via Delegation function
-	// the previous value is via Validator function
-	delegation := suite.App.StakingKeeper.Delegation(
-		suite.Ctx, operatorAddr, valAddr,
-	)
-	delegationTokens := validator.TokensFromShares(
-		delegation.GetShares(),
-	).TruncateInt()
-	delegationPower := sdk.TokensToConsensusPower(
-		delegationTokens, sdk.DefaultPowerReduction,
-	)
-	suite.Require().Equal(power, delegationPower)
 	// determine the amount of blocks to commit
-	consAddr = wrappedKey.ToConsAddr()
 	signInfo, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddr)
-	suite.Assert().True(found)
+	suite.Require().True(found)
 	signedBlocksWindow := suite.App.SlashingKeeper.SignedBlocksWindow(suite.Ctx)
 	minHeight := signInfo.StartHeight + signedBlocksWindow
 	minSignedPerWindow := suite.App.SlashingKeeper.MinSignedPerWindow(suite.Ctx)
@@ -301,123 +512,37 @@ func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
 		blocksToCommit = blocksToReachMin
 	}
 	for i := 0; i < int(blocksToCommit); i++ {
-		commit(time.Nanosecond)
+		suite.CommitWithInfo(validators, []int{2}, time.Nanosecond)
 	}
 	signInfo, found = suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddr)
-	suite.Assert().True(found)
+	suite.Require().True(found)
+	suite.Require().True(signInfo.JailedUntil.After(suite.Ctx.BlockTime()))
 	// check if the validator is available?
 	_, found = suite.App.StakingKeeper.GetImuachainValidator(suite.Ctx, consAddr)
-	suite.Assert().False(found)
+	suite.Require().False(found)
+	// check slashing
+	downtimeSlashFactor := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+	power = suite.CheckSlashEffect(operatorAddr, downtimeSlashFactor, power)
 	// now that the validator is jailed, change its key
-	newConsKey := testutiltx.GenerateConsensusKey()
-	response, err := suite.OperatorMsgServer.SetConsKey(
-		sdk.WrapSDKContext(suite.Ctx),
-		&operatortypes.SetConsKeyReq{
-			Address:       operatorAddr.String(),
-			AvsAddress:    avsAddress,
-			PublicKeyJSON: newConsKey.ToJSON(),
-		},
-	)
-	suite.Require().NoError(err)
-	suite.Require().NotNil(response)
+	newConsKey := suite.ChangeKey(operatorAddr, true)
 	suite.Commit()
 	// now that the key is removed, we advance some epochs
-	suite.RunToEpochEndNoEndBlocker(epochIdentifier)
-	// check our stake
-	// this is a rough appromixation!
-	checkPower := func(
-		slashProportion sdkmath.LegacyDec, startingPower int64,
-	) (endingPower int64) {
-		slashValue := sdkmath.LegacyNewDec(startingPower).Mul(slashProportion)
-		effectiveSlashProportion := sdkmath.LegacyMinDec(
-			sdkmath.LegacyNewDec(1), slashValue.QuoInt64(startingPower),
-		)
-		subtract := effectiveSlashProportion.MulInt64(startingPower)
-		endingPower = sdkmath.LegacyNewDec(startingPower).Sub(subtract).TruncateInt64()
-		delegation = suite.App.StakingKeeper.Delegation(
-			suite.Ctx, operatorAddr, valAddr,
-		)
-		delegationTokens = validator.TokensFromShares(
-			delegation.GetShares(),
-		).TruncateInt()
-		delegationPower = sdk.TokensToConsensusPower(
-			delegationTokens, sdk.DefaultPowerReduction,
-		)
-		suite.Require().Equal(endingPower, delegationPower)
-		return
-	}
-	power = checkPower(
-		sdkmath.LegacyMinDec(
-			sdkmath.LegacyNewDec(1), suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx),
-		), power,
-	)
-	// now the power must have been reduced, but by how much?
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
 	// submit the evidence for slashing
-	submitEvidence(equivocation)
+	suite.SubmitEvidence(
+		infractionAddr, infractionHeight, infractionTime, infractionPower,
+	)
 	// include it in the latest block
 	suite.Commit()
-	power = checkPower(
-		sdkmath.LegacyMinDec(
-			sdkmath.LegacyNewDec(1), suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx),
-		), power,
-	)
+	doubleSignSlashFactor := suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx)
+	power = suite.CheckSlashEffect(operatorAddr, doubleSignSlashFactor, power)
 	// check
-	signInfo, found = suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddr)
-	suite.Assert().True(found)
-	suite.Assert().True(signInfo.Tombstoned)
-	suite.Assert().Equal(signInfo.JailedUntil.UTC(), evidencetypes.DoubleSignJailEndTime.UTC())
+	suite.CheckTombstoned(consAddr, true)
+	suite.CheckTombstoned(newConsKey.ToConsAddr(), true)
 	// go forward in time
-	suite.RunToEpochEndNoEndBlockerN(epochIdentifier, 1)
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 1)
 	// now, we need to check if validator can rejoin the set
 	// to do so, the first thing required is unjailing
-	// to unjail, we first add some stake
-	requiredUsd := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx).MinSelfDelegation
-	usd, err := suite.App.OperatorKeeper.GetOrCalculateOperatorUSDValues(
-		suite.Ctx, operatorAddr, avsAddress,
-	)
-	requiredUsdDec := sdkmath.LegacyNewDecFromInt(requiredUsd)
-	suite.Require().NoError(err)
-	haveUsd := usd.SelfUSDValue
-	if haveUsd.LT(requiredUsdDec) {
-		diff := requiredUsdDec.Sub(haveUsd)
-		usdAmountHuman := diff.TruncateInt64() + 1
-		usdAmountDecimals := math.NewIntWithDecimal(usdAmountHuman, int(suite.Assets[0].Decimals))
-		stakerAddr := testutiltx.GenerateAddress()
-		depositParams := &assetskeeper.DepositWithdrawParams{
-			ClientChainLzID: suite.Assets[0].LayerZeroChainID,
-			Action:          assetstypes.DepositLST,
-			AssetsAddress:   common.HexToAddress(suite.Assets[0].Address).Bytes(),
-			StakerAddress:   stakerAddr.Bytes(),
-			OpAmount:        usdAmountDecimals,
-		}
-		postDepositAmount, err := suite.App.AssetsKeeper.PerformDepositOrWithdraw(
-			suite.Ctx, depositParams,
-		)
-		suite.Require().NoError(err)
-		suite.Require().Equal(usdAmountDecimals, postDepositAmount)
-		delegateParams := delegationtypes.NewDelegationOrUndelegationParams(
-			depositParams.ClientChainLzID,
-			depositParams.AssetsAddress,
-			operatorAddr,
-			depositParams.StakerAddress,
-			usdAmountDecimals,
-			common.BytesToHash([]byte("test")),
-			false,
-		)
-		_, _, err = suite.App.DelegationKeeper.DelegateTo(suite.Ctx, delegateParams)
-		suite.Require().NoError(err)
-		// associate this to be self stake
-		err = suite.App.DelegationKeeper.AssociateOperatorWithStaker(
-			suite.Ctx, depositParams.ClientChainLzID, operatorAddr, stakerAddr.Bytes(),
-		)
-		suite.Require().NoError(err)
-		suite.Commit()
-		suite.RunToEpochEndNoEndBlocker(epochIdentifier)
-	}
-	usd, err = suite.App.OperatorKeeper.GetOrCalculateOperatorUSDValues(
-		suite.Ctx, operatorAddr, avsAddress,
-	)
-	suite.Require().NoError(err)
 	// unjailing is routed by the slashing keeper to the staking keeper
 	// the slashing keeper detects the validator as tombstoned and exits
 	// the tombstone status is stored in the validator signing info
@@ -432,24 +557,437 @@ func (suite *KeyChangeEscapeTestSuite) TestKeyChangeEscape() {
 	// however, the slashing module indexes the signing info by consensus address and not
 	// account address. if a validator is tombstoned and then changes its key, it can be
 	// unjailed successfully. we have to avoid that somehow!
-	{
-		msgServer := slashingkeeper.NewMsgServerImpl(suite.App.SlashingKeeper)
-		resp, err := msgServer.Unjail(
-			sdk.WrapSDKContext(suite.Ctx),
-			&slashingtypes.MsgUnjail{
-				ValidatorAddr: sdk.ValAddress(operatorAddr).String(),
+	suite.Unjail(operatorAddr, false)
+	// check if we can submit the evidence again - there should be no panic
+	suite.Commit()
+	// first with same key
+	suite.SubmitEvidence(
+		consAddr, suite.Ctx.BlockHeight(),
+		suite.Ctx.BlockTime(), power,
+	)
+	suite.Commit()
+	// then with new key
+	suite.SubmitEvidence(
+		newConsKey.ToConsAddr(), suite.Ctx.BlockHeight(),
+		suite.Ctx.BlockTime(), power,
+	)
+	// check power, no slashing should be applied.
+	power = suite.CheckSlashEffect(operatorAddr, sdkmath.LegacyZeroDec(), power)
+}
+
+// Active Set Key Rotation ("Early Escape")
+func (suite *KeyChangeEscapeTestSuite) TestEarlyEscape() {
+	// add a new validator
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	// wait a few epochs for activation
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.Commit()
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	// save double-sign info for Key A
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Step 1: Operator rotates to Key B while still strictly in the active set
+	// (no downtime jailing has occurred)
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+
+	// Step 2: Epoch advances to process the key change
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	consAddrB := consKeyB.ToConsAddr()
+	// Validator should now be active under Key B
+	suite.CheckValidator(operatorAddr, consAddrB, power, power)
+
+	// Step 3: Evidence is submitted for Key A
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	// Step 4: Verify Slash & Tombstone
+	// The operator should be tombstoned on *both* the old and current key
+	suite.CheckTombstoned(consAddrA, true)
+	suite.CheckTombstoned(consAddrB, true)
+
+	// operator should have been slashed for the double sign
+	doubleSignSlashFactor := suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx)
+	suite.CheckSlashEffect(operatorAddr, doubleSignSlashFactor, power)
+
+	// The validator should be jailed and removed from the active set
+	_, found := suite.App.StakingKeeper.GetImuachainValidator(suite.Ctx, consAddrB)
+	suite.Require().False(found)
+}
+
+// Voluntary Opt-Out / Deregistration
+func (suite *KeyChangeEscapeTestSuite) TestKeyChangeVoluntaryOptOut() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.Commit()
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Step 1: Operator Double signs.
+	// Step 2: Operator voluntarily Opts Out before evidence
+	suite.OptOut(operatorAddr)
+	suite.Commit()
+
+	// Step 3: Run to the exact end of the epoch to process the OptOut
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	// Step 3: Evidence is submitted while they are unbonding / opted out
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	// Verify the operator is tombstoned
+	suite.CheckTombstoned(consAddrA, true)
+
+	// Operator is slashed despite opting out
+	doubleSignSlashFactor := suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx)
+	suite.CheckSlashEffect(operatorAddr, doubleSignSlashFactor, power)
+}
+
+// Forced Ejection via Delegator Unbonding
+func (suite *KeyChangeEscapeTestSuite) TestKeyChangeForcedEjection() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.Commit()
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Step 1: Delegator undelegates massively, dropping operator below MinSelfDelegation
+	// Withdraw 2x the minimum, leaving 1x (which is exactly the minimum, so we'll withdraw a bit more)
+	amountToWithdraw := suite.MinSelfDelegation.Int64()*2 + 1
+	suite.UndelegateFromOperator(common.Address(operatorAddr.Bytes()), operatorAddr, amountToWithdraw)
+	suite.Commit()
+
+	// Process the unbonding and wait an epoch for the validator to be ejected from active set
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	// The validator should be inactive
+	_, found := suite.App.StakingKeeper.GetImuachainValidator(suite.Ctx, consAddrA)
+	suite.Require().False(found)
+
+	// Step 2: Operator frantically rotates key to bypass the impending slash
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	// Step 3: Evidence submitted for the old key
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	// Verify all affected keys are tombstoned
+	suite.CheckTombstoned(consAddrA, true)
+	suite.CheckTombstoned(consKeyB.ToConsAddr(), true)
+
+	// Verify slash fraction was caught directly into the unbonding queues
+	// We can't check consensus power cleanly if they are completely evicted, so we check USD value
+	expectedRemainingUsdHuman := (suite.MinSelfDelegation.Int64() * 3) - amountToWithdraw
+
+	doubleSignSlashFactor := suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx)
+
+	slashValue := sdkmath.LegacyNewDec(expectedRemainingUsdHuman).Mul(doubleSignSlashFactor)
+	effectiveSlashProportion := sdkmath.LegacyMinDec(
+		sdkmath.LegacyNewDec(1), slashValue.QuoInt64(expectedRemainingUsdHuman),
+	)
+	subtract := effectiveSlashProportion.MulInt64(expectedRemainingUsdHuman)
+	endingUsd := sdkmath.LegacyNewDec(expectedRemainingUsdHuman).Sub(subtract)
+
+	suite.CheckOperatorUSDValueExact(operatorAddr, endingUsd)
+}
+
+// Opt-In with a Pending Slash
+func (suite *KeyChangeEscapeTestSuite) TestOptInWithPendingSlash() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Step 1: Double sign, then OptOut voluntarily. This begins
+	// the unbonding period (e.g., 8 epochs).
+	suite.OptOut(operatorAddr)
+	suite.Commit()
+
+	// Step 2: Advance a few epochs so we are inside the unbonding period
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 2)
+	suite.Commit()
+
+	// Step 3: Evidence is submitted. The operator is still in the unbonding period,
+	// so the slash and tombstone should apply to them.
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	// Verify the operator is tombstoned
+	suite.CheckTombstoned(consAddrA, true)
+
+	// Step 4: Advance the remaining epochs to process the Opt-Out fully
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 6)
+	suite.Commit()
+
+	// Step 5: After unbonding is complete, the operator (now completely unbonded)
+	// attempts to opt-in with a brand new key B to sneak back into the active set.
+	consKeyB := testutiltx.GenerateConsensusKey()
+	res, err := suite.OperatorMsgServer.OptIntoAVS(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.OptIntoAVSReq{
+			FromAddress:   operatorAddr.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: consKeyB.ToJSON(),
+		},
+	)
+
+	// It should fail because they are permanently jailed (tombstoned)
+	suite.Require().Nil(res)
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, operatortypes.ErrIsOptedOutOrJailed)
+
+	_, found := suite.App.StakingKeeper.GetImuachainValidator(suite.Ctx, consKeyB.ToConsAddr())
+	suite.Require().False(found, "Operator should not be allowed back in active set")
+}
+
+// Assimilating a Tombstoned Key
+func (suite *KeyChangeEscapeTestSuite) TestAssimilatingTombstonedKey() {
+	// Operator 1 gets tombstoned on Key A
+	operatorAddr1, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr1, consAddrA, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	suite.CheckTombstoned(consAddrA, true)
+
+	// Operator 2 arrives and tries to use Key A
+	operatorAddr2, _ := testutiltx.NewAccAddressAndKey()
+	suite.RegisterOperator(operatorAddr2)
+
+	// Attempt to set cons key should fail
+	response, err := suite.OperatorMsgServer.SetConsKey(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.SetConsKeyReq{
+			Address:       operatorAddr2.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: consKeyA.ToJSON(),
+		},
+	)
+	// it should be fully rejected to take over a jailed key
+	suite.Require().Error(err)
+	suite.Require().Nil(response)
+}
+
+// Rotating back to an old, innocent key
+func (suite *KeyChangeEscapeTestSuite) TestRotateToOldInnocentKey() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consKeyA.ToConsAddr(), power, power)
+
+	// Rotate to Key B
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+	suite.CheckValidator(operatorAddr, consKeyB.ToConsAddr(), power, power)
+
+	// Double sign on Key B
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	suite.SubmitEvidence(consKeyB.ToConsAddr(), infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	suite.CheckTombstoned(consKeyB.ToConsAddr(), true)
+
+	// key changing is rejected because we are frozen!
+	response, err := suite.OperatorMsgServer.SetConsKey(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.SetConsKeyReq{
+			Address:       operatorAddr.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: consKeyA.ToJSON(),
+		},
+	)
+	suite.Require().Nil(response)
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, operatortypes.ErrIsOptedOutOrJailed)
+	// Key A was naturally innocent. It shouldn't be tombstoned on its own;
+	// rather, the operator is securely jailed, preventing reuse.
+	suite.CheckTombstoned(consKeyA.ToConsAddr(), false)
+}
+
+// Simultaneous Downtime and Double Sign on Different Keys
+func (suite *KeyChangeEscapeTestSuite) TestSimultaneousInfractions() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	// Setup double sign on Key A, but don't submit yet
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Rotate to Key B
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.CheckValidator(operatorAddr, consKeyB.ToConsAddr(), power, power)
+
+	// Setup validators for downtime checking
+	validators := []abci.Validator{}
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validators = append(
+			validators, abci.Validator{
+				Address: validator.Address,
+				Power:   validator.Power,
 			},
 		)
-		suite.Require().Error(err)
-		suite.Require().True(errors.Is(err, slashingtypes.ErrValidatorJailed))
-		suite.Require().Nil(resp)
 	}
-	// check if we can submit the evidence again
+	validators = append(
+		validators, abci.Validator{
+			Address: consKeyB.ToConsAddr().Bytes(),
+			Power:   power,
+		},
+	)
+
+	// Go offline to accrue downtime on Key B
+	signedBlocksWindow := suite.App.SlashingKeeper.SignedBlocksWindow(suite.Ctx)
+	minSignedPerWindow := suite.App.SlashingKeeper.MinSignedPerWindow(suite.Ctx)
+	maxMissed := signedBlocksWindow - minSignedPerWindow
+
+	// Submit double sign ONE block before downtime jail
+	for i := int64(0); i < maxMissed-1; i++ {
+		suite.CommitWithInfo(validators, []int{2}, time.Nanosecond)
+	}
+
+	// Submit Double Sign on Key A
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+
+	// Final block that triggers downtime on Key B
+	suite.CommitWithInfo(validators, []int{2}, time.Nanosecond)
 	suite.Commit()
-	misbehavior.Height = suite.Ctx.BlockHeight()
-	evidence = evidencetypes.FromABCIEvidence(misbehavior)
-	equivocation = evidence.(*evidencetypes.Equivocation)
-	submitEvidence(equivocation)
-	// check power, no slashing should be applied.
-	power = checkPower(sdkmath.LegacyZeroDec(), power)
+
+	// Should not panic, should tombstone both
+	suite.CheckTombstoned(consAddrA, true)
+	suite.CheckTombstoned(consKeyB.ToConsAddr(), true)
+}
+
+// Stale Evidence Escape
+func (suite *KeyChangeEscapeTestSuite) TestStaleEvidence() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.Commit()
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Set consensus params for evidence maximums to be small, to avoid looping
+	consensusParams := suite.App.GetConsensusParams(suite.Ctx)
+	consensusParams.Evidence.MaxAgeNumBlocks = 10
+	consensusParams.Evidence.MaxAgeDuration = 10 * time.Second
+	suite.Ctx = suite.Ctx.WithConsensusParams(consensusParams)
+	suite.App.ConsensusParamsKeeper.Set(suite.Ctx, consensusParams)
+
+	maxAgeNumBlocks := consensusParams.Evidence.MaxAgeNumBlocks
+	maxAgeDuration := consensusParams.Evidence.MaxAgeDuration
+
+	// Age the evidence past the allowed boundary
+	for i := int64(0); i < maxAgeNumBlocks+1; i++ {
+		suite.Commit()
+	}
+
+	// Ensure time also passes the max age duration
+	header := suite.Ctx.BlockHeader()
+	header.Time = header.Time.Add(maxAgeDuration + time.Second)
+	suite.Ctx = suite.Ctx.WithBlockHeader(header)
+
+	// Rotate key at the boundary
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	// Submit evidence. Since EvidenceKeeper ignores it without returning an error
+	// (as seen in the provided handleEquivocationEvidence behavior), we simply
+	// call it and verify tombstoning didn't happen.
+	suite.App.EvidenceKeeper.HandleEquivocationEvidence(suite.Ctx, &evidencetypes.Equivocation{
+		Height:           infractionHeight,
+		Time:             infractionTime,
+		Power:            infractionPower,
+		ConsensusAddress: consAddrA.String(),
+	})
+
+	// Since evidence was rejected as stale, they should not be tombstoned
+	suite.CheckTombstoned(consAddrA, false)
+	suite.CheckTombstoned(consKeyB.ToConsAddr(), false)
+}
+
+// Exact Zero Stake Remaining
+func (suite *KeyChangeEscapeTestSuite) TestExactZeroStake() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consKeyA.ToConsAddr(), power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Withdraw exactly all self-stake to hit 0
+	amountToWithdraw := suite.MinSelfDelegation.Int64() * 3
+	suite.UndelegateFromOperator(common.Address(operatorAddr.Bytes()), operatorAddr, amountToWithdraw)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+
+	suite.SubmitEvidence(consKeyA.ToConsAddr(), infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	suite.CheckTombstoned(consKeyA.ToConsAddr(), true)
+	suite.CheckTombstoned(consKeyB.ToConsAddr(), true)
+
+	// Verify exact zero math works without panic
+	zeroUsd := sdkmath.LegacyZeroDec()
+	suite.CheckOperatorUSDValueExact(operatorAddr, zeroUsd)
 }
