@@ -58,9 +58,9 @@ func PrepareXChainOracleGenesis(cfg *network.Config) oracletypes.GenesisState {
 		if !hasPrice {
 			copy.PricesList = append(copy.PricesList, oracletypes.Prices{
 				TokenID:     tokenID,
-				NextRoundID: 2,
+				NextRoundID: 1,
 				PriceList: []*oracletypes.PriceTimeRound{
-					{Price: "1", Decimal: 0, RoundID: 1},
+					{Price: "1", Decimal: 0, RoundID: 0},
 				},
 			})
 		}

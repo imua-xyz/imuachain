@@ -659,20 +659,6 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 	}
 
 	for _, feederID := range f.sortedFeederIDs {
-		// #nosec G115
-		if _, ok := f.phaseTwoCollectingFeederIDs[uint64(feederID)]; ok {
-			if ctx.BlockHeight() < int64(f.rounds[feederID].roundPhaseTwoCheckingBlock) {
-				continue
-			}
-			if _, ok := f.phaseTwoCollectingFeederIDs[uint64(feederID)]; ok {
-				r := f.rounds[feederID]
-				consAddrStr := sdk.ConsAddress(ctx.BlockHeader().ProposerAddress).String()
-				logInfo := []any{"proposer", consAddrStr, "missed_rawData_feederID", feederID, "roundID", r.roundID}
-				f.handleMissCount(ctx, logger, consAddrStr, minReportedPerWindow, reportedRoundsWindow, logInfo, true, true)
-			}
-			// this feederID is collecting piece and there's no tx included by the proposer for current block
-			continue
-		}
 		r := f.rounds[feederID]
 		if r.IsQuotingWindowEnd(height) {
 			if _, found := r.FinalPrice(); !found {
@@ -693,6 +679,13 @@ func (f *FeederManager) handleQuotingMisBehavior(ctx sdk.Context) {
 			}
 			r.closeQuotingWindow()
 		}
+
+		if _, ok := f.phaseTwoCollectingFeederIDs[uint64(feederID)]; ok && ctx.BlockHeight() < int64(r.roundPhaseTwoCheckingBlock) {
+			consAddrStr := sdk.ConsAddress(ctx.BlockHeader().ProposerAddress).String()
+			logInfo := []any{"proposer", consAddrStr, "missed_rawData_feederID", feederID, "roundID", r.roundID}
+			f.handleMissCount(ctx, logger, consAddrStr, minReportedPerWindow, reportedRoundsWindow, logInfo, true, true)
+		}
+
 	}
 }
 
@@ -791,9 +784,37 @@ func (f *FeederManager) updateAndCommitRoundsInRecovery(ctx sdk.Context) {
 	f.removeExpiredRounds(ctx)
 }
 
+// flushTwoPhaseCacheToStore persists 2-phase proof nodes, raw data pieces, and next piece index for all rounds that are collecting raw data.
+// It is called at the start of EndBlock so that a crash after DeliverTx but before processRound does not lose 2-phase state.
+// Raw data pieces must be persisted here because the normal path only uses mem-cache; recovery restores r.m from store (GetRawDataPieces), so without this, XChain (2-phase) recovery would see round 1 differ (len(pieces) or GetRawDataPieces error).
+func (f *FeederManager) flushTwoPhaseCacheToStore(ctx sdk.Context) {
+	for _, r := range f.rounds {
+		if !r.twoPhases || r.m == nil || !r.m.CollectingRawData() {
+			continue
+		}
+		if len(r.cachedProofForBlock) > 0 {
+			// #nosec G115
+			f.k.AddNodesToMerkleTree(ctx, uint64(r.feederID), r.cachedProofForBlock)
+			r.cachedProofForBlock = nil
+		}
+		latestLeafIndex, hasPieces := r.m.LatestLeafIndex()
+		if hasPieces {
+			// #nosec G115
+			feederID := uint64(r.feederID)
+			for i := uint32(0); i <= latestLeafIndex; i++ {
+				if piece, ok := r.m.PieceByIndex(i); ok {
+					f.k.SetRawDataPiece(ctx, feederID, i, piece)
+				}
+			}
+			f.k.SetNextPieceIndexForFeeder(ctx, feederID, latestLeafIndex+1)
+		}
+	}
+}
+
 // updateAndCommitRounds updates and commits rounds during normal operation.
 func (f *FeederManager) updateAndCommitRounds(ctx sdk.Context) {
 	f.setCommittableState(ctx)
+	f.flushTwoPhaseCacheToStore(ctx)
 	f.commitRounds(ctx)
 	// behaviors review and close quotingWindow
 	f.handleQuotingMisBehavior(ctx)
@@ -1133,6 +1154,7 @@ func (f *FeederManager) recovery(ctx sdk.Context) (bool, error) {
 	}
 	f.prepareRounds(ctxReplay)
 
+	// Replay assumes recentMsgs and replayRecentParamsList are ordered by block ascending (store keys use big-endian block; getRecoveryStartPoint returns a suffix of that list).
 	params = nil
 	recentMsgs := f.k.GetAllRecentMsg(ctxReplay)
 	for ; startHeight < height; startHeight++ {
@@ -1226,42 +1248,51 @@ func (f *FeederManager) BaseBlockToNextRoundID(feederID, baseBlock uint64) (uint
 
 // Equals compares two FeederManager instances for equality.
 func (f *FeederManager) Equals(fm *FeederManager) bool {
+	return f.EqualsWithReason(fm) == ""
+}
+
+// EqualsWithReason returns the empty string if f and fm are equal, otherwise a short reason for the first mismatch.
+// Used by devmode to log why recovery state differs from live state.
+func (f *FeederManager) EqualsWithReason(fm *FeederManager) string {
 	if f == nil || fm == nil {
-		return f == fm
+		if f != fm {
+			return "nil vs non-nil"
+		}
+		return ""
 	}
-	if f.fCheckTx == nil && fm.fCheckTx != nil {
-		return false
+	if (f.fCheckTx == nil) != (fm.fCheckTx == nil) {
+		return "fCheckTx nil mismatch"
 	}
-	if f.fCheckTx != nil && fm.fCheckTx == nil {
-		return false
-	}
-	if !f.fCheckTx.Equals(fm.fCheckTx) {
-		return false
+	if f.fCheckTx != nil {
+		if reason := f.fCheckTx.EqualsWithReason(fm.fCheckTx); reason != "" {
+			return "fCheckTx: " + reason
+		}
 	}
 	if f.paramsUpdated != fm.paramsUpdated ||
 		f.validatorsUpdated != fm.validatorsUpdated ||
 		f.resetSlashing != fm.resetSlashing ||
 		f.forceSeal != fm.forceSeal {
-		return false
+		return "flags differ"
 	}
 	if !f.sortedFeederIDs.Equals(fm.sortedFeederIDs) {
-		return false
+		return "sortedFeederIDs differ"
 	}
 	if !f.cs.Equals(fm.cs) {
-		return false
+		return "caches differ"
 	}
 	if len(f.rounds) != len(fm.rounds) {
-		return false
+		return fmt.Sprintf("rounds length %d vs %d", len(f.rounds), len(fm.rounds))
 	}
-	// safe to range map, compare map
 	for id, r := range f.rounds {
-		if r2, ok := fm.rounds[id]; !ok {
-			return false
-		} else if !r.Equals(r2) {
-			return false
+		r2, ok := fm.rounds[id]
+		if !ok {
+			return fmt.Sprintf("round %d missing in recovered", id)
+		}
+		if reason := r.EqualsWithReason(r2); reason != "" {
+			return fmt.Sprintf("round %d differs (%s)", id, reason)
 		}
 	}
-	return true
+	return ""
 }
 
 // LatestRoundBaseBlock returns the base block of the latest round for a given feederID.
@@ -1284,7 +1315,7 @@ func (f *FeederManager) GetNSTChainIDFromFeederID(feederID uint64) (uint64, bool
 	return f.cs.GetNSTChainIDFromFeederID(feederID)
 }
 
-// recoveryStartPoint returns the height to start the recovery process
+// getRecoveryStartPoint returns the height to start the recovery process and the list of params updates to apply in the replay loop.
 func getRecoveryStartPoint(currentHeight int64, recentParamsList []*oracletypes.RecentParams, prevRecentParams, latestRecentParams *oracletypes.RecentParams, validatorUpdateHeight int64) (height int64, replayRecentParamsList []*oracletypes.RecentParams) {
 	if currentHeight > int64(latestRecentParams.Params.MaxNonce) {
 		height = currentHeight - int64(latestRecentParams.Params.MaxNonce)

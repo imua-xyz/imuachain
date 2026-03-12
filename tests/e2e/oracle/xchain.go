@@ -91,7 +91,6 @@ func (s *XChainTestSuite) TestCrossChainOracle2PhasesA() {
 	s.moveNAndCheck(1)
 
 	s.submitXChainPhaseTwoPieces(mt, feederID, baseBlock)
-
 	// Allow EndBlock queue processing to complete.
 	s.moveNAndCheck(2)
 

@@ -371,6 +371,25 @@ func (m *MerkleTree) RootIndex() uint32 {
 	return m.rootIndex
 }
 
+// Equals reports whether two MerkleTrees have the same recoverable state (leafCount, root, nextPieceIndex).
+// Used by devmode to compare live vs recovered FeederManager round state.
+func (m *MerkleTree) Equals(m2 *MerkleTree) bool {
+	if m == nil || m2 == nil {
+		return m == m2
+	}
+	if m.leafCount != m2.leafCount || m.pieceSize != m2.pieceSize {
+		return false
+	}
+	if !bytes.Equal(m.root, m2.root) {
+		return false
+	}
+	// nextPieceIndex is len(pieces)
+	if len(m.pieces) != len(m2.pieces) {
+		return false
+	}
+	return true
+}
+
 // GetCopy return a copy of the MerkleTree
 // NOTE: the returned MerkleTree is not a deep copy, the hash of each node is copied, but the pieces and rawData, path are not copied
 // for the shallow copies, the outter slice/map is copied, but the inner slice/map is not copied

@@ -58,8 +58,64 @@ func (r *round) Equals(r2 *round) bool {
 	if !r.a.Equals(r2.a) {
 		return false
 	}
-
+	// compare 2-phase merkle state so recovery consistency check (devmode) can detect mismatches
+	if (r.m == nil) != (r2.m == nil) {
+		return false
+	}
+	if r.m != nil && !r.m.Equals(r2.m) {
+		return false
+	}
 	return true
+}
+
+// EqualsWithReason returns the empty string if r and r2 are strictly equal, otherwise a short reason for devmode diagnostics.
+func (r *round) EqualsWithReason(r2 *round) string {
+	if r == nil || r2 == nil {
+		if r != r2 {
+			return "nil round"
+		}
+		return ""
+	}
+	if r.startBaseBlock != r2.startBaseBlock {
+		return "startBaseBlock"
+	}
+	if r.startRoundID != r2.startRoundID {
+		return "startRoundID"
+	}
+	if r.endBlock != r2.endBlock {
+		return "endBlock"
+	}
+	if r.interval != r2.interval {
+		return "interval"
+	}
+	if r.quoteWindowSize != r2.quoteWindowSize {
+		return "quoteWindowSize"
+	}
+	if r.feederID != r2.feederID {
+		return "feederID"
+	}
+	if r.tokenID != r2.tokenID {
+		return "tokenID"
+	}
+	if r.roundBaseBlock != r2.roundBaseBlock {
+		return "roundBaseBlock"
+	}
+	if r.roundID != r2.roundID {
+		return "roundID"
+	}
+	if r.status != r2.status {
+		return "status"
+	}
+	if !r.a.Equals(r2.a) {
+		return "aggregator"
+	}
+	if (r.m == nil) != (r2.m == nil) {
+		return "m nil"
+	}
+	if r.m != nil && !r.m.Equals(r2.m) {
+		return "m"
+	}
+	return ""
 }
 
 func (r *round) CopyForCheckTx() *round {

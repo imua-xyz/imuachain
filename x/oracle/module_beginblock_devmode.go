@@ -17,10 +17,11 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 	am.keeper.BeginBlock(ctx, req)
 
 	logger.Info("start simulating recovery in BeginBlock", "height", ctx.BlockHeight())
-	// check the result of recovery
+	// check the result of recovery so that node restart can replay to the same state
 	f := recoveryFeederManagerOnNextBlock(ctx, am.keeper)
-	if ok := am.keeper.FeederManager.Equals(f); !ok {
-		panic(fmt.Sprintf("there's something wrong in the recovery logic of feedermanager, block:%d", ctx.BlockHeight()))
+	if reason := am.keeper.FeederManager.EqualsWithReason(f); reason != "" {
+		logger.Error("recovery vs live FeederManager mismatch", "block", ctx.BlockHeight(), "reason", reason)
+		panic(fmt.Sprintf("there's something wrong in the recovery logic of feedermanager, block:%d, reason:%s", ctx.BlockHeight(), reason))
 	}
 }
 
