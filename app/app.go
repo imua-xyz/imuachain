@@ -1402,8 +1402,9 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// ethermint subspaces
 	paramsKeeper.Subspace(evmtypes.ModuleName).
-		WithKeyTable(evmtypes.ParamKeyTable()) //nolint:staticcheck
-	paramsKeeper.Subspace(oracleTypes.ModuleName).WithKeyTable(oracleTypes.ParamKeyTable())
+		WithKeyTable(evmtypes.ParamKeyTable())
+	paramsKeeper.Subspace(oracleTypes.ModuleName).
+		WithKeyTable(oracleTypes.ParamKeyTable())
 	return paramsKeeper
 }
 
