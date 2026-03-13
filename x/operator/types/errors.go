@@ -155,4 +155,9 @@ var (
 		ModuleName, 33,
 		"operator frozen state mismatch",
 	)
+
+	ErrOperatorIsFrozen = errorsmod.Register(
+		ModuleName, 34,
+		"the operator has been frozen",
+	)
 )

@@ -731,7 +731,8 @@ func (suite *KeyChangeEscapeTestSuite) TestOptInWithPendingSlash() {
 	suite.Commit()
 
 	// Step 2: Advance a few epochs so we are inside the unbonding period
-	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 2)
+	forwarded := 2
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, forwarded)
 	suite.Commit()
 
 	// Step 3: Evidence is submitted. The operator is still in the unbonding period,
@@ -743,7 +744,8 @@ func (suite *KeyChangeEscapeTestSuite) TestOptInWithPendingSlash() {
 	suite.CheckTombstoned(consAddrA, true)
 
 	// Step 4: Advance the remaining epochs to process the Opt-Out fully
-	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 6)
+	unbondingPeriod := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx).EpochsUntilUnbonded
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, int(unbondingPeriod)-forwarded+1)
 	suite.Commit()
 
 	// Step 5: After unbonding is complete, the operator (now completely unbonded)
@@ -761,7 +763,7 @@ func (suite *KeyChangeEscapeTestSuite) TestOptInWithPendingSlash() {
 	// It should fail because they are permanently jailed (tombstoned)
 	suite.Require().Nil(res)
 	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, operatortypes.ErrIsOptedOutOrJailed)
+	suite.Require().ErrorIs(err, operatortypes.ErrOperatorIsFrozen)
 
 	_, found := suite.App.StakingKeeper.GetImuachainValidator(suite.Ctx, consKeyB.ToConsAddr())
 	suite.Require().False(found, "Operator should not be allowed back in active set")
@@ -787,20 +789,33 @@ func (suite *KeyChangeEscapeTestSuite) TestAssimilatingTombstonedKey() {
 
 	// Operator 2 arrives and tries to use Key A
 	operatorAddr2, _ := testutiltx.NewAccAddressAndKey()
+	delegator2 := common.Address(operatorAddr2.Bytes())
 	suite.RegisterOperator(operatorAddr2)
+	amount := suite.MinSelfDelegation.Int64() * 3
+	suite.DepositFromStaker(
+		delegator2, amount,
+	)
+	suite.DelegateToOperator(
+		delegator2, operatorAddr2, amount,
+	)
+	suite.AssociateOperatorWithStaker(
+		delegator2, operatorAddr2,
+	)
 
 	// Attempt to set cons key should fail
-	response, err := suite.OperatorMsgServer.SetConsKey(
+	response, err := suite.OperatorMsgServer.OptIntoAVS(
 		sdk.WrapSDKContext(suite.Ctx),
-		&operatortypes.SetConsKeyReq{
-			Address:       operatorAddr2.String(),
+		&operatortypes.OptIntoAVSReq{
+			FromAddress:   operatorAddr2.String(),
 			AvsAddress:    suite.AvsAddress,
 			PublicKeyJSON: consKeyA.ToJSON(),
 		},
 	)
 	// it should be fully rejected to take over a jailed key
+	// we already test unjailed key elsewhere.
 	suite.Require().Error(err)
 	suite.Require().Nil(response)
+	suite.Require().ErrorIs(err, operatortypes.ErrConsKeyAlreadyInUse)
 }
 
 // Rotating back to an old, innocent key
@@ -838,7 +853,7 @@ func (suite *KeyChangeEscapeTestSuite) TestRotateToOldInnocentKey() {
 	)
 	suite.Require().Nil(response)
 	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, operatortypes.ErrIsOptedOutOrJailed)
+	suite.Require().ErrorIs(err, operatortypes.ErrOperatorIsFrozen)
 	// Key A was naturally innocent. It shouldn't be tombstoned on its own;
 	// rather, the operator is securely jailed, preventing reuse.
 	suite.CheckTombstoned(consKeyA.ToConsAddr(), false)
@@ -877,6 +892,7 @@ func (suite *KeyChangeEscapeTestSuite) TestSimultaneousInfractions() {
 			},
 		)
 	}
+	nonSigners := []int{len(validators)}
 	validators = append(
 		validators, abci.Validator{
 			Address: consKeyB.ToConsAddr().Bytes(),
@@ -891,7 +907,7 @@ func (suite *KeyChangeEscapeTestSuite) TestSimultaneousInfractions() {
 
 	// Submit double sign ONE block before downtime jail
 	for i := int64(0); i < maxMissed-1; i++ {
-		suite.CommitWithInfo(validators, []int{2}, time.Nanosecond)
+		suite.CommitWithInfo(validators, nonSigners, time.Nanosecond)
 	}
 
 	// Submit Double Sign on Key A

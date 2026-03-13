@@ -60,7 +60,7 @@ func (k *Keeper) setOperatorConsKeyForChainID(
 ) error {
 	// check for slashing
 	if !genesis && k.IsOperatorFrozen(ctx, opAccAddr) {
-		return delegationtypes.ErrOperatorIsFrozen
+		return types.ErrOperatorIsFrozen
 	}
 	/// in the process of opting out, do not allow key replacement
 	if k.IsOperatorRemovingKeyFromChainID(ctx, opAccAddr, chainID) {

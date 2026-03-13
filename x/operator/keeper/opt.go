@@ -30,6 +30,10 @@ func (k *Keeper) OptIn(
 	if !k.IsOperator(ctx, operatorAddress) {
 		return errorsmod.Wrapf(delegationtypes.ErrOperatorNotExist, "operator is :%s", operatorAddress)
 	}
+	// do not allow frozen operators to do anything meaningful
+	if k.IsOperatorFrozen(ctx, operatorAddress) {
+		return types.ErrOperatorIsFrozen
+	}
 	// check that the AVS is registered
 	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
@@ -65,11 +69,6 @@ func (k *Keeper) OptIn(
 	}
 	if operatorUSDValues.SelfUSDValue.LT(minSelfDelegation) {
 		return errorsmod.Wrapf(types.ErrMinDelegationNotMet, "operator:%s avs:%s selfUSDValue:%s minSelfDelegation:%s", operatorAddress.String(), avsAddr, operatorUSDValues.SelfUSDValue, minSelfDelegation)
-	}
-
-	// do not allow frozen operators to do anything meaningful
-	if k.IsOperatorFrozen(ctx, operatorAddress) {
-		return delegationtypes.ErrOperatorIsFrozen
 	}
 
 	// call InitOperatorUSDValue to mark the operator has been opted into the AVS
@@ -134,6 +133,10 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 	if !k.IsOperator(ctx, operatorAddress) {
 		return delegationtypes.ErrOperatorNotExist
 	}
+	// do not allow frozen operators to do anything meaningful
+	if k.IsOperatorFrozen(ctx, operatorAddress) {
+		return types.ErrOperatorIsFrozen
+	}
 	// check that the AVS is registered
 	if isAVS, _ := k.avsKeeper.IsAVS(ctx, avsAddr); !isAVS {
 		return types.ErrNoSuchAvs.Wrapf("AVS not found %s", avsAddr)
@@ -143,10 +146,6 @@ func (k *Keeper) OptOut(ctx sdk.Context, operatorAddress sdk.AccAddress, avsAddr
 	// Therefore, we only check if the operator has opted in here.
 	if !k.IsOptedIn(ctx, operatorAddress.String(), avsAddr) {
 		return types.ErrNotOptedIn
-	}
-	// do not allow frozen operators to do anything meaningful
-	if k.IsOperatorFrozen(ctx, operatorAddress) {
-		return delegationtypes.ErrOperatorIsFrozen
 	}
 	// check if it is the chain-type AVS
 	chainIDWithoutRevision, isChainAvs := k.avsKeeper.GetChainIDByAVSAddr(ctx, avsAddr)

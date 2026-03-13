@@ -14,6 +14,10 @@ func (k Keeper) ValidateAndUpdateCommissionRate(
 	if err != nil {
 		return err
 	}
+	// do not allow frozen operators to do anything meaningful
+	if k.IsOperatorFrozen(ctx, addr) {
+		return operatortypes.ErrOperatorIsFrozen
+	}
 	// check rate exceeds min commission rate
 	minCommissionRate := k.GetMinCommissionRate(ctx)
 	if rate.LT(minCommissionRate) {

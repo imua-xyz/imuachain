@@ -51,6 +51,11 @@ func (k Keeper) emitFreezeEvent(
 func (k Keeper) IsOperatorFrozenStr(ctx sdk.Context, addr string) bool {
 	addrBech32, err := sdk.AccAddressFromBech32(addr)
 	if err != nil {
+		k.Logger(ctx).Error(
+			"invalid operator address",
+			"address", addr,
+			"error", err.Error(),
+		)
 		return false
 	}
 	return k.IsOperatorFrozen(ctx, addrBech32)

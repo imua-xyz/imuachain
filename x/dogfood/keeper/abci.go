@@ -98,6 +98,8 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 		consAddr := sdk.ConsAddress(consensusAddr)
 		cc, writeFunc := ctx.CacheContext()
 		// tell the slashing module to delete look up from consensus addr to pub key
+		// the x/slashing module never returns an error for this hook. we only guard
+		// against the error because of the method signature.
 		if err := k.Hooks().AfterValidatorRemoved(
 			cc, consAddr, nil,
 		); err != nil {

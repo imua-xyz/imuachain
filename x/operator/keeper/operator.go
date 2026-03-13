@@ -108,6 +108,9 @@ func (k *Keeper) EditOperator(
 	if err != nil {
 		return err
 	}
+	if k.IsOperatorFrozen(ctx, opAccAddr) {
+		return operatortypes.ErrOperatorIsFrozen
+	}
 	// this prevents resetting to the same name as well
 	if has, err := k.HasOperatorName(ctx, description.Moniker); err != nil {
 		return err
@@ -148,6 +151,9 @@ func (k *Keeper) UpdateRewardCompoundingFlag(
 	info, err := k.OperatorInfo(ctx, opAccAddr.String())
 	if err != nil {
 		return err
+	}
+	if k.IsOperatorFrozen(ctx, opAccAddr) {
+		return operatortypes.ErrOperatorIsFrozen
 	}
 	if info.DisableCompoundRewards == disableCompoundRewards {
 		return nil

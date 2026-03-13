@@ -537,9 +537,7 @@ func (k Keeper) QueryOperatorFrozen(
 		return nil, status.Errorf(codes.InvalidArgument, "empty request")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	accAddr, err := sdk.AccAddressFromBech32(
-		strings.ToLower(req.OperatorAccAddr),
-	)
+	accAddr, err := sdk.AccAddressFromBech32(req.OperatorAccAddr)
 	if err != nil {
 		return nil, err
 	}
