@@ -1395,7 +1395,7 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(banktypes.ModuleName)
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).
-		WithKeyTable(govv1.ParamKeyTable()) //nolint:staticcheck
+		WithKeyTable(govv1.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibcexported.ModuleName)
