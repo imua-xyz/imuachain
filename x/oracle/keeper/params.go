@@ -61,6 +61,10 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		return err
 	}
 
+	if decimalInt < 0 {
+		return fmt.Errorf("decimal can't be nagetive:%d", decimalInt)
+	}
+
 	intervalInt := uint64(0)
 	if len(oInfo.Feeder.Interval) > 0 {
 		intervalInt, err = strconv.ParseUint(oInfo.Feeder.Interval, 10, 64)
