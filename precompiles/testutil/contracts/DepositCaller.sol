@@ -5,7 +5,7 @@ import "deposit/deposit.sol" as deposit;
 
 contract DepositCaller {
 
-    event callDepositToResult(bool indexed success, uint256 indexed latestAssetState);
+    event CallDepositToResult(bool indexed success, uint256 indexed latestAssetState);
     event ErrorOccurred(string errorMessage);
 
     function testDepositTo(

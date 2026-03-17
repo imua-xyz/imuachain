@@ -378,23 +378,18 @@ benchmark:
 
 lint:
 	golangci-lint run --out-format=tab
-	solhint contracts/**/*.sol
+	solhint precompiles/**/*.sol
 
-lint-contracts:
-	@cd contracts && \
-	npm i && \
-	npm run lint
+lint-precompiles-sol:
+	solhint precompiles/**/*.sol
 
 lint-fix:
 	golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
-lint-fix-contracts:
-	@cd contracts && \
-	npm i && \
-	npm run lint-fix
-	solhint --fix contracts/**/*.sol
+lint-fix-precompiles-sol:
+	solhint --fix precompiles/**/*.sol
 
-.PHONY: lint lint-fix
+.PHONY: lint lint-fix lint-precompiles-sol lint-fix-precompiles-sol
 
 format-golang:
 	@echo "Formating golang files"
