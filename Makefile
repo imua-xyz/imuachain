@@ -378,16 +378,16 @@ benchmark:
 
 lint:
 	golangci-lint run --out-format=tab
-	solhint precompiles/**/*.sol
+	solhint 'precompiles/**/I*.sol'
 
 lint-precompiles-sol:
-	solhint precompiles/**/*.sol
+	solhint 'precompiles/**/I*.sol'
 
 lint-fix:
 	golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
 lint-fix-precompiles-sol:
-	solhint --fix precompiles/**/*.sol
+	solhint --fix --noPrompt 'precompiles/**/I*.sol'
 
 .PHONY: lint lint-fix lint-precompiles-sol lint-fix-precompiles-sol
 

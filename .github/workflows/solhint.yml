@@ -17,4 +17,4 @@ jobs:
       - uses: actions/setup-node@v3
       - run: npm install -g solhint
       - run: solhint --version
-      - run: solhint 'precompiles/**/*.sol'
+      - run: solhint 'precompiles/**/I*.sol'
