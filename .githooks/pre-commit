@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+mapfile -t staged_files < <(git diff --cached --name-only --diff-filter=ACMR)
+
+# Lint staged Markdown files.
+mapfile -t md_files < <(printf "%s\n" "${staged_files[@]}" | grep -E '\.md$' || true)
+if [ ${#md_files[@]} -gt 0 ]; then
+  echo "Running markdownlint on staged markdown files..."
+  if command -v markdownlint >/dev/null 2>&1; then
+    markdownlint --config .markdownlint.yml --ignore-path .markdownlintignore "${md_files[@]}"
+  elif command -v npx >/dev/null 2>&1; then
+    npx --yes markdownlint-cli --config .markdownlint.yml --ignore-path .markdownlintignore "${md_files[@]}"
+  else
+    echo "markdownlint check skipped: neither 'markdownlint' nor 'npx' is available." >&2
+    echo "Install Node.js and markdownlint-cli to enable this hook." >&2
+    exit 1
+  fi
+fi
