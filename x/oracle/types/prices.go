@@ -15,6 +15,14 @@ func (p PriceAcc) ToPriceTR() PriceTimeRound {
 	}
 }
 
+func (p PriceAcc) AccumulatePriceTR(pTR PriceTimeRound) (PriceAcc, error) {
+	tmpAccumulated, err := p.ToPriceTR().Accumulate(pTR)
+	if err != nil {
+		return p, err
+	}
+	return tmpAccumulated.ToPriceAcc(p.StartRoundID), nil
+}
+
 func (p PriceTimeRound) ToPriceAcc(startRoundID uint64) PriceAcc {
 	return PriceAcc{
 		Price:        p.Price,
