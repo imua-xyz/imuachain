@@ -102,7 +102,6 @@ func UpdateXChainMsgs(
 	}
 
 	batch.Messages = msgs
-	k.SetXChainLastSeq(ctx, batch.SrcChainID, batch.BatchSeq)
 
 	if err := k.enqueueXChainBatch(ctx, batch.SrcChainID, xchainQueuedBatch{
 		RootHashB64: base64.StdEncoding.EncodeToString(rootHash),
@@ -111,6 +110,7 @@ func UpdateXChainMsgs(
 	}); err != nil {
 		return fmt.Errorf("failed to enqueue xchain batch: %w", err)
 	}
+	k.SetXChainLastSeq(ctx, batch.SrcChainID, batch.BatchSeq)
 
 	ctx.EventManager().EmitEvent(sdk.NewEvent(
 		types.EventTypeXChainBatch,

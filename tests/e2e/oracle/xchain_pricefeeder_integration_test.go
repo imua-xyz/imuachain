@@ -405,7 +405,10 @@ func (s *XChainPriceFeederSuite) moveNAndCheck(n int64) {
 
 func (s *XChainPriceFeederSuite) mustGetXChainFeeder(params oracletypes.Params) (uint64, uint64, uint64) {
 	for feederID, feeder := range params.TokenFeeders {
-		if feederID == 0 {
+		if feederID == 0 || feeder == nil {
+			continue
+		}
+		if int(feeder.TokenID) >= len(params.Tokens) {
 			continue
 		}
 		token := params.Tokens[feeder.TokenID]

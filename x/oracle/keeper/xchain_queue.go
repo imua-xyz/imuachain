@@ -141,7 +141,8 @@ func (k Keeper) peekXChainBatch(ctx sdk.Context, srcChainID uint64) (idx uint64,
 	}
 	bz := store.Get(types.XChainQueueItemKey(srcChainID, head))
 	if bz == nil {
-		// treat as empty/corrupted; force reset
+		store.Delete(types.XChainQueueHeadKey(srcChainID))
+		store.Delete(types.XChainQueueTailKey(srcChainID))
 		return 0, xchainQueuedBatch{}, false, nil
 	}
 	var out xchainQueuedBatch

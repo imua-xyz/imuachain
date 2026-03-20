@@ -199,13 +199,15 @@ func (s *XChainTestSuite) TestCrossChainOracle2PhasesDepositLST() {
 
 func (s *XChainTestSuite) mustGetXChainFeeder(params oracletypes.Params) (feederID uint64, startBaseBlock uint64, interval uint64) {
 	var tokenID uint64
+	var found bool
 	for i, token := range params.Tokens {
 		if strings.HasPrefix(strings.ToLower(token.AssetID), oracletypes.XChainIDPrefix) {
 			tokenID = uint64(i)
+			found = true
 			break
 		}
 	}
-	s.Require().Greater(tokenID, uint64(0))
+	s.Require().True(found, "no token with xchain_ prefix found in params")
 
 	for i, feeder := range params.TokenFeeders {
 		if feeder.TokenID == tokenID {
@@ -349,6 +351,6 @@ func (s *XChainTestSuite) waitForXChainLastSeq(srcChainID uint64, expected uint6
 		}
 		s.moveNAndCheck(1)
 	}
-	s.FailNow("xchain last executed seq not updated")
+	s.FailNow("xchain last seq not updated")
 	return 0
 }
