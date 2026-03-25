@@ -35,8 +35,9 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 
 func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.OracleInfo) error {
 	p := k.GetParams(ctx)
-	if p.GetTokenIDFromAssetID(oInfo.AssetID) > 0 {
-		return fmt.Errorf("assetID exists:%s", oInfo.AssetID)
+	assetID := strings.ToLower(oInfo.AssetID)
+	if p.GetTokenIDFromAssetID(assetID) > 0 {
+		return fmt.Errorf("assetID exists:%s", assetID)
 	}
 	chainID := uint64(0)
 	for id, c := range p.Chains {
@@ -62,7 +63,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	}
 
 	if decimalInt < 0 {
-		return fmt.Errorf("decimal can't be nagetive:%d", decimalInt)
+		return fmt.Errorf("decimal can't be negative:%d", decimalInt)
 	}
 
 	intervalInt := uint64(0)
@@ -76,14 +77,14 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 		intervalInt = defaultInterval
 	}
 
-	isNST := assetstypes.IsNST(oInfo.AssetID)
+	isNST := assetstypes.IsNST(assetID)
 	// var assetAddr string
 	var clientChainID uint64
 
 	if isNST {
-		_, clientChainID, err = assetstypes.ParseID(oInfo.AssetID)
+		_, clientChainID, err = assetstypes.ParseID(assetID)
 		if err != nil {
-			return fmt.Errorf("invalid assetID %s: %w", oInfo.AssetID, err)
+			return fmt.Errorf("invalid assetID %s: %w", assetID, err)
 		}
 	}
 
@@ -102,9 +103,6 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 			//   newStartBaseBlock = startBaseBlock + offset => newStartBaseBlock + 1 = (startBaseBlock + 1) + offset
 			startBaseBlock += offset
 		}
-		// startBaseBlock := computeStartBaseBlock(ctx, uint64(p.MaxNonce), intervalInt, p.TokenFeeders[1:])
-		// #nosec G115 // len(p.Tokens) must be positive since we just append an element for it
-		// appendTokenFeeder(&p, uint64(len(p.Tokens)-1), ruleID, startBaseBlock, intervalInt)
 		p.TokenFeeders = append(p.TokenFeeders, &types.TokenFeeder{
 			TokenID:        uint64(len(p.Tokens) - 1),
 			RuleID:         ruleID,
@@ -118,7 +116,7 @@ func (k Keeper) RegisterNewTokenAndSetTokenFeeder(ctx sdk.Context, oInfo *types.
 	idx, has := p.HasTokenByName(oInfo.Token.Name, chainID)
 	if has {
 		t := p.Tokens[idx]
-		t.AssetID = strings.Join([]string{t.AssetID, oInfo.AssetID}, ",")
+		t.AssetID = strings.Join([]string{t.AssetID, assetID}, ",")
 		if !isNST {
 			k.SetParams(ctx, p)
 			return nil
