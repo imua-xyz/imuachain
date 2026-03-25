@@ -23,6 +23,7 @@ import (
 	assetskeeper "github.com/imua-xyz/imuachain/x/assets/keeper"
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -78,7 +79,7 @@ func (suite *KeyChangeEscapeTestSuite) RegisterOperator(
 					OperatorAddr: operatorAddr.String(),
 					Description: stakingtypes.NewDescription(
 						// unique name
-						fmt.Sprintf("operator%d", time.Now().UnixMilli()),
+						fmt.Sprintf("operator%d", time.Now().UnixNano()),
 						"", "", "", "",
 					),
 					Commission: stakingtypes.NewCommission(
@@ -1006,4 +1007,225 @@ func (suite *KeyChangeEscapeTestSuite) TestExactZeroStake() {
 	// Verify exact zero math works without panic
 	zeroUsd := sdkmath.LegacyZeroDec()
 	suite.CheckOperatorUSDValueExact(operatorAddr, zeroUsd)
+}
+
+// Unit Test A: Tombstoned key rejection for new validator
+func (suite *KeyChangeEscapeTestSuite) TestTombstonedKeyRejectionOnNewValidator() {
+	operatorAddr1, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr1, consAddrA, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Step 1: Operator 1 rotates to Key B (so Key A begins an unbonding process and will be pruned eventually)
+	suite.ChangeKey(operatorAddr1, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+
+	// Step 2: Evidence is submitted for Key A. Operator 1 gets slashed and Key A gets tombstoned.
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	suite.CheckTombstoned(consAddrA, true)
+
+	// Step 3: Wait for 8 epochs for Key A's unbonding to finish, pruning the reverse lookup
+	unbondingPeriod := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx).EpochsUntilUnbonded
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, int(unbondingPeriod)+1)
+	suite.Commit()
+
+	// Step 4: Create a new validator with enough self delegation
+	operatorAddr2, _ := testutiltx.NewAccAddressAndKey()
+	delegator2 := common.Address(operatorAddr2.Bytes())
+	suite.RegisterOperator(operatorAddr2)
+	amount := suite.MinSelfDelegation.Int64() * 3
+	suite.DepositFromStaker(delegator2, amount)
+	suite.DelegateToOperator(delegator2, operatorAddr2, amount)
+	suite.AssociateOperatorWithStaker(delegator2, operatorAddr2)
+
+	// Step 5: Try to add same consensus key (Key A) to the new validator
+	response, err := suite.OperatorMsgServer.OptIntoAVS(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.OptIntoAVSReq{
+			FromAddress:   operatorAddr2.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: consKeyA.ToJSON(),
+		},
+	)
+
+	// Should fail with our error, instead of ErrConsKeyAlreadyInUse
+	suite.Require().Nil(response)
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, dogfoodtypes.ErrConsKeyAlreadyTombstoned)
+}
+
+// Unit Test B: Tombstoned key rejection on key replacement
+func (suite *KeyChangeEscapeTestSuite) TestTombstonedKeyRejectionOnKeyReplacement() {
+	// Operator 1
+	operatorAddr1, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	// Operator 2
+	operatorAddr2, _, power2 := suite.AddValidator(3)
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr1, consAddrA, power, power)
+	// We don't strictly need to check validator 2, but we can verify it's active
+	suite.CheckOperatorUSDValueExact(operatorAddr2, sdkmath.LegacyNewDec(power2))
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+	infractionPower := power
+
+	// Step 1: Operator 1 rotates to Key B (so Key A begins an unbonding process and will be pruned)
+	suite.ChangeKey(operatorAddr1, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+
+	// Step 2: Evidence is submitted for Key A. Operator 1 gets slashed and Key A gets tombstoned.
+	suite.SubmitEvidence(consAddrA, infractionHeight, infractionTime, infractionPower)
+	suite.Commit()
+
+	suite.CheckTombstoned(consAddrA, true)
+
+	// Step 3: Wait for 8 epochs for Key A's unbonding to finish, pruning the reverse lookup
+	unbondingPeriod := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx).EpochsUntilUnbonded
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, int(unbondingPeriod)+1)
+	suite.Commit()
+
+	// Step 4: Existing Operator 2 tries to replace their key with Key A
+	response, err := suite.OperatorMsgServer.SetConsKey(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.SetConsKeyReq{
+			Address:       operatorAddr2.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: consKeyA.ToJSON(),
+		},
+	)
+
+	// Should fail with our error
+	suite.Require().Nil(response)
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, dogfoodtypes.ErrConsKeyAlreadyTombstoned)
+}
+
+// Unit Test: Simulate UNSPECIFIED copy + DOWNTIME copy in the same epoch causing MissedBlocksCounter drift
+func (suite *KeyChangeEscapeTestSuite) TestDowntimeDriftKeyReplacement() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	validators := make([]abci.Validator, 0)
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validators = append(
+			validators, abci.Validator{
+				Address: validator.Address,
+				Power:   validator.Power,
+			},
+		)
+	}
+	nonSigners := []int{len(validators)} // the last validator is the one we added
+	validators = append(
+		validators, abci.Validator{
+			Address: consAddrA.Bytes(),
+			Power:   power,
+		},
+	)
+
+	// Step 1: go offline for some blocks, but not enough to trigger downtime
+	signInfo, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrA)
+	suite.Require().True(found)
+	signedBlocksWindow := suite.App.SlashingKeeper.SignedBlocksWindow(suite.Ctx)
+	minHeight := signInfo.StartHeight + signedBlocksWindow
+	minSignedPerWindow := suite.App.SlashingKeeper.MinSignedPerWindow(suite.Ctx)
+	maxMissed := signedBlocksWindow - minSignedPerWindow
+
+	blocksToReachMin := minHeight
+	blocksToMiss := maxMissed + 1
+	blocksToCommit := blocksToMiss
+	if blocksToCommit < blocksToReachMin {
+		blocksToCommit = blocksToReachMin
+	}
+
+	// Miss half the blocks needed
+	missesBeforeRotation := blocksToCommit / 2
+	for i := int64(0); i < missesBeforeRotation; i++ {
+		suite.CommitWithInfo(validators, nonSigners, time.Nanosecond)
+	}
+
+	// Step 2: Rotate key to Key B
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+
+	// Step 3: Continue going offline on Key A until downtime slash is triggered
+	blocksToTriggerSlash := blocksToCommit - missesBeforeRotation
+	for i := int64(0); i < blocksToTriggerSlash; i++ {
+		suite.CommitWithInfo(validators, nonSigners, time.Nanosecond)
+	}
+
+	// Now Key A should have been slashed for downtime. Operator Addr gets jailed.
+	// Inside SlashWithInfractionReason, since slashingOldKey = true,
+	// CopyValidatorSigningInfo (DOWNTIME) is called from Key A to Key B.
+	// This resets Key B's MissedBlocksCounter and IndexOffset to 0.
+
+	// Step 4: Run to epoch end so Key B becomes the active key
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+
+	// Operator is currently jailed. Unjail them.
+	downtimeJailDur := suite.App.SlashingKeeper.DowntimeJailDuration(suite.Ctx)
+	header := suite.Ctx.BlockHeader()
+	header.Time = header.Time.Add(downtimeJailDur).Add(time.Second)
+	suite.Ctx = suite.Ctx.WithBlockHeader(header)
+
+	suite.Unjail(operatorAddr, true)
+
+	// Run to epoch end so Key B re-enters the active set
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+
+	// Now Key B is an active signer.
+	validatorsForB := make([]abci.Validator, 0)
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validatorsForB = append(
+			validatorsForB, abci.Validator{
+				Address: validator.Address,
+				Power:   validator.Power,
+			},
+		)
+	}
+
+	// We need to find Key B's new power, as they might have been slashed softly during downtime
+	valB, found := suite.App.StakingKeeper.GetImuachainValidator(suite.Ctx, consKeyB.ToConsAddr())
+	suite.Require().True(found)
+
+	validatorsForB = append(
+		validatorsForB, abci.Validator{
+			Address: consKeyB.ToConsAddr().Bytes(),
+			Power:   valB.Power,
+		},
+	)
+
+	// Key B signs ONE block successfully (not in nonSigners).
+	// This invokes handleValidatorSignature at IndexOffset = 0.
+	// With the fix, the bit array is completely empty, so MissedBlocksCounter remains 0.
+	// Without the fix, bit 0 is true, so MissedBlocksCounter decrements from 0 to -1.
+	suite.CommitWithInfo(validatorsForB, []int{}, time.Nanosecond)
+
+	signInfo, found = suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consKeyB.ToConsAddr())
+	suite.Require().True(found)
+
+	// Assert that it did NOT drift negative.
+	suite.Require().GreaterOrEqual(signInfo.MissedBlocksCounter, int64(0), "Missed blocks counter should not drift negatively")
+	suite.Require().Equal(int64(0), signInfo.MissedBlocksCounter)
 }

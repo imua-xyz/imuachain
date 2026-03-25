@@ -229,21 +229,35 @@ func (k Keeper) CopyValidatorSigningInfo(
 		info.Tombstoned = true
 		info.JailedUntil = evidencetypes.DoubleSignJailEndTime
 	case stakingtypes.Infraction_INFRACTION_DOWNTIME:
+		// jail the new key
+		info.JailedUntil = ctx.BlockTime().Add(
+			k.slashingKeeper.DowntimeJailDuration(ctx),
+		)
 		// reset so the operator doesn't get slashed immediately upon unjail.
 		// x/slashing does this for the old key a few lines after calling this
 		// function.
 		info.MissedBlocksCounter = 0
 		info.IndexOffset = 0
-		info.JailedUntil = ctx.BlockTime().Add(
-			k.slashingKeeper.DowntimeJailDuration(ctx),
+		k.slashingKeeper.ClearValidatorMissedBlockBitArray(
+			ctx, newConsAddr,
 		)
 	// called by hook, not by SlashWithInfractionReason
 	case stakingtypes.Infraction_INFRACTION_UNSPECIFIED:
-		// the new key carries over the debt of the old key
-		// however, placement does not matter as much for us
-		// this helps reduce the size of the loop from O(window) to
+		// it is permitted for a validator to change from key A
+		// to key B back to key A again over a long period of time.
+		// so, the new key may have an outdated bit array.
+		// set the new key to a fresh slate, and then...
+		k.slashingKeeper.ClearValidatorMissedBlockBitArray(
+			ctx, newConsAddr,
+		)
+		// ...transplant the debt of the old key over.
+		// placement does not matter as much for us; this helps
+		// reduce the size of the loop from O(window) to
 		// O(MissedBlocksCounter)
 		for i := int64(0); i < info.MissedBlocksCounter; i++ {
+			// even though this loop is being called many times,
+			// the cost for db write is being paid by the tx sender
+			// so it is acceptable to us as sybil attacks are avoided
 			k.slashingKeeper.SetValidatorMissedBlockBitArray(
 				ctx, newConsAddr, i, true,
 			)

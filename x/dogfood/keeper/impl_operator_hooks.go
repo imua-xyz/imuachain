@@ -5,6 +5,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/utils"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -40,11 +41,23 @@ func (h OperatorHooksWrapper) afterValidatorCreated(
 	return nil
 }
 
+// isConsKeyTombstoned checks if the consensus key is tombstoned.
+func (h OperatorHooksWrapper) isConsKeyTombstoned(
+	ctx sdk.Context, consAddr sdk.ConsAddress,
+) bool {
+	info, found := h.keeper.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
+	if found {
+		return info.Tombstoned
+	}
+	return false
+}
+
 // AfterOperatorKeySet is the implementation of the operator hooks.
 // CONTRACT: an operator cannot set their key if they are already in the process of removing it.
 func (h OperatorHooksWrapper) AfterOperatorKeySet(
-	ctx sdk.Context, accAddress sdk.AccAddress, chainID string, _ keytypes.WrappedConsKey,
-) {
+	ctx sdk.Context, accAddress sdk.AccAddress,
+	chainID string, wrappedKey keytypes.WrappedConsKey,
+) error {
 	// we batch vote power changes at the end of the epoch, so nothing to do with those.
 	// we should, however, let the x/slashing module know of this change.
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
@@ -53,8 +66,13 @@ func (h OperatorHooksWrapper) AfterOperatorKeySet(
 				"AfterOperatorKeySet: error in afterValidatorCreated",
 				"error", err,
 			)
+			return err
+		}
+		if h.isConsKeyTombstoned(ctx, wrappedKey.ToConsAddr()) {
+			return types.ErrConsKeyAlreadyTombstoned
 		}
 	}
+	return nil
 }
 
 // AfterOperatorKeyReplaced is the implementation of the operator hooks.
@@ -65,7 +83,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeySet(
 func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	ctx sdk.Context, accAddress sdk.AccAddress, oldKey keytypes.WrappedConsKey,
 	newKey keytypes.WrappedConsKey, chainID string,
-) {
+) error {
 	// the impact of key replacement is:
 	// 1. vote power of old key is 0, which happens automatically at epoch end in EndBlock. this
 	// is because the key is in the previous set but not in the new one and our code will queue
@@ -82,7 +100,11 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 				"AfterOperatorKeyReplaced: error in afterValidatorCreated",
 				"error", err,
 			)
-			return
+			return err
+		}
+		newConsAddr := newKey.ToConsAddr()
+		if h.isConsKeyTombstoned(ctx, newConsAddr) {
+			return types.ErrConsKeyAlreadyTombstoned
 		}
 		// The reverse lookup (consensus address -> operator address) must be maintained
 		// during the unbonding period to allow slashing of validators who misbehaved while
@@ -99,10 +121,11 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, oldConsAddr)
 		// copy from old cons addr to new cons addr
 		h.keeper.CopyValidatorSigningInfo(
-			ctx, oldConsAddr, newKey.ToConsAddr(),
+			ctx, oldConsAddr, newConsAddr,
 			stakingtypes.Infraction_INFRACTION_UNSPECIFIED,
 		)
 	}
+	return nil
 }
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.

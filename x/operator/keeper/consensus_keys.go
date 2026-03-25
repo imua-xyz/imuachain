@@ -52,12 +52,13 @@ func (k *Keeper) SetOperatorConsKeyForChainID(
 // it is used with a boolean flag to indicate that the call is from genesis.
 // if so, operator freeze status is not checked and hooks are not called.
 func (k *Keeper) setOperatorConsKeyForChainID(
-	ctx sdk.Context,
+	oCtx sdk.Context,
 	opAccAddr sdk.AccAddress,
 	chainID string,
 	wrappedKey keytypes.WrappedConsKey,
 	genesis bool,
 ) error {
+	ctx, writeFunc := oCtx.CacheContext()
 	// check for slashing
 	if !genesis && k.IsOperatorFrozen(ctx, opAccAddr) {
 		return types.ErrOperatorIsFrozen
@@ -103,12 +104,21 @@ func (k *Keeper) setOperatorConsKeyForChainID(
 	if !genesis {
 		if found {
 			if !alreadyRecorded {
-				k.Hooks().AfterOperatorKeyReplaced(ctx, opAccAddr, prevKey, wrappedKey, chainID)
+				if err := k.Hooks().AfterOperatorKeyReplaced(
+					ctx, opAccAddr, prevKey, wrappedKey, chainID,
+				); err != nil {
+					return err
+				}
 			}
 		} else {
-			k.Hooks().AfterOperatorKeySet(ctx, opAccAddr, chainID, wrappedKey)
+			if err := k.Hooks().AfterOperatorKeySet(
+				ctx, opAccAddr, chainID, wrappedKey,
+			); err != nil {
+				return err
+			}
 		}
 	}
+	writeFunc()
 	return nil
 }
 

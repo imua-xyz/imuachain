@@ -122,12 +122,12 @@ type OperatorHooks interface {
 	AfterOperatorKeySet(
 		ctx sdk.Context, addr sdk.AccAddress, chainID string,
 		pubKey keytypes.WrappedConsKey,
-	)
+	) error
 	// AfterOperatorKeyReplaced This hook is called when an operator's consensus key is replaced for a chain.
 	AfterOperatorKeyReplaced(
 		ctx sdk.Context, addr sdk.AccAddress, oldKey keytypes.WrappedConsKey,
 		newKey keytypes.WrappedConsKey, chainID string,
-	)
+	) error
 	// AfterOperatorKeyRemovalInitiated This hook is called when an operator initiates the removal of a consensus key for a
 	// chain.
 	AfterOperatorKeyRemovalInitiated(

@@ -18,3 +18,8 @@ var ErrUpdateAVSInfo = errorsmod.Register(
 	ModuleName, 4,
 	"failed to update AVS information",
 )
+
+var ErrConsKeyAlreadyTombstoned = errorsmod.Register(
+	ModuleName, 5,
+	"consensus key is already tombstoned",
+)
