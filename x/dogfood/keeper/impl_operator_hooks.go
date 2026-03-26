@@ -41,17 +41,6 @@ func (h OperatorHooksWrapper) afterValidatorCreated(
 	return nil
 }
 
-// isConsKeyTombstoned checks if the consensus key is tombstoned.
-func (h OperatorHooksWrapper) isConsKeyTombstoned(
-	ctx sdk.Context, consAddr sdk.ConsAddress,
-) bool {
-	info, found := h.keeper.slashingKeeper.GetValidatorSigningInfo(ctx, consAddr)
-	if found {
-		return info.Tombstoned
-	}
-	return false
-}
-
 // AfterOperatorKeySet is the implementation of the operator hooks.
 // CONTRACT: an operator cannot set their key if they are already in the process of removing it.
 func (h OperatorHooksWrapper) AfterOperatorKeySet(
@@ -68,7 +57,12 @@ func (h OperatorHooksWrapper) AfterOperatorKeySet(
 			)
 			return err
 		}
-		if h.isConsKeyTombstoned(ctx, wrappedKey.ToConsAddr()) {
+		// check that the key is not already tombstoned.
+		// if reusing a tombstoned key were permitted (after the appropriate delay),
+		// it would be an issue. this is because x/evidence refuses to penalise
+		// already tombstoned validators for equivocation. if such a key is reused,
+		// any validator could double sign with impunity.
+		if h.keeper.slashingKeeper.IsTombstoned(ctx, wrappedKey.ToConsAddr()) {
 			return types.ErrConsKeyAlreadyTombstoned
 		}
 	}
@@ -102,8 +96,10 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 			)
 			return err
 		}
+		// check that the new key is not already tombstoned.
+		// see AfterOperatorKeySet to understand why.
 		newConsAddr := newKey.ToConsAddr()
-		if h.isConsKeyTombstoned(ctx, newConsAddr) {
+		if h.keeper.slashingKeeper.IsTombstoned(ctx, newConsAddr) {
 			return types.ErrConsKeyAlreadyTombstoned
 		}
 		// The reverse lookup (consensus address -> operator address) must be maintained

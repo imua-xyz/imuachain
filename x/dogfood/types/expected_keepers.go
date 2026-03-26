@@ -113,5 +113,7 @@ type SlashingKeeper interface {
 		sdk.Context, sdk.ConsAddress, func(int64, bool) bool,
 	)
 	DowntimeJailDuration(sdk.Context) time.Duration
+	ResetValidatorSigningInfo(sdk.Context, sdk.ConsAddress)
 	ClearValidatorMissedBlockBitArray(sdk.Context, sdk.ConsAddress)
+	IsTombstoned(sdk.Context, sdk.ConsAddress) bool
 }

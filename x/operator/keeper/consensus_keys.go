@@ -476,6 +476,8 @@ func (k Keeper) ValidatorByConsAddrForChainID(
 	// set this because the default is Unbonded and this module does not know the true status,
 	// which is instead stored in downstream modules.
 	val.Status = stakingtypes.Unspecified
+	// this call mirrors the x/staking keeper.
+	// this .Jailed is temporary jail, the tombstoning is not tracked in the x/staking keeper
 	val.Jailed = k.IsOperatorJailedForChainID(ctx, consAddr, chainIDWithoutRevision)
 
 	// set the tokens, delegated shares and minimum self delegation for unjail

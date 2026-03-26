@@ -1009,6 +1009,90 @@ func (suite *KeyChangeEscapeTestSuite) TestExactZeroStake() {
 	suite.CheckOperatorUSDValueExact(operatorAddr, zeroUsd)
 }
 
+// Unit Test C: Landmine Key Debt Reset
+func (suite *KeyChangeEscapeTestSuite) TestLandmineKeyDebtReset() {
+	operatorAddr1, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr1, consAddrA, power, power)
+
+	validators := make([]abci.Validator, 0)
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validators = append(
+			validators, abci.Validator{
+				Address: validator.Address,
+				Power:   validator.Power,
+			},
+		)
+	}
+	nonSigners := []int{len(validators)}
+	validators = append(
+		validators, abci.Validator{
+			Address: consAddrA.Bytes(),
+			Power:   power,
+		},
+	)
+
+	minSignedPerWindow := suite.App.SlashingKeeper.MinSignedPerWindow(suite.Ctx)
+	window := suite.App.SlashingKeeper.SignedBlocksWindow(suite.Ctx)
+	maxMissed := window - minSignedPerWindow
+	loop := int(maxMissed) - 1
+	for i := 0; i < loop; i++ {
+		suite.CommitWithInfo(validators, nonSigners, time.Nanosecond)
+	}
+	suite.Commit()
+
+	signInfo1, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrA)
+	suite.Require().True(found)
+	suite.Require().Equal(int64(loop), signInfo1.MissedBlocksCounter)
+
+	// Step 2: Operator 1 rotates to Key B. Key A begins unbonding.
+	suite.ChangeKey(operatorAddr1, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+
+	// Step 3: Wait for 8 epochs for Key A's unbonding to finish, pruning the reverse lookup
+	// This invokes abci.go which calls ResetValidatorSigningInfo!
+	unbondingPeriod := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx).EpochsUntilUnbonded
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, int(unbondingPeriod)+1)
+	suite.Commit()
+
+	// Step 4: Create a new validator 2
+	operatorAddr2, _ := testutiltx.NewAccAddressAndKey()
+	delegator2 := common.Address(operatorAddr2.Bytes())
+	suite.RegisterOperator(operatorAddr2)
+	amount := suite.MinSelfDelegation.Int64() * 3
+	suite.DepositFromStaker(delegator2, amount)
+	suite.DelegateToOperator(delegator2, operatorAddr2, amount)
+	suite.AssociateOperatorWithStaker(delegator2, operatorAddr2)
+
+	// Step 5: Validator 2 registers Key A
+	response, err := suite.OperatorMsgServer.OptIntoAVS(
+		sdk.WrapSDKContext(suite.Ctx),
+		&operatortypes.OptIntoAVSReq{
+			FromAddress:   operatorAddr2.String(),
+			AvsAddress:    suite.AvsAddress,
+			PublicKeyJSON: consKeyA.ToJSON(),
+		},
+	)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(response)
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+
+	// Step 6: Verify Key A's signing info was reset!
+	signInfo2, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrA)
+	suite.Require().True(found)
+
+	// The debt should be completely wiped clean!
+	suite.Require().Equal(int64(0), signInfo2.MissedBlocksCounter)
+}
+
 // Unit Test A: Tombstoned key rejection for new validator
 func (suite *KeyChangeEscapeTestSuite) TestTombstonedKeyRejectionOnNewValidator() {
 	operatorAddr1, consKeyA, power := suite.AddValidator(3)

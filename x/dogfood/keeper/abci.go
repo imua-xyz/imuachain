@@ -115,8 +115,18 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 			cc, chainIDWithoutRevision, consAddr,
 		)
 		// clear old signed vs missed blocks
-		// signing info is never cleared since it contains tombstone status
 		k.slashingKeeper.ClearValidatorMissedBlockBitArray(cc, consAddr)
+		// clear signing info, unless tombstoned. why?
+		// 1. if the key is not tombstoned, we don't need to retain any
+		// of the information. if an operator later switches to this key
+		// (whether the same operator or different is not relevant),
+		// they get a clean slate of signing info through this call.
+		// if they didn't get such a clean slate, they could have a non
+		// zero missed blocks counter but an empty missed block array,
+		// which is non-recoverable.
+		// 2. if the key is tombstoned, this does nothing. this way, a
+		// tombstoned key cannot be reused by any operator.
+		k.slashingKeeper.ResetValidatorSigningInfo(cc, consAddr)
 		writeFunc()
 	}
 	// reschedule these for the next epoch

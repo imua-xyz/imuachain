@@ -99,7 +99,11 @@ func (k Keeper) ValidatorByConsAddr(
 	if !found {
 		return nil
 	}
-	// TODO: alter the status of the validator?
+	// Q. should we set the status of the validator?
+	// A. to do that we would need to track unbonding status. while we do track when a consensus
+	// key should be pruned, we do not have the reverse lookup. if we start doing that, we can
+	// edit this. for now, we leave the status as unspecified, which, for the SDK's purposes
+	// is sufficient.
 	return val
 }
 
