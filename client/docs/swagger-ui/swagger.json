@@ -18896,7 +18896,7 @@
                         "last_round_id": {
                           "type": "string",
                           "format": "uint64",
-                          "title": "roundid of the price if the source is deteministic"
+                          "title": "last_round_id tells the round id of the latest price that has already been accumulated in the price value\nso at the very beginning of a new accumulator, last_round_id=start_round_id-1"
                         },
                         "start_round_id": {
                           "type": "string",
@@ -45560,7 +45560,7 @@
         "last_round_id": {
           "type": "string",
           "format": "uint64",
-          "title": "roundid of the price if the source is deteministic"
+          "title": "last_round_id tells the round id of the latest price that has already been accumulated in the price value\nso at the very beginning of a new accumulator, last_round_id=start_round_id-1"
         },
         "start_round_id": {
           "type": "string",
@@ -45778,7 +45778,7 @@
             "last_round_id": {
               "type": "string",
               "format": "uint64",
-              "title": "roundid of the price if the source is deteministic"
+              "title": "last_round_id tells the round id of the latest price that has already been accumulated in the price value\nso at the very beginning of a new accumulator, last_round_id=start_round_id-1"
             },
             "start_round_id": {
               "type": "string",
@@ -46348,7 +46348,7 @@
                 "last_round_id": {
                   "type": "string",
                   "format": "uint64",
-                  "title": "roundid of the price if the source is deteministic"
+                  "title": "last_round_id tells the round id of the latest price that has already been accumulated in the price value\nso at the very beginning of a new accumulator, last_round_id=start_round_id-1"
                 },
                 "start_round_id": {
                   "type": "string",
