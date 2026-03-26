@@ -59,7 +59,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeySet(
 		}
 		// check that the key is not already tombstoned.
 		// if reusing a tombstoned key were permitted (after the appropriate delay),
-		// it would be an issue. this is because x/evidence refuses to penalise
+		// it would be an issue. this is because x/evidence refuses to punish
 		// already tombstoned validators for equivocation. if such a key is reused,
 		// any validator could double sign with impunity.
 		if h.keeper.slashingKeeper.IsTombstoned(ctx, wrappedKey.ToConsAddr()) {
