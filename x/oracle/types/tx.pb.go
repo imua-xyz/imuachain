@@ -78,6 +78,14 @@ type MsgCreatePrice struct {
 	// true: this message includes data of {rawdata, proof} need to be verified based on consensused root
 	// false: this message includes data need to get consensus based on voting power
 	Phase AggregationPhase `protobuf:"varint,6,opt,name=phase,proto3,enum=imuachain.oracle.v1.AggregationPhase" json:"phase,omitempty"`
+	// Optional: piggybacked checkpoint signature (avoids separate MsgSignCheckpoint tx).
+	// If checkpoint_dst_chain_id > 0, the checkpoint signature fields are processed.
+	CheckpointDstChainId uint64 `protobuf:"varint,7,opt,name=checkpoint_dst_chain_id,json=checkpointDstChainId,proto3" json:"checkpoint_dst_chain_id,omitempty"`
+	CheckpointNonce      uint64 `protobuf:"varint,8,opt,name=checkpoint_nonce,json=checkpointNonce,proto3" json:"checkpoint_nonce,omitempty"`
+	CheckpointEvmAddress string `protobuf:"bytes,9,opt,name=checkpoint_evm_address,json=checkpointEvmAddress,proto3" json:"checkpoint_evm_address,omitempty"`
+	CheckpointV          uint32 `protobuf:"varint,10,opt,name=checkpoint_v,json=checkpointV,proto3" json:"checkpoint_v,omitempty"`
+	CheckpointR          []byte `protobuf:"bytes,11,opt,name=checkpoint_r,json=checkpointR,proto3" json:"checkpoint_r,omitempty"`
+	CheckpointS          []byte `protobuf:"bytes,12,opt,name=checkpoint_s,json=checkpointS,proto3" json:"checkpoint_s,omitempty"`
 }
 
 func (m *MsgCreatePrice) Reset()         { *m = MsgCreatePrice{} }
@@ -153,6 +161,48 @@ func (m *MsgCreatePrice) GetPhase() AggregationPhase {
 		return m.Phase
 	}
 	return AggregationPhaseUnspecified
+}
+
+func (m *MsgCreatePrice) GetCheckpointDstChainId() uint64 {
+	if m != nil {
+		return m.CheckpointDstChainId
+	}
+	return 0
+}
+
+func (m *MsgCreatePrice) GetCheckpointNonce() uint64 {
+	if m != nil {
+		return m.CheckpointNonce
+	}
+	return 0
+}
+
+func (m *MsgCreatePrice) GetCheckpointEvmAddress() string {
+	if m != nil {
+		return m.CheckpointEvmAddress
+	}
+	return ""
+}
+
+func (m *MsgCreatePrice) GetCheckpointV() uint32 {
+	if m != nil {
+		return m.CheckpointV
+	}
+	return 0
+}
+
+func (m *MsgCreatePrice) GetCheckpointR() []byte {
+	if m != nil {
+		return m.CheckpointR
+	}
+	return nil
+}
+
+func (m *MsgCreatePrice) GetCheckpointS() []byte {
+	if m != nil {
+		return m.CheckpointS
+	}
+	return nil
 }
 
 // MsgCreatePriceResponse
@@ -286,60 +336,222 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
+// MsgSignCheckpoint submits a validator's ECDSA signature for an outbound bridge checkpoint.
+type MsgSignCheckpoint struct {
+	// validator_address is the operator/validator address submitting the signature
+	ValidatorAddress string `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
+	// dst_chain_id is the destination client chain ID
+	DstChainId uint64 `protobuf:"varint,2,opt,name=dst_chain_id,json=dstChainId,proto3" json:"dst_chain_id,omitempty"`
+	// checkpoint_nonce is the checkpoint nonce being signed
+	CheckpointNonce uint64 `protobuf:"varint,3,opt,name=checkpoint_nonce,json=checkpointNonce,proto3" json:"checkpoint_nonce,omitempty"`
+	// validator_evm_address is the 20-byte EVM address of the validator (hex without 0x)
+	ValidatorEvmAddress string `protobuf:"bytes,4,opt,name=validator_evm_address,json=validatorEvmAddress,proto3" json:"validator_evm_address,omitempty"`
+	// v is the ECDSA signature recovery id (27 or 28)
+	V uint32 `protobuf:"varint,5,opt,name=v,proto3" json:"v,omitempty"`
+	// r is the ECDSA signature r component (32 bytes, hex)
+	R []byte `protobuf:"bytes,6,opt,name=r,proto3" json:"r,omitempty"`
+	// s is the ECDSA signature s component (32 bytes, hex)
+	S []byte `protobuf:"bytes,7,opt,name=s,proto3" json:"s,omitempty"`
+}
+
+func (m *MsgSignCheckpoint) Reset()         { *m = MsgSignCheckpoint{} }
+func (m *MsgSignCheckpoint) String() string { return proto.CompactTextString(m) }
+func (*MsgSignCheckpoint) ProtoMessage()    {}
+func (*MsgSignCheckpoint) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8a8b79b15e755ae2, []int{4}
+}
+func (m *MsgSignCheckpoint) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSignCheckpoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSignCheckpoint.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSignCheckpoint) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSignCheckpoint.Merge(m, src)
+}
+func (m *MsgSignCheckpoint) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSignCheckpoint) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSignCheckpoint.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSignCheckpoint proto.InternalMessageInfo
+
+func (m *MsgSignCheckpoint) GetValidatorAddress() string {
+	if m != nil {
+		return m.ValidatorAddress
+	}
+	return ""
+}
+
+func (m *MsgSignCheckpoint) GetDstChainId() uint64 {
+	if m != nil {
+		return m.DstChainId
+	}
+	return 0
+}
+
+func (m *MsgSignCheckpoint) GetCheckpointNonce() uint64 {
+	if m != nil {
+		return m.CheckpointNonce
+	}
+	return 0
+}
+
+func (m *MsgSignCheckpoint) GetValidatorEvmAddress() string {
+	if m != nil {
+		return m.ValidatorEvmAddress
+	}
+	return ""
+}
+
+func (m *MsgSignCheckpoint) GetV() uint32 {
+	if m != nil {
+		return m.V
+	}
+	return 0
+}
+
+func (m *MsgSignCheckpoint) GetR() []byte {
+	if m != nil {
+		return m.R
+	}
+	return nil
+}
+
+func (m *MsgSignCheckpoint) GetS() []byte {
+	if m != nil {
+		return m.S
+	}
+	return nil
+}
+
+// MsgSignCheckpointResponse
+type MsgSignCheckpointResponse struct {
+	// finalized indicates whether the checkpoint reached 2/3+ power after this signature
+	Finalized bool `protobuf:"varint,1,opt,name=finalized,proto3" json:"finalized,omitempty"`
+}
+
+func (m *MsgSignCheckpointResponse) Reset()         { *m = MsgSignCheckpointResponse{} }
+func (m *MsgSignCheckpointResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgSignCheckpointResponse) ProtoMessage()    {}
+func (*MsgSignCheckpointResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_8a8b79b15e755ae2, []int{5}
+}
+func (m *MsgSignCheckpointResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgSignCheckpointResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgSignCheckpointResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgSignCheckpointResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgSignCheckpointResponse.Merge(m, src)
+}
+func (m *MsgSignCheckpointResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgSignCheckpointResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgSignCheckpointResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgSignCheckpointResponse proto.InternalMessageInfo
+
+func (m *MsgSignCheckpointResponse) GetFinalized() bool {
+	if m != nil {
+		return m.Finalized
+	}
+	return false
+}
+
 func init() {
 	proto.RegisterEnum("imuachain.oracle.v1.AggregationPhase", AggregationPhase_name, AggregationPhase_value)
 	proto.RegisterType((*MsgCreatePrice)(nil), "imuachain.oracle.v1.MsgCreatePrice")
 	proto.RegisterType((*MsgCreatePriceResponse)(nil), "imuachain.oracle.v1.MsgCreatePriceResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "imuachain.oracle.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "imuachain.oracle.v1.MsgUpdateParamsResponse")
+	proto.RegisterType((*MsgSignCheckpoint)(nil), "imuachain.oracle.v1.MsgSignCheckpoint")
+	proto.RegisterType((*MsgSignCheckpointResponse)(nil), "imuachain.oracle.v1.MsgSignCheckpointResponse")
 }
 
 func init() { proto.RegisterFile("imuachain/oracle/v1/tx.proto", fileDescriptor_8a8b79b15e755ae2) }
 
 var fileDescriptor_8a8b79b15e755ae2 = []byte{
-	// 662 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0x4d, 0x4f, 0x13, 0x4f,
-	0x18, 0xef, 0x00, 0xed, 0x9f, 0x4e, 0x09, 0xff, 0x3a, 0xa0, 0x2c, 0x8b, 0x6c, 0xd7, 0xa2, 0x49,
-	0xad, 0xb4, 0x1b, 0x6a, 0x42, 0x8c, 0x24, 0x26, 0x2d, 0x14, 0xec, 0x01, 0xda, 0x6c, 0x41, 0x13,
-	0x2f, 0xcd, 0x76, 0x77, 0xd8, 0x6e, 0x60, 0x77, 0x36, 0x33, 0x5b, 0x04, 0x8f, 0x9e, 0x0c, 0x27,
-	0xbf, 0x00, 0x27, 0x13, 0xe3, 0x91, 0x03, 0x5f, 0xc0, 0xc4, 0x03, 0xf1, 0x44, 0x38, 0x79, 0x22,
-	0xa6, 0x1c, 0xf8, 0x1a, 0x66, 0xdf, 0x80, 0xd6, 0x35, 0xe1, 0xd2, 0xf4, 0xf9, 0xbd, 0xcc, 0xf3,
-	0xec, 0x6f, 0x9e, 0x0c, 0x7c, 0x68, 0x98, 0x5d, 0x45, 0xed, 0x28, 0x86, 0x25, 0x11, 0xaa, 0xa8,
-	0xbb, 0x58, 0xda, 0x5b, 0x90, 0x9c, 0xfd, 0xa2, 0x4d, 0x89, 0x43, 0xd0, 0xc4, 0x35, 0x5b, 0xf4,
-	0xd9, 0xe2, 0xde, 0x02, 0x7f, 0x4f, 0x31, 0x0d, 0x8b, 0x48, 0xde, 0xaf, 0xaf, 0xe3, 0xa7, 0x54,
-	0xc2, 0x4c, 0xc2, 0x24, 0x93, 0xe9, 0xae, 0xdf, 0x64, 0x7a, 0x40, 0x4c, 0xfb, 0x44, 0xcb, 0xab,
-	0x24, 0xbf, 0x08, 0xa8, 0x49, 0x9d, 0xe8, 0xc4, 0xc7, 0xdd, 0x7f, 0x01, 0x2a, 0x46, 0xcd, 0x63,
-	0x2b, 0x54, 0x31, 0x43, 0x5f, 0x26, 0x52, 0x41, 0x0d, 0x15, 0xfb, 0x82, 0xec, 0xd7, 0x21, 0x38,
-	0xbe, 0xce, 0xf4, 0x65, 0x8a, 0x15, 0x07, 0x37, 0x5c, 0x02, 0x2d, 0xc1, 0xff, 0x54, 0xb7, 0x24,
-	0x94, 0x03, 0x22, 0xc8, 0x25, 0x2b, 0x8f, 0xce, 0x4f, 0x0a, 0xb3, 0xc1, 0x38, 0x6f, 0x94, 0x5d,
-	0x43, 0x73, 0xb9, 0xb2, 0xa6, 0x51, 0xcc, 0x58, 0xd3, 0xa1, 0x86, 0xa5, 0xcb, 0xa1, 0x03, 0x3d,
-	0x85, 0xc9, 0x6d, 0x8c, 0x35, 0x4c, 0x5b, 0x86, 0xc6, 0x0d, 0x89, 0x20, 0x37, 0x52, 0x19, 0xeb,
-	0x5d, 0x64, 0x46, 0x57, 0x3d, 0xb0, 0xb6, 0x22, 0x8f, 0xfa, 0x74, 0x4d, 0x43, 0x2f, 0x60, 0xc2,
-	0x9b, 0x84, 0x71, 0xc3, 0xe2, 0x70, 0x2e, 0x55, 0x12, 0x8b, 0x11, 0x01, 0x16, 0xbd, 0x99, 0x9a,
-	0xa4, 0x4b, 0x55, 0x2c, 0x07, 0x7a, 0x94, 0x81, 0xa9, 0xb6, 0xc2, 0xb0, 0xd6, 0x6a, 0xef, 0x12,
-	0x75, 0x87, 0x1b, 0x71, 0xdb, 0xc8, 0xd0, 0x83, 0x2a, 0x2e, 0x82, 0x26, 0x61, 0xdc, 0x22, 0x96,
-	0x8a, 0xb9, 0xb8, 0x08, 0x72, 0x71, 0xd9, 0x2f, 0xd0, 0x12, 0x8c, 0xdb, 0x1d, 0x85, 0x61, 0x2e,
-	0x21, 0x82, 0xdc, 0x78, 0xe9, 0x49, 0x64, 0xbf, 0xb2, 0xae, 0x53, 0xac, 0x2b, 0x8e, 0x41, 0xac,
-	0x86, 0x2b, 0x96, 0x7d, 0x4f, 0x96, 0x83, 0x0f, 0xfa, 0x73, 0x92, 0x31, 0xb3, 0x89, 0xc5, 0x70,
-	0xf6, 0x3b, 0x80, 0xff, 0xaf, 0x33, 0x7d, 0xcb, 0xd6, 0x5c, 0xca, 0x4b, 0x1f, 0x2d, 0xc2, 0xa4,
-	0xd2, 0x75, 0x3a, 0x84, 0x1a, 0xce, 0x41, 0x90, 0x22, 0x77, 0x7e, 0x52, 0x98, 0x0c, 0x52, 0xec,
-	0x0f, 0xef, 0x46, 0x8a, 0x5e, 0xc1, 0x84, 0x7f, 0x7f, 0x5e, 0x76, 0xa9, 0xd2, 0x4c, 0x74, 0x26,
-	0x9e, 0xa4, 0x92, 0x3c, 0xbd, 0xc8, 0xc4, 0xbe, 0x5d, 0x1d, 0xe7, 0x81, 0x1c, 0xb8, 0x5e, 0x2e,
-	0x7e, 0xbc, 0x3a, 0xce, 0xdf, 0x9c, 0x77, 0x78, 0x75, 0x9c, 0x9f, 0xf3, 0x7b, 0x16, 0x98, 0xb6,
-	0x23, 0xed, 0x87, 0x5b, 0x30, 0x30, 0x6f, 0x76, 0x1a, 0x4e, 0x0d, 0x40, 0xe1, 0xe7, 0xe5, 0x7f,
-	0x00, 0x98, 0x1e, 0x0c, 0x05, 0x55, 0xe0, 0x6c, 0x79, 0x6d, 0x4d, 0xae, 0xae, 0x95, 0x37, 0x6b,
-	0xf5, 0x8d, 0x56, 0xe3, 0x75, 0xb9, 0x59, 0x6d, 0x6d, 0x6d, 0x34, 0x1b, 0xd5, 0xe5, 0xda, 0x6a,
-	0xad, 0xba, 0x92, 0x8e, 0xf1, 0x99, 0xc3, 0x23, 0x71, 0x66, 0xd0, 0xb8, 0x65, 0x31, 0x1b, 0xab,
-	0xc6, 0xb6, 0x81, 0x35, 0x54, 0x82, 0xf7, 0xff, 0x3e, 0xa3, 0xbe, 0x51, 0x4d, 0x03, 0x7e, 0xea,
-	0xf0, 0x48, 0x9c, 0x18, 0xf4, 0xd6, 0x2d, 0x1c, 0xed, 0xd9, 0x7c, 0x5b, 0x4f, 0x0f, 0x45, 0x7b,
-	0x36, 0xdf, 0x13, 0x7e, 0xe4, 0xd3, 0x17, 0x21, 0x56, 0xfa, 0x09, 0xe0, 0xf0, 0x3a, 0xd3, 0x51,
-	0x0b, 0xa6, 0x6e, 0x2f, 0xfb, 0x5c, 0x64, 0xc0, 0xfd, 0x37, 0xcd, 0x3f, 0xbb, 0x83, 0x28, 0xcc,
-	0x0b, 0xb5, 0xe1, 0x58, 0xdf, 0x2a, 0x3c, 0xfe, 0x97, 0xf9, 0xb6, 0x8a, 0x9f, 0xbf, 0x8b, 0x2a,
-	0xec, 0x51, 0x59, 0x3d, 0xed, 0x09, 0xe0, 0xac, 0x27, 0x80, 0xdf, 0x3d, 0x01, 0x7c, 0xbe, 0x14,
-	0x62, 0x67, 0x97, 0x42, 0xec, 0xd7, 0xa5, 0x10, 0x7b, 0x37, 0xaf, 0x1b, 0x4e, 0xa7, 0xdb, 0x2e,
-	0xaa, 0xc4, 0x94, 0xdc, 0x13, 0x0b, 0xfb, 0x07, 0x1f, 0xa4, 0x9b, 0x47, 0xe0, 0x7a, 0x01, 0x9c,
-	0x03, 0x1b, 0xb3, 0x76, 0xc2, 0x7b, 0x04, 0x9e, 0xff, 0x09, 0x00, 0x00, 0xff, 0xff, 0xd6, 0x03,
-	0xa1, 0xf9, 0xd9, 0x04, 0x00, 0x00,
+	// 894 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x55, 0x4d, 0x6f, 0xdb, 0x46,
+	0x10, 0xd5, 0xca, 0xb2, 0x63, 0x8d, 0x18, 0x47, 0x5e, 0xbb, 0x31, 0xad, 0x24, 0x12, 0xa3, 0xb4,
+	0x85, 0xe2, 0xc6, 0x22, 0xa2, 0xb6, 0x41, 0xdb, 0x00, 0x05, 0x24, 0x5b, 0x76, 0x75, 0xf0, 0x07,
+	0x28, 0x3b, 0x05, 0x7a, 0x21, 0x28, 0x72, 0x4d, 0x11, 0x36, 0xb9, 0x02, 0x97, 0x66, 0xed, 0x1c,
+	0x0b, 0x14, 0x28, 0x7c, 0xea, 0x1f, 0xc8, 0xa9, 0x87, 0xf6, 0xe8, 0x83, 0xff, 0x40, 0x81, 0x1e,
+	0x72, 0x0c, 0x72, 0xea, 0x29, 0x28, 0xec, 0x83, 0xff, 0x46, 0xc1, 0x25, 0x25, 0x51, 0x0c, 0xd3,
+	0xfa, 0x22, 0x68, 0xe6, 0xbd, 0xb7, 0x33, 0x3b, 0x7c, 0x43, 0xc2, 0x7d, 0xcb, 0x3e, 0xd6, 0xf4,
+	0xbe, 0x66, 0x39, 0x32, 0x75, 0x35, 0xfd, 0x88, 0xc8, 0xfe, 0x53, 0xd9, 0x3b, 0xa9, 0x0f, 0x5c,
+	0xea, 0x51, 0xbc, 0x30, 0x42, 0xeb, 0x21, 0x5a, 0xf7, 0x9f, 0x96, 0xe6, 0x35, 0xdb, 0x72, 0xa8,
+	0xcc, 0x7f, 0x43, 0x5e, 0x69, 0x49, 0xa7, 0xcc, 0xa6, 0x4c, 0xb6, 0x99, 0x19, 0xe8, 0x6d, 0x66,
+	0x46, 0xc0, 0x72, 0x08, 0xa8, 0x3c, 0x92, 0xc3, 0x20, 0x82, 0x16, 0x4d, 0x6a, 0xd2, 0x30, 0x1f,
+	0xfc, 0x8b, 0xb2, 0x52, 0x5a, 0x3f, 0x03, 0xcd, 0xd5, 0xec, 0xa1, 0xae, 0x92, 0xca, 0x70, 0x2d,
+	0x9d, 0x84, 0x84, 0xea, 0xef, 0x39, 0x98, 0xdb, 0x62, 0xe6, 0x9a, 0x4b, 0x34, 0x8f, 0xec, 0x06,
+	0x00, 0x7e, 0x0e, 0xb7, 0xf4, 0x20, 0xa4, 0xae, 0x88, 0x24, 0x54, 0xcb, 0xb7, 0x1e, 0xbe, 0xbd,
+	0x58, 0x7d, 0x10, 0xb5, 0xf3, 0x42, 0x3b, 0xb2, 0x8c, 0x00, 0x6b, 0x1a, 0x86, 0x4b, 0x18, 0xeb,
+	0x7a, 0xae, 0xe5, 0x98, 0xca, 0x50, 0x81, 0x1f, 0x43, 0xfe, 0x80, 0x10, 0x83, 0xb8, 0xaa, 0x65,
+	0x88, 0x59, 0x09, 0xd5, 0x72, 0x2d, 0xe1, 0xf2, 0x5d, 0x65, 0x76, 0x83, 0x27, 0x3b, 0xeb, 0xca,
+	0x6c, 0x08, 0x77, 0x0c, 0xfc, 0x15, 0xcc, 0xf0, 0x4e, 0x98, 0x38, 0x25, 0x4d, 0xd5, 0x0a, 0x0d,
+	0xa9, 0x9e, 0x32, 0xc0, 0x3a, 0xef, 0xa9, 0x4b, 0x8f, 0x5d, 0x9d, 0x28, 0x11, 0x1f, 0x57, 0xa0,
+	0xd0, 0xd3, 0x18, 0x31, 0xd4, 0xde, 0x11, 0xd5, 0x0f, 0xc5, 0x5c, 0x50, 0x46, 0x01, 0x9e, 0x6a,
+	0x05, 0x19, 0xbc, 0x08, 0xd3, 0x0e, 0x75, 0x74, 0x22, 0x4e, 0x4b, 0xa8, 0x36, 0xad, 0x84, 0x01,
+	0x7e, 0x0e, 0xd3, 0x83, 0xbe, 0xc6, 0x88, 0x38, 0x23, 0xa1, 0xda, 0x5c, 0xe3, 0x93, 0xd4, 0x7a,
+	0x4d, 0xd3, 0x74, 0x89, 0xa9, 0x79, 0x16, 0x75, 0x76, 0x03, 0xb2, 0x12, 0x6a, 0xf0, 0x97, 0xb0,
+	0xa4, 0xf7, 0x89, 0x7e, 0x38, 0xa0, 0x96, 0xe3, 0xa9, 0x06, 0xf3, 0x54, 0xae, 0x0c, 0xae, 0x79,
+	0x8b, 0xd7, 0x5f, 0x1c, 0xc3, 0xeb, 0xcc, 0x5b, 0x0b, 0xc0, 0x8e, 0x81, 0x1f, 0x43, 0x31, 0x26,
+	0x0b, 0x9b, 0x9a, 0xe5, 0xfc, 0x3b, 0xe3, 0xfc, 0x36, 0x6f, 0xef, 0x0b, 0xb8, 0x1b, 0xa3, 0x12,
+	0xdf, 0x56, 0xb5, 0x70, 0xc6, 0x62, 0x3e, 0x78, 0x0c, 0xf1, 0x02, 0x6d, 0xdf, 0x8e, 0xe6, 0x8f,
+	0x1f, 0x82, 0x10, 0x53, 0xf9, 0x22, 0x48, 0xa8, 0x76, 0x5b, 0x29, 0x8c, 0x73, 0x2f, 0x12, 0x14,
+	0x57, 0x2c, 0x48, 0xa8, 0x26, 0xc4, 0x29, 0x4a, 0x82, 0xc2, 0x44, 0x21, 0x49, 0xe9, 0x56, 0x45,
+	0xb8, 0x3b, 0x69, 0x14, 0x85, 0xb0, 0x01, 0x75, 0x18, 0xa9, 0xfe, 0x89, 0xe0, 0xce, 0x16, 0x33,
+	0xf7, 0x07, 0x46, 0x00, 0x71, 0xfb, 0xe1, 0x67, 0x90, 0xd7, 0x8e, 0xbd, 0x3e, 0x75, 0x2d, 0xef,
+	0x34, 0xb2, 0x91, 0xf8, 0xf6, 0x62, 0x75, 0x31, 0xb2, 0xd1, 0xa4, 0x7b, 0xc6, 0x54, 0xfc, 0x2d,
+	0xcc, 0x84, 0x06, 0xe6, 0xe6, 0x29, 0x34, 0xee, 0xa5, 0x9b, 0x82, 0x53, 0x5a, 0xf9, 0xd7, 0xef,
+	0x2a, 0x99, 0x3f, 0xae, 0xcf, 0x57, 0x90, 0x12, 0xa9, 0xbe, 0x79, 0xf6, 0xd3, 0xf5, 0xf9, 0xca,
+	0xf8, 0xbc, 0xb3, 0xeb, 0xf3, 0x95, 0x47, 0x61, 0xcd, 0x55, 0x66, 0x1c, 0xca, 0x27, 0xc3, 0x35,
+	0x48, 0xf4, 0x5b, 0x5d, 0x86, 0xa5, 0x44, 0x6a, 0x74, 0xbd, 0x9f, 0xb3, 0x30, 0xbf, 0xc5, 0xcc,
+	0xae, 0x65, 0x3a, 0x6b, 0xa3, 0x79, 0xe0, 0x36, 0xcc, 0xfb, 0xc3, 0x5d, 0x18, 0x3d, 0xa8, 0xff,
+	0xbb, 0x68, 0xd1, 0x4f, 0xac, 0x0f, 0x96, 0x40, 0x98, 0xf0, 0x52, 0x36, 0xf4, 0xb2, 0xf1, 0xdf,
+	0x0e, 0x9a, 0x4a, 0x77, 0x50, 0x03, 0x3e, 0x1a, 0xf7, 0x14, 0x37, 0x50, 0x8e, 0x1b, 0x68, 0x61,
+	0x04, 0xc6, 0xfc, 0x23, 0x00, 0xf2, 0xf9, 0x9a, 0xdc, 0x56, 0x90, 0x1f, 0x44, 0x2e, 0x5f, 0x0f,
+	0x41, 0x41, 0x6e, 0x10, 0x31, 0xee, 0x6e, 0x41, 0x41, 0xac, 0xfa, 0x35, 0x2c, 0xbf, 0x37, 0x86,
+	0xe1, 0x90, 0xf0, 0x7d, 0xc8, 0x1f, 0x58, 0x8e, 0x76, 0x64, 0xbd, 0x24, 0x06, 0x1f, 0xc3, 0xac,
+	0x32, 0x4e, 0xac, 0xfc, 0x85, 0xa0, 0x98, 0x5c, 0x2c, 0xdc, 0x82, 0x07, 0xcd, 0xcd, 0x4d, 0xa5,
+	0xbd, 0xd9, 0xdc, 0xeb, 0xec, 0x6c, 0xab, 0xbb, 0xdf, 0x35, 0xbb, 0x6d, 0x75, 0x7f, 0xbb, 0xbb,
+	0xdb, 0x5e, 0xeb, 0x6c, 0x74, 0xda, 0xeb, 0xc5, 0x4c, 0xa9, 0x72, 0xf6, 0x4a, 0xba, 0x97, 0x14,
+	0xee, 0x3b, 0x6c, 0x40, 0x74, 0xeb, 0xc0, 0x22, 0x46, 0x70, 0xe3, 0xf7, 0xcf, 0xd8, 0xd9, 0x6e,
+	0x17, 0x51, 0x69, 0xe9, 0xec, 0x95, 0xb4, 0x90, 0xd4, 0xee, 0x38, 0x24, 0x5d, 0xb3, 0xf7, 0xfd,
+	0x4e, 0x31, 0x9b, 0xae, 0xd9, 0xfb, 0x91, 0x96, 0x72, 0xbf, 0xfc, 0x56, 0xce, 0x34, 0x2e, 0xb2,
+	0x30, 0xb5, 0xc5, 0x4c, 0xac, 0x42, 0x21, 0xfe, 0xc2, 0x7c, 0x94, 0xea, 0xd1, 0xc9, 0x65, 0x29,
+	0x7d, 0x76, 0x03, 0xd2, 0x68, 0x9a, 0x3d, 0x10, 0x26, 0xb6, 0xe9, 0xe3, 0x0f, 0x89, 0xe3, 0xac,
+	0xd2, 0x93, 0x9b, 0xb0, 0x46, 0x35, 0xfa, 0x30, 0x97, 0xb0, 0xf4, 0xa7, 0x1f, 0xd2, 0x4f, 0xf2,
+	0x4a, 0xf5, 0x9b, 0xf1, 0x86, 0x95, 0x5a, 0x1b, 0xaf, 0x2f, 0xcb, 0xe8, 0xcd, 0x65, 0x19, 0xfd,
+	0x73, 0x59, 0x46, 0xbf, 0x5e, 0x95, 0x33, 0x6f, 0xae, 0xca, 0x99, 0xbf, 0xaf, 0xca, 0x99, 0x1f,
+	0x9e, 0x98, 0x96, 0xd7, 0x3f, 0xee, 0xd5, 0x75, 0x6a, 0xcb, 0xc1, 0x99, 0xab, 0x27, 0xa7, 0x2f,
+	0xe5, 0xf1, 0x27, 0x6b, 0xb4, 0xad, 0xde, 0xe9, 0x80, 0xb0, 0xde, 0x0c, 0xff, 0x64, 0x7d, 0xfe,
+	0x6f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xd4, 0xb4, 0x85, 0xdf, 0x87, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -358,6 +570,8 @@ type MsgClient interface {
 	CreatePrice(ctx context.Context, in *MsgCreatePrice, opts ...grpc.CallOption) (*MsgCreatePriceResponse, error)
 	// UpdateParams update params value
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
+	// SignCheckpoint submits a validator's ECDSA signature for an outbound checkpoint
+	SignCheckpoint(ctx context.Context, in *MsgSignCheckpoint, opts ...grpc.CallOption) (*MsgSignCheckpointResponse, error)
 }
 
 type msgClient struct {
@@ -386,12 +600,23 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 	return out, nil
 }
 
+func (c *msgClient) SignCheckpoint(ctx context.Context, in *MsgSignCheckpoint, opts ...grpc.CallOption) (*MsgSignCheckpointResponse, error) {
+	out := new(MsgSignCheckpointResponse)
+	err := c.cc.Invoke(ctx, "/imuachain.oracle.v1.Msg/SignCheckpoint", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	// CreatePrice creates price for a new oracle round
 	CreatePrice(context.Context, *MsgCreatePrice) (*MsgCreatePriceResponse, error)
 	// UpdateParams update params value
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
+	// SignCheckpoint submits a validator's ECDSA signature for an outbound checkpoint
+	SignCheckpoint(context.Context, *MsgSignCheckpoint) (*MsgSignCheckpointResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -403,6 +628,9 @@ func (*UnimplementedMsgServer) CreatePrice(ctx context.Context, req *MsgCreatePr
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
+}
+func (*UnimplementedMsgServer) SignCheckpoint(ctx context.Context, req *MsgSignCheckpoint) (*MsgSignCheckpointResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SignCheckpoint not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -445,6 +673,24 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_SignCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgSignCheckpoint)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).SignCheckpoint(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/imuachain.oracle.v1.Msg/SignCheckpoint",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).SignCheckpoint(ctx, req.(*MsgSignCheckpoint))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "imuachain.oracle.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -456,6 +702,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
+		},
+		{
+			MethodName: "SignCheckpoint",
+			Handler:    _Msg_SignCheckpoint_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -482,6 +732,42 @@ func (m *MsgCreatePrice) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.CheckpointS) > 0 {
+		i -= len(m.CheckpointS)
+		copy(dAtA[i:], m.CheckpointS)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.CheckpointS)))
+		i--
+		dAtA[i] = 0x62
+	}
+	if len(m.CheckpointR) > 0 {
+		i -= len(m.CheckpointR)
+		copy(dAtA[i:], m.CheckpointR)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.CheckpointR)))
+		i--
+		dAtA[i] = 0x5a
+	}
+	if m.CheckpointV != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.CheckpointV))
+		i--
+		dAtA[i] = 0x50
+	}
+	if len(m.CheckpointEvmAddress) > 0 {
+		i -= len(m.CheckpointEvmAddress)
+		copy(dAtA[i:], m.CheckpointEvmAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.CheckpointEvmAddress)))
+		i--
+		dAtA[i] = 0x4a
+	}
+	if m.CheckpointNonce != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.CheckpointNonce))
+		i--
+		dAtA[i] = 0x40
+	}
+	if m.CheckpointDstChainId != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.CheckpointDstChainId))
+		i--
+		dAtA[i] = 0x38
+	}
 	if m.Phase != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.Phase))
 		i--
@@ -612,6 +898,105 @@ func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgSignCheckpoint) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSignCheckpoint) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSignCheckpoint) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.S) > 0 {
+		i -= len(m.S)
+		copy(dAtA[i:], m.S)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.S)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.R) > 0 {
+		i -= len(m.R)
+		copy(dAtA[i:], m.R)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.R)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.V != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.V))
+		i--
+		dAtA[i] = 0x28
+	}
+	if len(m.ValidatorEvmAddress) > 0 {
+		i -= len(m.ValidatorEvmAddress)
+		copy(dAtA[i:], m.ValidatorEvmAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ValidatorEvmAddress)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.CheckpointNonce != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.CheckpointNonce))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.DstChainId != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.DstChainId))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.ValidatorAddress) > 0 {
+		i -= len(m.ValidatorAddress)
+		copy(dAtA[i:], m.ValidatorAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.ValidatorAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgSignCheckpointResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgSignCheckpointResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgSignCheckpointResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Finalized {
+		i--
+		if m.Finalized {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -651,6 +1036,27 @@ func (m *MsgCreatePrice) Size() (n int) {
 	if m.Phase != 0 {
 		n += 1 + sovTx(uint64(m.Phase))
 	}
+	if m.CheckpointDstChainId != 0 {
+		n += 1 + sovTx(uint64(m.CheckpointDstChainId))
+	}
+	if m.CheckpointNonce != 0 {
+		n += 1 + sovTx(uint64(m.CheckpointNonce))
+	}
+	l = len(m.CheckpointEvmAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.CheckpointV != 0 {
+		n += 1 + sovTx(uint64(m.CheckpointV))
+	}
+	l = len(m.CheckpointR)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.CheckpointS)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
 	return n
 }
 
@@ -684,6 +1090,52 @@ func (m *MsgUpdateParamsResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *MsgSignCheckpoint) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ValidatorAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.DstChainId != 0 {
+		n += 1 + sovTx(uint64(m.DstChainId))
+	}
+	if m.CheckpointNonce != 0 {
+		n += 1 + sovTx(uint64(m.CheckpointNonce))
+	}
+	l = len(m.ValidatorEvmAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.V != 0 {
+		n += 1 + sovTx(uint64(m.V))
+	}
+	l = len(m.R)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.S)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgSignCheckpointResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Finalized {
+		n += 2
+	}
 	return n
 }
 
@@ -864,6 +1316,163 @@ func (m *MsgCreatePrice) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointDstChainId", wireType)
+			}
+			m.CheckpointDstChainId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CheckpointDstChainId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointNonce", wireType)
+			}
+			m.CheckpointNonce = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CheckpointNonce |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointEvmAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CheckpointEvmAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointV", wireType)
+			}
+			m.CheckpointV = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CheckpointV |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointR", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CheckpointR = append(m.CheckpointR[:0], dAtA[iNdEx:postIndex]...)
+			if m.CheckpointR == nil {
+				m.CheckpointR = []byte{}
+			}
+			iNdEx = postIndex
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointS", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CheckpointS = append(m.CheckpointS[:0], dAtA[iNdEx:postIndex]...)
+			if m.CheckpointS == nil {
+				m.CheckpointS = []byte{}
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])
@@ -1079,6 +1688,315 @@ func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgUpdateParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSignCheckpoint) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSignCheckpoint: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSignCheckpoint: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DstChainId", wireType)
+			}
+			m.DstChainId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.DstChainId |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointNonce", wireType)
+			}
+			m.CheckpointNonce = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CheckpointNonce |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValidatorEvmAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValidatorEvmAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field V", wireType)
+			}
+			m.V = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.V |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field R", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.R = append(m.R[:0], dAtA[iNdEx:postIndex]...)
+			if m.R == nil {
+				m.R = []byte{}
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field S", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.S = append(m.S[:0], dAtA[iNdEx:postIndex]...)
+			if m.S == nil {
+				m.S = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgSignCheckpointResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgSignCheckpointResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgSignCheckpointResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Finalized", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Finalized = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

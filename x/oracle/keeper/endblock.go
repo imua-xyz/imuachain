@@ -11,6 +11,28 @@ import (
 func (k Keeper) EndBlock(ctx sdk.Context) {
 	k.FeederManager.EndBlock(ctx)
 	k.processAllXChainQueues(ctx)
+	k.createOutboundCheckpoints(ctx)
+}
+
+// createOutboundCheckpoints iterates all outbound queues and creates checkpoints
+// for any pending messages that haven't been checkpointed yet.
+func (k Keeper) createOutboundCheckpoints(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	prefix := []byte(types.OutboundHeadPrefix)
+	it := sdk.KVStorePrefixIterator(store, prefix)
+	defer it.Close()
+
+	for ; it.Valid(); it.Next() {
+		key := it.Key()
+		if len(key) != len(prefix)+8 {
+			continue
+		}
+		dstChainID, err := types.BytesToUint64(key[len(prefix):])
+		if err != nil {
+			continue
+		}
+		k.CreateCheckpointForPendingOutbound(ctx, dstChainID)
+	}
 }
 
 func (k Keeper) processAllXChainQueues(ctx sdk.Context) {

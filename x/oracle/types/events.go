@@ -7,6 +7,9 @@ const (
 	EventTypeOracleUpdateParams = "oracle_update_params"
 	EventTypeXChainDelivery     = "xchain_delivery"
 	EventTypeXChainBatch        = "xchain_batch"
+	EventTypeOutbound            = "outbound"
+	EventTypeCheckpointCreated   = "checkpoint_created"
+	EventTypeCheckpointFinalized = "checkpoint_finalized"
 
 	AttributeKeyFeederID         = "feeder_id"
 	AttributeKeyTokenID          = "token_id"
@@ -34,6 +37,17 @@ const (
 	AttributeKeyXChainMsgID        = "xchain_msg_id"
 	AttributeKeyXChainPayloadBytes = "xchain_payload_bytes"
 	AttributeKeyXChainRetryCount   = "xchain_retry_count"
+	// outbound queue attributes
+	AttributeKeyOutboundDstChainID  = "outbound_dst_chain_id"
+	AttributeKeyOutboundSeqNum      = "outbound_seq_num"
+	AttributeKeyOutboundNonce       = "outbound_nonce"
+	AttributeKeyOutboundPayloadBytes = "outbound_payload_bytes"
+
+	// checkpoint attributes
+	AttributeKeyCheckpointNonce    = "checkpoint_nonce"
+	AttributeKeyCheckpointHash     = "checkpoint_hash"
+	AttributeKeyCheckpointSeqRange = "checkpoint_seq_range"
+
 	AttributeKeyValidatorKey       = "validator_key"
 	AttributeKeyMissedRounds       = "missed_rounds"
 	AttributeKeyHeight             = "height"
