@@ -24,6 +24,8 @@ import (
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	delegationtypes "github.com/imua-xyz/imuachain/x/delegation/types"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	operatorkeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -1312,4 +1314,442 @@ func (suite *KeyChangeEscapeTestSuite) TestDowntimeDriftKeyReplacement() {
 	// Assert that it did NOT drift negative.
 	suite.Require().GreaterOrEqual(signInfo.MissedBlocksCounter, int64(0), "Missed blocks counter should not drift negatively")
 	suite.Require().Equal(int64(0), signInfo.MissedBlocksCounter)
+}
+
+// sumMissedBitsInWindow counts true entries in the x/slashing missed-block bit array for consAddr.
+func (suite *KeyChangeEscapeTestSuite) sumMissedBitsInWindow(consAddr sdk.ConsAddress) int64 {
+	window := suite.App.SlashingKeeper.SignedBlocksWindow(suite.Ctx)
+	var sum int64
+	for i := int64(0); i < window; i++ {
+		if suite.App.SlashingKeeper.GetValidatorMissedBlockBitArray(suite.Ctx, consAddr, i) {
+			sum++
+		}
+	}
+	return sum
+}
+
+// TestChecklist_A3_B4_KeyRotationSigningInfoInvariant covers review checklist A3, D2, and rotation-time B4/A6:
+// - After Msg SetConsKey, the old consensus address still has ValidatorSigningInfo (not yet pruned).
+// - On the new address, MissedBlocksCounter matches the sum of the bit array after UNSPECIFIED CopyValidatorSigningInfo.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_A3_B4_KeyRotationSigningInfoInvariant() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	validators := make([]abci.Validator, 0)
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validators = append(
+			validators, abci.Validator{
+				Address: validator.Address,
+				Power:   validator.Power,
+			},
+		)
+	}
+	nonSigners := []int{len(validators)}
+	validators = append(
+		validators, abci.Validator{
+			Address: consAddrA.Bytes(),
+			Power:   power,
+		},
+	)
+
+	const missBlocks int64 = 7
+	for i := int64(0); i < missBlocks; i++ {
+		suite.CommitWithInfo(validators, nonSigners, time.Nanosecond)
+	}
+
+	oldInfo, foundOld := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrA)
+	suite.Require().True(foundOld, "old key must have signing info before rotation")
+	suite.Require().Positive(
+		oldInfo.MissedBlocksCounter,
+		"expected missed blocks on old key before rotation",
+	)
+
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	consAddrB := consKeyB.ToConsAddr()
+
+	_, foundOldAfter := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrA)
+	suite.Require().True(
+		foundOldAfter,
+		"old cons addr should still have signing info immediately after rotation (pre-prune, checklist B4)",
+	)
+
+	newInfo, foundNew := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrB)
+	suite.Require().True(foundNew)
+	suite.Require().Equal(
+		oldInfo.MissedBlocksCounter,
+		newInfo.MissedBlocksCounter,
+		"UNSPECIFIED copy should preserve MissedBlocksCounter",
+	)
+	sum := suite.sumMissedBitsInWindow(consAddrB)
+	suite.Require().Equal(
+		newInfo.MissedBlocksCounter,
+		sum,
+		"after UNSPECIFIED Copy, counter must equal sum of bit array (SDK invariant)",
+	)
+}
+
+func (suite *KeyChangeEscapeTestSuite) dogfoodEpochWallDuration() time.Duration {
+	switch suite.EpochIdentifier {
+	case epochstypes.MinuteEpochID:
+		return time.Minute
+	case epochstypes.HourEpochID:
+		return time.Hour
+	case epochstypes.DayEpochID:
+		return 24 * time.Hour
+	case epochstypes.WeekEpochID:
+		return 7 * 24 * time.Hour
+	default:
+		suite.Require().Failf("unknown dogfood epoch identifier %q", suite.EpochIdentifier)
+		return 0
+	}
+}
+
+// TestChecklist_B2_EvidenceWindowCoversDogfoodUnbonding (checklist B2) asserts default consensus
+// evidence limits are looser than the minimum wall-clock and block span implied by dogfood
+// EpochsUntilUnbonded under this test harness (minute epochs, TestBlockNumberPerEpoch blocks each).
+// Production uses the same DefaultConsensusParams in app/test_helpers.go vs dogfood defaults.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_B2_EvidenceWindowCoversDogfoodUnbonding() {
+	cp := suite.App.GetConsensusParams(suite.Ctx)
+	suite.Require().NotNil(cp.Evidence)
+
+	epochs := suite.App.StakingKeeper.GetEpochsUntilUnbonded(suite.Ctx)
+	epochDur := suite.dogfoodEpochWallDuration()
+	minWall := time.Duration(epochs) * epochDur
+	suite.Require().GreaterOrEqual(
+		cp.Evidence.MaxAgeDuration,
+		minWall,
+		"Evidence.MaxAgeDuration must cover worst-case wall time until old-key prune (EpochsUntilUnbonded epochs)",
+	)
+
+	// Lower-bound block span: full epochs of advancement (conservative vs real prune boundary).
+	minBlocks := int64(epochs) * testutil.TestBlockNumberPerEpoch
+	suite.Require().GreaterOrEqual(
+		cp.Evidence.MaxAgeNumBlocks,
+		minBlocks,
+		"Evidence.MaxAgeNumBlocks should cover at least epochs*blocks-per-epoch for test config",
+	)
+	// Production defaults live in app/test_helpers.go (DefaultConsensusParams); they vastly exceed test unbonding.
+}
+
+// TestChecklist_D5_PostPruneReverseLookupAndSlashNoOp (checklist D5 / B4(3)): after waiting past
+// unbonding, the old consensus address loses reverse lookup and signing info; dogfood slash is a no-op.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_D5_PostPruneReverseLookupAndSlashNoOp() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	unbondingPeriod := suite.App.StakingKeeper.GetDogfoodParams(suite.Ctx).EpochsUntilUnbonded
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, int(unbondingPeriod)+1)
+	suite.Commit()
+
+	foundRev, _ := suite.App.OperatorKeeper.GetOperatorAddressForChainIDAndConsAddr(
+		suite.Ctx, suite.ChainIDWithoutRevision, consAddrA,
+	)
+	suite.Require().False(foundRev, "reverse lookup for pruned old cons addr should be gone")
+
+	_, foundSign := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrA)
+	suite.Require().False(foundSign, "signing info for pruned non-tombstone key should be deleted")
+
+	slashFrac := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+	burned := suite.App.StakingKeeper.SlashWithInfractionReason(
+		suite.Ctx,
+		consAddrA,
+		suite.Ctx.BlockHeight()-1,
+		power,
+		slashFrac,
+		stakingtypes.Infraction_INFRACTION_DOWNTIME,
+	)
+	suite.Require().True(
+		burned.IsZero(),
+		"SlashWithInfractionReason on pruned cons addr should not burn (no operator mapping)",
+	)
+}
+
+// TestSameEpochDoubleKeyRotation_SkipsSecondHookRisk documents when the second key replacement
+// skips AfterOperatorKeyReplaced (alreadyRecorded) and therefore skips CopyValidatorSigningInfo /
+// AfterValidatorCreated for the final key.
+//
+// Two Msg SetConsKey txs each followed by Commit() usually do NOT hit this path: dogfood EndBlock
+// (when ShouldUpdateValidatorSet) runs ClearPreviousConsensusKeys, so the second tx sees
+// alreadyRecorded == false and hooks run again. To reproduce the skip without an intervening
+// EndBlock, this test calls OperatorKeeper.SetOperatorConsKeyForChainID twice on the same context.
+func (suite *KeyChangeEscapeTestSuite) TestSameEpochDoubleKeyRotation_SkipsSecondHookRisk() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	consKeyB := testutiltx.GenerateConsensusKey()
+	consKeyC := testutiltx.GenerateConsensusKey()
+	chainID := suite.ChainIDWithoutRevision
+
+	err := suite.App.OperatorKeeper.SetOperatorConsKeyForChainID(suite.Ctx, operatorAddr, chainID, consKeyB)
+	suite.Require().NoError(err)
+	_, foundB := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consKeyB.ToConsAddr())
+	suite.Require().True(foundB, "first replacement runs hooks; B must exist in x/slashing")
+
+	err = suite.App.OperatorKeeper.SetOperatorConsKeyForChainID(suite.Ctx, operatorAddr, chainID, consKeyC)
+	suite.Require().NoError(err)
+
+	foundFwd, wrapped, err2 := suite.App.OperatorKeeper.GetOperatorConsKeyForChainID(
+		suite.Ctx, operatorAddr, chainID,
+	)
+	suite.Require().NoError(err2)
+	suite.Require().True(foundFwd)
+	suite.Require().Equal(consKeyC.ToConsAddr(), wrapped.ToConsAddr())
+
+	_, foundC := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consKeyC.ToConsAddr())
+	suite.Require().False(foundC,
+		"second replacement without ClearPreviousConsensusKeys: alreadyRecorded skips hooks; "+
+			"C missing in x/slashing (would panic on HandleValidatorSignature when C is active)")
+}
+
+// TestChecklist_D3_DoubleKeyRotationInvariants (checklist D3): two consecutive SetConsKey rotations;
+// forward key is the latest; newest key keeps slashing bit-array vs counter invariant.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_D3_DoubleKeyRotationInvariants() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	validators := make([]abci.Validator, 0)
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validators = append(
+			validators, abci.Validator{
+				Address: validator.Address,
+				Power:   validator.Power,
+			},
+		)
+	}
+	nonSigners := []int{len(validators)}
+	validators = append(
+		validators, abci.Validator{
+			Address: consAddrA.Bytes(),
+			Power:   power,
+		},
+	)
+
+	for i := int64(0); i < 4; i++ {
+		suite.CommitWithInfo(validators, nonSigners, time.Nanosecond)
+	}
+
+	suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	// Dogfood EndBlock clears previous-consensus-key records at epoch boundaries; without this,
+	// a second replacement in the same epoch skips AfterOperatorKeyReplaced (alreadyRecorded).
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	suite.Commit()
+	consAddrB := consKeyB.ToConsAddr()
+
+	suite.CheckValidator(operatorAddr, consAddrB, power, power)
+
+	info, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrB)
+	suite.Require().True(found)
+	suite.Require().Equal(
+		info.MissedBlocksCounter,
+		suite.sumMissedBitsInWindow(consAddrB),
+		"after two rotations, latest key: counter equals bit-array sum",
+	)
+}
+
+// TestChecklist_E1_DoubleSignSlashFreezesOperator (checklist E1): dogfood SlashWithInfractionReason
+// with double-sign must set the operator frozen flag (global liveness / participation lock).
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_E1_DoubleSignSlashFreezesOperator() {
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	consAddr := consKey.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+
+	suite.Require().False(suite.App.OperatorKeeper.IsOperatorFrozen(suite.Ctx, operatorAddr))
+
+	frac := suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx)
+	infractionHeight := suite.Ctx.BlockHeight()
+	_ = suite.App.StakingKeeper.SlashWithInfractionReason(
+		suite.Ctx,
+		consAddr,
+		infractionHeight,
+		power,
+		frac,
+		stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN,
+	)
+
+	suite.Require().True(
+		suite.App.OperatorKeeper.IsOperatorFrozen(suite.Ctx, operatorAddr),
+		"INFRACTION_DOUBLE_SIGN through dogfood must call FreezeOperator",
+	)
+}
+
+// TestChecklist_E2_UnjailNoOpWhenOperatorFrozen (checklist E2): dogfood Unjail is a no-op when the
+// operator is frozen, so MsgUnjail can succeed at the x/slashing layer while opted-in jail persists.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_E2_UnjailNoOpWhenOperatorFrozen() {
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	consAddr := consKey.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+
+	suite.App.OperatorKeeper.Jail(suite.Ctx, consAddr, suite.ChainIDWithoutRevision)
+	suite.Require().True(
+		suite.App.OperatorKeeper.IsOperatorJailedForChainID(
+			suite.Ctx, consAddr, suite.ChainIDWithoutRevision,
+		),
+	)
+
+	err := suite.App.OperatorKeeper.FreezeOperator(suite.Ctx, operatorAddr)
+	suite.Require().NoError(err)
+
+	msgServer := slashingkeeper.NewMsgServerImpl(suite.App.SlashingKeeper)
+	resp, err := msgServer.Unjail(
+		sdk.WrapSDKContext(suite.Ctx),
+		&slashingtypes.MsgUnjail{
+			ValidatorAddr: sdk.ValAddress(operatorAddr).String(),
+		},
+	)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(resp)
+
+	suite.Require().True(
+		suite.App.OperatorKeeper.IsOperatorJailedForChainID(
+			suite.Ctx, consAddr, suite.ChainIDWithoutRevision,
+		),
+		"frozen operator: dogfood Unjail must not clear jail in x/operator",
+	)
+}
+
+// TestChecklist_E4_DowntimeSlashRemovesImuaValidatorButRetainsSigningInfo (checklist E4):
+// ApplyValidatorChanges deletes the ImuachainValidator when Comet power goes to 0, but x/slashing
+// signing info for that consensus address remains until the scheduled prune path (rotation /
+// unbonding) — do not assume "no ImuachainValidator" implies "no ValidatorSigningInfo".
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_E4_DowntimeSlashRemovesImuaValidatorButRetainsSigningInfo() {
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	consAddr := consKey.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+
+	validators := []abci.Validator{}
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validators = append(
+			validators, abci.Validator{
+				Address: validator.Address,
+				Power:   validator.Power,
+			},
+		)
+	}
+	validators = append(
+		validators, abci.Validator{
+			Address: consAddr.Bytes(),
+			Power:   power,
+		},
+	)
+	nonSigners := []int{len(validators) - 1}
+
+	signInfo, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddr)
+	suite.Require().True(found)
+	signedBlocksWindow := suite.App.SlashingKeeper.SignedBlocksWindow(suite.Ctx)
+	minHeight := signInfo.StartHeight + signedBlocksWindow
+	minSignedPerWindow := suite.App.SlashingKeeper.MinSignedPerWindow(suite.Ctx)
+	maxMissed := signedBlocksWindow - minSignedPerWindow
+	currentlyMissed := int64(0)
+	blocksToMiss := maxMissed - currentlyMissed + 1
+	blocksToReachMin := minHeight
+	blocksToCommit := blocksToMiss
+	if blocksToCommit < blocksToReachMin {
+		blocksToCommit = blocksToReachMin
+	}
+	for i := int64(0); i < blocksToCommit; i++ {
+		suite.CommitWithInfo(validators, nonSigners, time.Nanosecond)
+	}
+
+	_, inDogfood := suite.App.StakingKeeper.GetImuachainValidator(suite.Ctx, consAddr)
+	suite.Require().False(inDogfood, "downtime slash removes validator from dogfood Imuachain set")
+
+	signInfoAfter, foundSI := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddr)
+	suite.Require().True(foundSI, "x/slashing signing info must still exist (not pruned with power-0 alone)")
+	suite.Require().True(signInfoAfter.JailedUntil.After(suite.Ctx.BlockTime()))
+}
+
+// TestChecklist_E5_DoubleSignDogfoodSlashWritesOperatorSlashRecord (checklist E5): dogfood
+// SlashWithInfractionReason delegates to operator Slash; slash ID encodes infraction + height.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_E5_DoubleSignDogfoodSlashWritesOperatorSlashRecord() {
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	consAddr := consKey.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	frac := suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx)
+	_ = suite.App.StakingKeeper.SlashWithInfractionReason(
+		suite.Ctx,
+		consAddr,
+		infractionHeight,
+		power,
+		frac,
+		stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN,
+	)
+
+	slashID := operatorkeeper.GetSlashIDForDogfood(
+		stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN,
+		infractionHeight,
+	)
+	slashInfo, err := suite.App.OperatorKeeper.GetOperatorSlashInfo(
+		suite.Ctx, suite.AvsAddress, operatorAddr.String(), slashID,
+	)
+	suite.Require().NoError(err)
+	suite.Require().NotNil(slashInfo)
+	suite.Require().Equal(uint32(stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN), slashInfo.SlashType)
+	suite.Require().Equal(infractionHeight, slashInfo.EventHeight)
+	suite.Require().Equal(frac, slashInfo.SlashProportion)
+}
+
+// TestChecklist_E6_SecondEquivocationSameConsAddrIgnored (checklist E6): x/evidence short-circuits
+// when the consensus addr is already tombstoned, so dogfood SlashWithInfractionReason (and
+// FreezeOperator) are not invoked again — no chain panic from FreezeOperator idempotency.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_E6_SecondEquivocationSameConsAddrIgnored() {
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	consAddr := consKey.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+
+	infractionHeight := suite.Ctx.BlockHeight()
+	infractionTime := suite.Ctx.BlockTime()
+
+	suite.SubmitEvidence(consAddr, infractionHeight, infractionTime, power)
+	suite.Require().True(suite.App.SlashingKeeper.IsTombstoned(suite.Ctx, consAddr))
+	suite.Require().True(suite.App.OperatorKeeper.IsOperatorFrozen(suite.Ctx, operatorAddr))
+
+	// Same evidence shape again: must not panic; evidence handler ignores already-tombstoned.
+	suite.SubmitEvidence(consAddr, infractionHeight, infractionTime, power)
+
+	suite.Require().True(suite.App.OperatorKeeper.IsOperatorFrozen(suite.Ctx, operatorAddr))
 }

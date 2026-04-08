@@ -164,12 +164,22 @@ func (k Keeper) SlashWithInfractionReason(
 			),
 		)
 	}
-	res := k.operatorKeeper.SlashWithInfractionReason(
+	attempted, slashErr := k.operatorKeeper.SlashDogfoodInfraction(
 		ctx, accAddress, infractionHeight,
 		power, slashFactor, infraction,
 	)
-	// copy over to new consensus key
-	if slashingOldKey {
+	if slashErr != nil {
+		k.Logger(ctx).Error(
+			"operator AVS slash failed (dogfood StakingKeeper)",
+			"error", slashErr,
+			"operator", accAddress.String(),
+			"cons_addr", addr.String(),
+			"infraction", infraction.String(),
+		)
+	}
+	// Only migrate x/slashing state when the economic slash committed; otherwise Copy could write
+	// inconsistent signing info relative to operator state (e.g. veto / SlashAssets failure).
+	if slashingOldKey && attempted && slashErr == nil {
 		// copy from old key to new key
 		// the slashing keeper tombstones after calling this function. hence,
 		// copy directly will not succeed. we must do it ourselves.
@@ -177,8 +187,18 @@ func (k Keeper) SlashWithInfractionReason(
 			ctx, addr, currentConsAddr, infraction,
 		)
 	}
-	if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN {
-		// Permanently freeze the operator globally
+	if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN && power > 0 &&
+		(attempted || slashErr != nil) {
+		// Double-sign is a consensus safety fault: freeze even if the economic slash path failed
+		// (so veto or asset errors cannot leave the operator unfrozen).
+		if slashErr != nil {
+			k.Logger(ctx).Error(
+				"double-sign: freezing operator despite failed AVS slash",
+				"operator", accAddress.String(),
+				"cons_addr", addr.String(),
+				"error", slashErr,
+			)
+		}
 		if err := k.operatorKeeper.FreezeOperator(
 			ctx, accAddress,
 		); err != nil {
@@ -190,7 +210,7 @@ func (k Keeper) SlashWithInfractionReason(
 			)
 		}
 	}
-	return res
+	return math.NewInt(0)
 }
 
 // CopyValidatorSigningInfo copies a validator's signing info from old consensus address
@@ -215,7 +235,9 @@ func (k Keeper) CopyValidatorSigningInfo(
 			info.MissedBlocksCounter,
 		)
 	} else {
-		// initialize a default value
+		// initialize a default value (DOUBLE_SIGN / DOWNTIME still apply punishment on newConsAddr).
+		// INFRACTION_UNSPECIFIED + !found is allowed when the old cons addr never received slashing
+		// state (e.g. opt-into-AVS then replace key in the same epoch); migration is then a no-op.
 		info = slashingtypes.NewValidatorSigningInfo(
 			newConsAddr,
 			ctx.BlockHeight(),
@@ -245,7 +267,6 @@ func (k Keeper) CopyValidatorSigningInfo(
 		k.slashingKeeper.ClearValidatorMissedBlockBitArray(
 			ctx, newConsAddr,
 		)
-	// called by hook, not by SlashWithInfractionReason
 	case stakingtypes.Infraction_INFRACTION_UNSPECIFIED:
 		// it is permitted for a validator to change from key A
 		// to key B back to key A again over a long period of time.
@@ -304,7 +325,13 @@ func (k Keeper) Unjail(ctx sdk.Context, addr sdk.ConsAddress) {
 	if found && k.operatorKeeper.IsOperatorFrozen(ctx, accAddr) {
 		// Operator is permanently frozen, silently ignore the unjail request
 		// or log it. We cannot return an error because the SDK's StakingKeeper interface doesn't allow it.
-		k.Logger(ctx).Info("blocked attempt to unjail a permanently frozen operator", "operator", accAddr)
+		// MsgUnjail may still return OK from x/slashing; indexers should key off this log / frozen state.
+		k.Logger(ctx).Info(
+			"blocked unjail: operator permanently frozen (MsgUnjail may still succeed at slashing layer)",
+			"reason", "operator_frozen",
+			"operator", accAddr.String(),
+			"cons_addr", addr.String(),
+		)
 		return
 	}
 	k.operatorKeeper.Unjail(ctx, addr, chainID)

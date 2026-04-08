@@ -35,6 +35,13 @@ func (k *Keeper) Logger(ctx sdk.Context) log.Logger {
 // SetOperatorConsKeyForChainID sets the (consensus) public key for the given operator address
 // and chain id. If a key already exists, it will be overwritten and the edit will flow to the
 // validator set at the next epoch.
+//
+// Replacement path: only the first change in a dogfood epoch records a “previous” key for 0-power
+// Comet updates (alreadyRecorded). A second replacement on the same SDK context without an
+// intervening dogfood EndBlock (ClearPreviousConsensusKeys) skips AfterOperatorKeyReplaced — see
+// x/dogfood/keeper/key_change_escape_test.go TestSameEpochDoubleKeyRotation_SkipsSecondHookRisk.
+// Normal Msg + Commit flows usually clear previous keys each epoch EndBlock.
+//
 // The caller must ensure that
 // 1. Operator is opted in to the chain
 // 2. The chain is registered with the AVS module
