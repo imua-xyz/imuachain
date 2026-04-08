@@ -191,6 +191,9 @@ func (k Keeper) SlashWithInfractionReason(
 		(attempted || slashErr != nil) {
 		// Double-sign is a consensus safety fault: freeze even if the economic slash path failed
 		// (so veto or asset errors cannot leave the operator unfrozen).
+		if k.operatorKeeper.IsOperatorFrozen(ctx, accAddress) {
+			return math.NewInt(0)
+		}
 		if slashErr != nil {
 			k.Logger(ctx).Error(
 				"double-sign: freezing operator despite failed AVS slash",

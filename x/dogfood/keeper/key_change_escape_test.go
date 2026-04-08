@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"fmt"
+	"math/rand"
 	"slices"
 	"testing"
 	"time"
@@ -1752,4 +1753,187 @@ func (suite *KeyChangeEscapeTestSuite) TestChecklist_E6_SecondEquivocationSameCo
 	suite.SubmitEvidence(consAddr, infractionHeight, infractionTime, power)
 
 	suite.Require().True(suite.App.OperatorKeeper.IsOperatorFrozen(suite.Ctx, operatorAddr))
+}
+
+// TestChecklist_F1_RepeatedDoubleSignSlashDoesNotPanicWhenAlreadyFrozen verifies that direct
+// repeated double-sign slash entry is idempotent with respect to freeze semantics.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_F1_RepeatedDoubleSignSlashDoesNotPanicWhenAlreadyFrozen() {
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	consAddr := consKey.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+
+	frac := suite.App.SlashingKeeper.SlashFractionDoubleSign(suite.Ctx)
+	height := suite.Ctx.BlockHeight()
+	_ = suite.App.StakingKeeper.SlashWithInfractionReason(
+		suite.Ctx, consAddr, height, power, frac, stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN,
+	)
+	suite.Require().True(suite.App.OperatorKeeper.IsOperatorFrozen(suite.Ctx, operatorAddr))
+
+	// Second call must not panic even though operator is already frozen.
+	suite.Require().NotPanics(func() {
+		_ = suite.App.StakingKeeper.SlashWithInfractionReason(
+			suite.Ctx, consAddr, height+1, power, frac, stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN,
+		)
+	})
+	suite.Require().True(suite.App.OperatorKeeper.IsOperatorFrozen(suite.Ctx, operatorAddr))
+}
+
+// TestChecklist_J1_RandomizedLifecycleInvariant runs a deterministic randomized sequence of
+// key rotations + epoch transitions and checks that the latest active key keeps the slashing
+// counter/bit-array invariant whenever its signing info exists.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_J1_RandomizedLifecycleInvariant() {
+	operatorAddr, consKey, power := suite.AddValidator(3)
+	consAddr := consKey.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddr, power, power)
+
+	r := rand.New(rand.NewSource(42))
+	currentConsAddr := consAddr
+
+	for i := 0; i < 12; i++ {
+		// occasionally accrue misses on the currently active key
+		if r.Intn(3) == 0 {
+			validators := []abci.Validator{}
+			for _, val := range suite.ValSet.Validators {
+				validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+					suite.Ctx, val.Address.Bytes(),
+				)
+				suite.Require().True(found)
+				validators = append(validators, abci.Validator{
+					Address: validator.Address,
+					Power:   validator.Power,
+				})
+			}
+			validators = append(validators, abci.Validator{
+				Address: currentConsAddr.Bytes(),
+				Power:   power,
+			})
+			suite.CommitWithInfo(validators, []int{len(validators) - 1}, time.Nanosecond)
+		}
+
+		// rotate key and force epoch boundary so hooks execute on each turn
+		newKey := suite.ChangeKey(operatorAddr, true)
+		suite.Commit()
+		suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+		suite.Commit()
+		currentConsAddr = newKey.ToConsAddr()
+
+		foundFwd, wrapped, err := suite.App.OperatorKeeper.GetOperatorConsKeyForChainID(
+			suite.Ctx, operatorAddr, suite.ChainIDWithoutRevision,
+		)
+		suite.Require().NoError(err)
+		suite.Require().True(foundFwd)
+		suite.Require().Equal(currentConsAddr, wrapped.ToConsAddr())
+
+		info, found := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, currentConsAddr)
+		if found {
+			suite.Require().Equal(
+				info.MissedBlocksCounter,
+				suite.sumMissedBitsInWindow(currentConsAddr),
+				"randomized lifecycle: counter equals bit-array sum on current key",
+			)
+		}
+	}
+}
+
+// TestChecklist_I1_RotationBoundaryUnspecifiedSlashMigratesToCurrentKey hardens oracle-style
+// UNSPECIFIED slash semantics: when slash is reported on a stale key after rotation, dogfood
+// uses slashingOldKey and migrates signing state to the current key.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_I1_RotationBoundaryUnspecifiedSlashMigratesToCurrentKey() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	// Build some missed-block debt on key A before rotation.
+	validators := []abci.Validator{}
+	for _, val := range suite.ValSet.Validators {
+		validator, found := suite.App.StakingKeeper.GetImuachainValidator(
+			suite.Ctx, val.Address.Bytes(),
+		)
+		suite.Require().True(found)
+		validators = append(validators, abci.Validator{
+			Address: validator.Address,
+			Power:   validator.Power,
+		})
+	}
+	validators = append(validators, abci.Validator{
+		Address: consAddrA.Bytes(),
+		Power:   power,
+	})
+	for i := 0; i < 5; i++ {
+		suite.CommitWithInfo(validators, []int{len(validators) - 1}, time.Nanosecond)
+	}
+	infoA, foundA := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrA)
+	suite.Require().True(foundA)
+	suite.Require().Positive(infoA.MissedBlocksCounter)
+
+	// Rotate A -> B, process epoch boundary so B is active while A reverse-mapping still exists.
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	consAddrB := consKeyB.ToConsAddr()
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	frac := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+	_ = suite.App.StakingKeeper.SlashWithInfractionReason(
+		suite.Ctx,
+		consAddrA,
+		suite.Ctx.BlockHeight()-1,
+		power,
+		frac,
+		stakingtypes.Infraction_INFRACTION_UNSPECIFIED,
+	)
+
+	infoB, foundB := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrB)
+	suite.Require().True(foundB, "UNSPECIFIED slash on stale A should copy/migrate to current B")
+	suite.Require().Equal(
+		infoB.MissedBlocksCounter,
+		suite.sumMissedBitsInWindow(consAddrB),
+		"migrated current key must keep counter/bit-array invariant",
+	)
+}
+
+// TestChecklist_I2_JailOnOldKeyAppliesToCurrentKeyCoherently verifies jail coherence after key
+// rotation: jailing by old consensus address propagates through operator state, so current key is
+// considered jailed too (single opted-info source of truth).
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_I2_JailOnOldKeyAppliesToCurrentKeyCoherently() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	consAddrB := consKeyB.ToConsAddr()
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	suite.App.StakingKeeper.Jail(suite.Ctx, consAddrA)
+
+	suite.Require().True(
+		suite.App.OperatorKeeper.IsOperatorJailedForChainID(
+			suite.Ctx, consAddrA, suite.ChainIDWithoutRevision,
+		),
+		"old key lookup still maps to operator and must report jailed",
+	)
+	suite.Require().True(
+		suite.App.OperatorKeeper.IsOperatorJailedForChainID(
+			suite.Ctx, consAddrB, suite.ChainIDWithoutRevision,
+		),
+		"current key should observe same jailed operator state",
+	)
+
+	// SDK unjail message should clear jail when not frozen.
+	suite.Unjail(operatorAddr, true)
+	suite.Require().False(
+		suite.App.OperatorKeeper.IsOperatorJailedForChainID(
+			suite.Ctx, consAddrB, suite.ChainIDWithoutRevision,
+		),
+	)
 }

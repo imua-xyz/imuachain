@@ -354,6 +354,57 @@ Use this as a concrete follow-up list; items below are updated after a trace + t
 
 - [x] **E6 — Evidence / slash replay (already tombstoned):** **`HandleEquivocationEvidence`** returns **before** **`SlashWithInfractionReason`** if **`IsTombstoned(consAddr)`** (x/evidence). Second identical equivocation **does not** call dogfood slash or **`FreezeOperator` again — **no panic**. **Invariant test:** **`TestChecklist_E6_SecondEquivocationSameConsAddrIgnored`**.
 
+#### F. Failure-mode and panic semantics
+
+- [x] **F1 — Freeze idempotency beyond x/evidence path:** **`impl_sdk.go`** now checks `IsOperatorFrozen` before `FreezeOperator` in the double-sign path; repeated direct double-sign slash no longer panics. **Regression test:** `TestChecklist_F1_RepeatedDoubleSignSlashDoesNotPanicWhenAlreadyFrozen`.
+
+- [x] **F2 — Panic boundaries around cache writes:** Traced `CacheContext` use: prune path commits only via `writeFunc` after all step success (`abci.go`), and operator slash uses cache atomicity in `slash.go`; panic sites are now logic-invariant guards (unknown chain/keeper violation) rather than routine control flow.
+
+- [x] **F3 — Distinguish slash outcomes operationally:** `SlashDogfoodInfraction` separates not-attempted vs attempted+error and dogfood logs attempted failures (`operator AVS slash failed`, `double-sign: freezing ... despite failed AVS slash`) with operator/cons addr context.
+
+#### G. Cross-module hook composition and ordering
+
+- [x] **G1 — Additional dogfood hooks compatibility:** Current app wiring registers only `slashingKeeper.Hooks()` in `NewMultiDogfoodHooks` (`app.go`); short-circuit behavior is covered by `TestChecklist_E3_MultiDogfoodHooksAfterValidatorRemovedShortCircuits`.
+
+- [x] **G2 — Hook ordering with epoch transitions:** Existing suite covers same-epoch and epoch-boundary rotations (`TestSameEpochDoubleKeyRotation_SkipsSecondHookRisk`, `TestChecklist_D3_DoubleKeyRotationInvariants`) plus epoch operation tests in `impl_epochs_hooks_test.go`.
+
+- [x] **G3 — Re-entrancy/idempotency on retries:** For current wiring (only x/slashing dogfood hook), retry paths are idempotent (`deleteAddrPubkeyRelation` uses `store.Delete`; prune loop writes only after successful full pass). Non-slashing future hooks remain a code-review watchpoint, not an unclosed risk for this PR scope.
+
+#### H. Config and upgrade safety
+
+- [x] **H1 — Production param parity check:** In-tree default parity documented and tested (`TestChecklist_B2_...` + `app/test_helpers.go` comment). External deployment param audit remains an operational follow-up.
+
+- [x] **H2 — Governance param drift guardrails:** Added explicit doc guidance in `app/test_helpers.go` and review §B2 to co-change evidence and dogfood/epoch params together.
+
+- [x] **H3 — Upgrade migration invariants:** Scope trace for reviewed commits shows no dedicated migration touching dogfood/operator key lifecycle stores; current invariants rely on runtime hooks/ABCI paths and are covered by A–E/F/J tests. Keep upgrade audit as standard release process, but no scope-local gap remains.
+
+#### I. Oracle integration edge coverage
+
+- [x] **I1 — Rotation-boundary oracle slash scenario:** Resolved by both trace and targeted invariant test. **`TestChecklist_I1_RotationBoundaryUnspecifiedSlashMigratesToCurrentKey`** asserts stale-key `UNSPECIFIED` slash (oracle-like) migrates signing state to the current key via `slashingOldKey`.
+
+- [x] **I2 — Oracle jail vs slashing jail coherence:** Resolved by targeted invariant test. **`TestChecklist_I2_JailOnOldKeyAppliesToCurrentKeyCoherently`** verifies jail on old key maps to the same operator jail state observed on the current key.
+
+- [x] **I3 — Oracle cache freshness assumptions:** Code path traced and documented in `feedermanager.go`: malicious handlers use current cache validators / tx creator cons addr; stale-key behavior falls back to dogfood `slashingOldKey` semantics.
+
+#### J. Stronger invariants / property-style tests
+
+- [x] **J1 — Randomized lifecycle invariant test:** Added `TestChecklist_J1_RandomizedLifecycleInvariant` in `key_change_escape_test.go` (deterministic random sequence of rotations + epoch boundaries + missed-block events; checks forward-key correctness and current-key counter/bit-array invariant).
+
+- [x] **J2 — Pruned-address invariant:** Covered by `TestChecklist_D5_PostPruneReverseLookupAndSlashNoOp` and B3 notes (non-tombstoned pruned keys lose signing info).
+
+- [x] **J3 — Frozen-operator activity invariant:** Covered by E1/E2 behavior + operator frozen checks on opt-in/key-set/power update paths; no counterexample found in traced flows.
+
+#### K. Operations and observability
+
+- [x] **K1 — Event/log contract for indexers:** Added structured unjail log fields (`reason=operator_frozen`, `operator`, `cons_addr`) and explicit slash-failure logs in dogfood slash flow.
+
+- [x] **K2 — External behavior docs:** Review doc + code comments now state MsgUnjail can succeed at x/slashing while operator remains jailed/frozen in x/operator.
+
+- [x] **K3 — Alerting recommendations:** Added concrete recommendations (below) for ops runbooks/monitors:
+  - alert on repeated `operator AVS slash failed (dogfood StakingKeeper)` logs per operator/cons addr,
+  - alert on repeated prune reschedules (`AfterValidatorRemoved` error path),
+  - alert on `double-sign: freezing operator despite failed AVS slash` occurrences.
+
 ### Checklist trace results (summary)
 
 | Item | Status | Notes |
@@ -366,6 +417,8 @@ Use this as a concrete follow-up list; items below are updated after a trace + t
 | B2, D3, D5 | Done | `TestChecklist_B2_EvidenceWindowCoversDogfoodUnbonding`, `TestChecklist_D3_DoubleKeyRotationInvariants` (epoch between rotations: `alreadyRecorded` / hooks), `TestSameEpochDoubleKeyRotation_SkipsSecondHookRisk` (same-ctx double `SetOperatorConsKeyForChainID`: second hook skipped), `TestChecklist_D5_PostPruneReverseLookupAndSlashNoOp`. |
 | C1, C2 | Done | Frozen checks on keeper paths; unjail no-op documented. |
 | E1–E6 | Done | **E1/E2:** freeze + unjail no-op. **E3:** `x/dogfood/types` multi-hook short-circuit; slashing `AfterValidatorRemoved` always `nil`; reschedule + idempotent pubkey delete. **E4:** no imua validator, signing info retained after downtime. **E5:** operator slash record for double-sign. **E6:** second equivocation ignored (tombstone). |
+| F1–F3 | Done | Added F1 regression test for repeated direct double-sign slash; traced panic/cache boundaries; slash outcome logs distinguish attempted failure paths. |
+| G1–G3, H1–H3, I1–I3, J1–J3, K1–K3 | Done | Closed via trace + docs + tests: `TestChecklist_J1_RandomizedLifecycleInvariant`, hook/ABCI idempotency review, oracle malicious path review, and explicit operational alert recommendations. |
 
 **How to run checklist tests**
 
@@ -380,6 +433,10 @@ go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_E2_
 go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_E4_' -count=1
 go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_E5_' -count=1
 go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_E6_' -count=1
+go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_F1_' -count=1
+go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_I1_' -count=1
+go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_I2_' -count=1
+go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_J1_' -count=1
 go test ./x/dogfood/types/ -run 'TestChecklist_E3_' -count=1
 # Or all dogfood checklist-style tests in keeper:
 go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_' -count=1
