@@ -56,6 +56,9 @@ const (
 	EventTypeOperatorAssetSlashed = "operator_asset_slashed"
 	AttributeKeyAssetID           = "asset_id"
 
+	EventTypeSlashVetoed = "slash_vetoed"
+	AttributeKeySlashID  = "slash_id"
+
 	EventTypeUpdateOperatorAssetUSDValue = "update_operator_asset_usd_value"
 
 	EventTypeDeleteOperatorAssetUSDValueByEpoch = "delete_operator_asset_usd_value_by_epoch"

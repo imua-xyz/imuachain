@@ -517,9 +517,17 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 
 	slashInfo.IsVetoed = true
 	slashInfo.VetoReason = vetoReason
-	err = k.UpdateOperatorSlashInfo(ctx, operatorAddr, avsAddr, slashID, *slashInfo)
+	err = k.MarkSlashVetoed(ctx, operatorAddr, avsAddr, slashID, *slashInfo)
 	if err != nil {
 		return err
 	}
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeSlashVetoed,
+			sdk.NewAttribute(types.AttributeKeyOperator, operatorAddr),
+			sdk.NewAttribute(types.AttributeKeyAVSAddr, avsAddr),
+			sdk.NewAttribute(types.AttributeKeySlashID, slashID),
+		),
+	)
 	return nil
 }

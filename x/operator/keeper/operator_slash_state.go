@@ -7,6 +7,7 @@ import (
 
 	assetstype "github.com/imua-xyz/imuachain/x/assets/types"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -14,9 +15,10 @@ import (
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
-// UpdateOperatorSlashInfo This is a function to store the slash info related to an operator
+// UpdateOperatorSlashInfo stores slash info when a new slash is executed (initial creation only).
 // The stored state is: operator + '/' + AVSAddr + '/' + slashId -> OperatorSlashInfo
-// Now this function will be called by `slash` function implemented in 'state_update.go' when there is a slash event occurs.
+// It is called from Slash in slash.go. Duplicate slashID for the same operator/AVS is rejected.
+// After veto, use MarkSlashVetoed instead so an AVS slash-contract upgrade cannot block persisting the veto.
 func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr, slashID string, slashInfo operatortypes.OperatorSlashInfo) error {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorSlashInfo)
 
@@ -24,6 +26,10 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 	_, err := sdk.AccAddressFromBech32(operatorAddr)
 	if err != nil {
 		return assetstype.ErrInvalidOperatorAddr
+	}
+	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
+	if store.Has(slashInfoKey) {
+		return errorsmod.Wrapf(operatortypes.ErrSlashInfoExist, "slashInfoKey:%s", slashInfoKey)
 	}
 	// check the validation of slash info
 	slashContract, err := k.avsKeeper.GetAVSSlashContract(ctx, avsAddr)
@@ -43,9 +49,26 @@ func (k *Keeper) UpdateOperatorSlashInfo(ctx sdk.Context, operatorAddr, avsAddr,
 
 	// save single operator delegation state
 	bz := k.cdc.MustMarshal(&slashInfo)
-	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
 	store.Set(slashInfoKey, bz)
 	// TODO: add an event for the slash info
+	return nil
+}
+
+// MarkSlashVetoed overwrites stored slash info after a successful veto (IsVetoed / VetoReason only).
+// It does not compare SlashContract to the AVS's current slash contract: the slash was already
+// validated at creation time, and re-checking would incorrectly fail if the AVS upgraded the contract.
+func (k *Keeper) MarkSlashVetoed(ctx sdk.Context, operatorAddr, avsAddr, slashID string, slashInfo operatortypes.OperatorSlashInfo) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorSlashInfo)
+	_, err := sdk.AccAddressFromBech32(operatorAddr)
+	if err != nil {
+		return assetstype.ErrInvalidOperatorAddr
+	}
+	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)
+	if !store.Has(slashInfoKey) {
+		return operatortypes.ErrNoKeyInTheStore.Wrapf("MarkSlashVetoed: key is %s", slashInfoKey)
+	}
+	bz := k.cdc.MustMarshal(&slashInfo)
+	store.Set(slashInfoKey, bz)
 	return nil
 }
 
