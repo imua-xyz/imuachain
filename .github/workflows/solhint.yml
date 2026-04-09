@@ -1,9 +1,9 @@
 name: Solhint
-# This workflow is only run when a file in the contracts folder changes.
+# This workflow is only run when a file in the precompiles folder changes.
 on:
   pull_request:
     paths:
-      - "contracts/**"
+      - "precompiles/**"
 
 permissions:
   contents: read
@@ -17,4 +17,4 @@ jobs:
       - uses: actions/setup-node@v3
       - run: npm install -g solhint
       - run: solhint --version
-      - run: solhint 'contracts/**/*.sol'
+      - run: solhint 'precompiles/**/I*.sol'

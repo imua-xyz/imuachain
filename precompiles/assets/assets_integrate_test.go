@@ -86,7 +86,7 @@ func (s *AssetsPrecompileSuite) TestCallDepositLSTFromEOA() {
 	s.Require().Equal(successRet, ethRes.Ret)
 }
 
-func (s *AssetsPrecompileSuite) TestCallDepositToFromContract() {
+func (s *AssetsPrecompileSuite) TestCallDepositLSTFromContract() {
 	// deposit params for test
 	lzAppAddress := "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
 	depositParams := assetstype.Params{
@@ -140,37 +140,37 @@ func (s *AssetsPrecompileSuite) TestCallDepositToFromContract() {
 			opAmount)
 	}
 
-	// testDepositTo
+	// testDepositLST
 	beforeEach()
 	depositParams.Gateways = []string{contractAddr.String()}
-	setDepositToArgs := prepareFunc(&depositParams, "testDepositTo")
+	setDepositToArgs := prepareFunc(&depositParams, "testDepositLST")
 	_, _, err = contracts.CallContractAndCheckLogs(s.Ctx, s.App, setDepositToArgs, passCheck)
 	s.Require().NoError(err)
 	// todo: need to find why the ethRet is nil when called by contract
-	/*	successRet, err := contracts.DepositCallerContract.ABI.Methods["testDepositTo"].Outputs.Pack(true, opAmount)
+	/*	successRet, err := contracts.DepositCallerContract.ABI.Methods["testDepositLST"].Outputs.Pack(true, opAmount)
 		s.Require().NoError(err)
 		s.Require().Equal(successRet, ethRes.Ret)*/
 
-	// testCallDepositToAndEmitEvent
+	// testCallDepositLSTAndEmitEvent
 	beforeEach()
-	setDepositToArgs = prepareFunc(&depositParams, "testCallDepositToAndEmitEvent")
+	setDepositToArgs = prepareFunc(&depositParams, "testCallDepositLSTAndEmitEvent")
 	// todo: need to check why can't get the ethereum log
-	// eventCheck := passCheck.WithExpEvents("callDepositToResult")
+	// eventCheck := passCheck.WithExpEvents("CallDepositLSTResult")
 	_, _, err = contracts.CallContractAndCheckLogs(s.Ctx, s.App, setDepositToArgs, passCheck)
 	s.Require().NoError(err)
-	/*	successRet, err = contracts.DepositCallerContract.ABI.Methods["testCallDepositToAndEmitEvent"].Outputs.Pack(true, opAmount)
+	/*	successRet, err = contracts.DepositCallerContract.ABI.Methods["testCallDepositLSTAndEmitEvent"].Outputs.Pack(true, opAmount)
 		s.Require().NoError(err)
 		s.Require().Equal(successRet, ethRes.Ret)*/
 
-	// testCallDepositToWithTryCatch
+	// testCallDepositLSTWithTryCatch
 	beforeEach()
 	depositParams.Gateways = []string{lzAppAddress}
-	setDepositToArgs = prepareFunc(&depositParams, "testCallDepositToWithTryCatch")
+	setDepositToArgs = prepareFunc(&depositParams, "testCallDepositLSTWithTryCatch")
 	// eventCheck = passCheck.WithExpEvents("ErrorOccurred")
 	// todo: need to check the ethereum log
 	_, _, err = contracts.CallContractAndCheckLogs(s.Ctx, s.App, setDepositToArgs, passCheck)
 	s.Require().NoError(err)
-	/*	successRet, err = contracts.DepositCallerContract.ABI.Methods["testCallDepositToWithTryCatch"].Outputs.Pack(false, big.NewInt(0))
+	/*	successRet, err = contracts.DepositCallerContract.ABI.Methods["testCallDepositLSTWithTryCatch"].Outputs.Pack(false, big.NewInt(0))
 		s.Require().NoError(err)
 		s.Require().Equal(successRet, ethRes.Ret)*/
 }
