@@ -1,21 +1,21 @@
 
 pragma solidity >=0.8.17;
 
-import "deposit/deposit.sol" as deposit;
+import "assets/IAssets.sol";
 
 contract DepositCaller {
 
-    event callDepositToResult(bool indexed success, uint256 indexed latestAssetState);
+    event CallDepositLSTResult(bool indexed success, uint256 indexed latestAssetState);
     event ErrorOccurred(string errorMessage);
 
-    function testDepositTo(
+    function testDepositLST(
         uint32 clientChainLzID,
         bytes memory assetsAddress,
         bytes memory stakerAddress,
         uint256 opAmount
     ) public returns (bool, uint256) {
         return
-            deposit.DEPOSIT_CONTRACT.depositTo(
+            ASSETS_CONTRACT.depositLST(
             clientChainLzID,
             assetsAddress,
             stakerAddress,
@@ -23,37 +23,37 @@ contract DepositCaller {
         );
     }
 
-    function testCallDepositToAndEmitEvent(
+    function testCallDepositLSTAndEmitEvent(
         uint32 clientChainLzID,
         bytes memory assetsAddress,
         bytes memory stakerAddress,
         uint256 opAmount
     ) public returns (bool, uint256) {
-        (bool success,uint256 latestAssetState) = deposit.DEPOSIT_CONTRACT.depositTo(
+        (bool success,uint256 latestAssetState) = ASSETS_CONTRACT.depositLST(
             clientChainLzID,
             assetsAddress,
             stakerAddress,
             opAmount
         );
 
-        emit callDepositToResult(success, latestAssetState);
+        emit CallDepositLSTResult(success, latestAssetState);
         return (success, latestAssetState);
     }
 
-    function testCallDepositToWithTryCatch(
+    function testCallDepositLSTWithTryCatch(
         uint32 clientChainLzID,
         bytes memory assetsAddress,
         bytes memory stakerAddress,
         uint256 opAmount
     ) public returns (bool, uint256) {
-        try deposit.DEPOSIT_CONTRACT.depositTo(
+        try ASSETS_CONTRACT.depositLST(
             clientChainLzID,
             assetsAddress,
             stakerAddress,
             opAmount
         ) returns (bool success, uint256 latestAssetState){
             //call successfully
-            emit callDepositToResult(success, latestAssetState);
+            emit CallDepositLSTResult(success, latestAssetState);
             return (success, latestAssetState);
         }catch Error(string memory errorMessage){
             // An error occurred, handle it
