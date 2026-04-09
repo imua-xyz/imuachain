@@ -327,7 +327,8 @@ type PriceAcc struct {
 	Decimal int32 `protobuf:"varint,2,opt,name=decimal,proto3" json:"decimal,omitempty"`
 	// timestamp when the price is corresponded
 	Timestamp string `protobuf:"bytes,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	// roundid of the price if the source is deteministic
+	// last_round_id tells the round id of the latest price that has already been accumulated in the price value
+	// so at the very beginning of a new accumulator, last_round_id=start_round_id-1
 	LastRoundID uint64 `protobuf:"varint,4,opt,name=last_round_id,json=lastRoundId,proto3" json:"last_round_id,omitempty"`
 	// start_round_id is used to indicate the round id of the first price in this accumulator
 	StartRoundID uint64 `protobuf:"varint,5,opt,name=start_round_id,json=startRoundId,proto3" json:"start_round_id,omitempty"`

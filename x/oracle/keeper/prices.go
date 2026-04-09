@@ -208,8 +208,11 @@ func (k Keeper) GetAllPrices(ctx sdk.Context) (list []types.Prices) {
 	return list
 }
 
-// AppenPriceTR append a new round of price for specific token, return false if the roundID not match
-func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound) bool {
+// AppendPriceTR appends a new round of price for a specific token and returns false if the roundID does not match.
+// The price round is always stored and the next round ID advanced when the roundID matches, regardless of the
+// value of accumulate. When accumulate is true, this also updates the accumulated price/TWAP state for the token;
+// when accumulate is false, no TWAP/accumulated-price updates are performed.
+func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.PriceTimeRound, accumulate bool) bool {
 	nextRoundID := k.GetNextRoundID(ctx, tokenID)
 	logger := k.Logger(ctx)
 	// This should not happen
@@ -230,15 +233,20 @@ func (k Keeper) AppendPriceTR(ctx sdk.Context, tokenID uint64, priceTR types.Pri
 	k.IncreaseNextRoundID(ctx, tokenID)
 
 	// accumulate the price for TWAP calculation
-	if err := k.accumulatePriceTR(ctx, tokenID, priceTR); err != nil {
-		// this caes should not happen, we just log an error here
-		logger.Error("accumulatePriceTR failed", "tokenID", tokenID, "priceTR", priceTR, "error", err)
+	if accumulate {
+		if err := k.accumulatePriceTR(ctx, tokenID, priceTR); err != nil {
+			// this case should not happen, we just log an error here
+			logger.Error("accumulatePriceTR failed", "tokenID", tokenID, "priceTR", priceTR, "error", err)
+		}
 	}
 	return true
 }
 
-// GrowRoundID Increases roundID with the previous price
-func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price string, roundID uint64) {
+// GrowRoundID increases the roundID using the previously stored price.
+// If accumulate is true, the carried-forward price is appended in a way that
+// updates TWAP/accumulated-price state (via AppendPriceTR); if false, the
+// round is advanced without updating TWAP/accumulated-price state.
+func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64, accumulate bool) (price string, roundID uint64) {
 	storedNextRoundID := k.GetNextRoundID(ctx, tokenID)
 	pTR, _ := k.GetPriceTRLatest(ctx, tokenID)
 	price = pTR.Price
@@ -255,7 +263,7 @@ func (k Keeper) GrowRoundID(ctx sdk.Context, tokenID, nextRoundID uint64) (price
 	}
 	roundID = nextRoundID
 	pTR.RoundID = nextRoundID
-	k.AppendPriceTR(ctx, tokenID, pTR)
+	k.AppendPriceTR(ctx, tokenID, pTR, accumulate)
 	return
 }
 
@@ -341,37 +349,38 @@ func (k Keeper) accumulatePriceTR(ctx sdk.Context, tokenID uint64, priceTR types
 	if !found {
 		return types.ErrAccumulatePrice.Wrapf("roundID %d not found for tokenID %d", prevRoundID, tokenID)
 	}
+	priceUnChanged := prevPrice.Equal(priceTR)
 
 	store := ctx.KVStore(k.storeKey)
 	key := types.PricesAccumulatedKey(tokenID)
 	bz := store.Get(key)
-	var accPrice types.PriceAcc
 
-	if bz == nil {
-		// this is the very first time to set the accumulated price
-		// if the price is equal to the previous round, we need to set the roundID
-		accPrice.StartRoundID = prevRoundID
-		accPrice.LastRoundID = prevRoundID
-		if prevPrice.Equal(priceTR) {
-			accPrice.Price = "0"
-			store.Set(key, k.cdc.MustMarshal(&accPrice))
-			return nil
+	if priceUnChanged {
+		if bz == nil {
+			store.Set(key, k.cdc.MustMarshal(&types.PriceAcc{
+				StartRoundID: prevRoundID,
+				LastRoundID:  prevRoundID - 1,
+				Price:        "0",
+			}))
 		}
-	} else {
-		// if found, unmarshal it
-		k.cdc.MustUnmarshal(bz, &accPrice)
-	}
-	// accumulate the price
-	if prevRoundID < accPrice.LastRoundID || prevPrice.Equal(priceTR) {
-		// we don't report error on these cases, and just skip the accumulation
 		return nil
 	}
-	prevPrice.RoundID++
-	tmp, err := accPrice.ToPriceTR().Accumulate(prevPrice)
+	var accPrice types.PriceAcc
+	if bz == nil {
+		accPrice.StartRoundID = prevRoundID
+		accPrice.LastRoundID = prevRoundID - 1
+		accPrice.Price = "0"
+	} else {
+		k.cdc.MustUnmarshal(bz, &accPrice)
+	}
+	// prevPrice has already been accumulated, just skip
+	if prevRoundID <= accPrice.LastRoundID {
+		return nil
+	}
+	accPrice, err := accPrice.AccumulatePriceTR(prevPrice)
 	if err != nil {
 		return types.ErrAccumulatePrice.Wrapf("failed to accumulate price, err: %v, tokenID: %d, prevPrice: %v, priceTR: %v, accPrice: %v", err, tokenID, prevPrice, priceTR, accPrice)
 	}
-	accPrice = tmp.ToPriceAcc(accPrice.StartRoundID)
 	store.Set(key, k.cdc.MustMarshal(&accPrice))
 	return nil
 }
@@ -380,18 +389,20 @@ func (k Keeper) ResetAccumulatedPrice(ctx sdk.Context, tokenID uint64) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.PricesAccumulatedKey(tokenID)
 	latestPrice, found := k.GetPriceTRLatest(ctx, tokenID)
-	if !found {
+	if !found || latestPrice.RoundID == 0 {
 		return
 	}
 	accPrice := types.PriceAcc{
-		LastRoundID:  latestPrice.RoundID,
 		StartRoundID: latestPrice.RoundID,
+		LastRoundID:  latestPrice.RoundID - 1,
 		Price:        "0",
 		Decimal:      latestPrice.Decimal,
 	}
 	store.Set(key, k.cdc.MustMarshal(&accPrice))
 }
 
+// GetTWAP retrieves the time-weighted average price for the given tokenID from the store.
+// NOTE: Non-numeric token prices (e.g. special tokens) will have no TWAP entry; callers should filter these before querying.
 func (k Keeper) GetTWAP(ctx sdk.Context, tokenID uint64) (types.PriceEpoch, bool) {
 	store := ctx.KVStore(k.storeKey)
 	key := types.PricesTWAPKey(tokenID)
@@ -459,20 +470,19 @@ func (k Keeper) CalculateTWAP(ctx sdk.Context, tokenID uint64, epochNumber int64
 	} else {
 		k.cdc.MustUnmarshal(bz, &twap)
 	}
-	if latestPrice.RoundID > accPrice.LastRoundID {
+	if latestPrice.RoundID > accPrice.LastRoundID+1 {
 		prevPrice, ok := k.GetPriceTRRoundID(ctx, tokenID, latestPrice.RoundID-1)
 		if !ok {
 			store.Set(keyTWAP, k.cdc.MustMarshal(&twapLatestPrice))
 			return twapLatestPrice, types.ErrTWAPFallback.Wrapf("CalculateTWAP failed to get previous price for latestPrice.RoundID-1(%d), tokenID:%d, set twap to the latest price", latestPrice.RoundID-1, tokenID)
 		}
 		// if the latest price roundID is larger than accumulated price roundID, we need to add the latest price to the accumulated price
-		prevPrice.RoundID++
-		tmp, err := accPrice.ToPriceTR().Accumulate(prevPrice)
+		var err error
+		accPrice, err = accPrice.AccumulatePriceTR(prevPrice)
 		if err != nil {
 			store.Set(keyTWAP, k.cdc.MustMarshal(&twapLatestPrice))
 			return twapLatestPrice, types.ErrTWAPFallback.Wrapf("CalculateTWAP failed to accumulate price, err:%v, tokenID:%d, set twap to the latest price", err, tokenID)
 		}
-		accPrice = tmp.ToPriceAcc(accPrice.StartRoundID)
 	}
 	accPriceInt, ok := new(big.Int).SetString(accPrice.Price, 10)
 	if !ok {
