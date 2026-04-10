@@ -20,9 +20,7 @@ import (
 	assetstypes "github.com/imua-xyz/imuachain/x/assets/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 )
 
 var (
@@ -36,7 +34,7 @@ var (
 // registerToken automatically through assets module when precompiled is called
 // slashing for downtime
 // slashing for malicious price
-func (s *E2ETestSuite) TestCreatePrice() {
+func (s *CreatePriceSuite) TestCreatePrice() {
 	kr0 = s.network.Validators[0].ClientCtx.Keyring
 	creator0 = sdk.AccAddress(s.network.Validators[0].PubKey.Address())
 
@@ -68,7 +66,7 @@ func (s *E2ETestSuite) TestCreatePrice() {
 	}
 }
 
-func (s *E2ETestSuite) testCreatePriceLSTAfterDelegationChangePower() {
+func (s *CreatePriceSuite) testCreatePriceLSTAfterDelegationChangePower() {
 	s.moveToAndCheck(80)
 	priceTest1R1 := price2.updateTimestamp()
 	priceTimeDetID1R1 := priceTest1R1.getPriceTimeDetID("9")
@@ -138,7 +136,7 @@ we need more than 2/3 power, so that at least 3 out of 4 validators power should
 
 --- nonce:
 */
-func (s *E2ETestSuite) testCreatePriceLST() {
+func (s *CreatePriceSuite) testCreatePriceLST() {
 	priceTest1R1 := price1.updateTimestamp()
 	priceTimeDetID1R1 := priceTest1R1.getPriceTimeDetID("9")
 	priceSource1R1 := oracletypes.PriceSource{
@@ -177,9 +175,9 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	s.Require().NoError(err)
 
 	// query final price. query state of 11 on height 12
-	_, err = s.network.QueryOracle().LatestPrice(ctxWithHeight(11), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
-	errStatus, _ := status.FromError(err)
-	s.Require().Equal(codes.NotFound, errStatus.Code())
+	priceRes, err := s.network.QueryOracle().LatestPrice(ctxWithHeight(11), &oracletypes.QueryGetLatestPriceRequest{TokenId: 1})
+	s.Require().NoError(err)
+	s.Require().Equal("1", priceRes.Price.Price)
 
 	s.moveToAndCheck(13)
 	// query final price. query state of 12 on height 13
@@ -284,7 +282,7 @@ func (s *E2ETestSuite) testCreatePriceLST() {
 	s.Require().Equal(ret, res.Price)
 }
 
-func (s *E2ETestSuite) testCreatePriceNST() {
+func (s *CreatePriceSuite) testCreatePriceNST() {
 	clientChainID := uint32(101)
 	validatorPubkey := []byte{1}
 	// this is just a fake address
@@ -354,8 +352,9 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 		},
 	}, *resStakerInfo.StakerInfo)
 
-	// new block - 8, send message with rawData piece to complete nst 2nd phase aggregation
 	s.moveToAndCheck(8)
+
+	// send message with rawData piece to complete nst 2nd phase aggregation
 	ps.Prices[0].Price = string(pieces[0])
 	ps.Prices[0].DetID = "0"
 	msg0 = oracletypes.NewMsgCreatePrice2Phase2(creator0.String(), 2, []*oracletypes.PriceSource{&ps}, 7, 1)
@@ -390,7 +389,7 @@ func (s *E2ETestSuite) testCreatePriceNST() {
 	}, resStakerInfo.StakerInfo.BalanceList)
 }
 
-func (s *E2ETestSuite) testSlashing() {
+func (s *CreatePriceSuite) testSlashing() {
 	// validator3 had already missed two rounds
 	// 1. for NST balance change update round 1
 	// 2. for LST round round 3, but rounds had reached to 4 which equals to reportWindow
@@ -452,7 +451,7 @@ func (s *E2ETestSuite) testSlashing() {
 	s.Require().False(resOperator.Jailed)
 }
 
-func (s *E2ETestSuite) testRegisterTokenThroughPrecompile() {
+func (s *CreatePriceSuite) testRegisterTokenThroughPrecompile() {
 	s.moveToAndCheck(2)
 	clientChainID := uint32(101)
 	assetAddr := common.HexToAddress("0xB82381A3fBD3FaFA77B3a7bE693342618240065b")
@@ -473,12 +472,12 @@ func (s *E2ETestSuite) testRegisterTokenThroughPrecompile() {
 	s.Require().Equal(name, res.Params.Tokens[len(res.Params.Tokens)-1].Name)
 }
 
-func (s *E2ETestSuite) moveToAndCheck(height int64) {
+func (s *CreatePriceSuite) moveToAndCheck(height int64) {
 	_, err := s.network.WaitForStateHeightWithTimeout(height, 120*time.Second)
 	s.Require().NoError(err)
 }
 
-func (s *E2ETestSuite) moveNAndCheck(n int64) {
+func (s *CreatePriceSuite) moveNAndCheck(n int64) {
 	for i := int64(0); i < n; i++ {
 		err := s.network.WaitForStateNextBlock()
 		s.Require().NoError(err)

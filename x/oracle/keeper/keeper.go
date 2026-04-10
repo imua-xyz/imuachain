@@ -26,6 +26,8 @@ type (
 		common.KeeperDogfood
 		delegationKeeper types.DelegationKeeper
 		assetsKeeper     types.AssetsKeeper
+		evmKeeper        types.EVMKeeper
+		operatorKeeper   types.OperatorKeeper
 		types.SlashingKeeper
 		*feedermanagement.FeederManager
 		postHandlers               map[int64]common.PostAggregationHandler
@@ -66,6 +68,7 @@ func NewKeeper(
 		KeeperDogfood:              sKeeper,
 		delegationKeeper:           delegationKeeper,
 		assetsKeeper:               assetsKeeper,
+		evmKeeper:                  nil, // set later via SetEVMKeeper
 		authority:                  authority,
 		SlashingKeeper:             slashingKeeper,
 		FeederManager:              feedermanagement.NewFeederManager(nil),
@@ -77,6 +80,16 @@ func NewKeeper(
 	}
 	ret.FeederManager.SetKeeper(&ret)
 	return ret
+}
+
+// SetEVMKeeper wires the EVM keeper after app initialization.
+// This is needed because the EVM keeper is initialized after the Oracle keeper in app wiring.
+func (k *Keeper) SetEVMKeeper(evmKeeper types.EVMKeeper) {
+	k.evmKeeper = evmKeeper
+}
+
+func (k *Keeper) SetOperatorKeeper(opKeeper types.OperatorKeeper) {
+	k.operatorKeeper = opKeeper
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

@@ -14,7 +14,7 @@ import (
 	oracletypes "github.com/imua-xyz/imuachain/x/oracle/types"
 )
 
-func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
+func (s *CreatePriceSuite) testTwoPhaseNST(_ int64) {
 	stakerAddrStrs := s.depositNST(3, 60)
 	// #nosec G115
 	stakerCount := uint32(len(stakerAddrStrs))
@@ -81,7 +81,7 @@ func (s *E2ETestSuite) testTwoPhaseNST(_ int64) {
 	s.Require().Equal(uint64(64), versionInfo.Version)
 }
 
-func (s *E2ETestSuite) testTwoPhaseNSTMalicious(_ uint64) {
+func (s *CreatePriceSuite) testTwoPhaseNSTMalicious(_ uint64) {
 	stakerAddrStrs := s.depositNST(3, 60)
 	// #nosec G115
 	stakerCount := uint32(len(stakerAddrStrs))
@@ -162,7 +162,7 @@ func (s *E2ETestSuite) testTwoPhaseNSTMalicious(_ uint64) {
 }
 
 // return value returns the number of valid stakers that had successfully deposited NST
-func (s *E2ETestSuite) depositNST(start int64, stakerCount int) []string {
+func (s *CreatePriceSuite) depositNST(start int64, stakerCount int) []string {
 	s.moveToAndCheck(start)
 	clientChainID := uint32(101)
 	opAmount := big.NewInt(32)
@@ -192,7 +192,7 @@ func (s *E2ETestSuite) depositNST(start int64, stakerCount int) []string {
 }
 
 // start should be the base block of an nst-feeder round
-func (s *E2ETestSuite) updateNSTBalance(start uint64, version uint64, stakerCount uint32, stakerAddrStrs []string, checkPieceError bool) []*oracletypes.NSTKV {
+func (s *CreatePriceSuite) updateNSTBalance(start uint64, version uint64, stakerCount uint32, stakerAddrStrs []string, checkPieceError bool) []*oracletypes.NSTKV {
 	mt, changes := getNstRootAndPiecesWithParams(version, stakerCount, 32)
 
 	s.sendRawDataRoot(start, mt.RootHash(), mt.LeafCount())
@@ -245,7 +245,7 @@ func (s *E2ETestSuite) updateNSTBalance(start uint64, version uint64, stakerCoun
 	return changes
 }
 
-func (s *E2ETestSuite) sendRawDataRoot(start uint64, root []byte, count uint32) {
+func (s *CreatePriceSuite) sendRawDataRoot(start uint64, root []byte, count uint32) {
 	// #nosec G115
 	startHeight := int64(start)
 	s.moveToAndCheck(startHeight)

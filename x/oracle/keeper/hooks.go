@@ -58,4 +58,8 @@ func (wrapper EpochsHooksWrapper) AfterEpochEnd(ctx sdk.Context, epochIdentifier
 		// Reset the accumulated price for the token feeder no matter if the TWAP was calculated successfully or not.
 		wrapper.keeper.ResetAccumulatedPrice(ctx, tf.TokenID)
 	}
+
+	// Create a validator set checkpoint if the active set has changed.
+	// This allows the BridgeVerifier on client chains to update their validator set.
+	wrapper.keeper.CreateValidatorSetCheckpointIfChanged(ctx)
 }

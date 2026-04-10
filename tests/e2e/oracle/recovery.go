@@ -16,7 +16,7 @@ import (
 //
 //	1{1} means the first block includes one valid quote
 //	1{1-} means the first block includes on invalid quote which is different with the expected final price(detID, price)
-func (s *E2ETestSuite) testRecoveryCases(start int64) {
+func (s *CreatePriceSuite) testRecoveryCases(start int64) {
 	// 1.successfully aggregated,
 	//   1.1 all prices provided are the same(detID, price, decimal)
 	// 1{3}, 2{1}, 3

@@ -132,7 +132,9 @@ func (msg *MsgCreatePrice) ValidateBasic() error {
 			if lPiece == 0 || lPiece > MaxPieceSize {
 				return fmt.Errorf("invalid piece size: %d, maximum: %d", lPiece, MaxPieceSize)
 			}
-			pieceIndex, err := strconv.ParseUint(piece.DetID, 16, 32)
+			// pieceIndex is expected to be encoded in base-10 to match the feeder submission format
+			// and the keeper-side parsing in FeederManager.GetPieceWithProof.
+			pieceIndex, err := strconv.ParseUint(piece.DetID, 10, 32)
 			if err != nil || pieceIndex >= MaxPieceCount {
 				return fmt.Errorf("invalid pieceIndex: %s, maximum: %d", piece.DetID, MaxPieceCount)
 			}
@@ -146,7 +148,8 @@ func (msg *MsgCreatePrice) ValidateBasic() error {
 					return fmt.Errorf("invalid proofHashes: %s, proofIndexes: %s", proofHashes, proofIndexes)
 				}
 				for _, idx := range indexList {
-					_, err := strconv.ParseUint(idx, 16, 32)
+					// proof index list is expected to be encoded in base-10
+					_, err := strconv.ParseUint(idx, 10, 32)
 					if err != nil {
 						return fmt.Errorf("invalid proofIndex: %s", idx)
 					}

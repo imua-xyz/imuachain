@@ -184,6 +184,12 @@ func (n Network) SendPrecompileTxWithNonce(preCompileName precompile, methodName
 	return nonce + 1, nil
 }
 
+// ExpectedOracleGatewayAddress returns the contract address for the first deployment
+// transaction sent from the test EVM private key.
+func ExpectedOracleGatewayAddress() common.Address {
+	return crypto.CreateAddress(callAddr, 0)
+}
+
 // parseABI parses abi from file
 func parseABI(abiPath string) (abi.ABI, error) {
 	f, err := os.Open(abiPath)

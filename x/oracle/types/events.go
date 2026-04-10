@@ -5,6 +5,11 @@ const (
 	EventTypeOracleLiveness     = "oracle_liveness"
 	EventTypeOracleSlash        = "oracle_slash"
 	EventTypeOracleUpdateParams = "oracle_update_params"
+	EventTypeXChainDelivery     = "xchain_delivery"
+	EventTypeXChainBatch        = "xchain_batch"
+	EventTypeOutbound            = "outbound"
+	EventTypeCheckpointCreated   = "checkpoint_created"
+	EventTypeCheckpointFinalized = "checkpoint_finalized"
 
 	AttributeKeyFeederID         = "feeder_id"
 	AttributeKeyTokenID          = "token_id"
@@ -23,13 +28,33 @@ const (
 	AttributeKeyNSTPieceChange   = "nst_piece_Change"
 	AttributeKeyNSTVersionUpdate = "nst_version_update"
 	AttributeKeyNSTFeedVersion   = "nst_feed_version"
-	AttributeKeyValidatorKey     = "validator_key"
-	AttributeKeyMissedRounds     = "missed_rounds"
-	AttributeKeyHeight           = "height"
-	AttributeKeyPower            = "power"
-	AttributeKeyReason           = "reason"
-	AttributeKeyJailed           = "jailed"
-	AttributeKeyBurnedCoins      = "burned_coins"
+	// xchain post-aggregation attributes
+	AttributeKeyXChainSrcChainID = "xchain_src_chain_id"
+	AttributeKeyXChainBatchSeq   = "xchain_batch_seq"
+	AttributeKeyXChainMsgCount   = "xchain_msg_count"
+	AttributeKeyXChainRootHash   = "xchain_root_hash"
+	// xchain budgeted delivery attributes
+	AttributeKeyXChainMsgID        = "xchain_msg_id"
+	AttributeKeyXChainPayloadBytes = "xchain_payload_bytes"
+	AttributeKeyXChainRetryCount   = "xchain_retry_count"
+	// outbound queue attributes
+	AttributeKeyOutboundDstChainID  = "outbound_dst_chain_id"
+	AttributeKeyOutboundSeqNum      = "outbound_seq_num"
+	AttributeKeyOutboundNonce       = "outbound_nonce"
+	AttributeKeyOutboundPayloadBytes = "outbound_payload_bytes"
+
+	// checkpoint attributes
+	AttributeKeyCheckpointNonce    = "checkpoint_nonce"
+	AttributeKeyCheckpointHash     = "checkpoint_hash"
+	AttributeKeyCheckpointSeqRange = "checkpoint_seq_range"
+
+	AttributeKeyValidatorKey       = "validator_key"
+	AttributeKeyMissedRounds       = "missed_rounds"
+	AttributeKeyHeight             = "height"
+	AttributeKeyPower              = "power"
+	AttributeKeyReason             = "reason"
+	AttributeKeyJailed             = "jailed"
+	AttributeKeyBurnedCoins        = "burned_coins"
 
 	AttributeValueTrue                 = "true"
 	AttributeValueSuccess              = "success"

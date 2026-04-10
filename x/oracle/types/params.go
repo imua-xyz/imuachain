@@ -701,6 +701,16 @@ func (p Params) IsNST(tokenID int) bool {
 	return strings.HasPrefix(strings.ToLower(token.AssetID), NSTIDPrefix)
 }
 
+// IsXChain marks oracle tokens used for cross-chain message batches via oracle 2-phases payload.
+// This is intentionally a lightweight convention based on Token.AssetID prefix to avoid proto changes.
+func (p Params) IsXChain(tokenID int) bool {
+	if tokenID >= len(p.Tokens) {
+		return false
+	}
+	token := p.Tokens[tokenID]
+	return strings.HasPrefix(strings.ToLower(token.AssetID), XChainIDPrefix)
+}
+
 func (p Params) IsRule2PhasesByFeederID(feederID uint64) bool {
 	if feederID >= uint64(len(p.TokenFeeders)) {
 		return false

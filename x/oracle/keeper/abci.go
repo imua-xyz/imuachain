@@ -11,15 +11,21 @@ import (
 
 func (k Keeper) BeginBlock(ctx sdk.Context, _ abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
-	if len(k.postHandlers) == 0 {
-		// bond handlers for nst token feeders
-		p := k.GetParams(ctx)
-		// it's safe to iterate over the map, the order of the elements is not important
-		for tfID, tf := range p.TokenFeeders {
-			// #nosec G115 - safe conversion since tokenId is set from slice index
-			if p.IsNST(int(tf.TokenID)) {
-				k.BondPostAggregation(int64(tfID), UpdateNSTBalanceChange)
-			}
+	// Bond handlers for token feeders.
+	// This is kept idempotent so new token feeders (added via params update) can be bonded without relying
+	// on keeper re-initialization.
+	p := k.GetParams(ctx)
+	for tfID, tf := range p.TokenFeeders {
+		if _, exists := k.postHandlers[int64(tfID)]; exists {
+			continue
+		}
+		// #nosec G115 - safe conversion since tokenId is set from slice index
+		if p.IsNST(int(tf.TokenID)) {
+			k.BondPostAggregation(int64(tfID), UpdateNSTBalanceChange)
+		}
+		// #nosec G115 - safe conversion since tokenId is set from slice index
+		if p.IsXChain(int(tf.TokenID)) {
+			k.BondPostAggregation(int64(tfID), UpdateXChainMsgs)
 		}
 	}
 	k.FeederManager.BeginBlock(ctx)

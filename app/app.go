@@ -706,6 +706,11 @@ func NewImuachainApp(
 		app.GetSubspace(evmtypes.ModuleName),
 	)
 
+	// Wire EVM keeper into oracle keeper (oracle-bridge uses EVM to call the Imuachain gateway).
+	app.OracleKeeper.SetEVMKeeper(app.EvmKeeper)
+	// Wire operator keeper for bridge checkpoint signing (EVM addr → validator power mapping).
+	app.OracleKeeper.SetOperatorKeeper(&app.OperatorKeeper)
+
 	// the AVS manager keeper is the AVS registry. this keeper is initialized after the EVM
 	// keeper because it depends on the EVM keeper to set a lookup from codeHash to code,
 	// at genesis.

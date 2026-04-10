@@ -106,8 +106,12 @@ type AggFinalPrice struct {
 type NSTType string
 
 const (
-	NSTTokenPrefix         = "nst"
-	NSTIDPrefix            = "nst_"
+	HexPrefix      = "0x"
+	NSTTokenPrefix = "nst"
+	NSTIDPrefix    = "nst_"
+	// XChainIDPrefix marks oracle tokens used for cross-chain message batches (oracle 2-phases payload).
+	// Token.AssetID should start with this prefix for the oracle keeper to bind the cross-chain post handler.
+	XChainIDPrefix         = "xchain_"
 	ETHChain       NSTType = "eth"
 	SOLChain       NSTType = "sol"
 

@@ -94,6 +94,23 @@ func init() {
 	DefaultGenStateOracle.Params.Slashing.ReportedRoundsWindow = 4
 	// set jailduration of oracle report downtime to 15 seconds for test
 	DefaultGenStateOracle.Params.Slashing.OracleMissJailDuration = 15 * time.Second
+	// set initial prices to avoid zero voting power at epoch end
+	DefaultGenStateOracle.PricesList = []oracletypes.Prices{
+		{
+			TokenID:     1,
+			NextRoundID: 2,
+			PriceList: []*oracletypes.PriceTimeRound{
+				{Price: "1", Decimal: 0, RoundID: 1},
+			},
+		},
+		{
+			TokenID:     2,
+			NextRoundID: 2,
+			PriceList: []*oracletypes.PriceTimeRound{
+				{Price: "1", Decimal: 0, RoundID: 1},
+			},
+		},
+	}
 	switch os.Getenv("TEST_OPTION") {
 	case "nst-malicious":
 		fallthrough
@@ -106,6 +123,56 @@ func init() {
 	//		DefaultGenStateOracle.Params.PieceSizeByte = 32
 	//		DefaultGenStateOracle.Params.TokenFeeders[2].Interval = 25
 	//	}
+}
+
+// DefaultOracleGenesisForE2E returns a fresh default oracle genesis with ETH + NST feeders (same as after init()).
+// Used by initGenFiles when no override is set, so e2e tests get a consistent 3-feeder genesis without reading
+// the possibly mutated DefaultGenStateOracle.
+func DefaultOracleGenesisForE2E() oracletypes.GenesisState {
+	gs := *oracletypes.DefaultGenesis()
+	gs.Params.Chains = append(gs.Params.Chains, &oracletypes.Chain{Name: "Ethereum", Desc: "-"})
+	gs.Params.Tokens = append(gs.Params.Tokens, &oracletypes.Token{
+		Name:            "ETH",
+		ChainID:         1,
+		ContractAddress: "0x",
+		Decimal:         8,
+		Active:          true,
+		AssetID:         fmt.Sprintf("%s,%s", ETHAssetID, NativeAssetID),
+	})
+	gs.Params.TokenFeeders = append(gs.Params.TokenFeeders, &oracletypes.TokenFeeder{
+		TokenID:        1,
+		RuleID:         2,
+		StartRoundID:   1,
+		StartBaseBlock: 10,
+		Interval:       10,
+	})
+	gs.Params.Tokens = append(gs.Params.Tokens, &oracletypes.Token{
+		Name:            "NSTETH",
+		ChainID:         1,
+		ContractAddress: "0x",
+		Decimal:         0,
+		Active:          true,
+		AssetID:         "NST_0x65",
+	})
+	gs.Params.TokenFeeders = append(gs.Params.TokenFeeders, &oracletypes.TokenFeeder{
+		TokenID:        2,
+		RuleID:         3,
+		StartRoundID:   1,
+		StartBaseBlock: 7,
+		Interval:       10,
+	})
+	gs.Params.Slashing.ReportedRoundsWindow = 4
+	gs.Params.Slashing.OracleMissJailDuration = 15 * time.Second
+	gs.PricesList = []oracletypes.Prices{
+		{TokenID: 1, NextRoundID: 1, PriceList: []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 0}}},
+		//		{TokenID: 2, NextRoundID: 2, PriceList: []*oracletypes.PriceTimeRound{{Price: "1", Decimal: 0, RoundID: 1}}},
+	}
+	switch os.Getenv("TEST_OPTION") {
+	case "nst-malicious", "nst":
+		gs.Params.PieceSizeByte = 32
+		gs.Params.TokenFeeders[2].Interval = 25
+	}
+	return gs
 }
 
 func NewTestToken(name, metaInfo, address string, chainID uint64, decimal uint32, amount int64) assetstypes.StakingAssetInfo {

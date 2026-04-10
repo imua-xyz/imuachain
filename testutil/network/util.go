@@ -240,10 +240,13 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	}
 	cfg.GenesisState[delegationtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&delegationGenState)
 
-	// set oracle genesis statse
-	oracleGenState, err := NewGenStateOracle()
-	if err != nil {
-		return err
+	// set oracle genesis state (use override when set so xchain tests use their own genesis).
+	// When using default, build a fresh default (ETH + NST feeders) so no global mutation can affect it.
+	var oracleGenState oracletypes.GenesisState
+	if cfg.OracleGenesisState != nil {
+		oracleGenState = *cfg.OracleGenesisState
+	} else {
+		oracleGenState = DefaultOracleGenesisForE2E()
 	}
 	cfg.GenesisState[oracletypes.ModuleName] = cfg.Codec.MustMarshalJSON(&oracleGenState)
 
@@ -357,16 +360,16 @@ func NewGenStateAssets(operatorAccAddresses []sdk.AccAddress, depositAmount, sta
 // each operator deposited and self staked all assets with: (depsitAmount, stakingAmount)
 // initial price for every asset is 1 USD
 func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []string, commissionRate sdkmath.LegacyDec, chainID string, optedAVSAddresses []string, stakingAmount sdkmath.Int, genStateAssets assetstypes.GenesisState) (operatortypes.GenesisState, error) {
-	// total stakingAmount one operator holds among all assets
+	// Build a fresh genesis so multiple tests in the same process do not append to the same global.
+	genState := operatortypes.GenesisState{}
 	stakingAmount = stakingAmount.Mul(sdkmath.NewInt(int64(len(genStateAssets.Tokens))))
 	if len(operatorAccAddresses) != len(consPubKeys) {
-		return DefaultGenStateOperator, fmt.Errorf("length of operatorAccAddresses %d should be equal to length of consPubKeys %d", len(operatorAccAddresses), len(consPubKeys))
+		return genState, fmt.Errorf("length of operatorAccAddresses %d should be equal to length of consPubKeys %d", len(operatorAccAddresses), len(consPubKeys))
 	}
 	n := len(operatorAccAddresses)
 	totalStakingAmount := stakingAmount.Mul(sdkmath.NewInt(int64(n)))
 	for i, operatorAccAddress := range operatorAccAddresses {
-		// operators
-		DefaultGenStateOperator.Operators = append(DefaultGenStateOperator.Operators, operatortypes.OperatorInfo{
+		genState.Operators = append(genState.Operators, operatortypes.OperatorInfo{
 			OperatorAddr: operatorAccAddress.String(),
 			Description:  stakingtypes.NewDescription(fmt.Sprintf("operator_%d", i), "", "", "", ""),
 			Commission: stakingtypes.Commission{
@@ -377,8 +380,7 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 				},
 			},
 		})
-		// operator_records
-		DefaultGenStateOperator.OperatorRecords = append(DefaultGenStateOperator.OperatorRecords, operatortypes.OperatorConsKeyRecord{
+		genState.OperatorRecords = append(genState.OperatorRecords, operatortypes.OperatorConsKeyRecord{
 			OperatorAddress: operatorAccAddress.String(),
 			Chains: []operatortypes.ChainDetails{
 				{
@@ -387,9 +389,8 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 				},
 			},
 		})
-		// OptStates
 		for _, AVSAddress := range optedAVSAddresses {
-			DefaultGenStateOperator.OptStates = append(DefaultGenStateOperator.OptStates, operatortypes.OptedState{
+			genState.OptStates = append(genState.OptStates, operatortypes.OptedState{
 				Key: operatorAccAddress.String() + "/" + AVSAddress,
 				OptInfo: operatortypes.OptedInfo{
 					OptedInHeight:  1,
@@ -397,10 +398,8 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 					Jailed:         false,
 				},
 			})
-			// OperatorUSDValues
-			// the price unit of assets is 1 not decimal 18
 			stakingValue := stakingAmount.Int64()
-			DefaultGenStateOperator.OperatorUSDValues = append(DefaultGenStateOperator.OperatorUSDValues, operatortypes.OperatorUSDValue{
+			genState.OperatorUSDValues = append(genState.OperatorUSDValues, operatortypes.OperatorUSDValue{
 				Key: AVSAddress + "/" + operatorAccAddress.String(),
 				OptedUSDValue: operatortypes.OperatorOptedUSDValue{
 					SelfUSDValue:   sdkmath.LegacyNewDec(stakingValue),
@@ -410,74 +409,74 @@ func NewGenStateOperator(operatorAccAddresses []sdk.AccAddress, consPubKeys []st
 			})
 		}
 	}
-	// AVSUSDValues
 	for _, AVSAddress := range optedAVSAddresses {
-		DefaultGenStateOperator.AVSUSDValues = append(DefaultGenStateOperator.AVSUSDValues, operatortypes.AVSUSDValue{
+		genState.AVSUSDValues = append(genState.AVSUSDValues, operatortypes.AVSUSDValue{
 			AVSAddr: AVSAddress,
 			Value: operatortypes.DecValueField{
-				// the price unit of assets is 1 not decimal 18
 				Amount: sdkmath.LegacyNewDec(totalStakingAmount.Int64()),
 			},
 		})
 	}
-	return DefaultGenStateOperator, nil
+	return genState, nil
 }
 
-// NewGenStateDogfood generates dogfood genesis state from default
-// stakingAmount is the amount each operator have for every single asset defined in assets module, so for a single operator the total stakingAmount they have is stakingAmount*count(assets)
-// assets genesis state is required as input argument to provide assets information. It should be called with NewGenStateAssets to update default assets genesis state for test
+// NewGenStateDogfood generates dogfood genesis state from default.
+// Builds a fresh genesis so multiple tests in the same process do not append to the same global.
 func NewGenStateDogfood(consPubKeys []string, stakingAmount sdkmath.Int, genStateAssets assetstypes.GenesisState) (dogfoodtypes.GenesisState, error) {
 	power := stakingAmount.Mul(sdkmath.NewInt(int64(len(genStateAssets.Tokens)))).Int64()
-	DefaultGenStateDogfood.Params.EpochIdentifier = "minute"
-	DefaultGenStateDogfood.Params.EpochsUntilUnbonded = 5
-	DefaultGenStateDogfood.Params.MinSelfDelegation = sdkmath.NewInt(100)
-	assetIDs := make(map[string]bool)
-	for _, assetID := range DefaultGenStateDogfood.Params.AssetIDs {
-		assetIDs[assetID] = true
+	genState := *dogfoodtypes.DefaultGenesis()
+	genState.Params.EpochIdentifier = "minute"
+	genState.Params.EpochsUntilUnbonded = 5
+	genState.Params.MinSelfDelegation = sdkmath.NewInt(100)
+	assetIDSet := make(map[string]bool)
+	for _, assetID := range genState.Params.AssetIDs {
+		assetIDSet[assetID] = true
 	}
 	for _, asset := range genStateAssets.Tokens {
 		_, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.AssetBasicInfo.LayerZeroChainID, "", asset.AssetBasicInfo.Address)
-		if assetIDs[assetID] {
-			continue
+		if !assetIDSet[assetID] {
+			genState.Params.AssetIDs = append(genState.Params.AssetIDs, assetID)
+			assetIDSet[assetID] = true
 		}
-		DefaultGenStateDogfood.Params.AssetIDs = append(DefaultGenStateDogfood.Params.AssetIDs, assetID)
 	}
 	for _, consPubKey := range consPubKeys {
-		DefaultGenStateDogfood.ValSet = append(DefaultGenStateDogfood.ValSet, dogfoodtypes.GenesisValidator{
+		genState.ValSet = append(genState.ValSet, dogfoodtypes.GenesisValidator{
 			PublicKey: consPubKey,
 			Power:     power,
 		})
 	}
-	DefaultGenStateDogfood.LastTotalPower = sdkmath.NewInt(power * int64(len(consPubKeys)))
-	return DefaultGenStateDogfood, nil
+	genState.LastTotalPower = sdkmath.NewInt(power * int64(len(consPubKeys)))
+	return genState, nil
 }
 
 func NewGenStateDelegation(operatorAccAddresses []sdk.AccAddress, stakingAmount sdkmath.Int, genStateAssets assetstypes.GenesisState) (delegationtypes.GenesisState, error) {
+	// Build a fresh genesis so multiple tests in the same process do not append to the same global.
+	genState := delegationtypes.GenesisState{}
 	for _, operator := range operatorAccAddresses {
 		stakerIDsLinked := make(map[string]bool)
 		for _, asset := range genStateAssets.Tokens {
 			stakerID, assetID := assetstypes.GetStakerIDAndAssetIDFromStr(asset.AssetBasicInfo.LayerZeroChainID, hexutil.Encode(operator), asset.AssetBasicInfo.Address)
 			if !stakerIDsLinked[stakerID] {
-				DefaultGenStateDelegation.Associations = append(DefaultGenStateDelegation.Associations, delegationtypes.StakerToOperator{
+				genState.Associations = append(genState.Associations, delegationtypes.StakerToOperator{
 					StakerId: stakerID,
 					Operator: operator.String(),
 				})
 				stakerIDsLinked[stakerID] = true
 			}
-			DefaultGenStateDelegation.DelegationStates = append(DefaultGenStateDelegation.DelegationStates, delegationtypes.DelegationStates{
+			genState.DelegationStates = append(genState.DelegationStates, delegationtypes.DelegationStates{
 				Key: stakerID + "/" + assetID + "/" + operator.String(),
 				States: delegationtypes.DelegationAmounts{
 					UndelegatableShare:        sdkmath.LegacyNewDecFromInt(stakingAmount),
 					PendingUndelegationAmount: sdkmath.ZeroInt(),
 				},
 			})
-			DefaultGenStateDelegation.StakersByOperator = append(
-				DefaultGenStateDelegation.StakersByOperator,
+			genState.StakersByOperator = append(
+				genState.StakersByOperator,
 				string(utils.GetJoinedStoreKey(operator.String(), assetID, stakerID)),
 			)
 		}
 	}
-	return DefaultGenStateDelegation, nil
+	return genState, nil
 }
 
 func NewGenStateOracle() (oracletypes.GenesisState, error) {
