@@ -72,9 +72,8 @@ func (k *Keeper) MarkSlashVetoed(ctx sdk.Context, operatorAddr, avsAddr, slashID
 	return nil
 }
 
-// GetOperatorSlashInfo This is a function to retrieve the slash info related to an operator
-// Now this function hasn't been called. In the future, it might be called by the grpc query.
-// Additionally, it might be used when implementing the veto function
+// GetOperatorSlashInfo retrieves the slash info for the given operator, AVS, and slash ID.
+// It is called by VetoSlash and may also be exposed via a gRPC query in the future.
 func (k *Keeper) GetOperatorSlashInfo(ctx sdk.Context, avsAddr, operatorAddr, slashID string) (changeState *operatortypes.OperatorSlashInfo, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), operatortypes.KeyPrefixOperatorSlashInfo)
 	slashInfoKey := utils.GetJoinedStoreKey(operatorAddr, strings.ToLower(avsAddr), slashID)

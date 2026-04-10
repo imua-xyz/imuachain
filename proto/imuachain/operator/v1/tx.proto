@@ -229,7 +229,7 @@ message StakerUndelegatableSharePerAVS {
 // the staker when the slash occurs.
 // This snapshot is used for slash veto scenarios to calculate the slashed amount of each related staker
 // along with SlashFromAssetPool.
-// slashedAmount = share * SlashFromAssetPool.total_amount / SlashFromAssetPool.snapshot_total_share
+// slashedAmount = share * SlashFromAssetPool.slash_amount / SlashFromAssetPool.snapshot_total_share
 // The slashID, assetID and stakerID are implicit within the store key.
 message StakerUndelegatableSharesSnapshot {
   // staking_undelegatable_share is the undelegatable share of the staking asset when the slash occurs.
@@ -249,11 +249,13 @@ message StakerUndelegatableSharesSnapshot {
 message SlashFromAssetPool {
   // asset_id is the asset id.
   string asset_id = 1 [(gogoproto.customname) = "AssetID"];
-  // total_amount is the total amount of the slashed asset.
-  string total_amount = 2 [
+  // slash_amount is the token amount removed from the operator asset pool by this slash
+  // (not the pre-slash pool total).
+  string slash_amount = 2 [
     (cosmos_proto.scalar) = "cosmos.Int",
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Int",
-    (gogoproto.nullable) = false
+    (gogoproto.nullable) = false,
+    (gogoproto.customname) = "SlashAmount"
   ];
   // snapshot_total_share is the total share of the operator asset pool at the time of slash execution.
   // This snapshot is used for slash veto scenarios to restore the state before the slash was applied.

@@ -331,7 +331,7 @@ func (k Keeper) HandleOperatorSlashEvent(ctx sdk.Context, operator sdk.AccAddres
 				// because the rewards being processed are from epochs prior to the slash.
 				// The current delegation amount is after the slash, so we add back the slashed amount.
 				preDelegationAmount = feedistributiontypes.ScaleIntByDecimals(
-					curDelegationAmount.Add(slashAsset.TotalAmount), assetDecimal)
+					curDelegationAmount.Add(slashAsset.SlashAmount), assetDecimal)
 			}
 			// For a new operator, it will be initialized when rewards are first allocated to it.
 			// Therefore, if a slash occurs during its first active epoch, it might not have been initialized yet.

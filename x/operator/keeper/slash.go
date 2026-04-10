@@ -147,7 +147,7 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 
 		executionInfo.SlashAssetsPool = append(executionInfo.SlashAssetsPool, types.SlashFromAssetPool{
 			AssetID:            assetID,
-			TotalAmount:        slashAmount,
+			SlashAmount:        slashAmount,
 			SnapshotTotalShare: state.TotalShare,
 		})
 		// store the slashed delegation share snapshot for slash veto
@@ -450,7 +450,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 		opFunc := func(stakerID string, shares *types.StakerUndelegatableSharesSnapshot) (bool, error) {
 			if shares.StakingUndelegatableShare.IsPositive() {
 				// calculate the slashed amount according to the snapshot share.
-				slashedStakingAmount, err := delegationkeeper.TokensFromShares(shares.StakingUndelegatableShare, slashFromAssetPool.SnapshotTotalShare, slashFromAssetPool.TotalAmount)
+				slashedStakingAmount, err := delegationkeeper.TokensFromShares(shares.StakingUndelegatableShare, slashFromAssetPool.SnapshotTotalShare, slashFromAssetPool.SlashAmount)
 				if err != nil {
 					return true, err
 				}
@@ -485,7 +485,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 			}
 			for _, rewardUndelegatableSharePerAVS := range shares.RewardUndelegatableShareBreakdown {
 				// calculate the slashed amount according to the snapshot share.
-				slashedRewardAmount, err := delegationkeeper.TokensFromShares(rewardUndelegatableSharePerAVS.RewardUndelegatableShare, slashFromAssetPool.SnapshotTotalShare, slashFromAssetPool.TotalAmount)
+				slashedRewardAmount, err := delegationkeeper.TokensFromShares(rewardUndelegatableSharePerAVS.RewardUndelegatableShare, slashFromAssetPool.SnapshotTotalShare, slashFromAssetPool.SlashAmount)
 				if err != nil {
 					return true, err
 				}

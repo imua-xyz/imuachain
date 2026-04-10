@@ -1550,7 +1550,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 						SlashAssetsPool: []operatortypes.SlashFromAssetPool{
 							{
 								AssetID:            assetstype.ImuachainAssetID,
-								TotalAmount:        slashedAmountFromAssetPool,
+								SlashAmount:        slashedAmountFromAssetPool,
 								SnapshotTotalShare: sdk.NewDecFromInt(feedistributiontypes.UnscaleDecToInt(operatorInitialPower, suite.Assets[1].Decimals)),
 							},
 						},
@@ -1778,7 +1778,7 @@ func (suite *KeeperTestSuite) TestRewardsCompounding() {
 				suite.App.OperatorKeeper.VetoSlash(suite.Ctx, suite.DogfoodAVSAddr, suite.testOperators[0].String(), slashID, "veto slash test")
 
 				// check the claimed rewards of the related staker
-				slashedRewardFromDelegation, err := delegationkeeper.TokensFromShares(delegationInfoBeforeSlash.RewardUndelegatableShare, slashInfo.ExecutionInfo.SlashAssetsPool[0].SnapshotTotalShare, slashInfo.ExecutionInfo.SlashAssetsPool[0].TotalAmount)
+				slashedRewardFromDelegation, err := delegationkeeper.TokensFromShares(delegationInfoBeforeSlash.RewardUndelegatableShare, slashInfo.ExecutionInfo.SlashAssetsPool[0].SnapshotTotalShare, slashInfo.ExecutionInfo.SlashAssetsPool[0].SlashAmount)
 				suite.Require().NoError(err)
 				avsRewardInfo, err := suite.App.DistrKeeper.GetAVSRewardAsset(suite.Ctx, suite.DogfoodAVSAddr, assetstype.ImuachainAssetID)
 				suite.Require().NoError(err)

@@ -97,7 +97,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	suite.NotEmpty(slashInfo.ExecutionInfo.SlashAssetsPool)
 	suite.Equal(types.SlashFromAssetPool{
 		AssetID:            suite.assetID,
-		TotalAmount:        newSlashProportion.MulInt(delegationRemaining).TruncateInt(),
+		SlashAmount:        newSlashProportion.MulInt(delegationRemaining).TruncateInt(),
 		SnapshotTotalShare: delegationRemaining.ToLegacyDec(),
 	}, slashInfo.ExecutionInfo.SlashAssetsPool[0])
 	suite.Equal(undelegationFilterHeight, slashInfo.ExecutionInfo.UndelegationFilterHeight)
@@ -105,7 +105,7 @@ func (suite *OperatorTestSuite) TestSlashWithInfractionReason() {
 	// check the assets state of undelegation and assets pool
 	assetsInfo, err := suite.App.AssetsKeeper.GetOperatorSpecifiedAssetInfo(suite.Ctx, suite.operatorAddr, suite.assetID)
 	suite.NoError(err)
-	suite.Equal(delegationRemaining.Sub(slashInfo.ExecutionInfo.SlashAssetsPool[0].TotalAmount), assetsInfo.TotalAmount)
+	suite.Equal(delegationRemaining.Sub(slashInfo.ExecutionInfo.SlashAssetsPool[0].SlashAmount), assetsInfo.TotalAmount)
 
 	undelegations, err := suite.App.DelegationKeeper.GetStakerUndelegationRecords(suite.Ctx, suite.stakerID, suite.assetID)
 	suite.NoError(err)
@@ -203,7 +203,7 @@ func (suite *OperatorTestSuite) TestVetoSlash() {
 	suite.Require().Equal(1, len(slashInfo.ExecutionInfo.SlashAssetsPool))
 	suite.Require().Equal(types.SlashFromAssetPool{
 		AssetID:            suite.AssetIDs[0],
-		TotalAmount:        slashedAmountFromAssetsPool,
+		SlashAmount:        slashedAmountFromAssetsPool,
 		SnapshotTotalShare: sdk.NewDecFromInt(assetPoolAmountAfterUndelegation),
 	}, slashInfo.ExecutionInfo.SlashAssetsPool[0])
 

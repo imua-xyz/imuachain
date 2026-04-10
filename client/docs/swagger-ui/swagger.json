@@ -26786,9 +26786,9 @@
                                       "type": "string",
                                       "description": "asset_id is the asset id."
                                     },
-                                    "total_amount": {
+                                    "slash_amount": {
                                       "type": "string",
-                                      "description": "total_amount is the total amount of the slashed asset."
+                                      "description": "slash_amount is the token amount removed from the operator asset pool by this slash\n(not the pre-slash pool total)."
                                     },
                                     "snapshot_total_share": {
                                       "type": "string",
@@ -53110,9 +53110,9 @@
                     "type": "string",
                     "description": "asset_id is the asset id."
                   },
-                  "total_amount": {
+                  "slash_amount": {
                     "type": "string",
-                    "description": "total_amount is the total amount of the slashed asset."
+                    "description": "slash_amount is the token amount removed from the operator asset pool by this slash\n(not the pre-slash pool total)."
                   },
                   "snapshot_total_share": {
                     "type": "string",
@@ -53324,9 +53324,9 @@
                         "type": "string",
                         "description": "asset_id is the asset id."
                       },
-                      "total_amount": {
+                      "slash_amount": {
                         "type": "string",
-                        "description": "total_amount is the total amount of the slashed asset."
+                        "description": "slash_amount is the token amount removed from the operator asset pool by this slash\n(not the pre-slash pool total)."
                       },
                       "snapshot_total_share": {
                         "type": "string",
@@ -53882,9 +53882,9 @@
                               "type": "string",
                               "description": "asset_id is the asset id."
                             },
-                            "total_amount": {
+                            "slash_amount": {
                               "type": "string",
-                              "description": "total_amount is the total amount of the slashed asset."
+                              "description": "slash_amount is the token amount removed from the operator asset pool by this slash\n(not the pre-slash pool total)."
                             },
                             "snapshot_total_share": {
                               "type": "string",
@@ -54516,9 +54516,9 @@
                 "type": "string",
                 "description": "asset_id is the asset id."
               },
-              "total_amount": {
+              "slash_amount": {
                 "type": "string",
-                "description": "total_amount is the total amount of the slashed asset."
+                "description": "slash_amount is the token amount removed from the operator asset pool by this slash\n(not the pre-slash pool total)."
               },
               "snapshot_total_share": {
                 "type": "string",
@@ -54623,9 +54623,9 @@
           "type": "string",
           "description": "asset_id is the asset id."
         },
-        "total_amount": {
+        "slash_amount": {
           "type": "string",
-          "description": "total_amount is the total amount of the slashed asset."
+          "description": "slash_amount is the token amount removed from the operator asset pool by this slash\n(not the pre-slash pool total)."
         },
         "snapshot_total_share": {
           "type": "string",
