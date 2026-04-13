@@ -364,7 +364,7 @@ func (gs GenesisState) ValidateSlashStates(operators, avs map[string]struct{}) e
 		}
 		if slash.Info.EventHeight > slash.Info.SubmittedHeight {
 			return ErrInvalidGenesisData.Wrapf(
-				"ValidateSlashStates: the submitted height shouldn't be greater than the event height for a slashing record, %+v",
+				"ValidateSlashStates: the event height must not exceed the submitted height for a slashing record, %+v",
 				slash,
 			)
 		}
