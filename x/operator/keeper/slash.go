@@ -406,12 +406,17 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 	if slashInfo.IsVetoed {
 		return types.ErrSlashAlreadyVetoed.Wrapf("slash already vetoed: %s", slashID)
 	}
+
+	// CacheContext ensures all veto mutations commit atomically; otherwise a failure
+	// after partial refunds could allow a second veto attempt to double-refund.
+	cc, writeFunc := ctx.CacheContext()
+
 	// veto the slashed amounts from pending undelegations.
 	for _, slashFromUndelegation := range slashInfo.ExecutionInfo.SlashUndelegations {
 		if !slashFromUndelegation.RewardAsset {
 			if slashFromUndelegation.AssetID != assetstype.ImuachainAssetID {
 				// return the slashed amount to the withdrawable amount of staking asset.
-				_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, slashFromUndelegation.StakerID, slashFromUndelegation.AssetID, assetstype.DeltaStakerSingleAsset{
+				_, err = k.assetsKeeper.UpdateStakerAssetState(cc, slashFromUndelegation.StakerID, slashFromUndelegation.AssetID, assetstype.DeltaStakerSingleAsset{
 					WithdrawableAmount: slashFromUndelegation.Amount,
 				})
 				if err != nil {
@@ -429,7 +434,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 				}
 				stakerAddr := sdk.AccAddress(stakerAddrBytes)
 				if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
-					ctx, delegationtype.DelegatedPoolName, stakerAddr,
+					cc, delegationtype.DelegatedPoolName, stakerAddr,
 					sdk.NewCoins(
 						sdk.NewCoin(assetstype.ImuachainAssetDenom, slashFromUndelegation.Amount),
 					),
@@ -439,7 +444,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 			}
 		} else {
 			// return the slashed amount to the withdrawable amount of claimed rewards.
-			err = k.distributionKeeper.VetoSlashRewardUndelegation(ctx, slashFromUndelegation.StakerID, slashFromUndelegation.AssetID, slashFromUndelegation.SlashRewardAmountPerAvs)
+			err = k.distributionKeeper.VetoSlashRewardUndelegation(cc, slashFromUndelegation.StakerID, slashFromUndelegation.AssetID, slashFromUndelegation.SlashRewardAmountPerAvs)
 			if err != nil {
 				return err
 			}
@@ -456,7 +461,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 				}
 				if slashFromAssetPool.AssetID != assetstype.ImuachainAssetID {
 					// return the slashed amount to the withdrawable amount of staking asset.
-					_, err = k.assetsKeeper.UpdateStakerAssetState(ctx, stakerID, slashFromAssetPool.AssetID, assetstype.DeltaStakerSingleAsset{
+					_, err = k.assetsKeeper.UpdateStakerAssetState(cc, stakerID, slashFromAssetPool.AssetID, assetstype.DeltaStakerSingleAsset{
 						WithdrawableAmount: slashedStakingAmount,
 					})
 					if err != nil {
@@ -474,7 +479,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 					}
 					stakerAddr := sdk.AccAddress(stakerAddrBytes)
 					if err := k.bankKeeper.UndelegateCoinsFromModuleToAccount(
-						ctx, delegationtype.DelegatedPoolName, stakerAddr,
+						cc, delegationtype.DelegatedPoolName, stakerAddr,
 						sdk.NewCoins(
 							sdk.NewCoin(assetstype.ImuachainAssetDenom, slashedStakingAmount),
 						),
@@ -494,7 +499,7 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 				// Alternatively, we could return it to the outstanding rewards if we want the
 				// returned rewards to be automatically redelegated in the future.
 				err = k.distributionKeeper.VetoSlashRewardFromDelegation(
-					ctx, stakerID, slashFromAssetPool.AssetID,
+					cc, stakerID, slashFromAssetPool.AssetID,
 					rewardUndelegatableSharePerAVS.AVSAddress, slashedRewardAmount)
 				if err != nil {
 					return true, err
@@ -502,26 +507,26 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 			}
 			return false, nil
 		}
-		err = k.IterateSlashStakerShareSnapshot(ctx, slashID, slashFromAssetPool.AssetID, opFunc)
+		err = k.IterateSlashStakerShareSnapshot(cc, slashID, slashFromAssetPool.AssetID, opFunc)
 		if err != nil {
 			return err
 		}
-		k.DeleteSlashStakerShareSnapshot(ctx, slashID, slashFromAssetPool.AssetID)
+		k.DeleteSlashStakerShareSnapshot(cc, slashID, slashFromAssetPool.AssetID)
 	}
 
 	// veto the slashed amounts from operator unclaimed rewards.
-	err = k.distributionKeeper.VetoSlashUnclaimedRewards(ctx, operatorAddr, slashInfo.ExecutionInfo.SlashUnclaimedRewards)
+	err = k.distributionKeeper.VetoSlashUnclaimedRewards(cc, operatorAddr, slashInfo.ExecutionInfo.SlashUnclaimedRewards)
 	if err != nil {
 		return err
 	}
 
 	slashInfo.IsVetoed = true
 	slashInfo.VetoReason = vetoReason
-	err = k.MarkSlashVetoed(ctx, operatorAddr, avsAddr, slashID, *slashInfo)
+	err = k.MarkSlashVetoed(cc, operatorAddr, avsAddr, slashID, *slashInfo)
 	if err != nil {
 		return err
 	}
-	ctx.EventManager().EmitEvent(
+	cc.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeSlashVetoed,
 			sdk.NewAttribute(types.AttributeKeyOperator, operatorAddr),
@@ -529,5 +534,6 @@ func (k Keeper) VetoSlash(ctx sdk.Context, avsAddr, operatorAddr, slashID, vetoR
 			sdk.NewAttribute(types.AttributeKeySlashID, slashID),
 		),
 	)
+	writeFunc()
 	return nil
 }
