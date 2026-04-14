@@ -108,6 +108,7 @@ type NSTType string
 const (
 	NSTTokenPrefix         = "nst"
 	NSTIDPrefix            = "nst_"
+	XChainIDPrefix         = "xchain_"
 	ETHChain       NSTType = "eth"
 	SOLChain       NSTType = "sol"
 
