@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,7 +32,7 @@ func (msg *MsgSignCheckpoint) GetSignBytes() []byte {
 
 func (msg *MsgSignCheckpoint) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.ValidatorAddress); err != nil {
-		return sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, msg.ValidatorAddress)
+		return errorsmod.Wrap(sdkerrors.ErrInvalidAddress, msg.ValidatorAddress)
 	}
 	if msg.DstChainId == 0 {
 		return fmt.Errorf("dst_chain_id must be > 0")

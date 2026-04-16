@@ -160,7 +160,7 @@ func (k Keeper) EnqueueOutboundForTest(ctx sdk.Context, msg OutboundMsg) error {
 
 // parseAndEnqueueOutbound parses EVM logs from a gateway ApplyMessage call and
 // enqueues any OutboundResponse or OutboundMessage events as outbound messages.
-func (k Keeper) parseAndEnqueueOutbound(ctx sdk.Context, logs []*evmtypes.Log, srcChainID uint64) {
+func (k Keeper) parseAndEnqueueOutbound(ctx sdk.Context, logs []*evmtypes.Log) {
 	for _, log := range logs {
 		if len(log.Topics) == 0 {
 			continue
@@ -169,7 +169,7 @@ func (k Keeper) parseAndEnqueueOutbound(ctx sdk.Context, logs []*evmtypes.Log, s
 
 		switch topicHash {
 		case outboundResponseEventID:
-			k.handleOutboundResponseLog(ctx, log, srcChainID)
+			k.handleOutboundResponseLog(ctx, log)
 		case outboundMessageEventID:
 			k.handleOutboundMessageLog(ctx, log)
 		}
@@ -179,7 +179,7 @@ func (k Keeper) parseAndEnqueueOutbound(ctx sdk.Context, logs []*evmtypes.Log, s
 // handleOutboundResponseLog parses: OutboundResponse(uint32 indexed dstChainId, uint64 indexed requestNonce, bytes payload)
 // Topics: [eventSig, dstChainId, requestNonce]
 // Data: ABI-encoded (bytes payload)
-func (k Keeper) handleOutboundResponseLog(ctx sdk.Context, log *evmtypes.Log, srcChainID uint64) {
+func (k Keeper) handleOutboundResponseLog(ctx sdk.Context, log *evmtypes.Log) {
 	if len(log.Topics) < 3 {
 		return
 	}
@@ -275,4 +275,3 @@ func decodeABIBytes(data []byte) ([]byte, error) {
 	}
 	return b, nil
 }
-

@@ -267,7 +267,7 @@ func (k Keeper) GetMinimalCheckpointSignatures(ctx sdk.Context, dstChainID, nonc
 	})
 
 	// Pick just enough to exceed 2/3
-	var selected []types.CheckpointSignature
+	selected := make([]types.CheckpointSignature, 0, len(all))
 	var accumulated int64
 	for _, sig := range all {
 		selected = append(selected, sig)
@@ -304,8 +304,10 @@ func (k Keeper) setCheckpointSignedPower(ctx sdk.Context, dstChainID, nonce uint
 // Returns 0 if the dogfood keeper is not wired (e.g., in unit tests).
 func (k Keeper) getTotalValidatorPower(ctx sdk.Context) int64 {
 	defer func() {
-		// Protect against nil dogfood keeper in unit tests
-		recover() //nolint:errcheck
+		if r := recover(); r != nil {
+			// Protects against nil dogfood keeper in unit tests.
+			ctx.Logger().Debug("getTotalValidatorPower recovered from panic", "error", r)
+		}
 	}()
 	validators := k.GetAllImuachainValidators(ctx)
 	var total int64
@@ -332,8 +334,8 @@ func (k Keeper) CreateValidatorSetCheckpointIfChanged(ctx sdk.Context) {
 	}
 
 	// Build current valset
-	var addrs []common.Address
-	var powers []int64
+	addrs := make([]common.Address, 0, len(validators))
+	powers := make([]int64, 0, len(validators))
 	var totalPower int64
 	for _, v := range validators {
 		if v.Power <= 0 {

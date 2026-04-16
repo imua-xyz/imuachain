@@ -7,10 +7,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
-	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/vm"
 	evmtypes "github.com/evmos/evmos/v16/x/evm/types"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

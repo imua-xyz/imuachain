@@ -51,11 +51,16 @@ message MsgCreatePrice {
   // Optional: piggybacked checkpoint signature (avoids separate MsgSignCheckpoint tx).
   // If checkpoint_dst_chain_id > 0, the checkpoint signature fields are processed.
   uint64 checkpoint_dst_chain_id = 7;
+  // checkpoint_nonce is the outbound checkpoint nonce being signed.
   uint64 checkpoint_nonce = 8;
-  string checkpoint_evm_address = 9;  // 40-char hex, no 0x prefix
+  // checkpoint_evm_address is the 40-char hex EVM address (no 0x prefix) of the signing validator.
+  string checkpoint_evm_address = 9;
+  // checkpoint_v is the ECDSA signature recovery id (27 or 28).
   uint32 checkpoint_v = 10;
-  bytes checkpoint_r = 11;            // 32 bytes
-  bytes checkpoint_s = 12;            // 32 bytes
+  // checkpoint_r is the ECDSA signature r component (32 bytes).
+  bytes checkpoint_r = 11;
+  // checkpoint_s is the ECDSA signature s component (32 bytes).
+  bytes checkpoint_s = 12;
 }
 
 // MsgCreatePriceResponse

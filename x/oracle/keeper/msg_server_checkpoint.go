@@ -22,10 +22,7 @@ func (ms msgServer) SignCheckpoint(goCtx context.Context, msg *types.MsgSignChec
 	}
 
 	evmAddr := msg.EVMAddress()
-	validatorPower, err := ms.resolveValidatorPower(ctx, evmAddr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve validator power for %s: %w", evmAddr.Hex(), err)
-	}
+	validatorPower := ms.resolveValidatorPower(ctx, evmAddr)
 	if validatorPower <= 0 {
 		return nil, fmt.Errorf("signer %s is not an active validator or has zero power", evmAddr.Hex())
 	}
@@ -52,7 +49,7 @@ func (ms msgServer) SignCheckpoint(goCtx context.Context, msg *types.MsgSignChec
 // Test fallback (no operator keeper):
 //
 //	Iterate active validators, return average power.
-func (ms msgServer) resolveValidatorPower(ctx sdk.Context, evmAddr common.Address) (int64, error) {
+func (ms msgServer) resolveValidatorPower(ctx sdk.Context, evmAddr common.Address) int64 {
 	accAddr := sdk.AccAddress(evmAddr.Bytes())
 
 	// Production path: use operator keeper to resolve consensus key → validator power.
@@ -63,10 +60,10 @@ func (ms msgServer) resolveValidatorPower(ctx sdk.Context, evmAddr common.Addres
 			// Operator exists but key lookup failed (e.g. not registered for this chain).
 			// Log and fall through to return 0.
 			ctx.Logger().Debug("operator cons key lookup failed", "addr", evmAddr.Hex(), "err", err)
-			return 0, nil
+			return 0
 		}
 		if !found {
-			return 0, nil
+			return 0
 		}
 
 		consAddr := wrappedKey.ToConsAddr()
@@ -74,13 +71,13 @@ func (ms msgServer) resolveValidatorPower(ctx sdk.Context, evmAddr common.Addres
 		// Direct lookup from dogfood validator set by consensus address.
 		validator, found := ms.getImuachainValidatorByConsAddr(ctx, consAddr)
 		if !found {
-			return 0, nil
+			return 0
 		}
-		return validator.Power, nil
+		return validator.Power
 	}
 
 	// Fallback for unit tests: return average power of active validators.
-	return ms.fallbackAveragePower(ctx), nil
+	return ms.fallbackAveragePower(ctx)
 }
 
 // GetImuachainValidator looks up a validator by consensus address via the dogfood keeper.
@@ -91,7 +88,11 @@ type imuachainValidatorInfo struct {
 }
 
 func (ms msgServer) getImuachainValidatorByConsAddr(ctx sdk.Context, consAddr sdk.ConsAddress) (imuachainValidatorInfo, bool) {
-	defer func() { recover() }() //nolint:errcheck
+	defer func() {
+		if r := recover(); r != nil {
+			ctx.Logger().Debug("getImuachainValidatorByConsAddr recovered from panic", "error", r)
+		}
+	}()
 	validators := ms.GetAllImuachainValidators(ctx)
 	for _, v := range validators {
 		if sdk.ConsAddress(v.Address).Equals(consAddr) {
@@ -102,7 +103,11 @@ func (ms msgServer) getImuachainValidatorByConsAddr(ctx sdk.Context, consAddr sd
 }
 
 func (ms msgServer) fallbackAveragePower(ctx sdk.Context) int64 {
-	defer func() { recover() }() //nolint:errcheck
+	defer func() {
+		if r := recover(); r != nil {
+			ctx.Logger().Debug("fallbackAveragePower recovered from panic", "error", r)
+		}
+	}()
 	validators := ms.GetAllImuachainValidators(ctx)
 	if len(validators) == 0 {
 		return 0

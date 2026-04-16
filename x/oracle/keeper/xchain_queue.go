@@ -340,7 +340,7 @@ func (k Keeper) deliverXChainToGateway(ctx sdk.Context, srcChainID, batchSeq uin
 	// Parse outbound events (OutboundResponse / OutboundMessage) from EVM logs
 	// and enqueue them for relay to the destination client chain.
 	if rsp != nil && len(rsp.Logs) > 0 {
-		k.parseAndEnqueueOutbound(ctx, rsp.Logs, srcChainID)
+		k.parseAndEnqueueOutbound(ctx, rsp.Logs)
 	}
 
 	// Observability: emit event on successful delivery (payload bytes only).

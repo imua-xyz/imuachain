@@ -710,6 +710,9 @@ func NewImuachainApp(
 	app.OracleKeeper.SetEVMKeeper(app.EvmKeeper)
 	// Wire operator keeper for bridge checkpoint signing (EVM addr → validator power mapping).
 	app.OracleKeeper.SetOperatorKeeper(&app.OperatorKeeper)
+	// Refresh the mempool's oracle keeper snapshot after the above late-dependency wiring
+	// so the mempool sees the EVM/operator keepers on the oracle keeper.
+	*oKeeper = app.OracleKeeper
 
 	// the AVS manager keeper is the AVS registry. this keeper is initialized after the EVM
 	// keeper because it depends on the EVM keeper to set a lookup from codeHash to code,

@@ -24,7 +24,8 @@ func (n Network) DeployOracleGatewayContract(oracleCaller common.Address) (commo
 }
 
 func (n Network) deployContract(data []byte) (common.Address, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	ethC := n.Validators[0].JSONRPCClient
 
 	chainID, err := ethC.ChainID(ctx)
@@ -41,7 +42,11 @@ func (n Network) deployContract(data []byte) (common.Address, error) {
 	if err != nil {
 		return common.Address{}, fmt.Errorf("failed to get suggested gas price: %w", err)
 	}
-	if bal, err := ethC.BalanceAt(ctx, callAddr, nil); err == nil && bal.Sign() == 0 {
+	bal, err := ethC.BalanceAt(ctx, callAddr, nil)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("failed to get deployer balance for %s: %w", callAddr.Hex(), err)
+	}
+	if bal.Sign() == 0 {
 		return common.Address{}, fmt.Errorf("insufficient deployer balance: 0")
 	}
 

@@ -114,13 +114,13 @@ func (ms msgServer) CreatePrice(goCtx context.Context, msg *types.MsgCreatePrice
 	// This allows validators to sign outbound checkpoints without a separate tx.
 	if msg.CheckpointDstChainId > 0 && msg.CheckpointNonce > 0 && len(msg.CheckpointR) == 32 && len(msg.CheckpointS) == 32 {
 		cpMsg := &types.MsgSignCheckpoint{
-			ValidatorAddress: msg.Creator,
-			DstChainId:       msg.CheckpointDstChainId,
-			CheckpointNonce:  msg.CheckpointNonce,
+			ValidatorAddress:    msg.Creator,
+			DstChainId:          msg.CheckpointDstChainId,
+			CheckpointNonce:     msg.CheckpointNonce,
 			ValidatorEvmAddress: msg.CheckpointEvmAddress,
-			V:                msg.CheckpointV,
-			R:                msg.CheckpointR,
-			S:                msg.CheckpointS,
+			V:                   msg.CheckpointV,
+			R:                   msg.CheckpointR,
+			S:                   msg.CheckpointS,
 		}
 		if cpMsg.ValidateBasic() == nil {
 			resp, err := ms.SignCheckpoint(goCtx, cpMsg)

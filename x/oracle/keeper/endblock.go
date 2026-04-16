@@ -7,11 +7,22 @@ import (
 
 // EndBlock contains the end-of-block logic for the oracle module.
 // It runs FeederManager endblock first (which may enqueue xchain batches via postHandlers),
-// then runs budgeted xchain queue delivery.
+// then runs budgeted xchain queue delivery. Panics in the bridge paths are recovered
+// and logged so an oracle-bridge bug can't halt consensus.
 func (k Keeper) EndBlock(ctx sdk.Context) {
 	k.FeederManager.EndBlock(ctx)
-	k.processAllXChainQueues(ctx)
-	k.createOutboundCheckpoints(ctx)
+	safeRunEndBlock(ctx, "processAllXChainQueues", func() { k.processAllXChainQueues(ctx) })
+	safeRunEndBlock(ctx, "createOutboundCheckpoints", func() { k.createOutboundCheckpoints(ctx) })
+}
+
+// safeRunEndBlock runs fn and recovers from panics, logging them instead of halting consensus.
+func safeRunEndBlock(ctx sdk.Context, name string, fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			ctx.Logger().Error("oracle endblock panic recovered", "stage", name, "error", r)
+		}
+	}()
+	fn()
 }
 
 // createOutboundCheckpoints iterates all outbound queues and creates checkpoints
