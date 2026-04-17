@@ -6,7 +6,10 @@ WORKDIR /go/src/github.com/imua-xyz/imuachain
 
 COPY go.mod go.sum ./
 
-RUN apk add --no-cache ca-certificates=~20250619 build-base=~0.5 git=~2.47.3 linux-headers=~6.6
+# Rely on the pinned Alpine 3.21 base image for reproducibility; fuzzy apk
+# pins break CI whenever the stable index advances within a release line.
+# hadolint ignore=DL3018
+RUN apk add --no-cache ca-certificates build-base git linux-headers
 
 RUN --mount=type=bind,target=. --mount=type=secret,id=GITHUB_TOKEN \
     git config --global url."https://$(cat /run/secrets/GITHUB_TOKEN)@github.com/".insteadOf "https://github.com/"; \
@@ -23,12 +26,15 @@ WORKDIR /root
 COPY --from=build-env /go/src/github.com/imua-xyz/imuachain/build/imuad /usr/bin/imuad
 COPY --from=build-env /go/bin/toml-cli /usr/bin/toml-cli
 
+# Rely on the pinned Alpine 3.21 base image for reproducibility; fuzzy apk
+# pins break CI whenever the stable index advances within a release line.
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
-	ca-certificates=~20250619 \
-	libstdc++=~14.2.0 \
-	jq=~1.7.1 \
-	curl=~8.14.1 \
-	bash=~5.2.37 \
+	ca-certificates \
+	libstdc++ \
+	jq \
+	curl \
+	bash \
     && addgroup -g 1000 imua \
     && adduser -S -h /home/imua -D imua -u 1000 -G imua
 
