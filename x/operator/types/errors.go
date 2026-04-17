@@ -155,4 +155,12 @@ var (
 		ModuleName, 33,
 		"the slash has already been vetoed",
 	)
+
+	// ErrSlashZeroStakingUSD is returned when SlashAssets would divide by a zero
+	// StakingAndWaitUnbonding USD total (e.g. missing oracle prices) while the
+	// slash still targets a positive USD amount.
+	ErrSlashZeroStakingUSD = errorsmod.Register(
+		ModuleName, 34,
+		"operator staking and unbonding USD value is zero; cannot compute slash proportion",
+	)
 )

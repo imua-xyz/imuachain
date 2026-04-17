@@ -92,6 +92,12 @@ func (k *Keeper) SlashAssets(ctx sdk.Context, snapshotHeight int64, parameter *t
 		return nil, err
 	}
 	// calculate the new slash proportion
+	if stakingInfo.StakingAndWaitUnbonding.IsZero() {
+		// LegacyDec.Quo panics on a zero divisor. Slash() skips zero power / zero
+		// SlashProportion, so a zero denominator here means slash-time USD is zero
+		// (e.g. missing prices) while power and proportion are positive.
+		return nil, types.ErrSlashZeroStakingUSD.Wrapf("operator:%s", parameter.Operator.String())
+	}
 	newSlashProportion := slashUSDValue.Quo(stakingInfo.StakingAndWaitUnbonding)
 	newSlashProportion = sdkmath.LegacyMinDec(k.GetParams(ctx).MaxSlashProportion, newSlashProportion)
 
@@ -232,8 +238,8 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 			return types.ErrInvalidSlashPower.Wrapf("slash: invalid voting power, power:%v", parameter.Power)
 		}
 	}
-	if parameter.Power == 0 {
-		k.Logger(ctx).Info("don't execute the slash if the historical voting power is zero")
+	if parameter.Power == 0 || parameter.SlashProportion.IsZero() {
+		k.Logger(ctx).Info("don't execute the slash if the historical voting power or slash proportion is zero")
 		return nil
 	}
 
