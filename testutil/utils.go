@@ -585,6 +585,8 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	genesisState[distributiontypes.ModuleName] = app.AppCodec().MustMarshalJSON(distributionGenesis)
 
 	groupMembers := []*group.GroupMember{}
+	// reset
+	suite.GroupKeys = []cryptotypes.PrivKey{}
 	for i := 0; i < 3; i++ {
 		_, key := testutiltx.NewAccAddressAndKey()
 		suite.GroupKeys = append(suite.GroupKeys, key)

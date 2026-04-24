@@ -29,9 +29,9 @@ message MsgCallContract {
 
   // authority is the calling + controlling address
   string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-  // to is the hex address of the contract to call, or nil for contract creation
+  // to is the hex address of the contract to call, or empty for contract creation
   string to = 2;
-  // data is the hex encoded data to send to the contract
+  // data is the raw call data bytes to be sent to the contract.
   bytes data = 3;
   // gas_limit is the gas limit for the transaction
   uint64 gas_limit = 4 [(gogoproto.customname) = "GasLimit"];

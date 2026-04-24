@@ -38,9 +38,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type MsgCallContract struct {
 	// authority is the calling + controlling address
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	// to is the hex address of the contract to call, or nil for contract creation
+	// to is the hex address of the contract to call, or empty for contract creation
 	To string `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
-	// data is the hex encoded data to send to the contract
+	// data is the raw call data bytes to be sent to the contract.
 	Data []byte `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
 	// gas_limit is the gas limit for the transaction
 	GasLimit uint64 `protobuf:"varint,4,opt,name=gas_limit,json=gasLimit,proto3" json:"gas_limit,omitempty"`

@@ -22,6 +22,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/imua-xyz/imuachain/app/ante/utils"
+	evmtypes "github.com/imua-xyz/imuachain/x/evm/types"
 )
 
 var (
@@ -447,11 +448,9 @@ func (isd IncrementSequenceDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 	// not the authority's).
 	skipIncrement := make(map[string]struct{})
 	for _, msg := range tx.GetMsgs() {
-		if callContract, ok := msg.(interface{ Type() string }); ok {
-			if callContract.Type() == "call_contract" {
-				for _, signer := range msg.GetSigners() {
-					skipIncrement[signer.String()] = struct{}{}
-				}
+		if _, ok := msg.(*evmtypes.MsgCallContract); ok {
+			for _, signer := range msg.GetSigners() {
+				skipIncrement[signer.String()] = struct{}{}
 			}
 		}
 	}
