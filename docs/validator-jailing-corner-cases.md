@@ -1,6 +1,7 @@
 # Validator Jailing Corner Cases
 
-This document is the formal review and verification record for the jailing/slashing corner-case fixes in dogfood/operator/oracle integration.
+This document is the formal review and verification record for the jailing/slashing corner-case fixes in
+dogfood/operator/oracle integration.
 
 ## Purpose
 
@@ -46,17 +47,17 @@ Major touched paths:
 ### Slashing/signing info lifecycle
 
 - `CopyValidatorSigningInfo` handles key migration and infraction shaping:
-  - `DOUBLE_SIGN`: tombstone + permanent jail on new key.
-  - `DOWNTIME`: jail duration + reset counters/bit-array on new key.
-  - `UNSPECIFIED`: migrate missed-block debt shape for key-rotation semantics.
+    - `DOUBLE_SIGN`: tombstone + permanent jail on new key.
+    - `DOWNTIME`: jail duration + reset counters/bit-array on new key.
+    - `UNSPECIFIED`: migrate missed-block debt shape for key-rotation semantics.
 
 ### Freeze lifecycle
 
 - Double-sign path freezes operator globally in x/operator.
 - Frozen operators:
-  - cannot re-enter active power paths,
-  - cannot effectively unjail via dogfood staking bridge,
-  - remain blocked for key/opt-in mutations by keeper checks.
+    - cannot re-enter active power paths,
+    - cannot effectively unjail via dogfood staking bridge,
+    - remain blocked for key/opt-in mutations by keeper checks.
 
 ## Key Findings and Fixes
 
@@ -74,8 +75,14 @@ Major touched paths:
 
 ### Finding FND-3: signing-info copy must be unconditional w.r.t. slash outcome (fixed)
 
-- **Issue:** FND-1's fix over-constrained `CopyValidatorSigningInfo`, gating it on `slashErr == nil`. The SDK (x/evidence, x/slashing) applies jail and tombstone consequences unconditionally after `SlashWithInfractionReason` returns — without checking its return value. The copy propagates those same consequences to the rotated key; gating it on slash success leaves the new key unpunished when the economic slash fails (e.g. missing voting power snapshot).
-- **Fix:** remove the `attempted && slashErr == nil` gate; copy runs whenever `slashingOldKey` is true, matching the SDK's unconditional consequence model. Merge `SlashDogfoodInfraction` back into `SlashWithInfractionReason` in the operator keeper.
+- **Issue:** FND-1's fix over-constrained `CopyValidatorSigningInfo`, gating it on `slashErr == nil`.
+The SDK (x/evidence, x/slashing) applies jail and tombstone consequences unconditionally after `SlashWithInfractionReason`
+returns — without checking its return value. The copy propagates those same consequences to the rotated key;
+gating it on slash success leaves the new key unpunished when the economic slash fails (e.g. missing voting power
+snapshot).
+- **Fix:** remove the `attempted && slashErr == nil` gate; copy runs whenever `slashingOldKey` is true, matching
+the SDK's unconditional consequence model. Merge `SlashDogfoodInfraction` back into `SlashWithInfractionReason` in
+the operator keeper.
 - **Safety:** signing-info state on the new key correctly reflects the infraction regardless of economic slash outcome.
 
 ## Checklist Coverage (A–K)
@@ -158,5 +165,7 @@ go test ./x/dogfood/keeper/ ./x/operator/keeper/ ./x/oracle/keeper/... ./x/dogfo
 
 ## Reviewer Notes
 
-- MsgUnjail success at x/slashing does not imply operator unjailed when frozen; authoritative state is x/operator jail+freeze state.
-- `alreadyRecorded` behavior is intentional for previous-key bookkeeping; same-context double replacement differs from normal msg+commit epoch flow.
+- MsgUnjail success at x/slashing does not imply operator unjailed when frozen; authoritative state is x/operator
+jail+freeze state.
+- `alreadyRecorded` behavior is intentional for previous-key bookkeeping;
+same-context double replacement differs from normal msg+commit epoch flow.
