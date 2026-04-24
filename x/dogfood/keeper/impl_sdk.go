@@ -123,7 +123,9 @@ func (k Keeper) Slash(
 
 // SlashWithInfractionReason is an implementation of the staking interface expected by the
 // SDK's slashing module. It is called when the slashing module observes an infraction
-// of either downtime or equivocation (which is via the evidence module).
+// of either downtime or equivocation (the latter of which is via the evidence module).
+// This function relies on cometbft guarantees that power > 0 to freeze the operator.
+// If there were no such guarantees, we would check and early exit.
 func (k Keeper) SlashWithInfractionReason(
 	ctx sdk.Context, addr sdk.ConsAddress, infractionHeight, power int64,
 	slashFactor sdk.Dec, infraction stakingtypes.Infraction,
@@ -133,7 +135,17 @@ func (k Keeper) SlashWithInfractionReason(
 		ctx, chainIDWithoutRevision, addr,
 	)
 	if !found {
-		// TODO(mm): already slashed and removed from the set?
+		// should never happen because evidence acceptance duration should
+		// be less than the unbonding period.
+		k.Logger(ctx).Error(
+			"operator not found",
+			"address", addr.String(),
+			"chain_id", chainIDWithoutRevision,
+			"infraction", infraction,
+			"height", infractionHeight,
+			"power", power,
+			"slash_factor", slashFactor,
+		)
 		return math.NewInt(0)
 	}
 
@@ -164,56 +176,45 @@ func (k Keeper) SlashWithInfractionReason(
 			),
 		)
 	}
-	attempted, slashErr := k.operatorKeeper.SlashDogfoodInfraction(
+	// note that this function has no error returns to match the SDK
+	// even though the slash may not be applied (due to potential errors like
+	// missing voting power snapshots), the non-economic consequences must be
+	// applied such as tombstoning or jailing.
+	// we perform those after this call - the same as the SDK does.
+	res := k.operatorKeeper.SlashWithInfractionReason(
 		ctx, accAddress, infractionHeight,
 		power, slashFactor, infraction,
 	)
-	if slashErr != nil {
-		k.Logger(ctx).Error(
-			"operator AVS slash failed (dogfood StakingKeeper)",
-			"error", slashErr,
-			"operator", accAddress.String(),
-			"cons_addr", addr.String(),
-			"infraction", infraction.String(),
-		)
-	}
-	// Only migrate x/slashing state when the economic slash committed; otherwise Copy could write
-	// inconsistent signing info relative to operator state (e.g. veto / SlashAssets failure).
-	if slashingOldKey && attempted && slashErr == nil {
-		// copy from old key to new key
-		// the slashing keeper tombstones after calling this function. hence,
-		// copy directly will not succeed. we must do it ourselves.
+	if slashingOldKey {
+		// since the SDK modifies the signing info after this function,
+		// we cannot directly copy it. instead `CopyValidatorSigningInfo`
+		// takes care of the jailing or the tombstoning status of the new
+		// key based on the provided infraction type.
 		k.CopyValidatorSigningInfo(
 			ctx, addr, currentConsAddr, infraction,
 		)
 	}
-	if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN && power > 0 &&
-		(attempted || slashErr != nil) {
-		// Double-sign is a consensus safety fault: freeze even if the economic slash path failed
-		// (so veto or asset errors cannot leave the operator unfrozen).
-		if k.operatorKeeper.IsOperatorFrozen(ctx, accAddress) {
-			return math.NewInt(0)
-		}
-		if slashErr != nil {
-			k.Logger(ctx).Error(
-				"double-sign: freezing operator despite failed AVS slash",
-				"operator", accAddress.String(),
-				"cons_addr", addr.String(),
-				"error", slashErr,
-			)
-		}
-		if err := k.operatorKeeper.FreezeOperator(
-			ctx, accAddress,
-		); err != nil {
-			panic(
-				fmt.Sprintf(
-					"Logic error: failed to freeze operator %s: %v",
-					accAddress.String(), err,
-				),
-			)
+	if infraction == stakingtypes.Infraction_INFRACTION_DOUBLE_SIGN {
+		// as explained previously, the operator or the key state
+		// must be updated regardless of the asset state.
+		if !k.operatorKeeper.IsOperatorFrozen(ctx, accAddress) {
+			if err := k.operatorKeeper.FreezeOperator(
+				ctx, accAddress,
+			); err != nil {
+				// this condition can only happen if the operator address
+				// is not a valid operator, since we already checked
+				// for the frozen status validity. if that happens,
+				// we are definitely in a bad state.
+				panic(
+					fmt.Sprintf(
+						"Logic error: failed to freeze operator %s: %v",
+						accAddress.String(), err,
+					),
+				)
+			}
 		}
 	}
-	return math.NewInt(0)
+	return res
 }
 
 // CopyValidatorSigningInfo copies a validator's signing info from old consensus address

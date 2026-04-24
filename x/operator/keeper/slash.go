@@ -275,31 +275,26 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 	return nil
 }
 
-// SlashDogfoodInfraction runs the operator AVS slash invoked from x/slashing via dogfood’s
-// StakingKeeper. It is separate from SlashWithInfractionReason so dogfood can tell a real Slash
-// execution from an early skip and can avoid copying signing state when Slash aborted.
-//
-// attempted is false when the function returned before calling Slash (invalid slash factor, zero
-// factor, or chain not an AVS). attempted is true when Slash was invoked; err is non-nil if Slash
-// returned an error (no committed slash state).
-func (k Keeper) SlashDogfoodInfraction(
+// SlashWithInfractionReason is an expected slash interface for the dogfood module.
+// The x/dogfood modulel simply forwards the call here after validating it
+// and the side effects.
+func (k Keeper) SlashWithInfractionReason(
 	ctx sdk.Context, addr sdk.AccAddress, infractionHeight, power int64,
 	slashFactor sdk.Dec, infraction stakingtypes.Infraction,
-) (attempted bool, err error) {
+) sdkmath.Int {
 	if slashFactor.IsNil() || slashFactor.IsNegative() {
 		k.Logger(ctx).Error("invalid slash factor, expected non-nil and non-negative", "slashFactor", slashFactor)
-		return false, nil
-	}
-	if slashFactor.IsZero() {
+		return sdkmath.ZeroInt()
+	} else if slashFactor.IsZero() {
 		k.Logger(ctx).Info("slash factor is zero, do nothing for the slash execution")
-		return false, nil
+		return sdkmath.ZeroInt()
 	}
 
 	chainID := utils.ChainIDWithoutRevision(ctx.ChainID())
 	isAVS, avsAddr := k.avsKeeper.IsAVSByChainID(ctx, chainID)
 	if !isAVS {
 		k.Logger(ctx).Error("the chainID is not supported by AVS", "chainID", chainID)
-		return false, nil
+		return sdkmath.ZeroInt()
 	}
 	slashID := GetSlashIDForDogfood(infraction, infractionHeight)
 	slashParam := &types.SlashInputInfo{
@@ -312,21 +307,9 @@ func (k Keeper) SlashDogfoodInfraction(
 		SlashEventHeight: infractionHeight,
 		SlashProportion:  slashFactor,
 	}
-	err = k.Slash(ctx, slashParam)
-	return true, err
-}
-
-// SlashWithInfractionReason is an expected slash interface for the dogfood module.
-func (k Keeper) SlashWithInfractionReason(
-	ctx sdk.Context, addr sdk.AccAddress, infractionHeight, power int64,
-	slashFactor sdk.Dec, infraction stakingtypes.Infraction,
-) sdkmath.Int {
-	attempted, err := k.SlashDogfoodInfraction(ctx, addr, infractionHeight, power, slashFactor, infraction)
+	err := k.Slash(ctx, slashParam)
 	if err != nil {
-		k.Logger(ctx).Error("error when executing slash", "error", err)
-		return sdkmath.ZeroInt()
-	}
-	if !attempted {
+		k.Logger(ctx).Error("error when executing slash", "error", err, "avsAddr", avsAddr)
 		return sdkmath.ZeroInt()
 	}
 	// The returned value should represent the amount of IMUA burned in the Cosmos SDK.

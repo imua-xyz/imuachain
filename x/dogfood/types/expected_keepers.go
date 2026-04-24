@@ -53,11 +53,6 @@ type OperatorKeeper interface {
 		sdk.Context, sdk.AccAddress, int64,
 		int64, sdk.Dec, stakingtypes.Infraction,
 	) math.Int
-	// SlashDogfoodInfraction runs the AVS slash for dogfood-driven x/slashing; see operator keeper.
-	SlashDogfoodInfraction(
-		sdk.Context, sdk.AccAddress, int64,
-		int64, sdk.Dec, stakingtypes.Infraction,
-	) (attempted bool, err error)
 	ValidatorByConsAddrForChainID(
 		ctx sdk.Context, consAddr sdk.ConsAddress, chainID string,
 	) (stakingtypes.Validator, bool)
