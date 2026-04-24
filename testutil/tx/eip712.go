@@ -84,7 +84,7 @@ func PrepareEIP712CosmosTx(
 	if err != nil {
 		return nil, err
 	}
-	fee := legacytx.NewStdFee(txArgs.Gas, txArgs.Fees)
+	fee := legacytx.NewStdFee(txArgs.Gas, txArgs.Fees) //nolint:staticcheck
 
 	msgs := txArgs.Msgs
 	data := legacytx.StdSignBytes(ctx.ChainID(), accNumber, nonce, 0, fee, msgs, "", nil)

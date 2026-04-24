@@ -83,7 +83,7 @@ func (cgts ConsumeTxSizeGasDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, sim
 
 			// use stdsignature to mock the size of a full signature
 			// #nosec G115
-			simSig := legacytx.StdSignature{
+			simSig := legacytx.StdSignature{ //nolint:staticcheck
 				Signature: simSecp256k1Sig[:],
 				PubKey:    pubkey,
 			}
