@@ -378,23 +378,18 @@ benchmark:
 
 lint:
 	golangci-lint run --out-format=tab
-	solhint contracts/**/*.sol
+	solhint 'precompiles/**/I*.sol'
 
-lint-contracts:
-	@cd contracts && \
-	npm i && \
-	npm run lint
+lint-precompiles-sol:
+	solhint 'precompiles/**/I*.sol'
 
 lint-fix:
 	golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
-lint-fix-contracts:
-	@cd contracts && \
-	npm i && \
-	npm run lint-fix
-	solhint --fix contracts/**/*.sol
+lint-fix-precompiles-sol:
+	solhint --fix --noPrompt 'precompiles/**/I*.sol'
 
-.PHONY: lint lint-fix
+.PHONY: lint lint-fix lint-precompiles-sol lint-fix-precompiles-sol
 
 format-golang:
 	@echo "Formating golang files"
@@ -410,7 +405,7 @@ format: format-golang proto-format
 
 protoVer=0.11.6
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace --user 0 $(protoImageName)
+protoImage=$(DOCKER) run --rm --network host -v $(CURDIR):/workspace --workdir /workspace --user 0 $(protoImageName)
 
 # ------
 # NOTE: If you are experiencing problems running these commands, try deleting

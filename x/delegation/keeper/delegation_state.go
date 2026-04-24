@@ -153,12 +153,8 @@ func (k *Keeper) AllDelegatedInfoForStakerAsset(ctx sdk.Context, stakerID string
 
 // UpdateDelegationState is used to update the staker's asset amount that is delegated to a specified operator.
 func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr string, deltaAmounts *delegationtype.DeltaDelegationAmounts) (bool, delegationtype.DelegationAmounts, error) {
-	var preState delegationtype.DelegationAmounts
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
-	// todo: think about the difference between init and update in future
-	shareIsZero := false
 	if deltaAmounts == nil {
-		return false, preState, errorsmod.Wrap(
+		return false, delegationtype.DelegationAmounts{}, errorsmod.Wrap(
 			assetstype.ErrInputPointerIsNil,
 			fmt.Sprintf("UpdateDelegationState opAddr:%v,deltaAmounts:%v", opAddr, deltaAmounts),
 		)
@@ -166,8 +162,11 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 	// check operator address validation
 	_, err := sdk.AccAddressFromBech32(opAddr)
 	if err != nil {
-		return shareIsZero, preState, delegationtype.ErrOperatorAddrIsNotAccAddr
+		return false, delegationtype.DelegationAmounts{}, delegationtype.ErrOperatorAddrIsNotAccAddr
 	}
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), delegationtype.KeyPrefixRestakerDelegationInfo)
+	// todo: think about the difference between init and update in future
+	shareIsZero := false
 	singleStateKey := utils.GetJoinedStoreKey(stakerID, assetID, opAddr)
 	delegationState := delegationtype.DelegationAmounts{
 		PendingUndelegationAmount:       sdkmath.ZeroInt(),
@@ -181,7 +180,7 @@ func (k Keeper) UpdateDelegationState(ctx sdk.Context, stakerID, assetID, opAddr
 		k.cdc.MustUnmarshal(value, &delegationState)
 	}
 
-	preState = delegationtype.DelegationAmounts{
+	preState := delegationtype.DelegationAmounts{
 		UndelegatableShare:              delegationState.UndelegatableShare.Clone(),
 		PendingUndelegationAmount:       sdkmath.NewIntFromBigInt(delegationState.PendingUndelegationAmount.BigInt()),
 		RewardUndelegatableShare:        delegationState.RewardUndelegatableShare.Clone(),

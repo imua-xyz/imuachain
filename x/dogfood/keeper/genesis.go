@@ -103,19 +103,6 @@ func (k Keeper) InitGenesis(
 			k.AppendConsensusAddrToPrune(ctx, epoch, accAddr)
 		}
 	}
-	for i := range genState.UndelegationMaturities {
-		obj := genState.UndelegationMaturities[i]
-		epoch := obj.Epoch
-		if epoch < epochInfo.CurrentEpoch {
-			panic(fmt.Sprintf("epoch %d is in the past", epoch))
-		}
-		for _, recordKey := range obj.UndelegationRecordKeys {
-			// #nosec G703 // already validated
-			recordKeyBytes, _ := hexutil.Decode(recordKey)
-			k.AppendUndelegationToMature(ctx, epoch, recordKeyBytes)
-			k.SetUndelegationMaturityEpoch(ctx, recordKeyBytes, epoch)
-		}
-	}
 	// ApplyValidatorChanges only gets changes and hence the vote power must be set here.
 	k.SetLastTotalPower(ctx, genState.LastTotalPower)
 
@@ -158,7 +145,6 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 		validators,
 		k.GetAllOptOutsToFinish(ctx),
 		k.GetAllConsAddrsToPrune(ctx),
-		k.GetAllUndelegationsToMature(ctx),
 		k.GetLastTotalPower(ctx),
 	)
 }

@@ -31,8 +31,6 @@ func GetQueryCmd(string) *cobra.Command {
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdQueryOptOutsToFinish())
 	cmd.AddCommand(CmdQueryOperatorOptOutFinishEpoch())
-	cmd.AddCommand(CmdQueryUndelegationsToMature())
-	cmd.AddCommand(CmdQueryUndelegationMaturityEpoch())
 	cmd.AddCommand(CmdQueryValidator())
 	cmd.AddCommand(CmdQueryValidators())
 
@@ -123,65 +121,6 @@ func CmdQueryOperatorOptOutFinishEpoch() *cobra.Command {
 		},
 	}
 
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdQueryUndelegationsToMature() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "undelegations-to-mature [epoch]",
-		Short: "shows the undelegations that will mature at the provided epoch",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-			epoch := args[0]
-			cEpoch, err := strconv.ParseInt(epoch, 10, 64)
-			if err != nil {
-				return err
-			}
-			res, err := queryClient.UndelegationsToMature(
-				cmd.Context(), &types.QueryUndelegationsToMatureRequest{Epoch: cEpoch},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdQueryUndelegationMaturityEpoch() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "undelegation-maturity-epoch [recordKey]",
-		Short: "shows the epoch at which an undelegation record will be mature",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientQueryContext(cmd)
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-			recordKey := args[0]
-			res, err := queryClient.UndelegationMaturityEpoch(
-				cmd.Context(), &types.QueryUndelegationMaturityEpochRequest{RecordKey: recordKey},
-			)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd

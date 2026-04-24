@@ -49,49 +49,35 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	// should be cleared.
 	consAddr := oldKey.ToConsAddr()
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
-		// is the oldKey already active? if not, we should not do anything.
-		// this can happen if we opt in with a key, then replace it with another key
-		// during the same epoch.
-		_, found := h.keeper.GetImuachainValidator(ctx, consAddr)
-		if found {
-			unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
-			// nb: if operator sets key, it is not "at stake" till the end of the epoch.
-			// before that time, any key replacement will store a superfluous entry for pruning
-			// since the old key will not be in use.
-			// this technically gives an operator the opportunity to spam the pruning queue
-			// but it is not a security risk or a DOS vector given the cost charged.
-			h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, consAddr)
-		} else {
-			// since this consAddr isn't active, we can remove it immediately.
-			h.keeper.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
-				ctx, chainID, consAddr,
-			)
-		}
+		// The reverse lookup (consensus address -> operator address) must be maintained
+		// during the unbonding period to allow slashing of validators who misbehaved while
+		// they were active, even after they've been removed from the active validator set.
+		// This is necessary even if the validator is currently jailed or inactive, as
+		// evidence of misbehavior (e.g., double-signing) from past epochs can be reported
+		// and processed during the unbonding period. Therefore, we always schedule the
+		// pruning for the consensus address at the end of the unbonding completion epoch.
+		unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
+		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, consAddr)
 	}
 }
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
-	ctx sdk.Context, operator sdk.AccAddress, chainID string, key keytypes.WrappedConsKey,
+	ctx sdk.Context, operator sdk.AccAddress, chainID string, _ keytypes.WrappedConsKey,
 ) {
 	// the impact of key removal is:
 	// 1. vote power of the operator is 0, which happens automatically at epoch end in EndBlock.
 	// this is because GetActiveOperatorsForChainID filters operators who are removing their
 	// keys from the chain.
 	// 2. X epochs later, the removal is marked complete in the operator module.
-	consAddr := key.ToConsAddr()
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
-		_, found := h.keeper.GetImuachainValidator(ctx, consAddr)
-		if found {
-			h.keeper.SetOptOutInformation(ctx, operator)
-		} else {
-			h.keeper.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
-				ctx, chainID, consAddr,
-			)
-		}
+		// see AfterOperatorKeyReplaced for the reasoning behind scheduling the opt out,
+		// even if the operator may not be in the active validator set.
+		h.keeper.ScheduleOperatorOptOut(ctx, operator)
 	}
 }
 
+// AfterSlash is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterSlash(
 	ctx sdk.Context, operator sdk.AccAddress, _ sdk.Dec, affectedAVSList []string,
 	_ []operatortypes.SlashAssetAmount, _ []operatortypes.SlashFromUnclaimedRewards,
@@ -99,32 +85,46 @@ func (h OperatorHooksWrapper) AfterSlash(
 	h.afterStakingOrJailChange(ctx, operator, false, affectedAVSList)
 }
 
+// AfterJail is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterJail(
 	ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string,
 ) {
 	h.afterStakingOrJailChange(ctx, operator, isUnjail, affectedAVSList)
 }
 
-func (h OperatorHooksWrapper) afterStakingOrJailChange(ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string) {
+// afterStakingOrJailChange is the helper function to handle the changes in slashing or jailing.
+func (h OperatorHooksWrapper) afterStakingOrJailChange(
+	ctx sdk.Context, operator sdk.AccAddress, isUnjail bool, affectedAVSList []string,
+) {
 	chainIDWithoutRevision := utils.ChainIDWithoutRevision(ctx.ChainID())
 	dogfoodAVSAddr := utils.GenerateAVSAddress(chainIDWithoutRevision)
 	for _, avs := range affectedAVSList {
+		// if we are an affected AVS
 		if avs == dogfoodAVSAddr {
-			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(ctx, operator, chainIDWithoutRevision)
+			// check whether a consensus key exists for the operator
+			found, wrappedKey, err := h.keeper.operatorKeeper.GetOperatorConsKeyForChainID(
+				ctx, operator, chainIDWithoutRevision,
+			)
+			// this should never happen because a consensus key must be set for this operator
+			// and avs combination for it to show up in the operator + affected AVS list
 			if !found || err != nil {
-				ctx.Logger().Error("AfterSlash the consensus key isn't found by the chainIDWithoutRevision and operator address", "operatorAddr", operator, "chainIDWithoutRevision", chainIDWithoutRevision, "err", err)
+				h.keeper.Logger(ctx).Error(
+					"could not find consensus key for operator",
+					"operatorAddr", operator,
+					"chainIDWithoutRevision", chainIDWithoutRevision,
+					"err", err,
+				)
 				return
 			}
+			// if it is an unjail request, we update the validator set at the end of the block
+			// TODO: unjailing should be performed only at the epoch end or when there is
+			// another jailing
 			if isUnjail {
-				// mark the flag for unjail
-				// the validator has been removed from the current active validator set when jailing,
-				// so it shouldn't check if it is active when unjail.
 				h.keeper.MarkUpdateValidatorSetFlag(ctx)
 				break
 			}
-
-			// check if the operator is in the current validator set.
-			// check if the key is active yet
+			// if, however, it is a jail request, we only alter the validator set if said key
+			// is in the current validator set.
 			isValidator := false
 			_, isValidator = h.keeper.GetImuachainValidator(
 				ctx, wrappedKey.ToConsAddr(),

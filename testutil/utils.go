@@ -550,7 +550,6 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 		},
 		[]dogfoodtypes.EpochToOperatorAddrs{},
 		[]dogfoodtypes.EpochToConsensusAddrs{},
-		[]dogfoodtypes.EpochToUndelegationRecordKeys{},
 		math.NewInt(power+power2), // must match total vote power
 	)
 	dogfoodGenesis.Params.AssetIDs = []string{assetID}

@@ -330,7 +330,7 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 			logger.Info("commit round with price from previous",
 				"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "height", height)
 			// #nosec G115  // tokenID is index of slice
-			f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
+			f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID), !r.twoPhases)
 			// if there's is no success price aggregated, the feed version is updated
 			// otherwise, the feed version will be updated after the 2nd phase aggregation
 			if r.twoPhases {
@@ -358,9 +358,9 @@ func (f *FeederManager) processRound(ctx sdk.Context, feederID, height int64, lo
 			"feederID", r.feederID, "roundID", r.roundID, "baseBlock", r.roundBaseBlock, "price", priceCommit, "height", height)
 
 		// #nosec G115  // tokenID is index of slice
-		if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit); !updated {
+		if updated := f.k.AppendPriceTR(ctx, uint64(r.tokenID), *priceCommit, !r.twoPhases); !updated {
 			// this is an 'impossible' case, we should not reach here
-			latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID))
+			latestPrice, latestRoundID := f.k.GrowRoundID(ctx, uint64(r.tokenID), uint64(r.roundID), !r.twoPhases)
 			logger.Error("failed to append price due to roundID gap and update this round with GrowRoundID",
 				"feederID", r.feederID, "try-to-update-roundID", r.roundID, "try-to-update-price", priceCommit,
 				"result-latestPrice", latestPrice, "result-latestRoundID", latestRoundID)

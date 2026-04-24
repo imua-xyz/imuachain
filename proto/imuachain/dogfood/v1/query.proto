@@ -31,18 +31,6 @@ service Query {
     option (google.api.http).get = "/imuachain/dogfood/v1/operator_opt_out_finish_epoch/{operator_acc_addr}";
   }
 
-  // UndelegationsToMature queries the undelegations that will mature at the given epoch.
-  rpc UndelegationsToMature(QueryUndelegationsToMatureRequest) returns (UndelegationRecordKeys) {
-    option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/dogfood/v1/undelegations_to_mature/{epoch}";
-  }
-
-  // UndelegationMaturityEpoch queries the epoch when the undelegation will mature.
-  rpc UndelegationMaturityEpoch(QueryUndelegationMaturityEpochRequest) returns (QueryUndelegationMaturityEpochResponse) {
-    option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/imuachain/dogfood/v1/undelegation_maturity_epoch/{record_key}";
-  }
-
   // Validator queries the validator for the given consensus address. This is the bare-minimum validator:
   // public key, consensus address, power. No other params such as commission, jailed, etc. are included.
   rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {

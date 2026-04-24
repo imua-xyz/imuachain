@@ -817,8 +817,9 @@ func NewImuachainApp(
 
 	(&app.DelegationKeeper).SetHooks(
 		delegationTypes.NewMultiDelegationHooks(
-			app.StakingKeeper.DelegationHooks(),
-			app.DistrKeeper.DelegationHooks(), // it's fine to be before or after the dogfood hook
+			// previously, x/dogfood would hold delegations until matured; now the delegation
+			// keeper handles it. thus, its hooks are removed.
+			app.DistrKeeper.DelegationHooks(),
 		),
 	)
 
