@@ -233,10 +233,7 @@ func (gs GenesisState) ValidateOptedStates(operators map[string]struct{}) (map[s
 		return state.Key, struct{}{}
 	}
 	_, err := utils.CommonValidation(gs.OptStates, seenFieldValueFunc, validationFunc)
-	if err != nil {
-		return nil, err
-	}
-	return avs, nil
+	return avs, err
 }
 
 func (gs GenesisState) ValidateAVSUSDValues(optedAVS map[string]struct{}) (map[string]DecValueField, error) {
