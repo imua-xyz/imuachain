@@ -320,13 +320,14 @@ func (p Params) UpdateTokens(currentHeight uint64, tokens ...*Token) (Params, er
 	}
 	for _, t := range tokens {
 		update := false
+		t.AssetID = strings.ToLower(t.AssetID)
 		for tokenID := 1; tokenID < len(p.Tokens); tokenID++ {
 			token := p.Tokens[tokenID]
-			token.AssetID = strings.ToLower(token.AssetID)
+			//			token.AssetID = strings.ToLower(token.AssetID)
 			if token.ChainID == t.ChainID && token.Name == t.Name {
 				// modify existing token
 				// update assetID
-				if len(t.AssetID) > 0 {
+				if len(t.AssetID) > 0 && prefixMask(t.AssetID) == prefixMask(token.AssetID) {
 					token.AssetID = t.AssetID
 					update = true
 				}
@@ -737,4 +738,14 @@ func (p Params) HasTokenByName(name string, chainID uint64) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+func prefixMask(v string) (mask uint8) {
+	v = strings.ToLower(v)
+	if strings.HasPrefix(v, NSTIDPrefix) {
+		mask |= 1 << 0
+	} else if strings.HasPrefix(v, XChainIDPrefix) {
+		mask |= 1 << 1
+	}
+	return
 }

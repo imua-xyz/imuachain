@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+mapfile -t staged_files < <(git diff --cached --name-only --diff-filter=ACMR)
+
+# Lint staged shell scripts (including repo hooks) with shfmt.
+mapfile -t shell_files < <(printf "%s\n" "${staged_files[@]}" | grep -E '(^\.githooks/|\.sh$|\.bash$|\.zsh$)' || true)
+if [ ${#shell_files[@]} -gt 0 ]; then
+	echo "Running shfmt on staged shell scripts..."
+	if command -v shfmt >/dev/null 2>&1; then
+		shfmt -d "${shell_files[@]}"
+	else
+		echo "shfmt is not installed. Install shfmt to enable staged shell checks." >&2
+		exit 1
+	fi
+fi
+
+# Lint staged Markdown files.
+mapfile -t md_files < <(printf "%s\n" "${staged_files[@]}" | grep -E '\.md$' || true)
+if [ ${#md_files[@]} -gt 0 ]; then
+	echo "Running markdownlint on staged markdown files..."
+	if command -v markdownlint >/dev/null 2>&1; then
+		markdownlint --config .markdownlint.yml --ignore-path .markdownlintignore "${md_files[@]}"
+	elif command -v npx >/dev/null 2>&1; then
+		npx --yes markdownlint-cli --config .markdownlint.yml --ignore-path .markdownlintignore "${md_files[@]}"
+	else
+		echo "markdownlint check skipped: neither 'markdownlint' nor 'npx' is available." >&2
+		echo "Install Node.js and markdownlint-cli to enable this hook." >&2
+		exit 1
+	fi
+fi
