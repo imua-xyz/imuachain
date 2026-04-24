@@ -125,6 +125,9 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 		GasLimit:  1_000_000,
 		Amount:    &amount,
 	}
+	// capture authority balance before sending funds to the contract
+	// (authority is the address that funds are debited from, regardless of who signs the tx)
+	authorityBalanceBefore := suite.App.BankKeeper.GetBalance(suite.Ctx, authAccAddr, utils.BaseDenom)
 	res, err = testutil.DeliverTx(suite.Ctx, suite.App, suite.PrivKey, nil, msg)
 	suite.Require().NoError(err)
 	suite.Require().True(res.IsOK(), "transaction should succeed: %s", res.Log)
@@ -136,7 +139,18 @@ func (suite *MsgServerTestSuite) TestCallContract() {
 	// check balance of the contract
 	balance := suite.App.BankKeeper.GetBalance(suite.Ctx, sdk.AccAddress(contractAddr.Bytes()), utils.BaseDenom)
 	suite.Require().Equal(amount.BigInt(), balance.Amount.BigInt())
-	// TODO check balance of the authority should change by 5, when authority is not the executor.
+	// check balance of the authority decreased by (amount + gas fee).
+	// when authority == executor (this test), the authority pays both the
+	// amount forwarded to the contract and the Cosmos tx gas fee.
+	// when authority != executor (e.g. group policy), the executor pays gas
+	// while the authority only loses the forwarded amount (exactly 5).
+	authorityBalanceAfter := suite.App.BankKeeper.GetBalance(suite.Ctx, authAccAddr, utils.BaseDenom)
+	feeCharged := suite.extractFeeCharged(res.Events)
+	suite.Require().Equal(
+		authorityBalanceBefore.Amount.Sub(amount).Sub(feeCharged),
+		authorityBalanceAfter.Amount,
+		"authority balance should decrease by amount + gas fee",
+	)
 
 	// check different caller case
 	addr, priv := testutiltx.NewAddrKey()
@@ -231,6 +245,30 @@ func (suite *MsgServerTestSuite) getStorageValue(contractAddr common.Address, sl
 	// In Solidity, the first state variable is at slot 0
 	storageValue := suite.App.EvmKeeper.GetState(suite.Ctx, contractAddr, slot)
 	return storageValue.Big()
+}
+
+// extractFeeCharged parses the actual fee charged to the fee payer from the tx response events.
+// The DeductFeeDecorator emits an EventTypeTx event with an AttributeKeyFee attribute
+// containing the fee as a coin string (e.g. "10000000000hua").
+func (suite *MsgServerTestSuite) extractFeeCharged(events []abci.Event) sdkmath.Int {
+	for _, event := range events {
+		if event.Type != sdk.EventTypeTx {
+			continue
+		}
+		for _, attr := range event.Attributes {
+			if attr.Key != sdk.AttributeKeyFee {
+				continue
+			}
+			// attr.Value is a coin string like "10000000000hua"
+			coins, err := sdk.ParseCoinsNormalized(attr.Value)
+			if err != nil {
+				suite.Require().NoError(err, "failed to parse fee from events")
+			}
+			return coins.AmountOf(utils.BaseDenom)
+		}
+	}
+	suite.Fail("fee event not found in tx response")
+	return sdkmath.ZeroInt()
 }
 
 // extractCallContractResponse extracts the MsgEthereumTxResponse from the transaction response.
