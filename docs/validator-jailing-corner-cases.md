@@ -60,18 +60,23 @@ Major touched paths:
 
 ## Key Findings and Fixes
 
-### Finding FND-1: slash-success coupling (fixed)
+### Finding FND-1: slash-success coupling (superseded by FND-3)
 
-- **Issue:** `CopyValidatorSigningInfo` could run even when operator economic slash did not commit.
-- **Impact:** cross-module state drift (x/slashing migrated state without committed operator slash effects).
-- **Fix:** introduced `SlashDogfoodInfraction(...)(attempted, err)` and gated copy on `attempted && err == nil`.
-- **Safety:** prevents partial migration side effects while preserving double-sign safety behavior.
+- **Original issue:** `CopyValidatorSigningInfo` could run even when operator economic slash did not commit.
+- **Original fix:** introduced `SlashDogfoodInfraction(...)(attempted, err)` and gated copy on `attempted && err == nil`.
+- **Status:** the gate was over-constrained; see FND-3.
 
 ### Finding FND-2: repeated double-sign freeze panic risk (fixed)
 
 - **Issue:** repeated direct double-sign slash could call `FreezeOperator` on already frozen operator and panic.
 - **Fix:** guard freeze path with `IsOperatorFrozen` check before `FreezeOperator`.
 - **Safety:** freeze path becomes idempotent for repeated inputs.
+
+### Finding FND-3: signing-info copy must be unconditional w.r.t. slash outcome (fixed)
+
+- **Issue:** FND-1's fix over-constrained `CopyValidatorSigningInfo`, gating it on `slashErr == nil`. The SDK (x/evidence, x/slashing) applies jail and tombstone consequences unconditionally after `SlashWithInfractionReason` returns — without checking its return value. The copy propagates those same consequences to the rotated key; gating it on slash success leaves the new key unpunished when the economic slash fails (e.g. missing voting power snapshot).
+- **Fix:** remove the `attempted && slashErr == nil` gate; copy runs whenever `slashingOldKey` is true, matching the SDK's unconditional consequence model. Merge `SlashDogfoodInfraction` back into `SlashWithInfractionReason` in the operator keeper.
+- **Safety:** signing-info state on the new key correctly reflects the infraction regardless of economic slash outcome.
 
 ## Checklist Coverage (A–K)
 
@@ -100,6 +105,7 @@ All checklist items are closed for this scope. IDs are retained so tests and fut
 ### F. Failure-mode and panic semantics
 
 - F1–F3: freeze idempotency, panic boundary trace, and slash-attempt observability validated.
+- F4: signing-info copy persists for rotated key even when economic slash fails (FND-3 correction; see test).
 
 ### G. Hook composition and ordering
 
@@ -135,6 +141,7 @@ All checklist items are closed for this scope. IDs are retained so tests and fut
 - E5: `TestChecklist_E5_DoubleSignDogfoodSlashWritesOperatorSlashRecord`
 - E6: `TestChecklist_E6_SecondEquivocationSameConsAddrIgnored`
 - F1: `TestChecklist_F1_RepeatedDoubleSignSlashDoesNotPanicWhenAlreadyFrozen`
+- F4 / FND-3: `TestChecklist_F4_SigningInfoCopiedEvenWhenSlashFails`
 - I1: `TestChecklist_I1_RotationBoundaryUnspecifiedSlashMigratesToCurrentKey`
 - I2: `TestChecklist_I2_JailOnOldKeyAppliesToCurrentKeyCoherently`
 - J1: `TestChecklist_J1_RandomizedLifecycleInvariant`
@@ -143,6 +150,7 @@ All checklist items are closed for this scope. IDs are retained so tests and fut
 
 ```bash
 go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_' -count=1
+go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestChecklist_F4_' -count=1
 go test ./x/dogfood/keeper/ -run 'TestKeyChangeEscapeTestSuite/TestSameEpochDoubleKeyRotation_SkipsSecondHookRisk' -count=1
 go test ./x/dogfood/types/ -run 'TestChecklist_E3_' -count=1
 go test ./x/dogfood/keeper/ ./x/operator/keeper/ ./x/oracle/keeper/... ./x/dogfood/types/ -count=1

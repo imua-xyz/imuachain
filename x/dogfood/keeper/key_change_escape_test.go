@@ -1937,3 +1937,72 @@ func (suite *KeyChangeEscapeTestSuite) TestChecklist_I2_JailOnOldKeyAppliesToCur
 		),
 	)
 }
+
+// TestChecklist_F4_SigningInfoCopiedEvenWhenSlashFails (checklist F4 / FND-3): verifies that
+// CopyValidatorSigningInfo is invoked for the rotated-to key even when the underlying economic
+// slash fails (e.g. missing voting power snapshot at a pre-epoch height).
+//
+// The SDK applies jail / tombstone consequences unconditionally after SlashWithInfractionReason
+// returns (x/evidence calls Tombstone regardless of the return value). Our
+// CopyValidatorSigningInfo propagates exactly those consequences to the rotated key, so it must
+// run regardless of slash outcome. Commit 4b72a197 incorrectly gated this copy on slashErr == nil.
+func (suite *KeyChangeEscapeTestSuite) TestChecklist_F4_SigningInfoCopiedEvenWhenSlashFails() {
+	operatorAddr, consKeyA, power := suite.AddValidator(3)
+	consAddrA := consKeyA.ToConsAddr()
+
+	suite.RunToEpochEndNoEndBlockerN(suite.EpochIdentifier, 3)
+	suite.CheckValidator(operatorAddr, consAddrA, power, power)
+
+	// Step 1: Rotate key A -> B while still in the active set.
+	consKeyB := suite.ChangeKey(operatorAddr, true)
+	consAddrB := consKeyB.ToConsAddr()
+	suite.Commit()
+	suite.RunToEpochEndNoEndBlocker(suite.EpochIdentifier)
+	suite.Commit()
+
+	suite.CheckValidator(operatorAddr, consAddrB, power, power)
+
+	// Key B must not be jailed at this point.
+	infoBefore, foundBefore := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrB)
+	suite.Require().True(foundBefore)
+	suite.Require().False(
+		infoBefore.JailedUntil.After(suite.Ctx.BlockTime()),
+		"key B should not be jailed before the slash attempt",
+	)
+
+	// Step 2: Call SlashWithInfractionReason on old key A using infractionHeight = 0
+	// (genesis, before the first epoch-end snapshot). LoadVotingPowerSnapshot will
+	// return ErrNoKeyInTheStore, so the economic slash will fail and no slash record
+	// is written. The non-economic consequence (signing-info copy) must still happen.
+	const infractionHeight = int64(0)
+	frac := suite.App.SlashingKeeper.SlashFractionDowntime(suite.Ctx)
+	_ = suite.App.StakingKeeper.SlashWithInfractionReason(
+		suite.Ctx,
+		consAddrA,
+		infractionHeight,
+		power,
+		frac,
+		stakingtypes.Infraction_INFRACTION_DOWNTIME,
+	)
+
+	// Step 3: Confirm the economic slash did NOT commit: no slash record for this ID.
+	slashID := operatorkeeper.GetSlashIDForDogfood(
+		stakingtypes.Infraction_INFRACTION_DOWNTIME,
+		infractionHeight,
+	)
+	_, errSlashRecord := suite.App.OperatorKeeper.GetOperatorSlashInfo(
+		suite.Ctx, suite.AvsAddress, operatorAddr.String(), slashID,
+	)
+	suite.Require().Error(errSlashRecord,
+		"no voting power snapshot at height 0: economic slash must fail (no record expected)")
+
+	// Step 4: Signing info must have been copied to key B regardless.
+	// For DOWNTIME, CopyValidatorSigningInfo sets JailedUntil on the new key to
+	// ctx.BlockTime() + DowntimeJailDuration, which is in the future.
+	infoBAfter, foundBAfter := suite.App.SlashingKeeper.GetValidatorSigningInfo(suite.Ctx, consAddrB)
+	suite.Require().True(foundBAfter)
+	suite.Require().True(
+		infoBAfter.JailedUntil.After(suite.Ctx.BlockTime()),
+		"signing info (JailedUntil) must be propagated to the current key even when the economic slash fails",
+	)
+}
