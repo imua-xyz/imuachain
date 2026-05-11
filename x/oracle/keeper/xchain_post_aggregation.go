@@ -42,14 +42,25 @@ var _ common.PostAggregationHandler = UpdateXChainMsgs
 // - Enqueues the batch for budgeted EndBlock delivery (gateway delivery is executed later).
 //
 // NOTE: postHandler errors are only logged (they do not revert the block).
+// We additionally recover panics here (e.g. from corrupted xchain_store decode
+// in GetXChainLastSeq) and convert them to returned errors. Letting them
+// propagate would halt consensus because the postHandler is invoked inside
+// FeederManager.commitRounds without panic recovery upstream.
 func UpdateXChainMsgs(
 	ctx sdk.Context,
 	rootHash []byte,
 	rawData []byte,
 	feederID, roundID uint64,
 	kInf common.KeeperOracle,
-) error {
-	// TODO: check alive queue length, we don't want the queue to grow infinititely (or we want to use map(k->v, not k->list) instead of slice in the storage)
+) (retErr error) {
+	defer func() {
+		if r := recover(); r != nil {
+			ctx.Logger().Error("UpdateXChainMsgs panic recovered — batch dropped, will retry next round",
+				"feederID", feederID, "roundID", roundID, "panic", r)
+			retErr = fmt.Errorf("xchain post-aggregation panic: %v", r)
+		}
+	}()
+	// Queue length cap enforced in enqueueXChainBatch via xchainMaxPendingBatchesPerSrcChain.
 	k, ok := kInf.(*Keeper)
 	if !ok {
 		return errors.New("input keeper interface type error")

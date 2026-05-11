@@ -210,8 +210,16 @@ func (k Keeper) AddCheckpointSignature(
 	signedPower += validatorPower
 	k.setCheckpointSignedPower(ctx, dstChainID, nonce, signedPower)
 
-	// Check if 2/3+ total power has signed
+	// Check if 2/3+ total power has signed.
+	// Guard: when totalPower <= 0 (panic recovery or empty valset), the 2/3 inequality
+	// `signedPower*3 > totalPower*2` would degenerate to `signedPower*3 > 0`, finalizing
+	// on a single signature. Refuse to finalize and surface the condition.
 	totalPower := k.getTotalValidatorPower(ctx)
+	if totalPower <= 0 {
+		ctx.Logger().Error("checkpoint signature accepted but totalPower<=0 — cannot evaluate finalization",
+			"dstChainID", dstChainID, "nonce", nonce, "signedPower", signedPower)
+		return false, nil
+	}
 	if signedPower*3 > totalPower*2 {
 		cp.Finalized = true
 		_ = k.setCheckpoint(ctx, dstChainID, nonce, cp)
@@ -302,11 +310,20 @@ func (k Keeper) setCheckpointSignedPower(ctx sdk.Context, dstChainID, nonce uint
 
 // getTotalValidatorPower returns the total voting power of the active validator set.
 // Returns 0 if the dogfood keeper is not wired (e.g., in unit tests).
+//
+// A panic here would propagate up through AddCheckpointSignature → msg server and
+// halt the tx; if it ever fires in EndBlock via checkpoint creation it would halt
+// consensus. We recover for safety, but log loudly (Error) and emit an event so a
+// silently-zero totalPower (which would let any single signature reach the 2/3
+// threshold) is never invisible.
 func (k Keeper) getTotalValidatorPower(ctx sdk.Context) int64 {
 	defer func() {
 		if r := recover(); r != nil {
-			// Protects against nil dogfood keeper in unit tests.
-			ctx.Logger().Debug("getTotalValidatorPower recovered from panic", "error", r)
+			ctx.Logger().Error("getTotalValidatorPower recovered from panic — total power treated as 0", "error", r)
+			ctx.EventManager().EmitEvent(sdk.NewEvent(
+				types.EventTypeCheckpointCreated,
+				sdk.NewAttribute(types.AttributeKeyReason, "total_power_panic"),
+			))
 		}
 	}()
 	validators := k.GetAllImuachainValidators(ctx)

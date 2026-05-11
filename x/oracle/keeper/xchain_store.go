@@ -1,9 +1,20 @@
 package keeper
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 )
+
+// xchain-store decoding policy:
+// A stored uint64 must always be 8 well-formed bytes (we only ever Set via
+// types.Uint64Bytes). A decode failure therefore indicates state corruption —
+// we MUST NOT silently treat it as "missing", because a corrupted lastSeq
+// would let an already-accepted batch_seq look new and bypass replay protection.
+// We panic with a descriptive message. EndBlock callers are wrapped by
+// safeRunEndBlock (endblock.go); the post-aggregation handler converts a
+// panic into a returned error (xchain_post_aggregation.go).
 
 func (k Keeper) GetXChainLastSeq(ctx sdk.Context, srcChainID uint64) (uint64, bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -13,8 +24,8 @@ func (k Keeper) GetXChainLastSeq(ctx sdk.Context, srcChainID uint64) (uint64, bo
 	}
 	seq, err := types.BytesToUint64(bz)
 	if err != nil {
-		// corrupted store entry; treat as missing so we don't panic in EndBlock
-		return 0, false
+		panic(fmt.Sprintf("xchain_store: corrupted XChainLastSeq for srcChainID=%d (len=%d): %s",
+			srcChainID, len(bz), err))
 	}
 	return seq, true
 }
@@ -27,8 +38,8 @@ func (k Keeper) GetXChainLastExecutedSeq(ctx sdk.Context, srcChainID uint64) (ui
 	}
 	seq, err := types.BytesToUint64(bz)
 	if err != nil {
-		// corrupted store entry; treat as missing so we don't panic in EndBlock
-		return 0, false
+		panic(fmt.Sprintf("xchain_store: corrupted XChainLastExecutedSeq for srcChainID=%d (len=%d): %s",
+			srcChainID, len(bz), err))
 	}
 	return seq, true
 }
@@ -61,7 +72,8 @@ func (k Keeper) GetXChainMsgRetryCount(ctx sdk.Context, srcChainID uint64, msgID
 	}
 	v, err := types.BytesToUint64(bz)
 	if err != nil {
-		return 0
+		panic(fmt.Sprintf("xchain_store: corrupted XChainMsgRetryCount for srcChainID=%d msgID=%s (len=%d): %s",
+			srcChainID, msgID, len(bz), err))
 	}
 	return v
 }

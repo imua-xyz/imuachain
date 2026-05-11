@@ -21,7 +21,18 @@ import (
 const (
 	xchainMaxDeliveriesPerEndBlock = 50
 	xchainMaxMsgRetries            = 2
+	// xchainMaxPendingBatchesPerSrcChain caps how many un-delivered batches we
+	// will buffer per srcChain before refusing new enqueues. Strict batch_seq
+	// ordering already limits ingest to one new batch per srcChain per oracle
+	// round, but per-srcChain delivery throughput can fall behind when many
+	// srcChains contend for the per-EndBlock delivery budget. Without a cap
+	// the queue could grow unboundedly across rounds.
+	xchainMaxPendingBatchesPerSrcChain = 100
 )
+
+// ErrXChainQueueFull is returned by enqueueXChainBatch when the per-srcChain
+// pending-batch cap is exceeded.
+var ErrXChainQueueFull = errors.New("xchain queue full for srcChainID")
 
 type xchainQueuedBatch struct {
 	RootHashB64 string             `json:"root_hash_b64"`
@@ -120,6 +131,15 @@ func (k Keeper) enqueueXChainBatch(ctx sdk.Context, srcChainID uint64, qb xchain
 		// corrupted; reset to empty to avoid panic / infinite loop
 		head, tail = 0, 0
 		reset = true
+	}
+
+	// Cap pending batches per srcChain. Strict batch_seq ordering already
+	// gates ingest to one batch per round, but if delivery falls behind we
+	// don't want unbounded growth. Caller logs the error; the chain
+	// proceeds and the next round retries the same batch_seq.
+	if tail-head >= xchainMaxPendingBatchesPerSrcChain {
+		return fmt.Errorf("%w: srcChainID=%d pending=%d cap=%d",
+			ErrXChainQueueFull, srcChainID, tail-head, xchainMaxPendingBatchesPerSrcChain)
 	}
 
 	// Ensure the head key exists so EndBlock can discover this srcChainID queue via prefix iteration.

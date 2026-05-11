@@ -1293,6 +1293,23 @@ func (f *FeederManager) EqualsWithReason(fm *FeederManager) string {
 			return fmt.Sprintf("round %d differs (%s)", id, reason)
 		}
 	}
+	// phaseTwoCollectingFeederIDs is part of the feeder-manager snapshot
+	// (see getCheckTx / updateCheckTx); equality MUST compare it or recovery
+	// drift checks miss divergence in 2-phase collection state.
+	if len(f.phaseTwoCollectingFeederIDs) != len(fm.phaseTwoCollectingFeederIDs) {
+		return fmt.Sprintf("phaseTwoCollectingFeederIDs length %d vs %d",
+			len(f.phaseTwoCollectingFeederIDs), len(fm.phaseTwoCollectingFeederIDs))
+	}
+	for feederID, startBaseBlock := range f.phaseTwoCollectingFeederIDs {
+		other, ok := fm.phaseTwoCollectingFeederIDs[feederID]
+		if !ok {
+			return fmt.Sprintf("phaseTwoCollectingFeederIDs missing feederID=%d", feederID)
+		}
+		if other != startBaseBlock {
+			return fmt.Sprintf("phaseTwoCollectingFeederIDs feederID=%d startBaseBlock %d vs %d",
+				feederID, startBaseBlock, other)
+		}
+	}
 	return ""
 }
 

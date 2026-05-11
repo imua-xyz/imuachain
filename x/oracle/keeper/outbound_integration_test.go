@@ -1,25 +1,62 @@
 package keeper_test
 
 import (
+	"crypto/ecdsa"
 	"encoding/hex"
+	"reflect"
 	"testing"
 
+	"github.com/agiledragon/gomonkey/v2"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
+	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
+	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
 	"github.com/imua-xyz/imuachain/x/oracle/keeper"
 	"github.com/imua-xyz/imuachain/x/oracle/types"
 	"github.com/stretchr/testify/require"
 )
 
 // TestOutboundE2EFlow tests the full outbound lifecycle:
-// 1. Enqueue outbound messages
-// 2. Create checkpoint
-// 3. Validators sign checkpoint
-// 4. Checkpoint reaches 2/3+ power and finalizes
-// 5. Signatures can be queried for relay to client chain
+//  1. Enqueue outbound messages
+//  2. Create checkpoint
+//  3. Validators sign checkpoint
+//  4. Checkpoint reaches 2/3+ power and finalizes
+//  5. Signatures can be queried for relay to client chain
+//
+// We patch dogfood's GetAllImuachainValidators so totalPower>0; otherwise the
+// production guard in AddCheckpointSignature (signedPower*3 > totalPower*2)
+// would refuse to finalize when totalPower==0.
 func TestOutboundE2EFlow(t *testing.T) {
 	k, ctx := keepertest.OracleKeeper(t)
 	dstChainID := uint64(101)
+
+	// 3 validators × 100 power = 300 totalPower.
+	// `signedPower*3 > totalPower*2` is strict: 2 sigs (200×3=600) tie with
+	// 300×2=600 → NOT finalized; 3 sigs (300×3=900) > 600 → finalized.
+	const numVals = 3
+	privKeys := make([]*ecdsa.PrivateKey, numVals)
+	addrs := make([]common.Address, numVals)
+	mockValidators := make([]dogfoodtypes.ImuachainValidator, numVals)
+	for i := 0; i < numVals; i++ {
+		pk, err := crypto.GenerateKey()
+		require.NoError(t, err)
+		privKeys[i] = pk
+		addrs[i] = crypto.PubkeyToAddress(pk.PublicKey)
+		mockValidators[i] = dogfoodtypes.ImuachainValidator{
+			Address: addrs[i].Bytes(),
+			Power:   100,
+		}
+	}
+	patcher := gomonkey.ApplyMethod(
+		reflect.TypeOf(dogfoodkeeper.Keeper{}),
+		"GetAllImuachainValidators",
+		func(_ dogfoodkeeper.Keeper, _ sdk.Context) []dogfoodtypes.ImuachainValidator {
+			return mockValidators
+		},
+	)
+	defer patcher.Reset()
 
 	// Step 1: Enqueue outbound messages (simulating what deliverXChainToGateway does)
 	msg1 := keeper.OutboundMsg{
@@ -56,16 +93,11 @@ func TestOutboundE2EFlow(t *testing.T) {
 	require.Equal(t, uint64(1), cp.SeqStart)
 	require.Equal(t, uint64(2), cp.SeqEnd)
 
-	// Step 3: Generate 3 validator ECDSA keys and sign
-	for i := 0; i < 3; i++ {
-		pk, err := crypto.GenerateKey()
-		require.NoError(t, err)
-		addr := crypto.PubkeyToAddress(pk.PublicKey)
-
-		// Sign the checkpoint
-		checkpointHash := types.ComputeCheckpointHash(cp.Nonce, cp.DstChainID, cp.MessagesHash)
-		ethHash := types.ComputeEthSignedMessageHash(checkpointHash)
-		sig, err := crypto.Sign(ethHash.Bytes(), pk)
+	// Step 3: Each validator signs the checkpoint; verify threshold behavior.
+	checkpointHash := types.ComputeCheckpointHash(cp.Nonce, cp.DstChainID, cp.MessagesHash)
+	ethHash := types.ComputeEthSignedMessageHash(checkpointHash)
+	for i := 0; i < numVals; i++ {
+		sig, err := crypto.Sign(ethHash.Bytes(), privKeys[i])
 		require.NoError(t, err)
 
 		var r, s [32]byte
@@ -73,16 +105,15 @@ func TestOutboundE2EFlow(t *testing.T) {
 		copy(s[:], sig[32:64])
 		v := uint8(sig[64] + 27)
 
-		// Submit signature (each validator gets power=100, total test power is 0 due to nil dogfood keeper,
-		// so any power triggers finalization)
-		finalized, err := k.AddCheckpointSignature(ctx, dstChainID, 1, addr, v, r, s, 100)
+		finalized, err := k.AddCheckpointSignature(ctx, dstChainID, 1, addrs[i], v, r, s, 100)
 		require.NoError(t, err)
 
-		if i < 2 {
-			// First two signatures: not yet finalized (need 2/3+ of total power)
-			// With nil dogfood keeper, totalPower returns 0, so signedPower > 0 > 0*2/3 → finalized immediately
-			// This is expected in unit tests
-			_ = finalized
+		// Strict 2/3 inequality means only the 3rd signature (300 power) crosses
+		// the threshold against totalPower=300.
+		if i < numVals-1 {
+			require.False(t, finalized, "should not finalize before reaching strict 2/3 of total power (sig %d)", i+1)
+		} else {
+			require.True(t, finalized, "should finalize when all 3 validators have signed (300 > 200)")
 		}
 	}
 
@@ -93,7 +124,7 @@ func TestOutboundE2EFlow(t *testing.T) {
 
 	// Step 5: Verify signatures can be queried
 	sigs := k.GetCheckpointSignatures(ctx, dstChainID, 1)
-	require.GreaterOrEqual(t, len(sigs), 1, "at least one signature should be stored")
+	require.Len(t, sigs, numVals, "all submitted signatures should be stored")
 
 	t.Logf("Outbound E2E flow completed: %d messages, checkpoint nonce=%d, %d signatures, finalized=%v",
 		len(msgs), nonce, len(sigs), cp.Finalized)
