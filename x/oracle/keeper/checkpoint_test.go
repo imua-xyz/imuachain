@@ -1,14 +1,17 @@
 package keeper_test
 
 import (
+	"bytes"
 	"encoding/hex"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	keepertest "github.com/imua-xyz/imuachain/testutil/keeper"
 	dogfoodkeeper "github.com/imua-xyz/imuachain/x/dogfood/keeper"
 	dogfoodtypes "github.com/imua-xyz/imuachain/x/dogfood/types"
@@ -27,6 +30,23 @@ func patchDogfoodValidators(vals []dogfoodtypes.ImuachainValidator) *gomonkey.Pa
 			return vals
 		},
 	)
+}
+
+// stubOperatorKeeper satisfies types.OperatorKeeper for tests by mapping
+// consensus addresses to operator AccAddresses via an in-memory table.
+type stubOperatorKeeper struct {
+	consToOp map[string]sdk.AccAddress
+}
+
+func (s *stubOperatorKeeper) GetOperatorConsKeyForChainID(_ sdk.Context, _ sdk.AccAddress, _ string) (bool, keytypes.WrappedConsKey, error) {
+	return false, nil, nil
+}
+
+func (s *stubOperatorKeeper) GetOperatorAddressForChainIDAndConsAddr(_ sdk.Context, _ string, consAddr sdk.ConsAddress) (bool, sdk.AccAddress) {
+	if a, ok := s.consToOp[consAddr.String()]; ok {
+		return true, a
+	}
+	return false, nil
 }
 
 func TestCheckpointCreation(t *testing.T) {
@@ -197,4 +217,122 @@ func TestEthSignedMessageHash(t *testing.T) {
 	ethHash := types.ComputeEthSignedMessageHash(hash)
 	require.NotEqual(t, hash, ethHash) // should be different from original
 	require.NotEqual(t, common.Hash{}, ethHash)
+}
+
+// TestValsetCheckpointAddressNamespace asserts that the valset checkpoint stores
+// **operator EVM addresses** (matching the namespace that ecrecover yields on
+// signed checkpoints), not raw dogfood consensus addresses. This is the bug that
+// would otherwise prevent BridgeVerifier on the destination chain from
+// associating signatures with valset entries.
+func TestValsetCheckpointAddressNamespace(t *testing.T) {
+	k, ctx := keepertest.OracleKeeper(t)
+
+	// Build 3 validators with DISTINCT consensus addresses and operator EVM
+	// addresses, so we can detect any reuse of the wrong namespace.
+	type val struct {
+		cons sdk.ConsAddress
+		op   sdk.AccAddress
+		pow  int64
+	}
+	vals := []val{
+		{cons: sdk.ConsAddress(bytes.Repeat([]byte{0x11}, 20)), op: sdk.AccAddress(common.HexToAddress("0xaa00000000000000000000000000000000000001").Bytes()), pow: 100},
+		{cons: sdk.ConsAddress(bytes.Repeat([]byte{0x22}, 20)), op: sdk.AccAddress(common.HexToAddress("0xcc00000000000000000000000000000000000002").Bytes()), pow: 200},
+		{cons: sdk.ConsAddress(bytes.Repeat([]byte{0x33}, 20)), op: sdk.AccAddress(common.HexToAddress("0xbb00000000000000000000000000000000000003").Bytes()), pow: 150},
+	}
+	dogVals := make([]dogfoodtypes.ImuachainValidator, len(vals))
+	consToOp := make(map[string]sdk.AccAddress, len(vals))
+	for i, v := range vals {
+		dogVals[i] = dogfoodtypes.ImuachainValidator{Address: v.cons.Bytes(), Power: v.pow}
+		consToOp[v.cons.String()] = v.op
+	}
+	patcher := patchDogfoodValidators(dogVals)
+	defer patcher.Reset()
+
+	k.SetOperatorKeeper(&stubOperatorKeeper{consToOp: consToOp})
+
+	// Run the under-test routine.
+	k.CreateValidatorSetCheckpointIfChanged(ctx)
+
+	nonce := uint64(1)
+	cp, found := k.GetValsetCheckpoint(ctx, nonce)
+	require.True(t, found, "valset checkpoint should be created on first call")
+	require.Equal(t, nonce, cp.Nonce)
+	require.Len(t, cp.Validators, 3)
+	require.Len(t, cp.Powers, 3)
+	require.EqualValues(t, 450, cp.TotalPower)
+
+	// Assert the stored addresses are operator EVM addresses, NOT consensus addrs,
+	// sorted strictly ascending.
+	expected := []common.Address{
+		common.HexToAddress("0xaa00000000000000000000000000000000000001"),
+		common.HexToAddress("0xbb00000000000000000000000000000000000003"),
+		common.HexToAddress("0xcc00000000000000000000000000000000000002"),
+	}
+	require.True(t, sort.SliceIsSorted(cp.Validators, func(i, j int) bool {
+		return bytes.Compare(cp.Validators[i].Bytes(), cp.Validators[j].Bytes()) < 0
+	}), "validators must be sorted ascending for BridgeVerifier")
+	require.Equal(t, expected, cp.Validators)
+
+	// Powers must follow the address permutation.
+	require.Equal(t, []int64{100, 150, 200}, cp.Powers)
+
+	// None of the consensus addresses should appear in the stored set —
+	// regression guard against the prior bug.
+	for _, v := range vals {
+		consAsAddr := common.BytesToAddress(v.cons.Bytes())
+		for _, stored := range cp.Validators {
+			require.NotEqual(t, consAsAddr, stored,
+				"consensus address %s leaked into valset (namespace bug)", consAsAddr.Hex())
+		}
+	}
+}
+
+// TestValsetCheckpointIfChangedSkipsOnNoChange asserts that calling
+// CreateValidatorSetCheckpointIfChanged twice with the same valset produces a
+// single checkpoint (the second call is a no-op).
+func TestValsetCheckpointIfChangedSkipsOnNoChange(t *testing.T) {
+	k, ctx := keepertest.OracleKeeper(t)
+
+	cons := sdk.ConsAddress(bytes.Repeat([]byte{0x11}, 20))
+	op := sdk.AccAddress(common.HexToAddress("0xaa00000000000000000000000000000000000001").Bytes())
+
+	patcher := patchDogfoodValidators([]dogfoodtypes.ImuachainValidator{
+		{Address: cons.Bytes(), Power: 100},
+	})
+	defer patcher.Reset()
+	k.SetOperatorKeeper(&stubOperatorKeeper{consToOp: map[string]sdk.AccAddress{cons.String(): op}})
+
+	k.CreateValidatorSetCheckpointIfChanged(ctx)
+	_, found := k.GetValsetCheckpoint(ctx, 1)
+	require.True(t, found)
+
+	// Second call: identical valset → no new checkpoint.
+	k.CreateValidatorSetCheckpointIfChanged(ctx)
+	_, found = k.GetValsetCheckpoint(ctx, 2)
+	require.False(t, found, "identical valset must not produce a new checkpoint")
+}
+
+// TestValsetCheckpointSkipsWhenOperatorBindingMissing asserts that validators
+// without an operator binding for this chain are skipped (logged, not stored),
+// preventing leakage of unmappable identities into the destination contract.
+func TestValsetCheckpointSkipsWhenOperatorBindingMissing(t *testing.T) {
+	k, ctx := keepertest.OracleKeeper(t)
+
+	cons1 := sdk.ConsAddress(bytes.Repeat([]byte{0x11}, 20))
+	op1 := sdk.AccAddress(common.HexToAddress("0xaa00000000000000000000000000000000000001").Bytes())
+	cons2 := sdk.ConsAddress(bytes.Repeat([]byte{0x22}, 20))
+	// cons2 deliberately has no mapping in the stub.
+
+	patcher := patchDogfoodValidators([]dogfoodtypes.ImuachainValidator{
+		{Address: cons1.Bytes(), Power: 100},
+		{Address: cons2.Bytes(), Power: 200},
+	})
+	defer patcher.Reset()
+	k.SetOperatorKeeper(&stubOperatorKeeper{consToOp: map[string]sdk.AccAddress{cons1.String(): op1}})
+
+	k.CreateValidatorSetCheckpointIfChanged(ctx)
+	cp, found := k.GetValsetCheckpoint(ctx, 1)
+	require.True(t, found)
+	require.Len(t, cp.Validators, 1, "unmapped validator must be skipped")
+	require.EqualValues(t, 100, cp.TotalPower)
 }

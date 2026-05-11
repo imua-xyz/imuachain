@@ -318,12 +318,23 @@ func (k Keeper) getTotalValidatorPower(ctx sdk.Context) int64 {
 
 // --- Validator Set Checkpoints ---
 
-// CreateValidatorSetCheckpointIfChanged creates a new valset checkpoint if the validator
-// set has changed since the last checkpoint. Called from the epoch hook.
+// CreateValidatorSetCheckpointIfChanged creates a new valset checkpoint when the
+// active validator set differs from the previously stored one.
+//
+// Address namespace: validators must be identified by the **operator EVM address**
+// — the same namespace that ecrecover yields when validators sign checkpoints.
+// The dogfood consensus address is in a different namespace and would break
+// destination-chain signature lookup. We map via operatorKeeper.
+//
+// Output ordering: validators are sorted strictly ascending by EVM address to
+// match BridgeVerifier._validateAndIngestValset on the destination side.
+//
+// Called from EpochsHooksWrapper.AfterEpochEnd (EndBlock chain). Recover is
+// load-bearing here — a panic would halt consensus via the epochs hook.
 func (k Keeper) CreateValidatorSetCheckpointIfChanged(ctx sdk.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			ctx.Logger().Error("valset checkpoint creation failed (recovered)", "error", r)
+			ctx.Logger().Error("valset checkpoint creation panic recovered", "error", r)
 		}
 	}()
 
@@ -332,35 +343,65 @@ func (k Keeper) CreateValidatorSetCheckpointIfChanged(ctx sdk.Context) {
 		return
 	}
 
-	// Build current valset
-	addrs := make([]common.Address, 0, len(validators))
-	powers := make([]int64, 0, len(validators))
-	var totalPower int64
+	if k.operatorKeeper == nil {
+		// Without operator binding we cannot produce the correct address namespace.
+		// Skip rather than write a checkpoint that destination contracts can't verify against.
+		ctx.Logger().Info("valset checkpoint skipped: operatorKeeper not wired")
+		return
+	}
+
+	chainID := ctx.ChainID()
+	type valEntry struct {
+		addr  common.Address
+		power int64
+	}
+	entries := make([]valEntry, 0, len(validators))
 	for _, v := range validators {
 		if v.Power <= 0 {
 			continue
 		}
-		// In evmos, the validator consensus address is NOT the operator EVM address.
-		// For the bridge, we need the operator's EVM address.
-		// If operator keeper is available, we can map consensus addr → operator addr.
-		// For now, store the consensus address bytes as the validator identifier.
-		// TODO: map via operator keeper when wired.
-		addr := common.BytesToAddress(v.Address)
-		addrs = append(addrs, addr)
-		powers = append(powers, v.Power)
-		totalPower += v.Power
+		consAddr := sdk.ConsAddress(v.Address)
+		found, opAccAddr := k.operatorKeeper.GetOperatorAddressForChainIDAndConsAddr(ctx, chainID, consAddr)
+		if !found {
+			ctx.Logger().Info("valset checkpoint: validator has no operator binding for this chain",
+				"consAddr", consAddr.String(), "chainID", chainID)
+			continue
+		}
+		entries = append(entries, valEntry{
+			addr:  common.BytesToAddress(opAccAddr.Bytes()),
+			power: v.Power,
+		})
 	}
-
-	if len(addrs) == 0 {
+	if len(entries) == 0 {
 		return
 	}
 
-	// Read current nonce
+	// BridgeVerifier requires strictly ascending addresses.
+	sort.Slice(entries, func(i, j int) bool {
+		return bytes.Compare(entries[i].addr.Bytes(), entries[j].addr.Bytes()) < 0
+	})
+
+	addrs := make([]common.Address, len(entries))
+	powers := make([]int64, len(entries))
+	var totalPower int64
+	for i, e := range entries {
+		addrs[i] = e.addr
+		powers[i] = e.power
+		totalPower += e.power
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	nonceBz := store.Get([]byte(types.ValsetCheckpointNonceKey))
 	var currentNonce uint64
 	if nonceBz != nil {
 		currentNonce, _ = types.BytesToUint64(nonceBz)
+	}
+
+	// Honor "IfChanged": skip when previous valset matches.
+	if currentNonce > 0 {
+		if prev, ok := k.GetValsetCheckpoint(ctx, currentNonce); ok && valsetEqual(prev, addrs, powers) {
+			return
+		}
 	}
 
 	newNonce := currentNonce + 1
@@ -392,6 +433,18 @@ func (k Keeper) CreateValidatorSetCheckpointIfChanged(ctx sdk.Context) {
 		sdk.NewAttribute("validator_count", fmt.Sprintf("%d", len(addrs))),
 		sdk.NewAttribute("total_power", fmt.Sprintf("%d", totalPower)),
 	))
+}
+
+func valsetEqual(prev types.ValidatorSetCheckpoint, addrs []common.Address, powers []int64) bool {
+	if len(prev.Validators) != len(addrs) || len(prev.Powers) != len(powers) {
+		return false
+	}
+	for i := range addrs {
+		if prev.Validators[i] != addrs[i] || prev.Powers[i] != powers[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // GetValsetCheckpoint returns a validator set checkpoint by nonce.
