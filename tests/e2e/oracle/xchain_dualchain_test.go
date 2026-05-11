@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
@@ -61,11 +62,13 @@ func TestDualChainBridgeE2E(t *testing.T) {
 	require.NoError(t, err)
 	validatorAddr := crypto.PubkeyToAddress(validatorKey.PublicKey)
 
-	// Initialize: owner=anvilAddr, gateway=mockGateway, validators=[validatorAddr], powers=[100]
+	// Initialize: owner=anvilAddr, gateway=mockGateway, expectedDstChainID=dstChainID,
+	// validators=[validatorAddr], powers=[100]
 	castSend(t, anvilRPC, bridgeVerifierAddr,
-		"initialize(address,address,address[],uint256[])",
+		"initialize(address,address,uint256,address[],uint256[])",
 		validatorAddr.Hex(), // owner
 		mockGatewayAddr,     // gateway
+		"31337",             // expectedDstChainID (anvil default; matches dstChainID used below)
 		fmt.Sprintf("[%s]", validatorAddr.Hex()), // validators
 		"[100]", // powers
 	)
@@ -83,7 +86,7 @@ func TestDualChainBridgeE2E(t *testing.T) {
 	responsePayload[9] = 0x01 // success = true
 
 	messages := [][]byte{responsePayload}
-	messagesHash := hashMessages(messages)
+	messagesHash := hashMessages(t, messages)
 
 	checkpointNonce := uint64(1)
 	dstChainID := uint64(31337) // anvil default chain ID
@@ -206,37 +209,15 @@ func castCall(t *testing.T, rpcURL, to, sig string, args ...string) string {
 	return out.String()
 }
 
-func hashMessages(messages [][]byte) common.Hash {
+func hashMessages(t *testing.T, messages [][]byte) common.Hash {
 	// Must match BridgeVerifier.sol: keccak256(abi.encode(messages))
-	// abi.encode for bytes[] is complex. We use the same encoding as Solidity.
-	// For simplicity in this test, we use the Go ABI encoder.
-	// But actually BridgeVerifier does: keccak256(abi.encode(messages))
-	// which for a single bytes element is the standard ABI encoding.
-	//
-	// For the test, we compute it the same way the Solidity contract does.
-	// We can use ethclient + abi to compute this, but simpler: just use cast.
-	// Actually, let's compute it directly to avoid a dependency.
-
-	// ABI encode bytes[] - this is complex. For test simplicity, just hash
-	// the raw concatenation with length prefix, matching what we'll pass to the contract.
-	// Actually, the contract does: keccak256(abi.encode(messages))
-	// and we pass messagesHash explicitly, so it just needs to match.
-
-	// Use crypto.Keccak256Hash on the ABI-encoded bytes[]
-	// For a single message, abi.encode(bytes[]) =
-	//   offset(32) + length(32) + element_offset(32) + element_length(32) + padded_data
-	// This is too complex to replicate manually. Let's just hash the raw data
-	// and pass it as messagesHash to both Go and Solidity.
-	//
-	// Actually, the messagesHash is passed explicitly to verifyAndDeliver,
-	// so it just needs to be consistent. The contract doesn't recompute it from messages.
-	// Wait - looking at BridgeVerifier.sol again... it doesn't verify messagesHash matches messages.
-	// It just uses messagesHash in the checkpoint hash. So we can use any consistent hash.
-
-	var data []byte
-	for _, m := range messages {
-		data = append(data, m...)
-	}
-	return crypto.Keccak256Hash(data)
+	// where messages is bytes[]. Use go-ethereum's ABI encoder for parity.
+	t.Helper()
+	bytesArrTy, err := abi.NewType("bytes[]", "", nil)
+	require.NoError(t, err)
+	args := abi.Arguments{{Type: bytesArrTy}}
+	encoded, err := args.Pack(messages)
+	require.NoError(t, err)
+	return crypto.Keccak256Hash(encoded)
 }
 
