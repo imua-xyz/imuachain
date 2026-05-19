@@ -46,6 +46,7 @@ func NewTxCmd() *cobra.Command {
 		CmdUpdateRewardCompoundingFlag(),
 		CmdUpdateCommissionRate(),
 		CmdUpdateParams(),
+		CmdUnfreezeOperator(),
 	)
 	return txCmd
 }
@@ -393,6 +394,32 @@ func CmdUpdateParams() *cobra.Command {
 					MinCommissionRate:           minCommissionRate,
 					MinCommissionUpdateInterval: minCommissionUpdateInterval,
 				},
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// CmdUnfreezeOperator unfreezes an operator.
+func CmdUnfreezeOperator() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unfreeze-operator <operator-addr-bech32>",
+		Short: "unfreeze the operator",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			addr := strings.ToLower(args[0])
+			if _, err := sdk.AccAddressFromBech32(addr); err != nil {
+				return err
+			}
+			msg := &types.UnfreezeOperatorReq{
+				Authority:       clientCtx.GetFromAddress().String(),
+				OperatorAddress: addr,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

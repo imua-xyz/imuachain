@@ -2,8 +2,10 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	"github.com/imua-xyz/imuachain/utils"
+	"github.com/imua-xyz/imuachain/x/dogfood/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
@@ -20,14 +22,51 @@ func (k *Keeper) OperatorHooks() OperatorHooksWrapper {
 	return OperatorHooksWrapper{k}
 }
 
+// afterValidatorCreated is a helper function to call the hook in a cached context.
+// the hook is primarily handled in the SDK's x/slashing, which simply stores a
+// lookup of consensus address to public key.
+func (h OperatorHooksWrapper) afterValidatorCreated(
+	ctx sdk.Context, accAddress sdk.AccAddress,
+) error {
+	cc, writeFunc := ctx.CacheContext()
+	// this hook is only used by x/slashing. it never returns an error.
+	// we only guard for it because of the method signature.
+	if err := h.keeper.Hooks().AfterValidatorCreated(
+		cc, sdk.ValAddress(accAddress),
+	); err != nil {
+		h.keeper.Logger(ctx).Error("error in AfterValidatorCreated", "error", err)
+		return err
+	}
+	writeFunc()
+	return nil
+}
+
 // AfterOperatorKeySet is the implementation of the operator hooks.
 // CONTRACT: an operator cannot set their key if they are already in the process of removing it.
 func (h OperatorHooksWrapper) AfterOperatorKeySet(
-	sdk.Context, sdk.AccAddress, string, keytypes.WrappedConsKey,
-) {
-	// an operator opting in does not meaningfully affect this module, since
-	// this information will be fetched at the end of the epoch
-	// and the operator's vote power will be calculated then.
+	ctx sdk.Context, accAddress sdk.AccAddress,
+	chainID string, wrappedKey keytypes.WrappedConsKey,
+) error {
+	// we batch vote power changes at the end of the epoch, so nothing to do with those.
+	// we should, however, let the x/slashing module know of this change.
+	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
+		if err := h.afterValidatorCreated(ctx, accAddress); err != nil {
+			h.keeper.Logger(ctx).Error(
+				"AfterOperatorKeySet: error in afterValidatorCreated",
+				"error", err,
+			)
+			return err
+		}
+		// check that the key is not already tombstoned.
+		// if reusing a tombstoned key were permitted (after the appropriate delay),
+		// it would be an issue. this is because x/evidence refuses to punish
+		// already tombstoned validators for equivocation. if such a key is reused,
+		// any validator could double sign with impunity.
+		if h.keeper.slashingKeeper.IsTombstoned(ctx, wrappedKey.ToConsAddr()) {
+			return types.ErrConsKeyAlreadyTombstoned
+		}
+	}
+	return nil
 }
 
 // AfterOperatorKeyReplaced is the implementation of the operator hooks.
@@ -36,9 +75,9 @@ func (h OperatorHooksWrapper) AfterOperatorKeySet(
 // CONTRACT: key replacement from newKey to oldKey is not allowed, after a replacement from
 // oldKey to newKey.
 func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
-	ctx sdk.Context, _ sdk.AccAddress, oldKey keytypes.WrappedConsKey,
-	_ keytypes.WrappedConsKey, chainID string,
-) {
+	ctx sdk.Context, accAddress sdk.AccAddress, oldKey keytypes.WrappedConsKey,
+	newKey keytypes.WrappedConsKey, chainID string,
+) error {
 	// the impact of key replacement is:
 	// 1. vote power of old key is 0, which happens automatically at epoch end in EndBlock. this
 	// is because the key is in the previous set but not in the new one and our code will queue
@@ -47,8 +86,22 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	// EndBlock.
 	// 3. X epochs later, the reverse lookup of old cons addr + chain id -> operator addr
 	// should be cleared.
-	consAddr := oldKey.ToConsAddr()
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
+		// Map standard cosmos hooks (call AfterValidatorCreated to register the new key).
+		// This creates a blank ValidatorSigningInfo internally.
+		if err := h.afterValidatorCreated(ctx, accAddress); err != nil {
+			h.keeper.Logger(ctx).Error(
+				"AfterOperatorKeyReplaced: error in afterValidatorCreated",
+				"error", err,
+			)
+			return err
+		}
+		// check that the new key is not already tombstoned.
+		// see AfterOperatorKeySet to understand why.
+		newConsAddr := newKey.ToConsAddr()
+		if h.keeper.slashingKeeper.IsTombstoned(ctx, newConsAddr) {
+			return types.ErrConsKeyAlreadyTombstoned
+		}
 		// The reverse lookup (consensus address -> operator address) must be maintained
 		// during the unbonding period to allow slashing of validators who misbehaved while
 		// they were active, even after they've been removed from the active validator set.
@@ -56,14 +109,24 @@ func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 		// evidence of misbehavior (e.g., double-signing) from past epochs can be reported
 		// and processed during the unbonding period. Therefore, we always schedule the
 		// pruning for the consensus address at the end of the unbonding completion epoch.
+		oldConsAddr := oldKey.ToConsAddr()
 		unbondingEpoch := h.keeper.GetUnbondingCompletionEpoch(ctx)
-		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, consAddr)
+		// nb. whenever such a pruning is complete, we can also tell x/slashing to delete
+		// the mapping from consensus address to consensus public key. this is done via the
+		// AfterValidatorRemoved hook which is called when the pruning is performed.
+		h.keeper.AppendConsensusAddrToPrune(ctx, unbondingEpoch, oldConsAddr)
+		// copy from old cons addr to new cons addr
+		h.keeper.CopyValidatorSigningInfo(
+			ctx, oldConsAddr, newConsAddr,
+			stakingtypes.Infraction_INFRACTION_UNSPECIFIED,
+		)
 	}
+	return nil
 }
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
-	ctx sdk.Context, operator sdk.AccAddress, chainID string, _ keytypes.WrappedConsKey,
+	ctx sdk.Context, operator sdk.AccAddress, chainID string, key keytypes.WrappedConsKey,
 ) {
 	// the impact of key removal is:
 	// 1. vote power of the operator is 0, which happens automatically at epoch end in EndBlock.
@@ -73,7 +136,7 @@ func (h OperatorHooksWrapper) AfterOperatorKeyRemovalInitiated(
 	if chainID == utils.ChainIDWithoutRevision(ctx.ChainID()) {
 		// see AfterOperatorKeyReplaced for the reasoning behind scheduling the opt out,
 		// even if the operator may not be in the active validator set.
-		h.keeper.ScheduleOperatorOptOut(ctx, operator)
+		h.keeper.ScheduleOperatorOptOut(ctx, operator, key.ToConsAddr())
 	}
 }
 

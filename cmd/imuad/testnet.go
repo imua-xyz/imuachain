@@ -440,7 +440,7 @@ func getTestImuachainGenesis(
 				},
 			}, depositsByStaker, nil,
 		), operatortypes.NewGenesisState(
-			operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams(),
+			operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams(), nil,
 		), delegationtypes.NewGenesis(delegationtypes.DefaultParams(), associations, delegationStates, stakersByOperator, nil), dogfoodtypes.NewGenesis(
 			dogfoodtypes.NewParams(
 				dogfoodtypes.DefaultEpochsUntilUnbonded,

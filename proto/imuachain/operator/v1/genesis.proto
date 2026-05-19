@@ -44,6 +44,8 @@ message GenesisState {
   repeated OperatorAssetUSDValue operator_asset_usd_values = 9 [(gogoproto.nullable) = false];
   // params is the params of the operator module.
   Params params = 10 [(gogoproto.nullable) = false];
+  // frozen_operators is a list of frozen operators
+  repeated string frozen_operators = 11;
 }
 
 // OptedStates is helper structure to store the opted state for the genesis state.

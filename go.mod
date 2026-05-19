@@ -286,8 +286,9 @@ replace (
 	// use Cosmos-SDK fork
 	// (1) to enable Ledger functionality
 	// (2) to backport `Copy` feature to state for reverting precompiles
+	// (3) to export an x/slashing store pruning function
 	// TODO cut a release (after adding security backports) instead of pointing to a commit hash
-	github.com/cosmos/cosmos-sdk => github.com/imua-xyz/cosmos-sdk v0.47.5-evmos.2.0.20250312095401-0035968c59f0
+	github.com/cosmos/cosmos-sdk => github.com/imua-xyz/cosmos-sdk v0.47.5-evmos.2.0.20260326052424-a067e6fb7fd6
 	// fix cosmos-sdk error
 	github.com/cosmos/gogoproto => github.com/cosmos/gogoproto v1.4.10
 	// use Evmos geth fork

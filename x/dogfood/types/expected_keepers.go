@@ -1,20 +1,23 @@
 package types
 
 import (
+	"time"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ethereum/go-ethereum/common"
 	keytypes "github.com/imua-xyz/imuachain/types/keys"
 	avstypes "github.com/imua-xyz/imuachain/x/avs/types"
 	delegationtype "github.com/imua-xyz/imuachain/x/delegation/types"
-	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
+	epochstypes "github.com/imua-xyz/imuachain/x/epochs/types"
 	operatortypes "github.com/imua-xyz/imuachain/x/operator/types"
 )
 
 // EpochsKeeper represents the expected keeper interface for the epochs module.
 type EpochsKeeper interface {
-	GetEpochInfo(sdk.Context, string) (epochsTypes.EpochInfo, bool)
+	GetEpochInfo(sdk.Context, string) (epochstypes.EpochInfo, bool)
 }
 
 // DogfoodHooks represents the event hooks for dogfood module. Ideally, these should
@@ -74,6 +77,8 @@ type OperatorKeeper interface {
 	// GetOrCalculateOperatorUSDValues is used to get the self staking value for the operator
 	GetOrCalculateOperatorUSDValues(sdk.Context, sdk.AccAddress, string) (operatortypes.OperatorOptedUSDValue, error)
 	InitGenesisVPSnapshot(ctx sdk.Context) error
+	FreezeOperator(ctx sdk.Context, addr sdk.AccAddress) error
+	IsOperatorFrozen(ctx sdk.Context, addr sdk.AccAddress) bool
 }
 
 // DelegationKeeper represents the expected keeper interface for the delegation module.
@@ -92,4 +97,23 @@ type AVSKeeper interface {
 	RegisterAVSWithChainID(sdk.Context, *avstypes.AVSRegisterOrDeregisterParams) (bool, common.Address, error)
 	IsAVSByChainID(ctx sdk.Context, chainID string) (bool, string)
 	UpdateAVSInfo(ctx sdk.Context, params *avstypes.AVSRegisterOrDeregisterParams) error
+}
+
+type SlashingKeeper interface {
+	GetValidatorSigningInfo(
+		sdk.Context, sdk.ConsAddress,
+	) (slashingtypes.ValidatorSigningInfo, bool)
+	SetValidatorSigningInfo(
+		sdk.Context, sdk.ConsAddress, slashingtypes.ValidatorSigningInfo,
+	)
+	SetValidatorMissedBlockBitArray(
+		sdk.Context, sdk.ConsAddress, int64, bool,
+	)
+	IterateValidatorMissedBlockBitArray(
+		sdk.Context, sdk.ConsAddress, func(int64, bool) bool,
+	)
+	DowntimeJailDuration(sdk.Context) time.Duration
+	ResetValidatorSigningInfo(sdk.Context, sdk.ConsAddress)
+	ClearValidatorMissedBlockBitArray(sdk.Context, sdk.ConsAddress)
+	IsTombstoned(sdk.Context, sdk.ConsAddress) bool
 }

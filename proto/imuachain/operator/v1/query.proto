@@ -437,6 +437,11 @@ service Query {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/imuachain/operator/v1/params";
   }
+
+  // QueryOperatorFrozen queries the frozen status of the operator.
+  rpc QueryOperatorFrozen(QueryOperatorFrozenReq) returns (QueryOperatorFrozenResp) {
+    option (google.api.http).get = "/imuachain/operator/v1/operator_frozen/{operator_acc_addr}";
+  }
 }
 
 // QueryValidatorsRequest is request type for Query/Validators RPC method.
@@ -478,4 +483,16 @@ message QueryValidatorResponse {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+}
+
+// QueryOperatorFrozenReq is the request to obtain the frozen status of the operator.
+message QueryOperatorFrozenReq {
+  // operator_acc_addr is the operator account address.
+  string operator_acc_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// QueryOperatorFrozenResp is the response to obtain the frozen status of the operator.
+message QueryOperatorFrozenResp {
+  // frozen is the frozen status of the operator.
+  bool frozen = 1;
 }

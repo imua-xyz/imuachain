@@ -116,6 +116,8 @@ func (k Keeper) InitGenesis(
 	if err != nil {
 		panic(fmt.Sprintf("cant init genesis voting power snapshot,err: %s", err))
 	}
+	// no need for any hooks to be called here for x/slashing's information because
+	// it can call IterateValidators, which we have implemented in impl_sdk.go
 	// ApplyValidatorChanges will sort it internally
 	return k.ApplyValidatorChanges(
 		ctx, out,

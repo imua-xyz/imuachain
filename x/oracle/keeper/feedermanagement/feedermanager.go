@@ -503,6 +503,11 @@ func (f *FeederManager) handleMalicious(ctx sdk.Context, logger log.Logger, vali
 			return
 		}
 		power, _ := f.cs.GetPowerForValidator(validator)
+		// consAddr is either the proposer (Comet) or ConsAddrStrFromCreator(msg.Creator) for bad
+		// phase-2 raw data; quoting rounds use f.cs.GetValidators() (active-set cache). Those
+		// align with the current dogfood validator view. If an addr ever differed from the
+		// operator’s forward key, dogfood SlashWithInfractionReason would set slashingOldKey and
+		// CopyValidatorSigningInfo(..., UNSPECIFIED) like Tendermint-driven slashes.
 		coinsBurned := f.k.SlashWithInfractionReason(ctx, consAddr, height, power.Int64(), f.k.GetSlashFractionMalicious(ctx), stakingtypes.Infraction_INFRACTION_UNSPECIFIED)
 		var reason string
 		if rawData {

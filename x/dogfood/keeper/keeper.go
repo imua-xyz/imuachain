@@ -26,6 +26,7 @@ type (
 		delegationKeeper types.DelegationKeeper
 		restakingKeeper  types.AssetsKeeper
 		avsKeeper        types.AVSKeeper
+		slashingKeeper   types.SlashingKeeper
 
 		// edit params
 		authority string
@@ -37,7 +38,8 @@ func NewKeeper(
 	cdc codec.BinaryCodec, storeKey storetypes.StoreKey,
 	epochsKeeper types.EpochsKeeper, operatorKeeper types.OperatorKeeper,
 	delegationKeeper delegationKeeper.Keeper, restakingKeeper types.AssetsKeeper,
-	avsKeeper types.AVSKeeper, authority string,
+	avsKeeper types.AVSKeeper, slashingKeeper types.SlashingKeeper,
+	authority string,
 ) Keeper {
 	k := Keeper{
 		cdc:              cdc,
@@ -47,6 +49,7 @@ func NewKeeper(
 		delegationKeeper: delegationKeeper,
 		restakingKeeper:  restakingKeeper,
 		avsKeeper:        avsKeeper,
+		slashingKeeper:   slashingKeeper,
 		authority:        authority,
 	}
 	k.mustValidateFields()
@@ -132,6 +135,7 @@ func (k Keeper) mustValidateFields() {
 	types.PanicIfNil(k.delegationKeeper, "delegationKeeper")
 	types.PanicIfNil(k.restakingKeeper, "restakingKeeper")
 	types.PanicIfNil(k.avsKeeper, "avsKeeper")
+	types.PanicIfNil(k.slashingKeeper, "slashingKeeper")
 	// ensure authority is a valid bech32 address
 	if _, err := sdk.AccAddressFromBech32(k.authority); err != nil {
 		panic(fmt.Sprintf("authority address %s is invalid: %s", k.authority, err))

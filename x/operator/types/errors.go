@@ -145,4 +145,19 @@ var (
 		ModuleName, 31,
 		"operator name already exists",
 	)
+
+	ErrNoSuchOperator = errorsmod.Register(
+		ModuleName, 32,
+		"no such operator",
+	)
+
+	ErrOperatorFrozenStateMismatch = errorsmod.Register(
+		ModuleName, 33,
+		"operator frozen state mismatch",
+	)
+
+	ErrOperatorIsFrozen = errorsmod.Register(
+		ModuleName, 34,
+		"the operator has been frozen",
+	)
 )

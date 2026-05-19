@@ -62,8 +62,11 @@ func (k *Keeper) UpdateVotingPower(ctx sdk.Context, avsAddr, epochIdentifier str
 		}
 		optedUSDValues.SelfUSDValue = stakingInfo.SelfStaking
 		optedUSDValues.TotalUSDValue = stakingInfo.Staking.Add(rewardsUSDValue)
-		// check if self USD value is more than the minimum self delegation.
-		if stakingInfo.SelfStaking.GTE(minimumSelfDelegation) {
+		// check if self USD value is more than the minimum self delegation,
+		// and that the operator is not frozen. Frozen operators are excluded
+		// from all opted-in AVSs to apply the freeze network-wide.
+		if stakingInfo.SelfStaking.GTE(minimumSelfDelegation) &&
+			!k.IsOperatorFrozenStr(ctx, operator) {
 			optedUSDValues.ActiveUSDValue = optedUSDValues.TotalUSDValue
 			avsVotingPower = avsVotingPower.Add(optedUSDValues.TotalUSDValue)
 		}

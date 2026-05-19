@@ -84,6 +84,10 @@ const (
 
 	// prefixParams is the prefix used to store the params.
 	prefixParams
+
+	// prefixOperatorFrozen is the prefix used to store whether an operator is frozen.
+	// combined with the operator address it acts as a sentinel.
+	prefixOperatorFrozen
 )
 
 var (
@@ -162,6 +166,11 @@ var (
 	// KeyPrefixParams key-value:
 	// params -> Params
 	KeyPrefixParams = []byte{prefixParams}
+
+	// KeyPrefixOperatorFrozen is a prefix to which a frozen operator's account address (bytes)
+	// is appended. The value is empty. If such a key exists, it implies that the operator
+	// is frozen. It can be used to iterate over frozen operators in an ordered manner.
+	KeyPrefixOperatorFrozen = []byte{prefixOperatorFrozen}
 )
 
 // ModuleAddress is the native module address for EVM
@@ -331,4 +340,13 @@ func IterateOperatorsForAVSPrefix(avsAddr string) []byte {
 // KeyForParams returns the key for the params.
 func KeyForParams() []byte {
 	return KeyPrefixParams
+}
+
+// KeyForOperatorFrozen returns the key which can be used to check whether an operator
+// is frozen.
+func KeyForOperatorFrozen(addr sdk.AccAddress) []byte {
+	return utils.AppendMany(
+		[]byte{prefixOperatorFrozen},
+		addr,
+	)
 }

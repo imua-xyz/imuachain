@@ -108,6 +108,9 @@ func (k *Keeper) EditOperator(
 	if err != nil {
 		return err
 	}
+	if k.IsOperatorFrozen(ctx, opAccAddr) {
+		return operatortypes.ErrOperatorIsFrozen
+	}
 	// this prevents resetting to the same name as well
 	if has, err := k.HasOperatorName(ctx, description.Moniker); err != nil {
 		return err
@@ -148,6 +151,9 @@ func (k *Keeper) UpdateRewardCompoundingFlag(
 	info, err := k.OperatorInfo(ctx, opAccAddr.String())
 	if err != nil {
 		return err
+	}
+	if k.IsOperatorFrozen(ctx, opAccAddr) {
+		return operatortypes.ErrOperatorIsFrozen
 	}
 	if info.DisableCompoundRewards == disableCompoundRewards {
 		return nil
@@ -392,7 +398,13 @@ func (k *Keeper) IsActive(ctx sdk.Context, operatorAddr, avsAddr string) bool {
 // operators who have opted out in the current epoch. These operators would still be included
 // if we used `IsActive`, because the voting power update happens before the epoch info is updated.
 func (k *Keeper) IsOptedInAndNotJailed(ctx sdk.Context, operatorAddr, avsAddr string) bool {
-	return k.IsOptedIn(ctx, operatorAddr, avsAddr) && !k.IsJailed(ctx, operatorAddr, avsAddr)
+	return k.IsOptedIn(
+		ctx, operatorAddr, avsAddr,
+	) && !k.IsJailed(
+		ctx, operatorAddr, avsAddr,
+	) && !k.IsOperatorFrozen(
+		ctx, sdk.MustAccAddressFromBech32(operatorAddr),
+	)
 }
 
 func (k *Keeper) IterateOptInfo(ctx sdk.Context, iteratePrefix []byte, opFunc func(key []byte, optedInfo *operatortypes.OptedInfo) (bool, error)) error {

@@ -157,14 +157,6 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/imuachain/imslash/v1/query.swagger.json",
-      "operationIds": {
-        "rename": {
-          "Params": "ImSlashParams"
-        }
-      }
-    },
-    {
       "url": "./tmp-swagger-gen/imuachain/oracle/v1/query.swagger.json",
       "operationIds": {
         "rename": {

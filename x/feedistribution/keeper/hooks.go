@@ -122,16 +122,18 @@ func (k *Keeper) OperatorHooks() OperatorHooksWrapper {
 // AfterOperatorKeySet is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeySet(
 	sdk.Context, sdk.AccAddress, string, keytypes.WrappedConsKey,
-) {
+) error {
 	// No operation needed here.
+	return nil
 }
 
 // AfterOperatorKeyReplaced is the implementation of the operator hooks.
 func (h OperatorHooksWrapper) AfterOperatorKeyReplaced(
 	sdk.Context, sdk.AccAddress, keytypes.WrappedConsKey,
 	keytypes.WrappedConsKey, string,
-) {
+) error {
 	// No operation needed here.
+	return nil
 }
 
 // AfterOperatorKeyRemovalInitiated is the implementation of the operator hooks.

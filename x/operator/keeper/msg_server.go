@@ -39,6 +39,7 @@ func (msgServer *MsgServerImpl) OptIntoAVS(goCtx context.Context, req *types.Opt
 		if len(req.PublicKeyJSON) > 0 {
 			return nil, types.ErrInvalidPubKey.Wrap("public key is not required for non-chain AVS")
 		}
+		// checks for frozen status internally
 		err = msgServer.keeper.OptIn(ctx, accAddr, req.AvsAddress)
 		if err != nil {
 			return nil, err
@@ -48,6 +49,7 @@ func (msgServer *MsgServerImpl) OptIntoAVS(goCtx context.Context, req *types.Opt
 		if key == nil {
 			return nil, types.ErrInvalidPubKey.Wrap("invalid public key")
 		}
+		// checks for frozen status internally
 		err = msgServer.keeper.OptInWithConsKey(ctx, accAddr, req.AvsAddress, key)
 		if err != nil {
 			return nil, err
@@ -67,6 +69,7 @@ func (msgServer *MsgServerImpl) OptOutOfAVS(goCtx context.Context, req *types.Op
 	}()
 	// #nosec G703 // already validated
 	accAddr, _ := sdk.AccAddressFromBech32(req.FromAddress)
+	// checks for frozen status internally
 	err = msgServer.keeper.OptOut(ctx, accAddr, req.AvsAddress)
 	if err != nil {
 		return nil, err
@@ -83,13 +86,17 @@ func (msgServer *MsgServerImpl) SetConsKey(goCtx context.Context, req *types.Set
 	}
 	// #nosec G703 // already validated
 	accAddr, _ := sdk.AccAddressFromBech32(req.Address)
-	if !msgServer.keeper.IsOptedInAndNotJailed(ctx, accAddr.String(), req.AvsAddress) {
+	// if a validator / operator is jailed, it is permitted to change the consensus key.
+	// this can happen, for example, in the case of server loss or migration or compromise.
+	// it must, however, be opted in, first.
+	if !msgServer.keeper.IsOptedIn(ctx, accAddr.String(), req.AvsAddress) {
 		return nil, types.ErrIsOptedOutOrJailed
 	}
 	wrappedKey := keytypes.NewWrappedConsKeyFromJSON(req.PublicKeyJSON)
 	if wrappedKey == nil {
 		return nil, types.ErrInvalidPubKey.Wrap("invalid public key")
 	}
+	// checks for frozen status internally
 	if err := msgServer.keeper.SetOperatorConsKeyForChainID(ctx, accAddr, chainID, wrappedKey); err != nil {
 		return nil, err
 	}
@@ -105,6 +112,7 @@ func (msgServer *MsgServerImpl) UpdateCommissionRate(
 	if err != nil {
 		return nil, err
 	}
+	// checks for frozen status internally
 	if err := msgServer.keeper.ValidateAndUpdateCommissionRate(
 		ctx, accAddr, req.CommissionRate,
 	); err != nil {
@@ -122,6 +130,7 @@ func (msgServer *MsgServerImpl) EditOperator(
 	if err != nil {
 		return nil, err
 	}
+	// checks for frozen status internally
 	if err := msgServer.keeper.EditOperator(ctx, accAddr, req.Description); err != nil {
 		return nil, err
 	}
@@ -137,6 +146,7 @@ func (msgServer *MsgServerImpl) UpdateRewardCompoundingFlag(
 	if err != nil {
 		return nil, err
 	}
+	// checks for frozen status internally
 	if err := msgServer.keeper.UpdateRewardCompoundingFlag(ctx, accAddr, req.DisableCompoundRewards); err != nil {
 		return nil, err
 	}
@@ -176,4 +186,21 @@ func (msgServer *MsgServerImpl) UpdateParams(
 		),
 	)
 	return &types.MsgUpdateParamsResponse{}, nil
+}
+
+func (msgServer *MsgServerImpl) UnfreezeOperator(
+	goCtx context.Context, req *types.UnfreezeOperatorReq,
+) (*types.UnfreezeOperatorResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msgServer.keeper.authority != req.Authority {
+		return nil, govtypes.ErrInvalidSigner.Wrapf(
+			"invalid authority; expected %s, got %s",
+			msgServer.keeper.authority, req.Authority,
+		)
+	}
+	addr := sdk.MustAccAddressFromBech32(req.OperatorAddress)
+	if err := msgServer.keeper.UnfreezeOperator(ctx, addr); err != nil {
+		return nil, err
+	}
+	return &types.UnfreezeOperatorResponse{}, nil
 }

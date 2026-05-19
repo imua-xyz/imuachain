@@ -54,6 +54,8 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	// start by clearing the previous consensus keys for the chain.
 	// each AVS can have a separate epoch and hence this function is a part of this module
 	// and not the operator module.
+	// as a reminder, this refers solely to the consensus key used in the previous epoch,
+	// which is tracked by x/operator to tell us if it's a new opt-in or a key replacement.
 	k.operatorKeeper.ClearPreviousConsensusKeys(ctx, chainIDWithoutRevision)
 	// let the operator module know that the opt out has finished.
 	optOuts := k.GetPendingOptOuts(ctx)
@@ -91,10 +93,45 @@ func (k Keeper) EndBlock(ctx sdk.Context) []abci.ValidatorUpdate {
 	// to operator address. this information can now be pruned, since the opt out is considered
 	// complete.
 	consensusAddrs := k.GetPendingConsensusAddrs(ctx)
+	failedConsAddrs := []sdk.ConsAddress{}
 	for _, consensusAddr := range consensusAddrs.GetList() {
+		consAddr := sdk.ConsAddress(consensusAddr)
+		cc, writeFunc := ctx.CacheContext()
+		// tell the slashing module to delete look up from consensus addr to pub key
+		// the x/slashing module never returns an error for this hook. we only guard
+		// against the error because of the method signature.
+		if err := k.Hooks().AfterValidatorRemoved(
+			cc, consAddr, nil,
+		); err != nil {
+			logger.Error(
+				"error in AfterValidatorRemoved hook",
+				"err", err,
+				"consensusAddr", consAddr.String(),
+			)
+			failedConsAddrs = append(failedConsAddrs, consensusAddr)
+			continue
+		}
 		k.operatorKeeper.DeleteOperatorAddressForChainIDAndConsAddr(
-			ctx, chainIDWithoutRevision, consensusAddr,
+			cc, chainIDWithoutRevision, consAddr,
 		)
+		// clear old signed vs missed blocks
+		k.slashingKeeper.ClearValidatorMissedBlockBitArray(cc, consAddr)
+		// clear signing info, unless tombstoned. why?
+		// 1. if the key is not tombstoned, we don't need to retain any
+		// of the information. if an operator later switches to this key
+		// (whether the same operator or different is not relevant),
+		// they get a clean slate of signing info through this call.
+		// if they didn't get such a clean slate, they could have a non
+		// zero missed blocks counter but an empty missed block array,
+		// which is non-recoverable.
+		// 2. if the key is tombstoned, this does nothing. this way, a
+		// tombstoned key cannot be reused by any operator.
+		k.slashingKeeper.ResetValidatorSigningInfo(cc, consAddr)
+		writeFunc()
+	}
+	// reschedule these for the next epoch
+	for _, addr := range failedConsAddrs {
+		k.AppendConsensusAddrToPrune(ctx, nextEpochNumber, addr)
 	}
 	k.ClearPendingConsensusAddrs(ctx)
 	// finally, perform the actual operations of vote power changes.

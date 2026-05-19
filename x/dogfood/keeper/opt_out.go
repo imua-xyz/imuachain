@@ -10,11 +10,13 @@ import (
 // ScheduleOperatorOptOut schedules the operator opt out
 // at the end of the unbonding completion epoch.
 func (k Keeper) ScheduleOperatorOptOut(
-	ctx sdk.Context, addr sdk.AccAddress,
+	ctx sdk.Context, addr sdk.AccAddress, consAddr sdk.ConsAddress,
 ) {
 	unbondingCompletionEpoch := k.GetUnbondingCompletionEpoch(ctx)
 	k.AppendOptOutToFinish(ctx, unbondingCompletionEpoch, addr)
 	k.SetOperatorOptOutFinishEpoch(ctx, addr, unbondingCompletionEpoch)
+	// once the operator completes their opt out, the key will be pruned.
+	k.AppendConsensusAddrToPrune(ctx, unbondingCompletionEpoch, consAddr)
 }
 
 // AppendOptOutToFinish appends an operator address to the list of operator addresses that have
@@ -49,9 +51,7 @@ func (k Keeper) GetOptOutsToFinish(
 		return [][]byte{}
 	}
 	var res types.AccountAddresses
-	if err := res.Unmarshal(bz); err != nil {
-		panic(err)
-	}
+	k.cdc.MustUnmarshal(bz, &res)
 	return res.GetList()
 }
 
@@ -62,10 +62,7 @@ func (k Keeper) setOptOutsToFinish(
 ) {
 	store := ctx.KVStore(k.storeKey)
 	key, _ := types.OptOutsToFinishKey(epoch)
-	bz, err := addrs.Marshal()
-	if err != nil {
-		panic(err)
-	}
+	bz := k.cdc.MustMarshal(&addrs)
 	store.Set(key, bz)
 }
 
@@ -176,9 +173,7 @@ func (k Keeper) GetConsensusAddrsToPrune(
 		return [][]byte{}
 	}
 	var res types.ConsensusAddresses
-	if err := res.Unmarshal(bz); err != nil {
-		panic(err)
-	}
+	k.cdc.MustUnmarshal(bz, &res)
 	return res.GetList()
 }
 
@@ -203,10 +198,7 @@ func (k Keeper) setConsensusAddrsToPrune(
 ) {
 	store := ctx.KVStore(k.storeKey)
 	key, _ := types.ConsensusAddrsToPruneKey(epoch)
-	bz, err := addrs.Marshal()
-	if err != nil {
-		panic(err)
-	}
+	bz := k.cdc.MustMarshal(&addrs)
 	store.Set(key, bz)
 }
 

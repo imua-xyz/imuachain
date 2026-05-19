@@ -61,6 +61,11 @@ var DefaultConsensusParams = &tmproto.ConsensusParams{
 		MaxGas:   -1, // no limit
 	},
 	Evidence: &tmproto.EvidenceParams{
+		// Must exceed the effective dogfood key-unbonding horizon (EpochsUntilUnbonded × epoch
+		// duration) so evidence can still attribute to a replaced key until operator reverse
+		// mapping is pruned. See TestChecklist_B2_EvidenceWindowCoversDogfoodUnbonding and
+		// validator-jailing-fix-review.md §B2 — tighten these on a live chain only with matching
+		// dogfood/epoch params.
 		MaxAgeNumBlocks: 302400,
 		MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
 		MaxBytes:        10000,
@@ -248,7 +253,7 @@ func GenesisStateWithValSet(app *ImuachainApp, genesisState simapp.GenesisState,
 		},
 	}
 
-	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams())
+	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, nil, nil, nil, nil, nil, nil, nil, nil, operatortypes.DefaultParams(), nil)
 	genesisState[operatortypes.ModuleName] = app.AppCodec().MustMarshalJSON(operatorGenesis)
 	// x/delegation
 	singleStateKey := utils.GetJoinedStoreKey(stakerID, assetID, operator.String())

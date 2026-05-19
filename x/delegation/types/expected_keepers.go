@@ -7,24 +7,6 @@ import (
 	epochsTypes "github.com/imua-xyz/imuachain/x/epochs/types"
 )
 
-var _ SlashKeeper = VirtualSlashKeeper{}
-
-type SlashKeeper interface {
-	IsOperatorFrozen(ctx sdk.Context, opAddr sdk.AccAddress) bool
-	OperatorAssetSlashedProportion(ctx sdk.Context, opAddr sdk.AccAddress, assetID string, startHeight, endHeight uint64) sdkmath.LegacyDec
-}
-
-// VirtualSlashKeeper todo: When the actual keeper functionality has not been implemented yet, temporarily use the virtual keeper.
-type VirtualSlashKeeper struct{}
-
-func (VirtualSlashKeeper) IsOperatorFrozen(_ sdk.Context, _ sdk.AccAddress) bool {
-	return false
-}
-
-func (VirtualSlashKeeper) OperatorAssetSlashedProportion(_ sdk.Context, _ sdk.AccAddress, _ string, _, _ uint64) sdkmath.LegacyDec {
-	return sdkmath.LegacyZeroDec()
-}
-
 // DelegationHooks are event hooks triggered by the delegation module
 type DelegationHooks interface {
 	// AfterDelegation :
@@ -45,6 +27,7 @@ type OperatorKeeper interface {
 	IsOperator(ctx sdk.Context, addr sdk.AccAddress) bool
 	GetUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (string, int64, uint64, error)
 	GetInstantUnbondingExpiration(ctx sdk.Context, operator sdk.AccAddress) (bool, string, int64, error)
+	IsOperatorFrozen(ctx sdk.Context, opAddr sdk.AccAddress) bool
 }
 
 type AssetsKeeper interface {

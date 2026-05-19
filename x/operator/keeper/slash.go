@@ -276,6 +276,8 @@ func (k *Keeper) Slash(ctx sdk.Context, parameter *types.SlashInputInfo) error {
 }
 
 // SlashWithInfractionReason is an expected slash interface for the dogfood module.
+// The x/dogfood modulel simply forwards the call here after validating it
+// and the side effects.
 func (k Keeper) SlashWithInfractionReason(
 	ctx sdk.Context, addr sdk.AccAddress, infractionHeight, power int64,
 	slashFactor sdk.Dec, infraction stakingtypes.Infraction,

@@ -70,4 +70,7 @@ const (
 	AttributeKeyAuthority                   = "authority"
 	AttributeKeyMinCommissionRate           = "min_commission_rate"
 	AttributeKeyMinCommissionUpdateInterval = "min_commission_update_interval"
+
+	EventTypeFreezeOperator      = "freeze_operator"
+	AttributeKeyFrozenOrUnfrozen = "frozen_or_unfrozen"
 )

@@ -23,12 +23,8 @@ import (
 	"github.com/imua-xyz/imuachain/x/operator"
 	operatorKeeper "github.com/imua-xyz/imuachain/x/operator/keeper"
 
-	imslash "github.com/imua-xyz/imuachain/x/imslash"
-
 	avsManagerKeeper "github.com/imua-xyz/imuachain/x/avs/keeper"
 	avsManagerTypes "github.com/imua-xyz/imuachain/x/avs/types"
-	slashKeeper "github.com/imua-xyz/imuachain/x/imslash/keeper"
-	imslashtypes "github.com/imua-xyz/imuachain/x/imslash/types"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -267,7 +263,6 @@ var (
 		assets.AppModuleBasic{},
 		operator.AppModuleBasic{},
 		delegation.AppModuleBasic{},
-		imslash.AppModuleBasic{},
 		avs.AppModuleBasic{},
 		oracle.AppModuleBasic{},
 		distr.AppModuleBasic{},
@@ -352,7 +347,6 @@ type ImuachainApp struct {
 	AssetsKeeper     assetsKeeper.Keeper
 	DelegationKeeper delegationKeeper.Keeper
 	OperatorKeeper   operatorKeeper.Keeper
-	ImSlashKeeper    slashKeeper.Keeper
 	AVSManagerKeeper avsManagerKeeper.Keeper
 	OracleKeeper     oracleKeeper.Keeper
 	ImmintKeeper     immintkeeper.Keeper
@@ -437,7 +431,6 @@ func NewImuachainApp(
 		// Imuachain module keys
 		assetsTypes.StoreKey,
 		delegationTypes.StoreKey,
-		imslashtypes.StoreKey,
 		operatorTypes.StoreKey,
 		avsManagerTypes.StoreKey,
 		oracleTypes.StoreKey,
@@ -579,7 +572,6 @@ func NewImuachainApp(
 	app.DelegationKeeper = delegationKeeper.NewKeeper(
 		keys[delegationTypes.StoreKey], appCodec, authAddrString,
 		app.AssetsKeeper,
-		delegationTypes.VirtualSlashKeeper{},
 		&app.OperatorKeeper, // intentionally a pointer, since not yet initialized.
 		app.AccountKeeper,
 		app.BankKeeper,
@@ -597,15 +589,11 @@ func NewImuachainApp(
 		app.AssetsKeeper,     // assets for vote power
 		// intentionally a pointer since it is not yet initialized
 		&app.AVSManagerKeeper, // used to create the AVS from the chainID
+		&app.SlashingKeeper,   // used to look up tombstone status
 		authAddrString,        // authority to edit params
 	)
 
 	// this modules aren't finalized yet.
-	app.ImSlashKeeper = slashKeeper.NewKeeper(
-		appCodec, keys[imslashtypes.StoreKey], app.AssetsKeeper, authAddrString,
-	)
-
-	// x/oracle is not fully integrated (or enabled) but allows for exchange rates to be added.
 	app.OracleKeeper = oracleKeeper.NewKeeper(
 		appCodec, keys[oracleTypes.StoreKey], memKeys[oracleTypes.MemStoreKey],
 		app.GetSubspace(oracleTypes.ModuleName), app.StakingKeeper,
@@ -727,7 +715,6 @@ func NewImuachainApp(
 		&app.OracleKeeper,
 		&app.AVSManagerKeeper,
 		&app.StakingKeeper,
-		delegationTypes.VirtualSlashKeeper{},
 		app.EpochsKeeper,
 		&app.DistrKeeper, // intentionally a pointer, since not yet initialized.
 		authAddrString,
@@ -748,7 +735,6 @@ func NewImuachainApp(
 		&app.AVSManagerKeeper,
 		app.AssetsKeeper,
 		&app.DelegationKeeper,
-		delegationTypes.VirtualSlashKeeper{},
 		&app.OracleKeeper,
 	)
 
@@ -862,7 +848,6 @@ func NewImuachainApp(
 			app.IBCKeeper.ChannelKeeper,
 			app.DelegationKeeper,
 			app.AssetsKeeper,
-			app.ImSlashKeeper,
 			app.DistrKeeper,
 			app.AVSManagerKeeper,
 		),
@@ -949,7 +934,6 @@ func NewImuachainApp(
 		assets.NewAppModule(appCodec, app.AssetsKeeper),
 		operator.NewAppModule(appCodec, app.OperatorKeeper),
 		delegation.NewAppModule(appCodec, app.DelegationKeeper),
-		imslash.NewAppModule(appCodec, app.ImSlashKeeper),
 		avs.NewAppModule(appCodec, app.AVSManagerKeeper),
 		oracle.NewAppModule(appCodec, app.OracleKeeper, app.AccountKeeper, app.BankKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper),
@@ -989,7 +973,6 @@ func NewImuachainApp(
 		assetsTypes.ModuleName,
 		operatorTypes.ModuleName,
 		delegationTypes.ModuleName,
-		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
 		group.ModuleName, // location irrelevant since end blocker only
@@ -1024,7 +1007,6 @@ func NewImuachainApp(
 		imminttypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		assetsTypes.ModuleName,
-		imslashtypes.ModuleName,
 		avsManagerTypes.ModuleName,
 		distrtypes.ModuleName,
 		// op module
@@ -1053,9 +1035,8 @@ func NewImuachainApp(
 		avsManagerTypes.ModuleName, // before dogfood, since dogfood registers itself as an AVS
 		operatorTypes.ModuleName,   // must be before delegation
 		delegationTypes.ModuleName,
-		stakingtypes.ModuleName, // must be after delegation
-		// must be after staking to `IterateValidators` but it is not implemented anyway
-		slashingtypes.ModuleName,
+		stakingtypes.ModuleName,  // must be after delegation
+		slashingtypes.ModuleName, // must be after staking to `IterateValidators`
 		evidencetypes.ModuleName,
 		govtypes.ModuleName, // can be anywhere after bank
 		erc20types.ModuleName,
@@ -1068,7 +1049,6 @@ func NewImuachainApp(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		upgradetypes.ModuleName, // no-op since we don't call SetInitVersionMap
-		imslashtypes.ModuleName, // not fully implemented yet
 		distrtypes.ModuleName,   // must be after the epoch
 		// must be the last module after others have been set up, so that it can check
 		// the invariants (if configured to do so).
@@ -1421,9 +1401,10 @@ func initParamsKeeper(
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	// ethermint subspaces
-	// nolint:staticcheck
-	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable())
-	paramsKeeper.Subspace(oracleTypes.ModuleName).WithKeyTable(oracleTypes.ParamKeyTable())
+	paramsKeeper.Subspace(evmtypes.ModuleName).
+		WithKeyTable(evmtypes.ParamKeyTable()) //nolint:staticcheck
+	paramsKeeper.Subspace(oracleTypes.ModuleName).
+		WithKeyTable(oracleTypes.ParamKeyTable())
 	return paramsKeeper
 }
 

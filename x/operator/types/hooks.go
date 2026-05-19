@@ -18,22 +18,28 @@ func (hooks MultiOperatorHooks) AfterOperatorKeySet(
 	addr sdk.AccAddress,
 	chainID string,
 	pubKey keytypes.WrappedConsKey,
-) {
+) error {
 	for _, hook := range hooks {
-		hook.AfterOperatorKeySet(ctx, addr, chainID, pubKey)
+		if err := hook.AfterOperatorKeySet(ctx, addr, chainID, pubKey); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (hooks MultiOperatorHooks) AfterOperatorKeyReplaced(
 	ctx sdk.Context,
 	addr sdk.AccAddress,
 	oldKey keytypes.WrappedConsKey,
-	newAddr keytypes.WrappedConsKey,
+	newKey keytypes.WrappedConsKey,
 	chainID string,
-) {
+) error {
 	for _, hook := range hooks {
-		hook.AfterOperatorKeyReplaced(ctx, addr, oldKey, newAddr, chainID)
+		if err := hook.AfterOperatorKeyReplaced(ctx, addr, oldKey, newKey, chainID); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func (hooks MultiOperatorHooks) AfterOperatorKeyRemovalInitiated(

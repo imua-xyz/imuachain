@@ -35,6 +35,13 @@ func (k *Keeper) Logger(ctx sdk.Context) log.Logger {
 // SetOperatorConsKeyForChainID sets the (consensus) public key for the given operator address
 // and chain id. If a key already exists, it will be overwritten and the edit will flow to the
 // validator set at the next epoch.
+//
+// Replacement path: only the first change in a dogfood epoch records a “previous” key for 0-power
+// Comet updates (alreadyRecorded). A second replacement on the same SDK context without an
+// intervening dogfood EndBlock (ClearPreviousConsensusKeys) skips AfterOperatorKeyReplaced — see
+// x/dogfood/keeper/key_change_escape_test.go TestSameEpochDoubleKeyRotation_SkipsSecondHookRisk.
+// Normal Msg + Commit flows usually clear previous keys each epoch EndBlock.
+//
 // The caller must ensure that
 // 1. Operator is opted in to the chain
 // 2. The chain is registered with the AVS module
@@ -52,15 +59,16 @@ func (k *Keeper) SetOperatorConsKeyForChainID(
 // it is used with a boolean flag to indicate that the call is from genesis.
 // if so, operator freeze status is not checked and hooks are not called.
 func (k *Keeper) setOperatorConsKeyForChainID(
-	ctx sdk.Context,
+	oCtx sdk.Context,
 	opAccAddr sdk.AccAddress,
 	chainID string,
 	wrappedKey keytypes.WrappedConsKey,
 	genesis bool,
 ) error {
+	ctx, writeFunc := oCtx.CacheContext()
 	// check for slashing
-	if !genesis && k.slashKeeper.IsOperatorFrozen(ctx, opAccAddr) {
-		return delegationtypes.ErrOperatorIsFrozen
+	if !genesis && k.IsOperatorFrozen(ctx, opAccAddr) {
+		return types.ErrOperatorIsFrozen
 	}
 	/// in the process of opting out, do not allow key replacement
 	if k.IsOperatorRemovingKeyFromChainID(ctx, opAccAddr, chainID) {
@@ -103,12 +111,21 @@ func (k *Keeper) setOperatorConsKeyForChainID(
 	if !genesis {
 		if found {
 			if !alreadyRecorded {
-				k.Hooks().AfterOperatorKeyReplaced(ctx, opAccAddr, prevKey, wrappedKey, chainID)
+				if err := k.Hooks().AfterOperatorKeyReplaced(
+					ctx, opAccAddr, prevKey, wrappedKey, chainID,
+				); err != nil {
+					return err
+				}
 			}
 		} else {
-			k.Hooks().AfterOperatorKeySet(ctx, opAccAddr, chainID, wrappedKey)
+			if err := k.Hooks().AfterOperatorKeySet(
+				ctx, opAccAddr, chainID, wrappedKey,
+			); err != nil {
+				return err
+			}
 		}
 	}
+	writeFunc()
 	return nil
 }
 
@@ -463,6 +480,11 @@ func (k Keeper) ValidatorByConsAddrForChainID(
 		ctx.Logger().Error("ValidatorByConsAddrForChainID new validator error", "err", err)
 		return stakingtypes.Validator{}, false
 	}
+	// set this because the default is Unbonded and this module does not know the true status,
+	// which is instead stored in downstream modules.
+	val.Status = stakingtypes.Unspecified
+	// this call mirrors the x/staking keeper.
+	// this .Jailed is temporary jail, the tombstoning is not tracked in the x/staking keeper
 	val.Jailed = k.IsOperatorJailedForChainID(ctx, consAddr, chainIDWithoutRevision)
 
 	// set the tokens, delegated shares and minimum self delegation for unjail

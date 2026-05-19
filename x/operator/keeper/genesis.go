@@ -68,6 +68,13 @@ func (k Keeper) InitGenesis(ctx sdk.Context, state types.GenesisState) []abci.Va
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to set all operator asset USD values"))
 	}
+	for _, frozenOp := range state.FrozenOperators {
+		// permit panic
+		accAddr := sdk.MustAccAddressFromBech32(frozenOp)
+		if err := k.FreezeOperator(ctx, accAddr); err != nil {
+			panic(errorsmod.Wrapf(err, "failed to freeze operator %s", frozenOp))
+		}
+	}
 	return []abci.ValidatorUpdate{}
 }
 
@@ -119,6 +126,8 @@ func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	if err != nil {
 		panic(errorsmod.Wrap(err, "failed to get all operator asset USD values").Error())
 	}
+
+	res.FrozenOperators = k.GetAllFrozenOperators(ctx)
 
 	return &res
 }

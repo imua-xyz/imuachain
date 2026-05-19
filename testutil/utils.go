@@ -454,7 +454,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 			},
 		},
 	}
-	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, operatorConsKeys, optStates, operatorUSDValues, avsUSDValues, nil, nil, nil, operatorAssetUSDValues, operatortypes.DefaultParams())
+	operatorGenesis := operatortypes.NewGenesisState(operatorInfos, operatorConsKeys, optStates, operatorUSDValues, avsUSDValues, nil, nil, nil, operatorAssetUSDValues, operatortypes.DefaultParams(), nil)
 	genesisState[operatortypes.ModuleName] = app.AppCodec().MustMarshalJSON(operatorGenesis)
 
 	// x/delegation
@@ -513,8 +513,8 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	genesisState[dogfoodtypes.ModuleName] = app.AppCodec().MustMarshalJSON(dogfoodGenesis)
 
 	suite.ValSet = tmtypes.NewValidatorSet([]*tmtypes.Validator{
-		tmtypes.NewValidator(pubKey.ToTmKey(), 1),
-		tmtypes.NewValidator(pubKey2.ToTmKey(), 1),
+		tmtypes.NewValidator(pubKey.ToTmKey(), power),
+		tmtypes.NewValidator(pubKey2.ToTmKey(), power2),
 	})
 
 	totalSupply := sdk.NewCoins()
@@ -569,6 +569,7 @@ func (suite *BaseTestSuite) SetupWithGenesisValSet(genAccs []authtypes.GenesisAc
 	})
 
 	suite.Ctx = app.BaseApp.NewContext(false, header)
+	suite.Ctx = suite.Ctx.WithConsensusParams(imuaapp.DefaultConsensusParams)
 	suite.App = app
 	suite.OperatorMsgServer = operatorkeeper.NewMsgServerImpl(app.OperatorKeeper)
 
@@ -657,6 +658,14 @@ func (suite *BaseTestSuite) CommitAfter(d time.Duration) {
 }
 
 func (suite *BaseTestSuite) RunToEpochEnd(epochIdentifier string) {
+	suite.runToEpochEnd(epochIdentifier, true)
+}
+
+func (suite *BaseTestSuite) RunToEpochEndNoEndBlocker(epochIdentifier string) {
+	suite.runToEpochEnd(epochIdentifier, false)
+}
+
+func (suite *BaseTestSuite) runToEpochEnd(epochIdentifier string, endBlocker bool) {
 	var epochDuration time.Duration
 	switch epochIdentifier {
 	case epochstypes.MinuteEpochID:
@@ -680,15 +689,28 @@ func (suite *BaseTestSuite) RunToEpochEnd(epochIdentifier string) {
 	}
 	// Run EndBlocker to trigger endBlock execution, which updates voting power in the dogfood module.
 	// Note: the above CommitAfter only executes beginBlock when running to the last block of the target epoch.
-	suite.App.EndBlocker(suite.Ctx, abci.RequestEndBlock{
-		Height: suite.Ctx.BlockHeight(),
-	})
+	if endBlocker {
+		suite.App.EndBlocker(suite.Ctx, abci.RequestEndBlock{
+			Height: suite.Ctx.BlockHeight(),
+		})
+	}
 }
 
 func (suite *BaseTestSuite) RunToEpochEndN(epochIdentifier string, number int) {
 	for i := 0; i < number; i++ {
 		suite.RunToEpochEnd(epochIdentifier)
 	}
+}
+
+func (suite *BaseTestSuite) RunToEpochEndNoEndBlockerN(epochIdentifier string, number int) {
+	if number <= 0 {
+		return
+	}
+
+	for i := 0; i < number-1; i++ {
+		suite.RunToEpochEnd(epochIdentifier)
+	}
+	suite.RunToEpochEndNoEndBlocker(epochIdentifier)
 }
 
 func (suite *BaseTestSuite) DebugPrintObject(object interface{}) {
