@@ -278,6 +278,29 @@ func (k Keeper) GetStakerList(ctx sdk.Context, assetID string, chainID uint64) t
 // UpdateNSTValidatorListForStaker handles deposits from the assets module, updating the staker's validator list and balance.
 // Emits an event for the deposit and updates the version.
 func (k Keeper) UpdateNSTValidatorListForStaker(ctx sdk.Context, assetID, stakerID, validatorPubkey string, amount sdkmath.Int) error {
+	// TODO: verify assetID is valid NST assetID ?
+	_, chainID, err := assetstypes.ParseID(strings.ToLower(assetID))
+	if err != nil {
+		return err
+	}
+	nstChain, ok := types.GetNSTChainFromChainID(chainID)
+	if !ok {
+		return errors.New("invalid NST assetID")
+	}
+	switch nstChain {
+	case types.ETHChain:
+		// currently validatorPubkey is the validator index, we don't need to check it
+	case types.BSCChain:
+		normalized, err := types.NormalizeBSCAddress(validatorPubkey)
+		if err != nil {
+			return err
+		}
+		validatorPubkey = normalized
+	case types.SOLChain:
+		if !types.ValidSOLAddressWithPrefix(validatorPubkey) {
+			return errors.New("invalid SOL validator pubkey")
+		}
+	}
 	// zero value will cause no change, so we do not allow it
 	if amount.IsZero() {
 		return errors.New("amount should not be zero")
@@ -380,8 +403,8 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 	}
 
 	updatedIndex = staker.StakerIndex
-	// set staker
-	if action == types.Action_ACTION_DEPOSIT {
+	switch action {
+	case types.Action_ACTION_DEPOSIT:
 		updatedVersion := k.IncreaseVersionByDeposit(ctx, chainID, balance)
 		staker.ValidatorList = append(staker.ValidatorList, &types.ValidatorDeposit{
 			ValidatorPubkey: validator,
@@ -394,7 +417,8 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 				k.refreshCachedStakerList(ctx, chainID)
 			}
 		}
-	} else if action == types.Action_ACTION_WITHDRAW {
+
+	case types.Action_ACTION_WITHDRAW:
 		// we don't need to check staker has enough balance, because assets module has done that check
 		// and the previous check has guaranteed stakerInfo.BalanceList is not empty
 		withdrawVersion := k.IncreaseVersionByWithdraw(ctx, chainID)
@@ -406,6 +430,10 @@ func (k Keeper) updateStaker(ctx sdk.Context, chainID, roundID, balance, feedVer
 				k.refreshCachedStakerList(ctx, chainID)
 			}
 		}
+
+	default:
+		// ACTION_SLASH_REFUND and ACTION_ROUND_UNSPECIFIED don't require staker updates in this switch
+		// They are handled elsewhere in the function (balance calculations, etc.)
 	}
 
 	// set balanceList
